@@ -8,5 +8,12 @@
     <string name="videos">Videos</string>
     <string name="pictures">Pictures</string>
     <string name="comics">Comics</string>
+    <string name="title_activity_scrolling_about">Avant-Garde Gallery Manager: About</string>
+    <string name="large_text">
+        "Read on to learn more about Avant-Garde Gallery Manager.\n\n"
+
+
+    </string>
+    <string name="action_settings">Settings</string>
 
 </resources>

@@ -48,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_About:
-                //Intent intentAbout = new Intent(this, AboutActivity.class);
-                //startActivity(intentAbout);
+                Intent intentAbout = new Intent(this, ScrollingAboutActivity.class);
+                startActivity(intentAbout);
                 return true;
 
 

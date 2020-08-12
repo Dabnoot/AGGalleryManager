@@ -2,11 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.agcurations.aggallerymanager">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
-        android:name="com.agcurations.aggallerymanager.GlobalClass"
+        android:name=".GlobalClass"
         android:allowBackup="true"
         android:icon="@mipmap/app_book"
         android:installLocation="preferExternal"
@@ -14,14 +14,24 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
-        <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup !-->
 
+        <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ScrollingAboutActivity"
+            android:label="@string/title_activity_scrolling_about"
+            android:theme="@style/AppTheme.Launcher.NoActionBar"
+            android:parentActivityName="com.agcurations.aggallerymanager.MainActivity">
+        </activity>
+
     </application>
+
 
 </manifest>
