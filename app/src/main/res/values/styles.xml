@@ -2,9 +2,16 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimary">@color/colorBlueGrey5</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:windowBackground">@color/colorBlueGrey3</item>
+        <item name="android:navigationBarColor">@color/colorBlueGrey5</item>
+    </style>
+
+    <!-- Starting activity theme -->
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@drawable/startup_screen</item>
     </style>
 
 </resources>

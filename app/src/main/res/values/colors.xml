@@ -1,6 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6200EE</color>
+    <!--<color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>!-->
+
+    <!--https://www.vogella.com/tutorials/AndroidStylesThemes/article.html!-->
+
+    <color name="colorPrimary">#453d83</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorLightPurple">#5f55af</color>
     <color name="colorAccent">#03DAC5</color>
+    <color name="colorBlackboardRed">#eb305b</color>
+    <color name="colorDarkOrange">#ea552d</color>
+    <color name="colorLightOrange">#f77026</color>
+    <color name="colorDarkDarkOrange">#bc3f2a</color>
+
+    <color name="colorGrey1">#efefef</color>
+    <color name="colorGrey2">#dddddd</color>
+    <color name="colorGrey3">#ceccca</color>
+
+    <color name="colorBlueGrey1">#8da2b5</color>
+    <color name="colorBlueGrey2">#7d93aa</color>
+    <color name="colorBlueGrey3">#647892</color>
+    <color name="colorBlueGrey4">#546d87</color>
+    <color name="colorBlueGrey5">#4d6682</color>
+
+    <color name="colorTextColorVsBlueGrey3"></color>
+
+
+
+
+
+    <color name="startup_screen_background">#292929</color>
 </resources>

@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">AG Gallery+</string>
+    <string name="flip_view">Flip View</string>
+    <string name="about">About</string>
+    <string name="productivity_tools">Productivity Tools</string>
+    <string name="data_management">Data Management</string>
+    <string name="quality_analysis">Quality Analysis</string>
+    <string name="videos">Videos</string>
+    <string name="pictures">Pictures</string>
+    <string name="comics">Comics</string>
+
 </resources>
