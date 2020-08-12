@@ -128,6 +128,7 @@ public class ComicViewerActivity extends AppCompatActivity {
     private String gsComicName = "";
     private int giSelectedComicSequenceNum;
     private int giCurrentPageIndex;
+    private int giMaxFileCount;
 
     //Graphics global variables
     private ImageView givComicPage;
@@ -162,6 +163,9 @@ public class ComicViewerActivity extends AppCompatActivity {
     private TextView gtvDebug;
     private int giDebugLineCount;
 
+    //Other globals
+    private int iSwipeToExitCounter = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -190,7 +194,7 @@ public class ComicViewerActivity extends AppCompatActivity {
         String[] sComicFields = tmCatalogComicList.get(giSelectedComicSequenceNum);
         if( sComicFields == null) return;
         gsComicName = sComicFields[GlobalClass.COMIC_NAME_INDEX];
-
+        giMaxFileCount = Integer.parseInt(sComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
 
         String sComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
         String sComicFolderPath;
@@ -242,11 +246,27 @@ public class ComicViewerActivity extends AppCompatActivity {
             public void onSwipeRight() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped right", Toast.LENGTH_SHORT).show();
                 if(gfScaleFactor == gfMinScale) gotoPreviousComicPage();
+                iSwipeToExitCounter = 0;
             }
 
             public void onSwipeLeft() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped left", Toast.LENGTH_SHORT).show();
-                if(gfScaleFactor == gfMinScale) gotoNextComicPage();
+
+                if(gfScaleFactor == gfMinScale){
+
+                    if(giCurrentPageIndex == (giMaxFileCount - 1)){
+                        if(iSwipeToExitCounter == 0) {
+                            Toast.makeText(getApplicationContext(), "End of comic", Toast.LENGTH_SHORT).show();
+                        } else if (iSwipeToExitCounter == 1){
+                            Toast.makeText(getApplicationContext(), "Swipe right again to exit", Toast.LENGTH_SHORT).show();  //right/left - it feels like a "right-swipe" in the comic reference frame.
+                        } else if (iSwipeToExitCounter == 2){
+                            finish();
+                        }
+                        iSwipeToExitCounter++;
+                    } else {
+                        gotoNextComicPage();
+                    }
+                }
             }
 
             public void onSwipeBottom() {
@@ -423,7 +443,7 @@ public class ComicViewerActivity extends AppCompatActivity {
     }
 
     private void gotoNextComicPage(){
-        if(giCurrentPageIndex < tmComicPages.size()){
+        if(giCurrentPageIndex < tmComicPages.size() - 1){
             giCurrentPageIndex++;
             LoadComicPage(giCurrentPageIndex);
         }
@@ -496,13 +516,10 @@ public class ComicViewerActivity extends AppCompatActivity {
                     //Get the values from the matrix for evaluation:
                     matrix.getValues(values);
 
-                    float fVerticalScrollValue = -1.0f;
-                    float fHorizontalScrollValue = -1.0f;
+                    float fVerticalScrollValue;
+                    float fHorizontalScrollValue;
 
                     if (mode == DRAG) { //movement of first finger
-
-                        float fImageHeight = values[Matrix.MSCALE_Y]*giImageHeight;
-
 
                         fVerticalScrollValue = event.getY() - gpTouchStart.y;
                         fHorizontalScrollValue = event.getX() - gpTouchStart.x;
@@ -521,8 +538,12 @@ public class ComicViewerActivity extends AppCompatActivity {
                         if((fImageY >= 0.0f) && (fVerticalScrollValue > 0.0f)) {
                             values[Matrix.MTRANS_Y] = 0.0f;
                             matrix.setValues(values);
+
+                            //What if the image is not as tall as the screen?
                         }
+
                         //Stop pan-up if at the bottom:
+                        //Y-coord of the end of the translated image:
                         float fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + (values[Matrix.MSCALE_Y] * giImageHeight);
                         if((fImageEndTRANS_Y <= gpDisplaySize.y) && (fVerticalScrollValue < 0.0f)){
                             //Restore the translated Y coordinate to the values array:
@@ -532,32 +553,43 @@ public class ComicViewerActivity extends AppCompatActivity {
                             matrix.setValues(values);
                         }
 
+                        float fScaledWidth;
                         //Stop pan-right if left edge is at the left of the screen:
                         if((fImageX >= 0.0f) && (fHorizontalScrollValue > 0.0f)) {
 
-                            //if the width of the image is less than the width of the screen,
-                            //  center the image:
-                            float fScaledWidth = values[Matrix.MSCALE_X] * giImageWidth;
+
+                            fScaledWidth = values[Matrix.MSCALE_X] * giImageWidth;
                             if(fScaledWidth < gpDisplaySize.x) {
+                                //if the width of the image is less than the width of the screen,
+                                //  center the image:
                                 float fTotalMargin = gpDisplaySize.x - fScaledWidth;
                                 values[Matrix.MTRANS_X] = fTotalMargin / 2.0f;
                             } else {
                                 //Stop the pan at the left edge of the screen.
                                 values[Matrix.MTRANS_X] = 0.0f;
                             }
-
-
                             matrix.setValues(values);
                         }
-                        //Stop pan-right if at the bottom:
-                        /*float fImageEndTRANS_X = values[Matrix.MTRANS_X] + (values[Matrix.MSCALE_X] * giImageWidth);
+
+                        //Stop pan-left if right edge is at the right of the screen:
+                        //X-coord of the end of the translated image:
+                        float fImageEndTRANS_X = values[Matrix.MTRANS_X] + (values[Matrix.MSCALE_X] * giImageWidth);
                         if((fImageEndTRANS_X <= gpDisplaySize.x) && (fHorizontalScrollValue < 0.0f)){
-                            //Restore the translated Y coordinate to the values array:
-                            float[] fImageMatrixValues = new float[9];
-                            givComicPage.getImageMatrix().getValues(fImageMatrixValues);
-                            values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
+
+                            fScaledWidth = values[Matrix.MSCALE_X] * giImageWidth;
+                            if(fScaledWidth < gpDisplaySize.x) {
+                                //if the width of the image is less than the width of the screen,
+                                //  center the image:
+                                float fTotalMargin = gpDisplaySize.x - fScaledWidth;
+                                values[Matrix.MTRANS_X] = fTotalMargin / 2.0f;
+                            } else {
+                                //Restore the translated X coordinate to the values array:
+                                float[] fImageMatrixValues = new float[9];
+                                givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                                values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
+                            }
                             matrix.setValues(values);
-                        }*/
+                        }
 
 
 
@@ -567,6 +599,8 @@ public class ComicViewerActivity extends AppCompatActivity {
 
                     }
                     else if (mode == ZOOM) { //pinch zooming
+                        iSwipeToExitCounter = 0; //Reset the swipe-to-exit counter.
+
                         float fNewPinchDistance = spacing(event);
 
                         //Determine the new scale:

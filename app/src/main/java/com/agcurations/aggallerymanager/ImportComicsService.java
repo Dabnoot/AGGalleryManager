@@ -537,6 +537,7 @@ public class ImportComicsService extends IntentService {
 
                             //Pull data from the record for easy access:
                             iComicID = Integer.parseInt(sImportComicListRecord[GlobalClass.COMIC_ID_INDEX]); //Could also use iComicID = entry.getKey();.
+                            iFileCount = Integer.parseInt(sImportComicListRecord[GlobalClass.COMIC_FILE_COUNT_INDEX]); //Used to reduce file count on deletion of cover page.
                             sFolderName = sImportComicListRecord[GlobalClass.COMIC_FOLDER_NAME_INDEX];
                             bDuplicateInCatalog = Boolean.parseBoolean(sImportComicListRecord[DUPLICATE_IN_CATALOG_INDEX]);
 
@@ -578,6 +579,12 @@ public class ImportComicsService extends IntentService {
                                                     //  first file touched.
                                                     if(!fDestinationFile.delete()) {
                                                         WriteLogLine("Could not delete comic cover file: " + fDestinationFile.getAbsolutePath(),true);
+                                                    } else {
+                                                        //Update the file count for this comic.
+                                                        iFileCount--;
+                                                        sImportComicListRecord[GlobalClass.COMIC_FILE_COUNT_INDEX] = Integer.toString(iFileCount);
+
+
                                                     }
                                                 }
 
