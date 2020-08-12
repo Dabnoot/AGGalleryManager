@@ -455,6 +455,8 @@ public class ComicViewerActivity extends AppCompatActivity {
 
             float scale;
             float[] values = new float[9];
+            float fImageEndTRANS_Y = 0.0f;
+
             String s="";
             // Handle touch events here...
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -510,13 +512,22 @@ public class ComicViewerActivity extends AppCompatActivity {
                         //Get the values from the matrix for evaluation:
                         matrix.getValues(values);
                         float fImageY = values[Matrix.MTRANS_Y]; //The top edge of the image, scaled.
-                        //If the top of the image is at or below the top of the screen,
-                        //  and the user is scrolling down), set the top of the image to the top
-                        //  of the screen:
-                        if(((fImageY >= 0.0f) && (fVerticalScrollValue > 0.0f))) {
+
+                        //Stop pan-down if at the top:
+                        if((fImageY >= 0.0f) && (fVerticalScrollValue > 0.0f)) {
                             values[Matrix.MTRANS_Y] = 0.0f;
                             matrix.setValues(values);
                         }
+                        //Stop pan-up if at the bottom:
+                        fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + (values[Matrix.MSCALE_Y] * giImageHeight);
+                        if((fImageEndTRANS_Y <= gpDisplaySize.y) && (fVerticalScrollValue < 0.0f)){
+                            //Restore the translated Y coordinate to the values array:
+                            float[] fImageMatrixValues = new float[9];
+                            givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                            values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
+                            matrix.setValues(values);
+                        }
+
                         // Perform the transformation
                         givComicPage.setImageMatrix(matrix);
 
@@ -566,7 +577,7 @@ public class ComicViewerActivity extends AppCompatActivity {
                     //Get the values from the matrix for evaluation:
                     matrix.getValues(values);
 
-                    float fImageEndTRANS_Y = 0.0f;
+
                     fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + (values[Matrix.MSCALE_Y] * giImageHeight);
 
                     s = String.format("%3.3f  %3.3f  %3.3f  %3.3f  %3.3f\n",
@@ -615,7 +626,7 @@ public class ComicViewerActivity extends AppCompatActivity {
         private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
             private static final int SWIPE_THRESHOLD = 300;
-            private static final int SWIPE_VELOCITY_THRESHOLD = 300;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 600;
 
             @Override
             public boolean onDown(MotionEvent e) {
