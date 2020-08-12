@@ -10,18 +10,21 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -153,6 +156,7 @@ public class ComicViewerActivity extends AppCompatActivity {
     PointF mid = new PointF();
     float oldDist = 1f;
 
+    Point gpDisplaySize;
 
 
     TextView gtvDebug;
@@ -213,6 +217,13 @@ public class ComicViewerActivity extends AppCompatActivity {
             }
         }
 
+        //Get the display size:
+        WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        Display display = windowManager.getDefaultDisplay();
+        gpDisplaySize = new Point();
+        display.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
+        //display.getSize(gpDisplaySize);   //Get the size of the screen with the navigation bar shown.
+
         //Post a runnable from onCreate(), that will be executed when the view has been created, in
         //  order to load the first comic page:
         mContentView.post(new Runnable(){
@@ -248,6 +259,7 @@ public class ComicViewerActivity extends AppCompatActivity {
 
             public void onSwipeBottom() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped bottom", Toast.LENGTH_SHORT).show();
+                CenterComicPage();
             }
 
         });
@@ -394,12 +406,16 @@ public class ComicViewerActivity extends AppCompatActivity {
     }
 
     private void CenterComicPage(){
+
+        //Get the dimensions of the image loaded into the ImageView:
         Drawable d = givComicPage.getDrawable();
-        // TODO: check that d isn't null
-        //Resolution of SM-T510 1920 x 1200 (WUXGA)
-        DisplayMetrics displayMetrics = getApplicationContext().getResources().getDisplayMetrics();
-        RectF imageRectF = new RectF(0, 0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
-        RectF viewRectF = new RectF(0, 0, givComicPage.getWidth(), displayMetrics.heightPixels);
+        if( d == null) return;
+
+        giImageWidth = d.getIntrinsicWidth();
+        giImageHeight = d.getIntrinsicHeight();
+
+        RectF imageRectF = new RectF(0, 0, giImageWidth, giImageHeight);
+        RectF viewRectF = new RectF(0, 0, givComicPage.getWidth(), gpDisplaySize.y);
         matrix.setRectToRect(imageRectF, viewRectF, Matrix.ScaleToFit.CENTER);
 
         //Get the values from the matrix:
@@ -407,12 +423,12 @@ public class ComicViewerActivity extends AppCompatActivity {
         matrix.getValues(values);
         //Get the scale from the matrix, and set this as the minimum scale:
         gfMinScale = values[Matrix.MSCALE_X];  //Both X and Y scales are the same because of Matrix.ScaleToFit.
+        //Get the new translated X and Y coordinates.
         gfImageViewCenteredX = values[Matrix.MTRANS_X];
         gfImageViewCenteredY = values[Matrix.MTRANS_Y];
 
         givComicPage.setImageMatrix(matrix);
-        giImageWidth = d.getIntrinsicWidth();
-        giImageHeight = d.getIntrinsicHeight();
+
 
     }
 
