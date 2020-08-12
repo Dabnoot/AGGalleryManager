@@ -15,5 +15,26 @@
 
     </string>
     <string name="action_settings">Settings</string>
+    <string name="no_comics_in_catalog">No comics in catalog.</string>
+    <string name="no_catalog_location">No catalog location.</string>
+    <string name="menu_import">Import</string>
+    <string name="menu_export">Export</string>
+    <string name="title_activity_comic_viewer">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="comic_page">Comic page.</string>
+    <string name="comic_export">Comic Export</string>
+    <string name="catalog_size">Catalog Size:</string>
+    <string name="select_output_file">Select Output File</string>
+    <string name="export_file">Export File</string>
+    <string name="comic_import">Comic Import</string>
+    <string name="import_from_folder">Import from folder</string>
+    <string name="import_from_backup">Import from backup</string>
+    <string name="select_input">Select Input</string>
+    <string name="import_path">Import Path:</string>
+    <string name="comic_cover_page">Comic cover page.</string>
+    <string name="comic_thumbnail_image">Comic thumbnail image.</string>
+    <string name="comic_name">Comic name</string>
+    <string name="comic_details">comic details</string>
 
 </resources>

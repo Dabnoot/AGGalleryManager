@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,6 +25,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
+
+        if(!globalClass.ObfuscationOn) {
+            //Remove obfuscation:
+            RemoveObfuscation();
+        }
 
     }
 
@@ -52,8 +58,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intentAbout);
                 return true;
 
-
-
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -73,21 +77,7 @@ public class MainActivity extends AppCompatActivity {
             Obfuscate();
         } else {
             //Remove obfuscation:
-            ImageView ivVideos = findViewById(R.id.imageView_Video);
-            ImageView ivPictures = findViewById(R.id.imageView_Pictures);
-            ImageView ivComics = findViewById(R.id.imageView_Comics);
-
-            ivVideos.setImageResource(R.drawable.nob_videos);
-            ivPictures.setImageResource(R.drawable.nob_pictures);
-            ivComics.setImageResource(R.drawable.nob_comics);
-
-            TextView tvVideos = findViewById(R.id.textView_Videos);
-            TextView tvPictures = findViewById(R.id.textView_Pictures);
-            TextView tvComics = findViewById(R.id.textView_Comics);
-
-            tvVideos.setText(R.string.videos);
-            tvPictures.setText(R.string.pictures);
-            tvComics.setText(R.string.comics);
+            RemoveObfuscation();
        }
 
     }
@@ -115,10 +105,34 @@ public class MainActivity extends AppCompatActivity {
         tvPictures.setText(R.string.data_management);
         tvComics.setText(R.string.quality_analysis);
 
-
     }
 
+    public void RemoveObfuscation() {
+        //Remove obfuscation:
+        ImageView ivVideos = findViewById(R.id.imageView_Video);
+        ImageView ivPictures = findViewById(R.id.imageView_Pictures);
+        ImageView ivComics = findViewById(R.id.imageView_Comics);
 
+        ivVideos.setImageResource(R.drawable.nob_videos);
+        ivPictures.setImageResource(R.drawable.nob_pictures);
+        ivComics.setImageResource(R.drawable.nob_comics);
 
+        TextView tvVideos = findViewById(R.id.textView_Videos);
+        TextView tvPictures = findViewById(R.id.textView_Pictures);
+        TextView tvComics = findViewById(R.id.textView_Comics);
+
+        tvVideos.setText(R.string.videos);
+        tvPictures.setText(R.string.pictures);
+        tvComics.setText(R.string.comics);
+    }
+
+    //=====================================================================================
+    //===== ImageView Click Code =================================================================
+    //=====================================================================================
+
+    public void startComicsCatalogActivity(View v){
+        Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
+        startActivity(intentComicsCatalogActivity);
+    }
 
 }

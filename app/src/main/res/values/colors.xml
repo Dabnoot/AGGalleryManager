@@ -26,4 +26,6 @@
     <color name="colorBlueGrey5">#4d6682</color>
 
     <color name="startup_screen_background">#292929</color>
+
+    <color name="black_overlay">#66000000</color>
 </resources>

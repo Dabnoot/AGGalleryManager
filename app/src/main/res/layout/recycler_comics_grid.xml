@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp">
+
+    <ImageView
+        android:id="@+id/ImageView_Thumbnail"
+        android:layout_width="match_parent"
+        android:layout_height="430dp"
+        android:layout_alignParentTop="true"
+        android:contentDescription="@string/comic_cover_page"/>
+
+    <TextView
+        android:id="@+id/TextView_ComicName"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/ImageView_Thumbnail"
+        android:layout_alignWithParentIfMissing="true"
+        android:textSize="16sp"
+        android:textColor="@color/colorGrey1"
+        android:gravity="center"/>
+
+</RelativeLayout>

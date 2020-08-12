@@ -15,11 +15,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
 
-        <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
+
+         <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -27,9 +28,41 @@
         <activity
             android:name=".ScrollingAboutActivity"
             android:label="@string/title_activity_scrolling_about"
-            android:theme="@style/AppTheme.Launcher.NoActionBar"
-            android:parentActivityName="com.agcurations.aggallerymanager.MainActivity">
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.Launcher.NoActionBar" />
+
+        <activity android:name=".ComicsCatalogActivity"
+            android:parentActivityName=".MainActivity"/>
+
+        <activity
+            android:name=".ComicViewerActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_comic_viewer"
+            android:parentActivityName=".ComicsCatalogActivity"
+            android:theme="@style/FullscreenTheme">
+
         </activity>
+
+        <activity
+            android:name=".ExportComicsActivity"
+            android:parentActivityName=".ComicsCatalogActivity">
+        </activity>
+
+        <activity
+            android:name=".ImportComicsActivity"
+            android:parentActivityName=".ComicsCatalogActivity">
+        </activity>
+
+        <service
+            android:name=".ExportComicsService"
+            android:exported="false">
+        </service>
+
+        <service
+            android:name=".ImportComicsService"
+            android:exported="false">
+        </service>
+
 
     </application>
 
