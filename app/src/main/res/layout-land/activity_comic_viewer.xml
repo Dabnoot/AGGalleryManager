@@ -29,10 +29,11 @@
             android:id="@+id/textViewDebug"
             android:layout_width="367dp"
             android:layout_height="match_parent"
-            android:layout_gravity="right"
-            android:text="TextView"
+            android:layout_gravity="end"
+            android:text=""
+            android:textAlignment="textEnd"
             android:textColor="@color/colorAccent"
-            android:visibility="invisible"/>
+            android:visibility="visible"/>
         <!-- TODO: Remove this textview !-->
 
         <TextView

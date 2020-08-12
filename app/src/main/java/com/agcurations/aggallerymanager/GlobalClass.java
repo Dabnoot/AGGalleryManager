@@ -86,7 +86,7 @@ public class GlobalClass extends Application {
 
     //Begin Obfuscation section:
 
-    public boolean ObfuscationOn = true;
+    public boolean ObfuscationOn = false;
     public int iObfuscationIndex;
     //public int OBFUSCATION_SUBJECT_VIDEOGAMES = 0;
     public int OBFUSCATION_SUBJECT_QUALITY = 1;

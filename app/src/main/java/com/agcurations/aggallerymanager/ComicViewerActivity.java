@@ -134,23 +134,13 @@ public class ComicViewerActivity extends AppCompatActivity {
 
     private int giSelectedComicSequenceNum;
 
-    //Movement variables
-    private float mLastTouchX = 0.0f;
-    private float mLastTouchY = 0.0f;
-    private float mPosX = 0.0f;
-    private float mPosY = 0.0f;
-
-
-
-
-    private static final String TAG = "Touch";
-
-    private static final float MIN_ZOOM = 1.0f;
-    private static final float MAX_ZOOM = 5.0f;
-
     // These matrices will be used to move and zoom image
     Matrix matrix = new Matrix();
     Matrix savedMatrix = new Matrix();
+
+    float gfMinScale = 1.0f;
+    float gfImageViewCenteredX = -1.0f;
+    float gfImageViewCenteredY = -1.0f;
 
     // We can be in one of these 3 states
     static final int NONE = 0;
@@ -170,7 +160,8 @@ public class ComicViewerActivity extends AppCompatActivity {
     int giDebugMaxLines = 30;
 
 
-
+    int giImageWidth = 0;
+    int giImageHeight = 0;
 
 
 
@@ -398,8 +389,6 @@ public class ComicViewerActivity extends AppCompatActivity {
             }
 
             givComicPage.setImageBitmap(myBitmap);
-            int h1 = givComicPage.getHeight();
-            int h2 = givComicPage.getMaxHeight();
             CenterComicPage();
         }
     }
@@ -413,7 +402,18 @@ public class ComicViewerActivity extends AppCompatActivity {
         RectF viewRectF = new RectF(0, 0, givComicPage.getWidth(), displayMetrics.heightPixels);
         matrix.setRectToRect(imageRectF, viewRectF, Matrix.ScaleToFit.CENTER);
 
+        //Get the values from the matrix:
+        float[] values = new float[9];
+        matrix.getValues(values);
+        //Get the scale from the matrix, and set this as the minimum scale:
+        gfMinScale = values[Matrix.MSCALE_X];  //Both X and Y scales are the same because of Matrix.ScaleToFit.
+        gfImageViewCenteredX = values[Matrix.MTRANS_X];
+        gfImageViewCenteredY = values[Matrix.MTRANS_Y];
+
         givComicPage.setImageMatrix(matrix);
+        giImageWidth = d.getIntrinsicWidth();
+        giImageHeight = d.getIntrinsicHeight();
+
     }
 
     private void gotoNextComicPage(){
@@ -438,164 +438,134 @@ public class ComicViewerActivity extends AppCompatActivity {
             gestureDetector = new GestureDetector(ctx, new GestureListener());
         }
 
-
-
-        // The â€˜active pointerâ€™ is the one currently moving our object.
-        private int INVALID_POINTER_ID = 0;
-        private int mActivePointerId = INVALID_POINTER_ID;
+        private int giOnTouchProcessCount = 0; //Used to limit writes to the debug window on the screen.
 
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             v.performClick();
             mScaleGestureDetector.onTouchEvent(event);
 
-
-
-
-
-
             //Code to process movement of the image:
-            if(mScaleFactor > 1.0f) {
-                //    if(false){
 
+            //https://www.semicolonworld.com/question/48318/android-imageview-setting-drag-and-pinch-zoom-parameters
+            float scale;
+            float[] values = new float[9];
+            String s="";
+            // Handle touch events here...
+            switch (event.getAction() & MotionEvent.ACTION_MASK) {
 
+                case MotionEvent.ACTION_DOWN: //first finger down only
+                    savedMatrix.set(matrix);
+                    start.set(event.getX(), event.getY());
+                    //Log.d(TAG, "mode=DRAG" );
+                    mode = DRAG;
+                    break;
+                case MotionEvent.ACTION_UP: //first finger lifted
+                case MotionEvent.ACTION_POINTER_UP: //second finger lifted
 
+                    //Get the values from the matrix for evaluation:
+                    matrix.getValues(values);
+                    //savedMatrix.set(matrix);
+                    savedMatrix.set(givComicPage.getImageMatrix());
 
+                    mode = NONE;
 
-
-                /*final int action = event.getActionMasked();
-
-                switch (action) {
-                    case MotionEvent.ACTION_DOWN: {
-                        final int pointerIndex = event.getActionIndex();
-                        final float x = event.getX(pointerIndex);
-                        final float y = event.getY(pointerIndex);
-
-                        // Remember where we started (for dragging)
-                        mLastTouchX = x;
-                        mLastTouchY = y;
-                        // Save the ID of this pointer (for dragging)
-                        mActivePointerId = event.getPointerId(0);
-                        break;
-                    }
-
-                    case MotionEvent.ACTION_MOVE: {
-                        // Find the index of the active pointer and fetch its position
-                        final int pointerIndex =
-                                event.findPointerIndex(mActivePointerId);
-
-                        final float x = event.getX(pointerIndex);
-                        final float y = event.getY(pointerIndex);
-
-                        // Calculate the distance moved
-                        final float dx = x - mLastTouchX;
-                        final float dy = y - mLastTouchY;
-
-                        mPosX += dx;
-                        mPosY += dy;
-
-                        v.invalidate();
-
-                        // Remember this touch position for the next move event
-                        mLastTouchX = x;
-                        mLastTouchY = y;
-
-                        break;
-                    }
-
-                    case MotionEvent.ACTION_UP: {
-                        mActivePointerId = INVALID_POINTER_ID;
-                        break;
-                    }
-
-                    case MotionEvent.ACTION_CANCEL: {
-                        mActivePointerId = INVALID_POINTER_ID;
-                        break;
-                    }
-
-                    case MotionEvent.ACTION_POINTER_UP: {
-
-                        final int pointerIndex = event.getActionIndex();
-                        final int pointerId = event.getPointerId(pointerIndex);
-
-                        if (pointerId == mActivePointerId) {
-                            // This was our active pointer going up. Choose a new
-                            // active pointer and adjust accordingly.
-                            final int newPointerIndex = pointerIndex == 0 ? 1 : 0;
-                            mLastTouchX = event.getX(newPointerIndex);
-                            mLastTouchY = event.getY(newPointerIndex);
-                            mActivePointerId = event.getPointerId(newPointerIndex);
-                        }
-                        break;
-                    }
-                }*/
-
-
-                //https://www.semicolonworld.com/question/48318/android-imageview-setting-drag-and-pinch-zoom-parameters
-                float scale = 0.0f;
-                String s="";
-                // Handle touch events here...
-                switch (event.getAction() & MotionEvent.ACTION_MASK) {
-
-                    case MotionEvent.ACTION_DOWN: //first finger down only
+                    //Log.d(TAG, "mode=NONE" );
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN: //second finger down
+                    oldDist = spacing(event);
+                    //Log.d(TAG, "oldDist=" + oldDist);
+                    if (oldDist > 5f) {
                         savedMatrix.set(matrix);
-                        start.set(event.getX(), event.getY());
-                        //Log.d(TAG, "mode=DRAG" );
-                        mode = DRAG;
-                        break;
-                    case MotionEvent.ACTION_UP: //first finger lifted
-                    case MotionEvent.ACTION_POINTER_UP: //second finger lifted
-                        mode = NONE;
-                        //Log.d(TAG, "mode=NONE" );
-                        break;
-                    case MotionEvent.ACTION_POINTER_DOWN: //second finger down
-                        oldDist = spacing(event);
-                        //Log.d(TAG, "oldDist=" + oldDist);
-                        if (oldDist > 5f) {
-                            savedMatrix.set(matrix);
-                            midPoint(mid, event);
-                            mode = ZOOM;
-                            //Log.d(TAG, "mode=ZOOM" );
+                        midPoint(mid, event);
+                        mode = ZOOM;
+                        //Log.d(TAG, "mode=ZOOM" );
+                    }
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    //Recall the matrix from when the user touched the screen:
+                    matrix.set(savedMatrix);
+                    //Get the values from the matrix for evaluation:
+                    matrix.getValues(values);
+
+                    float fVerticalScrollValue = -1.0f;
+
+                    if (mode == DRAG) { //movement of first finger
+
+                        float fImageHeight = values[Matrix.MSCALE_Y]*giImageHeight;
+
+                        fVerticalScrollValue = event.getY() - start.y;
+
+                        //Translate the matrix:
+                        matrix.postTranslate(0, fVerticalScrollValue);
+
+                        //Check to see if we are out of bounds.
+                        //  If not, update the ImageView matrix:
+                        //Get the values from the matrix for evaluation:
+                        matrix.getValues(values);
+                        float fImageY = values[Matrix.MTRANS_Y]; //The top edge of the image, scaled.
+                        //If the top of the image is at or below the top of the screen,
+                        //  and the user is scrolling down), set the top of the image to the top
+                        //  of the screen:
+                        if(((fImageY >= 0.0f) && (fVerticalScrollValue > 0.0f))) {
+                            values[Matrix.MTRANS_Y] = 0.0f;
+                            matrix.setValues(values);
                         }
-                        break;
+                        // Perform the transformation
+                        givComicPage.setImageMatrix(matrix);
 
-                    case MotionEvent.ACTION_MOVE:
 
-                        if (mode == DRAG) { //movement of first finger
+                    }
+                    else if (mode == ZOOM) { //pinch zooming
+                        float newDist = spacing(event);
 
-                            matrix.set(savedMatrix);
-                            if (givComicPage.getLeft() >= -392){
-                                matrix.postTranslate(event.getX() - start.x, event.getY() - start.y);
-                                s = "DRAG: NewX: " + event.getX() + ". OldX: " + start.x + ". NewY: " + event.getY() + ". OldY: " + start.y + "\n";
-                            }
+                        float[] values_image = new float[9];
+                        givComicPage.getImageMatrix().getValues(values_image);
 
+                        //Determine the new scale:
+                        scale = newDist / oldDist;
+
+                        matrix.postScale(scale, scale, mid.x, mid.y);
+
+                        //Get the values from the matrix for evaluation:
+                        matrix.getValues(values);
+
+                        //If the scale is below the minimum, reset the scale
+                        //  to the minimum:
+                        if(values[Matrix.MSCALE_X] < gfMinScale){
+                            values[Matrix.MSCALE_X] = gfMinScale;
+                            values[Matrix.MSCALE_Y] = gfMinScale;
+                            //Re-center the image on the screen:
+                            values[Matrix.MTRANS_X] = gfImageViewCenteredX;
+                            values[Matrix.MTRANS_Y] = gfImageViewCenteredY;
+                            //Place the values in the matrix:
+                            matrix.setValues(values);
                         }
-                        else if (mode == ZOOM) { //pinch zooming
-                            float newDist = spacing(event);
-                            //Log.d(TAG, "newDist=" + newDist);
+
+                        // Perform the transformation
+                        givComicPage.setImageMatrix(matrix);
+
+                    }
+                    //Get the values from the matrix for evaluation:
+                    matrix.getValues(values);
+                    s = String.format("%3.3f  %3.3f  %3.3f  %3.3f  %3.3f\n",
+                            0.0f,
+                            values[Matrix.MTRANS_X],
+                            values[Matrix.MTRANS_Y],
+                            values[Matrix.MSCALE_X],
+                            values[Matrix.MSCALE_Y]);
 
 
-
-                            if (newDist < 5f) {
-                                matrix.set(savedMatrix);
-                                scale = newDist / oldDist; //thinking i need to play around with this value to limit it**
-                                matrix.postScale(scale, scale, mid.x, mid.y);
-                            }
-                            s = "ZOOM: newDist=" + newDist + ". oldDist: " + oldDist + ". Scale: " + scale + "\n";
-
-                        }
-                        //debugWriteLine(s);
-                        break;
-                }
-
-                // Perform the transformation
-                givComicPage.setImageMatrix(matrix);
-
-                return true; // indicate event was handled
-
-            } else {
-                CenterComicPage();
+                    break;
             }
+
+            if(giOnTouchProcessCount >= 10) {
+                debugWriteLine(s);
+                giOnTouchProcessCount = 0;
+
+            }
+            giOnTouchProcessCount++;
 
 
             return gestureDetector.onTouchEvent(event);
@@ -657,6 +627,7 @@ public class ComicViewerActivity extends AppCompatActivity {
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                //Detect swipe actions:
                 boolean result = false;
                 try {
                     float diffY = e2.getY() - e1.getY();
@@ -678,14 +649,7 @@ public class ComicViewerActivity extends AppCompatActivity {
                         }
                         result = true;
                     }
-                    if(mScaleFactor > 1.0f) {
-                        //If we are zoomed-in, pan the image:
-                        givComicPage.animate()
-                                .x(e1.getX() + diffX)
-                                .y(e1.getY() + diffY)
-                                .setDuration(500)
-                                .start();
-                    }
+
                 } catch (Exception exception) {
                     exception.printStackTrace();
                 }
@@ -693,19 +657,10 @@ public class ComicViewerActivity extends AppCompatActivity {
             }
         }
 
-        public void onSwipeRight() {
-        }
-
-        public void onSwipeLeft() {
-        }
-
-        public void onSwipeTop() {
-        }
-
-        public void onSwipeBottom() {
-        }
-
-
+        public void onSwipeRight() {}
+        public void onSwipeLeft() {}
+        public void onSwipeTop() {}
+        public void onSwipeBottom() {}
     }
 
     private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
@@ -722,8 +677,8 @@ public class ComicViewerActivity extends AppCompatActivity {
             mScaleFactor = Math.max(gfMinZoom, Math.min(mScaleFactor, gfMaxZoom));
 
 
-            givComicPage.setScaleX(mScaleFactor);
-            givComicPage.setScaleY(mScaleFactor);
+            //givComicPage.setScaleX(mScaleFactor);
+            //givComicPage.setScaleY(mScaleFactor);
             return true;
         }
     }
