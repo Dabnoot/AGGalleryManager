@@ -9,11 +9,7 @@
     <string name="pictures">Pictures</string>
     <string name="comics">Comics</string>
     <string name="title_activity_scrolling_about">Avant-Garde Gallery Manager: About</string>
-    <string name="large_text">
-        "Read on to learn more about Avant-Garde Gallery Manager.\n\n"
 
-
-    </string>
     <string name="action_settings">Settings</string>
     <string name="no_comics_in_catalog">No comics in catalog.</string>
     <string name="no_catalog_location">No catalog location.</string>
@@ -36,5 +32,19 @@
     <string name="comic_thumbnail_image">Comic thumbnail image.</string>
     <string name="comic_name">Comic name</string>
     <string name="comic_details">comic details</string>
+    <string name="large_text">
+        "Read on to learn more about Avant-Garde Gallery Manager.\n\n"
 
+
+        "Comic Viewer\n\n"
+        "Tap the screen to show or hide the menu and navigation bars.\n"
+        "Long-press on the screen to obfuscate the image.\n"
+        "Select 'Flip View' from the menu to obfuscate or un-obfuscate the image.\n"
+        "Pinch to zoom.\n"
+        "While zoomed, drag up, down, left, or right to pan the image.\n"
+        "While zoomed, swipe down to zoom out to fit the image to the screen.\n"
+        "While zoomed-out, swipe left to go to the next page.\n"
+        "While zoomed-out, swipe right to go to the previous page.\n"
+
+    </string>
 </resources>

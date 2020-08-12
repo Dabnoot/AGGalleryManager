@@ -16,13 +16,11 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -123,52 +121,45 @@ public class ComicViewerActivity extends AppCompatActivity {
     public static final String SELECTED_COMIC_INDEX = "SELECTED_COMIC_INDEX";
 
     //Global variables
-    public TreeMap<Integer, String> tmComicPages;
-    public int giCurrentPageIndex;
-    public boolean gbDebugSwiping = false;
-    public GlobalClass globalClass;
 
-    private ScaleGestureDetector mScaleGestureDetector;
-    private float mScaleFactor = 1.0f;
-
+    //Comic global variables
+    private GlobalClass globalClass;
+    private TreeMap<Integer, String> tmComicPages;
     private String gsComicName = "";
-
-    ImageView givComicPage;
-
     private int giSelectedComicSequenceNum;
+    private int giCurrentPageIndex;
 
-    // These matrices will be used to move and zoom image
-    Matrix matrix = new Matrix();
-    Matrix savedMatrix = new Matrix();
+    //Graphics global variables
+    private ImageView givComicPage;
+    private Point gpDisplaySize;
+    private int giImageWidth = 0;
+    private int giImageHeight = 0;
 
-    float gfMinScale = 1.0f;
-    float gfImageViewCenteredX = -1.0f;
-    float gfImageViewCenteredY = -1.0f;
+    // Matrices for moving and zooming image:
+    private Matrix matrix = new Matrix();
+    private Matrix savedMatrix = new Matrix();
+    // Scaling
+    private float gfScaleFactor = 1.0f;
+    private float gfMinScale = 1.0f;
+    // Image reset to original coords:
+    private float gfImageViewOriginX = -1.0f;
+    private float gfImageViewOriginY = -1.0f;
 
-    // We can be in one of these 3 states
-    static final int NONE = 0;
-    static final int DRAG = 1;
-    static final int ZOOM = 2;
-    int mode = NONE;
+    //Touch data processing global variables
+    // Touch actions - We can be in one of these 3 states
+    private static final int NONE = 0;
+    private static final int DRAG = 1;
+    private static final int ZOOM = 2;
+    private int mode = NONE;
+    // Zooming:
+    private PointF gpTouchStart = new PointF();
+    private PointF gpMidPoint = new PointF();
+    private float gfPreviousPinchDistance = 1f;
 
-    // Remember some things for zooming
-    PointF start = new PointF();
-    PointF mid = new PointF();
-    float oldDist = 1f;
-
-    Point gpDisplaySize;
-
-
-    TextView gtvDebug;
-    int giDebugLineCount;
-    int giDebugMaxLines = 30;
-
-
-    int giImageWidth = 0;
-    int giImageHeight = 0;
-
-
-
+    //Debug assistance global variables
+    private boolean gbDebugSwiping = false;
+    private TextView gtvDebug;
+    private int giDebugLineCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -249,12 +240,12 @@ public class ComicViewerActivity extends AppCompatActivity {
 
             public void onSwipeRight() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped right", Toast.LENGTH_SHORT).show();
-                if(mScaleFactor == 1.0f) gotoPreviousComicPage();
+                if(gfScaleFactor == gfMinScale) gotoPreviousComicPage();
             }
 
             public void onSwipeLeft() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped left", Toast.LENGTH_SHORT).show();
-                if(mScaleFactor == 1.0f) gotoNextComicPage();
+                if(gfScaleFactor == gfMinScale) gotoNextComicPage();
             }
 
             public void onSwipeBottom() {
@@ -267,9 +258,6 @@ public class ComicViewerActivity extends AppCompatActivity {
 
         givComicPage = findViewById(R.id.imageView_ComicPage);
         givComicPage.setScaleType(ImageView.ScaleType.MATRIX);
-        //givComicPage.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        mScaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
-
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
@@ -423,9 +411,10 @@ public class ComicViewerActivity extends AppCompatActivity {
         matrix.getValues(values);
         //Get the scale from the matrix, and set this as the minimum scale:
         gfMinScale = values[Matrix.MSCALE_X];  //Both X and Y scales are the same because of Matrix.ScaleToFit.
+        gfScaleFactor = gfMinScale; //Track the current scale.
         //Get the new translated X and Y coordinates.
-        gfImageViewCenteredX = values[Matrix.MTRANS_X];
-        gfImageViewCenteredY = values[Matrix.MTRANS_Y];
+        gfImageViewOriginX = values[Matrix.MTRANS_X];
+        gfImageViewOriginY = values[Matrix.MTRANS_Y];
 
         givComicPage.setImageMatrix(matrix);
 
@@ -459,11 +448,9 @@ public class ComicViewerActivity extends AppCompatActivity {
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             v.performClick();
-            mScaleGestureDetector.onTouchEvent(event);
 
             //Code to process movement of the image:
 
-            //https://www.semicolonworld.com/question/48318/android-imageview-setting-drag-and-pinch-zoom-parameters
             float scale;
             float[] values = new float[9];
             String s="";
@@ -472,7 +459,7 @@ public class ComicViewerActivity extends AppCompatActivity {
 
                 case MotionEvent.ACTION_DOWN: //first finger down only
                     savedMatrix.set(matrix);
-                    start.set(event.getX(), event.getY());
+                    gpTouchStart.set(event.getX(), event.getY());
                     //Log.d(TAG, "mode=DRAG" );
                     mode = DRAG;
                     break;
@@ -489,11 +476,11 @@ public class ComicViewerActivity extends AppCompatActivity {
                     //Log.d(TAG, "mode=NONE" );
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN: //second finger down
-                    oldDist = spacing(event);
+                    gfPreviousPinchDistance = spacing(event);
                     //Log.d(TAG, "oldDist=" + oldDist);
-                    if (oldDist > 5f) {
+                    if (gfPreviousPinchDistance > 5f) {
                         savedMatrix.set(matrix);
-                        midPoint(mid, event);
+                        midPoint(gpMidPoint, event);
                         mode = ZOOM;
                         //Log.d(TAG, "mode=ZOOM" );
                     }
@@ -511,7 +498,7 @@ public class ComicViewerActivity extends AppCompatActivity {
 
                         float fImageHeight = values[Matrix.MSCALE_Y]*giImageHeight;
 
-                        fVerticalScrollValue = event.getY() - start.y;
+                        fVerticalScrollValue = event.getY() - gpTouchStart.y;
 
                         //Translate the matrix:
                         matrix.postTranslate(0, fVerticalScrollValue);
@@ -534,15 +521,15 @@ public class ComicViewerActivity extends AppCompatActivity {
 
                     }
                     else if (mode == ZOOM) { //pinch zooming
-                        float newDist = spacing(event);
+                        float fNewPinchDistance = spacing(event);
 
                         float[] values_image = new float[9];
                         givComicPage.getImageMatrix().getValues(values_image);
 
                         //Determine the new scale:
-                        scale = newDist / oldDist;
+                        scale = fNewPinchDistance / gfPreviousPinchDistance;
 
-                        matrix.postScale(scale, scale, mid.x, mid.y);
+                        matrix.postScale(scale, scale, gpMidPoint.x, gpMidPoint.y);
 
                         //Get the values from the matrix for evaluation:
                         matrix.getValues(values);
@@ -553,11 +540,14 @@ public class ComicViewerActivity extends AppCompatActivity {
                             values[Matrix.MSCALE_X] = gfMinScale;
                             values[Matrix.MSCALE_Y] = gfMinScale;
                             //Re-center the image on the screen:
-                            values[Matrix.MTRANS_X] = gfImageViewCenteredX;
-                            values[Matrix.MTRANS_Y] = gfImageViewCenteredY;
+                            values[Matrix.MTRANS_X] = gfImageViewOriginX;
+                            values[Matrix.MTRANS_Y] = gfImageViewOriginY;
                             //Place the values in the matrix:
                             matrix.setValues(values);
                         }
+
+                        //Track the current scale.
+                        gfScaleFactor = values[Matrix.MSCALE_X];
 
                         // Perform the transformation
                         givComicPage.setImageMatrix(matrix);
@@ -566,12 +556,11 @@ public class ComicViewerActivity extends AppCompatActivity {
                     //Get the values from the matrix for evaluation:
                     matrix.getValues(values);
                     s = String.format("%3.3f  %3.3f  %3.3f  %3.3f  %3.3f\n",
-                            0.0f,
+                            values[Matrix.MSCALE_X],
                             values[Matrix.MTRANS_X],
                             values[Matrix.MTRANS_Y],
                             values[Matrix.MSCALE_X],
                             values[Matrix.MSCALE_Y]);
-
 
                     break;
             }
@@ -583,11 +572,11 @@ public class ComicViewerActivity extends AppCompatActivity {
             }
             giOnTouchProcessCount++;
 
-
             return gestureDetector.onTouchEvent(event);
         }
 
         private void debugWriteLine(String s){
+            int giDebugMaxLines = 30;
             if(giDebugLineCount >= giDebugMaxLines){
                 gtvDebug.setText(s);
                 giDebugLineCount = 0;
@@ -609,8 +598,6 @@ public class ComicViewerActivity extends AppCompatActivity {
             point.set(x / 2, y / 2);
         }
 
-
-
         private final class GestureListener extends GestureDetector.SimpleOnGestureListener {
 
             private static final int SWIPE_THRESHOLD = 300;
@@ -618,7 +605,6 @@ public class ComicViewerActivity extends AppCompatActivity {
 
             @Override
             public boolean onDown(MotionEvent e) {
-
                 return true;
             }
 
@@ -677,26 +663,6 @@ public class ComicViewerActivity extends AppCompatActivity {
         public void onSwipeLeft() {}
         public void onSwipeTop() {}
         public void onSwipeBottom() {}
-    }
-
-    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-        //https://medium.com/quick-code/pinch-to-zoom-with-multi-touch-gestures-in-android-d6392e4bf52d
-        //https://stackoverflow.com/questions/10225851/how-do-i-define-max-and-min-zooming-lvl-when-scaling-imageview-by-matrix
-        @Override
-        public boolean onScale(ScaleGestureDetector scaleGestureDetector){
-            //updating the scalefactor after the current gesture
-            mScaleFactor *= scaleGestureDetector.getScaleFactor();
-
-            //making sure the scale is within the limits
-            float gfMaxZoom = 3.0f;
-            float gfMinZoom = 1.0f;
-            mScaleFactor = Math.max(gfMinZoom, Math.min(mScaleFactor, gfMaxZoom));
-
-
-            //givComicPage.setScaleX(mScaleFactor);
-            //givComicPage.setScaleY(mScaleFactor);
-            return true;
-        }
     }
 
 
