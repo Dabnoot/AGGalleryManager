@@ -141,6 +141,7 @@ public class ComicViewerActivity extends AppCompatActivity {
     // Scaling
     private float gfScaleFactor = 1.0f;
     private float gfMinScale = 1.0f;
+    private float gfMaxScale = 4.0f;
     // Image reset to original coords:
     private float gfImageViewOriginX = -1.0f;
     private float gfImageViewOriginY = -1.0f;
@@ -445,6 +446,7 @@ public class ComicViewerActivity extends AppCompatActivity {
 
         private int giOnTouchProcessCount = 0; //Used to limit writes to the debug window on the screen.
 
+        @SuppressLint("DefaultLocale")
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             v.performClick();
@@ -523,9 +525,6 @@ public class ComicViewerActivity extends AppCompatActivity {
                     else if (mode == ZOOM) { //pinch zooming
                         float fNewPinchDistance = spacing(event);
 
-                        float[] values_image = new float[9];
-                        givComicPage.getImageMatrix().getValues(values_image);
-
                         //Determine the new scale:
                         scale = fNewPinchDistance / gfPreviousPinchDistance;
 
@@ -544,6 +543,17 @@ public class ComicViewerActivity extends AppCompatActivity {
                             values[Matrix.MTRANS_Y] = gfImageViewOriginY;
                             //Place the values in the matrix:
                             matrix.setValues(values);
+                        } else if (values[Matrix.MSCALE_X] > gfMaxScale){
+                            //Set the scale to max:
+                            values[Matrix.MSCALE_X] = gfMaxScale;
+                            values[Matrix.MSCALE_Y] = gfMaxScale;
+                            //Restore the translated X & Y coordinates to the values array:
+                            float[] fImageMatrixValues = new float[9];
+                            givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                            values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
+                            values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
+                            //Place the values in the matrix:
+                            matrix.setValues(values);
                         }
 
                         //Track the current scale.
@@ -555,9 +565,13 @@ public class ComicViewerActivity extends AppCompatActivity {
                     }
                     //Get the values from the matrix for evaluation:
                     matrix.getValues(values);
+
+                    float fImageEndTRANS_Y = 0.0f;
+                    fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + (values[Matrix.MSCALE_Y] * giImageHeight);
+
                     s = String.format("%3.3f  %3.3f  %3.3f  %3.3f  %3.3f\n",
-                            values[Matrix.MSCALE_X],
-                            values[Matrix.MTRANS_X],
+                            0.0,
+                            fImageEndTRANS_Y,
                             values[Matrix.MTRANS_Y],
                             values[Matrix.MSCALE_X],
                             values[Matrix.MSCALE_Y]);
