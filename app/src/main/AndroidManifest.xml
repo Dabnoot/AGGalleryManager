@@ -45,12 +45,14 @@
 
         <activity
             android:name=".ExportComicsActivity"
-            android:parentActivityName=".ComicsCatalogActivity">
+            android:parentActivityName=".ComicsCatalogActivity"
+            android:theme="@style/AppTheme">
         </activity>
 
         <activity
             android:name=".ImportComicsActivity"
-            android:parentActivityName=".ComicsCatalogActivity">
+            android:parentActivityName=".ComicsCatalogActivity"
+            android:theme="@style/AppTheme">
         </activity>
 
         <service
