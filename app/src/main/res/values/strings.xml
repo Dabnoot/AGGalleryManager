@@ -34,7 +34,12 @@
     <string name="comic_details">comic details</string>
     <string name="large_text">
         "Read on to learn more about Avant-Garde Gallery Manager.\n\n"
-
+        "This program is aimed at obfuscating your art collection from prying eyes.\n"
+        "Obfuscation is global. When turned on, every page is obfuscated. When turned off, \n"
+        "every page is un-obfuscated.\n"
+        "Use the menu on any page to toggle obfuscation by selecting 'Flip View'.\n"
+        "You may also long-press on the page to trigger obfuscation. Your press must be stationary\n"
+        "for this feature. Long-press will not turn-off obfuscation.\n\n"
 
         "Comic Viewer\n\n"
         "Tap the screen to show or hide the menu and navigation bars.\n"

@@ -6,7 +6,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.NonNull;
-import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -24,13 +23,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import java.util.Map;
 import java.util.TreeMap;
 
 public class ComicsCatalogActivity extends AppCompatActivity {
@@ -39,10 +39,10 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     private static final String LOG_TAG = "ComicsCatalogActivity";
 
     //Global Variables:
-    GlobalClass globalClass;
-    TreeMap<Integer, Bitmap> tmComicThumbnails;
-    RecyclerView.Adapter<RecyclerViewComicsAdapter.ViewHolder> recyclerViewComicsAdapter;
-    boolean gbDebugTouch = false;
+    private GlobalClass globalClass;
+    private String gsComicFolder_AbsolutePath;
+    private RecyclerView.Adapter<RecyclerViewComicsAdapter.ViewHolder> gRecyclerViewComicsAdapter;
+    private boolean gbDebugTouch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,17 +196,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             }
         }
 
-        //Check memory available to this Activity before loading thumbnail images:
-        ActivityManager activityManager = (ActivityManager) this.getSystemService(ACTIVITY_SERVICE);
-        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
-        activityManager.getMemoryInfo(memoryInfo);
-        if (!memoryInfo.lowMemory) {
-            // Do memory intensive work ...
-            preLoadThumbnails(globalClass.getCatalogComicList(), globalClass.getCatalogComicsFolder().getAbsolutePath());
-
-        } else {
-            Toast.makeText(this, "Low memory. Thumbnail loading aborted.", Toast.LENGTH_LONG).show();
-        }
+        gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
 
         populate_RecyclerViewComicsCatalog();
 
@@ -262,85 +252,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     }
 
 
-    //=====================================================================================
-    //===== Pre-Load Thumbnail Images =================================================================
-    //=====================================================================================
-
-    public void preLoadThumbnails(TreeMap<Integer, String[]> data, String sComicFolder_AbsolutePath){
-
-        tmComicThumbnails = new TreeMap<>();
-        int iImageIndex = 0; //This will hold the index in loading order, same order as the TreeView data.
-
-        //The height of the row is specified in "density-independent pixels".
-        // Get the screen's density scale
-        final float fScreenDIPScale = getResources().getDisplayMetrics().density;
-        int iRowHeightDIP = 430;
-
-
-        for (Map.Entry<Integer, String[]>
-                entry : data.entrySet()) {
-
-            //Get the data for the entry:
-            String[] sFields;
-            sFields = entry.getValue();
-
-            if (sFields == null) {
-                sFields = new String[GlobalClass.ComicRecordFields.length]; //To prevent possible null pointer exception later.
-            }
-
-            String sThumbnailFilePath = sComicFolder_AbsolutePath + File.separator
-                    + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
-                    + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];
-            File fThumbnail = new File(sThumbnailFilePath);
-
-            if (fThumbnail.exists()) {
-                //https://developer.android.com/topic/performance/graphics/load-bitmap
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inJustDecodeBounds = true;
-
-                BitmapFactory.decodeFile(fThumbnail.getAbsolutePath(), options);
-
-                //Get the dimensions of the image in the file without loading the image:
-                int imageHeight = options.outHeight;
-                int imageWidth = options.outWidth;
-
-                //Calculate the required dimensions of the image:
-                int reqHeight;
-                int reqWidth;
-                reqHeight = Math.round(iRowHeightDIP * fScreenDIPScale);
-                reqWidth = Math.round((imageWidth / (float) imageHeight) * reqHeight);
-
-                int inSS = 1; //Scalar to scale-down the image.
-
-                if (imageHeight > reqHeight || imageWidth > reqWidth) {
-
-                    final int halfHeight = imageHeight / 2;
-                    final int halfWidth = imageWidth / 2;
-
-                    // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-                    // height and width larger than the requested height and width.
-                    while ((halfHeight / inSS) >= reqHeight
-                            && (halfWidth / inSS) >= reqWidth) {
-                        inSS *= 2;
-                    }
-
-                    options.inSampleSize = inSS;
-                    options.inJustDecodeBounds = false;
-                }
-
-
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                //!!!!!   REFACTOR USING createImageThumbnail ONCE API LEVEL 29 IS COMMON    !!!!!!!
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                Bitmap myBitmap;
-
-                myBitmap = BitmapFactory.decodeFile(fThumbnail.getAbsolutePath(), options);
-
-                tmComicThumbnails.put(iImageIndex, myBitmap);
-                iImageIndex++;
-            }
-        }
-    }
 
     //=====================================================================================
     //===== RecyclerView Code =================================================================
@@ -377,8 +288,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Set the global variable holding the comic list:
         tmCatalogComicList = globalClass.getCatalogComicList();
 
-        recyclerViewComicsAdapter = new RecyclerViewComicsAdapter(tmCatalogComicList);
-        recyclerView.setAdapter(recyclerViewComicsAdapter);
+        gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(tmCatalogComicList);
+        recyclerView.setAdapter(gRecyclerViewComicsAdapter);
 
 
     }
@@ -459,8 +370,19 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 holder.ivThumbnail.setImageBitmap(bmObfuscator);
                 holder.tvComicName.setText(globalClass.getObfuscationCategoryName());
             } else {
-                holder.ivThumbnail.setImageBitmap(tmComicThumbnails.get(position));
+
+                //Load the non-obfuscated image into the RecyclerView ViewHolder:
+                String sThumbnailFilePath = gsComicFolder_AbsolutePath + File.separator
+                        + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
+                        + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];
+                File fThumbnail = new File(sThumbnailFilePath);
+
+                if (fThumbnail.exists()) {
+                    Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
+                }
+
                 holder.tvComicName.setText(sFields[GlobalClass.COMIC_NAME_INDEX]);
+
             }
 
 
@@ -538,14 +460,14 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         }
         setTitle(globalClass.getObfuscatedProgramName());
         //Update the RecyclerView:
-        recyclerViewComicsAdapter.notifyDataSetChanged();
+        gRecyclerViewComicsAdapter.notifyDataSetChanged();
     }
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
         setTitle(globalClass.getNonObfuscatedProgramName());
         //Update the RecyclerView:
-        recyclerViewComicsAdapter.notifyDataSetChanged();
+        gRecyclerViewComicsAdapter.notifyDataSetChanged();
     }
 
 
