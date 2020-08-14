@@ -133,8 +133,10 @@ public class ComicPageViewerActivity extends AppCompatActivity {
     //Graphics global variables
     private ImageView givComicPage;
     private Point gpDisplaySize;
+    private Point gpLastDisplaySize;
     private int giImageWidth = 0;
     private int giImageHeight = 0;
+    Display gDisplay;
 
     // Matrices for moving and zooming image:
     private Matrix matrix = new Matrix();
@@ -142,11 +144,11 @@ public class ComicPageViewerActivity extends AppCompatActivity {
     // Scaling
     private float gfScaleFactor = 1.0f;
     private float gfMinScale = 1.0f;
-    private float gfMaxScale = 4.0f;
     private float gfScaleWidthMatch = 0.0f;
     private float gfScaleHeightMatch = 0.0f;
+    private float gfJumpOutAxisScale = 0.0f;
     private boolean gbOkToZoomJumpOut = true;
-    private boolean gbOkToZoomJumpIn = true;
+    boolean gbOkToZoomJumpIn = true;
     // Image reset to original coords:
     private float gfImageViewOriginX = -1.0f;
     private float gfImageViewOriginY = -1.0f;
@@ -169,6 +171,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
     //Other globals
     private int iSwipeToExitCounter = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,9 +222,11 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
         //Get the display size:
         WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        Display display = windowManager.getDefaultDisplay();
+        gDisplay = windowManager.getDefaultDisplay();
         gpDisplaySize = new Point();
-        display.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
+        gpLastDisplaySize = new Point();
+        gDisplay.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
+        gDisplay.getRealSize(gpLastDisplaySize);
         //display.getSize(gpDisplaySize);   //Get the size of the screen with the navigation bar shown.
 
         //Post a runnable from onCreate(), that will be executed when the view has been created, in
@@ -437,7 +442,8 @@ public class ComicPageViewerActivity extends AppCompatActivity {
     }
 
     private void CenterComicPage(){
-
+        //This routine gets called after a page is loaded, and when an orientation change has
+        //  been detected.
         //Get the dimensions of the image loaded into the ImageView:
         Drawable d = givComicPage.getDrawable();
         if( d == null) return;
@@ -458,15 +464,18 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         gfScaleHeightMatch = gpDisplaySize.y / (float) giImageHeight;
         gfMinScale = Math.min(gfScaleHeightMatch, gfScaleWidthMatch);
 
+        //Depending on the dimensions of the image and the screen,
+        //  the jump direction could be horizontal or vertical. Either way, it
+        //  will be in the direction of the larger scaling point. Grab that
+        //  scale:
+        gfJumpOutAxisScale = Math.max(gfScaleHeightMatch, gfScaleWidthMatch);
+
         gfScaleFactor = gfMinScale; //Track the current scale.
         //Get the new translated X and Y coordinates.
         gfImageViewOriginX = values[Matrix.MTRANS_X];
         gfImageViewOriginY = values[Matrix.MTRANS_Y];
-        //TODO: Rework above?
+
         givComicPage.setImageMatrix(matrix);
-
-        gbOkToZoomJumpOut = true;  //Let the first zoom-out jump to the edges of the screen.
-
     }
 
     private void gotoNextComicPage(){
@@ -512,6 +521,27 @@ public class ComicPageViewerActivity extends AppCompatActivity {
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
 
                 case MotionEvent.ACTION_DOWN: //first finger down only
+                    //First check to see if the orientation has changed:
+                    gDisplay.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
+                    if(gpDisplaySize.x != gpLastDisplaySize.x){
+                        //Display has rotated!
+                        CenterComicPage();
+                        gDisplay.getRealSize(gpLastDisplaySize);
+                    }
+                    if(gfScaleFactor == gfMinScale){
+                        gbOkToZoomJumpOut = true;
+                    }
+                    if(gfScaleFactor < gfJumpOutAxisScale){
+                        //Reset ZoomJumpIn if the scale is within the JumpOutAxis.
+                        //  We don't allow ZoomJumpIn if we are outside this limit
+                        //  because the user is probably interested in zooming in just a little
+                        //  bit.
+                        gbOkToZoomJumpIn = true;
+                    }
+
+
+
+
                     savedMatrix.set(matrix);
                     gpTouchStart.set(event.getX(), event.getY());
                     mode = DRAG;
@@ -642,33 +672,8 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                     else if (mode == ZOOM) { //pinch zooming
                         iSwipeToExitCounter = 0; //Reset the swipe-to-exit counter.
 
-
-                        //Recalculate the minimum zoom. This is needed if the user switches
-                        //  between landscape and portrait orientation after they have already
-                        //  loaded the activity.
-                        //Calculate scaling reference points:
-                        gfScaleWidthMatch = gpDisplaySize.x / (float) giImageWidth;
-                        gfScaleHeightMatch = gpDisplaySize.y / (float) giImageHeight;
-                        gfMinScale = Math.min(gfScaleHeightMatch, gfScaleWidthMatch);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                        //Determine the ZoomJumpOut direction:
+                        boolean bJumpDirectionHorizontal = (gfScaleWidthMatch > gfScaleHeightMatch);
 
                         float fNewPinchDistance = spacing(event);
 
@@ -713,10 +718,10 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                             matrix.setValues(values);
                             //Reset/Allow the user to use the Jump-To-Zoom feature for zoom-out:
                             gbOkToZoomJumpOut = true;
-                        } else if (values[Matrix.MSCALE_X] > gfMaxScale){ //If the scale is above the max, reset to max:
+                        } else if (values[Matrix.MSCALE_X] > globalClass.bCPV_MaxScale){ //If the scale is above the max, reset to max:
                             //Set the scale to max:
-                            values[Matrix.MSCALE_X] = gfMaxScale;
-                            values[Matrix.MSCALE_Y] = gfMaxScale;
+                            values[Matrix.MSCALE_X] = globalClass.bCPV_MaxScale;
+                            values[Matrix.MSCALE_Y] = globalClass.bCPV_MaxScale;
                             //Restore the translated X & Y coordinates to the values array:
                             givComicPage.getImageMatrix().getValues(fImageMatrixValues);
                             values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
@@ -726,18 +731,19 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                         } else if (globalClass.bCPV_AllowZoomJump) {
                             //If the settings are set to allow zoom jump...
 
-
-                            //Depending on the dimensions of the image and the screen,
-                            //  the jump direction could be horizontal or vertical. Either way, it
-                            //  will be in the direction of the larger scaling point. Grab that
-                            //  scale:
-                            float fJumpOutAxisScale = Math.max(gfScaleHeightMatch, gfScaleWidthMatch);
-                            boolean bJumpDirectionHorizontal = (gfScaleWidthMatch > gfScaleHeightMatch);
                             float fCurrentMatrixScaleValue = values[Matrix.MSCALE_X]; //When we use values[Matrix.MSCALE_X], know that it is the same value as MSCALE_Y - we keep the aspect ratio.
 
+                            if(fCurrentMatrixScaleValue > gfJumpOutAxisScale){
+                                //If the user has zoomed-in, expanding the image beyond the jump
+                                //  distance (outside the window), don't allow ZoomJumpIn when the
+                                //  user zooms back out into within normal bounds. We already don't
+                                //  jump back in while outside, but we also don't want a sudden jump
+                                //  when the user zooms back out and hits the window edge threshold.
+                                gbOkToZoomJumpIn = false;
+                            }
 
                             if(gbOkToZoomJumpOut && (fScaleDistance > globalClass.fCPV_ZoomJumpOutThreshold) &&
-                                    (fCurrentMatrixScaleValue < fJumpOutAxisScale)) {
+                                    (fCurrentMatrixScaleValue < gfJumpOutAxisScale)) {
 
                                 //  If the gbOkToZoomJumpOut flag is true,
                                 //  and the user is zooming out (past a threshold value),
@@ -759,8 +765,8 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                                 }
 
                                 //Set the zoom level to that required to match the width of the screen:
-                                values[Matrix.MSCALE_X] = fJumpOutAxisScale;
-                                values[Matrix.MSCALE_Y] = fJumpOutAxisScale;
+                                values[Matrix.MSCALE_X] = gfJumpOutAxisScale;
+                                values[Matrix.MSCALE_Y] = gfJumpOutAxisScale;
 
                                 //Place the values in the matrix:
                                 matrix.setValues(values);
@@ -772,7 +778,9 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                                 //  MotionEvent.ACTION_POINTER_UP case behaviors:
                                 savedMatrix.set(matrix);
                                 mode = NONE;
-                            } else if(gbOkToZoomJumpIn && (fScaleDistance < globalClass.fCPV_ZoomJumpInThreshold)) {
+                            } else if(gbOkToZoomJumpIn
+                                    && (fCurrentMatrixScaleValue < gfJumpOutAxisScale)
+                                    && (fScaleDistance < globalClass.fCPV_ZoomJumpInThreshold)) {
 
                                 //  If the gbOkToZoomJumpIn flag is true,
                                 //  and the user is zooming in (past a threshold value),

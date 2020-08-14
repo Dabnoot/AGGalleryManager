@@ -163,6 +163,7 @@ public class GlobalClass extends Application {
     //===== Comic Page Viewer Options =====================================================
     //=====================================================================================
     //CPV = "Comic Page Viewer"
+    public float bCPV_MaxScale = 4.0f; //Max zoom.
     public boolean bCPV_AllowZoomJump = true;
     public float fCPV_ZoomJumpOutThreshold = 100.0f;
     public float fCPV_ZoomJumpInThreshold = -200.0f;
