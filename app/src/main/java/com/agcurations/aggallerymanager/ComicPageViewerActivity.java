@@ -252,9 +252,13 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped top", Toast.LENGTH_SHORT).show();
             }
 
+            public void onSwipeBottom() {
+                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped bottom", Toast.LENGTH_SHORT).show();
+            }
+
             public void onSwipeRight() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped right", Toast.LENGTH_SHORT).show();
-                if(gfScaleFactor == gfMinScale) {
+                if(gfScaleFactor <= gfJumpOutAxisScale) {
                     if(giCurrentPageIndex == 0){
                         if(iSwipeToExitCounter == 0) {
                             Toast.makeText(getApplicationContext(), "Start of comic", Toast.LENGTH_SHORT).show();
@@ -274,7 +278,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
             public void onSwipeLeft() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped left", Toast.LENGTH_SHORT).show();
 
-                if(gfScaleFactor == gfMinScale){
+                if(gfScaleFactor <= gfJumpOutAxisScale){
 
                     if(giCurrentPageIndex == (giMaxFileCount - 1)){
                         if(iSwipeToExitCounter == 0) {
@@ -291,11 +295,6 @@ public class ComicPageViewerActivity extends AppCompatActivity {
                     }
                 }
             }
-
-            public void onSwipeBottom() {
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped bottom", Toast.LENGTH_SHORT).show();
-            }
-
         });
 
 
