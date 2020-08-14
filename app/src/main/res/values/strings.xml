@@ -47,9 +47,9 @@
         "Select 'Flip View' from the menu to obfuscate or un-obfuscate the image.\n"
         "Pinch to zoom.\n"
         "While zoomed, drag up, down, left, or right to pan the image.\n"
-        "While zoomed, swipe down to zoom out to fit the image to the screen.\n"
         "While zoomed-out, swipe left to go to the next page.\n"
         "While zoomed-out, swipe right to go to the previous page.\n"
+
 
     </string>
 </resources>

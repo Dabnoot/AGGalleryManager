@@ -424,13 +424,13 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //=====================================================================================
 
     public void StartComicViewerActivity(int iComicSequence){
-        Intent intentComicViewer = new Intent(this, ComicViewerActivity.class);
+        Intent intentComicViewer = new Intent(this, ComicPageViewerActivity.class);
         TreeMap<Integer, String[]> tmCatalogComicList;
         tmCatalogComicList = globalClass.getCatalogComicList();
         String[] sFields = tmCatalogComicList.get(iComicSequence);
 
-        intentComicViewer.putExtra(ComicViewerActivity.COMIC_FIELDS_STRING,sFields);
-        intentComicViewer.putExtra(ComicViewerActivity.SELECTED_COMIC_INDEX,iComicSequence);
+        intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_FIELDS_STRING,sFields);
+        intentComicViewer.putExtra(ComicPageViewerActivity.SELECTED_COMIC_INDEX,iComicSequence);
 
         startActivity(intentComicViewer);
     }

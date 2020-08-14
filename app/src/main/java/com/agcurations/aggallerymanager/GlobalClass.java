@@ -86,7 +86,7 @@ public class GlobalClass extends Application {
 
     //Begin Obfuscation section:
 
-    public boolean ObfuscationOn = true;
+    public boolean ObfuscationOn = false;
     public int iObfuscationIndex;
     //public int OBFUSCATION_SUBJECT_VIDEOGAMES = 0;
     public int OBFUSCATION_SUBJECT_QUALITY = 1;
@@ -159,8 +159,21 @@ public class GlobalClass extends Application {
 
     //End obfuscation section.
 
+    //=====================================================================================
+    //===== Comic Page Viewer Options =====================================================
+    //=====================================================================================
+    //CPV = "Comic Page Viewer"
+    public boolean bCPV_AllowZoomJump = true;
+    public float fCPV_ZoomJumpOutThreshold = 100.0f;
+    public float fCPV_ZoomJumpInThreshold = -200.0f;
 
-
+    //When image is zoomed, options for pan speed:
+    public boolean bCPV_PanAcceleration = true;
+    public static final int CPV_PAN_SPEED_SCALED = 1; //Pan based on zoom level.
+    public static final int CPV_PAN_SPEED_FIXED = 2;  //Pan based on user-selected speed.
+    public int iCPV_PanSpeedMethod = CPV_PAN_SPEED_SCALED;
+    public float fCPV_VerticalPanScalar = 1.5f;
+    public float fCPV_HorizontalPanScalar = 1.5f;
 
 }
 

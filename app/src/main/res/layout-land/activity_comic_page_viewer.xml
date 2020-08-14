@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
-    tools:context=".ComicViewerActivity">
+    android:background="#000000"
+    tools:context=".ComicPageViewerActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
@@ -25,16 +25,21 @@
 
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/imageView_ComicPage"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/textViewDebug"
+            android:layout_width="367dp"
             android:layout_height="match_parent"
-            android:contentDescription="@string/comic_page" />
+            android:layout_gravity="end"
+            android:text=""
+            android:textAlignment="textEnd"
+            android:textColor="@color/colorAccent"
+            android:visibility="invisible"/>
 
     </FrameLayout>
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
+
     <TextView
         android:id="@+id/fullscreen_content"
         android:layout_width="match_parent"
@@ -44,5 +49,11 @@
         android:textColor="#33b5e5"
         android:textSize="50sp"
         android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/imageView_ComicPage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/comic_page"/>
 
 </FrameLayout>

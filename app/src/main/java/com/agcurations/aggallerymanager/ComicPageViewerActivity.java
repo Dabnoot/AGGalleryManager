@@ -35,7 +35,7 @@ import java.util.TreeMap;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class ComicViewerActivity extends AppCompatActivity {
+public class ComicPageViewerActivity extends AppCompatActivity {
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -143,6 +143,10 @@ public class ComicViewerActivity extends AppCompatActivity {
     private float gfScaleFactor = 1.0f;
     private float gfMinScale = 1.0f;
     private float gfMaxScale = 4.0f;
+    private float gfScaleWidthMatch = 0.0f;
+    private float gfScaleHeightMatch = 0.0f;
+    private boolean gbOkToZoomJumpOut = true;
+    private boolean gbOkToZoomJumpIn = true;
     // Image reset to original coords:
     private float gfImageViewOriginX = -1.0f;
     private float gfImageViewOriginY = -1.0f;
@@ -169,7 +173,7 @@ public class ComicViewerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_comic_viewer);
+        setContentView(R.layout.activity_comic_page_viewer);
 
         globalClass = (GlobalClass) getApplicationContext();
 
@@ -245,8 +249,21 @@ public class ComicViewerActivity extends AppCompatActivity {
 
             public void onSwipeRight() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped right", Toast.LENGTH_SHORT).show();
-                if(gfScaleFactor == gfMinScale) gotoPreviousComicPage();
-                iSwipeToExitCounter = 0;
+                if(gfScaleFactor == gfMinScale) {
+                    if(giCurrentPageIndex == 0){
+                        if(iSwipeToExitCounter == 0) {
+                            Toast.makeText(getApplicationContext(), "Start of comic", Toast.LENGTH_SHORT).show();
+                        } else if (iSwipeToExitCounter == 1){
+                            Toast.makeText(getApplicationContext(), "Swipe left again to exit", Toast.LENGTH_SHORT).show();  //right/left - it feels like a "right-swipe" in the comic reference frame.
+                        } else if (iSwipeToExitCounter == 2){
+                            finish();
+                        }
+                        iSwipeToExitCounter++;
+                    } else {
+                        gotoPreviousComicPage();
+                        iSwipeToExitCounter = 0;
+                    }
+                }
             }
 
             public void onSwipeLeft() {
@@ -265,13 +282,13 @@ public class ComicViewerActivity extends AppCompatActivity {
                         iSwipeToExitCounter++;
                     } else {
                         gotoNextComicPage();
+                        iSwipeToExitCounter = 0;
                     }
                 }
             }
 
             public void onSwipeBottom() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped bottom", Toast.LENGTH_SHORT).show();
-                CenterComicPage();
             }
 
         });
@@ -341,8 +358,13 @@ public class ComicViewerActivity extends AppCompatActivity {
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
     }
 
+    //=====================================================================================
+    //===== Load Comic Page =================================================================
+    //=====================================================================================
 
     private void LoadComicPage(int iPageIndex){
+
+
 
         if(tmComicPages.containsKey(iPageIndex)){
             if(tmComicPages.get(iPageIndex) == null){
@@ -430,15 +452,20 @@ public class ComicViewerActivity extends AppCompatActivity {
         //Get the values from the matrix:
         float[] values = new float[9];
         matrix.getValues(values);
-        //Get the scale from the matrix, and set this as the minimum scale:
-        gfMinScale = values[Matrix.MSCALE_X];  //Both X and Y scales are the same because of Matrix.ScaleToFit.
+
+        //Calculate scaling reference points:
+        gfScaleWidthMatch = gpDisplaySize.x / (float) giImageWidth;
+        gfScaleHeightMatch = gpDisplaySize.y / (float) giImageHeight;
+        gfMinScale = Math.min(gfScaleHeightMatch, gfScaleWidthMatch);
+
         gfScaleFactor = gfMinScale; //Track the current scale.
         //Get the new translated X and Y coordinates.
         gfImageViewOriginX = values[Matrix.MTRANS_X];
         gfImageViewOriginY = values[Matrix.MTRANS_Y];
-
+        //TODO: Rework above?
         givComicPage.setImageMatrix(matrix);
 
+        gbOkToZoomJumpOut = true;  //Let the first zoom-out jump to the edges of the screen.
 
     }
 
@@ -455,6 +482,10 @@ public class ComicViewerActivity extends AppCompatActivity {
             LoadComicPage(giCurrentPageIndex);
         }
     }
+
+    //=====================================================================================
+    //===== Touch Listener =================================================================
+    //=====================================================================================
 
     class OnSwipeTouchListener implements View.OnTouchListener {
         //https://www.journaldev.com/28900/android-gesture-detectors
@@ -476,7 +507,6 @@ public class ComicViewerActivity extends AppCompatActivity {
             float scale;
             float[] values = new float[9];
 
-
             String s="";
             // Handle touch events here...
             switch (event.getAction() & MotionEvent.ACTION_MASK) {
@@ -484,29 +514,20 @@ public class ComicViewerActivity extends AppCompatActivity {
                 case MotionEvent.ACTION_DOWN: //first finger down only
                     savedMatrix.set(matrix);
                     gpTouchStart.set(event.getX(), event.getY());
-                    //Log.d(TAG, "mode=DRAG" );
                     mode = DRAG;
                     break;
                 case MotionEvent.ACTION_UP: //first finger lifted
                 case MotionEvent.ACTION_POINTER_UP: //second finger lifted
 
-                    //Get the values from the matrix for evaluation:
-                    matrix.getValues(values);
-                    //savedMatrix.set(matrix);
                     savedMatrix.set(givComicPage.getImageMatrix());
-
                     mode = NONE;
-
-                    //Log.d(TAG, "mode=NONE" );
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN: //second finger down
                     gfPreviousPinchDistance = spacing(event);
-                    //Log.d(TAG, "oldDist=" + oldDist);
                     if (gfPreviousPinchDistance > 5f) {
                         savedMatrix.set(matrix);
                         midPoint(gpMidPoint, event);
                         mode = ZOOM;
-                        //Log.d(TAG, "mode=ZOOM" );
                     }
                     break;
 
@@ -519,10 +540,26 @@ public class ComicViewerActivity extends AppCompatActivity {
                     float fVerticalScrollValue;
                     float fHorizontalScrollValue;
 
+
+                    //========================================
+                    //======  PANNING  =======================
+                    //========================================
                     if (mode == DRAG) { //movement of first finger
 
+                        //Get the drag/pan distance:
                         fVerticalScrollValue = event.getY() - gpTouchStart.y;
                         fHorizontalScrollValue = event.getX() - gpTouchStart.x;
+
+                        //Accelerate the panning if desired by settings:
+                        if(globalClass.bCPV_PanAcceleration) {
+                            if(globalClass.iCPV_PanSpeedMethod == GlobalClass.CPV_PAN_SPEED_FIXED) {
+                                fVerticalScrollValue *= globalClass.fCPV_VerticalPanScalar;
+                                fHorizontalScrollValue *= globalClass.fCPV_HorizontalPanScalar;
+                            } else {
+                                fVerticalScrollValue *= gfScaleFactor;
+                                fHorizontalScrollValue *= gfScaleFactor;
+                            }
+                        }
 
                         //Translate the matrix:
                         matrix.postTranslate(fHorizontalScrollValue, fVerticalScrollValue);
@@ -531,34 +568,44 @@ public class ComicViewerActivity extends AppCompatActivity {
                         //  If not, update the ImageView matrix:
                         //Get the values from the matrix for evaluation:
                         matrix.getValues(values);
-                        float fImageY = values[Matrix.MTRANS_Y]; //The top edge of the image, translated.
                         float fImageX = values[Matrix.MTRANS_X]; //The left edge of the image, translated.
+                        float fImageY = values[Matrix.MTRANS_Y]; //The top edge of the image, translated.
+                        float fScaledWidth = values[Matrix.MSCALE_X] * giImageWidth;
+                        float fScaledHeight = values[Matrix.MSCALE_Y] * giImageHeight;
+                        float fImageEndTRANS_X = values[Matrix.MTRANS_X] + fScaledWidth; //X-coord of the end of the translated image:
+                        float fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + fScaledHeight; //Y-coord of the end of the translated image.
 
                         //Stop pan-down if at the top:
                         if((fImageY >= 0.0f) && (fVerticalScrollValue > 0.0f)) {
-                            values[Matrix.MTRANS_Y] = 0.0f;
+                            if(fScaledHeight < gpDisplaySize.y) {
+                                //if the height of the image is less than the height of the screen,
+                                //  center the image:
+                                float fTotalMargin = gpDisplaySize.y - fScaledHeight;
+                                values[Matrix.MTRANS_Y] = fTotalMargin / 2.0f;
+                            } else {
+                                //Stop the pan at the top edge of the screen.
+                                values[Matrix.MTRANS_Y] = 0.0f;
+                            }
                             matrix.setValues(values);
-
-                            //What if the image is not as tall as the screen?
                         }
 
                         //Stop pan-up if at the bottom:
-                        //Y-coord of the end of the translated image:
-                        float fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + (values[Matrix.MSCALE_Y] * giImageHeight);
                         if((fImageEndTRANS_Y <= gpDisplaySize.y) && (fVerticalScrollValue < 0.0f)){
-                            //Restore the translated Y coordinate to the values array:
-                            float[] fImageMatrixValues = new float[9];
-                            givComicPage.getImageMatrix().getValues(fImageMatrixValues);
-                            values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
+                            if(fScaledHeight < gpDisplaySize.y) {
+                                //if the height of the image is less than the height of the screen,
+                                //  center the image:
+                                float fTotalMargin = gpDisplaySize.y - fScaledHeight;
+                                values[Matrix.MTRANS_Y] = fTotalMargin / 2.0f;
+                            } else {
+                                //Set the y-coord so that the translated end of the image is at the bottom of the screen:
+                                values[Matrix.MTRANS_Y] = gpDisplaySize.y - fScaledHeight;
+                            }
                             matrix.setValues(values);
                         }
 
-                        float fScaledWidth;
+
                         //Stop pan-right if left edge is at the left of the screen:
                         if((fImageX >= 0.0f) && (fHorizontalScrollValue > 0.0f)) {
-
-
-                            fScaledWidth = values[Matrix.MSCALE_X] * giImageWidth;
                             if(fScaledWidth < gpDisplaySize.x) {
                                 //if the width of the image is less than the width of the screen,
                                 //  center the image:
@@ -572,41 +619,86 @@ public class ComicViewerActivity extends AppCompatActivity {
                         }
 
                         //Stop pan-left if right edge is at the right of the screen:
-                        //X-coord of the end of the translated image:
-                        float fImageEndTRANS_X = values[Matrix.MTRANS_X] + (values[Matrix.MSCALE_X] * giImageWidth);
                         if((fImageEndTRANS_X <= gpDisplaySize.x) && (fHorizontalScrollValue < 0.0f)){
-
-                            fScaledWidth = values[Matrix.MSCALE_X] * giImageWidth;
                             if(fScaledWidth < gpDisplaySize.x) {
                                 //if the width of the image is less than the width of the screen,
                                 //  center the image:
                                 float fTotalMargin = gpDisplaySize.x - fScaledWidth;
                                 values[Matrix.MTRANS_X] = fTotalMargin / 2.0f;
                             } else {
-                                //Restore the translated X coordinate to the values array:
-                                float[] fImageMatrixValues = new float[9];
-                                givComicPage.getImageMatrix().getValues(fImageMatrixValues);
-                                values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
+                                //Set the x-coord so that the translated end of the image is at the end of the screen:
+                                values[Matrix.MTRANS_X] = gpDisplaySize.x - fScaledWidth;
                             }
                             matrix.setValues(values);
                         }
 
-
-
                         // Perform the transformation
                         givComicPage.setImageMatrix(matrix);
-
-
                     }
+
+                    //========================================
+                    //======  ZOOMING  =======================
+                    //========================================
                     else if (mode == ZOOM) { //pinch zooming
                         iSwipeToExitCounter = 0; //Reset the swipe-to-exit counter.
+
+
+                        //Recalculate the minimum zoom. This is needed if the user switches
+                        //  between landscape and portrait orientation after they have already
+                        //  loaded the activity.
+                        //Calculate scaling reference points:
+                        gfScaleWidthMatch = gpDisplaySize.x / (float) giImageWidth;
+                        gfScaleHeightMatch = gpDisplaySize.y / (float) giImageHeight;
+                        gfMinScale = Math.min(gfScaleHeightMatch, gfScaleWidthMatch);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                         float fNewPinchDistance = spacing(event);
 
                         //Determine the new scale:
                         scale = fNewPinchDistance / gfPreviousPinchDistance;
+                        float fScaleDistance = fNewPinchDistance - gfPreviousPinchDistance;
 
-                        matrix.postScale(scale, scale, gpMidPoint.x, gpMidPoint.y);
+                        s = String.format("%3.3f\n", fScaleDistance);
+
+
+                        //Define the center point about which the image zoom is translated:
+                        float fMidPointX = gpMidPoint.x;
+                        float fMidPointY = gpMidPoint.y;
+                        float[] fImageMatrixValues = new float[9];
+                        givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                        float fScaledWidth = fImageMatrixValues[Matrix.MSCALE_X] * giImageWidth;
+                        if(fScaledWidth < gpDisplaySize.x) {
+                            //if the width of the image is less than the width of the screen,
+                            //  scale about the center of the screen:
+                            fMidPointX = gpDisplaySize.x / 2.0f;
+                        }
+                        float fScaledHeight = fImageMatrixValues[Matrix.MSCALE_Y] * giImageHeight;
+                        if(fScaledHeight < gpDisplaySize.y) {
+                            //if the height of the image is less than the height of the screen,
+                            //  scale about the center of the screen:
+                            fMidPointY = gpDisplaySize.y / 2.0f;
+                        }
+
+                        //Translate the matrix to be provided to the ImageView:
+                        matrix.postScale(scale, scale, fMidPointX, fMidPointY);
 
                         //Get the values from the matrix for evaluation:
                         matrix.getValues(values);
@@ -619,18 +711,150 @@ public class ComicViewerActivity extends AppCompatActivity {
                             values[Matrix.MTRANS_Y] = gfImageViewOriginY;
                             //Place the values in the matrix:
                             matrix.setValues(values);
-
+                            //Reset/Allow the user to use the Jump-To-Zoom feature for zoom-out:
+                            gbOkToZoomJumpOut = true;
                         } else if (values[Matrix.MSCALE_X] > gfMaxScale){ //If the scale is above the max, reset to max:
                             //Set the scale to max:
                             values[Matrix.MSCALE_X] = gfMaxScale;
                             values[Matrix.MSCALE_Y] = gfMaxScale;
                             //Restore the translated X & Y coordinates to the values array:
-                            float[] fImageMatrixValues = new float[9];
                             givComicPage.getImageMatrix().getValues(fImageMatrixValues);
                             values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
                             values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
                             //Place the values in the matrix:
                             matrix.setValues(values);
+                        } else if (globalClass.bCPV_AllowZoomJump) {
+                            //If the settings are set to allow zoom jump...
+
+
+                            //Depending on the dimensions of the image and the screen,
+                            //  the jump direction could be horizontal or vertical. Either way, it
+                            //  will be in the direction of the larger scaling point. Grab that
+                            //  scale:
+                            float fJumpOutAxisScale = Math.max(gfScaleHeightMatch, gfScaleWidthMatch);
+                            boolean bJumpDirectionHorizontal = (gfScaleWidthMatch > gfScaleHeightMatch);
+                            float fCurrentMatrixScaleValue = values[Matrix.MSCALE_X]; //When we use values[Matrix.MSCALE_X], know that it is the same value as MSCALE_Y - we keep the aspect ratio.
+
+
+                            if(gbOkToZoomJumpOut && (fScaleDistance > globalClass.fCPV_ZoomJumpOutThreshold) &&
+                                    (fCurrentMatrixScaleValue < fJumpOutAxisScale)) {
+
+                                //  If the gbOkToZoomJumpOut flag is true,
+                                //  and the user is zooming out (past a threshold value),
+                                //  jump the zoom to the screen edges,
+                                //  but not if the image is already zoomed outside the edges of the screen.
+
+                                if( bJumpDirectionHorizontal) {
+                                    //Set the translated x-value to the left edge of the screen:
+                                    values[Matrix.MTRANS_X] = 0;
+                                    //Retain the translated y-value of the image:
+                                    givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                                    values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
+                                } else {
+                                    //Set the translated y-value to the left edge of the screen:
+                                    values[Matrix.MTRANS_Y] = 0;
+                                    //Retain the translated x-value of the image:
+                                    givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                                    values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
+                                }
+
+                                //Set the zoom level to that required to match the width of the screen:
+                                values[Matrix.MSCALE_X] = fJumpOutAxisScale;
+                                values[Matrix.MSCALE_Y] = fJumpOutAxisScale;
+
+                                //Place the values in the matrix:
+                                matrix.setValues(values);
+
+                                //Turn off jumpToZoomOut until the user zooms all the way back in:
+                                gbOkToZoomJumpOut = false;
+
+                                //Terminate the pinch processing by mimicking the
+                                //  MotionEvent.ACTION_POINTER_UP case behaviors:
+                                savedMatrix.set(matrix);
+                                mode = NONE;
+                            } else if(gbOkToZoomJumpIn && (fScaleDistance < globalClass.fCPV_ZoomJumpInThreshold)) {
+
+                                //  If the gbOkToZoomJumpIn flag is true,
+                                //  and the user is zooming in (past a threshold value),
+                                //  jump the zoom to the minimum value and center the translation.
+
+                                //Set the zoom level to that required to match the width of the screen:
+                                values[Matrix.MSCALE_X] = gfMinScale;
+                                values[Matrix.MSCALE_Y] = gfMinScale;
+                                //Re-center the image on the screen:
+                                values[Matrix.MTRANS_X] = gfImageViewOriginX;
+                                values[Matrix.MTRANS_Y] = gfImageViewOriginY;
+
+                                //Place the values in the matrix:
+                                matrix.setValues(values);
+
+                                //Terminate the pinch processing by mimicking the
+                                //  MotionEvent.ACTION_POINTER_UP case behaviors:
+                                savedMatrix.set(matrix);
+                                mode = NONE;
+                            }
+                        }
+
+
+
+                        //Check to see if the zoom has moved the matrix edge inside the screen
+                        //  bounds while the opposite edge is outside the screen. If so, translate
+                        //  the image so that the inside-edge is at the screen edge:
+                        matrix.getValues(values);
+                        float fImageX = values[Matrix.MTRANS_X]; //The left edge of the image, translated.
+                        float fImageY = values[Matrix.MTRANS_Y]; //The top edge of the image, translated.
+                        float fScaledImageWidth = values[Matrix.MSCALE_X] * giImageWidth;
+                        float fScaledImageHeight = values[Matrix.MSCALE_Y] * giImageHeight;
+                        float fImageEndTRANS_X = fImageX + fScaledImageWidth;
+                        float fImageEndTRANS_Y = fImageY + fScaledImageHeight;
+
+
+                        if(fScaledImageHeight > gpDisplaySize.y) { //If the image matrix height is bigger than the screen:
+
+                            if (fImageEndTRANS_Y < gpDisplaySize.y) { //If the bottom of the image matrix is above the bottom of the screen:
+                                //Translate the image matrix to put the bottom to the bottom of the screen:
+                                values[Matrix.MTRANS_Y] = gpDisplaySize.y - fScaledImageHeight;
+                                //Place the values in the matrix:
+                                matrix.setValues(values);
+                            } else if (fImageY > 0.0f) { //If the top of the image matrix is below the top of the screen:
+                                //Translate the image matrix to put the top to the top of the screen:
+                                values[Matrix.MTRANS_Y] = 0.0f;
+                                //Place the values in the matrix:
+                                matrix.setValues(values);
+                            }
+
+                        } else {
+                            //If the image matrix height is smaller than height of the screen,
+                            //  move the image to the horizontal mid-point of the screen.
+                            //  This should only occur in odd scenarios in which the scaled width
+                            //  of the image is the same as the width of the screen, but the scaled
+                            //  height of the image is less than the height of the screen.
+                            values[Matrix.MTRANS_Y] = (gpDisplaySize.y - fScaledImageHeight) / 2.0f;
+                            //Place the values in the matrix:
+                            matrix.setValues(values);
+                        }
+
+                        if(fScaledImageWidth > gpDisplaySize.x) { //If the image matrix width is bigger than the screen:
+
+                            if (fImageEndTRANS_X < gpDisplaySize.x) { //If the end of the image matrix is inside the end of the screen:
+                                //Translate the image matrix to put the end to the end of the screen:
+                                values[Matrix.MTRANS_X] = gpDisplaySize.x - fScaledImageWidth;
+                                //Place the values in the matrix:
+                                matrix.setValues(values);
+                            } else if (fImageX > 0.0f) { //If the start of the image matrix is inside the start of the screen:
+                                //Translate the image matrix to put the start to the start of the screen:
+                                values[Matrix.MTRANS_X] = 0.0f;
+                                //Place the values in the matrix:
+                                matrix.setValues(values);
+                            }
+
+                        } else {
+                            //If the image matrix width is smaller than the width of the screen,
+                            //  center the image on the screen and preserve the translated y-coord.
+                            values[Matrix.MTRANS_X] = (gpDisplaySize.x - fScaledImageWidth) / 2.0f;
+                            //Place the values in the matrix:
+                            matrix.setValues(values);
+
                         }
 
                         //Track the current scale.
@@ -640,18 +864,6 @@ public class ComicViewerActivity extends AppCompatActivity {
                         givComicPage.setImageMatrix(matrix);
 
                     }
-                    //Get the values from the matrix for evaluation:
-                    matrix.getValues(values);
-
-
-                    /*fImageEndTRANS_Y = values[Matrix.MTRANS_Y] + (values[Matrix.MSCALE_Y] * giImageHeight);
-
-                    s = String.format("%3.3f  %3.3f  %3.3f  %3.3f  %3.3f\n",
-                            0.0,
-                            fImageEndTRANS_Y,
-                            values[Matrix.MTRANS_Y],
-                            values[Matrix.MSCALE_X],
-                            values[Matrix.MSCALE_Y]);*/
 
                     break;
             }

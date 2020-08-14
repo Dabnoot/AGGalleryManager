@@ -35,7 +35,7 @@
             android:parentActivityName=".MainActivity"/>
 
         <activity
-            android:name=".ComicViewerActivity"
+            android:name=".ComicPageViewerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer"
             android:parentActivityName=".ComicsCatalogActivity"
