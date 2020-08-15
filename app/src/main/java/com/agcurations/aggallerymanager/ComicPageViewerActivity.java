@@ -118,7 +118,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
     //Global constants
     public static final String COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
-    public static final String SELECTED_COMIC_INDEX = "SELECTED_COMIC_INDEX";
+    public static final String COMIC_PAGE_START = "COMIC_PAGE_START";
 
     //Global variables
 
@@ -191,14 +191,10 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
         //Get the intent used to start this activity:
         Intent intentCaller = getIntent();
+        //Get data from the intent:
+        giCurrentPageIndex = giSelectedComicSequenceNum = intentCaller.getIntExtra(COMIC_PAGE_START,0);
+        String[] sComicFields = intentCaller.getStringArrayExtra(COMIC_FIELDS_STRING);
 
-        //Get an integer representing which ImageView was selected on the caller.
-        giSelectedComicSequenceNum = intentCaller.getIntExtra(SELECTED_COMIC_INDEX,-1);
-
-        //Get data related to the selected comic:
-        TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.getCatalogComicList();
-        String[] sComicFields = tmCatalogComicList.get(giSelectedComicSequenceNum);
         if( sComicFields == null) return;
         gsComicName = sComicFields[GlobalClass.COMIC_NAME_INDEX];
         giMaxFileCount = Integer.parseInt(sComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
@@ -208,7 +204,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + sComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
 
-        //Load the full path to each comic pate into tmComicPages:
+        //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
         tmComicPages = new TreeMap<>();
         if(fComicFolder.exists()){
@@ -234,7 +230,6 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         mContentView.post(new Runnable(){
             public void run(){
                 //https://stackoverflow.com/questions/12829653/content-view-width-and-height/21426049
-                giCurrentPageIndex = 0;
                 LoadComicPage(giCurrentPageIndex);
             }
         });

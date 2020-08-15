@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.agcurations.aggallerymanager">
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".GlobalClass"
@@ -15,9 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
 
-
-         <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
-
+        <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,39 +29,40 @@
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.Launcher.NoActionBar" />
 
-        <activity android:name=".ComicsCatalogActivity"
-            android:parentActivityName=".MainActivity"/>
+        <activity
+            android:name=".ComicsCatalogActivity"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".ComicDetailsActivity"
+            android:label="@string/title_activity_comic_details"
+            android:parentActivityName=".ComicsCatalogActivity"
+            android:theme="@style/AppTheme.Launcher.NoActionBar"/>
 
         <activity
             android:name=".ComicPageViewerActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer"
-            android:parentActivityName=".ComicsCatalogActivity"
-            android:theme="@style/FullscreenTheme">
-
-        </activity>
+            android:parentActivityName=".ComicDetailsActivity"
+            android:theme="@style/FullscreenTheme"/>
 
         <activity
             android:name=".ExportComicsActivity"
             android:parentActivityName=".ComicsCatalogActivity"
-            android:theme="@style/AppTheme">
-        </activity>
+            android:theme="@style/AppTheme"/>
 
         <activity
             android:name=".ImportComicsActivity"
             android:parentActivityName=".ComicsCatalogActivity"
-            android:theme="@style/AppTheme">
-        </activity>
+            android:theme="@style/AppTheme"/>
 
         <service
             android:name=".ExportComicsService"
-            android:exported="false">
-        </service>
+            android:exported="false"/>
 
         <service
             android:name=".ImportComicsService"
-            android:exported="false">
-        </service>
+            android:exported="false"/>
 
     </application>
 

@@ -145,6 +145,10 @@ public class GlobalClass extends Application {
         return iImageList[iObfuscationSubjectSelection][index];
     }
 
+    public String getObfuscationImageText(int index){
+        return sObfuscationCategoryNames[iObfuscationSubjectSelection][index];
+    }
+
     public String getObfuscationCategoryName(){
         return sObfuscationCategoryNames[iObfuscationSubjectSelection][iObfuscationIndex];
     }

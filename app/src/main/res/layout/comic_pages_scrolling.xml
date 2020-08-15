@@ -6,15 +6,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".ScrollingAboutActivity"
-    tools:showIn="@layout/activity_scrolling_about">
+    tools:context=".ComicDetailsActivity"
+    tools:showIn="@layout/activity_comic_details">
 
-    <TextView
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/RecyclerView_ComicPages"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/text_margin"
-        android:textColor="@color/colorGrey1"
-        android:textSize="18sp"
-        android:text="@string/large_text" />
+        android:layout_height="wrap_content"/>
 
 </androidx.core.widget.NestedScrollView>

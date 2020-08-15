@@ -69,6 +69,18 @@ public class MainActivity extends AppCompatActivity {
     //===== Obfuscation Code =================================================================
     //=====================================================================================
 
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(globalClass.ObfuscationOn) {
+            //Obfuscate data:
+            Obfuscate();
+        } else {
+            //Remove obfuscation:
+            RemoveObfuscation();
+        }
+    }
+
     public void FlipObfuscation() {
         //This routine primarily accessed via the toggle option on the menu.
         globalClass.ObfuscationOn = !globalClass.ObfuscationOn;

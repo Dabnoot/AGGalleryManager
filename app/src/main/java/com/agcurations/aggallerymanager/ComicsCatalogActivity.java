@@ -368,7 +368,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
                 Bitmap bmObfuscator = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
                 holder.ivThumbnail.setImageBitmap(bmObfuscator);
-                holder.tvComicName.setText(globalClass.getObfuscationCategoryName());
+                holder.tvComicName.setText(globalClass.getObfuscationImageText(i));
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
@@ -424,13 +424,15 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //=====================================================================================
 
     public void StartComicViewerActivity(int iComicSequence){
-        Intent intentComicViewer = new Intent(this, ComicPageViewerActivity.class);
+        //Intent intentComicViewer = new Intent(this, ComicPageViewerActivity.class); //TODO
+        Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
+
         TreeMap<Integer, String[]> tmCatalogComicList;
         tmCatalogComicList = globalClass.getCatalogComicList();
         String[] sFields = tmCatalogComicList.get(iComicSequence);
 
-        intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_FIELDS_STRING,sFields);
-        intentComicViewer.putExtra(ComicPageViewerActivity.SELECTED_COMIC_INDEX,iComicSequence);
+        intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
+        //intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_PAGE_START,0); //TODO
 
         startActivity(intentComicViewer);
     }
@@ -439,6 +441,18 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //=====================================================================================
     //===== Obfuscation Code =================================================================
     //=====================================================================================
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(globalClass.ObfuscationOn) {
+            //Obfuscate data:
+            Obfuscate();
+        } else {
+            //Remove obfuscation:
+            RemoveObfuscation();
+        }
+    }
 
     public void FlipObfuscation() {
         //This routine primarily accessed via the toggle option on the menu.
