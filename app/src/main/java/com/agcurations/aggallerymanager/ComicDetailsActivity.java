@@ -8,12 +8,9 @@ import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,7 +32,6 @@ public class ComicDetailsActivity extends AppCompatActivity {
     public static final String COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
 
     //Global Variables:
-    CollapsingToolbarLayout gCTL_toolBarLayout;
 
     private GlobalClass globalClass;
 
@@ -43,6 +39,38 @@ public class ComicDetailsActivity extends AppCompatActivity {
     private TreeMap<Integer, String> tmComicPages;
     private String gsComicName = "";
     private String gsComicFolder_AbsolutePath; //TODO
+
+    private ImageView ivComicCoverPage;
+    private TextView gtvComicTitle;
+    private TextView gtvComicID;
+    private TextView gtvParodies;
+    private TextView gtvCharacters;
+    private TextView gtvTags;
+    private TextView gtvArtists;
+    private TextView gtvGroups;
+    private TextView gtvLanguages;
+    private TextView gtvCategories;
+    private TextView gtvPages;
+
+    private TextView gtvLabelComicID;
+    private TextView gtvLabelParodies;
+    private TextView gtvLabelCharacters;
+    private TextView gtvLabelTags;
+    private TextView gtvLabelArtists;
+    private TextView gtvLabelGroups;
+    private TextView gtvLabelLanguages;
+    private TextView gtvLabelCategories;
+    private TextView gtvLabelPages;
+
+
+
+
+
+
+
+
+
+    private File fComicCoverPage;
 
     private RecyclerView.Adapter<ComicDetailsActivity.RecyclerViewComicPagesAdapter.ViewHolder> gRecyclerViewComicPagesAdapter;
 
@@ -53,17 +81,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comic_details);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -75,16 +93,8 @@ public class ComicDetailsActivity extends AppCompatActivity {
         //Get data from the intent:
         gsComicFields = intentCaller.getStringArrayExtra(COMIC_FIELDS_STRING);
 
-
         if( gsComicFields == null) return;
         gsComicName = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
-
-        gCTL_toolBarLayout = (CollapsingToolbarLayout) findViewById(R.id.toolbar_layout);
-        if(globalClass.ObfuscationOn) {
-            gCTL_toolBarLayout.setTitle(globalClass.getObfuscationCategoryName());
-        } else {
-            gCTL_toolBarLayout.setTitle(gsComicName);
-        }
 
         gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
         String sComicFolderPath;
@@ -99,23 +109,59 @@ public class ComicDetailsActivity extends AppCompatActivity {
             if(fComicPages != null) {
                 for (int i = 0; i < fComicPages.length; i++) {
                     tmComicPages.put(i, fComicPages[i].getAbsolutePath());
+                    if (fComicCoverPage == null){
+                        fComicCoverPage = new File(fComicPages[i].getAbsolutePath());
+                    }
                 }
             }
         }
 
 
+        ivComicCoverPage = findViewById(R.id.imageView_ComicCoverPage);
+        if (fComicCoverPage.exists()) {
+            Glide.with(getApplicationContext()).load(fComicCoverPage).into(ivComicCoverPage);
+        }
 
+        gtvComicTitle = findViewById(R.id.textView_ComicTitle);
+        gtvComicID = findViewById(R.id.textView_ComicID);
+        gtvParodies = findViewById(R.id.textView_Parodies);
+        gtvCharacters = findViewById(R.id.textView_Characters);
+        gtvTags = findViewById(R.id.textView_Tags);
+        gtvArtists = findViewById(R.id.textView_Artists);
+        gtvGroups = findViewById(R.id.textView_Groups);
+        gtvLanguages = findViewById(R.id.textView_Languages);
+        gtvCategories = findViewById(R.id.textView_Categories);
+        gtvPages = findViewById(R.id.textView_Pages);
 
+        gtvLabelComicID = findViewById(R.id.textView_LabelComicID);
+        gtvLabelParodies  = findViewById(R.id.textView_LabelParodies);
+        gtvLabelCharacters  = findViewById(R.id.textView_LabelCharacters);
+        gtvLabelTags = findViewById(R.id.textView_LabelTags);
+        gtvLabelArtists = findViewById(R.id.textView_LabelArtists);
+        gtvLabelGroups  = findViewById(R.id.textView_LabelGroups);
+        gtvLabelLanguages = findViewById(R.id.textView_LabelLanguages);
+        gtvLabelCategories = findViewById(R.id.textView_LabelCategories);
+        gtvLabelPages = findViewById(R.id.textView_LabelPages);
 
-
-
-
-
-
-
-
+        gtvComicTitle.setText(gsComicFields[GlobalClass.COMIC_NAME_INDEX]);
+        gtvComicID.setText(gsComicFields[GlobalClass.COMIC_ID_INDEX]);
+        gtvParodies.setText(gsComicFields[GlobalClass.COMIC_PARODIES_INDEX]);
+        gtvCharacters.setText(gsComicFields[GlobalClass.COMIC_CHARACTERS_INDEX]);
+        gtvTags.setText(gsComicFields[GlobalClass.COMIC_TAGS_INDEX]);
+        gtvArtists.setText(gsComicFields[GlobalClass.COMIC_ARTISTS_INDEX]);
+        gtvGroups.setText(gsComicFields[GlobalClass.COMIC_GROUPS_INDEX]);
+        gtvLanguages.setText(gsComicFields[GlobalClass.COMIC_LANGUAGES_INDEX]);
+        gtvCategories.setText(gsComicFields[GlobalClass.COMIC_CATEGORIES_INDEX]);
+        gtvPages.setText(gsComicFields[GlobalClass.COMIC_PAGES_INDEX]);
 
         populate_RecyclerViewComicPages();
+
+        if(globalClass.ObfuscationOn) {
+            Obfuscate();
+        } else {
+            RemoveObfuscation();
+        }
+
     }
 
     @Override
@@ -252,7 +298,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
                     Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
                 }
 
-                String s = String.format("Page %d", position);
+                String s = String.format("Page %d", position + 1);
                 holder.tvComicName.setText(s);
 
             }
@@ -333,14 +379,64 @@ public class ComicDetailsActivity extends AppCompatActivity {
         if(!globalClass.ObfuscationOn) {
             globalClass.ObfuscationOn = true;
         }
-        gCTL_toolBarLayout.setTitle(globalClass.getObfuscationCategoryName());
+        setTitle(globalClass.getObfuscationCategoryName());
+
+        gtvComicTitle.setVisibility(View.INVISIBLE);
+        gtvComicID.setVisibility(View.INVISIBLE);
+        gtvParodies.setVisibility(View.INVISIBLE);
+        gtvCharacters.setVisibility(View.INVISIBLE);
+        gtvTags.setVisibility(View.INVISIBLE);
+        gtvArtists.setVisibility(View.INVISIBLE);
+        gtvGroups.setVisibility(View.INVISIBLE);
+        gtvLanguages.setVisibility(View.INVISIBLE);
+        gtvCategories.setVisibility(View.INVISIBLE);
+        gtvPages.setVisibility(View.INVISIBLE);
+
+        gtvLabelComicID.setVisibility(View.INVISIBLE);
+        gtvLabelParodies.setVisibility(View.INVISIBLE);
+        gtvLabelCharacters.setVisibility(View.INVISIBLE);
+        gtvLabelTags.setVisibility(View.INVISIBLE);
+        gtvLabelArtists.setVisibility(View.INVISIBLE);
+        gtvLabelGroups.setVisibility(View.INVISIBLE);
+        gtvLabelLanguages.setVisibility(View.INVISIBLE);
+        gtvLabelCategories.setVisibility(View.INVISIBLE);
+        gtvLabelPages.setVisibility(View.INVISIBLE);
+
+        //Hide the cover page:
+        int iObfuscatorResourceID = globalClass.getObfuscationImage(0);
+        Bitmap bmObfuscator = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
+        Glide.with(getApplicationContext()).load(bmObfuscator).into(ivComicCoverPage);
+        //tvComicName.setText(globalClass.getObfuscationImageText(i));
+
         //Update the RecyclerView:
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
     }
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        gCTL_toolBarLayout.setTitle(gsComicName);
+        setTitle(gsComicName);
+
+        gtvComicTitle.setVisibility(View.VISIBLE);
+        gtvComicID.setVisibility(View.VISIBLE);
+        gtvParodies.setVisibility(View.VISIBLE);
+        gtvTags.setVisibility(View.VISIBLE);
+        gtvArtists.setVisibility(View.VISIBLE);
+        gtvLanguages.setVisibility(View.VISIBLE);
+        gtvCategories.setVisibility(View.VISIBLE);
+        gtvPages.setVisibility(View.VISIBLE);
+
+        gtvLabelComicID.setVisibility(View.VISIBLE);
+        gtvLabelParodies .setVisibility(View.VISIBLE);
+        gtvLabelTags.setVisibility(View.VISIBLE);
+        gtvLabelArtists.setVisibility(View.VISIBLE);
+        gtvLabelLanguages.setVisibility(View.VISIBLE);
+        gtvLabelCategories.setVisibility(View.VISIBLE);
+        gtvLabelPages.setVisibility(View.VISIBLE);
+
+        //Show the cover page:
+        if (fComicCoverPage.exists()) {
+            Glide.with(getApplicationContext()).load(fComicCoverPage).into(ivComicCoverPage);
+        }
 
         //Update the RecyclerView:
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();

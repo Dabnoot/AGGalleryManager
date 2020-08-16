@@ -1,47 +1,270 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     tools:context=".ComicDetailsActivity">
-
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/app_bar"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="@dimen/app_bar_height"
-        android:fitsSystemWindows="true"
-        android:theme="@style/AppTheme.Launcher.AppBarOverlay">
-
-        <com.google.android.material.appbar.CollapsingToolbarLayout
-            android:id="@+id/toolbar_layout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fitsSystemWindows="true"
-            app:contentScrim="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed"
-            app:toolbarId="@+id/toolbar">
-
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:layout_collapseMode="pin"
-                app:popupTheme="@style/AppTheme.Launcher.PopupOverlay" />
-
-        </com.google.android.material.appbar.CollapsingToolbarLayout>
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        app:layout_anchor="@id/app_bar"
-        app:layout_anchorGravity="bottom|end"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        android:scrollbars="none">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical">
 
-    <include layout="@layout/comic_pages_scrolling"/>
+            <ImageView
+                android:id="@+id/imageView_ComicCoverPage"
+                android:layout_width="400dp"
+                android:layout_height="500dp"
+                android:layout_margin="15dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_margin="15dp"
+                app:layout_constraintBottom_toBottomOf="@id/imageView_ComicCoverPage"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/imageView_ComicCoverPage"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:id="@+id/textView_ComicTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Comic Title"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="28sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/textView_LabelComicID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Comic ID:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_ComicTitle" />
+
+                <TextView
+                    android:id="@+id/textView_ComicID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="ComicID"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelComicID"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelComicID" />
+
+                <TextView
+                    android:id="@+id/textView_LabelParodies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Parodies:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_ComicID" />
+
+                <TextView
+                    android:id="@+id/textView_Parodies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Parodies"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelParodies"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelParodies" />
+
+                <TextView
+                    android:id="@+id/textView_LabelCharacters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Characters:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelParodies" />
+
+                <TextView
+                    android:id="@+id/textView_Characters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Characters"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelCharacters"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelCharacters" />
+
+                <TextView
+                    android:id="@+id/textView_LabelTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Tags:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_Characters" />
+
+                <TextView
+                    android:id="@+id/textView_Tags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Tags"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelTags"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelTags" />
+
+                <TextView
+                    android:id="@+id/textView_LabelArtists"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Artists:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelTags" />
+
+                <TextView
+                    android:id="@+id/textView_Artists"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Artists"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelArtists"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelArtists" />
+
+                <TextView
+                    android:id="@+id/textView_LabelGroups"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Groups:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelArtists" />
+
+                <TextView
+                    android:id="@+id/textView_Groups"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Groups"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelGroups"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelGroups" />
+
+                <TextView
+                    android:id="@+id/textView_LabelLanguages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Languages:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelGroups" />
+
+                <TextView
+                    android:id="@+id/textView_Languages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Languages"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelLanguages"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelLanguages" />
+
+                <TextView
+                    android:id="@+id/textView_LabelCategories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Categories:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelLanguages" />
+
+                <TextView
+                    android:id="@+id/textView_Categories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Categories"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelCategories"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelCategories" />
+
+                <TextView
+                    android:id="@+id/textView_LabelPages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginStart="15dp"
+                    android:gravity="start"
+                    android:text="Pages:"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelCategories" />
+
+                <TextView
+                    android:id="@+id/textView_Pages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Pages"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    app:layout_constraintStart_toEndOf="@+id/textView_LabelPages"
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelPages" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/RecyclerView_ComicPages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/imageView_ComicCoverPage"/>
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

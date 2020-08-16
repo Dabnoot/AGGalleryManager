@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -51,6 +52,9 @@ public class ImportComicsActivity extends AppCompatActivity {
         //Get view references now for updates rather than over and over again for the
         //  broadcast receiver:
         gtvLog = findViewById(R.id.textView_ImportLog);
+        gtvLog.setMovementMethod(new ScrollingMovementMethod());
+
+
         gpbDeterminateBar = findViewById(R.id.determinateBar_Import);
         gtvStage = findViewById(R.id.textView_ImportStage);
 

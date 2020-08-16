@@ -25,14 +25,14 @@ public class GlobalClass extends Application {
     public static final int COMIC_SIZE_KB_INDEX = 5;            //Total size of all files in the comic
     public static final int COMIC_FOLDER_NAME_INDEX = 6;        //Name of the folder holding the comic pages
     public static final int COMIC_THUMBNAIL_FILE_INDEX = 7;     //Name of the file used as the thumbnail for the comic
-    //public static final int COMIC_PARODIES_INDEX = 8;
-    //public static final int COMIC_CHARACTERS_INDEX = 9;
-    //public static final int COMIC_TAGS_INDEX = 10;              //Tags given to the comic
-    //public static final int COMIC_ARTISTS_INDEX = 11;
-    //public static final int COMIC_GROUPS_INDEX = 12;
-    //public static final int COMIC_LANGUAGES_INDEX = 13;         //Language(s) found in the comic
-    //public static final int COMIC_CATEGORIES_INDEX = 14;
-    //public static final int COMIC_PAGES_INDEX = 15;             //Total number of pages as defined at the comic source
+    public static final int COMIC_PARODIES_INDEX = 8;
+    public static final int COMIC_CHARACTERS_INDEX = 9;
+    public static final int COMIC_TAGS_INDEX = 10;              //Tags given to the comic
+    public static final int COMIC_ARTISTS_INDEX = 11;
+    public static final int COMIC_GROUPS_INDEX = 12;
+    public static final int COMIC_LANGUAGES_INDEX = 13;         //Language(s) found in the comic
+    public static final int COMIC_CATEGORIES_INDEX = 14;
+    public static final int COMIC_PAGES_INDEX = 15;             //Total number of pages as defined at the comic source
 
     public static final String[] ComicRecordFields = new String[]{
             "COMIC_ID",

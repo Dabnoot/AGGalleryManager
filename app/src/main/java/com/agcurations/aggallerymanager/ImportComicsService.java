@@ -314,10 +314,17 @@ public class ImportComicsService extends IntentService {
 
                             //J
                             //if the catalog contains the ComicID, mark as a duplicate:
-                            if (tmCatalogComicList.containsKey(iComicID)) {
-                                //if the catalog contains the ComicID, mark as a duplicate
-                                bDuplicateInCatalog = true;
-                                WriteLogLine("Found catalog comic duplicate: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".",true);
+                            for (Map.Entry<Integer, String[]>
+                                    CatalogEntry : tmCatalogComicList.entrySet()) {
+                                String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
+                                if( Integer.parseInt(sEntryComicID) == iComicID){
+                                //if (tmCatalogComicList.containsKey(iComicID)) {
+                                    //if the catalog contains the ComicID, mark as a duplicate
+
+                                    bDuplicateInCatalog = true;
+                                    WriteLogLine("Found catalog comic duplicate: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".", true);
+
+                                }
                             }
 
                             iLPPageID = iPageID;
@@ -459,7 +466,7 @@ public class ImportComicsService extends IntentService {
                 for (Map.Entry<Integer, String[]>
                         entry : tmImportComicList.entrySet()) {
                     sImportComicListRecord = entry.getValue();
-                    if(!Boolean.getBoolean(sImportComicListRecord[DUPLICATE_IN_CATALOG_INDEX])) { //Don't count the space required if the comic already exists in the catalog.
+                    if(!Boolean.parseBoolean(sImportComicListRecord[DUPLICATE_IN_CATALOG_INDEX])) { //Don't count the space required if the comic already exists in the catalog.
                         lSpaceRequiredKB += Long.parseLong(sImportComicListRecord[GlobalClass.COMIC_SIZE_KB_INDEX]);
                     } else {
                         //Delete duplicate catalog comics from the import folder:
@@ -671,10 +678,13 @@ public class ImportComicsService extends IntentService {
         return sFileName.substring(7 + iComicIDDigitCount,sFileName.length()-4);
     }
     private static Integer GetComicID(String sFileName){
-        int iComicIDDigitCount = 7;
+        boolean bIsValidComicPage = true;
+        int iComicIDDigitCount = 0;
         String sComicID;
-        int iComicID;
-        if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
+        int iComicID = -1;
+        if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
+            iComicIDDigitCount = 7;
+        } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
             iComicIDDigitCount = 6;
         } else if (sFileName.matches("^\\d{5}_(Cover|Page).+")) {
             iComicIDDigitCount = 5;
@@ -686,9 +696,13 @@ public class ImportComicsService extends IntentService {
             iComicIDDigitCount = 2;
         } else if (sFileName.matches("^\\d_(Cover|Page).+")) {
             iComicIDDigitCount = 1;
+        } else {
+            bIsValidComicPage = false;
         }
-        sComicID = sFileName.substring(0, iComicIDDigitCount);
-        iComicID = Integer.parseInt(sComicID);
+        if(bIsValidComicPage) {
+            sComicID = sFileName.substring(0, iComicIDDigitCount);
+            iComicID = Integer.parseInt(sComicID);
+        }
         return iComicID;
     }
 

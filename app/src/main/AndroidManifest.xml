@@ -37,7 +37,7 @@
             android:name=".ComicDetailsActivity"
             android:label="@string/title_activity_comic_details"
             android:parentActivityName=".ComicsCatalogActivity"
-            android:theme="@style/AppTheme.Launcher.NoActionBar"/>
+            android:theme="@style/AppTheme"/>
 
         <activity
             android:name=".ComicPageViewerActivity"

@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -56,7 +57,7 @@ public class ExportComicsActivity extends AppCompatActivity {
         gpbExportDeterminateBar = findViewById(R.id.determinateBar_Export);
         gtvExportPercent = findViewById(R.id.textView_ExportPercent);
         gtvExportLog = findViewById(R.id.textView_ExportLog);
-
+        gtvExportLog.setMovementMethod(new ScrollingMovementMethod());
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         final GlobalClass globalVariable = (GlobalClass) getApplicationContext();
