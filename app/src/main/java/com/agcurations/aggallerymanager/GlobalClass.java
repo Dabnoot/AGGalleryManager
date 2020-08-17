@@ -17,22 +17,25 @@ public class GlobalClass extends Application {
     private File gvfCatalogContentsFile; //CatalogContentsFile record fields: ComicID, ComicName, MaxPageID, MissingPages, ComicSize (in kB)
     TreeMap<Integer, String[]> gvtmCatalogComicList;
 
-    public static final int COMIC_ID_INDEX = 0;                 //Comic ID
-    public static final int COMIC_NAME_INDEX = 1;               //Comic Name
-    public static final int COMIC_FILE_COUNT_INDEX = 2;         //Files included with the comic
-    public static final int COMIC_MAX_PAGE_ID_INDEX = 3;        //Max page ID extracted from file names
-    public static final int COMIC_MISSING_PAGES_INDEX = 4;      //String of comma-delimited missing page numbers
-    public static final int COMIC_SIZE_KB_INDEX = 5;            //Total size of all files in the comic
-    public static final int COMIC_FOLDER_NAME_INDEX = 6;        //Name of the folder holding the comic pages
-    public static final int COMIC_THUMBNAIL_FILE_INDEX = 7;     //Name of the file used as the thumbnail for the comic
+    public static final int COMIC_ID_INDEX = 0;                    //Comic ID
+    public static final int COMIC_NAME_INDEX = 1;                  //Comic Name
+    public static final int COMIC_FILE_COUNT_INDEX = 2;            //Files included with the comic
+    public static final int COMIC_MAX_PAGE_ID_INDEX = 3;           //Max page ID extracted from file names
+    public static final int COMIC_MISSING_PAGES_INDEX = 4;         //String of comma-delimited missing page numbers
+    public static final int COMIC_SIZE_KB_INDEX = 5;               //Total size of all files in the comic
+    public static final int COMIC_FOLDER_NAME_INDEX = 6;           //Name of the folder holding the comic pages
+    public static final int COMIC_THUMBNAIL_FILE_INDEX = 7;        //Name of the file used as the thumbnail for the comic
     public static final int COMIC_PARODIES_INDEX = 8;
     public static final int COMIC_CHARACTERS_INDEX = 9;
-    public static final int COMIC_TAGS_INDEX = 10;              //Tags given to the comic
+    public static final int COMIC_TAGS_INDEX = 10;                 //Tags given to the comic
     public static final int COMIC_ARTISTS_INDEX = 11;
     public static final int COMIC_GROUPS_INDEX = 12;
-    public static final int COMIC_LANGUAGES_INDEX = 13;         //Language(s) found in the comic
+    public static final int COMIC_LANGUAGES_INDEX = 13;            //Language(s) found in the comic
     public static final int COMIC_CATEGORIES_INDEX = 14;
-    public static final int COMIC_PAGES_INDEX = 15;             //Total number of pages as defined at the comic source
+    public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
+    public static final int COMIC_SOURCE = 16;                     //nHentai.net, other source, etc.
+    public static final int COMIC_LAST_READ_BY_USER_DATETIME = 17; //Date of last read by user. Used for sorting if desired
+    public static final int COMIC_IMPORT_DATETIME = 18;            //Date of import. Used for sorting if desired
 
     public static final String[] ComicRecordFields = new String[]{
             "COMIC_ID",
