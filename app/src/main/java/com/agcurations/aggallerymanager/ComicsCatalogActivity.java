@@ -141,6 +141,17 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 if(fCatalogContentsFile.exists()){
                     //If the catalog contents file exists, set the global variable:
                     globalClass.setCatalogContentsFile(fCatalogContentsFile);
+
+                    //Process any modifications to the CatalogContentsFile:
+                    String[] sNewFields = new String[]{
+                            "COMIC_SOURCE",
+                            "COMIC_LAST_READ_BY_USER_DATETIME",
+                            "COMIC_IMPORT_DATETIME"
+                    };
+                    Catalog_data_file_add_fields(sNewFields,1);
+
+
+
                 }
 
                 //Look for the Logs folder. If it does not exist, create it.
@@ -424,7 +435,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //=====================================================================================
 
     public void StartComicViewerActivity(int iComicSequence){
-        //Intent intentComicViewer = new Intent(this, ComicPageViewerActivity.class); //TODO
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
 
         TreeMap<Integer, String[]> tmCatalogComicList;
@@ -432,7 +442,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         String[] sFields = tmCatalogComicList.get(iComicSequence);
 
         intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
-        //intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_PAGE_START,0); //TODO
 
         startActivity(intentComicViewer);
     }
@@ -483,6 +492,165 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Update the RecyclerView:
         gRecyclerViewComicsAdapter.notifyDataSetChanged();
     }
+
+    //=====================================================================================
+    //===== Catalog.dat Revision Routine(S) ===============================================
+    //=====================================================================================
+
+    public void Catalog_data_file_add_fields(String[] sNewFields, int iToVersion) {
+
+        File fCatalogContentsFile = globalClass.getCatalogContentsFile();
+
+        try {
+            //Read the list of comics and populate the catalog array:
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+
+            //Get the version of the current .dat file.
+            String sLine = brReader.readLine();
+            String[] sFields = sLine.split("\t");
+            String[] sVersionData = sFields[sFields.length - 1].split(".");
+            int iFromVersion = 0;
+            if (sVersionData.length == 2) {
+                iFromVersion = Integer.parseInt(sVersionData[1]);
+            }
+            //Quit this routine if the version of the .dat file to be written
+            //  is the same or older:
+            if (iToVersion <= iFromVersion) {
+                brReader.close();
+                return;
+            }
+
+            //Create the new catalog contents file:
+            File fCatalogComicsFolder = globalClass.getCatalogComicsFolder();
+            File fNewCatalogContentsFile;
+
+            //Create a new catalog status file:
+            fNewCatalogContentsFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_new.dat");
+
+            if (!fNewCatalogContentsFile.exists()) {
+                try {
+                    if (fNewCatalogContentsFile.createNewFile()) {
+                        FileWriter fwNewCatalogContentsFile = null;
+                        try {
+                            fwNewCatalogContentsFile = new FileWriter(fNewCatalogContentsFile, true);
+
+                            //Write the header line to the file:
+                            fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
+                            for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
+                                fwNewCatalogContentsFile.append("\t");
+                                fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[i]);
+                            }
+                            for (String sNewField : sNewFields) {
+                                fwNewCatalogContentsFile.append("\t");
+                                fwNewCatalogContentsFile.append(sNewField);
+                            }
+                            fwNewCatalogContentsFile.append("\t");
+                            fwNewCatalogContentsFile.append("DataFileVersion." + iToVersion);
+                            fwNewCatalogContentsFile.append("\n");
+
+
+                            sLine = brReader.readLine();
+                            while (sLine != null) {
+                                fwNewCatalogContentsFile.append(sLine);
+                                for (int i = 0; i < sNewFields.length - 1; i++) {
+                                    fwNewCatalogContentsFile.append("\t");
+                                }
+                                fwNewCatalogContentsFile.append("\n");
+                                // read next line
+                                sLine = brReader.readLine();
+                            }
+                            brReader.close();
+
+                            fwNewCatalogContentsFile.flush();
+                            fwNewCatalogContentsFile.close();
+
+                            File fRenameCurrentDatFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_v" + iFromVersion + "_bak.dat");
+                            if (!fRenameCurrentDatFile.exists()) {
+                                if (!fCatalogContentsFile.renameTo(fRenameCurrentDatFile)) {
+                                    Toast.makeText(this, "Could not rename CatalogContentsFile.", Toast.LENGTH_LONG).show();
+                                } else {
+                                    if (!fNewCatalogContentsFile.renameTo(fCatalogContentsFile)) {
+                                        Toast.makeText(this, "Could not rename new CatalogContentsFile.", Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            Toast.makeText(this, "Problem during CatalogContentsFile re-write.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    } else {
+                        Toast.makeText(this, "Could not write new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                    }
+                } catch (IOException e) {
+                    Toast.makeText(this, "Could not create new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                }
+            }
+        } catch (Exception e){
+            Toast.makeText(this, "Could not open CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath()+ "\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+
+    private boolean Catalog_Data_File_Update_Record(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
+        File fCatalogContentsFile = globalClass.getCatalogContentsFile();
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+                sFields = sLine.split("\t");
+                if (sFields[GlobalClass.COMIC_ID_INDEX].equals(sComicID)) {
+                    StringBuilder sb = new StringBuilder();
+                    if (iFieldIDs[j] == 0) {
+                        //If the caller wishes to update field 0...
+                        sb.append(sFieldUpdateData[j]);
+                        j++;
+                    } else {
+                        sb.append(sFields[0]);
+                    }
+                    for (int i = 1; i < sFields.length; i++) {
+                        sb.append("\t");
+                        if (iFieldIDs[j] == i) {
+                            //If the caller wishes to update field i...
+                            sb.append(sFieldUpdateData[j]);
+                            j++;
+                        } else {
+                            sb.append(sFields[i]);
+                        }
+                    }
+                    sLine = sb.toString();
+                }
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+
+
+
+
 
 
 }

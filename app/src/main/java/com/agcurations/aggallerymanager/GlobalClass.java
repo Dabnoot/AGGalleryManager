@@ -53,7 +53,10 @@ public class GlobalClass extends Application {
             "GROUPS",
             "LANGUAGES",
             "CATEGORIES",
-            "PAGES"};
+            "PAGES",
+            "COMIC_SOURCE",
+            "COMIC_LAST_READ_BY_USER_DATETIME",
+            "COMIC_IMPORT_DATETIME"};
 
 
 
