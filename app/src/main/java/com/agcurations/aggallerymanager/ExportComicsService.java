@@ -29,7 +29,7 @@ public class ExportComicsService extends IntentService {
     int giProgressCounter;
     int giProgressBarValue;
 
-    Utility utils;
+    private GlobalClass globalClass;
 
     public ExportComicsService() {
         super("ExportComicsService");
@@ -37,7 +37,7 @@ public class ExportComicsService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        utils = new Utility();
+        globalClass = (GlobalClass) getApplicationContext();
 
         //Get the list of files and folders to be zipped:
         ArrayList<String> alZipList = intent.getStringArrayListExtra(ZIP_LIST);
@@ -116,7 +116,7 @@ public class ExportComicsService extends IntentService {
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
-        String s = utils.GetTimeStamp() + ": " + sLogLine + "\n";
+        String s = globalClass.GetTimeStampReadReady() + ": " + sLogLine + "\n";
         broadcastIntent.putExtra(LOG_LINE_STRING, s);
         broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
         broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);

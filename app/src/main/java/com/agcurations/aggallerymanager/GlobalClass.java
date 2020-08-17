@@ -3,8 +3,19 @@ package com.agcurations.aggallerymanager;
 
 
 import android.app.Application;
+import android.content.Context;
+import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.TreeMap;
 
 public class GlobalClass extends Application {
@@ -16,6 +27,51 @@ public class GlobalClass extends Application {
     private File gvfLogsFolder;
     private File gvfCatalogContentsFile; //CatalogContentsFile record fields: ComicID, ComicName, MaxPageID, MissingPages, ComicSize (in kB)
     TreeMap<Integer, String[]> gvtmCatalogComicList;
+
+    public long AvailableStorageSpace(Context c, Integer iDevice) {
+        //Returns space available in kB.
+        long freeBytesExternal = 0;
+        File[] fAvailableDirs = c.getExternalFilesDirs(null);
+        if (fAvailableDirs.length >= iDevice) {
+            //Examine the likely SDCard:
+            freeBytesExternal = new File(fAvailableDirs[iDevice].toString()).getFreeSpace();
+        } else {
+            Toast.makeText(c, "Storage device " + iDevice + " not found.", Toast.LENGTH_LONG).show();
+        }
+
+        if (freeBytesExternal >= 1024) {
+            //contains at least 1 KB.
+            freeBytesExternal /= 1024;
+        } else {
+            freeBytesExternal = 0;
+        }
+
+        return freeBytesExternal;
+    }
+
+    String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
+    String gsDatePatternNumSort = "yyyyMMdd.HHmmss";
+    String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
+    DateTimeFormatter gdtfDateFormatter;
+
+    public String GetTimeStampFileSafe(){
+        //For putting a timestamp on a file name. Observant of illegal characters.
+        gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternFileSafe);
+        return gdtfDateFormatter.format(LocalDateTime.now());
+    }
+    public Double GetTimeStampFloat(){
+        //Get an easily-comparable time stamp.
+        gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort);
+        String sTimeStamp = gdtfDateFormatter.format(LocalDateTime.now());
+        return Double.parseDouble(sTimeStamp);
+    }
+    public String GetTimeStampReadReady(){
+        //Get an easily readable time stamp.
+        gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternReadReady);
+        return gdtfDateFormatter.format(LocalDateTime.now());
+    }
+
+
 
     public static final int COMIC_ID_INDEX = 0;                    //Comic ID
     public static final int COMIC_NAME_INDEX = 1;                  //Comic Name
@@ -34,8 +90,8 @@ public class GlobalClass extends Application {
     public static final int COMIC_CATEGORIES_INDEX = 14;
     public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
     public static final int COMIC_SOURCE = 16;                     //nHentai.net, other source, etc.
-    public static final int COMIC_LAST_READ_BY_USER_DATETIME = 17; //Date of last read by user. Used for sorting if desired
-    public static final int COMIC_IMPORT_DATETIME = 18;            //Date of import. Used for sorting if desired
+    public static final int COMIC_DATETIME_LAST_READ_BY_USER = 17; //Date of last read by user. Used for sorting if desired
+    public static final int COMIC_DATETIME_IMPORT = 18;            //Date of import. Used for sorting if desired
 
     public static final String[] ComicRecordFields = new String[]{
             "COMIC_ID",
@@ -55,8 +111,8 @@ public class GlobalClass extends Application {
             "CATEGORIES",
             "PAGES",
             "COMIC_SOURCE",
-            "COMIC_LAST_READ_BY_USER_DATETIME",
-            "COMIC_IMPORT_DATETIME"};
+            "COMIC_DATETIME_LAST_READ_BY_USER",
+            "COMIC_DATETIME_IMPORT"};
 
 
 
@@ -87,6 +143,125 @@ public class GlobalClass extends Application {
     }
     public void setCatalogComicList(TreeMap<Integer, String[]> tmCatalogComicList){
         gvtmCatalogComicList = tmCatalogComicList;
+    }
+
+    public boolean CatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
+        File fCatalogContentsFile = getCatalogContentsFile();
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+                sFields = sLine.split("\t",-1);
+                if (sFields[COMIC_ID_INDEX].equals(sComicID)) {
+                    StringBuilder sb = new StringBuilder();
+                    if (iFieldIDs[j] == 0) {
+                        //If the caller wishes to update field 0...
+                        sb.append(sFieldUpdateData[j]);
+                        j++;
+                    } else {
+                        sb.append(sFields[0]);
+                    }
+                    for (int i = 1; i < sFields.length; i++) {
+                        sb.append("\t");
+                        if(j < iFieldIDs.length) {
+                            if (iFieldIDs[j] == i) {
+                                //If the caller wishes to update field i...
+                                sb.append(sFieldUpdateData[j]);
+                                j++;
+                            } else {
+                                sb.append(sFields[i]);
+                            }
+                        } else {
+                            sb.append(sFields[i]);
+                        }
+                    }
+                    sLine = sb.toString();
+                }
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+
+    public boolean CatalogDataFile_UpdateAllRecords(int[] iFieldIDs, String[] sFieldUpdateData) {
+        File fCatalogContentsFile = getCatalogContentsFile();
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+                sFields = sLine.split("\t",-1);
+
+                StringBuilder sb = new StringBuilder();
+                if (iFieldIDs[j] == 0) {
+                    //If the caller wishes to update field 0...
+                    sb.append(sFieldUpdateData[j]);
+                    j++;
+                } else {
+                    sb.append(sFields[0]);
+                }
+                for (int i = 1; i < sFields.length; i++) {
+                    sb.append("\t");
+                    if(j < iFieldIDs.length) {
+                        if (iFieldIDs[j] == i) {
+                            //If the caller wishes to update field i...
+                            sb.append(sFieldUpdateData[j]);
+                            j++;
+                        } else {
+                            sb.append(sFields[i]);
+                        }
+                    } else {
+                        sb.append(sFields[i]);
+                    }
+                }
+                sLine = sb.toString();
+
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
     }
 
 
@@ -185,6 +360,11 @@ public class GlobalClass extends Application {
     public int iCPV_PanSpeedMethod = CPV_PAN_SPEED_SCALED;
     public float fCPV_VerticalPanScalar = 1.5f;
     public float fCPV_HorizontalPanScalar = 1.5f;
+
+
+
+
+
 
 }
 

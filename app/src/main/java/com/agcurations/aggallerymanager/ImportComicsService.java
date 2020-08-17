@@ -33,11 +33,11 @@ public class ImportComicsService extends IntentService {
     public static final String STAGE_STRING = "STAGE_STRING";
 
     //Global Variables:
-    Utility utils;
     Uri guriImportUri;
     private FileWriter gfwImportLogFile;
     private boolean bLogWriterErrorAcknowledged = false;
 
+    private GlobalClass globalClass;
 
     public ImportComicsService() {
         super("ImportComicsService");
@@ -46,13 +46,11 @@ public class ImportComicsService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        utils = new Utility();
-        final GlobalClass globalVariable = (GlobalClass) getApplicationContext();
-
+        globalClass = (GlobalClass) getApplicationContext();
 
         //Create a log file to track the import:
-        String sTemp = utils.GetTimeStamp() + "_ImportLog.txt";
-        File fImportLog = new File(globalVariable.getLogsFolder() + File.separator + sTemp);
+        String sTemp = globalClass.GetTimeStampFileSafe() + "_ImportLog.txt";
+        File fImportLog = new File(globalClass.getLogsFolder() + File.separator + sTemp);
         try {
             gfwImportLogFile = new FileWriter(fImportLog, true);
         } catch (Exception e){
@@ -109,7 +107,7 @@ public class ImportComicsService extends IntentService {
     public void WriteLogLine(String sLine, boolean bBroadcastLogLine){
         try {
             //Create a timestamp for the log line:
-            String s = utils.GetTimeStamp() + ": " + sLine + "\n";
+            String s = globalClass.GetTimeStampReadReady() + ": " + sLine + "\n";
             gfwImportLogFile.append(s);
 
             //Broadcast the log update back to the ImportComicsActivity?
@@ -129,9 +127,7 @@ public class ImportComicsService extends IntentService {
     }
 
     public void Import_Operation_Process_File_List(){
-        // Calling Application class (see application tag in AndroidManifest.xml)
-        final GlobalClass globalVariable = (GlobalClass) getApplicationContext();
-        TreeMap<Integer, String[]> tmCatalogComicList = globalVariable.getCatalogComicList();
+        TreeMap<Integer, String[]> tmCatalogComicList = globalClass.getCatalogComicList();
 
 
 
@@ -310,6 +306,12 @@ public class ImportComicsService extends IntentService {
                                 sImportComicListRecord[GlobalClass.COMIC_FOLDER_NAME_INDEX] = String.valueOf(iComicID); //Folder name
                                 sImportComicListRecord[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX] = sFileName; //Set the thumbnail file.
                             }
+
+                            //Apply an import timestamp:
+                            Double dTimeStamp = globalClass.GetTimeStampFloat();
+                            String sDateTime = dTimeStamp.toString();
+                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_IMPORT] = sDateTime;
+
                             WriteLogLine("Found new comic: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".",true);
 
                             //J
@@ -367,6 +369,7 @@ public class ImportComicsService extends IntentService {
                         sImportComicListRecord[GlobalClass.COMIC_MISSING_PAGES_INDEX] = sMissingPages;
                         sImportComicListRecord[GlobalClass.COMIC_SIZE_KB_INDEX] = String.valueOf(lComicSize);
                         sImportComicListRecord[DUPLICATE_IN_CATALOG_INDEX] = String.valueOf(bDuplicateInCatalog);
+
 
                         //Put the comic record into the tree map object (it's basically a set of records):
                         tmImportComicList.put(iComicID, sImportComicListRecord);
@@ -502,7 +505,7 @@ public class ImportComicsService extends IntentService {
                 }
                 WriteLogLine("Size required for file move: " + lSpaceRequiredKB + " KB.",true);
                 long lSizeKB;
-                lSizeKB = utils.AvailableStorageSpace(this, 1);
+                lSizeKB = globalClass.AvailableStorageSpace(this, 1);
 
                 BroadcastProgress(false, "",
                         true, 100,
@@ -518,7 +521,7 @@ public class ImportComicsService extends IntentService {
                     //Begin loop for comic folder creation and execution of file moves:
                     File fSourceFile;
                     File fDestinationFile;
-                    File fCatalogContentsFile = globalVariable.getCatalogContentsFile();
+                    File fCatalogContentsFile = globalClass.getCatalogContentsFile();
                     FileWriter fwCatalogContentsFile = null;
 
                     //Provide user with progress update:
@@ -553,7 +556,7 @@ public class ImportComicsService extends IntentService {
                             if(!bDuplicateInCatalog) { //Don't execute if the comic already exists in the catalog.
 
                                 //Create the comic folder:
-                                fComicDestination = new File(globalVariable.getCatalogComicsFolder(),sFolderName);
+                                fComicDestination = new File(globalClass.getCatalogComicsFolder(),sFolderName);
 
                                 if(!fComicDestination.mkdirs()){
                                     WriteLogLine( "Could not create folder for comic " + iComicID,true);
@@ -572,7 +575,7 @@ public class ImportComicsService extends IntentService {
 
                                         if (iPageComicID == iComicID) {
                                             WriteLogLine("Importing file into catalog: " + sAbsolutePath,true);
-                                            fDestinationFile = new File(globalVariable.getCatalogComicsFolder() + File.separator +
+                                            fDestinationFile = new File(globalClass.getCatalogComicsFolder() + File.separator +
                                                     sFolderName + File.separator + sFileName);
                                             WriteLogLine("Moving file " + sFileName + " to " + fDestinationFile.getAbsolutePath(),true);
                                             try {

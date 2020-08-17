@@ -90,4 +90,5 @@
 
     </string>
     <string name="title_activity_comic_details">Comic Details</string>
+    <string name="title_activity_comic_details_fullscreen">FullscreenActivity</string>
 </resources>

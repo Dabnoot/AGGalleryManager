@@ -38,7 +38,7 @@ public class ImportComicsActivity extends AppCompatActivity {
     ProgressBar gpbDeterminateBar;
     TextView gtvStage;
 
-    Utility utils;
+    private GlobalClass globalClass;
 
 
 
@@ -47,7 +47,7 @@ public class ImportComicsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_import_comics);
 
-        utils = new Utility();
+        globalClass = (GlobalClass) getApplicationContext();
 
         //Get view references now for updates rather than over and over again for the
         //  broadcast receiver:
@@ -69,7 +69,7 @@ public class ImportComicsActivity extends AppCompatActivity {
     public void selectImportFile(View v){
         //Make sure there is space for copying
         long lSize;
-        lSize = utils.AvailableStorageSpace(this, 1);
+        lSize = globalClass.AvailableStorageSpace(this, 1);
 
         //150 MB to begin import operation. This is about the size of 250 pages.
         //It is not uncommon for a comic listing to be a set of issues totaling neat 250 pages.

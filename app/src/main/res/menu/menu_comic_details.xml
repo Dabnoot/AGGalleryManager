@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.agcurations.aggallerymanager.ComicDetailsActivity">
+    tools:context="com.agcurations.aggallerymanager.ComicDetailsFullscreenActivity">
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

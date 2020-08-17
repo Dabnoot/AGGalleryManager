@@ -142,15 +142,21 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                     //If the catalog contents file exists, set the global variable:
                     globalClass.setCatalogContentsFile(fCatalogContentsFile);
 
-                    //Process any modifications to the CatalogContentsFile:
+                    /*//Process any modifications to the CatalogContentsFile:
                     String[] sNewFields = new String[]{
                             "COMIC_SOURCE",
-                            "COMIC_LAST_READ_BY_USER_DATETIME",
-                            "COMIC_IMPORT_DATETIME"
+                            "COMIC_DATETIME_LAST_READ_BY_USER",
+                            "COMIC_DATETIME_IMPORT"
                     };
                     Catalog_data_file_add_fields(sNewFields,1);
 
-
+                    int[] iFields = new int[]{
+                            GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER
+                    };
+                    String[] sUpdateData = new String[]{
+                            "0"
+                    };
+                    globalClass.CatalogDataFile_UpdateAllRecords(iFields,sUpdateData);*/
 
                 }
 
@@ -593,59 +599,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
 
 
-    private boolean Catalog_Data_File_Update_Record(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
-        File fCatalogContentsFile = globalClass.getCatalogContentsFile();
 
-        try {
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                int j = 0; //To track requested field updates.
-                sFields = sLine.split("\t");
-                if (sFields[GlobalClass.COMIC_ID_INDEX].equals(sComicID)) {
-                    StringBuilder sb = new StringBuilder();
-                    if (iFieldIDs[j] == 0) {
-                        //If the caller wishes to update field 0...
-                        sb.append(sFieldUpdateData[j]);
-                        j++;
-                    } else {
-                        sb.append(sFields[0]);
-                    }
-                    for (int i = 1; i < sFields.length; i++) {
-                        sb.append("\t");
-                        if (iFieldIDs[j] == i) {
-                            //If the caller wishes to update field i...
-                            sb.append(sFieldUpdateData[j]);
-                            j++;
-                        } else {
-                            sb.append(sFields[i]);
-                        }
-                    }
-                    sLine = sb.toString();
-                }
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-            return true;
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
 
 
 

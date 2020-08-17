@@ -1,16 +1,21 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -20,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -81,6 +87,11 @@ public class ComicDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comic_details);
+
+        getWindow().setStatusBarColor(ContextCompat.getColor(getApplicationContext(), R.color.colorDarkDarkOrange));
+        ActionBar bar = getSupportActionBar();
+        bar.setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.colorDarkDarkOrange)));
+        this.getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.startup_screen_background));
 
 
         // Calling Application class (see application tag in AndroidManifest.xml)
@@ -341,6 +352,16 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
         intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_FIELDS_STRING,gsComicFields);
         intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_PAGE_START,iComicPage);
+
+        //Record the COMIC_DATETIME_LAST_READ_BY_USER:
+        String sTest = globalClass.GetTimeStampFileSafe(); //TODO
+        Double dTimeStamp = globalClass.GetTimeStampFloat();
+        String[] sDateTime = new String[]{dTimeStamp.toString()};
+        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER};
+        globalClass.CatalogDataFile_UpdateRecord(
+                gsComicFields[GlobalClass.COMIC_ID_INDEX],
+                iFields,
+                sDateTime);
 
         startActivity(intentComicViewer);
     }

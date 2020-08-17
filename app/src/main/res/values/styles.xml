@@ -36,4 +36,9 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
+    <style name="ComicDetailsTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:background">@color/black_overlay</item>
+
+    </style>
+
 </resources>
