@@ -1,11 +1,13 @@
 package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.NonNull;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -31,8 +33,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -46,6 +46,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     private String gsComicFolder_AbsolutePath;
     private RecyclerView.Adapter<RecyclerViewComicsAdapter.ViewHolder> gRecyclerViewComicsAdapter;
     private boolean gbDebugTouch = false;
+    RecyclerView gRecyclerView;
+    private boolean gbRecyclerViewFiltered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -219,20 +221,58 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
 
-        //Build the internal list of comics:
-        TreeMap<Integer, String[]> tmCatalogComicList;
-        //Set the global variable holding the comic list:
-        tmCatalogComicList = globalClass.getCatalogComicList();
-        populate_RecyclerViewComicsCatalog(tmCatalogComicList);
 
-        ChangeComicSortOrder(GlobalClass.COMIC_NAME_INDEX, SORT_ORDER_ASCENDING);
+        gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
+        configure_RecyclerViewComicsCatalog();
+        SetComicSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
 
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.comics_catalog_menu, menu);
-        return true;
+        getMenuInflater().inflate(R.menu.comics_catalog_action_bar, menu);
+
+
+        // Initialise menu item search bar with id and take its object
+        //https://www.geeksforgeeks.org/android-searchview-with-example/
+        MenuItem searchViewItem = menu.findItem(R.id.search_bar);
+        SearchView searchView = (SearchView) searchViewItem.getActionView();
+        // attach setOnQueryTextListener to search view defined above
+        searchView.setOnQueryTextListener(
+                new SearchView.OnQueryTextListener() {
+                    // Override onQueryTextSubmit method
+                    @Override
+                    public boolean onQueryTextSubmit(String query)
+                    {
+                        ComicsCatalogFilter(true, query);
+                        gbRecyclerViewFiltered = true;
+                        return false;
+                    }
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        return false;
+                    }
+                });
+        //Set a listener for the "cancel search" button:
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                if(gbRecyclerViewFiltered) {
+                    SetComicSortOrderDefault();
+                }
+                return false;
+            }
+        });
+
+
+
+
+
+
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -240,6 +280,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Display a message showing the name of the item selected.
         //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
         switch (item.getItemId()) {
+
             case R.id.menu_import:
                 Intent intentImport = new Intent(this, ImportComicsActivity.class);
                 startActivity(intentImport);
@@ -284,14 +325,13 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //===== RecyclerView Code =================================================================
     //=====================================================================================
 
-    public void populate_RecyclerViewComicsCatalog(TreeMap<Integer, String[]> tmCatalogComicList){
+    public void configure_RecyclerViewComicsCatalog(){
 
-        RecyclerView recyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
         // use this setting to
         // improve performance if you know that changes
         // in content do not change the layout size
         // of the RecyclerView
-        recyclerView.setHasFixedSize(true);
+        gRecyclerView.setHasFixedSize(true);
 
         RecyclerView.LayoutManager layoutManager;
         GridLayoutManager gridLayoutManager;
@@ -301,20 +341,15 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             // In landscape
             // use a grid layout manager
             gridLayoutManager = new GridLayoutManager(this, 4, RecyclerView.VERTICAL, false);
-            recyclerView.setLayoutManager(gridLayoutManager);
+            gRecyclerView.setLayoutManager(gridLayoutManager);
         } else {
             // In portrait
             // use a linear layout manager
             layoutManager = new LinearLayoutManager(this);
-            recyclerView.setLayoutManager(layoutManager);
+            gRecyclerView.setLayoutManager(layoutManager);
         }
 
-        gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(tmCatalogComicList);
-        recyclerView.setAdapter(gRecyclerViewComicsAdapter);
-
-
     }
-
 
     public class RecyclerViewComicsAdapter extends RecyclerView.Adapter<RecyclerViewComicsAdapter.ViewHolder> {
 
@@ -440,9 +475,18 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     }
 
+    public void populate_RecyclerViewComicsCatalog(TreeMap<Integer, String[]> tmCatalogComicList){
+        gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(tmCatalogComicList);
+        gRecyclerView.setAdapter(gRecyclerViewComicsAdapter);
+    }
 
     public final int SORT_ORDER_ASCENDING = 0;
     public final int SORT_ORDER_DESCENDING = 1;
+
+    public void SetComicSortOrderDefault(){
+        ChangeComicSortOrder(GlobalClass.COMIC_NAME_INDEX, SORT_ORDER_ASCENDING);
+        gbRecyclerViewFiltered = false;
+    }
 
     public void ChangeComicSortOrder(int iField, int iOrder){
 
@@ -487,11 +531,52 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             iComicRID += iIterator;
         }
 
-        //Set the new TreeMap in GlobalClass, and tell the RecyclerView to update itself:
-        globalClass.setCatalogComicList(tmNewOrderCatalogComicList);
+        //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
         populate_RecyclerViewComicsCatalog(tmNewOrderCatalogComicList);
-        gRecyclerViewComicsAdapter.notifyDataSetChanged();
+    }
 
+    public void ComicsCatalogFilter(boolean bFilterOn, String sFilterText){
+
+        if(bFilterOn){
+            //Create new TreeMap to presort the comics:
+            TreeMap<Integer, String[]> treeMapFiltered;
+            treeMapFiltered = new TreeMap<>();
+
+            //Get existing data and load elements into the presorter:
+            TreeMap<Integer, String[]> tmCatalogComicList;
+            tmCatalogComicList = globalClass.getCatalogComicList();
+            String[] sComicListRecord;
+            StringBuilder sbKey;
+            int iComicRID = 0;
+            String sFilterText_LowerCase = sFilterText.toLowerCase();
+            String sKey_LowerCase;
+            for (Map.Entry<Integer, String[]>
+                    entry : tmCatalogComicList.entrySet()) {
+                sComicListRecord = entry.getValue();
+                sbKey = new StringBuilder();
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_ID_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_NAME_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_PARODIES_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_CHARACTERS_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_TAGS_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_ARTISTS_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_GROUPS_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_CATEGORIES_INDEX]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_SOURCE]);
+                sKey_LowerCase = sbKey.toString().toLowerCase();
+
+                if(sKey_LowerCase.contains(sFilterText_LowerCase)){
+                     treeMapFiltered.put(iComicRID, sComicListRecord);
+                     iComicRID++;
+                 }
+            }
+            populate_RecyclerViewComicsCatalog(treeMapFiltered);
+
+        } else {
+
+            SetComicSortOrderDefault();
+
+        }
     }
 
     //=====================================================================================
