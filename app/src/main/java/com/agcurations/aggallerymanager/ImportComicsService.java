@@ -311,6 +311,7 @@ public class ImportComicsService extends IntentService {
                             Double dTimeStamp = globalClass.GetTimeStampFloat();
                             String sDateTime = dTimeStamp.toString();
                             sImportComicListRecord[GlobalClass.COMIC_DATETIME_IMPORT] = sDateTime;
+                            sImportComicListRecord[GlobalClass.COMIC_SOURCE] = "nHentai.net";
 
                             WriteLogLine("Found new comic: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".",true);
 

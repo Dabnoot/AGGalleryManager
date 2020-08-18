@@ -31,6 +31,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class ComicsCatalogActivity extends AppCompatActivity {
@@ -149,10 +152,11 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                             "COMIC_DATETIME_IMPORT"
                     };
                     Catalog_data_file_add_fields(sNewFields,1);
-
-                    int[] iFields = new int[]{
-                            GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER
+*/
+                    /*int[] iFields = new int[]{
+                            GlobalClass.COMIC_DATETIME_IMPORT
                     };
+
                     String[] sUpdateData = new String[]{
                             "0"
                     };
@@ -215,7 +219,13 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
 
-        populate_RecyclerViewComicsCatalog();
+        //Build the internal list of comics:
+        TreeMap<Integer, String[]> tmCatalogComicList;
+        //Set the global variable holding the comic list:
+        tmCatalogComicList = globalClass.getCatalogComicList();
+        populate_RecyclerViewComicsCatalog(tmCatalogComicList);
+
+        ChangeComicSortOrder(GlobalClass.COMIC_NAME_INDEX, SORT_ORDER_ASCENDING);
 
     }
 
@@ -274,7 +284,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //===== RecyclerView Code =================================================================
     //=====================================================================================
 
-    public void populate_RecyclerViewComicsCatalog(){
+    public void populate_RecyclerViewComicsCatalog(TreeMap<Integer, String[]> tmCatalogComicList){
 
         RecyclerView recyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
         // use this setting to
@@ -298,12 +308,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             layoutManager = new LinearLayoutManager(this);
             recyclerView.setLayoutManager(layoutManager);
         }
-
-
-        //Build the internal list of comics:
-        TreeMap<Integer, String[]> tmCatalogComicList;
-        //Set the global variable holding the comic list:
-        tmCatalogComicList = globalClass.getCatalogComicList();
 
         gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(tmCatalogComicList);
         recyclerView.setAdapter(gRecyclerViewComicsAdapter);
@@ -433,6 +437,60 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         public int getItemCount() {
             return treeMap.size();
         }
+
+    }
+
+
+    public final int SORT_ORDER_ASCENDING = 0;
+    public final int SORT_ORDER_DESCENDING = 1;
+
+    public void ChangeComicSortOrder(int iField, int iOrder){
+
+        //Create new TreeMap to presort the comics:
+        TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Comic data
+        treeMapPreSort = new TreeMap<>();
+
+        //Get existing data and load elements into the presorter:
+        TreeMap<Integer, String[]> tmCatalogComicList;
+        tmCatalogComicList = globalClass.getCatalogComicList();
+        String[] sComicListRecord;
+        String sKey;
+        for (Map.Entry<Integer, String[]>
+                entry : tmCatalogComicList.entrySet()) {
+            sComicListRecord = entry.getValue();
+            //Append the ComicID to the key field to ensure that the key is always unique.
+            //  The user could choose to sort by "LAST_READ_DATE", and the LAST_READ_DATE
+            //  could be 0, duplicated. There cannot be duplicate keys.
+            //  The user might also decide to sort by # of pages, for which there might
+            //  be duplicates.
+            sKey = sComicListRecord[iField] + sComicListRecord[GlobalClass.COMIC_ID_INDEX];
+            treeMapPreSort.put(sKey, sComicListRecord);
+        }
+
+        //Treemap presort will auto-sort itself.
+
+        //Delete everything out of the old TreeMap, and re-populate it with the new sort order:
+        TreeMap<Integer, String[]> tmNewOrderCatalogComicList = new TreeMap<>();
+        int iComicRID, iIterator;
+        if(iOrder == SORT_ORDER_DESCENDING){
+            iComicRID = treeMapPreSort.size();
+            iIterator = -1;
+        } else {
+            iComicRID = 0;
+            iIterator = 1;
+        }
+
+        for (Map.Entry<String, String[]>
+                entry : treeMapPreSort.entrySet()) {
+            sComicListRecord = entry.getValue();
+            tmNewOrderCatalogComicList.put(iComicRID, sComicListRecord);
+            iComicRID += iIterator;
+        }
+
+        //Set the new TreeMap in GlobalClass, and tell the RecyclerView to update itself:
+        globalClass.setCatalogComicList(tmNewOrderCatalogComicList);
+        populate_RecyclerViewComicsCatalog(tmNewOrderCatalogComicList);
+        gRecyclerViewComicsAdapter.notifyDataSetChanged();
 
     }
 
