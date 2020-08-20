@@ -94,4 +94,24 @@
     <string name="search">Search</string>
     <string name="save_details">Save Details</string>
     <string name="sync_details_online">Sync Details Online</string>
+    <string name="cover_page">Cover page.</string>
+    <string name="comic_title">Comic Title</string>
+    <string name="comic_id">Comic ID:</string>
+    <string name="comicid">ComicID</string>
+    <string name="parodies">Parodies:</string>
+    <string name="parodies_">Parodies</string>
+    <string name="characters">Characters:</string>
+    <string name="characters_">Characters</string>
+    <string name="tags">Tags:</string>
+    <string name="tags_">Tags</string>
+    <string name="artists">Artists:</string>
+    <string name="artists_">Artists</string>
+    <string name="groups">Groups:</string>
+    <string name="groups_">Groups</string>
+    <string name="languages_">Languages:</string>
+    <string name="languages">Languages</string>
+    <string name="categories">Categories:</string>
+    <string name="categories_">Categories</string>
+    <string name="pages">Pages:</string>
+    <string name="pages_">Pages</string>
 </resources>
