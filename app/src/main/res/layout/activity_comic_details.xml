@@ -279,7 +279,7 @@
                 android:layout_height="wrap_content"
                 android:background="@color/black_overlay"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/imageView_ComicCoverPage"
+                app:layout_constraintTop_toBottomOf="@id/constraintLayout_ComicInfo"
                 android:layout_marginTop="15dp"/>
 
 
