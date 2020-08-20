@@ -10,12 +10,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class GlobalClass extends Application {
@@ -184,6 +181,25 @@ public class GlobalClass extends Application {
                         }
                     }
                     sLine = sb.toString();
+
+                    //The comic record should now be updated in the file.
+                    //Now update the record in the treemap:
+                    sFields = sLine.split("\t",-1);
+                    int iKey = -1;
+                    for (Map.Entry<Integer, String[]>
+                            CatalogEntry : gvtmCatalogComicList.entrySet()) {
+                        String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
+                        if( sEntryComicID.contains(sFields[COMIC_ID_INDEX])){
+                            iKey = CatalogEntry.getKey();
+                            break;
+                        }
+                    }
+                    if(iKey >= 0){
+                        gvtmCatalogComicList.put(iKey,sFields);
+                    }
+
+
+
                 }
                 sbBuffer.append(sLine);
                 sbBuffer.append("\n");
@@ -345,7 +361,7 @@ public class GlobalClass extends Application {
     //End obfuscation section.
 
     //=====================================================================================
-    //===== Comic Page Viewer Options =====================================================
+    //===== Comic Page Viewer Activity Options =====================================================
     //=====================================================================================
     //CPV = "Comic Page Viewer"
     public float bCPV_MaxScale = 4.0f; //Max zoom.
@@ -360,6 +376,20 @@ public class GlobalClass extends Application {
     public int iCPV_PanSpeedMethod = CPV_PAN_SPEED_SCALED;
     public float fCPV_VerticalPanScalar = 1.5f;
     public float fCPV_HorizontalPanScalar = 1.5f;
+
+    //=====================================================================================
+    //===== Comic Details Activity Options =====================================================
+    //=====================================================================================
+
+    public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
+    public String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
+
+    public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    public String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+
+    public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+
 
 
 

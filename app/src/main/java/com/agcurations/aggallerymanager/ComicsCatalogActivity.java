@@ -413,6 +413,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             if (sFields == null) {
                 sFields = new String[GlobalClass.ComicRecordFields.length]; //To prevent possible null pointer exception later.
             }
+            final String[] sFields_final = sFields;
 
 
             if(globalClass.ObfuscationOn) {
@@ -446,7 +447,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
-                    StartComicViewerActivity(position);
+                    StartComicViewerActivity(sFields_final);
                 }
             });
 
@@ -583,12 +584,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //===== Comic Viewer Code =================================================================
     //=====================================================================================
 
-    public void StartComicViewerActivity(int iComicSequence){
+    public void StartComicViewerActivity(String[] sFields){
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
-
-        TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.getCatalogComicList();
-        String[] sFields = tmCatalogComicList.get(iComicSequence);
 
         intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
 

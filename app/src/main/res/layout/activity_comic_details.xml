@@ -24,30 +24,38 @@
                 android:layout_width="400dp"
                 android:layout_height="500dp"
                 android:layout_margin="15dp"
+                android:background="@color/black_overlay"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="@+id/constraintLayout_ComicInfo"/>
 
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/constraintLayout_ComicInfo"
                 android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_margin="15dp"
-                app:layout_constraintBottom_toBottomOf="@id/imageView_ComicCoverPage"
+                android:layout_height="wrap_content"
+                android:minHeight="500dp"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="15dp"
+                android:background="@color/black_overlay"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/imageView_ComicCoverPage"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
                     android:id="@+id/textView_ComicTitle"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="15dp"
                     android:layout_marginStart="15dp"
+                    android:layout_marginEnd="15dp"
                     android:text="Comic Title"
                     android:textColor="@color/colorGrey1"
                     android:textSize="28sp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
                 <TextView
                     android:id="@+id/textView_LabelComicID"
@@ -132,14 +140,16 @@
 
                 <TextView
                     android:id="@+id/textView_Tags"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="15dp"
+                    android:layout_marginEnd="15dp"
                     android:text="Tags"
                     android:textColor="@color/colorGrey1"
                     android:textSize="20sp"
                     app:layout_constraintStart_toEndOf="@+id/textView_LabelTags"
-                    app:layout_constraintTop_toTopOf="@+id/textView_LabelTags" />
+                    app:layout_constraintTop_toTopOf="@+id/textView_LabelTags"
+                    app:layout_constraintEnd_toEndOf="parent"/>
 
                 <TextView
                     android:id="@+id/textView_LabelArtists"
@@ -151,7 +161,7 @@
                     android:textColor="@color/colorGrey1"
                     android:textSize="20sp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelTags" />
+                    app:layout_constraintTop_toBottomOf="@+id/textView_Tags" />
 
                 <TextView
                     android:id="@+id/textView_Artists"
@@ -239,23 +249,26 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginStart="15dp"
+                    android:layout_marginBottom="15dp"
                     android:gravity="start"
                     android:text="Pages:"
                     android:textColor="@color/colorGrey1"
                     android:textSize="20sp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelCategories" />
+                    app:layout_constraintTop_toBottomOf="@+id/textView_LabelCategories"/>
 
                 <TextView
                     android:id="@+id/textView_Pages"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="15dp"
+                    android:layout_marginBottom="15dp"
                     android:text="Pages"
                     android:textColor="@color/colorGrey1"
                     android:textSize="20sp"
                     app:layout_constraintStart_toEndOf="@+id/textView_LabelPages"
                     app:layout_constraintTop_toTopOf="@+id/textView_LabelPages" />
+
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -263,6 +276,7 @@
                 android:id="@+id/RecyclerView_ComicPages"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@color/black_overlay"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/imageView_ComicCoverPage"
                 android:layout_marginTop="15dp"/>

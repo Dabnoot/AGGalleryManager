@@ -1,16 +1,16 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.appbar.CollapsingToolbarLayout;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -25,12 +25,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class ComicDetailsActivity extends AppCompatActivity {
@@ -43,8 +44,6 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
     private String[] gsComicFields;
     private TreeMap<Integer, String> tmComicPages;
-    private String gsComicName = "";
-    private String gsComicFolder_AbsolutePath; //TODO
 
     private ImageView ivComicCoverPage;
     private TextView gtvComicTitle;
@@ -68,12 +67,20 @@ public class ComicDetailsActivity extends AppCompatActivity {
     private TextView gtvLabelCategories;
     private TextView gtvLabelPages;
 
+    private MenuItem gmiGetOnlineData;
+    private MenuItem gmiSaveDetails;
 
+    private ComicDetailsActivity.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
 
-
-
-
-
+    private boolean gbComicDetailsTitleUpdateAvailable = false;
+    private boolean gbComicDetailsParodiesDataUpdateAvailable = false;
+    private boolean gbComicDetailsCharactersDataUpdateAvailable = false;
+    private boolean gbComicDetailsTagsDataUpdateAvailable = false;
+    private boolean gbComicDetailsArtistsDataUpdateAvailable = false;
+    private boolean gbComicDetailsGroupsDataUpdateAvailable = false;
+    private boolean gbComicDetailsLanguagesDataUpdateAvailable = false;
+    private boolean gbComicDetailsCategoriesDataUpdateAvailable = false;
+    private boolean gbComicDetailsPagesDataUpdateAvailable = false;
 
 
     private File fComicCoverPage;
@@ -90,6 +97,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
         getWindow().setStatusBarColor(ContextCompat.getColor(getApplicationContext(), R.color.colorDarkDarkOrange));
         ActionBar bar = getSupportActionBar();
+        assert bar != null;
         bar.setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.colorDarkDarkOrange)));
         this.getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.startup_screen_background));
 
@@ -105,11 +113,10 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gsComicFields = intentCaller.getStringArrayExtra(COMIC_FIELDS_STRING);
 
         if( gsComicFields == null) return;
-        gsComicName = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
 
-        gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
+        String sComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
         String sComicFolderPath;
-        sComicFolderPath = gsComicFolder_AbsolutePath + File.separator
+        sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
 
         //Load the full path to each comic page into tmComicPages:
@@ -165,6 +172,8 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gtvCategories.setText(gsComicFields[GlobalClass.COMIC_CATEGORIES_INDEX]);
         gtvPages.setText(gsComicFields[GlobalClass.COMIC_PAGES_INDEX]);
 
+
+
         populate_RecyclerViewComicPages();
 
         if(globalClass.ObfuscationOn) {
@@ -173,11 +182,23 @@ public class ComicDetailsActivity extends AppCompatActivity {
             RemoveObfuscation();
         }
 
+
+
+        IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        gComicDetailsResponseReceiver = new ComicDetailsActivity.ComicDetailsResponseReceiver();
+        registerReceiver(gComicDetailsResponseReceiver, filter);
+
+
+
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.comic_pages_menu, menu);
+        getMenuInflater().inflate(R.menu.comic_details_menu, menu);
+        gmiGetOnlineData = menu.findItem(R.id.menu_GetOnlineData);
+        gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
         return true;
     }
 
@@ -189,13 +210,18 @@ public class ComicDetailsActivity extends AppCompatActivity {
             case R.id.menu_FlipView:
                 FlipObfuscation();
                 return true;
-
+            case R.id.menu_GetOnlineData:
+                SyncOnlineData();
+                return true;
+            case R.id.menu_SaveDetails:
+                SaveDetails();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-//=====================================================================================
+    //=====================================================================================
     //===== RecyclerView Code =================================================================
     //=====================================================================================
 
@@ -303,12 +329,13 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
                 String sThumbnailFilePath = tmComicPages.get(position);
-                File fThumbnail = new File(sThumbnailFilePath);
+                if(sThumbnailFilePath != null) {
+                    File fThumbnail = new File(sThumbnailFilePath);
 
-                if (fThumbnail.exists()) {
-                    Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
+                    if (fThumbnail.exists()) {
+                        Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
+                    }
                 }
-
                 String s = String.format("Page %d", position + 1);
                 holder.tvComicName.setText(s);
 
@@ -347,14 +374,13 @@ public class ComicDetailsActivity extends AppCompatActivity {
     //===== Comic Viewer Code =================================================================
     //=====================================================================================
 
-    public void StartComicViewerActivity(int iComicPage){//TODO
+    public void StartComicViewerActivity(int iComicPage){
         Intent intentComicViewer = new Intent(this, ComicPageViewerActivity.class);
 
         intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_FIELDS_STRING,gsComicFields);
         intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_PAGE_START,iComicPage);
 
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
-        String sTest = globalClass.GetTimeStampFileSafe(); //TODO
         Double dTimeStamp = globalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER};
@@ -435,7 +461,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(gsComicName);
+        setTitle(gsComicFields[GlobalClass.COMIC_NAME_INDEX]);
 
         gtvComicTitle.setVisibility(View.VISIBLE);
         gtvComicID.setVisibility(View.VISIBLE);
@@ -462,6 +488,167 @@ public class ComicDetailsActivity extends AppCompatActivity {
         //Update the RecyclerView:
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
     }
+
+    //=====================================================================================
+    //===== Data Update Code =================================================================
+    //=====================================================================================
+
+    public void SyncOnlineData(){
+        Intent intentGetComicDetails;
+
+        intentGetComicDetails = new Intent(this, ComicDetailsDataService.class);
+        intentGetComicDetails.putExtra(ComicDetailsDataService.COMIC_DETAILS_COMIC_ID,
+                                       gsComicFields[GlobalClass.COMIC_ID_INDEX]);
+
+        gmiGetOnlineData.setEnabled(false);
+
+        startService(intentGetComicDetails);
+    }
+
+
+
+
+    public class ComicDetailsResponseReceiver extends BroadcastReceiver {
+        public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.dabnoot.intent.action.FROM_COMIC_DETAILS_SERVICE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean bComicDetailsDataServiceSuccess;
+            bComicDetailsDataServiceSuccess = intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_SUCCESS,
+                                                         false);
+
+            String sErrorMessage;
+            if(bComicDetailsDataServiceSuccess) {
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_COMIC_TITLE_ACQUIRED,false)){
+                    gbComicDetailsTitleUpdateAvailable = true;
+                    gtvComicTitle.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_COMIC_TITLE));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_PARODIES_DATA_ACQUIRED,false)){
+                    gbComicDetailsParodiesDataUpdateAvailable = true;
+                    gtvParodies.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_PARODIES_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_CHARACTERS_DATA_ACQUIRED,false)){
+                    gbComicDetailsCharactersDataUpdateAvailable = true;
+                    gtvCharacters.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_CHARACTERS_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_TAGS_DATA_ACQUIRED,false)){
+                    gbComicDetailsTagsDataUpdateAvailable = true;
+                    gtvTags.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_TAGS_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_ARTISTS_DATA_ACQUIRED,false)){
+                    gbComicDetailsArtistsDataUpdateAvailable = true;
+                    gtvArtists.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_ARTISTS_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_GROUPS_DATA_ACQUIRED,false)){
+                    gbComicDetailsGroupsDataUpdateAvailable = true;
+                    gtvGroups.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_GROUPS_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_LANGUAGES_DATA_ACQUIRED,false)){
+                    gbComicDetailsLanguagesDataUpdateAvailable = true;
+                    gtvLanguages.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_LANGUAGES_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_CATEGORIES_DATA_ACQUIRED,false)){
+                    gbComicDetailsCategoriesDataUpdateAvailable = true;
+                    gtvCategories.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_CATEGORIES_DATA));
+                }
+
+                if(intent.getBooleanExtra(ComicDetailsDataService.COMIC_DETAILS_PAGES_DATA_ACQUIRED,false)){
+                    gbComicDetailsPagesDataUpdateAvailable = true;
+                    gtvPages.setText(intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_PAGES_DATA));
+                }
+
+                gmiSaveDetails.setEnabled(true);
+            } else {
+                sErrorMessage = intent.getStringExtra(ComicDetailsDataService.COMIC_DETAILS_ERROR_MESSAGE);
+                gtvTags.setText(sErrorMessage);
+                Toast.makeText(getApplicationContext(), "Error getting data online.\n" + sErrorMessage, Toast.LENGTH_LONG).show();
+            }
+
+            gmiGetOnlineData.setEnabled(true);
+
+        }
+    }
+
+
+    public void SaveDetails(){
+
+        boolean[] bFieldUpdateBooleans = new boolean[]{
+                gbComicDetailsTitleUpdateAvailable,
+                gbComicDetailsParodiesDataUpdateAvailable,
+                gbComicDetailsCharactersDataUpdateAvailable,
+                gbComicDetailsTagsDataUpdateAvailable,
+                gbComicDetailsArtistsDataUpdateAvailable,
+                gbComicDetailsGroupsDataUpdateAvailable,
+                gbComicDetailsLanguagesDataUpdateAvailable,
+                gbComicDetailsCategoriesDataUpdateAvailable,
+                gbComicDetailsPagesDataUpdateAvailable
+        };
+
+        String[] sFieldUpdateText = new String[]{
+                gtvComicTitle.getText().toString(),
+                gtvParodies.getText().toString(),
+                gtvCharacters.getText().toString(),
+                gtvTags.getText().toString(),
+                gtvArtists.getText().toString(),
+                gtvGroups.getText().toString(),
+                gtvLanguages.getText().toString(),
+                gtvCategories.getText().toString(),
+                gtvPages.getText().toString()
+        };
+
+        int[] iPossibleFieldIDs = new int[]{
+                GlobalClass.COMIC_NAME_INDEX,
+                GlobalClass.COMIC_PARODIES_INDEX,
+                GlobalClass.COMIC_CHARACTERS_INDEX,
+                GlobalClass.COMIC_TAGS_INDEX,
+                GlobalClass.COMIC_ARTISTS_INDEX,
+                GlobalClass.COMIC_GROUPS_INDEX,
+                GlobalClass.COMIC_LANGUAGES_INDEX,
+                GlobalClass.COMIC_CATEGORIES_INDEX,
+                GlobalClass.COMIC_PAGES_INDEX
+        };
+
+        ArrayList<Integer> iFieldIDs = new ArrayList<>();
+        ArrayList<String> sFieldUpdateData = new ArrayList<>();
+
+        for(int i = 0; i< bFieldUpdateBooleans.length; i++){
+            if(bFieldUpdateBooleans[i]){
+                iFieldIDs.add(iPossibleFieldIDs[i]);
+                sFieldUpdateData.add(sFieldUpdateText[i]);
+            }
+        }
+
+        int[] iTemp = new int[iFieldIDs.size()];
+        String[] sTemp = new String[sFieldUpdateData.size()];
+        for(int i = 0; i < iFieldIDs.size(); i++){
+            iTemp[i] = iFieldIDs.get(i);
+            sTemp[i] = sFieldUpdateData.get(i);
+        }
+
+        globalClass.CatalogDataFile_UpdateRecord(gsComicFields[GlobalClass.COMIC_ID_INDEX],
+                iTemp, sTemp);
+
+        gmiSaveDetails.setEnabled(false);
+        Toast.makeText(getApplicationContext(), "Data saved.", Toast.LENGTH_LONG).show();
+
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(gComicDetailsResponseReceiver);
+        super.onDestroy();
+    }
+
+
 
 
 

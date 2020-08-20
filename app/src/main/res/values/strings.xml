@@ -92,4 +92,6 @@
     <string name="title_activity_comic_details">Comic Details</string>
     <string name="title_activity_comic_details_fullscreen">FullscreenActivity</string>
     <string name="search">Search</string>
+    <string name="save_details">Save Details</string>
+    <string name="sync_details_online">Sync Details Online</string>
 </resources>
