@@ -147,4 +147,9 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intentComicsCatalogActivity);
     }
 
+    public void startPicturesCatalogActivity(View v){
+        Intent intentPicturesCatalogActivity = new Intent(this, PicturesCatalogActivity.class);
+        startActivity(intentPicturesCatalogActivity);
+    }
+
 }

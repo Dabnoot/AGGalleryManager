@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    android:id="@+id/coordinator_layout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".PicturesCatalogActivity">
+
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/app_bar_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        >
+        <!--
+            SCROLL_FLAG_ENTER_ALWAYS
+                When entering (scrolling on screen) the view will scroll on any downwards scroll
+                event, regardless of whether the scrolling view is also scrolling.
+
+            SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED
+                An additional flag for 'enterAlways' which modifies the returning view to
+                only initially scroll back to it's collapsed height.
+
+            SCROLL_FLAG_EXIT_UNTIL_COLLAPSED
+                When exiting (scrolling off screen) the view will be scrolled until it is 'collapsed'.
+
+            SCROLL_FLAG_SCROLL
+                The view will be scroll in direct relation to scroll events.
+
+            SCROLL_FLAG_SNAP
+                Upon a scroll ending, if the view is only partially visible then it will be
+                snapped and scrolled to it's closest edge.
+        -->
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:layout_scrollFlags="scroll|enterAlways"
+            />
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tab_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            >
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_item_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tab 1"
+                />
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_item_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tab 2"
+                />
+            <android.support.design.widget.TabItem
+                android:id="@+id/tab_item_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tab 3"
+                />
+        </android.support.design.widget.TabLayout>
+    </android.support.design.widget.AppBarLayout>
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

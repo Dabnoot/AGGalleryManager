@@ -362,13 +362,13 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder {
             // each data item is just a string in this case
             public final ImageView ivThumbnail;
-            public final TextView tvComicName;
+            public final TextView tvThumbnailText;
             public final TextView tvComicDetails;
 
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvComicName = v.findViewById(R.id.TextView_ComicName);
+                tvThumbnailText = v.findViewById(R.id.TextView_ThumbnailText);
                 tvComicDetails = v.findViewById(R.id.TextView_ComicDetails);
             }
         }
@@ -425,7 +425,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
                 Bitmap bmObfuscator = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
                 holder.ivThumbnail.setImageBitmap(bmObfuscator);
-                holder.tvComicName.setText(globalClass.getObfuscationImageText(i));
+                holder.tvThumbnailText.setText(globalClass.getObfuscationImageText(i));
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
@@ -438,7 +438,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                     Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
                 }
 
-                holder.tvComicName.setText(sFields[GlobalClass.COMIC_NAME_INDEX]);
+                holder.tvThumbnailText.setText(sFields[GlobalClass.COMIC_NAME_INDEX]);
 
             }
 
@@ -587,7 +587,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     public void StartComicViewerActivity(String[] sFields){
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
 
-        intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
+        //intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
+        globalClass.gvSelectedComic = sFields; //Don't bother with using the intent to pass this data.
 
         startActivity(intentComicViewer);
     }

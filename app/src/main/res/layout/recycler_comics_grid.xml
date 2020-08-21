@@ -12,7 +12,7 @@
         android:contentDescription="@string/comic_cover_page"/>
 
     <TextView
-        android:id="@+id/TextView_ComicName"
+        android:id="@+id/TextView_ThumbnailText"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/ImageView_Thumbnail"

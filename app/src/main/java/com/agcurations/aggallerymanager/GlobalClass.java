@@ -25,6 +25,8 @@ public class GlobalClass extends Application {
     private File gvfCatalogContentsFile; //CatalogContentsFile record fields: ComicID, ComicName, MaxPageID, MissingPages, ComicSize (in kB)
     TreeMap<Integer, String[]> gvtmCatalogComicList;
 
+    public String[] gvSelectedComic;
+
     public long AvailableStorageSpace(Context c, Integer iDevice) {
         //Returns space available in kB.
         long freeBytesExternal = 0;

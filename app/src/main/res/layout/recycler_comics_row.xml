@@ -15,7 +15,7 @@
         android:src="@mipmap/ic_launcher"/>
 
     <TextView
-        android:id="@+id/TextView_ComicName"
+        android:id="@+id/TextView_ThumbnailText"
         android:layout_width="wrap_content"
         android:layout_height="26dip"
         android:layout_alignParentTop="true"
@@ -31,7 +31,7 @@
         android:id="@+id/TextView_ComicDetails"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/TextView_ComicName"
+        android:layout_below="@id/TextView_ThumbnailText"
         android:layout_alignParentRight="true"
         android:layout_alignWithParentIfMissing="true"
         android:layout_toRightOf="@id/ImageView_Thumbnail"

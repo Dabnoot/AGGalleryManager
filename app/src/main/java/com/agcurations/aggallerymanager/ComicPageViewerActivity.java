@@ -124,6 +124,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
     //Comic global variables
     private GlobalClass globalClass;
+    String[] gsComicFields;
     private TreeMap<Integer, String> tmComicPages;
     private String gsComicName = "";
     private int giSelectedComicSequenceNum;
@@ -192,17 +193,20 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         //Get the intent used to start this activity:
         Intent intentCaller = getIntent();
         //Get data from the intent:
-        giCurrentPageIndex = giSelectedComicSequenceNum = intentCaller.getIntExtra(COMIC_PAGE_START,0);
-        String[] sComicFields = intentCaller.getStringArrayExtra(COMIC_FIELDS_STRING);
+        giCurrentPageIndex = intentCaller.getIntExtra(COMIC_PAGE_START,0);
+        gsComicFields = globalClass.gvSelectedComic; //Don't bother with using the intent to pass this data.
+        //There are complications when the user presses the back button. The ComicDetailsActivty
+        //doesn't know what comic to display, and so it has problems. Better to just access
+        // the data from the global data class.
 
-        if( sComicFields == null) return;
-        gsComicName = sComicFields[GlobalClass.COMIC_NAME_INDEX];
-        giMaxFileCount = Integer.parseInt(sComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
+        if( gsComicFields == null) return;
+        gsComicName = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
+        giMaxFileCount = Integer.parseInt(gsComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
 
         String sComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                + sComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
+                + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);

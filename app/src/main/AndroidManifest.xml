@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.agcurations.aggallerymanager">
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".GlobalClass"
@@ -14,8 +15,6 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
-
-
 
         <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
         <activity android:name=".MainActivity">
@@ -32,6 +31,11 @@
             android:theme="@style/AppTheme.Launcher.NoActionBar" />
 
         <activity
+            android:name=".PicturesCatalogActivity"
+            android:parentActivityName=".MainActivity"/>
+
+
+        <activity
             android:name=".ComicsCatalogActivity"
             android:parentActivityName=".MainActivity" />
 
@@ -40,10 +44,6 @@
             android:label="@string/title_activity_comic_details"
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
-
-        <service
-            android:name=".ComicDetailsDataService"
-            android:exported="false" />
 
         <activity
             android:name=".ComicPageViewerActivity"
@@ -61,6 +61,10 @@
             android:name=".ImportComicsActivity"
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
+
+        <service
+            android:name=".ComicDetailsDataService"
+            android:exported="false" />
 
         <service
             android:name=".ExportComicsService"
