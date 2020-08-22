@@ -144,7 +144,7 @@ public class GlobalClass extends Application {
         gvtmCatalogComicList = tmCatalogComicList;
     }
 
-    public boolean CatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
+    public boolean ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
         File fCatalogContentsFile = getCatalogContentsFile();
 
         try {
@@ -222,8 +222,7 @@ public class GlobalClass extends Application {
         }
     }
 
-
-    public boolean CatalogDataFile_UpdateAllRecords(int[] iFieldIDs, String[] sFieldUpdateData) {
+    public boolean ComicCatalogDataFile_UpdateAllRecords(int[] iFieldIDs, String[] sFieldUpdateData) {
         File fCatalogContentsFile = getCatalogContentsFile();
 
         try {
@@ -281,6 +280,117 @@ public class GlobalClass extends Application {
             return false;
         }
     }
+
+
+    public boolean gbComicJustDeleted = false;
+    public boolean ComicCatalog_DeleteComic(String sComicID) {
+
+        //Delete the comic record from the CatalogContentsFile:
+        File fCatalogContentsFile = getCatalogContentsFile();
+
+        try {
+
+            //Attempt to delete the selected comic folder first.
+            //If that fails, abort the operation.
+            String sComicFolderName = "";
+
+            //Don't transfer the line over.
+            //Get a path to the comic's folder for deletion in the next step:
+            for (Map.Entry<Integer, String[]>
+                    CatalogEntry : gvtmCatalogComicList.entrySet()) {
+                String[] sFields = CatalogEntry.getValue();
+                if( sFields[GlobalClass.COMIC_ID_INDEX].contains(sComicID)){
+                    sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
+                    break;
+                }
+            }
+
+            String  sComicFolderPath = gvfCatalogComicsFolder.getPath() + File.separator
+                    + sComicFolderName;
+
+            File fComicFolderToBeDeleted = new File(sComicFolderPath);
+            if(fComicFolderToBeDeleted.exists() && fComicFolderToBeDeleted.isDirectory()){
+                try{
+                    //First, the directory must be empty to delete. So delete all files in folder:
+                    String[] sChildFiles = fComicFolderToBeDeleted.list();
+                    for (int i = 0; i < sChildFiles.length; i++) {
+                        new File(fComicFolderToBeDeleted, sChildFiles[i]).delete();
+                    }
+
+                    if(!fComicFolderToBeDeleted.delete()){
+                        Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
+                                Toast.LENGTH_LONG).show();
+                        return false;
+                    }
+                } catch (Exception e){
+                    Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
+                            Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            } else {
+                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + sComicID + ".",
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
+
+
+
+            //Now attempt to delete the comic record from the CatalogContentsFile:
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+                sFields = sLine.split("\t",-1);
+                if (!(sFields[COMIC_ID_INDEX].equals(sComicID))) {
+                    //If the line is not the comic we are trying to delete, transfer it over:
+                    sbBuffer.append(sLine);
+                    sbBuffer.append("\n");
+
+                }
+
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            //Re-write the CatalogContentsFile without the deleted comic's data record:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+
+            //Now update memory to no longer include the comic:
+            int iKey = -1;
+            for (Map.Entry<Integer, String[]>
+                    CatalogEntry : gvtmCatalogComicList.entrySet()) {
+                String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
+                if( sEntryComicID.contains(sComicID)){
+                    iKey = CatalogEntry.getKey();
+                    break;
+                }
+            }
+            if(iKey >= 0){
+                gvtmCatalogComicList.remove(iKey);
+            }
+
+            gbComicJustDeleted = true;
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+
+
 
 
     //Begin Obfuscation section:

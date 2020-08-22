@@ -114,4 +114,5 @@
     <string name="categories_">Categories</string>
     <string name="pages">Pages:</string>
     <string name="pages_">Pages</string>
+    <string name="delete_comic">Delete Comic</string>
 </resources>

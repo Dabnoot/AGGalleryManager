@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -14,6 +15,7 @@ import com.bumptech.glide.Glide;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -42,7 +44,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
     private GlobalClass globalClass;
 
     private String[] gsComicFields;
-    private TreeMap<Integer, String> tmComicPages;
+    private TreeMap<Integer, String> gtmComicPages;
 
 
 
@@ -92,12 +94,12 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
-        tmComicPages = new TreeMap<>();
+        gtmComicPages = new TreeMap<>();
         if(fComicFolder.exists()){
             File[] fComicPages = fComicFolder.listFiles();
             if(fComicPages != null) {
                 for (int i = 0; i < fComicPages.length; i++) {
-                    tmComicPages.put(i, fComicPages[i].getAbsolutePath());
+                    gtmComicPages.put(i, fComicPages[i].getAbsolutePath());
                 }
             }
         }
@@ -158,8 +160,44 @@ public class ComicDetailsActivity extends AppCompatActivity {
             case R.id.menu_SaveDetails:
                 SaveDetails();
                 return true;
+            case R.id.menu_DeleteComic:
+                DeleteComicPrompt();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void DeleteComicPrompt(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Comic");
+        builder.setMessage("Are you sure you want to delete this comic?");
+        //builder.setIcon(R.drawable.ic_launcher);
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+                DeleteComic();
+
+            }
+        });
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog alert = builder.create();
+        alert.show();
+
+    }
+
+    public void DeleteComic(){
+        gtmComicPages = new TreeMap<>();
+        gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
+        if(globalClass.ComicCatalog_DeleteComic(gsComicFields[GlobalClass.COMIC_ID_INDEX])) {
+            //If comic deletion successful, close the activity. Otherwise remain open so that
+            //  the user can view the toast message.
+            finish();
         }
     }
 
@@ -189,7 +227,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(gridLayoutManager);
 
             View header = LayoutInflater.from(this).inflate(
-                    R.layout.header, recyclerView, false);
+                    R.layout.activity_comic_details_header, recyclerView, false);
             header.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View v) {
@@ -208,7 +246,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         }
 
 
-        gRecyclerViewComicPagesAdapter = new ComicDetailsActivity.RecyclerViewComicPagesAdapter(tmComicPages);
+        gRecyclerViewComicPagesAdapter = new ComicDetailsActivity.RecyclerViewComicPagesAdapter(gtmComicPages);
         recyclerView.setAdapter(gRecyclerViewComicPagesAdapter);
 
         gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
@@ -326,7 +364,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
             if (viewType == ITEM_VIEW_TYPE_HEADER) {
-                View headerView = inflater.inflate(R.layout.header, parent, false);
+                View headerView = inflater.inflate(R.layout.activity_comic_details_header, parent, false);
                 return new ComicDetailsActivity.RecyclerViewComicPagesAdapter.ViewHolder(headerView);
             }
 
@@ -432,7 +470,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
                 }
 
 
-                String sThumbnailFilePath = tmComicPages.get(position);
+                String sThumbnailFilePath = gtmComicPages.get(position);
                 if (sThumbnailFilePath != null) {
                     File fThumbnail = new File(sThumbnailFilePath);
                     if (fThumbnail.exists()) {
@@ -484,7 +522,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         Double dTimeStamp = globalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER};
-        globalClass.CatalogDataFile_UpdateRecord(
+        globalClass.ComicCatalogDataFile_UpdateRecord(
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 iFields,
                 sDateTime);
@@ -692,7 +730,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
             sTemp[i] = sFieldUpdateData.get(i);
         }
 
-        globalClass.CatalogDataFile_UpdateRecord(gsComicFields[GlobalClass.COMIC_ID_INDEX],
+        globalClass.ComicCatalogDataFile_UpdateRecord(gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 iTemp, sTemp);
 
         gmiSaveDetails.setEnabled(false);

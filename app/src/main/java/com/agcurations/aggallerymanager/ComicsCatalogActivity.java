@@ -116,7 +116,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                             try {
                                 fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
 
-                                //Write the header line to the file:
+                                //Write the activity_comic_details_header line to the file:
                                 fwCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
                                 for(int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
                                     fwCatalogContentsFile.append("\t");
@@ -184,7 +184,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 BufferedReader brReader;
                 try {
                     brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-                    brReader.readLine(); //The first line is the header. Skip this line.
+                    brReader.readLine(); //The first line is the activity_comic_details_header. Skip this line.
                     String sLine = brReader.readLine();
                     String[] sFields;
                     int iComicRID = 0;
@@ -220,7 +220,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         }
 
         gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
-
 
         gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
         configure_RecyclerViewComicsCatalog();
@@ -266,7 +265,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 return false;
             }
         });
-
 
 
 
@@ -485,7 +483,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     public final int SORT_ORDER_DESCENDING = 1;
 
     public void SetComicSortOrderDefault(){
-        ChangeComicSortOrder(GlobalClass.COMIC_NAME_INDEX, SORT_ORDER_ASCENDING);
+        ChangeComicSortOrder(GlobalClass.COMIC_TAGS_INDEX, SORT_ORDER_ASCENDING); //TODO, return to default sort.
         gbRecyclerViewFiltered = false;
     }
 
@@ -585,6 +583,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //=====================================================================================
 
     public void StartComicViewerActivity(String[] sFields){
+
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
 
         //intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
@@ -601,6 +600,15 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     @Override
     public void onResume(){
         super.onResume();
+
+        //If we are returning from ComicDetailsActivity after deleting the comic,
+        //  return the sort:
+        if(globalClass.gbComicJustDeleted){
+            SetComicSortOrderDefault();
+            globalClass.gbComicJustDeleted = false;
+        }
+
+
         if(globalClass.ObfuscationOn) {
             //Obfuscate data:
             Obfuscate();
@@ -682,7 +690,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                         try {
                             fwNewCatalogContentsFile = new FileWriter(fNewCatalogContentsFile, true);
 
-                            //Write the header line to the file:
+                            //Write the activity_comic_details_header line to the file:
                             fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
                             for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
                                 fwNewCatalogContentsFile.append("\t");
