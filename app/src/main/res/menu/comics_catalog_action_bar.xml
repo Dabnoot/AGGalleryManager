@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:style="http://schemas.android.com/tools">
+
+    <item
+        android:id="@+id/label_spinner"
+        android:title="Sort by:"
+        android:actionLayout="@layout/comics_action_bar_spinner_label"
+        android:orderInCategory="9"
+        app:showAsAction="ifRoom">
+    </item>
+
+    <item
+        android:id="@+id/spinner_sort"
+        android:title="Sort"
+        android:visible="true"
+        android:orderInCategory="10"
+        app:showAsAction="ifRoom"
+        app:actionViewClass="android.widget.Spinner" />
 
     <item
         android:id="@+id/search_bar"
         android:title="@string/search"
+        android:orderInCategory="20"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="ifRoom|withText"
         />
+
+    <item android:id="@+id/menu_FlipView"
+        android:title="@string/flip_view" />
+
+    <item android:id="@+id/menu_import"
+        android:title="@string/menu_import" />
+
+    <item android:id="@+id/menu_export"
+        android:title="@string/menu_export" />
+
 
 </menu>

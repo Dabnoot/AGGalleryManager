@@ -312,6 +312,9 @@ public class ImportComicsService extends IntentService {
                             String sDateTime = dTimeStamp.toString();
                             sImportComicListRecord[GlobalClass.COMIC_DATETIME_IMPORT] = sDateTime;
                             sImportComicListRecord[GlobalClass.COMIC_SOURCE] = "nHentai.net";
+                            //Must provide a value for the last read by user or there will be an error
+                            //  during interpretation during user-selected sort:
+                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER] = "0";
 
                             WriteLogLine("Found new comic: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".",true);
 
@@ -616,14 +619,19 @@ public class ImportComicsService extends IntentService {
                                         }
                                     }
                                     //Write a record to the CatalogContentsFile:
-
                                     sbCatalogContentRecord = new StringBuilder (sImportComicListRecord[0]);
                                     for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++){
                                         sbCatalogContentRecord.append("\t");
                                         sbCatalogContentRecord.append(sImportComicListRecord[i]);
                                     }
+
                                     sbCatalogContentRecord.append("\n");
                                     fwCatalogContentsFile.append(sbCatalogContentRecord.toString());
+
+                                    //Add the record to the global memory memory treemap:
+                                    globalClass.gvtmCatalogComicList.put(
+                                            globalClass.gvtmCatalogComicList.size(),
+                                            sImportComicListRecord);
                                 }
 
                             }

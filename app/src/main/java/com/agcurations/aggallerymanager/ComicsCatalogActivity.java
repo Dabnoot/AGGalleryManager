@@ -21,7 +21,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,6 +51,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     private boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
+
+    private int giComicSortOrderDefault = GlobalClass.COMIC_TAGS_INDEX;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -231,9 +236,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.comics_catalog_menu, menu);
         getMenuInflater().inflate(R.menu.comics_catalog_action_bar, menu);
-
 
         // Initialise menu item search bar with id and take its object
         //https://www.geeksforgeeks.org/android-searchview-with-example/
@@ -267,11 +270,42 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         });
 
 
+        //Configure the 'Sort by' selection spinner:
+        MenuItem miSpinnerSort=menu.findItem(R.id.spinner_sort);
+        Spinner spinnerSort =(Spinner) miSpinnerSort.getActionView();
+        String[] items={"Missing tags","Import Date","Last Read Date"};
+        //wrap the items in the Adapter
+        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this,R.layout.comics_action_bar_spinner_item,items);
+        //assign adapter to the Spinner
+        spinnerSort.setAdapter(adapter);
+        spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                // your code here
+                String sSelectedItemText = parentView.getItemAtPosition(position).toString();
+                if(sSelectedItemText.contains("Missing tags")){
+                    giComicSortOrderDefault = GlobalClass.COMIC_TAGS_INDEX;
+                } else if(sSelectedItemText.contains("Import Date")) {
+                    giComicSortOrderDefault = GlobalClass.COMIC_DATETIME_IMPORT;
+                } else if(sSelectedItemText.contains("Last Read Date")) {
+                    giComicSortOrderDefault = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER;
+                }
+                SetComicSortOrderDefault();
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // your code here
+            }
+
+        });
 
 
         return super.onCreateOptionsMenu(menu);
     }
+
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -483,8 +517,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     public final int SORT_ORDER_DESCENDING = 1;
 
     public void SetComicSortOrderDefault(){
-        ChangeComicSortOrder(GlobalClass.COMIC_TAGS_INDEX, SORT_ORDER_ASCENDING); //TODO, return to default sort.
-        gbRecyclerViewFiltered = false;
+        ChangeComicSortOrder(giComicSortOrderDefault, SORT_ORDER_ASCENDING); //TODO, return to default sort.
+        gbRecyclerViewFiltered = false;  //Removes filtering.
     }
 
     public void ChangeComicSortOrder(int iField, int iOrder){
@@ -497,7 +531,30 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         TreeMap<Integer, String[]> tmCatalogComicList;
         tmCatalogComicList = globalClass.getCatalogComicList();
         String[] sComicListRecord;
-        String sKey;
+        String sKey = "";
+
+        //If the user has selected 'Sort by last read date', get the oldest read date and apply
+        //  that date plus one day to any comic that has a "zero" for the last read date.
+        String sTemp;
+        double dDateTimeValue = 0d;
+        Double dTemp = 0d;
+        if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER) {
+            for (Map.Entry<Integer, String[]>
+                    entry : tmCatalogComicList.entrySet()) {
+                sComicListRecord = entry.getValue();
+                sTemp = sComicListRecord[iField];
+                try {
+                    dTemp = Double.parseDouble(sTemp);
+                }catch (Exception e){
+                    String s = e.getMessage();
+                    Toast.makeText(this, "Trouble with sort by datetime read by user.\n" + s, Toast.LENGTH_LONG).show();
+                }
+                if (dTemp < dDateTimeValue) dDateTimeValue = dTemp;
+            }
+        }  //if sort by last read datetime, finished getting oldest date.
+
+
+
         for (Map.Entry<Integer, String[]>
                 entry : tmCatalogComicList.entrySet()) {
             sComicListRecord = entry.getValue();
@@ -506,9 +563,31 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             //  could be 0, duplicated. There cannot be duplicate keys.
             //  The user might also decide to sort by # of pages, for which there might
             //  be duplicates.
-            sKey = sComicListRecord[iField] + sComicListRecord[GlobalClass.COMIC_ID_INDEX];
+            sKey = sComicListRecord[iField];
+            if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER) {
+                if (Double.parseDouble(sKey) == 0d){
+                    dTemp = dDateTimeValue - 1.0d;
+                    sKey = dTemp.toString();
+                }
+            }
+            sKey = sKey + sComicListRecord[GlobalClass.COMIC_ID_INDEX];
             treeMapPreSort.put(sKey, sComicListRecord);
         }
+
+        //Review the sort (for debugging purposes):
+        for (Map.Entry<String, String[]>
+                entry : treeMapPreSort.entrySet()) {
+            sComicListRecord = entry.getValue();
+            sKey = entry.getKey();
+            Log.d("ComicsCatalogActivity", "ChangeComicSortOrder: " +
+                    sComicListRecord[GlobalClass.COMIC_ID_INDEX] + ": " +
+                    sKey + ", " +
+                    sComicListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER]);
+        }
+
+
+
+
 
         //Treemap presort will auto-sort itself.
 
