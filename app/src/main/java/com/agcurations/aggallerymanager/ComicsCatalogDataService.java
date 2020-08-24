@@ -92,11 +92,9 @@ public class ComicsCatalogDataService extends IntentService {
             if (fAvailableDirs.length == 2) {
                 //Create the folder on the likely SDCard:
                 fCatalogComicsFolder = new File(fAvailableDirs[1] + File.separator + "Comics");
-                Toast.makeText(this, "Using SD Card.", Toast.LENGTH_SHORT).show();
             }else{
                 //Create the folder on the likely Internal storage.
                 fCatalogComicsFolder = new File(fAvailableDirs[1] + File.separator + "Comics");
-                Toast.makeText(this, "Using internal storage.", Toast.LENGTH_SHORT).show();
             }
 
             if(!fCatalogComicsFolder.exists()) {
@@ -232,7 +230,7 @@ public class ComicsCatalogDataService extends IntentService {
     void problemNotificationConfig(String sMessage){
         broadcastIntent_LoadComicCatalogResponse.putExtra(EXTRA_BOOL_DATA_IMPORT_PROBLEM, true);
         broadcastIntent_LoadComicCatalogResponse.putExtra(EXTRA_STRING_DATA_IMPORT_PROBLEM, sMessage);
-        Toast.makeText(this, sMessage, Toast.LENGTH_LONG).show();
+
     }
 
 }

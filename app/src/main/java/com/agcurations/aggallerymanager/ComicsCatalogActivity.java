@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.NonNull;
 
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -249,17 +250,23 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            boolean 	bCatalogDataChange;
+            boolean bCatalogDataChange;
+            boolean bError;
 
-            //Get booleans from the intent telling us what to update:
+            //Get boolean indicating data acquisition was successful:
             bCatalogDataChange = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_CATALOG_DATA_CHANGE,false);
-
             if( bCatalogDataChange) {
                 //Update TextView to show 0 comics if applicable:
                 notifyZeroComicsIfApplicable();
                 gRecyclerViewComicsAdapter.notifyDataSetChanged();
             }
 
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(ComicsCatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            }
 
 
         }
