@@ -37,7 +37,7 @@ public class ExportComicsActivity extends AppCompatActivity {
     private static final String LOG_TAG = "ExportComicsActivity";
 
     //Global Variables:
-    private ExportComicsActivity.ExportResponseReceiver exportResponseReceiver;
+    private ExportResponseReceiver exportResponseReceiver;
     Intent gIntentExport;
     TextView gtvExportLog;
     ProgressBar gpbExportDeterminateBar;
@@ -103,9 +103,9 @@ public class ExportComicsActivity extends AppCompatActivity {
         tvCatalogSize.setText(s);
 
 
-        IntentFilter filter = new IntentFilter(ExportComicsActivity.ExportResponseReceiver.EXPORT_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(ExportResponseReceiver.EXPORT_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        exportResponseReceiver = new ExportComicsActivity.ExportResponseReceiver();
+        exportResponseReceiver = new ExportResponseReceiver();
         registerReceiver(exportResponseReceiver, filter);
 
     }

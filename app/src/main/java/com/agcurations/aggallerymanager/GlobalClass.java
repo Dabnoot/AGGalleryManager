@@ -20,10 +20,11 @@ public class GlobalClass extends Application {
     //https://androidexample.com/Global_Variable_Or_Application_Context_Variable_-_Android_Example/index.php?view=article_discription&aid=114&aaid=136
 
     //Global Variables:
+    public boolean gbSkipComicCatalogReload;
     private File gvfCatalogComicsFolder;
     private File gvfLogsFolder;
     private File gvfCatalogContentsFile; //CatalogContentsFile record fields: ComicID, ComicName, MaxPageID, MissingPages, ComicSize (in kB)
-    TreeMap<Integer, String[]> gvtmCatalogComicList;
+    TreeMap<Integer, String[]> gvtmCatalogComicList = new TreeMap<>();
     public int gviComicSortOrderDefault = COMIC_TAGS_INDEX;
     public boolean gvbComicSortAscending = true;
 

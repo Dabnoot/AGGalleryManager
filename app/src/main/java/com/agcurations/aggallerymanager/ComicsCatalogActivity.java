@@ -8,8 +8,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.NonNull;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -46,11 +48,12 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     //Global Variables:
     private GlobalClass globalClass;
-    private String gsComicFolder_AbsolutePath;
     private RecyclerView.Adapter<RecyclerViewComicsAdapter.ViewHolder> gRecyclerViewComicsAdapter;
     private boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
+
+    private CCDataServiceResponseReceiver ccDataServiceResponseReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,168 +72,51 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             setTitle(globalClass.getNonObfuscatedProgramName());
         }
 
-        File fCatalogComicsFolder;
-        File fCatalogContentsFile;
-        File fLogsFolder;
 
-        String sExternalStorageState;
-        sExternalStorageState = Environment.getExternalStorageState();
-        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
-
-            // Get the NHComicManager directory that's inside the app-specific directory on
-            // external storage, or create it.
-            boolean bFolderOk = false ;
-
-            File[] fAvailableDirs = getExternalFilesDirs(null);
-            if (fAvailableDirs.length == 2) {
-                //Create the folder on the likely SDCard:
-                fCatalogComicsFolder = new File(fAvailableDirs[1] + File.separator + "Comics");
-                Toast.makeText(this, "Using SD Card.", Toast.LENGTH_SHORT).show();
-            }else{
-                //Create the folder on the likely Internal storage.
-                fCatalogComicsFolder = new File(fAvailableDirs[1] + File.separator + "Comics");
-                Toast.makeText(this, "Using internal storage.", Toast.LENGTH_SHORT).show();
-            }
-
-            if(!fCatalogComicsFolder.exists()) {
-                if (fCatalogComicsFolder.mkdirs()) {
-                    bFolderOk = true;
-                }
-            }else{
-                bFolderOk = true;
-            }
-
-            if (!bFolderOk) {
-                //If the catalog folder does not exist and cannot be created:
-                Log.e(LOG_TAG, "Directory not created");
-                TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
-                tvCatalogStatus.setText(R.string.no_catalog_location);
-            } else {
-
-                //Set the global variable holding the catalog comics folder:
-                globalClass.setCatalogComicsFolder(fCatalogComicsFolder);
-
-                //Look for the catalog status file:
-                fCatalogContentsFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents.dat");
-                if (!fCatalogContentsFile.exists()){
-                    try {
-                        if(fCatalogContentsFile.createNewFile()) {
-                            FileWriter fwCatalogContentsFile = null;
-                            try {
-                                fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
-
-                                //Write the activity_comic_details_header line to the file:
-                                fwCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
-                                for(int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
-                                    fwCatalogContentsFile.append("\t");
-                                    fwCatalogContentsFile.append("GlobalClass.ComicRecordFields[i]");
-                                }
-                                fwCatalogContentsFile.append("\n");
-
-                            } catch (Exception e) {
-                                Toast.makeText(this, "Problem during CatalogContentsFile write.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-                            } finally {
-                                try {
-                                    if (fwCatalogContentsFile != null) {
-                                        fwCatalogContentsFile.flush();
-                                        fwCatalogContentsFile.close();
-                                    }
-                                } catch (IOException e) {
-                                    Toast.makeText(this, "Problem during CatalogContentsFile flush/close.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-                                }
-                            }
-                        } else {
-                            Toast.makeText(this, "Could not create CatalogContents.dat at" + fCatalogComicsFolder.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                        }
-                    }catch (IOException e){
-                        Toast.makeText(this, "Could not create CatalogContents.dat at" + fCatalogComicsFolder.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                    }
-                }
-                if(fCatalogContentsFile.exists()){
-                    //If the catalog contents file exists, set the global variable:
-                    globalClass.setCatalogContentsFile(fCatalogContentsFile);
-
-                    /*//Process any modifications to the CatalogContentsFile:
-                    String[] sNewFields = new String[]{
-                            "COMIC_SOURCE",
-                            "COMIC_DATETIME_LAST_READ_BY_USER",
-                            "COMIC_DATETIME_IMPORT"
-                    };
-                    Catalog_data_file_add_fields(sNewFields,1);
-*/
-                    /*int[] iFields = new int[]{
-                            GlobalClass.COMIC_DATETIME_IMPORT
-                    };
-
-                    String[] sUpdateData = new String[]{
-                            "0"
-                    };
-                    globalClass.CatalogDataFile_UpdateAllRecords(iFields,sUpdateData);*/
-
-                }
-
-                //Look for the Logs folder. If it does not exist, create it.
-                fLogsFolder = new File(fCatalogComicsFolder + File.separator + "Logs");
-                if(!fLogsFolder.exists()) {
-                    if(!fLogsFolder.mkdirs()){
-                        Toast.makeText(this, "Could not create log folder at" + fLogsFolder.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                    }
-                }
-                if(fLogsFolder.exists()) {
-                    globalClass.setLogsFolder(fLogsFolder);
-                }
-
-                //Build the internal list of comics:
-                TreeMap<Integer, String[]> tmCatalogComicList = new TreeMap<>();
-
-                //Read the list of comics and populate the catalog array:
-                BufferedReader brReader;
-                try {
-                    brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-                    brReader.readLine(); //The first line is the activity_comic_details_header. Skip this line.
-                    String sLine = brReader.readLine();
-                    String[] sFields;
-                    int iComicRID = 0;
-                    while (sLine != null) {
-                        //Split the line read from the contents file with the delimiter of TAB:
-                        sFields = sLine.split("\t",-1);
-                        tmCatalogComicList.put(iComicRID, sFields);
-
-                        // read next line
-                        sLine = brReader.readLine();
-                        iComicRID++;
-                    }
-                    brReader.close();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(this, "Trouble reading CatalogContents.dat at" + fCatalogComicsFolder.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                }
-
-                //Update main activity view to include the listing of the comics.
-                TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
-                if (tmCatalogComicList.size() <= 0 ) {
-                    tvCatalogStatus.setVisibility(View.VISIBLE);
-                    String s = "Catalog contains " + tmCatalogComicList.size() + " comics.";
-                    tvCatalogStatus.setText(s);
-                } else {
-                    tvCatalogStatus.setVisibility(View.INVISIBLE);
-                }
-
-                //Set the global variable holding the comic list:
-                globalClass.setCatalogComicList(tmCatalogComicList);
-            }
-        }
-
-        gsComicFolder_AbsolutePath = globalClass.getCatalogComicsFolder().getAbsolutePath();
+        //Update TextView to show 0 comics if applicable:
+        notifyZeroComicsIfApplicable();
 
         gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
         configure_RecyclerViewComicsCatalog();
         SetComicSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
 
+        if(!globalClass.gbSkipComicCatalogReload) { //If the 'skip reload' boolean is not set...
+            //This prevents reloading comic catalog data from storage if not requested to do so,
+            //  but allows it when run for the first time.
+
+
+
+            //Configure a response receiver to listen for updates from the Comics Catalog (CC) Data Service:
+            IntentFilter filter = new IntentFilter(CCDataServiceResponseReceiver.CCDATA_SERVICE_ACTION_RESPONSE);
+            filter.addCategory(Intent.CATEGORY_DEFAULT);
+            ccDataServiceResponseReceiver = new CCDataServiceResponseReceiver();
+            registerReceiver(ccDataServiceResponseReceiver, filter);
+
+            //Call the CC Data Service, which will create a call to a service:
+            ComicsCatalogDataService.startActionLoadComicsCatalog(this);
+
+            //Set the 'skip reload' boolean so that we don't come here and reload data from storage
+            //  everytime we return to this activity:
+            globalClass.gbSkipComicCatalogReload = true;
+        }
+
+
+
     }
 
+    public void notifyZeroComicsIfApplicable(){
 
+        //Update TextView to show 0 comics if applicable:
+        TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
+        if (globalClass.gvtmCatalogComicList.size() == 0 ) {
+            tvCatalogStatus.setVisibility(View.VISIBLE);
+            String s = "Catalog contains 0 comics.";
+            tvCatalogStatus.setText(s);
+        } else {
+            tvCatalogStatus.setVisibility(View.INVISIBLE);
+        }
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -275,7 +161,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         Spinner spinnerSort =(Spinner) miSpinnerSort.getActionView();
         String[] items={"Missing tags","Import Date","Last Read Date"};
         //wrap the items in the Adapter
-        ArrayAdapter<String> adapter=new ArrayAdapter<String>(this,R.layout.comics_action_bar_spinner_item,items);
+        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,R.layout.comics_action_bar_spinner_item,items);
         //assign adapter to the Spinner
         spinnerSort.setAdapter(adapter);
         spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -300,9 +186,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         return super.onCreateOptionsMenu(menu);
     }
-
-
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -359,7 +242,28 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     }
 
+    public class CCDataServiceResponseReceiver extends BroadcastReceiver {
+        //CCDataService = Comics Catalog Data Service
+        public static final String CCDATA_SERVICE_ACTION_RESPONSE = "com.dabnoot.intent.action.FROM_CCDATA_SERVICE";
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean 	bCatalogDataChange;
+
+            //Get booleans from the intent telling us what to update:
+            bCatalogDataChange = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_CATALOG_DATA_CHANGE,false);
+
+            if( bCatalogDataChange) {
+                //Update TextView to show 0 comics if applicable:
+                notifyZeroComicsIfApplicable();
+                gRecyclerViewComicsAdapter.notifyDataSetChanged();
+            }
+
+
+
+        }
+    }
 
     //=====================================================================================
     //===== RecyclerView Code =================================================================
@@ -469,7 +373,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = gsComicFolder_AbsolutePath + File.separator
+                String sThumbnailFilePath = globalClass.getCatalogComicsFolder().getAbsolutePath()
+                        + File.separator
                         + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
                         + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];
                 File fThumbnail = new File(sThumbnailFilePath);
