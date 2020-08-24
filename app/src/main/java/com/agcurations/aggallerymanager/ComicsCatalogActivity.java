@@ -52,8 +52,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
 
-    private int giComicSortOrderDefault = GlobalClass.COMIC_TAGS_INDEX;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
@@ -236,6 +234,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
+
         getMenuInflater().inflate(R.menu.comics_catalog_action_bar, menu);
 
         // Initialise menu item search bar with id and take its object
@@ -284,22 +284,19 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 // your code here
                 String sSelectedItemText = parentView.getItemAtPosition(position).toString();
                 if(sSelectedItemText.contains("Missing tags")){
-                    giComicSortOrderDefault = GlobalClass.COMIC_TAGS_INDEX;
+                    globalClass.gviComicSortOrderDefault = GlobalClass.COMIC_TAGS_INDEX;
                 } else if(sSelectedItemText.contains("Import Date")) {
-                    giComicSortOrderDefault = GlobalClass.COMIC_DATETIME_IMPORT;
+                    globalClass.gviComicSortOrderDefault = GlobalClass.COMIC_DATETIME_IMPORT;
                 } else if(sSelectedItemText.contains("Last Read Date")) {
-                    giComicSortOrderDefault = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER;
+                    globalClass.gviComicSortOrderDefault = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER;
                 }
                 SetComicSortOrderDefault();
             }
-
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
-                // your code here
+                // no need to code here
             }
-
         });
-
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -312,6 +309,17 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Display a message showing the name of the item selected.
         //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
         switch (item.getItemId()) {
+
+            case R.id.icon_sort_order:
+                if( globalClass.gvbComicSortAscending) {
+                    item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
+                    globalClass.gvbComicSortAscending = false;
+                } else {
+                    item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
+                    globalClass.gvbComicSortAscending = true;
+                }
+                ApplyComicSortOrder();
+                return true;
 
             case R.id.menu_import:
                 Intent intentImport = new Intent(this, ImportComicsActivity.class);
@@ -513,15 +521,12 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         gRecyclerView.setAdapter(gRecyclerViewComicsAdapter);
     }
 
-    public final int SORT_ORDER_ASCENDING = 0;
-    public final int SORT_ORDER_DESCENDING = 1;
-
     public void SetComicSortOrderDefault(){
-        ChangeComicSortOrder(giComicSortOrderDefault, SORT_ORDER_ASCENDING); //TODO, return to default sort.
+        ChangeComicSortField(globalClass.gviComicSortOrderDefault); //TODO, return to default sort.
         gbRecyclerViewFiltered = false;  //Removes filtering.
     }
 
-    public void ChangeComicSortOrder(int iField, int iOrder){
+    public void ChangeComicSortField(int iField){
 
         //Create new TreeMap to presort the comics:
         TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Comic data
@@ -575,7 +580,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         }
 
         //Review the sort (for debugging purposes):
-        for (Map.Entry<String, String[]>
+        /*for (Map.Entry<String, String[]>
                 entry : treeMapPreSort.entrySet()) {
             sComicListRecord = entry.getValue();
             sKey = entry.getKey();
@@ -583,10 +588,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                     sComicListRecord[GlobalClass.COMIC_ID_INDEX] + ": " +
                     sKey + ", " +
                     sComicListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER]);
-        }
-
-
-
+        }*/
 
 
         //Treemap presort will auto-sort itself.
@@ -594,12 +596,12 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Delete everything out of the old TreeMap, and re-populate it with the new sort order:
         TreeMap<Integer, String[]> tmNewOrderCatalogComicList = new TreeMap<>();
         int iComicRID, iIterator;
-        if(iOrder == SORT_ORDER_DESCENDING){
-            iComicRID = treeMapPreSort.size();
-            iIterator = -1;
-        } else {
+        if(globalClass.gvbComicSortAscending){
             iComicRID = 0;
             iIterator = 1;
+        } else {
+            iComicRID = treeMapPreSort.size();
+            iIterator = -1;
         }
 
         for (Map.Entry<String, String[]>
@@ -611,6 +613,39 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
         populate_RecyclerViewComicsCatalog(tmNewOrderCatalogComicList);
+    }
+
+    public void ApplyComicSortOrder(){
+
+        //Create new TreeMap to presort the comics:
+        TreeMap<Integer, String[]> treeMapNewSortOrder; //String = field being sorted, String = Comic data
+        treeMapNewSortOrder = new TreeMap<>();
+
+        //Get existing data and load elements into the presorter:
+        TreeMap<Integer, String[]> tmCatalogComicList;
+        tmCatalogComicList = globalClass.getCatalogComicList();
+        String[] sComicListRecord;
+        Integer iKey, iIterator;
+
+        if(globalClass.gvbComicSortAscending){
+            iKey = 0;
+            iIterator = 1;
+        } else {
+            iKey = tmCatalogComicList.size();
+            iIterator = -1;
+        }
+
+
+        //Reverse the sort of the catalog:
+        for (Map.Entry<Integer, String[]>
+                entry : tmCatalogComicList.entrySet()) {
+            sComicListRecord = entry.getValue();
+            treeMapNewSortOrder.put(iKey, sComicListRecord);
+            iKey = iKey + iIterator;
+        }
+
+        //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
+        populate_RecyclerViewComicsCatalog(treeMapNewSortOrder);
     }
 
     public void ComicsCatalogFilter(boolean bFilterOn, String sFilterText){

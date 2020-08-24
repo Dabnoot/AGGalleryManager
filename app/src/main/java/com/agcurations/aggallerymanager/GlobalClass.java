@@ -24,6 +24,8 @@ public class GlobalClass extends Application {
     private File gvfLogsFolder;
     private File gvfCatalogContentsFile; //CatalogContentsFile record fields: ComicID, ComicName, MaxPageID, MissingPages, ComicSize (in kB)
     TreeMap<Integer, String[]> gvtmCatalogComicList;
+    public int gviComicSortOrderDefault = COMIC_TAGS_INDEX;
+    public boolean gvbComicSortAscending = true;
 
     public String[] gvSelectedComic;
 

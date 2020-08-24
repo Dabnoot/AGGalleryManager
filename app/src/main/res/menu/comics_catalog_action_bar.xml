@@ -20,6 +20,15 @@
         app:actionViewClass="android.widget.Spinner" />
 
     <item
+        android:id="@+id/icon_sort_order"
+        android:title="sort_order"
+        android:icon="@drawable/baseline_sort_ascending_white_18dp"
+        android:orderInCategory="15"
+        app:showAsAction="ifRoom"
+        />
+
+
+    <item
         android:id="@+id/search_bar"
         android:title="@string/search"
         android:orderInCategory="20"
