@@ -1,7 +1,9 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.util.Xml;
 
 import org.htmlcleaner.CleanerProperties;

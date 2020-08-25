@@ -4,6 +4,9 @@ package com.agcurations.aggallerymanager;
 
 import android.app.Application;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkRequest;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -29,6 +32,47 @@ public class GlobalClass extends Application {
     public boolean gvbComicSortAscending = true;
 
     public String[] gvSelectedComic;
+
+
+    //=====================================================================================
+    //===== Start Network Monitoring Section ==============================================
+    //=====================================================================================
+    public static boolean isNetworkConnected = false;
+    public ConnectivityManager connectivityManager;
+    // Network Check
+    public void registerNetworkCallback()
+    {
+        try {
+            connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkRequest.Builder builder = new NetworkRequest.Builder();
+
+            connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback(){
+                                                                   @Override
+                                                                   public void onAvailable(Network network) {
+                                                                       isNetworkConnected = true; // Global Static Variable
+                                                                   }
+                                                                   @Override
+                                                                   public void onLost(Network network) {
+                                                                       isNetworkConnected = false; // Global Static Variable
+                                                                   }
+                                                               }
+
+            );
+            isNetworkConnected = false;
+        }catch (Exception e){
+            isNetworkConnected = false;
+        }
+    }
+
+    //User-set option:
+    public boolean bAutoDownloadOn = true; //By default, auto-download details is on.
+      //This uses little network resource because we are just getting html data.
+
+
+    //=====================================================================================
+    //===== End Network Monitoring ============================================================
+    //=====================================================================================
+
 
     public long AvailableStorageSpace(Context c, Integer iDevice) {
         //Returns space available in kB.
@@ -504,7 +548,6 @@ public class GlobalClass extends Application {
 
     public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-
 
 
 

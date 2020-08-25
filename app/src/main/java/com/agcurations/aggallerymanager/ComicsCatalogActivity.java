@@ -16,6 +16,7 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -85,8 +86,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             //This prevents reloading comic catalog data from storage if not requested to do so,
             //  but allows it when run for the first time.
 
-
-
             //Configure a response receiver to listen for updates from the Comics Catalog (CC) Data Service:
             IntentFilter filter = new IntentFilter(CCDataServiceResponseReceiver.CCDATA_SERVICE_ACTION_RESPONSE);
             filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -101,6 +100,12 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             globalClass.gbSkipComicCatalogReload = true;
         }
 
+
+        if(globalClass.connectivityManager == null){
+            globalClass.registerNetworkCallback();
+              //This lets us check globalClass.isNetworkConnected to see if we are connected to the
+                //network;
+        }
 
 
     }

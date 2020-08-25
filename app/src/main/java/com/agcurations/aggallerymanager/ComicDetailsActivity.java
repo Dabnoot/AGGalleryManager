@@ -9,6 +9,8 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkRequest;
 import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
@@ -104,11 +106,6 @@ public class ComicDetailsActivity extends AppCompatActivity {
             }
         }
 
-
-
-
-
-
         populate_RecyclerViewComicPages();
 
         if(globalClass.ObfuscationOn) {
@@ -117,16 +114,10 @@ public class ComicDetailsActivity extends AppCompatActivity {
             RemoveObfuscation();
         }
 
-
-
         IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         gComicDetailsResponseReceiver = new ComicDetailsActivity.ComicDetailsResponseReceiver();
         registerReceiver(gComicDetailsResponseReceiver, filter);
-
-
-
-
 
 
     }
@@ -137,10 +128,12 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gmiGetOnlineData = menu.findItem(R.id.menu_GetOnlineData);
         gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
 
-        if(gsComicFields[GlobalClass.COMIC_TAGS_INDEX].equals("")){
-            //If there is no tag data, automatically go out and try to get it.
-            gbAutoAcquireData = true;
-            SyncOnlineData();
+        if(globalClass.bAutoDownloadOn) {
+            if (gsComicFields[GlobalClass.COMIC_TAGS_INDEX].equals("")) {
+                //If there is no tag data, automatically go out and try to get it.
+                gbAutoAcquireData = true;
+                SyncOnlineData();
+            }
         }
 
         return true;
@@ -258,7 +251,6 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
 
     }
-
 
     public class RecyclerViewComicPagesAdapter extends RecyclerView.Adapter<ComicDetailsActivity.RecyclerViewComicPagesAdapter.ViewHolder> {
 
@@ -584,18 +576,25 @@ public class ComicDetailsActivity extends AppCompatActivity {
     //===== Data Update Code =================================================================
     //=====================================================================================
 
+
     public void SyncOnlineData(){
-        Intent intentGetComicDetails;
 
-        intentGetComicDetails = new Intent(this, ComicDetailsDataService.class);
-        intentGetComicDetails.putExtra(ComicDetailsDataService.COMIC_DETAILS_COMIC_ID,
-                                       gsComicFields[GlobalClass.COMIC_ID_INDEX]);
+        if(GlobalClass.isNetworkConnected) {
 
-        gmiGetOnlineData.setEnabled(false);
+            Intent intentGetComicDetails;
 
-        Toast.makeText(getApplicationContext(), "Getting online data...", Toast.LENGTH_LONG).show();
+            intentGetComicDetails = new Intent(this, ComicDetailsDataService.class);
+            intentGetComicDetails.putExtra(ComicDetailsDataService.COMIC_DETAILS_COMIC_ID,
+                    gsComicFields[GlobalClass.COMIC_ID_INDEX]);
 
-        startService(intentGetComicDetails);
+            gmiGetOnlineData.setEnabled(false);
+
+            Toast.makeText(getApplicationContext(), "Getting online data...", Toast.LENGTH_LONG).show();
+
+            startService(intentGetComicDetails);
+        } else {
+            Toast.makeText(getApplicationContext(), "No network connected.", Toast.LENGTH_LONG).show();
+        }
     }
 
     public class ComicDetailsResponseReceiver extends BroadcastReceiver {
