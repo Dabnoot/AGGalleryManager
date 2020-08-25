@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
-import android.widget.Toast;
 
 import java.io.Closeable;
 import java.io.File;
@@ -35,7 +34,7 @@ public class ImportComicsService extends IntentService {
     //Global Variables:
     Uri guriImportUri;
     private FileWriter gfwImportLogFile;
-    private boolean bLogWriterErrorAcknowledged = false;
+    private boolean bLogWriterErrorReported = false;
 
     private GlobalClass globalClass;
 
@@ -54,7 +53,11 @@ public class ImportComicsService extends IntentService {
         try {
             gfwImportLogFile = new FileWriter(fImportLog, true);
         } catch (Exception e){
-            Toast.makeText(this, "Problem creating log file to record Import.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            String s = "Problem creating log file to record Import.\n" + e.getMessage();
+            BroadcastProgress(true, s,
+                    false, 0,
+                    false, "");
+
         }
 
         //Get the Uri for the import object from the intent:
@@ -105,25 +108,28 @@ public class ImportComicsService extends IntentService {
 
 
     public void WriteLogLine(String sLine, boolean bBroadcastLogLine){
+        String s = "";
         try {
             //Create a timestamp for the log line:
-            String s = globalClass.GetTimeStampReadReady() + ": " + sLine + "\n";
+            s = globalClass.GetTimeStampReadReady() + ": " + sLine + "\n";
             gfwImportLogFile.append(s);
 
-            //Broadcast the log update back to the ImportComicsActivity?
-            if(bBroadcastLogLine){
-                BroadcastProgress(true, s,
-                        false, 0,
-                        false, "");
-            }
-
         } catch (Exception e){
-            if(!bLogWriterErrorAcknowledged) { //Don't keep repeating the error for each time we attempt to write a line during operations.
-                Toast.makeText(this, "Problem writing to log file to record Import.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-                bLogWriterErrorAcknowledged = true;
+            if(!bLogWriterErrorReported) { //Don't keep repeating the error for each time we attempt to write a line during operations.
+                s = "Problem writing to log file to record Import.\n" + e.getMessage();
+                bBroadcastLogLine = true;
+                bLogWriterErrorReported = true;
             }
-
         }
+
+        //Broadcast the log update back to the ImportComicsActivity?
+        if(bBroadcastLogLine){
+            BroadcastProgress(true, s,
+                    false, 0,
+                    false, "");
+        }
+
+
     }
 
     public void Import_Operation_Process_File_List(){
@@ -612,7 +618,6 @@ public class ImportComicsService extends IntentService {
 
 
                                             } catch (Exception e) {
-                                                Toast.makeText(this, "Problem during file move.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
                                                 WriteLogLine("Problem during file move.\n" + e.getMessage(),true);
                                             }
 
@@ -642,7 +647,6 @@ public class ImportComicsService extends IntentService {
 
 
                     } catch (Exception e){
-                        Toast.makeText(this, "Problem during file move.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
                         WriteLogLine("Problem during file move.\n" + e.getMessage(),true);
                     } finally {
                         try {
@@ -651,7 +655,6 @@ public class ImportComicsService extends IntentService {
                                 fwCatalogContentsFile.close();
                             }
                         } catch (IOException e) {
-                            Toast.makeText(this, "Problem during CatalogContentsFile flush/close.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
                             WriteLogLine("Problem during CatalogContentsFile flush/close.\n" + e.getMessage(),true);
                         }
                     }
@@ -662,16 +665,13 @@ public class ImportComicsService extends IntentService {
 
                 } else {
                     WriteLogLine( "Insufficient space, " + lSizeKB + " KB, in storage to move " + lSpaceRequiredKB + " KB of comic files.",true);
-                    Toast.makeText(this, "Insufficient space, " + lSizeKB + " KB, in storage to move " + lSpaceRequiredKB + " KB of comic files.", Toast.LENGTH_LONG).show();
                 }
 
             } else {
                 WriteLogLine( "No comics detected for import.",true);
-                Toast.makeText(this, "No comics detected for import.", Toast.LENGTH_LONG).show();
             }
         } catch (Exception e) {
             WriteLogLine( "Exception during import. Import aborted. " + e.getMessage(),true);
-            Toast.makeText(this, "Exception during import. Import aborted. " + e.getMessage(), Toast.LENGTH_LONG).show();
         } finally {
             closeQuietly(cImport);
             WriteLogLine( "Comic import operation complete.",true);
