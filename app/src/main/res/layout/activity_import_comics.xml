@@ -12,7 +12,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/comic_import"
-        android:textColor="@color/colorGrey1"
         android:textSize="30sp"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
@@ -37,15 +36,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="@string/import_from_folder"
-            android:textColor="@color/colorGrey1"/>
+            android:text="@string/import_from_folder"/>
 
         <RadioButton
             android:id="@+id/radioButton_ImportBackupZip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/import_from_backup"
-            android:textColor="@color/colorGrey1"
             android:layout_marginStart="10dp"
              />
     </RadioGroup>
@@ -59,6 +56,7 @@
         android:layout_marginEnd="15dp"
         android:onClick="selectImportFile"
         android:text="@string/select_input"
+        android:textColor="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/radioButtonGroup_ImportType" />
@@ -71,7 +69,6 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="5dp"
         android:text="@string/import_path"
-        android:textColor="@color/colorGrey1"
         app:layout_constraintEnd_toStartOf="@+id/textView_ImportPath"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_SelectInput" />
@@ -84,7 +81,6 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:text=""
-        android:textColor="@color/colorGrey1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/textView_ImportPathLabel"
         app:layout_constraintTop_toBottomOf="@+id/button_SelectInput" />
@@ -126,7 +122,6 @@
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
         android:gravity="bottom"
-        android:textColor="@color/colorGrey1"
         android:scrollbars="vertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/determinateBar_Import"

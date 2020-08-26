@@ -13,7 +13,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/text_margin"
-        android:textColor="@color/colorGrey1"
         android:textSize="18sp"
         android:text="@string/large_text" />
 

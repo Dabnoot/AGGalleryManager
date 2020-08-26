@@ -38,7 +38,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginEnd="15dp"
                 android:text="@string/comic_title"
-                android:textColor="@color/colorGrey1"
                 android:textSize="28sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -51,7 +50,6 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginStart="15dp"
                 android:text="@string/comic_id"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/TextView_ThumbnailText" />
@@ -62,7 +60,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/comicid"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelComicID"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelComicID" />
@@ -74,7 +71,6 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginStart="15dp"
                 android:text="@string/parodies"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_ComicID" />
@@ -97,7 +93,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/characters"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Parodies" />
@@ -108,7 +103,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/characters_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelCharacters"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelCharacters" />
@@ -120,7 +114,6 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginStart="15dp"
                 android:text="@string/tags"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Characters" />
@@ -132,7 +125,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginEnd="15dp"
                 android:text="@string/tags_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelTags"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelTags"
@@ -145,7 +137,6 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginStart="15dp"
                 android:text="@string/artists"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Tags" />
@@ -156,7 +147,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/artists_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelArtists"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelArtists" />
@@ -168,7 +158,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/groups"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Artists" />
@@ -179,7 +168,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/groups_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelGroups"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelGroups" />
@@ -191,7 +179,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/languages_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Groups" />
@@ -202,7 +189,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/languages"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelLanguages"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelLanguages" />
@@ -214,7 +200,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/categories"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Languages" />
@@ -225,7 +210,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/categories_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelCategories"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelCategories" />
@@ -238,7 +222,6 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="10dp"
                 android:text="@string/pages"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -251,7 +234,6 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginBottom="15dp"
                 android:text="@string/pages_"
-                android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelPages"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelPages" />

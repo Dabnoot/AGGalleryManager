@@ -53,6 +53,12 @@ public class MainActivity extends AppCompatActivity {
                 FlipObfuscation();
                 return true;
 
+            case R.id.menu_Settings:
+                Intent intentSettings = new Intent(this, AGGallerySettingsActivity.class);
+
+                startActivity(intentSettings);
+                return true;
+
             case R.id.menu_About:
                 Intent intentAbout = new Intent(this, ScrollingAboutActivity.class);
                 startActivity(intentAbout);
