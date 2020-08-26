@@ -1,30 +1,15 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.util.Xml;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.TagNode;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xmlpull.v1.XmlPullParser;
 
 import java.io.BufferedReader;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathFactory;
 
 import androidx.annotation.Nullable;
 
@@ -60,6 +45,7 @@ public class ComicDetailsDataService extends IntentService {
     //Global Variables
     private GlobalClass globalClass;
 
+    //We don't grab the title from one of the html data blocks on nHentai.net.
     private String[] gsDataBlockIDs = new String[]{
             "Parodies:",
             "Characters:",
@@ -92,6 +78,8 @@ public class ComicDetailsDataService extends IntentService {
             COMIC_DETAILS_PAGES_DATA};
 
 
+
+
     public ComicDetailsDataService() { super("ComicDetailsDataService"); }
 
     @Override
@@ -99,14 +87,81 @@ public class ComicDetailsDataService extends IntentService {
 
         globalClass = (GlobalClass) getApplicationContext();
 
+        assert intent != null;
         String sComicID = intent.getStringExtra(COMIC_DETAILS_COMIC_ID);
-        String sComicTitle;
+
+        String[] sComicData =  getOnlineComicDetails(sComicID);
 
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(ComicDetailsActivity.ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+
+        //Apply booleans to the intent to tell the receiver if there is data available,
+        //  and set the data where appropriate:
+
+        //Set to return the title data:
+        int i = 0;
+        if(sComicData[i].length()>0) {
+            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE_ACQUIRED, true);
+            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE, sComicData[i]);
+        } else {
+            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE_ACQUIRED, false);
+        }
+
+        //set to return the datablock data:
+        for(i = 1; i < gsComicDetailsDataContentMarkers.length + 1; i++){
+            if(sComicData[i].length()>0) {
+                broadcastIntent.putExtra(gsComicDetailsDataBooleans[i - 1], true);
+                broadcastIntent.putExtra(gsComicDetailsDataContentMarkers[i - 1], sComicData[i]);
+            } else {
+                broadcastIntent.putExtra(gsComicDetailsDataBooleans[i - 1], false);
+            }
+        }
+
+        //set to return any error message that arose:
+        if(sComicData[i].length()>0) {  //'i' iterates to the next entry at exit from For loop, above.
+            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
+            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE, sComicData[i]);
+        } else {
+            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
+        }
+
+        sendBroadcast(broadcastIntent);
+    }
+
+
+
+
+
+
+    //Return data order for getOnlineComicDetails:
+    public static int COMIC_DETAILS_TITLE_INDEX = 0;
+    public static int COMIC_DETAILS_PARODIES_DATA_INDEX = 1;
+    public static int COMIC_DETAILS_CHARACTERS_DATA_INDEX = 2;
+    public static int COMIC_DETAILS_TAGS_DATA_INDEX = 3;
+    public static int COMIC_DETAILS_ARTISTS_DATA_INDEX = 4;
+    public static int COMIC_DETAILS_GROUPS_DATA_INDEX = 5;
+    public static int COMIC_DETAILS_LANGUAGES_DATA_INDEX = 6;
+    public static int COMIC_DETAILS_CATEGORIES_DATA_INDEX = 7;
+    public static int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
+    public static int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
+
+    public String[] getOnlineComicDetails(String sComicID){
+
+        int j = gsComicDetailsDataContentMarkers.length + 2;
+        String[] sReturnData = new String[j];
+        //First array element is for comic title.
+        //Elements 1-8 are data block results.
+        //Last array element is for error message.
+        for(int i = 0; i < j; i++){
+            sReturnData[i] = "";
+        }
+
+
+        String sComicTitle = "";
 
         try {
             //Get the data from the WebPage:
@@ -144,16 +199,16 @@ public class ComicDetailsDataService extends IntentService {
             sxPathExpression = globalClass.snHentai_Comic_Title_xPathExpression;
             //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
             Object[] objsTagNodeTitle = node.evaluateXPath(sxPathExpression);
-            String s="";
-            boolean bDataAcquired = false;
             //Check to see if we found anything:
             if (objsTagNodeTitle != null && objsTagNodeTitle.length > 0) {
                 //If we found something, assign it to a string:
-                s = ((TagNode) objsTagNodeTitle[0]).getText().toString();
-                bDataAcquired = true;
+                sComicTitle = ((TagNode) objsTagNodeTitle[0]).getText().toString();
             }
-            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE_ACQUIRED, bDataAcquired);
-            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE, s);
+
+            sReturnData[COMIC_DETAILS_TITLE_INDEX] = sComicTitle;
+
+
+
 
 
             //Attempt to determine the inclusion of "parodies", "characters", "tags", etc
@@ -182,20 +237,18 @@ public class ComicDetailsDataService extends IntentService {
             //Process each named data block. Data blocks are parodies, characters, tags, etc.
             for(int i = 0; i < gsDataBlockIDs.length - 1; i++) {
                 //gsDataBlockIDs.length - 1 ====> We are ignoring the last data block, "Uploaded:", the upload date.
-                sData = "";
-                bDataAcquired = false;
                 int iterator = -1; //Determine where in the sequence of objects the current data block will appear.
                 for (int k = 0; k < sDataBreakout.length - 1; k++) {
                     //Find the DataBreakout index (k) that contains the DataBlock identifier (not the data):
                     if (sDataBreakout[k].contains(gsDataBlockIDs[i])) {
 
-                            if (sDataBreakout[k + 1].contains(gsDataBlockIDs[i + 1])) {
-                                //If we are here, then it means that there was no data between the current
-                                //  data block and the next data block. Skip gathering the data for this
-                                //  data block.
-                            } else {
-                                iterator = k + 1;
-                            }
+                        if (sDataBreakout[k + 1].contains(gsDataBlockIDs[i + 1])) {
+                            //If we are here, then it means that there was no data between the current
+                            //  data block and the next data block. Skip gathering the data for this
+                            //  data block.
+                        } else {
+                            iterator = k + 1;
+                        }
 
                         break;
                     }
@@ -208,11 +261,11 @@ public class ComicDetailsDataService extends IntentService {
                         sData = sData.replaceAll("\\d{4}K", "\t");
                         sData = sData.replaceAll("\\d{3}K", "\t");
                         sData = sData.replaceAll("\\d{2}K", "\t");
-                        sData = sData.replaceAll("\\d{1}K", "\t");
+                        sData = sData.replaceAll("\\dK", "\t");
                         sData = sData.replaceAll("\\d{4}", "\t");
                         sData = sData.replaceAll("\\d{3}", "\t");
                         sData = sData.replaceAll("\\d{2}", "\t");
-                        sData = sData.replaceAll("\\d{1}", "\t");
+                        sData = sData.replaceAll("\\d", "\t");
                     }
                     //Reformat the data:
                     String[] sItems = sData.split("\t");
@@ -222,28 +275,16 @@ public class ComicDetailsDataService extends IntentService {
                         sbData.append(", ");
                         sbData.append(sItems[m]);
                     }
-
-                    bDataAcquired = true;
-                    broadcastIntent.putExtra(gsComicDetailsDataContentMarkers[i], sbData.toString());
+                    sReturnData[i + 1] = sbData.toString();
                 }
-                //Tell the broadcast listener that there IS or IS NOT data available for this data block:
-                broadcastIntent.putExtra(gsComicDetailsDataBooleans[i], bDataAcquired);
-
-
             }
-
-            //broadcastIntent.putExtra(COMIC_DETAILS_TAG_DATA, sTagData);
-            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
         } catch(Exception e){
             String sMsg = e.getMessage();
-            broadcastIntent.putExtra(COMIC_DETAILS_ERROR_MESSAGE, sMsg);
-            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
+            sReturnData[COMIC_DETAILS_ERROR_MSG_INDEX] =  sMsg;
         }
 
-        sendBroadcast(broadcastIntent);
+        return sReturnData;
+
     }
-
-
-
 
 }

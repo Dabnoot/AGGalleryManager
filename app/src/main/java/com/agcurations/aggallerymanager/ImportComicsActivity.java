@@ -63,6 +63,7 @@ public class ImportComicsActivity extends AppCompatActivity {
         importResponseReceiver = new ImportComicsActivity.ImportResponseReceiver();
         registerReceiver(importResponseReceiver, filter);
 
+
     }
 
 

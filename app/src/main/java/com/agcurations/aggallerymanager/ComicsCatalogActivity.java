@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.NonNull;
 
-import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,9 +15,7 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -54,6 +51,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     private boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
+
+    Spinner gspSpinnerSort;
 
     private CCDataServiceResponseReceiver ccDataServiceResponseReceiver;
 
@@ -124,6 +123,11 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     }
 
+    public static int SPINNER_ITEM_MISSING_TAGS = 0;
+    public static int SPINNER_ITEM_IMPORT_DATE = 1;
+    public static int SPINNER_ITEM_LAST_READ_DATE = 2;
+    String[] gsSpinnerItems={"Missing tags","Import Date","Last Read Date"};
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
@@ -161,26 +165,41 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             }
         });
 
-
         //Configure the 'Sort by' selection spinner:
-        MenuItem miSpinnerSort=menu.findItem(R.id.spinner_sort);
-        Spinner spinnerSort =(Spinner) miSpinnerSort.getActionView();
-        String[] items={"Missing tags","Import Date","Last Read Date"};
+        MenuItem miSpinnerSort = menu.findItem(R.id.spinner_sort);
+        gspSpinnerSort =(Spinner) miSpinnerSort.getActionView();
         //wrap the items in the Adapter
-        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,R.layout.comics_action_bar_spinner_item,items);
+        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,R.layout.comics_action_bar_spinner_item,gsSpinnerItems);
         //assign adapter to the Spinner
-        spinnerSort.setAdapter(adapter);
-        spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        gspSpinnerSort.setAdapter(adapter);
+
+        //Change spinner position if we have just returned from an import operation.
+        //  The user will want to see the comic that they just imported has made it into the
+        //  catalog.
+        if(globalClass.gbComicJustImported) {
+            //Set sort by comic import datetime
+            globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT;
+            //Set the sort order to reverse:
+            if( globalClass.gvbComicSortAscending) {
+                globalClass.gvbComicSortAscending = false;
+            }
+            gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
+            //Get a reference to the sort order icon:
+            MenuItem miSortOrder = menu.findItem(R.id.icon_sort_order);
+            miSortOrder.setIcon(R.drawable.baseline_sort_descending_white_18dp);
+            globalClass.gbComicJustImported = false;
+        }
+
+        //Continue with configuring the spinner:
+        gspSpinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                // your code here
-                String sSelectedItemText = parentView.getItemAtPosition(position).toString();
-                if(sSelectedItemText.contains("Missing tags")){
-                    globalClass.gviComicSortOrderDefault = GlobalClass.COMIC_TAGS_INDEX;
-                } else if(sSelectedItemText.contains("Import Date")) {
-                    globalClass.gviComicSortOrderDefault = GlobalClass.COMIC_DATETIME_IMPORT;
-                } else if(sSelectedItemText.contains("Last Read Date")) {
-                    globalClass.gviComicSortOrderDefault = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER;
+                if(position == SPINNER_ITEM_MISSING_TAGS){
+                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_TAGS_INDEX;
+                } else if(position == SPINNER_ITEM_IMPORT_DATE) {
+                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT;
+                } else if(position == SPINNER_ITEM_LAST_READ_DATE) {
+                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER;
                 }
                 SetComicSortOrderDefault();
             }
@@ -189,6 +208,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 // no need to code here
             }
         });
+
+
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -439,7 +460,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     }
 
     public void SetComicSortOrderDefault(){
-        ChangeComicSortField(globalClass.gviComicSortOrderDefault); //TODO, return to default sort.
+        ChangeComicSortField(globalClass.gviComicDefaultSortBySetting); //TODO, return to default sort.
         gbRecyclerViewFiltered = false;  //Removes filtering.
     }
 
@@ -638,6 +659,11 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             SetComicSortOrderDefault();
             globalClass.gbComicJustDeleted = false;
         }
+
+        //If a comic has just been imported, there are certain actions that take place to sort the
+        //  comics so that the user sees most recent imports. These actions cannot take place here,
+        //  but rather take place in the menu inflation routine, as the menu icons are changed
+        //  to indicate the new sort order.
 
 
         if(globalClass.ObfuscationOn) {

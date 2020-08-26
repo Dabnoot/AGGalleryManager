@@ -645,6 +645,12 @@ public class ImportComicsService extends IntentService {
 
                         }
 
+                        //If we made it here, the import was successful.
+
+                        //Inform the rest of the program that we have just completed a comic import.
+                        // This will affect comic default sort so that the user can see the newly-
+                        // imported comic first:
+                        globalClass.gbComicJustImported = true;
 
                     } catch (Exception e){
                         WriteLogLine("Problem during file move.\n" + e.getMessage(),true);
