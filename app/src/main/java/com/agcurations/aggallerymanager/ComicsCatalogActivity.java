@@ -106,7 +106,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 //network;
         }
 
-
+        //See additional initialization in onCreateOptionsMenu().
     }
 
     public void notifyZeroComicsIfApplicable(){
@@ -705,103 +705,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         gRecyclerViewComicsAdapter.notifyDataSetChanged();
     }
 
-    //=====================================================================================
-    //===== Catalog.dat Revision Routine(S) ===============================================
-    //=====================================================================================
 
-    public void Catalog_data_file_add_fields(String[] sNewFields, int iToVersion) {
-
-        File fCatalogContentsFile = globalClass.getCatalogContentsFile();
-
-        try {
-            //Read the list of comics and populate the catalog array:
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-
-            //Get the version of the current .dat file.
-            String sLine = brReader.readLine();
-            String[] sFields = sLine.split("\t");
-            String[] sVersionData = sFields[sFields.length - 1].split(".");
-            int iFromVersion = 0;
-            if (sVersionData.length == 2) {
-                iFromVersion = Integer.parseInt(sVersionData[1]);
-            }
-            //Quit this routine if the version of the .dat file to be written
-            //  is the same or older:
-            if (iToVersion <= iFromVersion) {
-                brReader.close();
-                return;
-            }
-
-            //Create the new catalog contents file:
-            File fCatalogComicsFolder = globalClass.getCatalogComicsFolder();
-            File fNewCatalogContentsFile;
-
-            //Create a new catalog status file:
-            fNewCatalogContentsFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_new.dat");
-
-            if (!fNewCatalogContentsFile.exists()) {
-                try {
-                    if (fNewCatalogContentsFile.createNewFile()) {
-                        FileWriter fwNewCatalogContentsFile = null;
-                        try {
-                            fwNewCatalogContentsFile = new FileWriter(fNewCatalogContentsFile, true);
-
-                            //Write the activity_comic_details_header line to the file:
-                            fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
-                            for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
-                                fwNewCatalogContentsFile.append("\t");
-                                fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[i]);
-                            }
-                            for (String sNewField : sNewFields) {
-                                fwNewCatalogContentsFile.append("\t");
-                                fwNewCatalogContentsFile.append(sNewField);
-                            }
-                            fwNewCatalogContentsFile.append("\t");
-                            fwNewCatalogContentsFile.append("DataFileVersion." + iToVersion);
-                            fwNewCatalogContentsFile.append("\n");
-
-
-                            sLine = brReader.readLine();
-                            while (sLine != null) {
-                                fwNewCatalogContentsFile.append(sLine);
-                                for (int i = 0; i < sNewFields.length - 1; i++) {
-                                    fwNewCatalogContentsFile.append("\t");
-                                }
-                                fwNewCatalogContentsFile.append("\n");
-                                // read next line
-                                sLine = brReader.readLine();
-                            }
-                            brReader.close();
-
-                            fwNewCatalogContentsFile.flush();
-                            fwNewCatalogContentsFile.close();
-
-                            File fRenameCurrentDatFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_v" + iFromVersion + "_bak.dat");
-                            if (!fRenameCurrentDatFile.exists()) {
-                                if (!fCatalogContentsFile.renameTo(fRenameCurrentDatFile)) {
-                                    Toast.makeText(this, "Could not rename CatalogContentsFile.", Toast.LENGTH_LONG).show();
-                                } else {
-                                    if (!fNewCatalogContentsFile.renameTo(fCatalogContentsFile)) {
-                                        Toast.makeText(this, "Could not rename new CatalogContentsFile.", Toast.LENGTH_LONG).show();
-                                    }
-                                }
-                            }
-
-                        } catch (Exception e) {
-                            Toast.makeText(this, "Problem during CatalogContentsFile re-write.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-                        }
-                    } else {
-                        Toast.makeText(this, "Could not write new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                    }
-                } catch (IOException e) {
-                    Toast.makeText(this, "Could not create new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                }
-            }
-        } catch (Exception e){
-            Toast.makeText(this, "Could not open CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath()+ "\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
 
 
 

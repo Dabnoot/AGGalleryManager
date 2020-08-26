@@ -119,7 +119,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gComicDetailsResponseReceiver = new ComicDetailsActivity.ComicDetailsResponseReceiver();
         registerReceiver(gComicDetailsResponseReceiver, filter);
 
-
+        //See additional initialization in onCreateOptionsMenu().
     }
 
     @Override
@@ -129,7 +129,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
 
         if(globalClass.bAutoDownloadOn) {
-            if (gsComicFields[GlobalClass.COMIC_TAGS_INDEX].equals("")) {
+            if (gsComicFields[GlobalClass.COMIC_ONLINE_DATA_ACQUIRED].equals(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_NO)) {
                 //If there is no tag data, automatically go out and try to get it.
                 gbAutoAcquireData = true;
                 SyncOnlineData();

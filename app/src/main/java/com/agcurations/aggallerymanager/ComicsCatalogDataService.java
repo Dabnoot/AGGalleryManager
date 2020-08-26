@@ -4,9 +4,6 @@ import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
 import android.os.Environment;
-import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -94,7 +91,7 @@ public class ComicsCatalogDataService extends IntentService {
                 fCatalogComicsFolder = new File(fAvailableDirs[1] + File.separator + "Comics");
             }else{
                 //Create the folder on the likely Internal storage.
-                fCatalogComicsFolder = new File(fAvailableDirs[1] + File.separator + "Comics");
+                fCatalogComicsFolder = new File(fAvailableDirs[0] + File.separator + "Comics");
             }
 
             if(!fCatalogComicsFolder.exists()) {
@@ -112,7 +109,7 @@ public class ComicsCatalogDataService extends IntentService {
                 //Set the global variable holding the catalog comics folder:
                 globalClass.setCatalogComicsFolder(fCatalogComicsFolder);
 
-                //Look for the catalog status file:
+                //Look for the catalog contents file:
                 fCatalogContentsFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents.dat");
                 if (!fCatalogContentsFile.exists()){
                     try {
@@ -155,22 +152,8 @@ public class ComicsCatalogDataService extends IntentService {
                     //If the catalog contents file exists, set the global variable:
                     globalClass.setCatalogContentsFile(fCatalogContentsFile);
 
-                    /*//Process any modifications to the CatalogContentsFile:
-                    String[] sNewFields = new String[]{
-                            "COMIC_SOURCE",
-                            "COMIC_DATETIME_LAST_READ_BY_USER",
-                            "COMIC_DATETIME_IMPORT"
-                    };
-                    Catalog_data_file_add_fields(sNewFields,1);
-*/
-                    /*int[] iFields = new int[]{
-                            GlobalClass.COMIC_DATETIME_IMPORT
-                    };
-
-                    String[] sUpdateData = new String[]{
-                            "0"
-                    };
-                    globalClass.CatalogDataFile_UpdateAllRecords(iFields,sUpdateData);*/
+                    //Process any modifications to the CatalogContentsFile:
+                    //Catalog_data_file_add_field();
 
                 }
 
@@ -232,5 +215,111 @@ public class ComicsCatalogDataService extends IntentService {
         broadcastIntent_LoadComicCatalogResponse.putExtra(EXTRA_STRING_DATA_IMPORT_PROBLEM, sMessage);
 
     }
+
+
+    public void Catalog_data_file_add_field() {
+        //Add the new field to GlobalClass.ComicRecordFields before running this routine.
+        //  This will affect the creation of the dat file header.
+
+        int iToVersion = 2; //This causes the routine to update the .dat file only once.
+
+        File fCatalogContentsFile = globalClass.getCatalogContentsFile();
+
+        try {
+            //Read the list of comics and populate the catalog array:
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+
+            //Get the version of the current .dat file.
+            String sLine = brReader.readLine();
+            String[] sFields = sLine.split("\t");
+            String[] sVersionData = sFields[sFields.length - 1].split(".");
+            int iFromVersion = 0;
+            if (sVersionData.length == 2) {
+                iFromVersion = Integer.parseInt(sVersionData[1]);
+            }
+            //Quit this routine if the version of the .dat file to be written
+            //  is the same or older:
+            if (iToVersion <= iFromVersion) {
+                brReader.close();
+                return;
+            }
+
+            //Create the new catalog contents file:
+            File fCatalogComicsFolder = globalClass.getCatalogComicsFolder();
+            File fNewCatalogContentsFile;
+
+            //Create a new catalog status file:
+            fNewCatalogContentsFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_new.dat");
+
+            if (!fNewCatalogContentsFile.exists()) {
+                try {
+                    if (fNewCatalogContentsFile.createNewFile()) {
+                        FileWriter fwNewCatalogContentsFile;
+                        try {
+                            fwNewCatalogContentsFile = new FileWriter(fNewCatalogContentsFile, true);
+
+                            //Write the activity_comic_details_header line to the file:
+                            fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
+                            for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
+                                fwNewCatalogContentsFile.append("\t");
+                                fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[i]);
+                            }
+
+                            fwNewCatalogContentsFile.append("\t");
+                            fwNewCatalogContentsFile.append("DataFileVersion."); //DataFileVersion.[version number]
+                            fwNewCatalogContentsFile.append(Integer.toString(iToVersion));
+                            fwNewCatalogContentsFile.append("\n");
+
+                            //Write lines from the original .dat file to the new .dat file:
+                            sLine = brReader.readLine();
+                            while (sLine != null) {
+                                fwNewCatalogContentsFile.append(sLine);
+                                fwNewCatalogContentsFile.append("\t");
+
+                                //Write field initial value here:
+                                sFields = sLine.split("\t",-1);
+                                if(sFields[GlobalClass.COMIC_TAGS_INDEX].equals("")){ //If TAGS data does not exist
+                                    fwNewCatalogContentsFile.append("No");  //Initial value "online data acquired = no"
+                                } else {                                    //else if TAGS data DOES exist...
+                                    fwNewCatalogContentsFile.append("Yes"); //Initial value "online data acquired = yes"
+                                }
+
+                                //Close the data row:
+                                fwNewCatalogContentsFile.append("\n");
+                                // read next line
+                                sLine = brReader.readLine();
+                            }
+                            brReader.close();
+
+                            fwNewCatalogContentsFile.flush();
+                            fwNewCatalogContentsFile.close();
+
+                            File fRenameCurrentDatFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_v" + iFromVersion + "_bak.dat");
+                            if (!fRenameCurrentDatFile.exists()) {
+                                if (!fCatalogContentsFile.renameTo(fRenameCurrentDatFile)) {
+                                    Toast.makeText(this, "Could not rename CatalogContentsFile.", Toast.LENGTH_LONG).show();
+                                } else {
+                                    if (!fNewCatalogContentsFile.renameTo(fCatalogContentsFile)) {
+                                        Toast.makeText(this, "Could not rename new CatalogContentsFile.", Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            Toast.makeText(this, "Problem during CatalogContentsFile re-write.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    } else {
+                        Toast.makeText(this, "Could not write new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                    }
+                } catch (IOException e) {
+                    Toast.makeText(this, "Could not create new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                }
+            }
+        } catch (Exception e){
+            Toast.makeText(this, "Could not open CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath()+ "\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
 
 }

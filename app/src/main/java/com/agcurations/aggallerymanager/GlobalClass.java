@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -140,6 +141,7 @@ public class GlobalClass extends Application {
     public static final int COMIC_SOURCE = 16;                     //nHentai.net, other source, etc.
     public static final int COMIC_DATETIME_LAST_READ_BY_USER = 17; //Date of last read by user. Used for sorting if desired
     public static final int COMIC_DATETIME_IMPORT = 18;            //Date of import. Used for sorting if desired
+    public static final int COMIC_ONLINE_DATA_ACQUIRED = 19;
 
     public static final String[] ComicRecordFields = new String[]{
             "COMIC_ID",
@@ -158,12 +160,12 @@ public class GlobalClass extends Application {
             "LANGUAGES",
             "CATEGORIES",
             "PAGES",
-            "COMIC_SOURCE",
-            "COMIC_DATETIME_LAST_READ_BY_USER",
-            "COMIC_DATETIME_IMPORT"};
+            "SOURCE",
+            "DATETIME_LAST_READ_BY_USER",
+            "DATETIME_IMPORT",
+            "ONLINE_DATA_ACQUIRED"};
 
-
-
+    public static final String COMIC_ONLINE_DATA_ACQUIRED_NO = "No";
 
     public File getCatalogComicsFolder() {
         return gvfCatalogComicsFolder;
@@ -192,6 +194,10 @@ public class GlobalClass extends Application {
     public void setCatalogComicList(TreeMap<Integer, String[]> tmCatalogComicList){
         gvtmCatalogComicList = tmCatalogComicList;
     }
+
+    //=====================================================================================
+    //===== Start Catalog.dat Data Modification Routine(S) ================================
+    //=====================================================================================
 
     public boolean ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
         File fCatalogContentsFile = getCatalogContentsFile();
@@ -331,6 +337,7 @@ public class GlobalClass extends Application {
     }
 
 
+
     public boolean gbComicJustDeleted = false;
     public boolean ComicCatalog_DeleteComic(String sComicID) {
 
@@ -438,7 +445,9 @@ public class GlobalClass extends Application {
         }
     }
 
-
+    //=====================================================================================
+    //===== End Catalog.dat Data Modification Routine(S) ================================
+    //=====================================================================================
 
 
 
