@@ -9,8 +9,6 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.ColorDrawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkRequest;
 import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
