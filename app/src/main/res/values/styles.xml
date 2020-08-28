@@ -1,15 +1,37 @@
-<resources>
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorBlueGrey5</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowBackground">@color/colorBlueGrey3</item>
-        <item name="android:navigationBarColor">@color/colorBlueGrey5</item>
+
+        <item name="colorPrimaryDark">@color/colorStatusBarPurple</item>    <!-- Status bar color -->
+        <item name="colorPrimary">@color/colorActionBarPurple</item>        <!-- Action bar color -->
+        <item name="actionBarStyle">@style/ActionBarTheme</item>            <!-- Sets the popup menu color -->
+        <item name="android:windowBackground">@color/colorBackgroundPurple</item>
+        <item name="android:navigationBarColor">@color/colorNavigationBarPurple</item>
         <item name="android:textColor">@color/colorGrey1</item>
         <item name="android:textColorSecondary">@color/colorGrey1</item>
+        <item name="colorBackgroundFloating">@color/colorDarkDarkOrange</item> <!-- Sets AlertDialog color -->
     </style>
+
+
+    <style name="MainTheme" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/sora_sagano_unsplash</item>
+    </style>
+
+    <style name="ComicsTheme" parent="MainTheme">
+    </style>
+
+    <style name="ActionBarTheme" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="popupTheme">@style/ActionBarPopupTheme</item>
+    </style>
+
+    <!-- Popup menu theme -->
+    <style name="ActionBarPopupTheme">
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:background">@color/colorPopupPurple</item>
+    </style>
+
 
     <!-- Starting activity theme -->
     <style name="AppTheme.Launcher">
@@ -42,5 +64,18 @@
         <item name="android:background">@color/black_overlay</item>
 
     </style>
+
+
+    <style name="BusyBackgroundOverlayText">
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:shadowColor">#000000</item>
+        <item name="android:shadowDx">3</item>
+        <item name="android:shadowDy">3</item>
+        <item name="android:shadowRadius">3</item>
+    </style>
+
+
 
 </resources>

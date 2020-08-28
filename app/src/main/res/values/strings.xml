@@ -115,7 +115,7 @@
     <string name="pages">Pages:</string>
     <string name="pages_">Pages</string>
     <string name="delete_comic">Delete Comic</string>
-    <string name="title_activity_a_g_gallery_settings">AGGallerySettingsActivity</string>
+    <string name="title_activity_a_g_gallery_settings">AG Gallery Manager Settings</string>
 
     <!-- Preference Titles -->
     <string name="messages_header">Messages</string>

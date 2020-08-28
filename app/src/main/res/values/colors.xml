@@ -4,17 +4,28 @@
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>!-->
 
-    <!--https://www.vogella.com/tutorials/AndroidStylesThemes/article.html!-->
+    <!-- https://www.vogella.com/tutorials/AndroidStylesThemes/article.html -->
 
-    <color name="colorPrimary">#453d83</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorLightPurple">#5f55af</color>
+    <color name="colorPrimary">#9966ff</color>
+    <color name="colorPrimaryDark">#9933ff</color>
+    <color name="colorDarkPurple">#5f55af</color>
     <color name="colorAccent">#03DAC5</color>
+
+    <color name="colorStatusBarPurple">#282668</color>
+    <color name="colorActionBarPurple">#333087</color>
+    <color name="colorBackgroundPurple">#3f3b9c</color>
+    <color name="colorPopupPurple">#343995</color>
+    <color name="colorNavigationBarPurple">#203892</color>
+
+
     <color name="colorBlackboardRed">#eb305b</color>
     <color name="colorDarkOrange">#ea552d</color>
     <color name="colorLightOrange">#f77026</color>
     <color name="colorDarkDarkOrange">#bc3f2a</color>
 
+    <color name="colorBlack">#000000</color>
+
+    <color name="colorWhite">#ffffff</color>
     <color name="colorGrey1">#efefef</color>
     <color name="colorGrey2">#dddddd</color>
     <color name="colorGrey3">#ceccca</color>

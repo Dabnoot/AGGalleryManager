@@ -59,7 +59,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
-        setTheme(R.style.AppTheme);
+        setTheme(R.style.ComicsTheme);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comics_catalog);
