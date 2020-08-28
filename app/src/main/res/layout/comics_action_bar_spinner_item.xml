@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:textSize="16sp"
-    android:gravity="start"
-    android:background="@color/colorBlueGrey5"
-    android:padding="5dip"
+    android:gravity="center"
+    android:background="@color/colorStatusBarPurple"
+    android:padding="15dp"
     />

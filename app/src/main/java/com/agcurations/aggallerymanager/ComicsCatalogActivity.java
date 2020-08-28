@@ -169,7 +169,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         MenuItem miSpinnerSort = menu.findItem(R.id.spinner_sort);
         gspSpinnerSort =(Spinner) miSpinnerSort.getActionView();
         //wrap the items in the Adapter
-        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,R.layout.comics_action_bar_spinner_item,gsSpinnerItems);
+        ArrayAdapter<String> adapter=new ArrayAdapter<>(this, R.layout.comics_action_bar_spinner_item, gsSpinnerItems);
         //assign adapter to the Spinner
         gspSpinnerSort.setAdapter(adapter);
 
