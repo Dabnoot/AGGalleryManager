@@ -7,6 +7,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkRequest;
+import android.os.Environment;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -24,6 +25,9 @@ public class GlobalClass extends Application {
     //https://androidexample.com/Global_Variable_Or_Application_Context_Variable_-_Android_Example/index.php?view=article_discription&aid=114&aaid=136
 
     //Global Variables:
+
+    public String gsPin = "";
+
     public boolean gbSkipComicCatalogReload;
     private File gvfCatalogComicsFolder;
     private File gvfLogsFolder;
@@ -35,6 +39,118 @@ public class GlobalClass extends Application {
     public boolean gbComicJustImported = false;
 
     public String[] gvSelectedComic;
+
+
+    public void SendToast(Context context, String sMessage){
+        Toast.makeText(context, sMessage, Toast.LENGTH_SHORT).show();
+    }
+
+    public void readPin(Context context){
+        //Attempt to read a pin number set by the user:
+        File fAppFolder;
+        File fAppConfigFile;
+
+        String sExternalStorageState;
+        sExternalStorageState = Environment.getExternalStorageState();
+        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
+
+            // Get the app directory:
+            File[] fAvailableDirs = getExternalFilesDirs(null);
+            if (fAvailableDirs.length == 2) {
+                //Create the folder on the likely SDCard:
+                fAppFolder = new File(fAvailableDirs[1].toString());
+            }else{
+                //Create the folder on the likely Internal storage.
+                fAppFolder = new File(fAvailableDirs[0].toString());
+            }
+
+            //Look for the AppConfig file:
+            fAppConfigFile = new File(fAppFolder.getAbsolutePath() + File.separator + "AppConfig.dat");
+            if (!fAppConfigFile.exists()){
+                try {
+                    fAppConfigFile.createNewFile();
+                }catch (IOException e){
+                    SendToast(context,"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath());
+                }
+            } else {
+
+                //Read the AppConfig data. This file, at the time of design, was only intended to
+                //  hold 1 piece of data - a pin/password set by the user to unlock certain settings.
+                //  Specifically, settings for restricted tags, and turning the restriction on and off.
+                BufferedReader brReader;
+                String sLine = "";
+                try {
+                    brReader = new BufferedReader(new FileReader(fAppConfigFile.getAbsolutePath()));
+                    sLine = brReader.readLine();
+                    brReader.close();
+                } catch (IOException e) {
+                    SendToast(context,"Trouble reading AppConfig.dat at" + fAppConfigFile.getAbsolutePath());
+                }
+
+                //Set the global variable holding the pin:
+                if(sLine == null){
+                    gsPin = "";
+                } else {
+                    gsPin = sLine;
+                }
+            }
+
+
+        }
+
+
+    }
+
+    public void writePin(Context context,  String sPin){
+        //Attempt to write to file a pin number set by the user:
+        File fAppFolder;
+        File fAppConfigFile;
+
+        String sExternalStorageState;
+        sExternalStorageState = Environment.getExternalStorageState();
+        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
+
+            // Get the app directory:
+            File[] fAvailableDirs = getExternalFilesDirs(null);
+            if (fAvailableDirs.length == 2) {
+                //Create the folder on the likely SDCard:
+                fAppFolder = new File(fAvailableDirs[1].toString());
+            }else{
+                //Create the folder on the likely Internal storage.
+                fAppFolder = new File(fAvailableDirs[0].toString());
+            }
+
+            //Look for the AppConfig file:
+            fAppConfigFile = new File(fAppFolder.getAbsolutePath() + File.separator + "AppConfig.dat");
+            if (!fAppConfigFile.exists()){
+                try {
+                    fAppConfigFile.createNewFile();
+                }catch (IOException e){
+                    SendToast(context,"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath());
+                }
+            }
+
+            if (!fAppConfigFile.exists()){
+
+
+                try {
+                    FileWriter fwAppConfigFile = new FileWriter(fAppConfigFile, false);
+                    fwAppConfigFile.write(sPin);
+                    fwAppConfigFile.flush();
+                    fwAppConfigFile.close();
+                    gsPin = sPin;
+                } catch (IOException e) {
+                    SendToast(context,"Trouble writing AppConfig.dat at" + fAppConfigFile.getAbsolutePath());
+                }
+
+            }
+
+
+        }
+
+
+    }
+
 
 
     //=====================================================================================

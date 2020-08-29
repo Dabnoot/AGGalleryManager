@@ -1,0 +1,28 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$MessagesFragment"
+        app:icon="@drawable/messages"
+        app:key="messages_header"
+        app:title="@string/messages_header"/>
+
+    <Preference
+        app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$SyncFragment"
+        app:icon="@drawable/sync"
+        app:key="sync_header"
+        app:title="@string/sync_header" />
+
+    <Preference
+        app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$ComicsFragment"
+
+        app:key="comics_header"
+        app:title="Comics" />
+
+    <Preference
+        app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$LockedFragment"
+
+        app:key="locked_header"
+        app:title="Locked Preferences" />
+
+</PreferenceScreen>
