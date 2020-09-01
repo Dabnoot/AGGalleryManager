@@ -11,7 +11,6 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
@@ -86,7 +85,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
         gsPin = globalClass.gsPin;
 
-        gssTags = globalClass.gssTags;
+        gssTags = globalClass.gssAllUniqueCatalogComicTags;
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);

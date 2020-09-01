@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -71,9 +73,16 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Update TextView to show 0 comics if applicable:
         notifyZeroComicsIfApplicable();
 
+        //Get comic restrictions preferences:
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        globalClass.gssComicTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+        globalClass.gvbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+
+
         gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
         configure_RecyclerViewComicsCatalog();
         SetComicSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
+        //gspSpinnerSort.setOnItemSelected will call SetComicSortOrderDefault after menu load.
 
         if(!globalClass.gbSkipComicCatalogReload) { //If the 'skip reload' boolean is not set...
             //This prevents reloading comic catalog data from storage if not requested to do so,
@@ -99,6 +108,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
               //This lets us check globalClass.isNetworkConnected to see if we are connected to the
                 //network;
         }
+
+
 
         //See additional initialization in onCreateOptionsMenu().
     }
@@ -127,6 +138,16 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
 
         getMenuInflater().inflate(R.menu.comics_catalog_action_bar, menu);
+
+        //Set the restricted comics lock icon as appropriate:
+        MenuItem restrictedItem = menu.findItem(R.id.icon_comics_restricted);
+        if(globalClass.gvbComicRestrictionsOn){
+            restrictedItem.setIcon(R.drawable.baseline_lock_white_18dp);
+        } else {
+            restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
+        }
+
+
 
         // Initialise menu item search bar with id and take its object
         //https://www.geeksforgeeks.org/android-searchview-with-example/
@@ -213,6 +234,17 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Display a message showing the name of the item selected.
         //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
         switch (item.getItemId()) {
+
+            case R.id.icon_comics_restricted:
+                globalClass.gvbComicRestrictionsOn = !globalClass.gvbComicRestrictionsOn;
+                if(globalClass.gvbComicRestrictionsOn){
+                    item.setIcon(R.drawable.baseline_lock_white_18dp);
+                } else {
+                    item.setIcon(R.drawable.baseline_lock_open_white_18dp);
+                }
+                //Repopulate the catalog comics list:
+                populate_RecyclerViewComicsCatalog(globalClass.gvtmCatalogComicList);
+                return true;
 
             case R.id.icon_sort_order:
                 if( globalClass.gvbComicSortAscending) {
@@ -449,14 +481,65 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     }
 
     public void populate_RecyclerViewComicsCatalog(TreeMap<Integer, String[]> tmCatalogComicList){
-        gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(tmCatalogComicList);
+        gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(FilterOutRestrictedComics(tmCatalogComicList));
         gRecyclerView.setAdapter(gRecyclerViewComicsAdapter);
+        Toast.makeText(this, "Showing " + gRecyclerViewComicsAdapter.getItemCount() + " comics.", Toast.LENGTH_LONG).show();
     }
 
     public void SetComicSortOrderDefault(){
         ChangeComicSortField(globalClass.gviComicDefaultSortBySetting); //TODO, return to default sort.
         gbRecyclerViewFiltered = false;  //Removes filtering.
     }
+
+
+    public TreeMap<Integer, String[]> FilterOutRestrictedComics(TreeMap<Integer, String[]> tmIncoming){
+        TreeMap<Integer, String[]> tmOutgoing = new TreeMap<>();
+        boolean bNoData = true;
+        if(globalClass.gvbComicRestrictionsOn){
+            //Format the restriction tag set so that we can process it:
+            String sTemp = String.valueOf(globalClass.gssComicTagsRestricted);
+            String[] sTagsArray;
+            if(sTemp.length() > 0) {
+                //Get rid of brackets:
+                sTemp = sTemp.substring(1, sTemp.length() - 1);
+                //Split restricted tags into array:
+                 sTagsArray = sTemp.split(",");
+
+                 //Look for restricted tags in the incoming treemap and transfer the entry if
+                //  none are found:
+                String[] sFields;
+                int i = 0;
+                for (Map.Entry<Integer, String[]>
+                        entry : tmIncoming.entrySet()) {
+                    sFields = entry.getValue();
+                    boolean bHasRestrictedTag = false;
+                    for (String s : sTagsArray) {
+                        String sTitle = sFields[GlobalClass.COMIC_NAME_INDEX];
+
+                        if (sFields[GlobalClass.COMIC_TAGS_INDEX].contains(s.trim())) {
+                            bHasRestrictedTag = true;
+                            break;
+                        }
+                    }
+                    if(!bHasRestrictedTag){
+                        tmOutgoing.put(i, sFields);
+                        i++;
+                    }
+                }
+                bNoData = false;
+            }
+
+        }
+        if(bNoData) {
+            return tmIncoming;
+        } else {
+            return tmOutgoing;
+        }
+
+
+    }
+
+
 
     public void ChangeComicSortField(int iField){
 

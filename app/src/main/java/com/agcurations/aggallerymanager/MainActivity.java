@@ -15,7 +15,6 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -65,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
                         //  and does not throw an exception.
                         ssTags.add(sEntry.trim());
                     }
-                    globalClass.gssTags = ssTags;
+                    globalClass.gssAllUniqueCatalogComicTags = ssTags;
                 }
             } catch (IOException e) {
                 Toast.makeText(this,

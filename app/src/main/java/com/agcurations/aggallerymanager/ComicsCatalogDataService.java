@@ -3,7 +3,6 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
-import android.os.Environment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -199,8 +198,8 @@ public class ComicsCatalogDataService extends IntentService {
             boolean bNewTagsFound = false;
 
             for (String sEntry : ssCurrentTags) {
-                if (!globalClass.gssTags.contains(sEntry)) {
-                    globalClass.gssTags.add(sEntry);
+                if (!globalClass.gssAllUniqueCatalogComicTags.contains(sEntry)) {
+                    globalClass.gssAllUniqueCatalogComicTags.add(sEntry);
                     bNewTagsFound = true;
                 }
             }
@@ -228,7 +227,7 @@ public class ComicsCatalogDataService extends IntentService {
                     try {
                         FileWriter fwComicTagsFile = new FileWriter(fComicTagsFile, false);
 
-                        for (String sEntry : globalClass.gssTags) {
+                        for (String sEntry : globalClass.gssAllUniqueCatalogComicTags) {
                             if(!sEntry.equals("")) {
                                 fwComicTagsFile.write(sEntry + ",");
                                 //Don't worry about the trailing comma. It will be ignored on

@@ -8,16 +8,15 @@
         android:title="comics_restricted"
         android:icon="@drawable/baseline_lock_white_18dp"
         android:orderInCategory="5"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         />
-
 
     <item
         android:id="@+id/label_spinner"
         android:title="Sort by:"
         android:actionLayout="@layout/comics_action_bar_spinner_label"
         android:orderInCategory="9"
-        app:showAsAction="ifRoom">
+        app:showAsAction="always">
     </item>
 
     <item
@@ -25,7 +24,7 @@
         android:title="Sort"
         android:visible="true"
         android:orderInCategory="10"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         app:actionViewClass="android.widget.Spinner" />
 
     <item
@@ -33,16 +32,15 @@
         android:title="sort_order"
         android:icon="@drawable/baseline_sort_ascending_white_18dp"
         android:orderInCategory="15"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
         />
-
 
     <item
         android:id="@+id/search_bar"
         android:title="@string/search"
         android:orderInCategory="20"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
-        app:showAsAction="ifRoom|withText"
+        app:showAsAction="always|withText"
         />
 
     <item android:id="@+id/menu_FlipView"

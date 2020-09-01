@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -40,6 +41,9 @@ public class GlobalClass extends Application {
     public static File gvfComicTagsFile;
 
     TreeMap<Integer, String[]> gvtmCatalogComicList = new TreeMap<>();
+
+    public boolean gvbComicRestrictionsOn = false;
+
     public int gviComicDefaultSortBySetting = COMIC_TAGS_INDEX;
     public boolean gvbComicSortAscending = true;
 
@@ -47,7 +51,8 @@ public class GlobalClass extends Application {
 
     public String[] gvSelectedComic;
 
-    public SortedSet<String> gssTags = new TreeSet<>();
+    public SortedSet<String> gssAllUniqueCatalogComicTags = new TreeSet<>();
+    public Set<String> gssComicTagsRestricted = new TreeSet<>();
 
     public void SendToast(Context context, String sMessage){
         Toast.makeText(context, sMessage, Toast.LENGTH_SHORT).show();
