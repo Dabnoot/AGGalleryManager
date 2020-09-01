@@ -18,7 +18,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -29,9 +31,14 @@ public class GlobalClass extends Application {
     public String gsPin = "";
 
     public boolean gbSkipComicCatalogReload;
-    private File gvfCatalogComicsFolder;
-    private File gvfLogsFolder;
-    private File gvfCatalogContentsFile; //CatalogContentsFile record fields: ComicID, ComicName, MaxPageID, MissingPages, ComicSize (in kB)
+
+    public static File gvfAppFolder;
+    public static File gvfAppConfigFile;
+    public static File gvfComicsFolder;
+    public static File gvfComicLogsFolder;
+    public static File gvfComicCatalogContentsFile;
+    public static File gvfComicTagsFile;
+
     TreeMap<Integer, String[]> gvtmCatalogComicList = new TreeMap<>();
     public int gviComicDefaultSortBySetting = COMIC_TAGS_INDEX;
     public boolean gvbComicSortAscending = true;
@@ -40,117 +47,85 @@ public class GlobalClass extends Application {
 
     public String[] gvSelectedComic;
 
+    public SortedSet<String> gssTags = new TreeSet<>();
 
     public void SendToast(Context context, String sMessage){
         Toast.makeText(context, sMessage, Toast.LENGTH_SHORT).show();
     }
 
+    public void initFolderAndFileStructure(){
+
+        String sExternalStorageState;
+        sExternalStorageState = Environment.getExternalStorageState();
+        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ) {
+
+            File[] fAvailableDirs = getExternalFilesDirs(null);
+            if (fAvailableDirs.length == 2) {
+                gvfAppFolder = fAvailableDirs[1];
+            } else {
+                gvfAppFolder = fAvailableDirs[0];
+            }
+
+            gvfComicsFolder = new File(gvfAppFolder
+                    + File.separator + "Comics");
+
+            gvfComicCatalogContentsFile = new File(gvfComicsFolder.getAbsolutePath()
+                    + File.separator + "CatalogContents.dat");
+
+            gvfComicLogsFolder = new File(gvfComicsFolder
+                    + File.separator + "Logs");
+
+            gvfComicTagsFile = new File(gvfComicsFolder.getAbsolutePath()
+                    + File.separator + "ComicTags.dat");
+
+            gvfAppConfigFile = new File(gvfAppFolder.getAbsolutePath()
+                    + File.separator + "AppConfig.dat");
+
+        }
+
+
+    }
+
+
     public void readPin(Context context){
         //Attempt to read a pin number set by the user:
-        File fAppFolder;
-        File fAppConfigFile;
 
-        String sExternalStorageState;
-        sExternalStorageState = Environment.getExternalStorageState();
-        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
+        if (!gvfAppConfigFile.exists()){
+            try {
+                if(!gvfAppConfigFile.createNewFile()) {
+                    SendToast(context, "Could not create AppConfig.dat at " + gvfAppConfigFile.getAbsolutePath());
+                }
+            }catch (IOException e){
+                SendToast(context,"Could not create AppConfig.dat at " + gvfAppConfigFile.getAbsolutePath());
+            }
+        } else {
 
-            // Get the app directory:
-            File[] fAvailableDirs = getExternalFilesDirs(null);
-            if (fAvailableDirs.length == 2) {
-                //Create the folder on the likely SDCard:
-                fAppFolder = new File(fAvailableDirs[1].toString());
-            }else{
-                //Create the folder on the likely Internal storage.
-                fAppFolder = new File(fAvailableDirs[0].toString());
+            //Read the AppConfig data. This file, at the time of design, was only intended to
+            //  hold 1 piece of data - a pin/password set by the user to unlock certain settings.
+            //  Specifically, settings for restricted tags, and turning the restriction on and off.
+            BufferedReader brReader;
+            String sLine = "";
+            try {
+                brReader = new BufferedReader(new FileReader(gvfAppConfigFile.getAbsolutePath()));
+                sLine = brReader.readLine();
+                brReader.close();
+            } catch (IOException e) {
+                SendToast(context,"Trouble reading AppConfig.dat at" + gvfAppConfigFile.getAbsolutePath());
             }
 
-            //Look for the AppConfig file:
-            fAppConfigFile = new File(fAppFolder.getAbsolutePath() + File.separator + "AppConfig.dat");
-            if (!fAppConfigFile.exists()){
-                try {
-                    fAppConfigFile.createNewFile();
-                }catch (IOException e){
-                    SendToast(context,"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath());
-                }
+            //Set the global variable holding the pin:
+            if(sLine == null){
+                gsPin = "";
             } else {
-
-                //Read the AppConfig data. This file, at the time of design, was only intended to
-                //  hold 1 piece of data - a pin/password set by the user to unlock certain settings.
-                //  Specifically, settings for restricted tags, and turning the restriction on and off.
-                BufferedReader brReader;
-                String sLine = "";
-                try {
-                    brReader = new BufferedReader(new FileReader(fAppConfigFile.getAbsolutePath()));
-                    sLine = brReader.readLine();
-                    brReader.close();
-                } catch (IOException e) {
-                    SendToast(context,"Trouble reading AppConfig.dat at" + fAppConfigFile.getAbsolutePath());
-                }
-
-                //Set the global variable holding the pin:
-                if(sLine == null){
-                    gsPin = "";
-                } else {
-                    gsPin = sLine;
-                }
+                gsPin = sLine;
             }
-
-
         }
 
 
-    }
 
-    public void writePin(Context context,  String sPin){
-        //Attempt to write to file a pin number set by the user:
-        File fAppFolder;
-        File fAppConfigFile;
-
-        String sExternalStorageState;
-        sExternalStorageState = Environment.getExternalStorageState();
-        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
-
-            // Get the app directory:
-            File[] fAvailableDirs = getExternalFilesDirs(null);
-            if (fAvailableDirs.length == 2) {
-                //Create the folder on the likely SDCard:
-                fAppFolder = new File(fAvailableDirs[1].toString());
-            }else{
-                //Create the folder on the likely Internal storage.
-                fAppFolder = new File(fAvailableDirs[0].toString());
-            }
-
-            //Look for the AppConfig file:
-            fAppConfigFile = new File(fAppFolder.getAbsolutePath() + File.separator + "AppConfig.dat");
-            if (!fAppConfigFile.exists()){
-                try {
-                    fAppConfigFile.createNewFile();
-                }catch (IOException e){
-                    SendToast(context,"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath());
-                }
-            }
-
-            if (!fAppConfigFile.exists()){
-
-
-                try {
-                    FileWriter fwAppConfigFile = new FileWriter(fAppConfigFile, false);
-                    fwAppConfigFile.write(sPin);
-                    fwAppConfigFile.flush();
-                    fwAppConfigFile.close();
-                    gsPin = sPin;
-                } catch (IOException e) {
-                    SendToast(context,"Trouble writing AppConfig.dat at" + fAppConfigFile.getAbsolutePath());
-                }
-
-            }
-
-
-        }
 
 
     }
-
 
 
     //=====================================================================================
@@ -159,8 +134,7 @@ public class GlobalClass extends Application {
     public static boolean isNetworkConnected = false;
     public ConnectivityManager connectivityManager;
     // Network Check
-    public void registerNetworkCallback()
-    {
+    public void registerNetworkCallback() {
         try {
             connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkRequest.Builder builder = new NetworkRequest.Builder();
@@ -283,45 +257,20 @@ public class GlobalClass extends Application {
 
     public static final String COMIC_ONLINE_DATA_ACQUIRED_NO = "No";
 
-    public File getCatalogComicsFolder() {
-        return gvfCatalogComicsFolder;
-    }
-    public void setCatalogComicsFolder(File fCatalogComicsFolder){
-        gvfCatalogComicsFolder = fCatalogComicsFolder;
-    }
 
-    public File getLogsFolder() {
-        return gvfLogsFolder;
-    }
-    public void setLogsFolder(File fLogsFolder){
-        gvfLogsFolder = fLogsFolder;
-    }
 
-    public File getCatalogContentsFile() {
-        return gvfCatalogContentsFile;
-    }
-    public void setCatalogContentsFile(File fCatalogContentsFile){
-        gvfCatalogContentsFile = fCatalogContentsFile;
-    }
-
-    public TreeMap<Integer, String[]> getCatalogComicList() {
-        return gvtmCatalogComicList;
-    }
-    public void setCatalogComicList(TreeMap<Integer, String[]> tmCatalogComicList){
-        gvtmCatalogComicList = tmCatalogComicList;
-    }
 
     //=====================================================================================
     //===== Start Catalog.dat Data Modification Routine(S) ================================
     //=====================================================================================
 
     public boolean ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
-        File fCatalogContentsFile = getCatalogContentsFile();
+        File fCatalogContentsFile = gvfComicCatalogContentsFile;
 
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gvfComicCatalogContentsFile.getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -382,7 +331,7 @@ public class GlobalClass extends Application {
             }
             brReader.close();
 
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gvfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
@@ -394,12 +343,11 @@ public class GlobalClass extends Application {
     }
 
     public boolean ComicCatalogDataFile_UpdateAllRecords(int[] iFieldIDs, String[] sFieldUpdateData) {
-        File fCatalogContentsFile = getCatalogContentsFile();
 
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gvfComicCatalogContentsFile.getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -441,7 +389,7 @@ public class GlobalClass extends Application {
             }
             brReader.close();
 
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gvfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
@@ -458,7 +406,6 @@ public class GlobalClass extends Application {
     public boolean ComicCatalog_DeleteComic(String sComicID) {
 
         //Delete the comic record from the CatalogContentsFile:
-        File fCatalogContentsFile = getCatalogContentsFile();
 
         try {
 
@@ -477,7 +424,7 @@ public class GlobalClass extends Application {
                 }
             }
 
-            String  sComicFolderPath = gvfCatalogComicsFolder.getPath() + File.separator
+            String  sComicFolderPath = gvfComicsFolder.getPath() + File.separator
                     + sComicFolderName;
 
             File fComicFolderToBeDeleted = new File(sComicFolderPath);
@@ -510,14 +457,13 @@ public class GlobalClass extends Application {
             //Now attempt to delete the comic record from the CatalogContentsFile:
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gvfComicCatalogContentsFile.getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
             String[] sFields;
             String sLine = brReader.readLine();
             while (sLine != null) {
-                int j = 0; //To track requested field updates.
                 sFields = sLine.split("\t",-1);
                 if (!(sFields[COMIC_ID_INDEX].equals(sComicID))) {
                     //If the line is not the comic we are trying to delete, transfer it over:
@@ -533,7 +479,7 @@ public class GlobalClass extends Application {
             brReader.close();
 
             //Re-write the CatalogContentsFile without the deleted comic's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gvfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();

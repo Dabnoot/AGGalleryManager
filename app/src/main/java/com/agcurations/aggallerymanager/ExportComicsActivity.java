@@ -63,8 +63,8 @@ public class ExportComicsActivity extends AppCompatActivity {
         final GlobalClass globalVariable = (GlobalClass) getApplicationContext();
 
         //Determine the amount of space required for the export (backup):
-        TreeMap<Integer, String[]> tmCatalogComicList = globalVariable.getCatalogComicList();
-        String sComicFolderPath = globalVariable.getCatalogComicsFolder().getAbsolutePath();
+        TreeMap<Integer, String[]> tmCatalogComicList = globalVariable.gvtmCatalogComicList;
+        String sComicFolderPath = GlobalClass.gvfComicsFolder.getAbsolutePath();
 
         int iComicCatalogSize = 0;
         String sTemp;
@@ -94,7 +94,7 @@ public class ExportComicsActivity extends AppCompatActivity {
             galZipList.add(sTemp);
         }
         //Add the catalog contents file to the list of files to include in the zip file:
-        File f = globalVariable.getCatalogContentsFile();
+        File f = GlobalClass.gvfComicCatalogContentsFile;
         galZipList.add(f.getAbsolutePath());
         giComicFileCount++;
 

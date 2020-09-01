@@ -31,11 +31,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -53,8 +49,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     private boolean gbRecyclerViewFiltered;
 
     Spinner gspSpinnerSort;
-
-    private CCDataServiceResponseReceiver ccDataServiceResponseReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +82,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             //Configure a response receiver to listen for updates from the Comics Catalog (CC) Data Service:
             IntentFilter filter = new IntentFilter(CCDataServiceResponseReceiver.CCDATA_SERVICE_ACTION_RESPONSE);
             filter.addCategory(Intent.CATEGORY_DEFAULT);
-            ccDataServiceResponseReceiver = new CCDataServiceResponseReceiver();
+            CCDataServiceResponseReceiver ccDataServiceResponseReceiver = new CCDataServiceResponseReceiver();
             registerReceiver(ccDataServiceResponseReceiver, filter);
 
             //Call the CC Data Service, which will create a call to a service:
@@ -406,7 +400,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = globalClass.getCatalogComicsFolder().getAbsolutePath()
+                String sThumbnailFilePath = GlobalClass.gvfComicsFolder.getAbsolutePath()
                         + File.separator
                         + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
                         + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];
@@ -472,15 +466,15 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Get existing data and load elements into the presorter:
         TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.getCatalogComicList();
+        tmCatalogComicList = globalClass.gvtmCatalogComicList;
         String[] sComicListRecord;
-        String sKey = "";
+        String sKey;
 
         //If the user has selected 'Sort by last read date', get the oldest read date and apply
         //  that date plus one day to any comic that has a "zero" for the last read date.
         String sTemp;
         double dDateTimeValue = 0d;
-        Double dTemp = 0d;
+        double dTemp = 0d;
         if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER) {
             for (Map.Entry<Integer, String[]>
                     entry : tmCatalogComicList.entrySet()) {
@@ -510,7 +504,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER) {
                 if (Double.parseDouble(sKey) == 0d){
                     dTemp = dDateTimeValue - 1.0d;
-                    sKey = dTemp.toString();
+                    sKey = Double.toString(dTemp);
                 }
             }
             sKey = sKey + sComicListRecord[GlobalClass.COMIC_ID_INDEX];
@@ -561,7 +555,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Get existing data and load elements into the presorter:
         TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.getCatalogComicList();
+        tmCatalogComicList = globalClass.gvtmCatalogComicList;
         String[] sComicListRecord;
         Integer iKey, iIterator;
 
@@ -595,7 +589,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
             //Get existing data and load elements into the presorter:
             TreeMap<Integer, String[]> tmCatalogComicList;
-            tmCatalogComicList = globalClass.getCatalogComicList();
+            tmCatalogComicList = globalClass.gvtmCatalogComicList;
             String[] sComicListRecord;
             StringBuilder sbKey;
             int iComicRID = 0;

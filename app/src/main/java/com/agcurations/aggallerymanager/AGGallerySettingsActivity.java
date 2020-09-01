@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Application;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.InputType;
@@ -10,13 +11,20 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.EditTextPreference;
+import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
@@ -28,6 +36,8 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
     private static File gfAppFolder;
     private static String gsPin;
+    private static SortedSet<String> gssTags;
+    private static Set<String> gssSelectedTags;
     GlobalClass globalClass;
 
     @Override
@@ -74,6 +84,58 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             gfAppFolder = new File(fAvailableDirs[0].toString());
         }
 
+        gsPin = globalClass.gsPin;
+
+        gssTags = globalClass.gssTags;
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+
+
+        if(!gsPin.isEmpty()) {
+            final String[] sPinEntry = new String[1];
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Preferences");
+            builder.setMessage("Enter pin to view/set preferences.");
+
+            // Set up the input
+            final EditText input = new EditText(this);
+            // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+            input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+            builder.setView(input);
+
+            // Set up the buttons
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    sPinEntry[0] = input.getText().toString();
+                    boolean bExit = false;
+                    if(sPinEntry[0].isEmpty()){
+                        bExit = true;
+                    } else {
+                        if(!sPinEntry[0].equals(gsPin)){
+                            bExit = true;
+                        }
+                    }
+                    if(bExit){
+                        finish();
+                    }
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                    finish();
+
+
+                }
+            });
+            builder.show();
+
+
+        }
+
     }
 
     @Override
@@ -86,6 +148,8 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
     @Override
     public boolean onSupportNavigateUp() {
         if (getSupportFragmentManager().popBackStackImmediate()) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
             return true;
         }
         return super.onSupportNavigateUp();
@@ -117,21 +181,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
         }
     }
 
-    public static class MessagesFragment extends PreferenceFragmentCompat {
 
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.messages_preferences, rootKey);
-        }
-    }
-
-    public static class SyncFragment extends PreferenceFragmentCompat {
-
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.sync_preferences, rootKey);
-        }
-    }
 
     public static class ComicsFragment extends PreferenceFragmentCompat {
 
@@ -141,16 +191,20 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
         }
     }
 
-    public static class LockedFragment extends PreferenceFragmentCompat {
+    public static class RestrictedFragment extends PreferenceFragmentCompat {
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            setPreferencesFromResource(R.xml.locked_preferences, rootKey);
 
-            final EditTextPreference pref_locked_preferences_pin = (EditTextPreference) findPreference("locked_preferences_pin");
+            setPreferencesFromResource(R.xml.restricted_preferences, rootKey);
+
+            //CONFIGURE THE PIN PREFERENCE:
+            final EditTextPreference pref_preferences_pin =
+                    findPreference("preferences_pin");
 
             //Set keyboard to be numeric:
-            pref_locked_preferences_pin.setOnBindEditTextListener(new androidx.preference.EditTextPreference.OnBindEditTextListener() {
+            assert pref_preferences_pin != null;
+            pref_preferences_pin.setOnBindEditTextListener(new androidx.preference.EditTextPreference.OnBindEditTextListener() {
                 @Override
                 public void onBindEditText(@NonNull EditText editText) {
                     editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
@@ -158,28 +212,24 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
                 }
             });
 
-
-
-            assert pref_locked_preferences_pin != null;
-            pref_locked_preferences_pin.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            pref_preferences_pin.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
 
                     //Attempt to write to file a pin number set by the user:
-                    File fAppFolder;
                     File fAppConfigFile;
 
                     String sExternalStorageState;
                     sExternalStorageState = Environment.getExternalStorageState();
                     if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
 
-
-
                         //Look for the AppConfig file:
                         fAppConfigFile = new File(gfAppFolder.getAbsolutePath() + File.separator + "AppConfig.dat");
                         if (!fAppConfigFile.exists()){
                             try {
-                                fAppConfigFile.createNewFile();
+                                if(!fAppConfigFile.createNewFile()){
+                                    Toast.makeText(getContext(),"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+                                }
                             }catch (IOException e){
                                 Toast.makeText(getContext(),"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
                             }
@@ -202,9 +252,84 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
                     }
 
+                    return true;
+                }
+            });
+
+            //CONFIGURE THE restricted TAGS LIST PREFERENCE:
+
+            final MultiSelectListPreference pref_restricted_tags =
+                    findPreference("multi_select_list_restricted_tags");
+
+            CharSequence[] csEntries;
+            csEntries = gssTags.toArray(new CharSequence[0]);
+            assert pref_restricted_tags != null;
+            pref_restricted_tags.setEntries(csEntries);
+            pref_restricted_tags.setEntryValues(csEntries);
+
+            //Fill out the "selected tags" summary text:
+            //Sort the strings:
+            SortedSet<String> ssTemp = new TreeSet<>(gssSelectedTags);
+
+            //Format the strings:
+            StringBuilder sb = new StringBuilder();
+            Iterator<String> isIterator = ssTemp.iterator();
+            sb.append(isIterator.next());
+            while(isIterator.hasNext()){
+                sb.append(", ");
+                sb.append(isIterator.next());
+            }
+            String sTemp = sb.toString();
+
+            //Apply the new data to the summary:
+            if (!(sTemp.isEmpty())) {
+                sTemp = "Restricted tags: " + sTemp;
+                pref_restricted_tags.setSummary(sTemp);
+            }
+
+
+            //Configure the change listener for when the user modifies the selection:
+            pref_restricted_tags.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    //The user has modified the tag selection.
+                    //Build-out the summary text.
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(newValue);
+                    String sTemp = sb.toString();
+                    if(sTemp.length() > 0) {
+                        //Get rid of brackets:
+                        sTemp = sTemp.substring(1, sTemp.length() - 1);
+
+                        //Sort the strings:
+                        String[] sTempArray = sTemp.split(",");
+                        SortedSet<String> ssTemp = new TreeSet<>();
+                        for(String s: sTempArray) {
+                            ssTemp.add(s.trim());
+                        }
+
+                        //Format the strings:
+                        sb = new StringBuilder();
+                        Iterator<String> isIterator = ssTemp.iterator();
+                        sb.append(isIterator.next());
+                        while(isIterator.hasNext()){
+                            sb.append(", ");
+                            sb.append(isIterator.next());
+                        }
+                        sTemp = sb.toString();
+
+                        //Apply the new data to the summary:
+                        if (!(sTemp.isEmpty())) {
+                            sTemp = "Restricted tags: " + sTemp;
+                            pref_restricted_tags.setSummary(sTemp);
+                        }
+                    }
 
                     return true;
                 }
+
+
             });
 
         }

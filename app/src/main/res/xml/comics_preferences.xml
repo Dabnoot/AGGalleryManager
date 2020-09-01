@@ -8,10 +8,16 @@
     </SwitchPreferenceCompat>
 
     <SwitchPreferenceCompat
-        app:dependency="sync"
-        app:key="attachment"
-        app:summaryOff="@string/attachment_summary_off"
-        app:summaryOn="@string/attachment_summary_on"
-        app:title="@string/attachment_title" />
+        app:dependency="comic_auto_online_data_acquisition"
+        app:key="comic_auto_online_data_acquitistion_onImport"
+        app:summaryOff="Do not automatically download comic data on import."
+        app:summaryOn="Automatically download comic data on import."
+        app:title="Download comic data on import" />
 
+    <SwitchPreferenceCompat
+        app:dependency="comic_auto_online_data_acquisition"
+        app:key="comic_auto_online_data_acquitistion_onDetailsView"
+        app:summaryOff="Do not automatically download comic data when comic is previewed."
+        app:summaryOn="Automatically download comic data when comic is previewed."
+        app:title="Download comic data on comic preview" />
 </PreferenceScreen>

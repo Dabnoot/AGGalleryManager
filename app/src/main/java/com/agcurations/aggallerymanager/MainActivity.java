@@ -3,10 +3,7 @@ package com.agcurations.aggallerymanager;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Environment;
-import android.text.Html;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,12 +13,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,12 +34,45 @@ public class MainActivity extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
+        //Initialize the File objects with paths:
+        globalClass.initFolderAndFileStructure();
+
         if(!globalClass.ObfuscationOn) {
             //Remove obfuscation:
             RemoveObfuscation();
         }
 
+        //Read the user-set pin for feature access:
         globalClass.readPin(this);
+
+        if(GlobalClass.gvfComicTagsFile.exists()) {
+            //Get Comic Tags from file:
+            //Read the list of comics and populate the catalog array:
+            BufferedReader brReader;
+            try {
+
+                brReader = new BufferedReader(new FileReader(GlobalClass.gvfComicTagsFile.getAbsolutePath()));
+                String sLine = brReader.readLine();
+                if(sLine != null) {
+                    String[] sTags;
+                    sTags = sLine.split(",");
+                    brReader.close();
+                    SortedSet<String> ssTags = new TreeSet<>();
+                    for (String sEntry : sTags) {
+                        //Don't add duplicates
+                        //The SortedSet<T> class does not accept duplicate elements.
+                        //  If item is already in the set, this method returns false
+                        //  and does not throw an exception.
+                        ssTags.add(sEntry.trim());
+                    }
+                    globalClass.gssTags = ssTags;
+                }
+            } catch (IOException e) {
+                Toast.makeText(this,
+                        "Trouble reading ComicTags.dat at" + GlobalClass.gvfComicTagsFile.getAbsolutePath(),
+                        Toast.LENGTH_LONG).show();
+            }
+        }
 
     }
 

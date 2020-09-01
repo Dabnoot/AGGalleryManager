@@ -4,6 +4,15 @@
     xmlns:style="http://schemas.android.com/tools">
 
     <item
+        android:id="@+id/icon_comics_restricted"
+        android:title="comics_restricted"
+        android:icon="@drawable/baseline_lock_white_18dp"
+        android:orderInCategory="5"
+        app:showAsAction="ifRoom"
+        />
+
+
+    <item
         android:id="@+id/label_spinner"
         android:title="Sort by:"
         android:actionLayout="@layout/comics_action_bar_spinner_label"
