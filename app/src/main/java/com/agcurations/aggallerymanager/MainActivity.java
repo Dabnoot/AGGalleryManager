@@ -98,6 +98,11 @@ public class MainActivity extends AppCompatActivity {
                 FlipObfuscation();
                 return true;
 
+            case R.id.menu_import_guided:
+                Intent intentImportGuided = new Intent(this, ImportComicsGuidedActivity.class);
+                startActivity(intentImportGuided);
+                return true;
+
             case R.id.menu_Settings:
                 Intent intentSettings = new Intent(this, AGGallerySettingsActivity.class);
 

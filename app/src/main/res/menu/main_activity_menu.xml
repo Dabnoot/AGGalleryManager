@@ -4,6 +4,8 @@
 
     <item android:id="@+id/menu_FlipView"
         android:title="@string/flip_view"/>
+    <item android:id="@+id/menu_import_guided"
+        android:title="Guided Import" />
     <item android:id="@+id/menu_Settings"
         android:title="@string/settings" />
     <item android:id="@+id/menu_About"

@@ -16,6 +16,9 @@
     <color name="colorBackgroundPurple">#3f3b9c</color>
     <color name="colorPopupPurple">#343995</color>
     <color name="colorNavigationBarPurple">#203892</color>
+    <color name="colorFragmentImportBackground">#1d4890</color>
+    <color name="colorFragmentImportBackgroundHighlight">#255dbb</color>
+    <color name="colorFragmentImportBackgroundHighlight2">#447ad4</color>
 
 
     <color name="colorBlackboardRed">#eb305b</color>

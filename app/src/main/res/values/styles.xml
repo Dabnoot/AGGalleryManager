@@ -1,7 +1,8 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+    <!--<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">-->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+
         <item name="colorAccent">@color/colorAccent</item>
 
         <item name="colorPrimaryDark">@color/colorStatusBarPurple</item>    <!-- Status bar color -->
@@ -15,7 +16,8 @@
         <item name="colorBackgroundFloating">@color/colorLightOrange</item>    <!-- Sets AlertDialog color -->
         <item name="textColorAlertDialogListItem">@color/colorGrey1</item>     <!-- Sets AlertDialog text color -->
         <item name="android:editTextColor">@color/colorGrey1</item>
-        <!--<item name="subtitleTextColor">@color/colorGrey1</item>
+
+        <item name="subtitleTextColor">@color/colorGrey1</item>
         <item name="editTextColor">@color/colorGrey1</item>
         <item name="actionMenuTextColor">@color/colorGrey1</item>
         <item name="badgeTextColor">@color/colorGrey1</item>
@@ -30,8 +32,10 @@
         <item name="tabTextColor">@color/colorGrey1</item>
         <item name="titleTextColor">@color/colorGrey1</item>
         <item name="actionTextColorAlpha">@color/colorGrey1</item>
-        <item name="helperTextTextColor">@color/colorGrey1</item>-->
+        <item name="helperTextTextColor">@color/colorGrey1</item>
 
+
+        <item name="colorSurface">@color/colorLightOrange</item>  <!-- Background of menu-->
 
     </style>
 
