@@ -69,7 +69,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.import_comics_guided_activity);
+        setContentView(R.layout.activity_import_comics_guided);
 
         globalClass = (GlobalClass) getApplicationContext();
 
