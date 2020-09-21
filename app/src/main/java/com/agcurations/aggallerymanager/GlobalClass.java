@@ -243,10 +243,10 @@ public class GlobalClass extends Application {
     public static final int COMIC_LANGUAGES_INDEX = 13;            //Language(s) found in the comic
     public static final int COMIC_CATEGORIES_INDEX = 14;
     public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
-    public static final int COMIC_SOURCE = 16;                     //nHentai.net, other source, etc.
-    public static final int COMIC_DATETIME_LAST_READ_BY_USER = 17; //Date of last read by user. Used for sorting if desired
-    public static final int COMIC_DATETIME_IMPORT = 18;            //Date of import. Used for sorting if desired
-    public static final int COMIC_ONLINE_DATA_ACQUIRED = 19;
+    public static final int COMIC_SOURCE_INDEX = 16;                     //nHentai.net, other source, etc.
+    public static final int COMIC_DATETIME_LAST_READ_BY_USER_INDEX = 17; //Date of last read by user. Used for sorting if desired
+    public static final int COMIC_DATETIME_IMPORT_INDEX = 18;            //Date of import. Used for sorting if desired
+    public static final int COMIC_ONLINE_DATA_ACQUIRED_INDEX = 19;
 
     public static final String[] ComicRecordFields = new String[]{
             "COMIC_ID",

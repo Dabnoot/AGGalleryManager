@@ -31,7 +31,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
-                android:id="@+id/TextView_ThumbnailText"
+                android:id="@+id/editText_ComicTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -44,7 +44,7 @@
                 app:layout_constraintEnd_toEndOf="parent"/>
 
             <TextView
-                android:id="@+id/textView_LabelComicID"
+                android:id="@+id/textView_LabelComicSource"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
@@ -52,17 +52,17 @@
                 android:text="@string/comic_id"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/TextView_ThumbnailText" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_ComicTitle" />
 
             <TextView
-                android:id="@+id/textView_ComicID"
+                android:id="@+id/editText_ComicSource"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/comicid"
                 android:textSize="20sp"
-                app:layout_constraintStart_toEndOf="@+id/textView_LabelComicID"
-                app:layout_constraintTop_toTopOf="@+id/textView_LabelComicID" />
+                app:layout_constraintStart_toEndOf="@+id/textView_LabelComicSource"
+                app:layout_constraintTop_toTopOf="@+id/textView_LabelComicSource" />
 
             <TextView
                 android:id="@+id/textView_LabelParodies"
@@ -73,10 +73,10 @@
                 android:text="@string/parodies"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_ComicID" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_ComicSource" />
 
             <TextView
-                android:id="@+id/textView_Parodies"
+                android:id="@+id/editText_Parodies"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -95,10 +95,10 @@
                 android:text="@string/characters"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Parodies" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Parodies" />
 
             <TextView
-                android:id="@+id/textView_Characters"
+                android:id="@+id/editText_Characters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -116,10 +116,10 @@
                 android:text="@string/tags"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Characters" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Characters" />
 
             <TextView
-                android:id="@+id/textView_Tags"
+                android:id="@+id/editText_Tags"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -139,10 +139,10 @@
                 android:text="@string/artists"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Tags" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Tags" />
 
             <TextView
-                android:id="@+id/textView_Artists"
+                android:id="@+id/editText_Artists"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -160,10 +160,10 @@
                 android:text="@string/groups"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Artists" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Artists" />
 
             <TextView
-                android:id="@+id/textView_Groups"
+                android:id="@+id/editText_Groups"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -181,10 +181,10 @@
                 android:text="@string/languages_"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Groups" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Groups" />
 
             <TextView
-                android:id="@+id/textView_Languages"
+                android:id="@+id/editText_Languages"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -202,10 +202,10 @@
                 android:text="@string/categories"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Languages" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Languages" />
 
             <TextView
-                android:id="@+id/textView_Categories"
+                android:id="@+id/editText_Categories"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
@@ -225,7 +225,7 @@
                 android:textSize="20sp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView_Categories" />
+                app:layout_constraintTop_toBottomOf="@+id/editText_Categories" />
 
             <TextView
                 android:id="@+id/textView_Pages"

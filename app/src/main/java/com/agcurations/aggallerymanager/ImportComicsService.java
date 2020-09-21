@@ -316,11 +316,11 @@ public class ImportComicsService extends IntentService {
                             //Apply an import timestamp:
                             Double dTimeStamp = globalClass.GetTimeStampFloat();
                             String sDateTime = dTimeStamp.toString();
-                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_IMPORT] = sDateTime;
-                            sImportComicListRecord[GlobalClass.COMIC_SOURCE] = "nHentai.net";
+                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_IMPORT_INDEX] = sDateTime;
+                            sImportComicListRecord[GlobalClass.COMIC_SOURCE_INDEX] = "nHentai.net";
                             //Must provide a value for the last read by user or there will be an error
                             //  during interpretation during user-selected sort:
-                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER] = "0";
+                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX] = "0";
 
                             WriteLogLine("Found new comic: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".",true);
 

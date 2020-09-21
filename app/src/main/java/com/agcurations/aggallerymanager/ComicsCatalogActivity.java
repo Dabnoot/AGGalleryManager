@@ -193,7 +193,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //  catalog.
         if(globalClass.gbComicJustImported) {
             //Set sort by comic import datetime
-            globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT;
+            globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
             //Set the sort order to reverse:
             if( globalClass.gvbComicSortAscending) {
                 globalClass.gvbComicSortAscending = false;
@@ -212,9 +212,9 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 if(position == SPINNER_ITEM_MISSING_TAGS){
                     globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_TAGS_INDEX;
                 } else if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT;
+                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
                 } else if(position == SPINNER_ITEM_LAST_READ_DATE) {
-                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER;
+                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX;
                 }
                 SetComicSortOrderDefault();
             }
@@ -371,7 +371,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvThumbnailText = v.findViewById(R.id.TextView_ThumbnailText);
+                tvThumbnailText = v.findViewById(R.id.editText_ComicTitle);
                 tvComicDetails = v.findViewById(R.id.TextView_ComicDetails);
             }
         }
@@ -558,7 +558,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         String sTemp;
         double dDateTimeValue = 0d;
         double dTemp = 0d;
-        if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER) {
+        if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX) {
             for (Map.Entry<Integer, String[]>
                     entry : tmCatalogComicList.entrySet()) {
                 sComicListRecord = entry.getValue();
@@ -584,7 +584,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             //  The user might also decide to sort by # of pages, for which there might
             //  be duplicates.
             sKey = sComicListRecord[iField];
-            if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER) {
+            if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX) {
                 if (Double.parseDouble(sKey) == 0d){
                     dTemp = dDateTimeValue - 1.0d;
                     sKey = Double.toString(dTemp);
@@ -690,7 +690,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 sbKey.append(sComicListRecord[GlobalClass.COMIC_ARTISTS_INDEX]);
                 sbKey.append(sComicListRecord[GlobalClass.COMIC_GROUPS_INDEX]);
                 sbKey.append(sComicListRecord[GlobalClass.COMIC_CATEGORIES_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_SOURCE]);
+                sbKey.append(sComicListRecord[GlobalClass.COMIC_SOURCE_INDEX]);
                 sKey_LowerCase = sbKey.toString().toLowerCase();
 
                 if(sKey_LowerCase.contains(sFilterText_LowerCase)){

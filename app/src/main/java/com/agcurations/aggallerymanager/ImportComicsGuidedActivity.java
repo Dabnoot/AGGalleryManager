@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Stack;
 
 public class ImportComicsGuidedActivity extends AppCompatActivity {
@@ -66,6 +67,9 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
 
     private GlobalClass globalClass;
 
+    private String[] sSingleComicDataFields;
+    private ArrayList<fileModel> alfmSingleComicFiles;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +85,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
         ai.add(2);
         ai.add(3);
         ai.add(4);
+        ai.add(5);
 
         //The pager adapter, which provides the pages to the view pager widget.
         ViewPagerAdapter pagerAdapter = new ViewPagerAdapter(ai);
@@ -113,32 +118,46 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
         int[] layouts = {R.layout.activity_import_comics_guided_step_0,
                          R.layout.activity_import_comics_guided_step_1_1,
                          R.layout.activity_import_comics_guided_step_1_2,
+                         R.layout.activity_import_comics_guided_step_1_3,
                          R.layout.activity_import_comics_guided_step_2_1};
 
         //Declare integers to track pages:
         private static final int STEP_0_SelectImportSource = 0;
         private static final int STEP_1_1_Select_Folder = 1;
         private static final int STEP_1_2_Select_Folder_Items = 2;
-        private static final int STEP_2_1_EnterWebAddress = 3;
+        private static final int STEP_1_3_Provide_Comic_Details = 3;
+        private static final int STEP_2_1_EnterWebAddress = 4;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
         // you provide access to all the views for a data item in a view holder
         public class ViewHolder extends RecyclerView.ViewHolder {
 
-            public final RadioButton radioButton_ImportComicsFromStorage;
+            private final RadioButton radioButton_ImportComicsFromStorage;
 
-            public final Button button_SelectFolder;
-            public final TextView textView_Label_Selected_Folder;
-            public final TextView textView_Selected_Import_Folder;
+            private final Button button_SelectFolder;
+            private final TextView textView_Label_Selected_Folder;
+            private final TextView textView_Selected_Import_Folder;
 
-            public CheckBox checkBox_SelectAllStorageItems;
-            public Spinner spinner_SortBy;
-            public ImageView imageView_SortOrder;
-            public EditText editText_Search;
-            public ListView listView_FolderContents;
+            //STEP_1_2_Select_Folder_Items page:
+            private CheckBox checkBox_SelectAllStorageItems;
+            private Spinner spinner_SortBy;
+            private ImageView imageView_SortOrder;
+            private EditText editText_Search;
+            private ListView listView_FolderContents;
 
-            public final Button button_Next;
+            //STEP_1_3_Provide_Comic_Details page:
+            private EditText editText_ComicTitle;
+            private EditText editText_ComicSource;
+            private EditText editText_Tags;
+            private EditText editText_Parodies;
+            private EditText editText_Characters;
+            private EditText editText_Artists;
+            private EditText editText_Groups;
+            private EditText editText_Languages;
+            private EditText editText_Categories;
+
+            private final Button button_Next;
 
 
             public ViewHolder(View v) {
@@ -149,11 +168,23 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 textView_Label_Selected_Folder = v.findViewById(R.id.textView_Label_Selected_Folder);
                 textView_Selected_Import_Folder = v.findViewById(R.id.textView_Selected_Import_Folder);
 
+                //STEP_1_2_Select_Folder_Items page:
                 checkBox_SelectAllStorageItems = v.findViewById(R.id.checkBox_SelectAllStorageItems);
                 spinner_SortBy = v.findViewById(R.id.spinner_SortBy);
                 imageView_SortOrder = v.findViewById(R.id.imageView_SortOrder);
                 editText_Search = v.findViewById(R.id.editText_Search);
                 listView_FolderContents = v.findViewById(R.id.listView_FolderContents);
+
+                //STEP_1_3_Provide_Comic_Details page:
+                editText_ComicTitle = v.findViewById(R.id.editText_ComicTitle);
+                editText_ComicSource = v.findViewById(R.id.editText_ComicSource);
+                editText_Tags = v.findViewById(R.id.editText_Tags);
+                editText_Parodies = v.findViewById(R.id.editText_Parodies);
+                editText_Characters = v.findViewById(R.id.editText_Characters);
+                editText_Artists = v.findViewById(R.id.editText_Artists);
+                editText_Groups = v.findViewById(R.id.editText_Groups);
+                editText_Languages = v.findViewById(R.id.editText_Languages);
+                editText_Categories = v.findViewById(R.id.editText_Categories);
 
                 button_Next = v.findViewById(R.id.button_NextStep);
 
@@ -173,6 +204,8 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 return STEP_1_1_Select_Folder;
             } else if(position == 2) {
                 return STEP_1_2_Select_Folder_Items;
+            } else if(position == 3) {
+                return STEP_1_3_Provide_Comic_Details;
             } else {
                 return STEP_2_1_EnterWebAddress;
             }
@@ -352,8 +385,108 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 });
 
 
-            } //End config/response of STEP_1_2_Select_Folder_Items
+                holder.button_Next.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        int iNextStep;
+                        iNextStep = STEP_1_3_Provide_Comic_Details;
+                        stackImportSteps.push(new String[]{Integer.toString(iNextStep), "test"});
+                        //Save the selected files:
+                        alfmSingleComicFiles = fileListCustomAdapter.alFileListDisplay;
+                        //Move to the next page
+                        viewPager.setCurrentItem(iNextStep);
+                    }
+                });
 
+            } //End config/response of STEP_1_2_Select_Folder_Items.
+
+
+            if(position == STEP_1_3_Provide_Comic_Details){
+                //Push step onto the step stack:
+                stackImportSteps.push(new String[]{Integer.toString(STEP_1_3_Provide_Comic_Details)});
+
+                holder.button_Next.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //Create a String array to hold comic details:
+                        sSingleComicDataFields = new String[GlobalClass.ComicRecordFields.length];
+
+                        //Create a unique comic ID:
+                        boolean bComicIDIsUnique = false;
+                        int iComicID = 0;
+                        while(!bComicIDIsUnique) {
+                            iComicID = (int) Math.round(Math.random() * 100000);
+                            bComicIDIsUnique = true;
+                            for (Map.Entry<Integer, String[]>
+                                    CatalogEntry : globalClass.gvtmCatalogComicList.entrySet()) {
+                                String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
+                                if (Integer.parseInt(sEntryComicID) == iComicID) {
+                                    bComicIDIsUnique = false;
+                                }
+                            }
+                        } //Unique comic ID created.
+                        sSingleComicDataFields[GlobalClass.COMIC_NAME_INDEX] = String.valueOf(iComicID);
+
+                        String sComicName = String.valueOf(holder.editText_ComicTitle.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_NAME_INDEX] = sComicName;
+                        sSingleComicDataFields[GlobalClass.COMIC_SOURCE_INDEX] = String.valueOf(holder.editText_ComicSource.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_TAGS_INDEX] = String.valueOf(holder.editText_Tags.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_PARODIES_INDEX] = String.valueOf(holder.editText_Parodies.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_CHARACTERS_INDEX] = String.valueOf(holder.editText_Characters.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_ARTISTS_INDEX] = String.valueOf(holder.editText_Artists.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_GROUPS_INDEX] = String.valueOf(holder.editText_Groups.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_LANGUAGES_INDEX] = String.valueOf(holder.editText_Languages.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_CATEGORIES_INDEX] = String.valueOf(holder.editText_Categories.getText());
+                        sSingleComicDataFields[GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_INDEX] = GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_NO;
+
+                        //Page count related data:
+                        sSingleComicDataFields[GlobalClass.COMIC_PAGES_INDEX] = String.valueOf(alfmSingleComicFiles.size());
+                        sSingleComicDataFields[GlobalClass.COMIC_MAX_PAGE_ID_INDEX] = String.valueOf(alfmSingleComicFiles.size());
+                        sSingleComicDataFields[GlobalClass.COMIC_FILE_COUNT_INDEX] = String.valueOf(alfmSingleComicFiles.size());
+                        sSingleComicDataFields[GlobalClass.COMIC_MISSING_PAGES_INDEX] = ""; //Assume no missing pages.
+
+                        //Apply an import timestamp:
+                        Double dTimeStamp = globalClass.GetTimeStampFloat();
+                        String sDateTime = dTimeStamp.toString();
+                        sSingleComicDataFields[GlobalClass.COMIC_DATETIME_IMPORT_INDEX] = sDateTime;
+                        //Must provide a value for the last read by user or there will be an error
+                        //  during interpretation during user-selected sort:
+                        sSingleComicDataFields[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX] = "0";
+
+                        //Replace any illegal characters in the comic name to create the folder name:
+                        //cleanGalleryName = thisGalleryName.replace(/[|&;$%@"<>()+,\[\]]/g, "-");
+
+                        String sCleanFolderName = sComicName.replace("?", "¿");   //Replace '?' character.
+                        sCleanFolderName = sCleanFolderName.replace("|", "");  //Remove '|'characters.
+                        sCleanFolderName = sCleanFolderName.replace("\"", "");  //Remove '"' characters.
+                        sCleanFolderName = sCleanFolderName.replace("[", "{");   //Replace [
+                        sCleanFolderName = sCleanFolderName.replace("]", "}");   //Replace ]
+                        sCleanFolderName = sCleanFolderName.replace("(", "{");   //Replace (
+                        sCleanFolderName = sCleanFolderName.replace(")", "}");   //Replace )
+                        sCleanFolderName = sCleanFolderName.replace("<", "{");   //Replace <
+                        sCleanFolderName = sCleanFolderName.replace(">", "}");   //Replace >
+
+
+                        sSingleComicDataFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] = sCleanFolderName; //Folder name
+                        sSingleComicDataFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX] = alfmSingleComicFiles.get(0).name; //Set the thumbnail file.
+
+                        int iComicSize = 0;
+                        for(int i = 0; i < alfmSingleComicFiles.size(); i++){
+                            iComicSize += alfmSingleComicFiles.get(i).size;
+                        }
+                        sSingleComicDataFields[GlobalClass.COMIC_SIZE_KB_INDEX] = "" + iComicSize;
+
+                        //Comic details gathered.
+
+
+
+
+                    }
+                });
+
+
+
+            } //End config/response of STEP_1_3_Provide_Comic_Details.
 
 
         }
@@ -417,7 +550,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
             }
             String fileName = value.getName();
             String filePath = value.getPath();
-            long fileSize = value.length();
+            long fileSize = value.length() / 1024; //size in kB.
             Date dateLastModified = new Date(value.lastModified());
             String fileExtention = filePath.contains(".") ? filePath.substring(filePath.lastIndexOf(".")) : "";
 

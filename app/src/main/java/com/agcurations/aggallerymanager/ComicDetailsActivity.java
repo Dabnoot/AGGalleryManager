@@ -127,7 +127,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
 
         if(globalClass.bAutoDownloadOn) {
-            if (gsComicFields[GlobalClass.COMIC_ONLINE_DATA_ACQUIRED].equals(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_NO)) {
+            if (gsComicFields[GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_INDEX].equals(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_NO)) {
                 //If there is no tag data, automatically go out and try to get it.
                 gbAutoAcquireData = true;
                 SyncOnlineData();
@@ -292,19 +292,19 @@ public class ComicDetailsActivity extends AppCompatActivity {
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvThumbnailText = v.findViewById(R.id.TextView_ThumbnailText);
+                tvThumbnailText = v.findViewById(R.id.editText_ComicTitle);
 
-                tvComicID = v.findViewById(R.id.textView_ComicID);
-                tvParodies = v.findViewById(R.id.textView_Parodies);
-                tvCharacters = v.findViewById(R.id.textView_Characters);
-                tvTags = v.findViewById(R.id.textView_Tags);
-                tvArtists = v.findViewById(R.id.textView_Artists);
-                tvGroups = v.findViewById(R.id.textView_Groups);
-                tvLanguages = v.findViewById(R.id.textView_Languages);
-                tvCategories = v.findViewById(R.id.textView_Categories);
+                tvComicID = v.findViewById(R.id.editText_ComicSource);
+                tvParodies = v.findViewById(R.id.editText_Parodies);
+                tvCharacters = v.findViewById(R.id.editText_Characters);
+                tvTags = v.findViewById(R.id.editText_Tags);
+                tvArtists = v.findViewById(R.id.editText_Artists);
+                tvGroups = v.findViewById(R.id.editText_Groups);
+                tvLanguages = v.findViewById(R.id.editText_Languages);
+                tvCategories = v.findViewById(R.id.editText_Categories);
                 tvPages = v.findViewById(R.id.textView_Pages);
 
-                tvLabelComicID = v.findViewById(R.id.textView_LabelComicID);
+                tvLabelComicID = v.findViewById(R.id.textView_LabelComicSource);
                 tvLabelParodies  = v.findViewById(R.id.textView_LabelParodies);
                 tvLabelCharacters  = v.findViewById(R.id.textView_LabelCharacters);
                 tvLabelTags = v.findViewById(R.id.textView_LabelTags);
@@ -511,7 +511,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
         Double dTimeStamp = globalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
-        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER};
+        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX};
         globalClass.ComicCatalogDataFile_UpdateRecord(
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 iFields,
