@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_import_guided:
-                Intent intentImportGuided = new Intent(this, ImportComicsGuidedActivity.class);
+                Intent intentImportGuided = new Intent(this, ImportActivity.class);
                 startActivity(intentImportGuided);
                 return true;
 

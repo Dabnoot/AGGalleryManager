@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -40,6 +41,7 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -67,8 +69,10 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
 
     private GlobalClass globalClass;
 
+    private Uri guriImportTreeURI; //Uri of selected base folder holding files/folders to be imported.
+
     private String[] sSingleComicDataFields;
-    private ArrayList<fileModel> alfmSingleComicFiles;
+    private ArrayList<fileModel> alfmSingleComicFiles; //To preserve files selected by the user for a next step.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -299,10 +303,13 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 stackImportSteps.push(new String[]{Integer.toString(STEP_1_2_Select_Folder_Items)});
 
                 //Set the contents of the ListView:
-                TextView textView_Label_Selected_Folder = findViewById(R.id.textView_Selected_Import_Folder);
-                String sFolder = textView_Label_Selected_Folder.getText().toString();
-                if(!sFolder.equals("")) {
-                    ArrayList<fileModel> alFileList = fnc_readFolderContent(sFolder, ".+", FILES_ONLY);
+                //TextView textView_Label_Selected_Folder = findViewById(R.id.textView_Selected_Import_Folder);
+                //String sFolder = textView_Label_Selected_Folder.getText().toString();
+                //if(!sFolder.equals("")) {
+                if(guriImportTreeURI != null){
+                    //ArrayList<fileModel> alFileList = readFolderContent(sFolder, ".+", FILES_ONLY);
+                    ArrayList<fileModel> alFileList = readFolderContent(guriImportTreeURI, ".+", FILES_ONLY);
+
                     fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
 
                     if(holder.listView_FolderContents != null) {
@@ -508,6 +515,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
     //  https://thecodeprogram.com/build-your-own-file-selector-screen-on-android
 
     public static class fileModel {
+        final public Uri uri;
         final public String type; //folder or file
         final public String name;
         final public String path;
@@ -517,9 +525,22 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
 
         public fileModel(String _type, String _name ,String _path, long _size, Date _dateLastModified, Boolean _isChecked)
         {
+            this.uri = null;
             this.type = _type;
             this.name = _name;
             this.path = _path;
+            this.size = _size;
+            this.dateLastModified = _dateLastModified;
+            this.isChecked = _isChecked;
+        }
+
+        //Initialize with Uri instead of path:
+        public fileModel(String _type, String _name , Uri _uri, long _size, Date _dateLastModified, Boolean _isChecked)
+        {
+            this.uri = _uri;
+            this.type = _type;
+            this.name = _name;
+            this.path = "";
             this.size = _size;
             this.dateLastModified = _dateLastModified;
             this.isChecked = _isChecked;
@@ -529,7 +550,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
     int FOLDERS_ONLY = 0;
     int FILES_ONLY = 1;
     //int BOTH_FOLDERS_AND_FILES = 3;
-    public ArrayList<fileModel> fnc_readFolderContent(String _path, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
+    public ArrayList<fileModel> readFolderContent(String _path, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
 
         ArrayList<fileModel> alFileList = new ArrayList<>();
 
@@ -561,23 +582,96 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
             //create the file model and initialize:
             fileModel file = new fileModel(fileType, fileName, filePath, fileSize, dateLastModified, false);
 
-            alFileList.add(file); // add the file models to the Arraylist to return for the outer function
+            alFileList.add(file); // add the file models to the ArrayList.
         }
 
         return alFileList;
     }
+
+    //Use a Uri instead of a path to get folder contents:
+    public ArrayList<fileModel> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
+
+        //Get data about the files from the UriTree:
+        ContentResolver contentResolver = this.getContentResolver();
+        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder, DocumentsContract.getTreeDocumentId(uriFolder));
+        List<Uri> dirNodes = new LinkedList<>();
+        dirNodes.add(childrenUri);
+        childrenUri = dirNodes.remove(0); // get the item from top
+        String sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
+        Cursor cImport = contentResolver.query(childrenUri,
+                new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE,
+                        DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                        DocumentsContract.Document.COLUMN_SIZE,
+                        DocumentsContract.Document.COLUMN_SUMMARY,
+                        DocumentsContract.Document.COLUMN_FLAGS,
+                        DocumentsContract.Document.COLUMN_ICON},
+                null,
+                null,
+                sSortOrder);
+        if(cImport == null){
+            return null;
+        }
+
+        ArrayList<fileModel> alFileList = new ArrayList<>();
+
+        while (cImport.moveToNext()) {
+            final String docId = cImport.getString(0);
+            final String docName = cImport.getString(1);
+            final String mime = cImport.getString(2);
+            final long lLastModified = cImport.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
+            final String sFileSize = cImport.getString(4);
+
+            boolean isDirectory;
+            isDirectory = (mime.equals(DocumentsContract.Document.MIME_TYPE_DIR));
+            String fileType = (isDirectory) ? "folder" : "file";
+
+            if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (isDirectory)) {
+                continue; //skip the rest of the for loop for this item.
+            } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!isDirectory)) {
+                continue; //skip the rest of the for loop for this item.
+            }
+
+            //Get a Uri for this individual document:
+            final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri,docId);
+
+            long lFileSize = Long.parseLong(sFileSize) / 1024; //size in kB
+
+
+            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+            cal.setTimeInMillis(lLastModified);
+            Date dateLastModified = cal.getTime();
+
+            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
+
+            if (!fileExtension.matches(sFileExtensionRegEx)) {
+                continue;  //skip the rest of the loop if the file extension does not match.
+            }
+
+            //create the file model and initialize:
+            fileModel file = new fileModel(fileType, docName, docUri, lFileSize, dateLastModified, false);
+
+            alFileList.add(file); // add the file models to the ArrayList.
+
+        }
+        cImport.close();
+
+        return alFileList;
+    }
+
+
 
     private static class FileListCustomAdapter extends ArrayAdapter<fileModel> {
 
         final private ArrayList<fileModel> alFileList;
         private ArrayList<fileModel> alFileListDisplay;
         private  boolean bSelectAllSelected = false;
-        private  boolean bSearched = false;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<fileModel> xmlList) {
             super(context, textViewResourceId, xmlList);
-            this.alFileList = new ArrayList<fileModel>(xmlList);
-            this.alFileListDisplay = new ArrayList<fileModel>(xmlList);
+            this.alFileList = new ArrayList<>(xmlList);
+            this.alFileListDisplay = new ArrayList<>(xmlList);
             SortByFileNameAsc();
         }
 
@@ -646,12 +740,10 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                     alFileListDisplay.add(fm);
                 }
             }
-            bSearched = true;
         }
 
         public void removeSearch(){
             alFileListDisplay = alFileList;
-            bSearched = false;
         }
 
         //Comparators
@@ -677,7 +769,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 //descending order
                 return FileName2.compareTo(FileName1);
             }
-        };
+        }
 
         //Sort by file modified date ascending:
         private static class FileModifiedDateAscComparator implements Comparator<fileModel> {
@@ -689,7 +781,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 //ascending order
                 return FileDate1.compareTo(FileDate2);
             }
-        };
+        }
 
         //Sort by file modified date descending:
         private static class FileModifiedDateDescComparator implements Comparator<fileModel> {
@@ -701,7 +793,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                 //descending order
                 return FileDate2.compareTo(FileDate1);
             }
-        };
+        }
 
         private int iCurrentSortMethod;
         private final int SORT_METHOD_FILENAME_ASC = 1;
@@ -871,48 +963,18 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
 
                     //Put the import Uri into the intent (this could represent a folder OR a file:
 
-                    Uri uriTree = resultData.getData();
-                    String path = GlobalClass.FileUtil.getFullPathFromTreeUri(uriTree,this);
+                    guriImportTreeURI = resultData.getData();
 
-                    assert uriTree != null;
-                    assert path != null;
-                    if(path.matches("/") && uriTree.toString().contains("providers.downloads")) {
-                        //Downloads Provider selected.
-                        //  Get the path of the Downloads folder:
-                        Uri uriProvider = resultData.getData();
-                        ContentResolver contentResolver = this.getContentResolver();
-                        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriProvider, DocumentsContract.getTreeDocumentId(uriProvider));
+                    assert guriImportTreeURI != null;
+                    DocumentFile df1 = DocumentFile.fromTreeUri(this, guriImportTreeURI);
+                    String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
 
-                        // Keep track of our directory hierarchy
-                        List<Uri> dirNodes = new LinkedList<>();
-                        dirNodes.add(childrenUri);
-
-                        childrenUri = dirNodes.remove(0); // get the item from top
-                        String sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
-                        Cursor cImport = contentResolver.query(childrenUri, new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME, DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, sSortOrder);
-
-                        if (cImport == null) {
-                            return;
-                        }
-
-                        //int iItemCount = cImport.getCount();
-                        while (cImport.moveToNext()) {
-                            final String docId = cImport.getString(0);
-                            if(docId.contains("Download")){
-                                path = docId.substring(docId.indexOf("/"),docId.lastIndexOf("/"));
-                                break;
-                            }
-                        }
-                        cImport.close();
-
-                    }
-
+                    //Display the source name:
                     TextView textView_Selected_Import_Folder = findViewById(R.id.textView_Selected_Import_Folder);
-                    textView_Selected_Import_Folder.setText(path);
+                    textView_Selected_Import_Folder.setText(sTreeUriSourceName);
                     TextView textView_Label_Selected_Folder = findViewById(R.id.textView_Label_Selected_Folder);
                     textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
                     textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
-
 
                 }
 

@@ -18,7 +18,7 @@
         android:id="@+id/constraintLayout_StepTitleSection"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight=".4"
+        android:layout_weight=".3"
         android:background="@color/colorStatusBarPurple"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -37,7 +37,8 @@
                 android:id="@+id/textView_StepTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Comic Import"
+                android:text="Guided\nImport"
+                android:gravity="center"
                 android:textSize="40sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -53,7 +54,7 @@
         android:id="@+id/constraintLayout_StepInteractionSection"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight=".6"
+        android:layout_weight=".7"
         android:background="@color/colorFragmentImportBackground"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
