@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
-        <activity android:name=".ImportActivity"></activity>
+        <activity android:name=".ImportActivity" />
+
         <activity android:name=".ImportComicsGuidedActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -19,11 +20,11 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity> <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
+        </activity>
         <activity
             android:name=".AGGallerySettingsActivity"
             android:label="@string/title_activity_a_g_gallery_settings"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity" /> <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
         <activity
             android:name=".ScrollingAboutActivity"
             android:label="@string/title_activity_scrolling_about"
@@ -54,6 +55,9 @@
             android:name=".ImportComicsActivity"
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
+        <service
+            android:name=".MainActivityDataService"
+            android:exported="false"></service>
 
         <service
             android:name=".ComicsCatalogDataService"
@@ -68,10 +72,10 @@
             android:name=".ImportComicsService"
             android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

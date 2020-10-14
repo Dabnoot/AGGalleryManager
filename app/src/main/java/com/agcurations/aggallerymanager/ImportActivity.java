@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
@@ -22,8 +23,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
-import java.util.Stack;
+import java.util.Map;
 
 public class ImportActivity extends AppCompatActivity {
 
@@ -35,8 +37,9 @@ public class ImportActivity extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY = 0;
     public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 1;
     public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 2;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 3;
 
-    public static int FRAGMENT_COUNT = 3;
+    public static int FRAGMENT_COUNT = 4;
 
     //=================================================
     //User selection global variables:
@@ -54,6 +57,10 @@ public class ImportActivity extends AppCompatActivity {
     //FragmentImport_2_SelectItems
     public static FileListCustomAdapter fileListCustomAdapter;
 
+    //FragmentImport_3_SelectTags
+    public static String[] sDefaultTags; //Default tags from which user may select.
+    public static String[] sImportTags;  //Tags to apply to the import.
+
     //=================================================
 
 
@@ -68,6 +75,7 @@ public class ImportActivity extends AppCompatActivity {
         arrayList_ImportFragments.add(new FragmentImport_0_MediaCategory());
         arrayList_ImportFragments.add(new FragmentImport_1_StorageLocation());
         arrayList_ImportFragments.add(new FragmentImport_2_SelectItems());
+        arrayList_ImportFragments.add(new FragmentImport_3_SelectTags());
 
         importViewPagerFragmentAdapter = new FragmentImportViewPagerAdapter(getSupportFragmentManager(), getLifecycle());
         // set Orientation in your ViewPager2
@@ -113,6 +121,29 @@ public class ImportActivity extends AppCompatActivity {
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
     }
 
+    public void buttonNextClick_ItemSelectComplete(View v){
+        if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_VIDEOS) {
+
+            //Create an array of tag strings from GlobalClass:
+            List<String> alsTags = new ArrayList<String>();
+            for (Map.Entry<Integer, String> entry : GlobalClass.gtmAllUniqueCatalogVideoTags.entrySet()){
+                alsTags.add(entry.getValue());
+            }
+            String[] sTags = (String[]) alsTags.toArray(new String[0]);
+
+            sDefaultTags = sTags; //getResources().getStringArray(R.array.default_video_tags);
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
+        }
+
+    }
+
+    public void buttonNextClick_TagSelectComplete(View v){
+        String s;
+        TextView editText_ImportTag = findViewById(R.id.textView_ImportTags);
+        s = editText_ImportTag.getText().toString();
+        s = s + "?";
+    }
+
 
     //================================================
     //  Data Structures
@@ -156,10 +187,6 @@ public class ImportActivity extends AppCompatActivity {
             this.isChecked = _isChecked;
         }
     }
-
-
-
-
 
     public static class FileListCustomAdapter extends ArrayAdapter<fileModel> {
 

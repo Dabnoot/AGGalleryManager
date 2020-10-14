@@ -2,7 +2,10 @@ package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -14,6 +17,7 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -33,49 +37,42 @@ public class MainActivity extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        //Initialize the File objects with paths:
-        globalClass.initFolderAndFileStructure();
-
         if(!globalClass.ObfuscationOn) {
             //Remove obfuscation:
             RemoveObfuscation();
         }
 
-        //Read the user-set pin for feature access:
-        globalClass.readPin(this);
+        //Configure a response receiver to listen for updates from the Main Activity (MA) Data Service:
+        IntentFilter filter = new IntentFilter(MADataServiceResponseReceiver.MADATA_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        MADataServiceResponseReceiver maDataServiceResponseReceiver = new MADataServiceResponseReceiver();
+        registerReceiver(maDataServiceResponseReceiver, filter);
 
-        if(GlobalClass.gvfComicTagsFile.exists()) {
-            //Get Comic Tags from file:
-            //Read the list of comics and populate the catalog array:
-            BufferedReader brReader;
-            try {
+        //Call the CC Data Service, which will create a call to a service:
+        MainActivityDataService.startActionLoadData(this);
 
-                brReader = new BufferedReader(new FileReader(GlobalClass.gvfComicTagsFile.getAbsolutePath()));
-                String sLine = brReader.readLine();
-                if(sLine != null) {
-                    String[] sTags;
-                    sTags = sLine.split(",");
-                    brReader.close();
-                    SortedSet<String> ssTags = new TreeSet<>();
-                    for (String sEntry : sTags) {
-                        //Don't add duplicates
-                        //The SortedSet<T> class does not accept duplicate elements.
-                        //  If item is already in the set, this method returns false
-                        //  and does not throw an exception.
-                        ssTags.add(sEntry.trim());
-                    }
-                    globalClass.gssAllUniqueCatalogComicTags = ssTags;
-                }
-            } catch (IOException e) {
-                Toast.makeText(this,
-                        "Trouble reading ComicTags.dat at" + GlobalClass.gvfComicTagsFile.getAbsolutePath(),
-                        Toast.LENGTH_LONG).show();
-            }
-        }
 
     }
 
+    public class MADataServiceResponseReceiver extends BroadcastReceiver {
+        //CCDataService = Comics Catalog Data Service
+        public static final String MADATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MADATA_SERVICE";
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(ComicsCatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            }
+
+
+        }
+    }
 
     //=====================================================================================
     //===== Menu Code =================================================================

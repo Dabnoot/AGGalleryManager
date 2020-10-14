@@ -27,6 +27,8 @@ public class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
                 return new FragmentImport_1_StorageLocation();
             case 2:
                 return new FragmentImport_2_SelectItems();
+            case 3:
+                return new FragmentImport_3_SelectTags();
 
         }
         return null;
@@ -34,7 +36,7 @@ public class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 3;
+        return ImportActivity.FRAGMENT_COUNT;
     }
 
 }

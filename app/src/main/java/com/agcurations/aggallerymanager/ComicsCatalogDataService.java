@@ -70,9 +70,9 @@ public class ComicsCatalogDataService extends IntentService {
         broadcastIntent_LoadComicCatalogResponse.addCategory(Intent.CATEGORY_DEFAULT);
 
 
-        File fCatalogComicsFolder = GlobalClass.gvfComicsFolder;
+        File fCatalogComicsFolder = GlobalClass.gfComicsFolder;
         File fCatalogContentsFile = GlobalClass.gvfComicCatalogContentsFile;
-        File fLogsFolder = GlobalClass.gvfComicLogsFolder;
+        File fLogsFolder = GlobalClass.gfComicLogsFolder;
 
 
         boolean bFolderOk = false ;
@@ -209,19 +209,6 @@ public class ComicsCatalogDataService extends IntentService {
 
                 File fComicTagsFile = GlobalClass.gvfComicTagsFile;
 
-                //Look for the AppConfig file:
-                if (!fComicTagsFile.exists()){
-                    try {
-                        if(!fComicTagsFile.createNewFile()){
-                            problemNotificationConfig("Could not create ComicTags.dat at "
-                                    + fComicTagsFile.getAbsolutePath());
-                        }
-                    }catch (IOException e){
-                        problemNotificationConfig("Could not create ComicTags.dat at "
-                                + fComicTagsFile.getAbsolutePath());
-                    }
-                }
-
                 if (fComicTagsFile.exists()){
 
                     try {
@@ -238,12 +225,11 @@ public class ComicsCatalogDataService extends IntentService {
                         fwComicTagsFile.close();
 
                     } catch (IOException e) {
-                        problemNotificationConfig("Trouble writing ComicTags.dat at"
+                        problemNotificationConfig("Trouble writing ComicTags.dat at "
                                 + fComicTagsFile.getAbsolutePath());
                     }
 
                 }
-
 
             }
 
@@ -289,7 +275,7 @@ public class ComicsCatalogDataService extends IntentService {
             }
 
             //Create the new catalog contents file:
-            File fCatalogComicsFolder = GlobalClass.gvfComicsFolder;
+            File fCatalogComicsFolder = GlobalClass.gfComicsFolder;
             File fNewCatalogContentsFile;
 
             //Create a new catalog status file:

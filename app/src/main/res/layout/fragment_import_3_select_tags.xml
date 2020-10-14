@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ImportActivity">
+
+
+    <!--<androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_above="@+id/button_NextStep"
+        android:layout_below="@+id/TagSelectionTopText"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="10dp"
+        android:scrollbarSize="10dp"
+        android:scrollbars="vertical">
+
+        <me.gujun.android.taggroup.TagGroup
+            android:id="@+id/tag_group"
+            style="@style/TagGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:atg_backgroundColor="@color/colorFragmentImportBackground"
+            app:atg_borderColor="@color/colorBlackboardRed"
+            app:atg_textColor="@color/colorBlackboardRed" />
+
+    </androidx.core.widget.NestedScrollView>-->
+
+    <RelativeLayout
+        android:id="@+id/TagSelectionTopText"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/button_NextStep"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/textView_Label_Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:text="Tag Selection"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/textView_Label_Subtext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/textView_Label_Title"
+            android:layout_gravity="center"
+            android:textAlignment="center"
+            android:text="Choose tags applicable to the selection. A new tag can be added from the main menu. Additional tags can be added or removed from individual files when the import is completed."
+            android:textSize="20sp" />
+
+        <ListView
+            android:id="@+id/listView_ImportTagSelection"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:scrollbarSize="20dp"
+            android:layout_margin="20dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/textView_Label_Subtext"
+            android:layout_above="@+id/textView_ImportTags"
+            android:defaultValue="@array/empty_array" />
+
+        <TextView
+            android:id="@+id/textView_LabelImportTags"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/textView_ImportTags"
+            android:layout_marginEnd="10dp"
+            android:text="Tags:"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/textView_ImportTags"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="0dp"
+            android:layout_marginBottom="10dp"
+            android:textSize="20sp"
+            android:layout_toRightOf="@+id/textView_LabelImportTags"
+            android:text=""/>
+
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/button_NextStep"
+        android:layout_width="149dp"
+        android:layout_height="67dp"
+        android:background="@color/colorBlackboardRed"
+        android:text="Next"
+        android:textSize="24sp"
+        android:onClick="buttonNextClick_TagSelectComplete"
+        android:layout_marginBottom="20dp"
+        app:backgroundTint="@color/colorBlackboardRed"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

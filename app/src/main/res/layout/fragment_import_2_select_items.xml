@@ -4,90 +4,56 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".FragmentImport_2_SelectItems">
+    tools:context=".ImportActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
 
-        <TextView
-            android:id="@+id/textView_Label_FolderContents"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="20dp"
-            android:text="Select import items from folder contents:"
+        <Button
+            android:id="@+id/button_ItemSelectComplete"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:layout_marginBottom="20dp"
+            android:background="@color/colorBlackboardRed"
+            android:onClick="buttonNextClick_ItemSelectComplete"
+            android:text="Next"
             android:textSize="24sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:backgroundTint="@color/colorBlackboardRed"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
         <LinearLayout
             android:id="@+id/linearLayout_ListViewControlBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
+            android:background="@color/colorFragmentImportBackgroundHighlight"
+            android:gravity="center_vertical"
             android:paddingTop="7dp"
             android:paddingBottom="7dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView_Label_FolderContents"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toTopOf="@+id/listView_FolderContents"
-            android:gravity="center_vertical"
-            android:background="@color/colorFragmentImportBackgroundHighlight">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView_Label_FolderContents">
 
             <CheckBox
                 android:id="@+id/checkBox_SelectAllStorageItems"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Select All"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="40dp"
                 android:buttonTint="@color/colorGrey1"
-                android:textColor="@color/colorGrey1"/>
+                android:text="Select All"
+                android:textColor="@color/colorGrey1" />
 
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:layout_marginEnd="40dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp"
-                android:background="@color/colorFragmentImportBackgroundHighlight2"
-                >
-
-                <TextView
-                    android:id="@+id/textView_labelSortBy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="Sort by: " />
-
-                <Spinner
-                    android:id="@+id/spinner_SortBy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp"/>
-
-                <ImageView
-                    android:id="@+id/imageView_SortOrder"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="15dp"
-                    android:src="@drawable/baseline_sort_ascending_white_18dp" />
-
-            </LinearLayout>
-            <TextView
-                android:id="@+id/textView_labelSearch"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Search: " />
 
             <EditText
                 android:id="@+id/editText_Search"
@@ -100,6 +66,45 @@
                 android:singleLine="true"
                 app:layout_constraintEnd_toEndOf="parent" />
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="40dp"
+                android:background="@color/colorFragmentImportBackgroundHighlight2"
+                android:gravity="center_vertical"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp">
+
+                <ImageView
+                    android:id="@+id/imageView_SortOrder"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="15dp"
+                    android:src="@drawable/baseline_sort_ascending_white_18dp" />
+
+                <Spinner
+                    android:id="@+id/spinner_SortBy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp" />
+
+                <TextView
+                    android:id="@+id/textView_labelSortBy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Sort by: " />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textView_labelSearch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Search: " />
+
         </LinearLayout>
 
         <ListView
@@ -108,25 +113,21 @@
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
             android:textSize="24sp"
+            app:layout_constrainedHeight="true"
+            app:layout_constraintBottom_toTopOf="@+id/button_ItemSelectComplete"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constrainedHeight="true"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout_ListViewControlBar"
-            app:layout_constraintBottom_toTopOf="@+id/button_ItemSelectComplete"/>
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout_ListViewControlBar" />
 
-        <Button
-            android:id="@+id/button_ItemSelectComplete"
-            android:layout_width="149dp"
-            android:layout_height="67dp"
-            android:layout_marginTop="60dp"
-            android:layout_marginBottom="20dp"
-            android:background="@color/colorBlackboardRed"
-            android:text="Next"
+        <TextView
+            android:id="@+id/textView_Label_FolderContents"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="Select import items from folder contents:"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

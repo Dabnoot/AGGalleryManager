@@ -87,7 +87,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gsComicFields = globalClass.gvSelectedComic; //Don't bother with using the intent to pass this data.
         if( gsComicFields == null) return;
 
-        String sComicFolder_AbsolutePath = GlobalClass.gvfComicsFolder.getAbsolutePath();
+        String sComicFolder_AbsolutePath = GlobalClass.gfComicsFolder.getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];

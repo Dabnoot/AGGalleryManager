@@ -297,7 +297,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     public class CCDataServiceResponseReceiver extends BroadcastReceiver {
         //CCDataService = Comics Catalog Data Service
-        public static final String CCDATA_SERVICE_ACTION_RESPONSE = "com.dabnoot.intent.action.FROM_CCDATA_SERVICE";
+        public static final String CCDATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CCDATA_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -432,7 +432,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = GlobalClass.gvfComicsFolder.getAbsolutePath()
+                String sThumbnailFilePath = GlobalClass.gfComicsFolder.getAbsolutePath()
                         + File.separator
                         + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
                         + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];

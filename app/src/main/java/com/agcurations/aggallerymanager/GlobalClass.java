@@ -11,7 +11,6 @@ import android.net.Network;
 import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.widget.Toast;
@@ -20,7 +19,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
@@ -39,16 +37,30 @@ public class GlobalClass extends Application {
 
     //Global Variables:
 
-    public String gsPin = "";
+    public static String gsPin = "";
 
     public boolean gbSkipComicCatalogReload;
 
     public static File gvfAppFolder;
     public static File gvfAppConfigFile;
-    public static File gvfComicsFolder;
-    public static File gvfComicLogsFolder;
+
+    public static File gvfVideosFolder;
+    public static File gvfVideoLogsFolder;
+    public static File gvfVideoCatalogContentsFile;
+    public static File gvfVideoTagsFile;
+    public static TreeMap<Integer, String> gtmAllUniqueCatalogVideoTags = new TreeMap<>();
+    public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>();
+
+    public static File gfComicsFolder;
+    public static File gfComicLogsFolder;
     public static File gvfComicCatalogContentsFile;
     public static File gvfComicTagsFile;
+    public SortedSet<String> gssAllUniqueCatalogComicTags = new TreeSet<>();
+    public Set<String> gssComicTagsRestricted = new TreeSet<>();
+
+    //Tags are given IDs for the event that the user chooses to rename a tag.
+    public static final int TAG_ID_INDEX = 0;                    //Tag ID
+    public static final int TAG_NAME_INDEX = 1;                  //Tag Name
 
     TreeMap<Integer, String[]> gvtmCatalogComicList = new TreeMap<>();
 
@@ -61,87 +73,11 @@ public class GlobalClass extends Application {
 
     public String[] gvSelectedComic;
 
-    public SortedSet<String> gssAllUniqueCatalogComicTags = new TreeSet<>();
-    public Set<String> gssComicTagsRestricted = new TreeSet<>();
+
 
     public void SendToast(Context context, String sMessage){
         Toast.makeText(context, sMessage, Toast.LENGTH_SHORT).show();
     }
-
-    public void initFolderAndFileStructure(){
-
-        String sExternalStorageState;
-        sExternalStorageState = Environment.getExternalStorageState();
-        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ) {
-
-            File[] fAvailableDirs = getExternalFilesDirs(null);
-            if (fAvailableDirs.length == 2) {
-                gvfAppFolder = fAvailableDirs[1];
-            } else {
-                gvfAppFolder = fAvailableDirs[0];
-            }
-
-            gvfComicsFolder = new File(gvfAppFolder
-                    + File.separator + "Comics");
-
-            gvfComicCatalogContentsFile = new File(gvfComicsFolder.getAbsolutePath()
-                    + File.separator + "CatalogContents.dat");
-
-            gvfComicLogsFolder = new File(gvfComicsFolder
-                    + File.separator + "Logs");
-
-            gvfComicTagsFile = new File(gvfComicsFolder.getAbsolutePath()
-                    + File.separator + "ComicTags.dat");
-
-            gvfAppConfigFile = new File(gvfAppFolder.getAbsolutePath()
-                    + File.separator + "AppConfig.dat");
-
-        }
-
-
-    }
-
-
-    public void readPin(Context context){
-        //Attempt to read a pin number set by the user:
-
-        if (!gvfAppConfigFile.exists()){
-            try {
-                if(!gvfAppConfigFile.createNewFile()) {
-                    SendToast(context, "Could not create AppConfig.dat at " + gvfAppConfigFile.getAbsolutePath());
-                }
-            }catch (IOException e){
-                SendToast(context,"Could not create AppConfig.dat at " + gvfAppConfigFile.getAbsolutePath());
-            }
-        } else {
-
-            //Read the AppConfig data. This file, at the time of design, was only intended to
-            //  hold 1 piece of data - a pin/password set by the user to unlock certain settings.
-            //  Specifically, settings for restricted tags, and turning the restriction on and off.
-            BufferedReader brReader;
-            String sLine = "";
-            try {
-                brReader = new BufferedReader(new FileReader(gvfAppConfigFile.getAbsolutePath()));
-                sLine = brReader.readLine();
-                brReader.close();
-            } catch (IOException e) {
-                SendToast(context,"Trouble reading AppConfig.dat at" + gvfAppConfigFile.getAbsolutePath());
-            }
-
-            //Set the global variable holding the pin:
-            if(sLine == null){
-                gsPin = "";
-            } else {
-                gsPin = sLine;
-            }
-        }
-
-
-
-
-
-    }
-
 
     //=====================================================================================
     //===== Start Network Monitoring Section ==============================================
@@ -439,7 +375,7 @@ public class GlobalClass extends Application {
                 }
             }
 
-            String  sComicFolderPath = gvfComicsFolder.getPath() + File.separator
+            String  sComicFolderPath = gfComicsFolder.getPath() + File.separator
                     + sComicFolderName;
 
             File fComicFolderToBeDeleted = new File(sComicFolderPath);

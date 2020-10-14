@@ -49,7 +49,7 @@ public class ImportComicsService extends IntentService {
 
         //Create a log file to track the import:
         String sTemp = globalClass.GetTimeStampFileSafe() + "_ImportLog.txt";
-        File fImportLog = new File(GlobalClass.gvfComicLogsFolder + File.separator + sTemp);
+        File fImportLog = new File(GlobalClass.gfComicLogsFolder + File.separator + sTemp);
         try {
             gfwImportLogFile = new FileWriter(fImportLog, true);
         } catch (Exception e){
@@ -566,7 +566,7 @@ public class ImportComicsService extends IntentService {
                             if(!bDuplicateInCatalog) { //Don't execute if the comic already exists in the catalog.
 
                                 //Create the comic folder:
-                                fComicDestination = new File(GlobalClass.gvfComicsFolder,sFolderName);
+                                fComicDestination = new File(GlobalClass.gfComicsFolder,sFolderName);
 
                                 if(!fComicDestination.mkdirs()){
                                     WriteLogLine( "Could not create folder for comic " + iComicID,true);
@@ -585,7 +585,7 @@ public class ImportComicsService extends IntentService {
 
                                         if (iPageComicID == iComicID) {
                                             WriteLogLine("Importing file into catalog: " + sAbsolutePath,true);
-                                            fDestinationFile = new File(GlobalClass.gvfComicsFolder.getAbsolutePath() + File.separator +
+                                            fDestinationFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath() + File.separator +
                                                     sFolderName + File.separator + sFileName);
                                             WriteLogLine("Moving file " + sFileName + " to " + fDestinationFile.getAbsolutePath(),true);
                                             try {
