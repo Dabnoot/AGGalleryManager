@@ -59,7 +59,7 @@ public class ImportActivity extends AppCompatActivity {
 
     //FragmentImport_3_SelectTags
     public static String[] sDefaultTags; //Default tags from which user may select.
-    public static String[] sImportTags;  //Tags to apply to the import.
+    public static ArrayList<String> alsImportTags = new ArrayList<>();  //Tags to apply to the import.
 
     //=================================================
 
@@ -138,10 +138,7 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
-        String s;
-        TextView editText_ImportTag = findViewById(R.id.textView_ImportTags);
-        s = editText_ImportTag.getText().toString();
-        s = s + "?";
+
     }
 
 

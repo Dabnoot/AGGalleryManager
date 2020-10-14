@@ -190,10 +190,12 @@ public class FragmentImport_3_SelectTags extends Fragment {
                             }
                         }
                     }
-                    //Transfer the treemap items to a string for display:
+                    //Transfer the treemap items back to ImportActivity as well as to a string for display:
                     StringBuilder sb = new StringBuilder();
+                    ImportActivity.alsImportTags.clear();
                     for (Map.Entry<Integer, String>
                             entry : tmSelectedItems.entrySet()) {
+                        ImportActivity.alsImportTags.add(entry.getValue());
                         sb.append(entry.getValue());
                         sb.append(", ");
                     }
