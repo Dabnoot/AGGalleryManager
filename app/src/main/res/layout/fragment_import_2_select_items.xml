@@ -21,7 +21,6 @@
             android:layout_width="149dp"
             android:layout_height="67dp"
             android:layout_marginBottom="20dp"
-            android:background="@color/colorBlackboardRed"
             android:onClick="buttonNextClick_ItemSelectComplete"
             android:text="Next"
             android:textSize="24sp"

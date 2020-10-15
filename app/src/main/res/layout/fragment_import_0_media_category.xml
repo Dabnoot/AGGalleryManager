@@ -17,7 +17,7 @@
         android:gravity="center">
 
         <RadioGroup
-            android:id="@+id/radioGroup_ImportMethod"
+            android:id="@+id/radioGroup_MediaCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="60dp">
@@ -63,7 +63,6 @@
             android:id="@+id/button_NextStep"
             android:layout_width="149dp"
             android:layout_height="67dp"
-            android:background="@color/colorBlackboardRed"
             android:onClick="buttonNextClick_MediaCategory"
             android:text="Next"
             android:textSize="24sp"

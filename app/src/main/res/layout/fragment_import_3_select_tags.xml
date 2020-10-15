@@ -102,7 +102,6 @@
         android:id="@+id/button_NextStep"
         android:layout_width="149dp"
         android:layout_height="67dp"
-        android:background="@color/colorBlackboardRed"
         android:text="Next"
         android:textSize="24sp"
         android:onClick="buttonNextClick_TagSelectComplete"
