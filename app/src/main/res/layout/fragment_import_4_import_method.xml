@@ -23,13 +23,21 @@
             android:text="Choose Import Method"/>
 
         <TextView
-            android:id="@+id/TextView_AppStorageLocationMessage"
+            android:id="@+id/TextView_Subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:layout_gravity="start"
-            android:text="This application uses the SD Card for storage if available. The current storage location is: \nPlease choose the import method you would like to use."/>
+            android:layout_gravity="center"
+            android:text="Please choose the import method you would like to use."/>
 
+
+        <TextView
+            android:id="@+id/TextView_AppStorageLocationMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="10dp"
+            android:text="The destination location is: " />
 
         <RadioGroup
             android:id="@+id/radioGroup_ImportMethod"
@@ -47,12 +55,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
+            <!--<TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="30dp"
                 android:layout_marginEnd="10dp"
-                android:text="This is the recommended import method. The process of moving files will result in only 1 copy of each file. Selected files in the source directory will be deleted after import. Files can be retrieved using the export feature or by manually retrieving from the app storage location."/>
+                android:text="This is the recommended import method. Minimizes storage utilization."/>-->
 
             <RadioButton
                 android:id="@+id/radioButton_CopyFiles"
@@ -64,12 +72,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
+            <!--<TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="30dp"
                 android:layout_marginEnd="10dp"
-                android:text="The process of copying files will result in 2 copies of each file. The originals will be left in the source location. This may result in heavily increased storage use if not copying from an external storage device."/>
+                android:text="Leave a copy of the file in the source location."/>-->
 
         </RadioGroup>
 
@@ -77,10 +85,11 @@
             android:id="@+id/button_ImportMethodSelected"
             android:layout_width="149dp"
             android:layout_height="67dp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            android:layout_marginTop="20dp"
+            android:onClick="buttonNextClick_ImportMethodComplete"
             android:text="Next"
             android:textSize="24sp"
-            android:layout_marginTop="20dp"/>
+            app:backgroundTint="@color/colorBlackboardRed" />
 
     </LinearLayout>
 

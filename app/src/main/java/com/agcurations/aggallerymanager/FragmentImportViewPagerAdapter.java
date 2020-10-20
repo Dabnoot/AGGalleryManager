@@ -21,14 +21,18 @@ public class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
     @Override
     public Fragment createFragment(int position) {
         switch (position) {
-            case 0:
+            case ImportActivity.FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
                 return new FragmentImport_0_MediaCategory();
-            case 1:
+            case ImportActivity.FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
                 return new FragmentImport_1_StorageLocation();
-            case 2:
+            case ImportActivity.FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
                 return new FragmentImport_2_SelectItems();
-            case 3:
+            case ImportActivity.FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
                 return new FragmentImport_3_SelectTags();
+            case ImportActivity.FRAGMENT_IMPORT_4_ID_IMPORT_METHOD:
+                return new FragmentImport_4_ImportMethod();
+            case ImportActivity.FRAGMENT_IMPORT_5_ID_CONFIRMATION:
+                return new FragmentImport_5_Confirmation();
 
         }
         return null;

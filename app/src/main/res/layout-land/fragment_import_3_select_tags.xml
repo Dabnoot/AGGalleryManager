@@ -40,8 +40,8 @@
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="10dp"
                 android:layout_below="@+id/textView_Label_Title"
-                android:layout_gravity="center"
-                android:textAlignment="center"
+                android:layout_gravity="start"
+                android:textAlignment="textStart"
                 android:text="Choose tags applicable to the selection from the scrollbox to the right.\n\nA new tag can be added from the main menu.\n\nAdditional tags can be added or removed from individual files when the import is completed.\n\nEach tag has an ID number. Files will be imported into a storage folder which will be identified by the FIRST tag selected. The tag ID number is used as the folder name to preserve content anonymity."
                 android:textSize="20sp" />
 

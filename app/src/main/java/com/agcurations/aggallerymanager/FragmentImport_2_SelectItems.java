@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 
 import android.provider.DocumentsContract;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +34,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -108,6 +110,9 @@ public class FragmentImport_2_SelectItems extends Fragment {
             return;
         }
 
+        //Long lStartTime = 0L;
+        //Long lEndTime = 0L;
+
         //Set the contents of the ListView:
         //TextView textView_Label_Selected_Folder = findViewById(R.id.textView_Selected_Import_Folder);
         //String sFolder = textView_Label_Selected_Folder.getText().toString();
@@ -115,8 +120,11 @@ public class FragmentImport_2_SelectItems extends Fragment {
         final ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
         if(ImportActivity.guriImportTreeURI != null){
             //ArrayList<fileModel> alFileList = readFolderContent(sFolder, ".+", FILES_ONLY);
+            //lStartTime = System.nanoTime();
             ArrayList<ImportActivity.fileModel> alFileList = readFolderContent(ImportActivity.guriImportTreeURI, ".+", FILES_ONLY);
-
+            //lEndTime = System.nanoTime();
+            //Log.d("********Time used to read folder","*******Time used to read folder: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
+            //lStartTime = System.nanoTime();
             if(getActivity() == null){
                 return;
             }
@@ -215,6 +223,8 @@ public class FragmentImport_2_SelectItems extends Fragment {
 
             }
         });
+        //lEndTime = System.nanoTime();
+        //Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
     }
 
     int FOLDERS_ONLY = 0;

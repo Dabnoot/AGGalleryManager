@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,8 +39,10 @@ public class ImportActivity extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 1;
     public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 2;
     public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 3;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 4;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 5;
 
-    public static int FRAGMENT_COUNT = 4;
+    public static int FRAGMENT_COUNT = 6;
 
     //=================================================
     //User selection global variables:
@@ -50,6 +53,7 @@ public class ImportActivity extends AppCompatActivity {
     public final int IMPORT_MEDIA_CATEGORY_IMAGES = 1;
     public final int IMPORT_MEDIA_CATEGORY_COMICS = 2;
     public int giImportMediaCategory; //Selected Category
+    public static String gsMediaCategoryFolderName = "";
 
     //FragmentImport_1_StorageLocation
     public static Uri guriImportTreeURI; //Uri of selected base folder holding files/folders to be imported.
@@ -60,6 +64,12 @@ public class ImportActivity extends AppCompatActivity {
     //FragmentImport_3_SelectTags
     public static String[] sDefaultTags; //Default tags from which user may select.
     public static ArrayList<String> alsImportTags = new ArrayList<>();  //Tags to apply to the import.
+    public static String gsImportDestinationFolder;
+
+    //FragmentImport_4_ImportMethod
+    public static int IMPORT_METHOD_MOVE = 0;
+    public static int IMPORT_METHOD_COPY = 1;
+    public static int giImportMethod; //Selected import method.
 
     //=================================================
 
@@ -87,6 +97,7 @@ public class ImportActivity extends AppCompatActivity {
         ViewPager2_Import.setUserInputEnabled(false);
 
         //myViewPager2.setPageTransformer(new MarginPageTransformer(1500));
+
     }
 
     @Override
@@ -104,12 +115,18 @@ public class ImportActivity extends AppCompatActivity {
         RadioButton rbVideos = findViewById(R.id.radioButton_ImportVideos);
         RadioButton rbImages = findViewById(R.id.radioButton_ImportImages);
         //RadioButton rbComics = findViewById(R.id.radioButton_ImportComics);
+
+
+
         if (rbVideos.isChecked()){
             giImportMediaCategory = IMPORT_MEDIA_CATEGORY_VIDEOS;
+            gsMediaCategoryFolderName =  "Videos";
         } else if (rbImages.isChecked()){
             giImportMediaCategory = IMPORT_MEDIA_CATEGORY_IMAGES;
+            gsMediaCategoryFolderName = "Images";
         } else {
             giImportMediaCategory = IMPORT_MEDIA_CATEGORY_COMICS;
+            gsMediaCategoryFolderName = "Comics";
         }
 
         //Go to the import folder selection fragment:
@@ -138,7 +155,30 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
+        Integer iFolderID;
+        if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_VIDEOS){
+            for (Map.Entry<Integer, String> entry : GlobalClass.gtmAllUniqueCatalogVideoTags.entrySet()){
+                if(alsImportTags.get(0).contentEquals(entry.getValue())){
+                    gsImportDestinationFolder = Integer.toString(entry.getKey());
+                    break;
+                }
+            }
+        } else if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_IMAGES){
 
+        }
+
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
+    }
+
+    public void buttonNextClick_ImportMethodComplete(View v){        RadioButton rbMove = findViewById(R.id.radioButton_MoveFiles);
+
+        if (rbMove.isChecked()){
+            giImportMethod = IMPORT_METHOD_MOVE;
+        } else{
+            giImportMethod = IMPORT_METHOD_COPY;
+        }
+
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION);
     }
 
 
@@ -187,20 +227,20 @@ public class ImportActivity extends AppCompatActivity {
 
     public static class FileListCustomAdapter extends ArrayAdapter<fileModel> {
 
-        final private ArrayList<fileModel> alFileList;
+        final public ArrayList<fileModel> alFileList;
         private ArrayList<fileModel> alFileListDisplay;
         private  boolean bSelectAllSelected = false;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<fileModel> xmlList) {
             super(context, textViewResourceId, xmlList);
-            this.alFileList = new ArrayList<>(xmlList);
-            this.alFileListDisplay = new ArrayList<>(xmlList);
+            alFileList = new ArrayList<>(xmlList);
+            alFileListDisplay = new ArrayList<>(xmlList);
             SortByFileNameAsc();
         }
 
         @Override
-        public View getView(final int position, View convertView, ViewGroup parent) {
-            View row = convertView;
+        public View getView(final int position, View v, ViewGroup parent) {
+            View row = v;
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
                 //My custom list item design is here
@@ -212,13 +252,13 @@ public class ImportActivity extends AppCompatActivity {
             TextView tvFileName =  row.findViewById(R.id.textView_FileName);
             TextView tvModifiedDate = row.findViewById(R.id.textView_DateModified);
 
-            tvFileName.setText(this.alFileListDisplay.get(position).name);
+            tvFileName.setText(alFileListDisplay.get(position).name);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
-            String sdf = dfDateFormat.format(this.alFileListDisplay.get(position).dateLastModified);
+            String sdf = dfDateFormat.format(alFileListDisplay.get(position).dateLastModified);
             tvModifiedDate.setText(sdf);
 
             //set the image type if folder or file
-            if(this.alFileListDisplay.get(position).type.equals("folder")) {
+            if(alFileListDisplay.get(position).type.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
                 ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
@@ -229,6 +269,57 @@ public class ImportActivity extends AppCompatActivity {
             } else {
                 cbStorageItemSelect.setChecked(false);
             }
+
+
+            //Set the onClickListener for the row to toggle the checkbox:
+            row.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View view) {
+                    CheckBox checkBox_StorageItemSelect = view.findViewById(R.id.checkBox_StorageItemSelect);
+                    boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
+                    checkBox_StorageItemSelect.setChecked(bNewCheckedState);
+
+                    //Find the item that is checked/unchecked in alFileList and apply the property.
+                    //  The user will have clicked an item in alFileListDisplay, not alFileList.
+                    //  alFileListDisplay may be a subset of alFileList.
+
+                    alFileListDisplay.get(position).isChecked = bNewCheckedState;
+
+                    for(fileModel fm: alFileList){
+                        if(fm.name.contentEquals(alFileListDisplay.get(position).name)){
+                            fm.isChecked = bNewCheckedState;
+                            break;
+                        }
+                    }
+
+                }
+            });
+
+            //Set the onClickListener for the checkbox to toggle the checkbox:
+            CheckBox checkBox_StorageItemSelect = row.findViewById(R.id.checkBox_StorageItemSelect);
+            checkBox_StorageItemSelect.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View view) {
+                    CheckBox checkBox_StorageItemSelect = (CheckBox) view;
+                    boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
+
+                    //Find the item that is checked/unchecked in alFileList and apply the property.
+                    //  The user will have clicked an item in alFileListDisplay, not alFileList.
+                    //  alFileListDisplay may be a subset of alFileList.
+                    alFileListDisplay.get(position).isChecked = bNewCheckedState;
+
+                    for(fileModel fm: alFileList){
+                        if(fm.name.contentEquals(alFileListDisplay.get(position).name)){
+                            fm.isChecked = bNewCheckedState;
+                            break;
+                        }
+                    }
+
+                }
+            });
+
 
             return row;
         }
@@ -251,9 +342,19 @@ public class ImportActivity extends AppCompatActivity {
 
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
-            for(fileModel fm:alFileListDisplay){
-                fm.isChecked = bSelectAllSelected;
+            for(fileModel fmDisplayed:alFileListDisplay){
+                fmDisplayed.isChecked = bSelectAllSelected;
+                //Translate the selected item state to alFileList:
+                for(fileModel fm: alFileList){
+                    if(fm.name.contentEquals(fmDisplayed.name)){
+                        fm.isChecked = bSelectAllSelected;
+                        break;
+                    }
+                }
             }
+
+
+
         }
 
         public void applySearch(String sSearch){
