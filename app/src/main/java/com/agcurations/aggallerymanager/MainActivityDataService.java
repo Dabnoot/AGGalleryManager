@@ -53,7 +53,7 @@ public class MainActivityDataService extends IntentService {
 
 
 
-    Intent broadcastIntent_LoadAppDataResponse; //Make global to allow for problem notification string extras.
+    Intent broadcastIntent_LoadAppDataResponse = new Intent();; //Make global to allow for problem notification string extras.
     private void handleActionLoadAppData() {
 
         String sExternalStorageState;

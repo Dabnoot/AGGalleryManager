@@ -4,9 +4,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +20,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -98,7 +104,49 @@ public class ImportActivity extends AppCompatActivity {
 
         //myViewPager2.setPageTransformer(new MarginPageTransformer(1500));
 
+        //Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        ImportDataServiceResponseReceiver importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
+        registerReceiver(importDataServiceResponseReceiver, filter);
+
     }
+
+    @SuppressWarnings("unchecked")
+    public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
+        public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(ImportActivityDataService.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(ImportActivityDataService.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to request to get directory contents:
+                boolean bGetDirContentsResponse = intent.getBooleanExtra(ImportActivityDataService.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
+                if(bGetDirContentsResponse) {
+                    ArrayList<ImportActivity.fileModel> alFileList = (ArrayList<ImportActivity.fileModel>) intent.getSerializableExtra(ImportActivityDataService.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
+                    fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList); //todo: rather not leave getApplicationContext() here. This adapter should die at activity destroy.
+                }
+
+            }
+
+
+        }
+    }
+
+
+
+    //======================================================
+    //======  FRAGMENT NAVIGATION ROUTINES  ================
+    //======================================================
+
 
     @Override
     public void onBackPressed() {
@@ -192,8 +240,8 @@ public class ImportActivity extends AppCompatActivity {
     //References:
     //  https://thecodeprogram.com/build-your-own-file-selector-screen-on-android
 
-    public static class fileModel {
-        final public Uri uri;
+    public static class fileModel implements Serializable {
+        final public String uri;
         final public String type; //folder or file
         final public String name;
         final public String path;
@@ -203,7 +251,7 @@ public class ImportActivity extends AppCompatActivity {
 
         public fileModel(String _type, String _name ,String _path, long _size, Date _dateLastModified, Boolean _isChecked)
         {
-            this.uri = null;
+            this.uri = "";
             this.type = _type;
             this.name = _name;
             this.path = _path;
@@ -213,7 +261,7 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Initialize with Uri instead of path:
-        public fileModel(String _type, String _name , Uri _uri, long _size, Date _dateLastModified, Boolean _isChecked)
+        public fileModel(String _type, String _name , long _size, Date _dateLastModified, Boolean _isChecked, String _uri)
         {
             this.uri = _uri;
             this.type = _type;
@@ -223,6 +271,26 @@ public class ImportActivity extends AppCompatActivity {
             this.dateLastModified = _dateLastModified;
             this.isChecked = _isChecked;
         }
+    }
+
+    public static class fileModel2 implements Serializable {
+        final public String type; //folder or file
+        final public String name;
+        final public String path;
+        final public long size;
+        final public Date dateLastModified;
+        public Boolean isChecked;
+
+        public fileModel2(String _type, String _name ,String _path, long _size, Date _dateLastModified, Boolean _isChecked)
+        {
+            this.type = _type;
+            this.name = _name;
+            this.path = _path;
+            this.size = _size;
+            this.dateLastModified = _dateLastModified;
+            this.isChecked = _isChecked;
+        }
+
     }
 
     public static class FileListCustomAdapter extends ArrayAdapter<fileModel> {

@@ -54,16 +54,7 @@
                 android:textColor="@color/colorGrey1" />
 
 
-            <EditText
-                android:id="@+id/editText_Search"
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:ems="10"
-                android:imeOptions="actionSearch"
-                android:inputType="text"
-                android:singleLine="true"
-                app:layout_constraintEnd_toEndOf="parent" />
+
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -74,6 +65,20 @@
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp">
 
+
+                <TextView
+                    android:id="@+id/textView_labelSortBy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Sort by: " />
+
+                <Spinner
+                    android:id="@+id/spinner_SortBy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="5dp" />
+
                 <ImageView
                     android:id="@+id/imageView_SortOrder"
                     android:layout_width="wrap_content"
@@ -82,18 +87,6 @@
                     android:layout_marginEnd="15dp"
                     android:src="@drawable/baseline_sort_ascending_white_18dp" />
 
-                <Spinner
-                    android:id="@+id/spinner_SortBy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="5dp" />
-
-                <TextView
-                    android:id="@+id/textView_labelSortBy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="Sort by: " />
 
             </LinearLayout>
 
@@ -103,6 +96,16 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Search: " />
+
+            <EditText
+                android:id="@+id/editText_Search"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:ems="10"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:singleLine="true" />
 
         </LinearLayout>
 

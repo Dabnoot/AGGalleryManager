@@ -15,13 +15,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 public class MainActivity extends AppCompatActivity {
 
     //Global Variables:
@@ -43,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Configure a response receiver to listen for updates from the Main Activity (MA) Data Service:
-        IntentFilter filter = new IntentFilter(MADataServiceResponseReceiver.MADATA_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(MADataServiceResponseReceiver.MA_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         MADataServiceResponseReceiver maDataServiceResponseReceiver = new MADataServiceResponseReceiver();
         registerReceiver(maDataServiceResponseReceiver, filter);
@@ -55,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public class MADataServiceResponseReceiver extends BroadcastReceiver {
-        //CCDataService = Comics Catalog Data Service
-        public static final String MADATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MADATA_SERVICE";
+        //MADataService = Main Activity Data Service
+        public static final String MA_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MA_DATA_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -64,9 +57,9 @@ public class MainActivity extends AppCompatActivity {
             boolean bError;
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
+            bError = intent.getBooleanExtra(MainActivityDataService.EXTRA_BOOL_DATA_LOAD_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(ComicsCatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
+                String sMessage = intent.getStringExtra(MainActivityDataService.EXTRA_STRING_DATA_LOAD_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             }
 

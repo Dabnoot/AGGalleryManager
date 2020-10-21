@@ -24,7 +24,7 @@
         <activity
             android:name=".AGGallerySettingsActivity"
             android:label="@string/title_activity_a_g_gallery_settings"
-            android:parentActivityName=".MainActivity" /> <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
+            android:parentActivityName=".MainActivity" />
         <activity
             android:name=".ScrollingAboutActivity"
             android:label="@string/title_activity_scrolling_about"
@@ -32,7 +32,7 @@
             android:theme="@style/AppTheme.Launcher.NoActionBar" />
         <activity
             android:name=".PicturesCatalogActivity"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity" /> <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
         <activity
             android:name=".ComicsCatalogActivity"
             android:parentActivityName=".MainActivity" />
@@ -56,9 +56,12 @@
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
         <service
-            android:name=".MainActivityDataService"
+            android:name=".ImportActivityDataService"
             android:exported="false"></service>
 
+        <service
+            android:name=".MainActivityDataService"
+            android:exported="false" />
         <service
             android:name=".ComicsCatalogDataService"
             android:exported="false" />
@@ -72,10 +75,10 @@
             android:name=".ImportComicsService"
             android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

@@ -19,6 +19,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link FragmentImport_1_StorageLocation#newInstance} factory method to
@@ -181,6 +183,14 @@ public class FragmentImport_1_StorageLocation extends Fragment {
                 TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
                 textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
                 textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
+
+
+                ImportActivityDataService.startActionGetDirectoryContents(getActivity().getApplicationContext(), ImportActivity.guriImportTreeURI);
+
+
+
+
+
 
             }
 

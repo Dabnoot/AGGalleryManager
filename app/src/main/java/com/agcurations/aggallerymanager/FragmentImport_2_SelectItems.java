@@ -96,6 +96,7 @@ public class FragmentImport_2_SelectItems extends Fragment {
             //There will be a problem
             return;
         }*/
+
     }
 
     @Override
@@ -110,30 +111,19 @@ public class FragmentImport_2_SelectItems extends Fragment {
             return;
         }
 
-        //Long lStartTime = 0L;
-        //Long lEndTime = 0L;
+        Long lStartTime = 0L;
+        Long lEndTime = 0L;
 
+        lStartTime = System.nanoTime();
         //Set the contents of the ListView:
-        //TextView textView_Label_Selected_Folder = findViewById(R.id.textView_Selected_Import_Folder);
-        //String sFolder = textView_Label_Selected_Folder.getText().toString();
-        //if(!sFolder.equals("")) {
         final ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
-        if(ImportActivity.guriImportTreeURI != null){
-            //ArrayList<fileModel> alFileList = readFolderContent(sFolder, ".+", FILES_ONLY);
-            //lStartTime = System.nanoTime();
-            ArrayList<ImportActivity.fileModel> alFileList = readFolderContent(ImportActivity.guriImportTreeURI, ".+", FILES_ONLY);
-            //lEndTime = System.nanoTime();
-            //Log.d("********Time used to read folder","*******Time used to read folder: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
-            //lStartTime = System.nanoTime();
-            if(getActivity() == null){
-                return;
-            }
-            ImportActivity.fileListCustomAdapter = new ImportActivity.FileListCustomAdapter(getActivity().getApplicationContext(), R.id.listView_FolderContents, alFileList);
-
-            if(listView_FolderContents != null) {
-                listView_FolderContents.setAdapter(ImportActivity.fileListCustomAdapter);
-            }
+        if(listView_FolderContents != null) {
+            listView_FolderContents.setAdapter(ImportActivity.fileListCustomAdapter);
         }
+
+        lEndTime = System.nanoTime();
+        Log.d("********Time used to read folder","*******Time used to assign adapter: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
+        lStartTime = System.nanoTime();
 
         //Configure the "Select All" checkbox:
         CheckBox checkBox_SelectAllStorageItems = getView().findViewById(R.id.checkBox_SelectAllStorageItems);
@@ -223,125 +213,11 @@ public class FragmentImport_2_SelectItems extends Fragment {
 
             }
         });
-        //lEndTime = System.nanoTime();
-        //Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
+        lEndTime = System.nanoTime();
+        Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
     }
 
-    int FOLDERS_ONLY = 0;
-    int FILES_ONLY = 1;
-    //int BOTH_FOLDERS_AND_FILES = 3;
-    public ArrayList<ImportActivity.fileModel> readFolderContent(String _path, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
 
-        ArrayList<ImportActivity.fileModel> alFileList = new ArrayList<>();
-
-        File directory = new File(_path);
-        File[] files = directory.listFiles();
-
-        if(files == null){
-            return null;
-        }
-
-        //Gather attributes from files:
-        for (File value : files) {
-            String fileType = value.isDirectory() ? "folder" : "file";
-            if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (value.isDirectory())) {
-                continue; //skip the rest of the for loop for this item.
-            } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!value.isDirectory())) {
-                continue; //skip the rest of the for loop for this item.
-            }
-            String fileName = value.getName();
-            String filePath = value.getPath();
-            long fileSize = value.length() / 1024; //size in kB.
-            Date dateLastModified = new Date(value.lastModified());
-            String fileExtention = filePath.contains(".") ? filePath.substring(filePath.lastIndexOf(".")) : "";
-
-            if (!fileExtention.matches(sFileExtensionRegEx)) {
-                continue;  //skip the rest of the loop if the file extension does not match.
-            }
-
-            //create the file model and initialize:
-            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, fileName, filePath, fileSize, dateLastModified, false);
-
-            alFileList.add(file); // add the file models to the ArrayList.
-        }
-
-        return alFileList;
-    }
-
-    //Use a Uri instead of a path to get folder contents:
-    public ArrayList<ImportActivity.fileModel> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
-
-        //Get data about the files from the UriTree:
-        if(getActivity() == null){
-            return null;
-        }
-        ContentResolver contentResolver = getActivity().getContentResolver();
-        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder, DocumentsContract.getTreeDocumentId(uriFolder));
-        List<Uri> dirNodes = new LinkedList<>();
-        dirNodes.add(childrenUri);
-        childrenUri = dirNodes.remove(0); // get the item from top
-        String sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
-        Cursor cImport = contentResolver.query(childrenUri,
-                new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                        DocumentsContract.Document.COLUMN_MIME_TYPE,
-                        DocumentsContract.Document.COLUMN_LAST_MODIFIED,
-                        DocumentsContract.Document.COLUMN_SIZE,
-                        DocumentsContract.Document.COLUMN_SUMMARY,
-                        DocumentsContract.Document.COLUMN_FLAGS,
-                        DocumentsContract.Document.COLUMN_ICON},
-                null,
-                null,
-                sSortOrder);
-        if(cImport == null){
-            return null;
-        }
-
-        ArrayList<ImportActivity.fileModel> alFileList = new ArrayList<>();
-
-        while (cImport.moveToNext()) {
-            final String docId = cImport.getString(0);
-            final String docName = cImport.getString(1);
-            final String mime = cImport.getString(2);
-            final long lLastModified = cImport.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
-            final String sFileSize = cImport.getString(4);
-
-            boolean isDirectory;
-            isDirectory = (mime.equals(DocumentsContract.Document.MIME_TYPE_DIR));
-            String fileType = (isDirectory) ? "folder" : "file";
-
-            if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (isDirectory)) {
-                continue; //skip the rest of the for loop for this item.
-            } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!isDirectory)) {
-                continue; //skip the rest of the for loop for this item.
-            }
-
-            //Get a Uri for this individual document:
-            final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri,docId);
-
-            long lFileSize = Long.parseLong(sFileSize) / 1024; //size in kB
-
-
-            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
-            cal.setTimeInMillis(lLastModified);
-            Date dateLastModified = cal.getTime();
-
-            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
-
-            if (!fileExtension.matches(sFileExtensionRegEx)) {
-                continue;  //skip the rest of the loop if the file extension does not match.
-            }
-
-            //create the file model and initialize:
-            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, docName, docUri, lFileSize, dateLastModified, false);
-
-            alFileList.add(file); // add the file models to the ArrayList.
-
-        }
-        cImport.close();
-
-        return alFileList;
-    }
 
 
 
