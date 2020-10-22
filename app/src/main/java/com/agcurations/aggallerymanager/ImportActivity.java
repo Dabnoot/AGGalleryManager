@@ -66,6 +66,7 @@ public class ImportActivity extends AppCompatActivity {
     public static Uri guriImportTreeURI; //Uri of selected base folder holding files/folders to be imported.
 
     //FragmentImport_2_SelectItems
+    public static int SelectItemsListViewWidth = 1000;
     public static FileListCustomAdapter fileListCustomAdapter;
 
     //FragmentImport_3_SelectTags
@@ -148,7 +149,7 @@ public class ImportActivity extends AppCompatActivity {
                 boolean bGetDirContentsResponse = intent.getBooleanExtra(ImportActivityDataService.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
                 if(bGetDirContentsResponse) {
                     ArrayList<ImportActivity.fileModel> alFileList = (ArrayList<ImportActivity.fileModel>) intent.getSerializableExtra(ImportActivityDataService.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
-                    fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList); //todo: rather not leave getApplicationContext() here. This adapter should die at activity destroy.
+                    fileListCustomAdapter = new FileListCustomAdapter(getContextOfActivity(), R.id.listView_FolderContents, alFileList);
                 }
 
             }
@@ -308,11 +309,9 @@ public class ImportActivity extends AppCompatActivity {
         final public ArrayList<fileModel> alFileList;
         private ArrayList<fileModel> alFileListDisplay;
         private  boolean bSelectAllSelected = false;
-        Context parentContext;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<fileModel> xmlList) {
             super(context, textViewResourceId, xmlList);
-            parentContext = context;
             alFileList = new ArrayList<>(xmlList);
             alFileListDisplay = new ArrayList<>(xmlList);
             SortByFileNameAsc();
@@ -347,7 +346,7 @@ public class ImportActivity extends AppCompatActivity {
 
                 if(alFileListDisplay.get(position).mimeType.startsWith("video")) {
                     Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
-                    mediaMetadataRetriever.setDataSource(parentContext, docUri);
+                    mediaMetadataRetriever.setDataSource(getContextOfActivity(), docUri);
                     String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                     durationInMilliseconds = Long.parseLong(time);
                 } else { //if it's not a video file, check to see if it's a gif:
@@ -357,7 +356,7 @@ public class ImportActivity extends AppCompatActivity {
                     if (fileExtension.contentEquals(".gif")) {
                         //Get the duration of the gif image:
                         Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
-                        Context activityContext = ImportActivity.getContextOfActivity();
+                        Context activityContext = getContextOfActivity();
                         pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                         durationInMilliseconds = gd.getDuration();
                     }
@@ -454,6 +453,10 @@ public class ImportActivity extends AppCompatActivity {
                 }
             });
 
+            //Expand the width of the listItem to the width of the ListView.
+            //  This makes it so that the listItem responds to the click even when
+            //  the click is off of the text.
+            row.setMinimumWidth(SelectItemsListViewWidth);
 
             return row;
         }

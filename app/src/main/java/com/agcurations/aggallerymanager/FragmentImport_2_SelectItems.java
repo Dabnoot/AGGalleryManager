@@ -1,15 +1,10 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
-import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -19,7 +14,6 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -27,13 +21,6 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -118,6 +105,7 @@ public class FragmentImport_2_SelectItems extends Fragment {
         //Set the contents of the ListView:
         final ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
         if(listView_FolderContents != null) {
+            ImportActivity.SelectItemsListViewWidth = listView_FolderContents.getWidth();
             listView_FolderContents.setAdapter(ImportActivity.fileListCustomAdapter);
         }
 
