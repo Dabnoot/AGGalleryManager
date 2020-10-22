@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     tools:context=".ImportActivity">
 
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/button_ImportConfirmation"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:orientation="vertical">
+
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -26,6 +21,7 @@
                 android:layout_height="wrap_content"
                 android:text="Comfirm Import Details"
                 android:textSize="24sp"
+                android:layout_marginTop="10dp"
                 android:layout_centerHorizontal="true"
                 android:layout_alignParentTop="true"/>
 
@@ -36,7 +32,7 @@
                 android:text="File Count:"
                 android:textSize="20sp"
                 android:layout_marginStart="20dp"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:layout_below="@+id/textView_Label_Title"/>
 
             <TextView
@@ -131,16 +127,18 @@
                 android:layout_toRightOf="@+id/textView_Label_TagsToApply"
                 android:layout_alignTop="@+id/textView_Label_TagsToApply"/>
 
+            <TextView
+                android:id="@+id/textView_Label_ImportFileList"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Files to Import:"
+                android:textSize="20sp"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_below="@+id/textView_TagsToApply"/>
+
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/textView_Label_ImportFileList"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Files to Import:"
-            android:textSize="20sp"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="20dp"/>
 
         <ListView
             android:id="@+id/listView_FilesToImport"
@@ -149,22 +147,24 @@
             android:layout_marginTop="10dp"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
-            android:textSize="24sp"/>
+            android:textSize="24sp"
+            android:layout_weight="1"/>
 
-    </LinearLayout>
+        <Button
+            android:id="@+id/button_ImportConfirmation"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:text="Next"
+            android:textSize="24sp"
+            app:backgroundTint="@color/colorBlackboardRed"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_gravity="center"
+            android:onClick="buttonNextClick_StorageLocation"/>
 
 
-    <Button
-        android:id="@+id/button_ImportConfirmation"
-        android:layout_width="149dp"
-        android:layout_height="67dp"
-        android:text="Next"
-        android:textSize="24sp"
-        app:backgroundTint="@color/colorBlackboardRed"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:onClick="buttonNextClick_StorageLocation"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+</LinearLayout>

@@ -118,12 +118,17 @@ public class FragmentImport_5_Confirmation extends Fragment {
         String s = Integer.toString(iFileCount);
         textView_FileCount.setText(s);
 
+
         //Display the required space:
         TextView textView_RequiredStorageSpace = getView().findViewById(R.id.textView_RequiredStorageSpace);
         DecimalFormat decimalFormat = new DecimalFormat();
         decimalFormat.setGroupingUsed(true);
         decimalFormat.setGroupingSize(3);
-        s = decimalFormat.format(lRequiredStorageSpaceKB) + " KB";
+        if(lRequiredStorageSpaceKB < 5000L) {
+            s = decimalFormat.format(lRequiredStorageSpaceKB) + " KB";
+        } else {
+            s = decimalFormat.format(lRequiredStorageSpaceKB / 1000) + " MB";
+        }
         textView_RequiredStorageSpace.setText(s);
 
         //Display the available space:
@@ -132,8 +137,14 @@ public class FragmentImport_5_Confirmation extends Fragment {
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         lAvailableStorageSpaceKB = globalClass.AvailableStorageSpace(getActivity().getApplicationContext(), 1);
         TextView textView_AvailableStorageSpace = getView().findViewById(R.id.textView_AvailableStorageSpace);
-        s = decimalFormat.format(lAvailableStorageSpaceKB) + " KB";
+        if(lAvailableStorageSpaceKB < 5000L) {
+            s = decimalFormat.format(lAvailableStorageSpaceKB) + " KB";
+        } else {
+            s = decimalFormat.format(lAvailableStorageSpaceKB / 1000) + " MB";
+        }
+
         textView_AvailableStorageSpace.setText(s);
+
 
         //Display the destination folder:
         String sDestinationFolder;
