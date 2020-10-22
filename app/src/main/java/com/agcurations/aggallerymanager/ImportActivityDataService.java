@@ -5,10 +5,21 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.ImageDecoder;
+import android.graphics.drawable.Animatable2;
+import android.graphics.drawable.AnimatedImageDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+
 import java.io.File;
+import java.io.FileDescriptor;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -90,15 +101,14 @@ public class ImportActivityDataService extends IntentService {
 
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri) {
         if(ImportActivity.guriImportTreeURI != null){
-
-            ArrayList<ImportActivity.fileModel> alFileList = readFolderContent(uriImportTreeUri, ".+", FILES_ONLY);
+            ArrayList<ImportActivity.fileModel> alFileList = null;
+            try {
+                alFileList = readFolderContent(uriImportTreeUri, ".+", FILES_ONLY);
+            }catch (Exception e){
+                problemNotificationConfig(e.getMessage());
+            }
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE, alFileList);
-
-            /*ImportActivity.fileModel2 fm2;
-            Date date = new Date();
-            fm2 = new ImportActivity.fileModel2("test", "test", "test", 0L, date, false);
-            broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE, fm2);*/
 
             broadcastIntent_GetDirectoryContentsResponse.setAction(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
             broadcastIntent_GetDirectoryContentsResponse.addCategory(Intent.CATEGORY_DEFAULT);
@@ -118,44 +128,6 @@ public class ImportActivityDataService extends IntentService {
 
     int FOLDERS_ONLY = 0;
     int FILES_ONLY = 1;
-    //int BOTH_FOLDERS_AND_FILES = 3;
-    public ArrayList<ImportActivity.fileModel> readFolderContent(String _path, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
-
-        ArrayList<ImportActivity.fileModel> alFileList = new ArrayList<>();
-
-        File directory = new File(_path);
-        File[] files = directory.listFiles();
-
-        if(files == null){
-            return null;
-        }
-
-        //Gather attributes from files:
-        for (File value : files) {
-            String fileType = value.isDirectory() ? "folder" : "file";
-            if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (value.isDirectory())) {
-                continue; //skip the rest of the for loop for this item.
-            } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!value.isDirectory())) {
-                continue; //skip the rest of the for loop for this item.
-            }
-            String fileName = value.getName();
-            String filePath = value.getPath();
-            long fileSize = value.length() / 1024; //size in kB.
-            Date dateLastModified = new Date(value.lastModified());
-            String fileExtention = filePath.contains(".") ? filePath.substring(filePath.lastIndexOf(".")) : "";
-
-            if (!fileExtention.matches(sFileExtensionRegEx)) {
-                continue;  //skip the rest of the loop if the file extension does not match.
-            }
-
-            //create the file model and initialize:
-            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, fileName, filePath, fileSize, dateLastModified, false);
-
-            alFileList.add(file); // add the file models to the ArrayList.
-        }
-
-        return alFileList;
-    }
 
     //Use a Uri instead of a path to get folder contents:
     public ArrayList<ImportActivity.fileModel> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
@@ -188,12 +160,12 @@ public class ImportActivityDataService extends IntentService {
         while (cImport.moveToNext()) {
             final String docId = cImport.getString(0);
             final String docName = cImport.getString(1);
-            final String mime = cImport.getString(2);
+            final String mimeType = cImport.getString(2);
             final long lLastModified = cImport.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
             final String sFileSize = cImport.getString(4);
 
             boolean isDirectory;
-            isDirectory = (mime.equals(DocumentsContract.Document.MIME_TYPE_DIR));
+            isDirectory = (mimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
             String fileType = (isDirectory) ? "folder" : "file";
 
             if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (isDirectory)) {
@@ -218,10 +190,12 @@ public class ImportActivityDataService extends IntentService {
                 continue;  //skip the rest of the loop if the file extension does not match.
             }
 
+            long durationInMilliseconds = 0L;
+
             String sUri = docUri.toString();
 
             //create the file model and initialize:
-            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, docName, lFileSize, dateLastModified, false, sUri);
+            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, docName, lFileSize, dateLastModified, false, sUri, mimeType, durationInMilliseconds);
 
             alFileList.add(file); // add the file models to the ArrayList.
 

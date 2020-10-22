@@ -8,21 +8,21 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
+import com.bumptech.glide.Glide;
+
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ImportActivity extends AppCompatActivity {
 
@@ -79,11 +80,20 @@ public class ImportActivity extends AppCompatActivity {
 
     //=================================================
 
+    static MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+
+    // a static variable to get a reference of our activity context
+    public static Context contextOfActivity;
+    public static Context getContextOfActivity(){
+        return contextOfActivity;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_import);
+
+        contextOfActivity = this;
 
         ViewPager2_Import = findViewById(R.id.viewPager_Import);
 
@@ -110,6 +120,12 @@ public class ImportActivity extends AppCompatActivity {
         ImportDataServiceResponseReceiver importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         registerReceiver(importDataServiceResponseReceiver, filter);
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mediaMetadataRetriever.release();
     }
 
     @SuppressWarnings("unchecked")
@@ -244,63 +260,59 @@ public class ImportActivity extends AppCompatActivity {
         final public String uri;
         final public String type; //folder or file
         final public String name;
-        final public String path;
         final public long size;
         final public Date dateLastModified;
+        final public long videoTimeInMilliseconds;
+        final public String videoTimeText;
+        final public String mimeType;
         public Boolean isChecked;
 
-        public fileModel(String _type, String _name ,String _path, long _size, Date _dateLastModified, Boolean _isChecked)
-        {
-            this.uri = "";
-            this.type = _type;
-            this.name = _name;
-            this.path = _path;
-            this.size = _size;
-            this.dateLastModified = _dateLastModified;
-            this.isChecked = _isChecked;
-        }
-
-        //Initialize with Uri instead of path:
-        public fileModel(String _type, String _name , long _size, Date _dateLastModified, Boolean _isChecked, String _uri)
+        public fileModel(String _type,
+                         String _name,
+                         long _size,
+                         Date _dateLastModified,
+                         Boolean _isChecked,
+                         String _uri,
+                         String _mime,
+                         long _videoTimeInMillisec)
         {
             this.uri = _uri;
             this.type = _type;
             this.name = _name;
-            this.path = "";
             this.size = _size;
             this.dateLastModified = _dateLastModified;
             this.isChecked = _isChecked;
+            this.mimeType = _mime;
+            this.videoTimeInMilliseconds = _videoTimeInMillisec;
+
+            this.videoTimeText = getDurationTextFromMilliseconds(_videoTimeInMillisec);
+
         }
     }
 
-    public static class fileModel2 implements Serializable {
-        final public String type; //folder or file
-        final public String name;
-        final public String path;
-        final public long size;
-        final public Date dateLastModified;
-        public Boolean isChecked;
-
-        public fileModel2(String _type, String _name ,String _path, long _size, Date _dateLastModified, Boolean _isChecked)
-        {
-            this.type = _type;
-            this.name = _name;
-            this.path = _path;
-            this.size = _size;
-            this.dateLastModified = _dateLastModified;
-            this.isChecked = _isChecked;
-        }
-
+    public static String getDurationTextFromMilliseconds(long lMilliseconds){
+        String sDurationText;
+        sDurationText = String.format("%02d:%02d:%02d",
+                TimeUnit.MILLISECONDS.toHours(lMilliseconds),
+                TimeUnit.MILLISECONDS.toMinutes(lMilliseconds) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(lMilliseconds)),
+                TimeUnit.MILLISECONDS.toSeconds(lMilliseconds) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(lMilliseconds)));
+        return sDurationText;
     }
+
+
 
     public static class FileListCustomAdapter extends ArrayAdapter<fileModel> {
 
         final public ArrayList<fileModel> alFileList;
         private ArrayList<fileModel> alFileListDisplay;
         private  boolean bSelectAllSelected = false;
+        Context parentContext;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<fileModel> xmlList) {
             super(context, textViewResourceId, xmlList);
+            parentContext = context;
             alFileList = new ArrayList<>(xmlList);
             alFileListDisplay = new ArrayList<>(xmlList);
             SortByFileNameAsc();
@@ -312,25 +324,79 @@ public class ImportActivity extends AppCompatActivity {
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
                 //My custom list item design is here
-                row = inflater.inflate(R.layout.listview_import_storageitem, parent, false);
+                row = inflater.inflate(R.layout.listview_fileitem, parent, false);
             }
 
             CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
             ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
-            TextView tvFileName =  row.findViewById(R.id.textView_FileName);
-            TextView tvModifiedDate = row.findViewById(R.id.textView_DateModified);
+            TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
+            TextView tvLine2 = row.findViewById(R.id.textView_Line2);
 
-            tvFileName.setText(alFileListDisplay.get(position).name);
+            tvLine1.setText(alFileListDisplay.get(position).name);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
-            String sdf = dfDateFormat.format(alFileListDisplay.get(position).dateLastModified);
-            tvModifiedDate.setText(sdf);
+            String sLine2 = dfDateFormat.format(alFileListDisplay.get(position).dateLastModified);
+
+
+
+
+
+            //If type is video or gif, get the duration:
+            long durationInMilliseconds = 0L;
+            //If mimeType is video or gif, get the duration:
+            try {
+
+                if(alFileListDisplay.get(position).mimeType.startsWith("video")) {
+                    Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
+                    mediaMetadataRetriever.setDataSource(parentContext, docUri);
+                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                    durationInMilliseconds = Long.parseLong(time);
+                } else { //if it's not a video file, check to see if it's a gif:
+                    String fileExtension = alFileListDisplay.get(position).name.contains(".")
+                            ? alFileListDisplay.get(position).name.substring(alFileListDisplay.get(position).name.lastIndexOf("."))
+                            : "";
+                    if (fileExtension.contentEquals(".gif")) {
+                        //Get the duration of the gif image:
+                        Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
+                        Context activityContext = ImportActivity.getContextOfActivity();
+                        pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                        durationInMilliseconds = gd.getDuration();
+                    }
+                }
+
+                if(durationInMilliseconds != 0L) {
+                    String s = getDurationTextFromMilliseconds(durationInMilliseconds);
+                    sLine2 = sLine2 + "\tDuration: " + s;
+                }
+
+            }catch (Exception e){
+                Context activityContext = ImportActivity.getContextOfActivity();
+                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileListDisplay.get(position).name, Toast.LENGTH_LONG).show();
+            }
+
+            tvLine2.setText(sLine2);
+
+
 
             //set the image type if folder or file
             if(alFileListDisplay.get(position).type.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
-                ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
+                //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
+
+                //Get the Uri of the file and create/display a thumbnail:
+                String sUri = alFileListDisplay.get(position).uri;
+                Uri uri = Uri.parse(sUri);
+                /*Glide.with(getContext()).
+                        load(uri).
+                        thumbnail(1.0f).
+                        into(ivFileType);*/
+                Glide.with(getContext()).
+                        load(uri).
+                        into(ivFileType);
             }
+
+
+
 
             if(alFileListDisplay.get(position).isChecked ){
                 cbStorageItemSelect.setChecked(true);

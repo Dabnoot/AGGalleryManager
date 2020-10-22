@@ -681,13 +681,13 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
                 //My custom list item design is here
-                row = inflater.inflate(R.layout.listview_import_storageitem, parent, false);
+                row = inflater.inflate(R.layout.listview_fileitem, parent, false);
             }
 
             CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
             ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
-            TextView tvFileName =  row.findViewById(R.id.textView_FileName);
-            TextView tvModifiedDate = row.findViewById(R.id.textView_DateModified);
+            TextView tvFileName =  row.findViewById(R.id.textView_Line1);
+            TextView tvModifiedDate = row.findViewById(R.id.textView_Line2);
 
             tvFileName.setText(this.alFileListDisplay.get(position).name);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
