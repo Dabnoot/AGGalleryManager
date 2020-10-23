@@ -42,6 +42,7 @@ public class ImportActivityDataService extends IntentService {
     private static final String ACTION_IMPORT_FILES = "com.agcurations.aggallerymanager.action.IMPORT_FILES";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
+    private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
     private static final String EXTRA_IMPORT_FILES_ARRAY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_ARRAY";
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
@@ -56,11 +57,12 @@ public class ImportActivityDataService extends IntentService {
      * Starts this service to perform actions with the given parameters. If
      * the service is already performing a task this action will be queued.
      */
-    public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri) {
+    public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory) {
         Intent intent = new Intent(context, ImportActivityDataService.class);
         intent.setAction(ACTION_GET_DIRECTORY_CONTENTS);
         String sImportTreeUri = uriImportTreeUri.toString();
         intent.putExtra(EXTRA_IMPORT_TREE_URI, sImportTreeUri);
+        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
         context.startService(intent);
     }
 
@@ -83,7 +85,8 @@ public class ImportActivityDataService extends IntentService {
             if (ACTION_GET_DIRECTORY_CONTENTS.equals(action)) {
                 final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
                 Uri uriImportTreeUri = Uri.parse(sImportTreeUri);
-                handleAction_GetDirectoryContents(uriImportTreeUri);
+                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
+                handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory);
 
             } else if (ACTION_IMPORT_FILES.equals(action)) {
                 final String param2 = intent.getStringExtra(EXTRA_IMPORT_FILES_ARRAY);
@@ -99,11 +102,11 @@ public class ImportActivityDataService extends IntentService {
 
     }
 
-    private void handleAction_GetDirectoryContents(Uri uriImportTreeUri) {
+    private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
         if(ImportActivity.guriImportTreeURI != null){
             ArrayList<ImportActivity.fileModel> alFileList = null;
             try {
-                alFileList = readFolderContent(uriImportTreeUri, ".+", FILES_ONLY);
+                alFileList = readFolderContent(uriImportTreeUri, ".+", iMediaCategory, FILES_ONLY);
             }catch (Exception e){
                 problemNotificationConfig(e.getMessage());
             }
@@ -130,7 +133,8 @@ public class ImportActivityDataService extends IntentService {
     int FILES_ONLY = 1;
 
     //Use a Uri instead of a path to get folder contents:
-    public ArrayList<ImportActivity.fileModel> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iSelectFoldersFilesOrBoth) {
+    public ArrayList<ImportActivity.fileModel> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iMediaCategory, int iSelectFoldersFilesOrBoth) {
+        //iMediaCategory: Specify media category. -1 ignore, 0 video, >0 images.
 
         //Get data about the files from the UriTree:
         ContentResolver contentResolver = getApplicationContext().getContentResolver();
@@ -174,30 +178,51 @@ public class ImportActivityDataService extends IntentService {
                 continue; //skip the rest of the for loop for this item.
             }
 
-            //Get a Uri for this individual document:
-            final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri,docId);
-
-            long lFileSize = Long.parseLong(sFileSize) / 1024; //size in kB
-
-
-            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
-            cal.setTimeInMillis(lLastModified);
-            Date dateLastModified = cal.getTime();
-
-            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
-
+            //Record the file extension:
+            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".") + 1) : "";
+            //If the file extension does not match the file extension regex, skip the remainder of the loop.
             if (!fileExtension.matches(sFileExtensionRegEx)) {
                 continue;  //skip the rest of the loop if the file extension does not match.
             }
 
-            long durationInMilliseconds = 0L;
+            if(!isDirectory) {
+                //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
+                if (mimeType.startsWith("video") || fileExtension.equals("gif")) {
+                    //If video...
+                    if ((iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_IMAGES)
+                            || (iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_COMICS)) {
+                        continue; //If requesting images or comics, and mimeType is video or the file a gif, go to next loop.
+                        }
+                } else {
+                    //If not video...
+                    if (iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_VIDEOS) {
+                        continue; //If requesting videos, and mimeType is not video nor is the file a gif, go to next loop.
+                    }
+                }
+            }
 
+            //Get a Uri for this individual document:
+            final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri,docId);
+
+            //Determine the file size:
+            long lFileSize = Long.parseLong(sFileSize) / 1024; //size in kB
+
+            //Get date last modified:
+            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+            cal.setTimeInMillis(lLastModified);
+            Date dateLastModified = cal.getTime();
+
+
+
+            //Convert the file Uri to string. Uri's don't transport well as intent extras.
             String sUri = docUri.toString();
 
             //create the file model and initialize:
-            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, docName, lFileSize, dateLastModified, false, sUri, mimeType, durationInMilliseconds);
+            //Don't detect the duration of video files here. It could take too much time.
+            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, docName, fileExtension, lFileSize, dateLastModified, false, sUri, mimeType, -1L);
 
-            alFileList.add(file); // add the file models to the ArrayList.
+            //Add the file model to the ArrayList:
+            alFileList.add(file);
 
         }
         cImport.close();

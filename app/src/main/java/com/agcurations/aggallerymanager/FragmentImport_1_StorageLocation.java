@@ -185,7 +185,7 @@ public class FragmentImport_1_StorageLocation extends Fragment {
                 textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
 
 
-                ImportActivityDataService.startActionGetDirectoryContents(getActivity().getApplicationContext(), ImportActivity.guriImportTreeURI);
+                ImportActivityDataService.startActionGetDirectoryContents(ImportActivity.getContextOfActivity(), ImportActivity.guriImportTreeURI, ImportActivity.giImportMediaCategory);
 
 
 

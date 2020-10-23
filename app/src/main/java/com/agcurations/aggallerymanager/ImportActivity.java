@@ -56,10 +56,10 @@ public class ImportActivity extends AppCompatActivity {
 
     //FragmentImport_0_MediaCategory
     //Radiobutton selections:
-    public final int IMPORT_MEDIA_CATEGORY_VIDEOS = 0;
-    public final int IMPORT_MEDIA_CATEGORY_IMAGES = 1;
-    public final int IMPORT_MEDIA_CATEGORY_COMICS = 2;
-    public int giImportMediaCategory; //Selected Category
+    public static final int IMPORT_MEDIA_CATEGORY_VIDEOS = 0;
+    public static final int IMPORT_MEDIA_CATEGORY_IMAGES = 1;
+    public static final int IMPORT_MEDIA_CATEGORY_COMICS = 2;
+    public static int giImportMediaCategory; //Selected Category
     public static String gsMediaCategoryFolderName = "";
 
     //FragmentImport_1_StorageLocation
@@ -258,18 +258,22 @@ public class ImportActivity extends AppCompatActivity {
     //  https://thecodeprogram.com/build-your-own-file-selector-screen-on-android
 
     public static class fileModel implements Serializable {
-        final public String uri;
+
         final public String type; //folder or file
         final public String name;
+        final public String extension;
         final public long size;
         final public Date dateLastModified;
-        final public long videoTimeInMilliseconds;
-        final public String videoTimeText;
-        final public String mimeType;
         public Boolean isChecked;
+        final public String uri;
+        final public String mimeType;
+        final public long videoTimeInMilliseconds;
+
+        public String videoTimeText;
 
         public fileModel(String _type,
                          String _name,
+                         String _extension,
                          long _size,
                          Date _dateLastModified,
                          Boolean _isChecked,
@@ -280,14 +284,13 @@ public class ImportActivity extends AppCompatActivity {
             this.uri = _uri;
             this.type = _type;
             this.name = _name;
+            this.extension = _extension;
             this.size = _size;
             this.dateLastModified = _dateLastModified;
             this.isChecked = _isChecked;
             this.mimeType = _mime;
             this.videoTimeInMilliseconds = _videoTimeInMillisec;
-
-            this.videoTimeText = getDurationTextFromMilliseconds(_videoTimeInMillisec);
-
+            this.videoTimeText = "";
         }
     }
 
@@ -340,31 +343,32 @@ public class ImportActivity extends AppCompatActivity {
 
 
             //If type is video or gif, get the duration:
-            long durationInMilliseconds = 0L;
+            long durationInMilliseconds = -1L;
             //If mimeType is video or gif, get the duration:
             try {
-
-                if(alFileListDisplay.get(position).mimeType.startsWith("video")) {
-                    Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
-                    mediaMetadataRetriever.setDataSource(getContextOfActivity(), docUri);
-                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                    durationInMilliseconds = Long.parseLong(time);
-                } else { //if it's not a video file, check to see if it's a gif:
-                    String fileExtension = alFileListDisplay.get(position).name.contains(".")
-                            ? alFileListDisplay.get(position).name.substring(alFileListDisplay.get(position).name.lastIndexOf("."))
-                            : "";
-                    if (fileExtension.contentEquals(".gif")) {
-                        //Get the duration of the gif image:
+                if(alFileListDisplay.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                    if (alFileListDisplay.get(position).mimeType.startsWith("video")) {
                         Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
-                        Context activityContext = getContextOfActivity();
-                        pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
-                        durationInMilliseconds = gd.getDuration();
+                        mediaMetadataRetriever.setDataSource(getContextOfActivity(), docUri);
+                        String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                        durationInMilliseconds = Long.parseLong(time);
+                    } else { //if it's not a video file, check to see if it's a gif:
+                        if (alFileListDisplay.get(position).extension.contentEquals("gif")) {
+                            //Get the duration of the gif image:
+                            Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
+                            Context activityContext = getContextOfActivity();
+                            pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                            durationInMilliseconds = gd.getDuration();
+                        }
+                    }
+                    if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
+                        alFileListDisplay.get(position).videoTimeText = getDurationTextFromMilliseconds(durationInMilliseconds);
                     }
                 }
 
-                if(durationInMilliseconds != 0L) {
-                    String s = getDurationTextFromMilliseconds(durationInMilliseconds);
-                    sLine2 = sLine2 + "\tDuration: " + s;
+                if(alFileListDisplay.get(position).videoTimeText.length() > 0){
+                    //If the video time text has been defined, recall and display the time:
+                    sLine2 = sLine2 + "\tDuration: " + alFileListDisplay.get(position).videoTimeText;
                 }
 
             }catch (Exception e){

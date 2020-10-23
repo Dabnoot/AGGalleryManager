@@ -148,6 +148,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginEnd="20dp"
             android:textSize="24sp"
+            android:scrollbarSize="20dp"
             android:layout_weight="1"/>
 
         <Button
@@ -159,8 +160,8 @@
             app:backgroundTint="@color/colorBlackboardRed"
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
-            android:layout_gravity="center"
-            android:onClick="buttonNextClick_StorageLocation"/>
+            android:layout_gravity="center"/>
+<!--            android:onClick="buttonNextClick_StorageLocation"/>-->
 
 
 

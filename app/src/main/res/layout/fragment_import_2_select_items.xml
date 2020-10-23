@@ -115,6 +115,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
             android:textSize="24sp"
+            android:scrollbarSize="20dp"
             app:layout_constrainedHeight="true"
             app:layout_constraintBottom_toTopOf="@+id/button_ItemSelectComplete"
             app:layout_constraintEnd_toEndOf="parent"
