@@ -39,7 +39,6 @@ public class ImportActivity extends AppCompatActivity {
 
     public static ViewPager2 ViewPager2_Import;
     FragmentImportViewPagerAdapter importViewPagerFragmentAdapter;
-    private ArrayList<Fragment> arrayList_ImportFragments = new ArrayList<>();
 
     //Fragment page indexes:
     public static final int FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY = 0;
@@ -48,8 +47,9 @@ public class ImportActivity extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 3;
     public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 4;
     public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 5;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 6;
 
-    public static int FRAGMENT_COUNT = 6;
+    public static int FRAGMENT_COUNT = 7;
 
     //=================================================
     //User selection global variables:
@@ -97,12 +97,6 @@ public class ImportActivity extends AppCompatActivity {
         contextOfActivity = this;
 
         ViewPager2_Import = findViewById(R.id.viewPager_Import);
-
-        // add Fragments in your ViewPagerFragmentAdapter class
-        arrayList_ImportFragments.add(new FragmentImport_0_MediaCategory());
-        arrayList_ImportFragments.add(new FragmentImport_1_StorageLocation());
-        arrayList_ImportFragments.add(new FragmentImport_2_SelectItems());
-        arrayList_ImportFragments.add(new FragmentImport_3_SelectTags());
 
         importViewPagerFragmentAdapter = new FragmentImportViewPagerAdapter(getSupportFragmentManager(), getLifecycle());
         // set Orientation in your ViewPager2
@@ -235,7 +229,8 @@ public class ImportActivity extends AppCompatActivity {
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
     }
 
-    public void buttonNextClick_ImportMethodComplete(View v){        RadioButton rbMove = findViewById(R.id.radioButton_MoveFiles);
+    public void buttonNextClick_ImportMethodComplete(View v){
+        RadioButton rbMove = findViewById(R.id.radioButton_MoveFiles);
 
         if (rbMove.isChecked()){
             giImportMethod = IMPORT_METHOD_MOVE;
@@ -244,6 +239,11 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION);
+    }
+
+    public void buttonNextClick_ImportConfirm(View v){
+
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT);
     }
 
 
@@ -304,8 +304,6 @@ public class ImportActivity extends AppCompatActivity {
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(lMilliseconds)));
         return sDurationText;
     }
-
-
 
     public static class FileListCustomAdapter extends ArrayAdapter<fileModel> {
 

@@ -160,8 +160,8 @@
             app:backgroundTint="@color/colorBlackboardRed"
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp"
-            android:layout_gravity="center"/>
-<!--            android:onClick="buttonNextClick_StorageLocation"/>-->
+            android:layout_gravity="center"
+            android:onClick="buttonNextClick_ImportConfirm"/>
 
 
 

@@ -33,6 +33,8 @@ public class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
                 return new FragmentImport_4_ImportMethod();
             case ImportActivity.FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                 return new FragmentImport_5_Confirmation();
+            case ImportActivity.FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
+                return new FragmentImport_6_ExecuteImport();
 
         }
         return null;
