@@ -4,9 +4,14 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -61,4 +66,27 @@ public class FragmentImport_6_ExecuteImport extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_import_6_execute_import, container, false);
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    public void initComponents(){
+
+        //Init progress:
+        ProgressBar progressBar_ImportProgress = getView().findViewById(R.id.progressBar_ImportProgress);
+        progressBar_ImportProgress.setProgress(0);
+        TextView textView_ImportProgress = getView().findViewById(R.id.textView_ImportProgress);
+        textView_ImportProgress.setText("0%");
+
+        //Set the log textView to be able to scroll vertically:
+        TextView textView_ImportLog = getView().findViewById(R.id.textView_ImportLog);
+        textView_ImportLog.setMovementMethod(new ScrollingMovementMethod());
+        //Init log:
+        textView_ImportLog.setText("");
+
+
+    }
+
 }
