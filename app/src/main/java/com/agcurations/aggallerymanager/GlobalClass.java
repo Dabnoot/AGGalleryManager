@@ -48,19 +48,31 @@ public class GlobalClass extends Application {
     public static File gvfVideoLogsFolder;
     public static File gvfVideoCatalogContentsFile;
     public static File gvfVideoTagsFile;
-    public static TreeMap<Integer, String> gtmAllUniqueCatalogVideoTags = new TreeMap<>();
-    public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>();
+    //Video tag variables:
+    public static TreeMap<Integer, String[]> gtmVideoTagReferenceList = new TreeMap<>();
+    public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
 
     public static File gfComicsFolder;
     public static File gfComicLogsFolder;
     public static File gvfComicCatalogContentsFile;
     public static File gvfComicTagsFile;
-    public SortedSet<String> gssAllUniqueCatalogComicTags = new TreeSet<>();
-    public Set<String> gssComicTagsRestricted = new TreeSet<>();
+    //Process comic tags in same manner as video and picture tags.
+    //  However, they are not interchangeable. The fictional nature of comics could cause problems
+    //  if the tags were applied to real videos or pictures.
+    public TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
+    public TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
 
-    //Tags are given IDs for the event that the user chooses to rename a tag.
+    //Each tags file has the same fields:
     public static final int TAG_ID_INDEX = 0;                    //Tag ID
     public static final int TAG_NAME_INDEX = 1;                  //Tag Name
+    public static final int TAG_DESCRIPTION_INDEX = 3;           //Tag Description
+    public static final String[] TagRecordFields = new String[]{
+            "TAG_ID",
+            "TAG_NAME",
+            "DESCRIPTION"};
+
+
+
 
     TreeMap<Integer, String[]> gvtmCatalogComicList = new TreeMap<>();
 
@@ -160,6 +172,22 @@ public class GlobalClass extends Application {
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternReadReady);
         return gdtfDateFormatter.format(LocalDateTime.now());
     }
+
+
+    public static String JumbleStorageText(String sSourceText){
+        //Render the text unsearchable so that no scanning system can pick up explicit tags.
+        String sFinalText = "";
+        StringBuilder sbReverse = new StringBuilder();
+        sbReverse.append(sSourceText);
+        sFinalText = sbReverse.reverse().toString();
+
+        return sFinalText;
+    }
+
+    //=====================================================================================
+    //===== Comics Section ============================================================
+    //=====================================================================================
+
 
 
 

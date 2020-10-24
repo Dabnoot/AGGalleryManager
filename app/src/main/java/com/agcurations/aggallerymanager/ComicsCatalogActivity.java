@@ -36,6 +36,8 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
 
 public class ComicsCatalogActivity extends AppCompatActivity {
@@ -75,7 +77,18 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Get comic restrictions preferences:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        globalClass.gssComicTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+        Set<String> sssComicTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+        //Attempt to match the restricted tag text from the preferences to the Tag ID:
+        for(String sRestrictedTag: sssComicTagsRestricted) {
+            for (Map.Entry<Integer, String[]> entry : globalClass.gtmComicTagReferenceList.entrySet()) {
+                if(sRestrictedTag.equals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
+                    //If the restricted tag has been found, assign it to the restricted tags TreeMap:
+                    globalClass.gtmComicTagsRestricted.put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                }
+            }
+        }
+
+
         globalClass.gvbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
 
@@ -497,7 +510,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         boolean bNoData = true;
         if(globalClass.gvbComicRestrictionsOn){
             //Format the restriction tag set so that we can process it:
-            String sTemp = String.valueOf(globalClass.gssComicTagsRestricted);
+            String sTemp = String.valueOf(globalClass.gtmComicTagsRestricted);
             String[] sTagsArray;
             if(sTemp.length() > 0) {
                 //Get rid of brackets:

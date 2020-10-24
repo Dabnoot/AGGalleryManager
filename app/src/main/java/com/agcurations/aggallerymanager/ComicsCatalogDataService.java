@@ -171,7 +171,11 @@ public class ComicsCatalogDataService extends IntentService {
             broadcastIntent_LoadComicCatalogResponse.putExtra(EXTRA_BOOL_CATALOG_DATA_CHANGE, true);
 
 
-            //Process comic tags
+            /*//Process comic tags
+            -Update 2020-10-23: Don't worry about tags here. Loading is handled by
+            MainActivityDataService. Discovery of new tags is handled by import, by user
+            assigning new tags to individual comics, and by tag editing feature (not yet
+            implemented).
 
             //Look for new comic tags, and if there are any new tags, write them to
             //  the comic tags file. I put this in a file because the preferences activity
@@ -198,8 +202,8 @@ public class ComicsCatalogDataService extends IntentService {
             boolean bNewTagsFound = false;
 
             for (String sEntry : ssCurrentTags) {
-                if (!globalClass.gssAllUniqueCatalogComicTags.contains(sEntry)) {
-                    globalClass.gssAllUniqueCatalogComicTags.add(sEntry);
+                if (!globalClass.gssComicTagReferenceList.contains(sEntry)) {
+                    globalClass.gssComicTagReferenceList.add(sEntry);
                     bNewTagsFound = true;
                 }
             }
@@ -214,9 +218,10 @@ public class ComicsCatalogDataService extends IntentService {
                     try {
                         FileWriter fwComicTagsFile = new FileWriter(fComicTagsFile, false);
 
-                        for (String sEntry : globalClass.gssAllUniqueCatalogComicTags) {
+                        for (String sEntry : globalClass.gssComicTagReferenceList) {
                             if(!sEntry.equals("")) {
-                                fwComicTagsFile.write(sEntry + ",");
+                                fwComicTagsFile.write(GlobalClass.JumbleStorageText(sEntry) + ",");
+                                //JumbleStorageText makes the data unreadable during a file search.
                                 //Don't worry about the trailing comma. It will be ignored on
                                 //  read/String.split operation.
                             }
@@ -231,7 +236,7 @@ public class ComicsCatalogDataService extends IntentService {
 
                 }
 
-            }
+            }*/
 
         }
 

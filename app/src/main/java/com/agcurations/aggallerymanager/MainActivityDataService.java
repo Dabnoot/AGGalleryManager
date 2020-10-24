@@ -139,12 +139,13 @@ public class MainActivityDataService extends IntentService {
         }
 
         //Attempt to read or create the video tags file:
-        globalClass.gtmAllUniqueCatalogVideoTags =
+        globalClass.gtmVideoTagReferenceList =
                 InitTagData(GlobalClass.gvfVideoTagsFile,
                         getResources().getStringArray(R.array.default_video_tags));
+
         //Attempt to read or create the comic tags file:
-        globalClass.gssAllUniqueCatalogComicTags =
-                InitTagDataComics(GlobalClass.gvfComicTagsFile,
+        globalClass.gtmComicTagReferenceList =
+                InitTagData(GlobalClass.gvfComicTagsFile,
                         getResources().getStringArray(R.array.default_comic_tags));
 
     }
@@ -157,8 +158,8 @@ public class MainActivityDataService extends IntentService {
         }
     }
 
-    private TreeMap<Integer, String> InitTagData(File fTagsFile, String[] sDefaultTags ){
-        TreeMap<Integer, String> tmTags = new TreeMap<>();
+    private TreeMap<Integer, String[]> InitTagData(File fTagsFile, String[] sDefaultTags ){
+        TreeMap<Integer, String[]> tmTags = new TreeMap<>();
         if(fTagsFile.exists()) {
             //Get Tags from file:
             BufferedReader brReader;
@@ -170,7 +171,8 @@ public class MainActivityDataService extends IntentService {
                 while(sLine != null) {
                     String[] sFields;
                     sFields = sLine.split(",");
-                    tmTags.put(Integer.parseInt(sFields[0]), sFields[1]);
+                    Integer iTagID = Integer.parseInt(sFields[0]);
+                    tmTags.put(iTagID, sFields); //Yes, even though the TagID is the key, value sFields also includes the tagID.
                     sLine = brReader.readLine();
                 }
 
@@ -185,13 +187,24 @@ public class MainActivityDataService extends IntentService {
                     try {
                         FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
                         Integer i = 0;
+                        //Write the header record:
+                        fwTagsFile.write(GlobalClass.TagRecordFields[0]);
+                        for(int j = 1; j < GlobalClass.TagRecordFields.length; j++){
+                            fwTagsFile.write("," + GlobalClass.TagRecordFields[j]);
+                        }
+                        fwTagsFile.write("\n");
+
+                        //Write data records:
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(i.toString() + "," + sEntry + "\n");
-                                tmTags.put(i, sEntry);
+                                fwTagsFile.write(i.toString() + "," + GlobalClass.JumbleStorageText(sEntry) + "\n");
+                                String[] s = new String[]{i.toString(), sEntry};
+                                tmTags.put(i, s);
                                 i++;
                             }
                         }
+
+                        //Close the tags file:
                         fwTagsFile.flush();
                         fwTagsFile.close();
 
@@ -212,7 +225,11 @@ public class MainActivityDataService extends IntentService {
         return tmTags;
     }
 
-    private SortedSet<String> InitTagDataComics(File fTagsFile, String[] sDefaultTags ){
+    /*private SortedSet<String> InitTagDataComics(File fTagsFile, String[] sDefaultTags ){
+        Update 2020-10-23: Attempting to process comic tags in same manner as video and picture tags.
+        However, they are not interchangeable. The fictional nature of comics could cause problems
+        if the tags were applied to real videos or pictures.
+
         //Comic tags are not to be changed.
         //  Comic tags can be added, but tags will be automatically grabbed from comic-hosting web
         //  pages. We will use SortedSet instead of TreeMap. SortedSet will prevent duplicates. A
@@ -245,7 +262,7 @@ public class MainActivityDataService extends IntentService {
                         FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(sEntry + ",");
+                                fwTagsFile.write(GlobalClass.JumbleStorageText(sEntry) + ",");
                                 //Don't worry about the trailing comma. It will be ignored on
                                 //  read/String.split operation.
                                 ssTags.add(sEntry);
@@ -269,7 +286,7 @@ public class MainActivityDataService extends IntentService {
         }
 
         return ssTags;
-    }
+    }*/
 
 
 
@@ -278,6 +295,8 @@ public class MainActivityDataService extends IntentService {
         broadcastIntent_LoadAppDataResponse.putExtra(EXTRA_STRING_DATA_LOAD_PROBLEM, sMessage);
 
     }
+
+
 
 
 }

@@ -11,9 +11,12 @@ import android.widget.Toast;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import androidx.annotation.NonNull;
@@ -35,7 +38,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
     private static File gfAppFolder;
     private static String gsPin;
-    private static SortedSet<String> gssTags;
+    private static TreeMap<Integer, String> gtmTags;
     private static Set<String> gssSelectedTags;
     GlobalClass globalClass;
 
@@ -83,9 +86,15 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             gfAppFolder = new File(fAvailableDirs[0].toString());
         }
 
-        gsPin = globalClass.gsPin;
+        gsPin = GlobalClass.gsPin;
 
-        gssTags = globalClass.gssAllUniqueCatalogComicTags;
+        //Get a list of comic tags to populate the multiSelect dropdown list:
+        for (Map.Entry<Integer, String[]>
+                entry : globalClass.gtmComicTagReferenceList.entrySet()) {
+            String sTag = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
+            gtmTags.put(entry.getKey(),sTag);
+        }
+
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
@@ -260,15 +269,20 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             final MultiSelectListPreference pref_restricted_tags =
                     findPreference("multi_select_list_restricted_tags");
 
+            //Populate the MultiSelectListPreference drop-down menu:
             CharSequence[] csEntries;
-            csEntries = gssTags.toArray(new CharSequence[0]);
+            ArrayList<String> alTags = new ArrayList<>();
+            for (Map.Entry<Integer, String> entry : gtmTags.entrySet()) {
+                alTags.add(entry.getValue());
+            }
+            csEntries = alTags.toArray(new CharSequence[0]);
             assert pref_restricted_tags != null;
             pref_restricted_tags.setEntries(csEntries);
             pref_restricted_tags.setEntryValues(csEntries);
 
             //Fill out the "selected tags" summary text:
             //Sort the strings:
-            SortedSet<String> ssTemp = new TreeSet<>(gssSelectedTags);
+            SortedSet<String> ssTemp = new TreeSet<>(gssSelectedTags);  //gssSelectedTags contains the tags selected by the user.
 
             //Format the strings:
             StringBuilder sb = new StringBuilder();

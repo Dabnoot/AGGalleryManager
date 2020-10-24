@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.BroadcastReceiver;
@@ -202,8 +201,8 @@ public class ImportActivity extends AppCompatActivity {
 
             //Create an array of tag strings from GlobalClass:
             List<String> alsTags = new ArrayList<String>();
-            for (Map.Entry<Integer, String> entry : GlobalClass.gtmAllUniqueCatalogVideoTags.entrySet()){
-                alsTags.add(entry.getValue());
+            for (Map.Entry<Integer, String[]> entry : GlobalClass.gtmVideoTagReferenceList.entrySet()){
+                alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
             }
             String[] sTags = (String[]) alsTags.toArray(new String[0]);
 
@@ -216,8 +215,10 @@ public class ImportActivity extends AppCompatActivity {
     public void buttonNextClick_TagSelectComplete(View v){
         Integer iFolderID;
         if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_VIDEOS){
-            for (Map.Entry<Integer, String> entry : GlobalClass.gtmAllUniqueCatalogVideoTags.entrySet()){
-                if(alsImportTags.get(0).contentEquals(entry.getValue())){
+            //Determine the folder into which the contents will be placed:
+            for (Map.Entry<Integer, String[]> entry : GlobalClass.gtmVideoTagReferenceList.entrySet()){
+                //Get the key value associated with the text tag:
+                if(alsImportTags.get(0).contentEquals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
                     gsImportDestinationFolder = Integer.toString(entry.getKey());
                     break;
                 }
