@@ -425,7 +425,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
                             iComicID = (int) Math.round(Math.random() * 100000);
                             bComicIDIsUnique = true;
                             for (Map.Entry<Integer, String[]>
-                                    CatalogEntry : globalClass.gvtmCatalogComicList.entrySet()) {
+                                    CatalogEntry : globalClass.gtmCatalogComicList.entrySet()) {
                                 String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
                                 if (Integer.parseInt(sEntryComicID) == iComicID) {
                                     bComicIDIsUnique = false;

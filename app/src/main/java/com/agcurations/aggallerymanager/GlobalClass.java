@@ -24,10 +24,7 @@ import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import androidx.annotation.Nullable;
 
@@ -74,16 +71,16 @@ public class GlobalClass extends Application {
 
 
 
-    TreeMap<Integer, String[]> gvtmCatalogComicList = new TreeMap<>();
+    TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
 
-    public boolean gvbComicRestrictionsOn = false;
+    public boolean gbComicRestrictionsOn = false;
 
-    public int gviComicDefaultSortBySetting = COMIC_TAGS_INDEX;
-    public boolean gvbComicSortAscending = true;
+    public int giComicDefaultSortBySetting = COMIC_TAGS_INDEX;
+    public boolean gbComicSortAscending = true;
 
     public boolean gbComicJustImported = false;
 
-    public String[] gvSelectedComic;
+    public String[] gsSelectedComic;
 
 
 
@@ -92,7 +89,7 @@ public class GlobalClass extends Application {
     }
 
     //=====================================================================================
-    //===== Start Network Monitoring Section ==============================================
+    //===== Network Monitoring ============================================================
     //=====================================================================================
     public static boolean isNetworkConnected = false;
     public ConnectivityManager connectivityManager;
@@ -126,7 +123,7 @@ public class GlobalClass extends Application {
 
 
     //=====================================================================================
-    //===== End Network Monitoring ============================================================
+    //===== Utilities =====================================================================
     //=====================================================================================
 
 
@@ -185,11 +182,38 @@ public class GlobalClass extends Application {
     }
 
     //=====================================================================================
-    //===== Comics Section ============================================================
+    //===== Videos Section ===============================================================
     //=====================================================================================
 
+    public static final int VIDEO_ID_INDEX = 0;                             //Video ID
+    public static final int VIDEO_FILENAME_INDEX = 1;
+    public static final int VIDEO_SIZE_MB_INDEX = 2;
+    public static final int VIDEO_DURATION_INDEX = 3;                       //Duration of video
+    public static final int VIDEO_RESOLUTION_INDEX = 4;
+    public static final int VIDEO_FOLDER_NAME_INDEX = 5;                    //Name of the folder holding the video
+    public static final int VIDEO_TAGS_INDEX = 6;                           //Tags given to the video
+    public static final int VIDEO_CAST_INDEX = 7;
+    public static final int VIDEO_SOURCE_INDEX = 8;                         //Website, if relevant
+    public static final int VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX = 9;   //Date of last read by user. Used for sorting if desired
+    public static final int VIDEO_DATETIME_IMPORT_INDEX = 10;               //Date of import. Used for sorting if desired
+
+    public static final String[] VideoRecordFields = new String[]{
+            "VIDEO_ID",
+            "VIDEO_FILENAME",
+            "SIZE_MB",
+            "DURATION",
+            "RESOLUTION",
+            "FOLDER_NAME",
+            "TAGS",
+            "CAST",
+            "SOURCE",
+            "DATETIME_LAST_VIEWED_BY_USER",
+            "DATETIME_IMPORT"};
 
 
+    //=====================================================================================
+    //===== Comics Section ================================================================
+    //=====================================================================================
 
     public static final int COMIC_ID_INDEX = 0;                    //Comic ID
     public static final int COMIC_NAME_INDEX = 1;                  //Comic Name
@@ -240,10 +264,10 @@ public class GlobalClass extends Application {
 
 
     //=====================================================================================
-    //===== Start Catalog.dat Data Modification Routine(S) ================================
+    //===== Start Comic Catalog.dat Data Modification Routine(S) ================================
     //=====================================================================================
 
-    public boolean ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
+    public void ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
         File fCatalogContentsFile = gvfComicCatalogContentsFile;
 
         try {
@@ -288,7 +312,7 @@ public class GlobalClass extends Application {
                     sFields = sLine.split("\t",-1);
                     int iKey = -1;
                     for (Map.Entry<Integer, String[]>
-                            CatalogEntry : gvtmCatalogComicList.entrySet()) {
+                            CatalogEntry : gtmCatalogComicList.entrySet()) {
                         String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
                         if( sEntryComicID.contains(sFields[COMIC_ID_INDEX])){
                             iKey = CatalogEntry.getKey();
@@ -296,7 +320,7 @@ public class GlobalClass extends Application {
                         }
                     }
                     if(iKey >= 0){
-                        gvtmCatalogComicList.put(iKey,sFields);
+                        gtmCatalogComicList.put(iKey,sFields);
                     }
 
 
@@ -314,10 +338,8 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
-            return true;
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
         }
     }
 
@@ -395,7 +417,7 @@ public class GlobalClass extends Application {
             //Don't transfer the line over.
             //Get a path to the comic's folder for deletion in the next step:
             for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gvtmCatalogComicList.entrySet()) {
+                    CatalogEntry : gtmCatalogComicList.entrySet()) {
                 String[] sFields = CatalogEntry.getValue();
                 if( sFields[GlobalClass.COMIC_ID_INDEX].contains(sComicID)){
                     sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
@@ -467,7 +489,7 @@ public class GlobalClass extends Application {
             //Now update memory to no longer include the comic:
             int iKey = -1;
             for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gvtmCatalogComicList.entrySet()) {
+                    CatalogEntry : gtmCatalogComicList.entrySet()) {
                 String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
                 if( sEntryComicID.contains(sComicID)){
                     iKey = CatalogEntry.getKey();
@@ -475,7 +497,7 @@ public class GlobalClass extends Application {
                 }
             }
             if(iKey >= 0){
-                gvtmCatalogComicList.remove(iKey);
+                gtmCatalogComicList.remove(iKey);
             }
 
             gbComicJustDeleted = true;
@@ -487,7 +509,7 @@ public class GlobalClass extends Application {
     }
 
     //=====================================================================================
-    //===== End Catalog.dat Data Modification Routine(S) ================================
+    //===== End Comic Catalog.dat Data Modification Routine(S) ================================
     //=====================================================================================
 
 
@@ -592,19 +614,19 @@ public class GlobalClass extends Application {
     //===== Comic Details Activity Options =====================================================
     //=====================================================================================
 
+    //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
     public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
     public String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
-
     public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
     public String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-
     public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
 
 
 
 
-    public static final class FileUtil {
+   /* public static final class FileUtil {
+   This item commented-out on 2020-10-24.
         static String TAG="TAG";
         private static final String PRIMARY_VOLUME_NAME = "primary";
 
@@ -680,7 +702,7 @@ public class GlobalClass extends Application {
             if ((split.length >= 2) && (split[1] != null)) return split[1];
             else return File.separator;
         }
-    }
+    }*/
 
 
 }

@@ -194,7 +194,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         Intent intentCaller = getIntent();
         //Get data from the intent:
         giCurrentPageIndex = intentCaller.getIntExtra(COMIC_PAGE_START,0);
-        gsComicFields = globalClass.gvSelectedComic; //Don't bother with using the intent to pass this data.
+        gsComicFields = globalClass.gsSelectedComic; //Don't bother with using the intent to pass this data.
         //There are complications when the user presses the back button. The ComicDetailsActivty
         //doesn't know what comic to display, and so it has problems. Better to just access
         // the data from the global data class.

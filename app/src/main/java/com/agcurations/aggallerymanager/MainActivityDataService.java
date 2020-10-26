@@ -225,68 +225,6 @@ public class MainActivityDataService extends IntentService {
         return tmTags;
     }
 
-    /*private SortedSet<String> InitTagDataComics(File fTagsFile, String[] sDefaultTags ){
-        Update 2020-10-23: Attempting to process comic tags in same manner as video and picture tags.
-        However, they are not interchangeable. The fictional nature of comics could cause problems
-        if the tags were applied to real videos or pictures.
-
-        //Comic tags are not to be changed.
-        //  Comic tags can be added, but tags will be automatically grabbed from comic-hosting web
-        //  pages. We will use SortedSet instead of TreeMap. SortedSet will prevent duplicates. A
-        //  nice bonus. TreeMap is used on Video and Image tags to give each tag an ID so that the
-        //  user can rename them.
-        SortedSet<String> ssTags = new TreeSet<>();
-        if(fTagsFile.exists()) {
-            //Get Tags from file:
-            BufferedReader brReader;
-            try {
-
-                brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
-                String sLine = brReader.readLine();
-
-                if(sLine != null) {
-                    String[] sTags;
-                    sTags = sLine.split(",");
-                    ssTags.addAll(Arrays.asList(sTags));
-                }
-
-                brReader.close();
-
-            } catch (IOException e) {
-                problemNotificationConfig("Trouble reading tags file at" + fTagsFile.getAbsolutePath());
-            }
-        } else { //If the tags file does not exist, create it and populate it with default values:
-            try {
-                if(fTagsFile.createNewFile()) {
-                    try {
-                        FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
-                        for (String sEntry : sDefaultTags) {
-                            if(!sEntry.equals("")) {
-                                fwTagsFile.write(GlobalClass.JumbleStorageText(sEntry) + ",");
-                                //Don't worry about the trailing comma. It will be ignored on
-                                //  read/String.split operation.
-                                ssTags.add(sEntry);
-                            }
-                        }
-                        fwTagsFile.flush();
-                        fwTagsFile.close();
-
-                    } catch (IOException e) {
-                        problemNotificationConfig( "Trouble writing file at "
-                                + fTagsFile.getAbsolutePath());
-                    }
-                } else {
-                    problemNotificationConfig( "Could not create file at "
-                            + fTagsFile.getAbsolutePath());
-                }
-            }catch (IOException e){
-                problemNotificationConfig("Could not create file at "
-                        + fTagsFile.getAbsolutePath());
-            }
-        }
-
-        return ssTags;
-    }*/
 
 
 

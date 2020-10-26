@@ -133,7 +133,7 @@ public class ImportComicsService extends IntentService {
     }
 
     public void Import_Operation_Process_File_List(){
-        TreeMap<Integer, String[]> tmCatalogComicList = globalClass.gvtmCatalogComicList;
+        TreeMap<Integer, String[]> tmCatalogComicList = globalClass.gtmCatalogComicList;
 
 
 
@@ -634,8 +634,8 @@ public class ImportComicsService extends IntentService {
                                     fwCatalogContentsFile.append(sbCatalogContentRecord.toString());
 
                                     //Add the record to the global memory memory treemap:
-                                    globalClass.gvtmCatalogComicList.put(
-                                            globalClass.gvtmCatalogComicList.size(),
+                                    globalClass.gtmCatalogComicList.put(
+                                            globalClass.gtmCatalogComicList.size(),
                                             sImportComicListRecord);
                                 }
 

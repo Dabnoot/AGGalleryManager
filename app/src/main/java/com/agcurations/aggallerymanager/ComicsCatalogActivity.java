@@ -37,7 +37,6 @@ import java.io.File;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeMap;
 
 public class ComicsCatalogActivity extends AppCompatActivity {
@@ -89,7 +88,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         }
 
 
-        globalClass.gvbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+        globalClass.gbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
 
         gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
@@ -131,7 +130,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Update TextView to show 0 comics if applicable:
         TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
-        if (globalClass.gvtmCatalogComicList.size() == 0 ) {
+        if (globalClass.gtmCatalogComicList.size() == 0 ) {
             tvCatalogStatus.setVisibility(View.VISIBLE);
             String s = "Catalog contains 0 comics.";
             tvCatalogStatus.setText(s);
@@ -154,7 +153,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Set the restricted comics lock icon as appropriate:
         MenuItem restrictedItem = menu.findItem(R.id.icon_comics_restricted);
-        if(globalClass.gvbComicRestrictionsOn){
+        if(globalClass.gbComicRestrictionsOn){
             restrictedItem.setIcon(R.drawable.baseline_lock_white_18dp);
         } else {
             restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
@@ -206,10 +205,10 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //  catalog.
         if(globalClass.gbComicJustImported) {
             //Set sort by comic import datetime
-            globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
+            globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
             //Set the sort order to reverse:
-            if( globalClass.gvbComicSortAscending) {
-                globalClass.gvbComicSortAscending = false;
+            if( globalClass.gbComicSortAscending) {
+                globalClass.gbComicSortAscending = false;
             }
             gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
             //Get a reference to the sort order icon:
@@ -223,11 +222,11 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if(position == SPINNER_ITEM_MISSING_TAGS){
-                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_TAGS_INDEX;
+                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_TAGS_INDEX;
                 } else if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
+                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
                 } else if(position == SPINNER_ITEM_LAST_READ_DATE) {
-                    globalClass.gviComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX;
+                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX;
                 }
                 SetComicSortOrderDefault();
             }
@@ -249,23 +248,23 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.icon_comics_restricted:
-                globalClass.gvbComicRestrictionsOn = !globalClass.gvbComicRestrictionsOn;
-                if(globalClass.gvbComicRestrictionsOn){
+                globalClass.gbComicRestrictionsOn = !globalClass.gbComicRestrictionsOn;
+                if(globalClass.gbComicRestrictionsOn){
                     item.setIcon(R.drawable.baseline_lock_white_18dp);
                 } else {
                     item.setIcon(R.drawable.baseline_lock_open_white_18dp);
                 }
                 //Repopulate the catalog comics list:
-                populate_RecyclerViewComicsCatalog(globalClass.gvtmCatalogComicList);
+                populate_RecyclerViewComicsCatalog(globalClass.gtmCatalogComicList);
                 return true;
 
             case R.id.icon_sort_order:
-                if( globalClass.gvbComicSortAscending) {
+                if( globalClass.gbComicSortAscending) {
                     item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
-                    globalClass.gvbComicSortAscending = false;
+                    globalClass.gbComicSortAscending = false;
                 } else {
                     item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
-                    globalClass.gvbComicSortAscending = true;
+                    globalClass.gbComicSortAscending = true;
                 }
                 ApplyComicSortOrder();
                 return true;
@@ -500,7 +499,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     }
 
     public void SetComicSortOrderDefault(){
-        ChangeComicSortField(globalClass.gviComicDefaultSortBySetting); //TODO, return to default sort.
+        ChangeComicSortField(globalClass.giComicDefaultSortBySetting); //TODO, return to default sort.
         gbRecyclerViewFiltered = false;  //Removes filtering.
     }
 
@@ -508,7 +507,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     public TreeMap<Integer, String[]> FilterOutRestrictedComics(TreeMap<Integer, String[]> tmIncoming){
         TreeMap<Integer, String[]> tmOutgoing = new TreeMap<>();
         boolean bNoData = true;
-        if(globalClass.gvbComicRestrictionsOn){
+        if(globalClass.gbComicRestrictionsOn){
             //Format the restriction tag set so that we can process it:
             String sTemp = String.valueOf(globalClass.gtmComicTagsRestricted);
             String[] sTagsArray;
@@ -562,7 +561,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Get existing data and load elements into the presorter:
         TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.gvtmCatalogComicList;
+        tmCatalogComicList = globalClass.gtmCatalogComicList;
         String[] sComicListRecord;
         String sKey;
 
@@ -624,7 +623,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         //Delete everything out of the old TreeMap, and re-populate it with the new sort order:
         TreeMap<Integer, String[]> tmNewOrderCatalogComicList = new TreeMap<>();
         int iComicRID, iIterator;
-        if(globalClass.gvbComicSortAscending){
+        if(globalClass.gbComicSortAscending){
             iComicRID = 0;
             iIterator = 1;
         } else {
@@ -651,11 +650,11 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Get existing data and load elements into the presorter:
         TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.gvtmCatalogComicList;
+        tmCatalogComicList = globalClass.gtmCatalogComicList;
         String[] sComicListRecord;
         Integer iKey, iIterator;
 
-        if(globalClass.gvbComicSortAscending){
+        if(globalClass.gbComicSortAscending){
             iKey = 0;
             iIterator = 1;
         } else {
@@ -685,7 +684,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
             //Get existing data and load elements into the presorter:
             TreeMap<Integer, String[]> tmCatalogComicList;
-            tmCatalogComicList = globalClass.gvtmCatalogComicList;
+            tmCatalogComicList = globalClass.gtmCatalogComicList;
             String[] sComicListRecord;
             StringBuilder sbKey;
             int iComicRID = 0;
@@ -729,7 +728,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
 
         //intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
-        globalClass.gvSelectedComic = sFields; //Don't bother with using the intent to pass this data.
+        globalClass.gsSelectedComic = sFields; //Don't bother with using the intent to pass this data.
 
         startActivity(intentComicViewer);
     }

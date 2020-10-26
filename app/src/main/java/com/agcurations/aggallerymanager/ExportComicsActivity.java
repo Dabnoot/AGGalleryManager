@@ -63,7 +63,7 @@ public class ExportComicsActivity extends AppCompatActivity {
         final GlobalClass globalVariable = (GlobalClass) getApplicationContext();
 
         //Determine the amount of space required for the export (backup):
-        TreeMap<Integer, String[]> tmCatalogComicList = globalVariable.gvtmCatalogComicList;
+        TreeMap<Integer, String[]> tmCatalogComicList = globalVariable.gtmCatalogComicList;
         String sComicFolderPath = GlobalClass.gfComicsFolder.getAbsolutePath();
 
         int iComicCatalogSize = 0;

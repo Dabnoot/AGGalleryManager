@@ -84,7 +84,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        gsComicFields = globalClass.gvSelectedComic; //Don't bother with using the intent to pass this data.
+        gsComicFields = globalClass.gsSelectedComic; //Don't bother with using the intent to pass this data.
         if( gsComicFields == null) return;
 
         String sComicFolder_AbsolutePath = GlobalClass.gfComicsFolder.getAbsolutePath();

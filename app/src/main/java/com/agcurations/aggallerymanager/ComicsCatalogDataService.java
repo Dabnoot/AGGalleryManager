@@ -9,10 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -166,77 +163,10 @@ public class ComicsCatalogDataService extends IntentService {
             }
 
             //Set the global variable holding the comic list:
-            globalClass.gvtmCatalogComicList = tmCatalogComicList;
+            globalClass.gtmCatalogComicList = tmCatalogComicList;
 
             broadcastIntent_LoadComicCatalogResponse.putExtra(EXTRA_BOOL_CATALOG_DATA_CHANGE, true);
 
-
-            /*//Process comic tags
-            -Update 2020-10-23: Don't worry about tags here. Loading is handled by
-            MainActivityDataService. Discovery of new tags is handled by import, by user
-            assigning new tags to individual comics, and by tag editing feature (not yet
-            implemented).
-
-            //Look for new comic tags, and if there are any new tags, write them to
-            //  the comic tags file. I put this in a file because the preferences activity
-            //  wants to use static contexts. globalClass is not static. Therefore it is easier
-            //  at my level of understanding just to read the data from a file.
-            //Get all unique tags from all of the comic records:
-            SortedSet<String> ssCurrentTags = new TreeSet<>();
-            String[] sFields;
-            String[] sTags;
-            for (Map.Entry<Integer, String[]>
-                    tmEntry : tmCatalogComicList.entrySet()) {
-                sFields = tmEntry.getValue();
-                sTags = sFields[GlobalClass.COMIC_TAGS_INDEX].split(",");
-                for(String sEntry : sTags){
-                    //Don't add duplicates
-                    //The SortedSet<T> class does not accept duplicate elements.
-                    //  If item is already in the set, this method returns false
-                    //  and does not throw an exception.
-                    ssCurrentTags.add(sEntry.trim());
-                }
-            }
-
-            //Determine any new tags, and append:
-            boolean bNewTagsFound = false;
-
-            for (String sEntry : ssCurrentTags) {
-                if (!globalClass.gssComicTagReferenceList.contains(sEntry)) {
-                    globalClass.gssComicTagReferenceList.add(sEntry);
-                    bNewTagsFound = true;
-                }
-            }
-
-            if(bNewTagsFound){
-                //Write the tags to the comic tags file.
-
-                File fComicTagsFile = GlobalClass.gvfComicTagsFile;
-
-                if (fComicTagsFile.exists()){
-
-                    try {
-                        FileWriter fwComicTagsFile = new FileWriter(fComicTagsFile, false);
-
-                        for (String sEntry : globalClass.gssComicTagReferenceList) {
-                            if(!sEntry.equals("")) {
-                                fwComicTagsFile.write(GlobalClass.JumbleStorageText(sEntry) + ",");
-                                //JumbleStorageText makes the data unreadable during a file search.
-                                //Don't worry about the trailing comma. It will be ignored on
-                                //  read/String.split operation.
-                            }
-                        }
-                        fwComicTagsFile.flush();
-                        fwComicTagsFile.close();
-
-                    } catch (IOException e) {
-                        problemNotificationConfig("Trouble writing ComicTags.dat at "
-                                + fComicTagsFile.getAbsolutePath());
-                    }
-
-                }
-
-            }*/
 
         }
 
