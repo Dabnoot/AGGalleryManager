@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -47,7 +46,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     //Global Variables:
     private GlobalClass globalClass;
     private RecyclerView.Adapter<RecyclerViewComicsAdapter.ViewHolder> gRecyclerViewComicsAdapter;
-    private boolean gbDebugTouch = false;
+    private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
 
@@ -78,9 +77,11 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         Set<String> sssComicTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
         //Attempt to match the restricted tag text from the preferences to the Tag ID:
+        String s;
         for(String sRestrictedTag: sssComicTagsRestricted) {
             for (Map.Entry<Integer, String[]> entry : globalClass.gtmComicTagReferenceList.entrySet()) {
-                if(sRestrictedTag.equals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
+                s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
+                if(sRestrictedTag.equals(s)){
                     //If the restricted tag has been found, assign it to the restricted tags TreeMap:
                     globalClass.gtmComicTagsRestricted.put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
                 }
@@ -96,24 +97,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         SetComicSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
         //gspSpinnerSort.setOnItemSelected will call SetComicSortOrderDefault after menu load.
 
-        if(!globalClass.gbSkipComicCatalogReload) { //If the 'skip reload' boolean is not set...
-            //This prevents reloading comic catalog data from storage if not requested to do so,
-            //  but allows it when run for the first time.
-
-            //Configure a response receiver to listen for updates from the Comics Catalog (CC) Data Service:
-            IntentFilter filter = new IntentFilter(CCDataServiceResponseReceiver.CCDATA_SERVICE_ACTION_RESPONSE);
-            filter.addCategory(Intent.CATEGORY_DEFAULT);
-            CCDataServiceResponseReceiver ccDataServiceResponseReceiver = new CCDataServiceResponseReceiver();
-            registerReceiver(ccDataServiceResponseReceiver, filter);
-
-            //Call the CC Data Service, which will create a call to a service:
-            ComicsCatalogDataService.startActionLoadComicsCatalog(this);
-
-            //Set the 'skip reload' boolean so that we don't come here and reload data from storage
-            //  everytime we return to this activity:
-            globalClass.gbSkipComicCatalogReload = true;
-        }
-
 
         if(globalClass.connectivityManager == null){
             globalClass.registerNetworkCallback();
@@ -121,7 +104,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 //network;
         }
 
-
+        gRecyclerViewComicsAdapter.notifyDataSetChanged();
 
         //See additional initialization in onCreateOptionsMenu().
     }
@@ -307,14 +290,14 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     }
 
-    public class CCDataServiceResponseReceiver extends BroadcastReceiver {
+    public static class CCDataServiceResponseReceiver extends BroadcastReceiver {
         //CCDataService = Comics Catalog Data Service
-        public static final String CCDATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CCDATA_SERVICE";
+        //public static final String CC_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CC_DATA_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            boolean bCatalogDataChange;
+            /*boolean bCatalogDataChange;
             boolean bError;
 
             //Get boolean indicating data acquisition was successful:
@@ -330,7 +313,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             if(bError) {
                 String sMessage = intent.getStringExtra(ComicsCatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-            }
+            }*/
 
 
         }
@@ -509,15 +492,20 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         boolean bNoData = true;
         if(globalClass.gbComicRestrictionsOn){
             //Format the restriction tag set so that we can process it:
-            String sTemp = String.valueOf(globalClass.gtmComicTagsRestricted);
-            String[] sTagsArray;
-            if(sTemp.length() > 0) {
-                //Get rid of brackets:
-                sTemp = sTemp.substring(1, sTemp.length() - 1);
-                //Split restricted tags into array:
-                 sTagsArray = sTemp.split(",");
+            StringBuilder sbRestrictedTags = new StringBuilder();
+            for(Map.Entry<Integer, String> entry: globalClass.gtmComicTagsRestricted.entrySet()){
+                sbRestrictedTags.append(entry.getValue());
+                sbRestrictedTags.append(",");
+            }
+            //Split restricted tags into array:
+            String[] sTagsArray = sbRestrictedTags.toString().split(",");
 
-                 //Look for restricted tags in the incoming treemap and transfer the entry if
+
+            if(sTagsArray.length > 0) { //If restricted tags exist...
+
+
+
+                 //Look for restricted tags in the incoming treeMap and transfer the entry if
                 //  none are found:
                 String[] sFields;
                 int i = 0;
@@ -526,7 +514,6 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                     sFields = entry.getValue();
                     boolean bHasRestrictedTag = false;
                     for (String s : sTagsArray) {
-                        String sTitle = sFields[GlobalClass.COMIC_NAME_INDEX];
 
                         if (sFields[GlobalClass.COMIC_TAGS_INDEX].contains(s.trim())) {
                             bHasRestrictedTag = true;

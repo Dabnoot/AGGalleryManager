@@ -36,13 +36,22 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Configure a response receiver to listen for updates from the Main Activity (MA) Data Service:
+        //  This will load the tags files for videos, pictures, and comics.
         IntentFilter filter = new IntentFilter(MADataServiceResponseReceiver.MA_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         MADataServiceResponseReceiver maDataServiceResponseReceiver = new MADataServiceResponseReceiver();
         registerReceiver(maDataServiceResponseReceiver, filter);
-
-        //Call the CC Data Service, which will create a call to a service:
+        //Call the MA Data Service, which will create a call to a service:
         MainActivityDataService.startActionLoadData(this);
+
+
+        //Configure a response receiver to listen for updates from the Comics Catalog (CC) Data Service:
+        filter = new IntentFilter(CCDataServiceResponseReceiver.CCDATA_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        CCDataServiceResponseReceiver ccDataServiceResponseReceiver = new CCDataServiceResponseReceiver();
+        registerReceiver(ccDataServiceResponseReceiver, filter);
+        //Call the CC Data Service, which will create a call to a service:
+        ComicsCatalogDataService.startActionLoadComicsCatalog(this);
 
 
     }
@@ -60,6 +69,35 @@ public class MainActivity extends AppCompatActivity {
             bError = intent.getBooleanExtra(MainActivityDataService.EXTRA_BOOL_DATA_LOAD_PROBLEM,false);
             if(bError) {
                 String sMessage = intent.getStringExtra(MainActivityDataService.EXTRA_STRING_DATA_LOAD_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            }
+
+
+        }
+    }
+
+    public class CCDataServiceResponseReceiver extends BroadcastReceiver {
+        //CCDataService = Comics Catalog Data Service
+        public static final String CCDATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CCDATA_SERVICE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bCatalogDataChange;
+            boolean bError;
+
+            //Get boolean indicating data acquisition was successful:
+            bCatalogDataChange = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_CATALOG_DATA_CHANGE,false);
+            if( bCatalogDataChange) { //todo: This might no longer be applicable.
+                //Update TextView to show 0 comics if applicable:
+                //notifyZeroComicsIfApplicable();
+                //gRecyclerViewComicsAdapter.notifyDataSetChanged();
+            }
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(ComicsCatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             }
 
