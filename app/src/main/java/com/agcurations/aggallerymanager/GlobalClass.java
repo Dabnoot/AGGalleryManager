@@ -241,6 +241,7 @@ public class GlobalClass extends Application {
             "ONLINE_DATA_ACQUIRED"};
 
     public static final String COMIC_ONLINE_DATA_ACQUIRED_NO = "No";
+    public static final String COMIC_ONLINE_DATA_ACQUIRED_YES = "Yes";
 
 
 
@@ -262,9 +263,19 @@ public class GlobalClass extends Application {
             String sLine = brReader.readLine();
             while (sLine != null) {
                 int j = 0; //To track requested field updates.
+
                 sFields = sLine.split("\t",-1);
+                //De-jumble the data:
+                String[] sFields2 = new String[sFields.length];
+                for(int i = 0; i < sFields.length; i++){
+                    sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                }
+                sFields = sFields2;
+
+                //Check to see if this record is the one that we want to update:
                 if (sFields[COMIC_ID_INDEX].equals(sComicID)) {
                     StringBuilder sb = new StringBuilder();
+
                     if (iFieldIDs[j] == 0) {
                         //If the caller wishes to update field 0...
                         sb.append(sFieldUpdateData[j]);
@@ -272,6 +283,7 @@ public class GlobalClass extends Application {
                     } else {
                         sb.append(sFields[0]);
                     }
+
                     for (int i = 1; i < sFields.length; i++) {
                         sb.append("\t");
                         if(j < iFieldIDs.length) {
@@ -286,9 +298,9 @@ public class GlobalClass extends Application {
                             sb.append(sFields[i]);
                         }
                     }
+
                     sLine = sb.toString();
 
-                    //The comic record should now be updated in the file.
                     //Now update the record in the treemap:
                     sFields = sLine.split("\t",-1);
                     int iKey = -1;
@@ -304,9 +316,18 @@ public class GlobalClass extends Application {
                         gtmCatalogComicList.put(iKey,sFields);
                     }
 
-
+                    //Jumble the fields in preparation for writing to file:
+                    sFields2 = sLine.split("\t",-1);
+                    StringBuilder sbJumble = new StringBuilder();
+                    sbJumble.append(GlobalClass.JumbleStorageText(sFields2[0]));
+                    for(int i = 1; i < sFields.length; i++){
+                        sbJumble.append("\t");
+                        sbJumble.append(GlobalClass.JumbleStorageText(sFields2[i]));
+                    }
+                    sLine = sbJumble.toString();
 
                 }
+                //Write the current comic record to the buffer:
                 sbBuffer.append(sLine);
                 sbBuffer.append("\n");
 
@@ -315,6 +336,7 @@ public class GlobalClass extends Application {
             }
             brReader.close();
 
+            //Write the data to the file:
             FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
@@ -447,7 +469,7 @@ public class GlobalClass extends Application {
             String sLine = brReader.readLine();
             while (sLine != null) {
                 sFields = sLine.split("\t",-1);
-                if (!(sFields[COMIC_ID_INDEX].equals(sComicID))) {
+                if (!(JumbleStorageText(sFields[COMIC_ID_INDEX]).equals(sComicID))) {
                     //If the line is not the comic we are trying to delete, transfer it over:
                     sbBuffer.append(sLine);
                     sbBuffer.append("\n");

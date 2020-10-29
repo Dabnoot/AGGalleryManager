@@ -478,7 +478,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     public void populate_RecyclerViewComicsCatalog(TreeMap<Integer, String[]> tmCatalogComicList){
         gRecyclerViewComicsAdapter = new RecyclerViewComicsAdapter(FilterOutRestrictedComics(tmCatalogComicList));
         gRecyclerView.setAdapter(gRecyclerViewComicsAdapter);
-        Toast.makeText(this, "Showing " + gRecyclerViewComicsAdapter.getItemCount() + " comics.", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Showing " + gRecyclerViewComicsAdapter.getItemCount() + " comics.", Toast.LENGTH_SHORT).show();
     }
 
     public void SetComicSortOrderDefault(){

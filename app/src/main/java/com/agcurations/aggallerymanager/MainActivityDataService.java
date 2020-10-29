@@ -323,7 +323,7 @@ public class MainActivityDataService extends IntentService {
                 while (sLine != null) {
                     //Split the line read from the contents file with the delimiter of TAB:
                     sFields = sLine.split("\t",-1);
-
+                    //De-jumble the data:
                     String[] sFields2 = new String[sFields.length];
                     for(int i = 0; i < sFields.length; i++){
                         sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);

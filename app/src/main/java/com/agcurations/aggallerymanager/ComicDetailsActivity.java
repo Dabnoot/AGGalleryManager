@@ -720,6 +720,11 @@ public class ComicDetailsActivity extends AppCompatActivity {
             }
         }
 
+        //Update the field indicating that the comic data has been acquired:
+        iFieldIDs.add(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_INDEX);
+        sFieldUpdateData.add(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_YES);
+
+        //Convert ArrayLists to arrays:
         int[] iTemp = new int[iFieldIDs.size()];
         String[] sTemp = new String[sFieldUpdateData.size()];
         for(int i = 0; i < iFieldIDs.size(); i++){
@@ -727,6 +732,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
             sTemp[i] = sFieldUpdateData.get(i);
         }
 
+        //Update the applicable fields in the catalog file:
         globalClass.ComicCatalogDataFile_UpdateRecord(gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 iTemp, sTemp);
 
