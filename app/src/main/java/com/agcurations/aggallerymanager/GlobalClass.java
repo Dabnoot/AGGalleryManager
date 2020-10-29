@@ -2,31 +2,21 @@ package com.agcurations.aggallerymanager;
 
 
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkRequest;
-import android.net.Uri;
-import android.os.Build;
-import android.os.storage.StorageManager;
-import android.provider.DocumentsContract;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.TreeMap;
-
-import androidx.annotation.Nullable;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -36,28 +26,33 @@ public class GlobalClass extends Application {
 
     public static String gsPin = "";
 
-    public boolean gbSkipComicCatalogReload;
+    public static File gfAppFolder;
+    public static File gfAppConfigFile;
 
-    public static File gvfAppFolder;
-    public static File gvfAppConfigFile;
-
-    public static File gvfVideosFolder;
-    public static File gvfVideoLogsFolder;
-    public static File gvfVideoCatalogContentsFile;
-    public static File gvfVideoTagsFile;
+    public static File gfVideosFolder;
+    public static File gfVideoLogsFolder;
+    public static File gfVideoCatalogContentsFile;
+    public static File gfVideoTagsFile;
     //Video tag variables:
     public static TreeMap<Integer, String[]> gtmVideoTagReferenceList = new TreeMap<>();
-    public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public static TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public static TreeMap<Integer, String[]> gtmCatalogVideoList = new TreeMap<>();
 
     public static File gfComicsFolder;
     public static File gfComicLogsFolder;
-    public static File gvfComicCatalogContentsFile;
-    public static File gvfComicTagsFile;
+    public static File gfComicCatalogContentsFile;
+    public static File gfComicTagsFile;
     //Process comic tags in same manner as video and picture tags.
     //  However, they are not interchangeable. The fictional nature of comics could cause problems
     //  if the tags were applied to real videos or pictures.
-    public TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
-    public TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public static TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
+    public static TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public static TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
+    public boolean gbComicRestrictionsOn = false;
+    public int giComicDefaultSortBySetting = COMIC_TAGS_INDEX;
+    public boolean gbComicSortAscending = true;
+    public boolean gbComicJustImported = false;
+    public String[] gsSelectedComic;
 
     //Each tags file has the same fields:
     public static final int TAG_ID_INDEX = 0;                    //Tag ID
@@ -69,18 +64,6 @@ public class GlobalClass extends Application {
             "DESCRIPTION"};
 
 
-
-
-    TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
-
-    public boolean gbComicRestrictionsOn = false;
-
-    public int giComicDefaultSortBySetting = COMIC_TAGS_INDEX;
-    public boolean gbComicSortAscending = true;
-
-    public boolean gbComicJustImported = false;
-
-    public String[] gsSelectedComic;
 
 
 
@@ -97,7 +80,6 @@ public class GlobalClass extends Application {
     public void registerNetworkCallback() {
         try {
             connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkRequest.Builder builder = new NetworkRequest.Builder();
 
             connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback(){
                                                                    @Override
@@ -173,7 +155,7 @@ public class GlobalClass extends Application {
 
     public static String JumbleStorageText(String sSourceText){
         //Render the text unsearchable so that no scanning system can pick up explicit tags.
-        String sFinalText = "";
+        String sFinalText;
         StringBuilder sbReverse = new StringBuilder();
         sbReverse.append(sSourceText);
         sFinalText = sbReverse.reverse().toString();
@@ -268,12 +250,11 @@ public class GlobalClass extends Application {
     //=====================================================================================
 
     public void ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
-        File fCatalogContentsFile = gvfComicCatalogContentsFile;
 
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gvfComicCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gfComicCatalogContentsFile.getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -334,7 +315,7 @@ public class GlobalClass extends Application {
             }
             brReader.close();
 
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gvfComicCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
@@ -348,7 +329,7 @@ public class GlobalClass extends Application {
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gvfComicCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gfComicCatalogContentsFile.getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -390,7 +371,7 @@ public class GlobalClass extends Application {
             }
             brReader.close();
 
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gvfComicCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
@@ -458,7 +439,7 @@ public class GlobalClass extends Application {
             //Now attempt to delete the comic record from the CatalogContentsFile:
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gvfComicCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gfComicCatalogContentsFile.getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -480,7 +461,7 @@ public class GlobalClass extends Application {
             brReader.close();
 
             //Re-write the CatalogContentsFile without the deleted comic's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gvfComicCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
@@ -615,11 +596,11 @@ public class GlobalClass extends Application {
     //=====================================================================================
 
     //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
-    public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
+    //public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
     public String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
-    public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    //public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
     public String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
 
 

@@ -94,7 +94,7 @@ public class ExportComicsActivity extends AppCompatActivity {
             galZipList.add(sTemp);
         }
         //Add the catalog contents file to the list of files to include in the zip file:
-        File f = GlobalClass.gvfComicCatalogContentsFile;
+        File f = GlobalClass.gfComicCatalogContentsFile;
         galZipList.add(f.getAbsolutePath());
         giComicFileCount++;
 

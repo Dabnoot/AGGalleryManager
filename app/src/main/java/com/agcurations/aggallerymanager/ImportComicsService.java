@@ -531,7 +531,7 @@ public class ImportComicsService extends IntentService {
                     //Begin loop for comic folder creation and execution of file moves:
                     File fSourceFile;
                     File fDestinationFile;
-                    File fCatalogContentsFile = GlobalClass.gvfComicCatalogContentsFile;
+                    File fCatalogContentsFile = GlobalClass.gfComicCatalogContentsFile;
                     FileWriter fwCatalogContentsFile = null;
 
                     //Provide user with progress update:

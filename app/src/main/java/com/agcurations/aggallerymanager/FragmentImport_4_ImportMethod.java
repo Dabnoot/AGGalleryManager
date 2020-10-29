@@ -72,7 +72,7 @@ public class FragmentImport_4_ImportMethod extends Fragment {
         if(getView() == null)
             return;
         TextView TextView_AppStorageLocationMessage = getView().findViewById(R.id.TextView_AppStorageLocationMessage);
-        String sMessage = "The destination location is: " + GlobalClass.gvfAppFolder;
+        String sMessage = "The destination location is: " + GlobalClass.gfAppFolder;
         TextView_AppStorageLocationMessage.setText(sMessage);
     }
 }

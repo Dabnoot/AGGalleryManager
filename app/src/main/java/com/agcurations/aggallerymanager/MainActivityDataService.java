@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 
 public class MainActivityDataService extends IntentService {
@@ -62,57 +59,57 @@ public class MainActivityDataService extends IntentService {
 
             File[] fAvailableDirs = getExternalFilesDirs(null);
             if (fAvailableDirs.length == 2) {
-                GlobalClass.gvfAppFolder = fAvailableDirs[1];
+                GlobalClass.gfAppFolder = fAvailableDirs[1];
             } else {
-                GlobalClass.gvfAppFolder = fAvailableDirs[0];
+                GlobalClass.gfAppFolder = fAvailableDirs[0];
             }
 
 
 
             //--------------------------------------------------------------------------------
             //Videos Folder Structure:
-            GlobalClass.gvfVideosFolder = new File(GlobalClass.gvfAppFolder
+            GlobalClass.gfVideosFolder = new File(GlobalClass.gfAppFolder
                     + File.separator + "Videos");
-            obtainFolderStructureItem(GlobalClass.gvfVideosFolder);
+            obtainFolderStructureItem(GlobalClass.gfVideosFolder);
 
-            GlobalClass.gvfVideoCatalogContentsFile = new File(GlobalClass.gvfVideosFolder.getAbsolutePath()
+            GlobalClass.gfVideoCatalogContentsFile = new File(GlobalClass.gfVideosFolder.getAbsolutePath()
                     + File.separator + "CatalogContents.dat");
 
-            GlobalClass.gvfVideoLogsFolder = new File(GlobalClass.gvfVideosFolder
+            GlobalClass.gfVideoLogsFolder = new File(GlobalClass.gfVideosFolder
                     + File.separator + "Logs");
-            obtainFolderStructureItem(GlobalClass.gvfVideoLogsFolder);
+            obtainFolderStructureItem(GlobalClass.gfVideoLogsFolder);
 
-            GlobalClass.gvfVideoTagsFile = new File(GlobalClass.gvfVideosFolder.getAbsolutePath()
+            GlobalClass.gfVideoTagsFile = new File(GlobalClass.gfVideosFolder.getAbsolutePath()
                     + File.separator + "VideoTags.dat");
             //--------------------------------------------------------------------------------
 
             //--------------------------------------------------------------------------------
             //Comics Folder Structure:
-            GlobalClass.gfComicsFolder = new File(GlobalClass.gvfAppFolder
+            GlobalClass.gfComicsFolder = new File(GlobalClass.gfAppFolder
                     + File.separator + "Comics");
             obtainFolderStructureItem(GlobalClass.gfComicsFolder);
 
-            GlobalClass.gvfComicCatalogContentsFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath()
+            GlobalClass.gfComicCatalogContentsFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath()
                     + File.separator + "CatalogContents.dat");
 
             GlobalClass.gfComicLogsFolder = new File(GlobalClass.gfComicsFolder
                     + File.separator + "Logs");
             obtainFolderStructureItem(GlobalClass.gfComicLogsFolder);
 
-            GlobalClass.gvfComicTagsFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath()
+            GlobalClass.gfComicTagsFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath()
                     + File.separator + "ComicTags.dat");
             //--------------------------------------------------------------------------------
 
             //Attempt to read a pin number set by the user:
-            GlobalClass.gvfAppConfigFile = new File(GlobalClass.gvfAppFolder.getAbsolutePath()
+            GlobalClass.gfAppConfigFile = new File(GlobalClass.gfAppFolder.getAbsolutePath()
                     + File.separator + "AppConfig.dat");
-            if (!GlobalClass.gvfAppConfigFile.exists()) {
+            if (!GlobalClass.gfAppConfigFile.exists()) {
                 try {
-                    if (!GlobalClass.gvfAppConfigFile.createNewFile()) {
-                        problemNotificationConfig("Could not create AppConfig.dat at " + GlobalClass.gvfAppConfigFile.getAbsolutePath());
+                    if (!GlobalClass.gfAppConfigFile.createNewFile()) {
+                        problemNotificationConfig("Could not create AppConfig.dat at " + GlobalClass.gfAppConfigFile.getAbsolutePath());
                     }
                 } catch (IOException e) {
-                    problemNotificationConfig("Could not create AppConfig.dat at " + GlobalClass.gvfAppConfigFile.getAbsolutePath());
+                    problemNotificationConfig("Could not create AppConfig.dat at " + GlobalClass.gfAppConfigFile.getAbsolutePath());
                 }
             } else {
 
@@ -122,11 +119,11 @@ public class MainActivityDataService extends IntentService {
                 BufferedReader brReader;
                 String sLine = "";
                 try {
-                    brReader = new BufferedReader(new FileReader(GlobalClass.gvfAppConfigFile.getAbsolutePath()));
+                    brReader = new BufferedReader(new FileReader(GlobalClass.gfAppConfigFile.getAbsolutePath()));
                     sLine = brReader.readLine();
                     brReader.close();
                 } catch (IOException e) {
-                    problemNotificationConfig("Trouble reading AppConfig.dat at" + GlobalClass.gvfAppConfigFile.getAbsolutePath());
+                    problemNotificationConfig("Trouble reading AppConfig.dat at" + GlobalClass.gfAppConfigFile.getAbsolutePath());
                 }
 
                 //Set the global variable holding the pin:
@@ -139,22 +136,24 @@ public class MainActivityDataService extends IntentService {
         }
 
         //Attempt to read or create the video tags file:
-        globalClass.gtmVideoTagReferenceList =
-                InitTagData(GlobalClass.gvfVideoTagsFile,
+        GlobalClass.gtmVideoTagReferenceList =
+                InitTagData(GlobalClass.gfVideoTagsFile,
                         getResources().getStringArray(R.array.default_video_tags));
 
         //Attempt to read or create the comic tags file:
-        globalClass.gtmComicTagReferenceList =
-                InitTagData(GlobalClass.gvfComicTagsFile,
+        GlobalClass.gtmComicTagReferenceList =
+                InitTagData(GlobalClass.gfComicTagsFile,
                         getResources().getStringArray(R.array.default_comic_tags));
 
 
-        readComicsCatalogFile();
+        //readComicsCatalogFile();
 
 
-
-
-
+        GlobalClass.gtmCatalogComicList = readCatalogFile(
+                GlobalClass.gfComicsFolder,
+                GlobalClass.gfComicCatalogContentsFile,
+                GlobalClass.gfComicLogsFolder,
+                GlobalClass.ComicRecordFields);
 
 
 
@@ -243,16 +242,11 @@ public class MainActivityDataService extends IntentService {
         return tmTags;
     }
 
-    private void readComicsCatalogFile(){
-
-        File fCatalogComicsFolder = GlobalClass.gfComicsFolder;
-        File fCatalogContentsFile = GlobalClass.gvfComicCatalogContentsFile;
-        File fLogsFolder = GlobalClass.gfComicLogsFolder;
-
+    private TreeMap<Integer, String[]> readCatalogFile(File fCatalogFolder, File fCatalogContentsFile, File fLogsFolder, String[] sRecordFields){
 
         boolean bFolderOk = false ;
-        if(!fCatalogComicsFolder.exists()) {
-            if (fCatalogComicsFolder.mkdirs()) {
+        if(!fCatalogFolder.exists()) {
+            if (fCatalogFolder.mkdirs()) {
                 bFolderOk = true;
             }
         }else{
@@ -261,6 +255,7 @@ public class MainActivityDataService extends IntentService {
 
         if (!bFolderOk) {
             problemNotificationConfig("Could not create catalog data folder 'Comics'.");
+            return null;
         } else {
 
             if (!fCatalogContentsFile.exists()){
@@ -271,15 +266,15 @@ public class MainActivityDataService extends IntentService {
                             fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
 
                             //Write the activity_comic_details_header line to the file:
-                            fwCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
-                            for(int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
+                            fwCatalogContentsFile.append(sRecordFields[0]);
+                            for(int i = 1; i < sRecordFields.length; i++) {
                                 fwCatalogContentsFile.append("\t");
-                                fwCatalogContentsFile.append("GlobalClass.ComicRecordFields[i]");
+                                fwCatalogContentsFile.append(sRecordFields[i]);
                             }
                             fwCatalogContentsFile.append("\n");
 
                         } catch (Exception e) {
-                            problemNotificationConfig("Problem during Comics Catalog Contents File write.\n" + e.getMessage());
+                            problemNotificationConfig("Problem during Catalog Contents File write:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
 
                         } finally {
                             try {
@@ -288,15 +283,15 @@ public class MainActivityDataService extends IntentService {
                                     fwCatalogContentsFile.close();
                                 }
                             } catch (IOException e) {
-                                problemNotificationConfig("Problem during Comics Catalog Contents File flush/close.\n" + e.getMessage());
+                                problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
 
                             }
                         }
                     } else {
-                        problemNotificationConfig("Could not create Comics CatalogContents.dat at" + fCatalogComicsFolder.getAbsolutePath());
+                        problemNotificationConfig("Could not create CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
                     }
                 }catch (IOException e){
-                    problemNotificationConfig("Could not create Comics CatalogContents.dat at" + fCatalogComicsFolder.getAbsolutePath());
+                    problemNotificationConfig("Problem creating CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
 
                 }
             }
@@ -314,43 +309,42 @@ public class MainActivityDataService extends IntentService {
                 }
             }
 
-            //Build the internal list of comics:
-            TreeMap<Integer, String[]> tmCatalogComicList = new TreeMap<>();
+            //Build the internal list of entries:
+            TreeMap<Integer, String[]> tmCatalogListings = new TreeMap<>();
 
-            //Read the list of comics and populate the catalog array:
+            //Read the list of entries and populate the catalog array:
             BufferedReader brReader;
             try {
                 brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-                brReader.readLine(); //The first line is the activity_comic_details_header. Skip this line.
+                brReader.readLine(); //The first line is the header. Skip this line.
                 String sLine = brReader.readLine();
                 String[] sFields;
-                int iComicRID = 0;
+                int iRID = 0;
                 while (sLine != null) {
                     //Split the line read from the contents file with the delimiter of TAB:
                     sFields = sLine.split("\t",-1);
-                    tmCatalogComicList.put(iComicRID, sFields);
+
+                    String[] sFields2 = new String[sFields.length];
+                    for(int i = 0; i < sFields.length; i++){
+                        sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                    }
+
+                    tmCatalogListings.put(iRID, sFields2);
 
                     // read next line
                     sLine = brReader.readLine();
-                    iComicRID++;
+                    iRID++;
                 }
                 brReader.close();
 
             } catch (IOException e) {
-                problemNotificationConfig("Trouble reading Comics CatalogContents.dat at" + fCatalogComicsFolder.getAbsolutePath());
+                problemNotificationConfig("Trouble reading CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
             }
 
-            //Set the global variable holding the comic list:
-            globalClass.gtmCatalogComicList = tmCatalogComicList;
-
-
+            //Return the data read from the file:
+            return tmCatalogListings;
 
         }
-
-
-
-
-
 
     }
 
@@ -361,7 +355,7 @@ public class MainActivityDataService extends IntentService {
 
         int iToVersion = 2; //This causes the routine to update the .dat file only once.
 
-        File fCatalogContentsFile = GlobalClass.gvfComicCatalogContentsFile;
+        File fCatalogContentsFile = GlobalClass.gfComicCatalogContentsFile;
 
         try {
             //Read the list of comics and populate the catalog array:
@@ -423,6 +417,106 @@ public class MainActivityDataService extends IntentService {
                                     fwNewCatalogContentsFile.append("Yes"); //Initial value "online data acquired = yes"
                                 }
 
+                                //Close the data row:
+                                fwNewCatalogContentsFile.append("\n");
+                                // read next line
+                                sLine = brReader.readLine();
+                            }
+                            brReader.close();
+
+                            fwNewCatalogContentsFile.flush();
+                            fwNewCatalogContentsFile.close();
+
+                            File fRenameCurrentDatFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_v" + iFromVersion + "_bak.dat");
+                            if (!fRenameCurrentDatFile.exists()) {
+                                if (!fCatalogContentsFile.renameTo(fRenameCurrentDatFile)) {
+                                    problemNotificationConfig("Could not rename CatalogContentsFile.");
+                                } else {
+                                    if (!fNewCatalogContentsFile.renameTo(fCatalogContentsFile)) {
+                                        problemNotificationConfig("Could not rename new CatalogContentsFile.");
+                                    }
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            problemNotificationConfig("Problem during CatalogContentsFile re-write.\n" + e.getMessage());
+                        }
+                    } else {
+                        problemNotificationConfig("Could not write new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath());
+                    }
+                } catch (IOException e) {
+                    problemNotificationConfig("Could not create new CatalogContents.dat at" + fNewCatalogContentsFile.getAbsolutePath());
+                }
+            }
+        } catch (Exception e){
+            problemNotificationConfig("Could not open CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath()+ "\n" + e.getMessage());
+        }
+    }
+
+    public void Catalog_data_file_jumble_fields() {
+        //Jumble the fields.
+        //  This will affect the creation of the dat file header.
+
+        int iToVersion = 3; //This causes the routine to update the .dat file only once.
+
+        File fCatalogContentsFile = GlobalClass.gfComicCatalogContentsFile;
+
+        try {
+            //Read the list of comics and populate the catalog array:
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+
+            //Get the version of the current .dat file.
+            String sLine = brReader.readLine();
+            String[] sFields = sLine.split("\t");
+            String[] sVersionData = sFields[sFields.length - 1].split(".");
+            int iFromVersion = 0;
+            if (sVersionData.length == 2) {
+                iFromVersion = Integer.parseInt(sVersionData[1]);
+            }
+            //Quit this routine if the version of the .dat file to be written
+            //  is the same or older:
+            if (iToVersion <= iFromVersion) {
+                brReader.close();
+                return;
+            }
+
+            //Create the new catalog contents file:
+            File fCatalogComicsFolder = GlobalClass.gfComicsFolder;
+            File fNewCatalogContentsFile;
+
+            //Create a new catalog status file:
+            fNewCatalogContentsFile = new File(fCatalogComicsFolder.getAbsolutePath() + File.separator + "CatalogContents_new.dat");
+
+            if (!fNewCatalogContentsFile.exists()) {
+                try {
+                    if (fNewCatalogContentsFile.createNewFile()) {
+                        FileWriter fwNewCatalogContentsFile;
+                        try {
+                            fwNewCatalogContentsFile = new FileWriter(fNewCatalogContentsFile, true);
+
+                            //Write the activity_comic_details_header line to the file:
+                            fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[0]);
+                            for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++) {
+                                fwNewCatalogContentsFile.append("\t");
+                                fwNewCatalogContentsFile.append(GlobalClass.ComicRecordFields[i]);
+                            }
+
+                            fwNewCatalogContentsFile.append("\t");
+                            fwNewCatalogContentsFile.append("DataFileVersion."); //DataFileVersion.[version number]
+                            fwNewCatalogContentsFile.append(Integer.toString(iToVersion));
+                            fwNewCatalogContentsFile.append("\n");
+
+                            //Write lines from the original .dat file to the new .dat file:
+                            sLine = brReader.readLine();
+                            while (sLine != null) {
+                                sFields = sLine.split("\t",-1);
+                                //Write data to file:
+                                fwNewCatalogContentsFile.append(GlobalClass.JumbleStorageText(sFields[0]));
+                                for(int i = 1; i < sFields.length; i++){
+                                    fwNewCatalogContentsFile.append("\t");
+                                    fwNewCatalogContentsFile.append(GlobalClass.JumbleStorageText(sFields[i]));
+                                }
                                 //Close the data row:
                                 fwNewCatalogContentsFile.append("\n");
                                 // read next line

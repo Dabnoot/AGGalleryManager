@@ -11,8 +11,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -148,7 +146,7 @@ public class FragmentImport_5_Confirmation extends Fragment {
 
         //Display the destination folder:
         String sDestinationFolder;
-        sDestinationFolder = GlobalClass.gvfAppFolder.getAbsolutePath() +
+        sDestinationFolder = GlobalClass.gfAppFolder.getAbsolutePath() +
                 File.separator + ImportActivity.gsMediaCategoryFolderName +
                 File.separator + ImportActivity.gsImportDestinationFolder;
         TextView textView_DestinationFolder = getView().findViewById(R.id.textView_DestinationFolder);
