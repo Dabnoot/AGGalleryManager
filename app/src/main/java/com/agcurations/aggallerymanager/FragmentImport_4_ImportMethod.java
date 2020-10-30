@@ -18,6 +18,8 @@ import android.widget.TextView;
  */
 public class FragmentImport_4_ImportMethod extends Fragment {
 
+    private GlobalClass globalClass;
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -56,6 +58,10 @@ public class FragmentImport_4_ImportMethod extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        // Calling Application class (see application tag in AndroidManifest.xml)
+        globalClass = (GlobalClass) getActivity().getApplicationContext();
+
     }
 
     @Override
@@ -72,7 +78,7 @@ public class FragmentImport_4_ImportMethod extends Fragment {
         if(getView() == null)
             return;
         TextView TextView_AppStorageLocationMessage = getView().findViewById(R.id.TextView_AppStorageLocationMessage);
-        String sMessage = "The destination location is: " + GlobalClass.gfAppFolder;
+        String sMessage = "The destination location is: " + globalClass.gfAppFolder;
         TextView_AppStorageLocationMessage.setText(sMessage);
     }
 }

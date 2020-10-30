@@ -60,11 +60,11 @@ public class ExportComicsActivity extends AppCompatActivity {
         gtvExportLog.setMovementMethod(new ScrollingMovementMethod());
 
         // Calling Application class (see application tag in AndroidManifest.xml)
-        final GlobalClass globalVariable = (GlobalClass) getApplicationContext();
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
         //Determine the amount of space required for the export (backup):
-        TreeMap<Integer, String[]> tmCatalogComicList = globalVariable.gtmCatalogComicList;
-        String sComicFolderPath = GlobalClass.gfComicsFolder.getAbsolutePath();
+        TreeMap<Integer, String[]> tmCatalogComicList = globalClass.gtmCatalogComicList;
+        String sComicFolderPath = globalClass.gfComicsFolder.getAbsolutePath();
 
         int iComicCatalogSize = 0;
         String sTemp;
@@ -94,7 +94,7 @@ public class ExportComicsActivity extends AppCompatActivity {
             galZipList.add(sTemp);
         }
         //Add the catalog contents file to the list of files to include in the zip file:
-        File f = GlobalClass.gfComicCatalogContentsFile;
+        File f = globalClass.gfComicCatalogContentsFile;
         galZipList.add(f.getAbsolutePath());
         giComicFileCount++;
 

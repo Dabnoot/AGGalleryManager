@@ -59,57 +59,57 @@ public class MainActivityDataService extends IntentService {
 
             File[] fAvailableDirs = getExternalFilesDirs(null);
             if (fAvailableDirs.length == 2) {
-                GlobalClass.gfAppFolder = fAvailableDirs[1];
+                globalClass.gfAppFolder = fAvailableDirs[1];
             } else {
-                GlobalClass.gfAppFolder = fAvailableDirs[0];
+                globalClass.gfAppFolder = fAvailableDirs[0];
             }
 
 
 
             //--------------------------------------------------------------------------------
             //Videos Folder Structure:
-            GlobalClass.gfVideosFolder = new File(GlobalClass.gfAppFolder
+            globalClass.gfVideosFolder = new File(globalClass.gfAppFolder
                     + File.separator + "Videos");
-            obtainFolderStructureItem(GlobalClass.gfVideosFolder);
+            obtainFolderStructureItem(globalClass.gfVideosFolder);
 
-            GlobalClass.gfVideoCatalogContentsFile = new File(GlobalClass.gfVideosFolder.getAbsolutePath()
+            globalClass.gfVideoCatalogContentsFile = new File(globalClass.gfVideosFolder.getAbsolutePath()
                     + File.separator + "CatalogContents.dat");
 
-            GlobalClass.gfVideoLogsFolder = new File(GlobalClass.gfVideosFolder
+            globalClass.gfVideoLogsFolder = new File(globalClass.gfVideosFolder
                     + File.separator + "Logs");
-            obtainFolderStructureItem(GlobalClass.gfVideoLogsFolder);
+            obtainFolderStructureItem(globalClass.gfVideoLogsFolder);
 
-            GlobalClass.gfVideoTagsFile = new File(GlobalClass.gfVideosFolder.getAbsolutePath()
+            globalClass.gfVideoTagsFile = new File(globalClass.gfVideosFolder.getAbsolutePath()
                     + File.separator + "VideoTags.dat");
             //--------------------------------------------------------------------------------
 
             //--------------------------------------------------------------------------------
             //Comics Folder Structure:
-            GlobalClass.gfComicsFolder = new File(GlobalClass.gfAppFolder
+            globalClass.gfComicsFolder = new File(globalClass.gfAppFolder
                     + File.separator + "Comics");
-            obtainFolderStructureItem(GlobalClass.gfComicsFolder);
+            obtainFolderStructureItem(globalClass.gfComicsFolder);
 
-            GlobalClass.gfComicCatalogContentsFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath()
+            globalClass.gfComicCatalogContentsFile = new File(globalClass.gfComicsFolder.getAbsolutePath()
                     + File.separator + "CatalogContents.dat");
 
-            GlobalClass.gfComicLogsFolder = new File(GlobalClass.gfComicsFolder
+            globalClass.gfComicLogsFolder = new File(globalClass.gfComicsFolder
                     + File.separator + "Logs");
-            obtainFolderStructureItem(GlobalClass.gfComicLogsFolder);
+            obtainFolderStructureItem(globalClass.gfComicLogsFolder);
 
-            GlobalClass.gfComicTagsFile = new File(GlobalClass.gfComicsFolder.getAbsolutePath()
+            globalClass.gfComicTagsFile = new File(globalClass.gfComicsFolder.getAbsolutePath()
                     + File.separator + "ComicTags.dat");
             //--------------------------------------------------------------------------------
 
             //Attempt to read a pin number set by the user:
-            GlobalClass.gfAppConfigFile = new File(GlobalClass.gfAppFolder.getAbsolutePath()
+            globalClass.gfAppConfigFile = new File(globalClass.gfAppFolder.getAbsolutePath()
                     + File.separator + "AppConfig.dat");
-            if (!GlobalClass.gfAppConfigFile.exists()) {
+            if (!globalClass.gfAppConfigFile.exists()) {
                 try {
-                    if (!GlobalClass.gfAppConfigFile.createNewFile()) {
-                        problemNotificationConfig("Could not create AppConfig.dat at " + GlobalClass.gfAppConfigFile.getAbsolutePath());
+                    if (!globalClass.gfAppConfigFile.createNewFile()) {
+                        problemNotificationConfig("Could not create AppConfig.dat at " + globalClass.gfAppConfigFile.getAbsolutePath());
                     }
                 } catch (IOException e) {
-                    problemNotificationConfig("Could not create AppConfig.dat at " + GlobalClass.gfAppConfigFile.getAbsolutePath());
+                    problemNotificationConfig("Could not create AppConfig.dat at " + globalClass.gfAppConfigFile.getAbsolutePath());
                 }
             } else {
 
@@ -119,40 +119,40 @@ public class MainActivityDataService extends IntentService {
                 BufferedReader brReader;
                 String sLine = "";
                 try {
-                    brReader = new BufferedReader(new FileReader(GlobalClass.gfAppConfigFile.getAbsolutePath()));
+                    brReader = new BufferedReader(new FileReader(globalClass.gfAppConfigFile.getAbsolutePath()));
                     sLine = brReader.readLine();
                     brReader.close();
                 } catch (IOException e) {
-                    problemNotificationConfig("Trouble reading AppConfig.dat at" + GlobalClass.gfAppConfigFile.getAbsolutePath());
+                    problemNotificationConfig("Trouble reading AppConfig.dat at" + globalClass.gfAppConfigFile.getAbsolutePath());
                 }
 
                 //Set the global variable holding the pin:
                 if (sLine == null) {
-                    GlobalClass.gsPin = "";
+                    globalClass.gsPin = "";
                 } else {
-                    GlobalClass.gsPin = sLine;
+                    globalClass.gsPin = sLine;
                 }
             }
         }
 
         //Attempt to read or create the video tags file:
-        GlobalClass.gtmVideoTagReferenceList =
-                InitTagData(GlobalClass.gfVideoTagsFile,
+        globalClass.gtmVideoTagReferenceList =
+                InitTagData(globalClass.gfVideoTagsFile,
                         getResources().getStringArray(R.array.default_video_tags));
 
         //Attempt to read or create the comic tags file:
-        GlobalClass.gtmComicTagReferenceList =
-                InitTagData(GlobalClass.gfComicTagsFile,
+        globalClass.gtmComicTagReferenceList =
+                InitTagData(globalClass.gfComicTagsFile,
                         getResources().getStringArray(R.array.default_comic_tags));
 
 
         //readComicsCatalogFile();
 
 
-        GlobalClass.gtmCatalogComicList = readCatalogFile(
-                GlobalClass.gfComicsFolder,
-                GlobalClass.gfComicCatalogContentsFile,
-                GlobalClass.gfComicLogsFolder,
+        globalClass.gtmCatalogComicList = readCatalogFile(
+                globalClass.gfComicsFolder,
+                globalClass.gfComicCatalogContentsFile,
+                globalClass.gfComicLogsFolder,
                 GlobalClass.ComicRecordFields);
 
 
@@ -185,7 +185,7 @@ public class MainActivityDataService extends IntentService {
 
                     //Reverse the text of each field (except the TagID):
                     for(int j = 1; j < sFields.length; j++){
-                        sFields[j] = GlobalClass.JumbleStorageText(sFields[j]);
+                        sFields[j] = globalClass.JumbleStorageText(sFields[j]);
                     }
 
 
@@ -205,16 +205,16 @@ public class MainActivityDataService extends IntentService {
                         FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
                         Integer i = 0;
                         //Write the header record:
-                        fwTagsFile.write(GlobalClass.TagRecordFields[0]);
-                        for(int j = 1; j < GlobalClass.TagRecordFields.length; j++){
-                            fwTagsFile.write("," + GlobalClass.TagRecordFields[j]);
+                        fwTagsFile.write(globalClass.TagRecordFields[0]);
+                        for(int j = 1; j < globalClass.TagRecordFields.length; j++){
+                            fwTagsFile.write("," + globalClass.TagRecordFields[j]);
                         }
                         fwTagsFile.write("\n");
 
                         //Write data records:
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(i.toString() + "," + GlobalClass.JumbleStorageText(sEntry) + "\n");
+                                fwTagsFile.write(i.toString() + "," + globalClass.JumbleStorageText(sEntry) + "\n");
                                 String[] s = new String[]{i.toString(), sEntry};
                                 tmTags.put(i, s);
                                 i++;
@@ -326,7 +326,7 @@ public class MainActivityDataService extends IntentService {
                     //De-jumble the data:
                     String[] sFields2 = new String[sFields.length];
                     for(int i = 0; i < sFields.length; i++){
-                        sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                        sFields2[i] = globalClass.JumbleStorageText(sFields[i]);
                     }
 
                     tmCatalogListings.put(iRID, sFields2);
@@ -349,13 +349,13 @@ public class MainActivityDataService extends IntentService {
     }
 
 
-    public void Catalog_data_file_add_field() {
+    public void Comic_Catalog_data_file_add_field() {
         //Add the new field to GlobalClass.ComicRecordFields before running this routine.
         //  This will affect the creation of the dat file header.
 
         int iToVersion = 2; //This causes the routine to update the .dat file only once.
 
-        File fCatalogContentsFile = GlobalClass.gfComicCatalogContentsFile;
+        File fCatalogContentsFile = globalClass.gfComicCatalogContentsFile;
 
         try {
             //Read the list of comics and populate the catalog array:
@@ -378,7 +378,7 @@ public class MainActivityDataService extends IntentService {
             }
 
             //Create the new catalog contents file:
-            File fCatalogComicsFolder = GlobalClass.gfComicsFolder;
+            File fCatalogComicsFolder = globalClass.gfComicsFolder;
             File fNewCatalogContentsFile;
 
             //Create a new catalog status file:
@@ -459,7 +459,7 @@ public class MainActivityDataService extends IntentService {
 
         int iToVersion = 3; //This causes the routine to update the .dat file only once.
 
-        File fCatalogContentsFile = GlobalClass.gfComicCatalogContentsFile;
+        File fCatalogContentsFile = globalClass.gfComicCatalogContentsFile;
 
         try {
             //Read the list of comics and populate the catalog array:
@@ -482,7 +482,7 @@ public class MainActivityDataService extends IntentService {
             }
 
             //Create the new catalog contents file:
-            File fCatalogComicsFolder = GlobalClass.gfComicsFolder;
+            File fCatalogComicsFolder = globalClass.gfComicsFolder;
             File fNewCatalogContentsFile;
 
             //Create a new catalog status file:
@@ -512,10 +512,10 @@ public class MainActivityDataService extends IntentService {
                             while (sLine != null) {
                                 sFields = sLine.split("\t",-1);
                                 //Write data to file:
-                                fwNewCatalogContentsFile.append(GlobalClass.JumbleStorageText(sFields[0]));
+                                fwNewCatalogContentsFile.append(globalClass.JumbleStorageText(sFields[0]));
                                 for(int i = 1; i < sFields.length; i++){
                                     fwNewCatalogContentsFile.append("\t");
-                                    fwNewCatalogContentsFile.append(GlobalClass.JumbleStorageText(sFields[i]));
+                                    fwNewCatalogContentsFile.append(globalClass.JumbleStorageText(sFields[i]));
                                 }
                                 //Close the data row:
                                 fwNewCatalogContentsFile.append("\n");

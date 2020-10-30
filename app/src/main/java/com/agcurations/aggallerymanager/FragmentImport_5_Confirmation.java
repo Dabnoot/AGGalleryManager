@@ -22,6 +22,8 @@ import java.util.ArrayList;
  */
 public class FragmentImport_5_Confirmation extends Fragment {
 
+    private GlobalClass globalClass;
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -60,6 +62,8 @@ public class FragmentImport_5_Confirmation extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        // Calling Application class (see application tag in AndroidManifest.xml)
+        globalClass = (GlobalClass) getActivity().getApplicationContext();
     }
 
     @Override
@@ -146,7 +150,7 @@ public class FragmentImport_5_Confirmation extends Fragment {
 
         //Display the destination folder:
         String sDestinationFolder;
-        sDestinationFolder = GlobalClass.gfAppFolder.getAbsolutePath() +
+        sDestinationFolder = globalClass.gfAppFolder.getAbsolutePath() +
                 File.separator + ImportActivity.gsMediaCategoryFolderName +
                 File.separator + ImportActivity.gsImportDestinationFolder;
         TextView textView_DestinationFolder = getView().findViewById(R.id.textView_DestinationFolder);

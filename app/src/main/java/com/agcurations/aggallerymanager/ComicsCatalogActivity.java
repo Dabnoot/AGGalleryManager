@@ -427,7 +427,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = GlobalClass.gfComicsFolder.getAbsolutePath()
+                String sThumbnailFilePath = globalClass.gfComicsFolder.getAbsolutePath()
                         + File.separator
                         + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
                         + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];

@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ImportActivity extends AppCompatActivity {
+    private GlobalClass globalClass;
 
     public static ViewPager2 ViewPager2_Import;
     FragmentImportViewPagerAdapter importViewPagerFragmentAdapter;
@@ -94,6 +95,9 @@ public class ImportActivity extends AppCompatActivity {
         setContentView(R.layout.activity_import);
 
         contextOfActivity = this;
+
+        // Calling Application class (see application tag in AndroidManifest.xml)
+        globalClass = (GlobalClass) getApplicationContext();
 
         ViewPager2_Import = findViewById(R.id.viewPager_Import);
 
@@ -201,7 +205,7 @@ public class ImportActivity extends AppCompatActivity {
 
             //Create an array of tag strings from GlobalClass:
             List<String> alsTags = new ArrayList<String>();
-            for (Map.Entry<Integer, String[]> entry : GlobalClass.gtmVideoTagReferenceList.entrySet()){
+            for (Map.Entry<Integer, String[]> entry : globalClass.gtmVideoTagReferenceList.entrySet()){
                 alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
             }
             String[] sTags = (String[]) alsTags.toArray(new String[0]);
@@ -216,7 +220,7 @@ public class ImportActivity extends AppCompatActivity {
         Integer iFolderID;
         if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_VIDEOS){
             //Determine the folder into which the contents will be placed:
-            for (Map.Entry<Integer, String[]> entry : GlobalClass.gtmVideoTagReferenceList.entrySet()){
+            for (Map.Entry<Integer, String[]> entry : globalClass.gtmVideoTagReferenceList.entrySet()){
                 //Get the key value associated with the text tag:
                 if(alsImportTags.get(0).contentEquals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
                     gsImportDestinationFolder = Integer.toString(entry.getKey());

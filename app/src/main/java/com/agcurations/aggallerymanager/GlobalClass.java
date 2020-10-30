@@ -26,30 +26,30 @@ public class GlobalClass extends Application {
 
     //Global Variables:
 
-    public static String gsPin = "";
+    public String gsPin = "";
 
-    public static File gfAppFolder;
-    public static File gfAppConfigFile;
+    public File gfAppFolder;
+    public File gfAppConfigFile;
 
-    public static File gfVideosFolder;
-    public static File gfVideoLogsFolder;
-    public static File gfVideoCatalogContentsFile;
-    public static File gfVideoTagsFile;
+    public File gfVideosFolder;
+    public File gfVideoLogsFolder;
+    public File gfVideoCatalogContentsFile;
+    public File gfVideoTagsFile;
     //Video tag variables:
-    public static TreeMap<Integer, String[]> gtmVideoTagReferenceList = new TreeMap<>();
-    public static TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
-    public static TreeMap<Integer, String[]> gtmCatalogVideoList = new TreeMap<>();
+    public TreeMap<Integer, String[]> gtmVideoTagReferenceList = new TreeMap<>();
+    public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public TreeMap<Integer, String[]> gtmCatalogVideoList = new TreeMap<>();
 
-    public static File gfComicsFolder;
-    public static File gfComicLogsFolder;
-    public static File gfComicCatalogContentsFile;
-    public static File gfComicTagsFile;
+    public File gfComicsFolder;
+    public File gfComicLogsFolder;
+    public File gfComicCatalogContentsFile;
+    public File gfComicTagsFile;
     //Process comic tags in same manner as video and picture tags.
     //  However, they are not interchangeable. The fictional nature of comics could cause problems
     //  if the tags were applied to real videos or pictures.
-    public static TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
-    public static TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
-    public static TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
+    public TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
+    public TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
     public boolean gbComicRestrictionsOn = false;
     public int giComicDefaultSortBySetting = COMIC_TAGS_INDEX;
     public boolean gbComicSortAscending = true;
@@ -60,7 +60,7 @@ public class GlobalClass extends Application {
     public static final int TAG_ID_INDEX = 0;                    //Tag ID
     public static final int TAG_NAME_INDEX = 1;                  //Tag Name
     public static final int TAG_DESCRIPTION_INDEX = 3;           //Tag Description
-    public static final String[] TagRecordFields = new String[]{
+    public final String[] TagRecordFields = new String[]{
             "TAG_ID",
             "TAG_NAME",
             "DESCRIPTION"};
@@ -76,7 +76,7 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Network Monitoring ============================================================
     //=====================================================================================
-    public static boolean isNetworkConnected = false;
+    public boolean isNetworkConnected = false;
     public ConnectivityManager connectivityManager;
     // Network Check
     public void registerNetworkCallback() {
@@ -155,7 +155,7 @@ public class GlobalClass extends Application {
     }
 
 
-    public static String JumbleStorageText(String sSourceText){
+    public String JumbleStorageText(String sSourceText){
         //Render the text unsearchable so that no scanning system can pick up explicit tags.
         String sFinalText;
         StringBuilder sbReverse = new StringBuilder();
@@ -195,7 +195,7 @@ public class GlobalClass extends Application {
                 //De-jumble the data read from the file:
                 String[] sFields2 = new String[sFields.length];
                 for(int i = 0; i < sFields.length; i++){
-                    sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                    sFields2[i] = JumbleStorageText(sFields[i]);
                 }
                 sFields = sFields2;
 
@@ -246,10 +246,10 @@ public class GlobalClass extends Application {
                     //Jumble the fields in preparation for writing to file:
                     sFields2 = sLine.split("\t",-1);
                     StringBuilder sbJumble = new StringBuilder();
-                    sbJumble.append(GlobalClass.JumbleStorageText(sFields2[0]));
+                    sbJumble.append(JumbleStorageText(sFields2[0]));
                     for(int i = 1; i < sFields.length; i++){
                         sbJumble.append("\t");
-                        sbJumble.append(GlobalClass.JumbleStorageText(sFields2[i]));
+                        sbJumble.append(JumbleStorageText(sFields2[i]));
                     }
                     sLine = sbJumble.toString();
 
@@ -643,87 +643,6 @@ public class GlobalClass extends Application {
     //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
 
-
-
-
-   /* public static final class FileUtil {
-   This item commented-out on 2020-10-24.
-        static String TAG="TAG";
-        private static final String PRIMARY_VOLUME_NAME = "primary";
-
-        @Nullable
-        public static String getFullPathFromTreeUri(@Nullable final Uri treeUri, Context con) {
-            if (treeUri == null) return null;
-            String volumePath = getVolumePath(getVolumeIdFromTreeUri(treeUri),con);
-            if (volumePath == null) return File.separator;
-            if (volumePath.endsWith(File.separator))
-                volumePath = volumePath.substring(0, volumePath.length() - 1);
-
-            String documentPath = getDocumentPathFromTreeUri(treeUri);
-            if (documentPath.endsWith(File.separator))
-                documentPath = documentPath.substring(0, documentPath.length() - 1);
-
-            if (documentPath.length() > 0) {
-                if (documentPath.startsWith(File.separator))
-                    return volumePath + documentPath;
-                else
-                    return volumePath + File.separator + documentPath;
-            }
-            else return volumePath;
-        }
-
-
-        @SuppressLint("ObsoleteSdkInt")
-        private static String getVolumePath(final String volumeId, Context context) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) return null;
-            try {
-                StorageManager mStorageManager =
-                        (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
-                Class<?> storageVolumeClazz = Class.forName("android.os.storage.StorageVolume");
-                Method getVolumeList = mStorageManager.getClass().getMethod("getVolumeList");
-                Method getUuid = storageVolumeClazz.getMethod("getUuid");
-                Method getPath = storageVolumeClazz.getMethod("getPath");
-                Method isPrimary = storageVolumeClazz.getMethod("isPrimary");
-                Object result = getVolumeList.invoke(mStorageManager);
-
-                final int length = Array.getLength(result);
-                for (int i = 0; i < length; i++) {
-                    Object storageVolumeElement = Array.get(result, i);
-                    String uuid = (String) getUuid.invoke(storageVolumeElement);
-                    Boolean primary = (Boolean) isPrimary.invoke(storageVolumeElement);
-
-                    // primary volume?
-                    if (primary && PRIMARY_VOLUME_NAME.equals(volumeId))
-                        return (String) getPath.invoke(storageVolumeElement);
-
-                    // other volumes?
-                    if (uuid != null && uuid.equals(volumeId))
-                        return (String) getPath.invoke(storageVolumeElement);
-                }
-                // not found.
-                return null;
-            } catch (Exception ex) {
-                return null;
-            }
-        }
-
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        private static String getVolumeIdFromTreeUri(final Uri treeUri) {
-            final String docId = DocumentsContract.getTreeDocumentId(treeUri);
-            final String[] split = docId.split(":");
-            if (split.length > 0) return split[0];
-            else return null;
-        }
-
-
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-        private static String getDocumentPathFromTreeUri(final Uri treeUri) {
-            final String docId = DocumentsContract.getTreeDocumentId(treeUri);
-            final String[] split = docId.split(":");
-            if ((split.length >= 2) && (split[1] != null)) return split[1];
-            else return File.separator;
-        }
-    }*/
 
 
 }

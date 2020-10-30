@@ -86,7 +86,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             gfAppFolder = new File(fAvailableDirs[0].toString());
         }
 
-        gsPin = GlobalClass.gsPin;
+        gsPin = globalClass.gsPin;
 
         //Get a list of comic tags to populate the multiSelect dropdown list:
         for (Map.Entry<Integer, String[]>

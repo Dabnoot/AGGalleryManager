@@ -87,7 +87,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gsComicFields = globalClass.gsSelectedComic; //Don't bother with using the intent to pass this data.
         if( gsComicFields == null) return;
 
-        String sComicFolder_AbsolutePath = GlobalClass.gfComicsFolder.getAbsolutePath();
+        String sComicFolder_AbsolutePath = globalClass.gfComicsFolder.getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
@@ -513,8 +513,8 @@ public class ComicDetailsActivity extends AppCompatActivity {
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX};
         globalClass.CatalogDataFile_UpdateRecord(
-                GlobalClass.gfComicCatalogContentsFile,
-                GlobalClass.gtmCatalogComicList,
+                globalClass.gfComicCatalogContentsFile,
+                globalClass.gtmCatalogComicList,
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 GlobalClass.COMIC_ID_INDEX,
                 iFields,
@@ -580,7 +580,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
     public void SyncOnlineData(){
 
-        if(GlobalClass.isNetworkConnected) {
+        if(globalClass.isNetworkConnected) {
 
             Intent intentGetComicDetails;
 
@@ -737,8 +737,8 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
         //Update the applicable fields in the catalog file:
         globalClass.CatalogDataFile_UpdateRecord(
-                GlobalClass.gfComicCatalogContentsFile,
-                GlobalClass.gtmCatalogComicList,
+                globalClass.gfComicCatalogContentsFile,
+                globalClass.gtmCatalogComicList,
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 GlobalClass.COMIC_ID_INDEX,
                 iTemp,
