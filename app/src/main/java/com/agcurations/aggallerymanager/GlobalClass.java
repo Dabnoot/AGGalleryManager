@@ -22,6 +22,8 @@ public class GlobalClass extends Application {
     //GlobalClass built using this guide:
     //https://androidexample.com/Global_Variable_Or_Application_Context_Variable_-_Android_Example/index.php?view=article_discription&aid=114&aaid=136
 
+    //Each section, Videos, Pictures, Comics, has its own folder, catalog file, tags file, and log folder.
+
     //Global Variables:
 
     public static String gsPin = "";
@@ -164,7 +166,175 @@ public class GlobalClass extends Application {
     }
 
     //=====================================================================================
-    //===== Videos Section ===============================================================
+    //===== Catalog Subroutines Section ===================================================
+    //=====================================================================================
+
+    public void CatalogDataFile_UpdateRecord(
+            File fCatalogContentsFile,
+            TreeMap<Integer, String[]> tmCatalogRecords,
+            String sRecordID,
+            int iRecordIDIndex,
+            int[] iFieldIDs,
+            String[] sFieldUpdateData) {
+
+        //iRecordIDIndex is the index in the record at which the ID can be found.
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+
+                sFields = sLine.split("\t",-1);
+                //De-jumble the data read from the file:
+                String[] sFields2 = new String[sFields.length];
+                for(int i = 0; i < sFields.length; i++){
+                    sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                }
+                sFields = sFields2;
+
+                //Check to see if this record is the one that we want to update:
+                if (sFields[iRecordIDIndex].equals(sRecordID)) {
+                    StringBuilder sb = new StringBuilder();
+
+                    if (iFieldIDs[j] == 0) {
+                        //If the caller wishes to update field 0...
+                        sb.append(sFieldUpdateData[j]);
+                        j++;
+                    } else {
+                        sb.append(sFields[0]);
+                    }
+
+                    for (int i = 1; i < sFields.length; i++) {
+                        sb.append("\t");
+                        if(j < iFieldIDs.length) {
+                            if (iFieldIDs[j] == i) {
+                                //If the caller wishes to update field i...
+                                sb.append(sFieldUpdateData[j]);
+                                j++;
+                            } else {
+                                sb.append(sFields[i]);
+                            }
+                        } else {
+                            sb.append(sFields[i]);
+                        }
+                    }
+
+                    sLine = sb.toString();
+
+                    //Now update the record in the treeMap:
+                    sFields = sLine.split("\t",-1);
+                    int iKey = -1;
+                    for (Map.Entry<Integer, String[]>
+                            CatalogEntry : tmCatalogRecords.entrySet()) {
+                        String sEntryRecordID = CatalogEntry.getValue()[iRecordIDIndex];
+                        if( sEntryRecordID.contains(sFields[iRecordIDIndex])){
+                            iKey = CatalogEntry.getKey();
+                            break;
+                        }
+                    }
+                    if(iKey >= 0){
+                        tmCatalogRecords.put(iKey,sFields);
+                    }
+
+                    //Jumble the fields in preparation for writing to file:
+                    sFields2 = sLine.split("\t",-1);
+                    StringBuilder sbJumble = new StringBuilder();
+                    sbJumble.append(GlobalClass.JumbleStorageText(sFields2[0]));
+                    for(int i = 1; i < sFields.length; i++){
+                        sbJumble.append("\t");
+                        sbJumble.append(GlobalClass.JumbleStorageText(sFields2[i]));
+                    }
+                    sLine = sbJumble.toString();
+
+                }
+                //Write the current record to the buffer:
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            //Write the data to the file:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public boolean CatalogDataFile_UpdateAllRecords(File fCatalogContentsFile, int[] iFieldIDs, String[] sFieldUpdateData) {
+        //This routine used to update a single field across all record in a catalog file.
+        //  Used primarily during development of the software.
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+                sFields = sLine.split("\t",-1);
+
+                StringBuilder sb = new StringBuilder();
+                if (iFieldIDs[j] == 0) {
+                    //If the caller wishes to update field 0...
+                    sb.append(sFieldUpdateData[j]);
+                    j++;
+                } else {
+                    sb.append(sFields[0]);
+                }
+                for (int i = 1; i < sFields.length; i++) {
+                    sb.append("\t");
+                    if(j < iFieldIDs.length) {
+                        if (iFieldIDs[j] == i) {
+                            //If the caller wishes to update field i...
+                            sb.append(sFieldUpdateData[j]);
+                            j++;
+                        } else {
+                            sb.append(sFields[i]);
+                        }
+                    } else {
+                        sb.append(sFields[i]);
+                    }
+                }
+                sLine = sb.toString();
+
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    //=====================================================================================
+    //===== Videos Variables Section ======================================================
     //=====================================================================================
 
     public static final int VIDEO_ID_INDEX = 0;                             //Video ID
@@ -194,7 +364,7 @@ public class GlobalClass extends Application {
 
 
     //=====================================================================================
-    //===== Comics Section ================================================================
+    //===== Comics Variables Section ======================================================
     //=====================================================================================
 
     public static final int COMIC_ID_INDEX = 0;                    //Comic ID
@@ -250,159 +420,7 @@ public class GlobalClass extends Application {
     //===== Start Comic Catalog.dat Data Modification Routine(S) ================================
     //=====================================================================================
 
-    public void ComicCatalogDataFile_UpdateRecord(String sComicID, int[] iFieldIDs, String[] sFieldUpdateData) {
 
-        try {
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfComicCatalogContentsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
-            sbBuffer.append("\n");
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                int j = 0; //To track requested field updates.
-
-                sFields = sLine.split("\t",-1);
-                //De-jumble the data:
-                String[] sFields2 = new String[sFields.length];
-                for(int i = 0; i < sFields.length; i++){
-                    sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
-                }
-                sFields = sFields2;
-
-                //Check to see if this record is the one that we want to update:
-                if (sFields[COMIC_ID_INDEX].equals(sComicID)) {
-                    StringBuilder sb = new StringBuilder();
-
-                    if (iFieldIDs[j] == 0) {
-                        //If the caller wishes to update field 0...
-                        sb.append(sFieldUpdateData[j]);
-                        j++;
-                    } else {
-                        sb.append(sFields[0]);
-                    }
-
-                    for (int i = 1; i < sFields.length; i++) {
-                        sb.append("\t");
-                        if(j < iFieldIDs.length) {
-                            if (iFieldIDs[j] == i) {
-                                //If the caller wishes to update field i...
-                                sb.append(sFieldUpdateData[j]);
-                                j++;
-                            } else {
-                                sb.append(sFields[i]);
-                            }
-                        } else {
-                            sb.append(sFields[i]);
-                        }
-                    }
-
-                    sLine = sb.toString();
-
-                    //Now update the record in the treemap:
-                    sFields = sLine.split("\t",-1);
-                    int iKey = -1;
-                    for (Map.Entry<Integer, String[]>
-                            CatalogEntry : gtmCatalogComicList.entrySet()) {
-                        String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
-                        if( sEntryComicID.contains(sFields[COMIC_ID_INDEX])){
-                            iKey = CatalogEntry.getKey();
-                            break;
-                        }
-                    }
-                    if(iKey >= 0){
-                        gtmCatalogComicList.put(iKey,sFields);
-                    }
-
-                    //Jumble the fields in preparation for writing to file:
-                    sFields2 = sLine.split("\t",-1);
-                    StringBuilder sbJumble = new StringBuilder();
-                    sbJumble.append(GlobalClass.JumbleStorageText(sFields2[0]));
-                    for(int i = 1; i < sFields.length; i++){
-                        sbJumble.append("\t");
-                        sbJumble.append(GlobalClass.JumbleStorageText(sFields2[i]));
-                    }
-                    sLine = sbJumble.toString();
-
-                }
-                //Write the current comic record to the buffer:
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            //Write the data to the file:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public boolean ComicCatalogDataFile_UpdateAllRecords(int[] iFieldIDs, String[] sFieldUpdateData) {
-
-        try {
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfComicCatalogContentsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
-            sbBuffer.append("\n");
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                int j = 0; //To track requested field updates.
-                sFields = sLine.split("\t",-1);
-
-                StringBuilder sb = new StringBuilder();
-                if (iFieldIDs[j] == 0) {
-                    //If the caller wishes to update field 0...
-                    sb.append(sFieldUpdateData[j]);
-                    j++;
-                } else {
-                    sb.append(sFields[0]);
-                }
-                for (int i = 1; i < sFields.length; i++) {
-                    sb.append("\t");
-                    if(j < iFieldIDs.length) {
-                        if (iFieldIDs[j] == i) {
-                            //If the caller wishes to update field i...
-                            sb.append(sFieldUpdateData[j]);
-                            j++;
-                        } else {
-                            sb.append(sFields[i]);
-                        }
-                    } else {
-                        sb.append(sFields[i]);
-                    }
-                }
-                sLine = sb.toString();
-
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-            return true;
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
 
 
 

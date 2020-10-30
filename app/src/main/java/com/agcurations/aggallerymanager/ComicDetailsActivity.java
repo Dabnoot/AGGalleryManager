@@ -512,8 +512,11 @@ public class ComicDetailsActivity extends AppCompatActivity {
         Double dTimeStamp = globalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX};
-        globalClass.ComicCatalogDataFile_UpdateRecord(
+        globalClass.CatalogDataFile_UpdateRecord(
+                GlobalClass.gfComicCatalogContentsFile,
+                GlobalClass.gtmCatalogComicList,
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
+                GlobalClass.COMIC_ID_INDEX,
                 iFields,
                 sDateTime);
 
@@ -733,8 +736,13 @@ public class ComicDetailsActivity extends AppCompatActivity {
         }
 
         //Update the applicable fields in the catalog file:
-        globalClass.ComicCatalogDataFile_UpdateRecord(gsComicFields[GlobalClass.COMIC_ID_INDEX],
-                iTemp, sTemp);
+        globalClass.CatalogDataFile_UpdateRecord(
+                GlobalClass.gfComicCatalogContentsFile,
+                GlobalClass.gtmCatalogComicList,
+                gsComicFields[GlobalClass.COMIC_ID_INDEX],
+                GlobalClass.COMIC_ID_INDEX,
+                iTemp,
+                sTemp);
 
         gmiSaveDetails.setEnabled(false);
         Toast.makeText(getApplicationContext(), "Data saved.", Toast.LENGTH_LONG).show();
