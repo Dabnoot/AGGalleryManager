@@ -253,7 +253,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_import:
-                Intent intentImport = new Intent(this, ImportComicsActivity.class);
+                Intent intentImport = new Intent(this, ImportComicsActivity_obsolete.class);
                 startActivity(intentImport);
                 return true;
 

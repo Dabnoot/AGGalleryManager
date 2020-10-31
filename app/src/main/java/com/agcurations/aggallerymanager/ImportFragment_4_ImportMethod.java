@@ -13,10 +13,10 @@ import android.widget.TextView;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link FragmentImport_4_ImportMethod#newInstance} factory method to
+ * Use the {@link ImportFragment_4_ImportMethod#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentImport_4_ImportMethod extends Fragment {
+public class ImportFragment_4_ImportMethod extends Fragment {
 
     private GlobalClass globalClass;
 
@@ -29,7 +29,7 @@ public class FragmentImport_4_ImportMethod extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public FragmentImport_4_ImportMethod() {
+    public ImportFragment_4_ImportMethod() {
         // Required empty public constructor
     }
 
@@ -42,8 +42,8 @@ public class FragmentImport_4_ImportMethod extends Fragment {
      * @return A new instance of fragment FragmentImport_4_ImportMethod.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentImport_4_ImportMethod newInstance(String param1, String param2) {
-        FragmentImport_4_ImportMethod fragment = new FragmentImport_4_ImportMethod();
+    public static ImportFragment_4_ImportMethod newInstance(String param1, String param2) {
+        ImportFragment_4_ImportMethod fragment = new ImportFragment_4_ImportMethod();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -68,7 +68,7 @@ public class FragmentImport_4_ImportMethod extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_4_import_method, container, false);
+        return inflater.inflate(R.layout.import_fragment_4_import_method, container, false);
     }
 
     @Override

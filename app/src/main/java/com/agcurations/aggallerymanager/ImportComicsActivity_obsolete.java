@@ -23,7 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
-public class ImportComicsActivity extends AppCompatActivity {
+public class ImportComicsActivity_obsolete extends AppCompatActivity {
 
     //Global Constants:
     public static final int  MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE = 1002;
@@ -32,7 +32,7 @@ public class ImportComicsActivity extends AppCompatActivity {
     private static final String LOG_TAG = "ImportComicsActivity";
 
     //Global Variables:
-    private ImportComicsActivity.ImportResponseReceiver importResponseReceiver;
+    private ImportComicsActivity_obsolete.ImportResponseReceiver importResponseReceiver;
     Intent gIntentImport;
     TextView gtvLog;
     ProgressBar gpbDeterminateBar;
@@ -58,9 +58,9 @@ public class ImportComicsActivity extends AppCompatActivity {
         gpbDeterminateBar = findViewById(R.id.determinateBar_Import);
         gtvStage = findViewById(R.id.textView_ImportStage);
 
-        IntentFilter filter = new IntentFilter(ImportComicsActivity.ImportResponseReceiver.IMPORT_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(ImportComicsActivity_obsolete.ImportResponseReceiver.IMPORT_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        importResponseReceiver = new ImportComicsActivity.ImportResponseReceiver();
+        importResponseReceiver = new ImportComicsActivity_obsolete.ImportResponseReceiver();
         registerReceiver(importResponseReceiver, filter);
 
 
@@ -180,19 +180,19 @@ public class ImportComicsActivity extends AppCompatActivity {
                     //The result data contains a URI for the document or directory that
                     //the user selected.
 
-                    gIntentImport = new Intent(this, ImportComicsService.class);
+                    gIntentImport = new Intent(this, ImportComicsService_obsolete.class);
 
                     //Put the import method into the intent.
                     if(requestCode == REQUEST_CODE_GET_IMPORT_FOLDER) {
-                        gIntentImport.putExtra(ImportComicsService.IMPORT_METHOD, ImportComicsService.IMPORT_METHOD_FOLDER);
+                        gIntentImport.putExtra(ImportComicsService_obsolete.IMPORT_METHOD, ImportComicsService_obsolete.IMPORT_METHOD_FOLDER);
                     } else {
-                        gIntentImport.putExtra(ImportComicsService.IMPORT_METHOD, ImportComicsService.IMPORT_METHOD_FILE);
+                        gIntentImport.putExtra(ImportComicsService_obsolete.IMPORT_METHOD, ImportComicsService_obsolete.IMPORT_METHOD_FILE);
                     }
                     //Put the import Uri into the intent (this could represent a folder OR a file:
                     Uri uriImportURI = resultData.getData();
                     assert uriImportURI != null;
                     String sUriString = uriImportURI.toString();
-                    gIntentImport.putExtra(ImportComicsService.IMPORT_URI, sUriString);
+                    gIntentImport.putExtra(ImportComicsService_obsolete.IMPORT_URI, sUriString);
 
                     TextView tvImportPath = findViewById(R.id.textView_ImportPath);
                     tvImportPath.setText(sUriString);
@@ -223,23 +223,23 @@ public class ImportComicsActivity extends AppCompatActivity {
             boolean 	bUpdateStageIndication;
 
             //Get booleans from the intent telling us what to update:
-            bUpdateLog = intent.getBooleanExtra(ImportComicsService.UPDATE_LOG_BOOLEAN,false);
-            bUpdatePercentComplete = intent.getBooleanExtra(ImportComicsService.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-            bUpdateStageIndication = intent.getBooleanExtra(ImportComicsService.UPDATE_STAGE_INDICATION_BOOLEAN,false);
+            bUpdateLog = intent.getBooleanExtra(ImportComicsService_obsolete.UPDATE_LOG_BOOLEAN,false);
+            bUpdatePercentComplete = intent.getBooleanExtra(ImportComicsService_obsolete.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+            bUpdateStageIndication = intent.getBooleanExtra(ImportComicsService_obsolete.UPDATE_STAGE_INDICATION_BOOLEAN,false);
 
             if(bUpdateLog){
                 String 		sLogLine;
-                sLogLine = intent.getStringExtra(ImportComicsService.LOG_LINE_STRING);
+                sLogLine = intent.getStringExtra(ImportComicsService_obsolete.LOG_LINE_STRING);
                 gtvLog.append(sLogLine);
             }
             if(bUpdatePercentComplete){
                 int 		iAmountComplete;
-                iAmountComplete = intent.getIntExtra(ImportComicsService.PERCENT_COMPLETE_INT, -1);
+                iAmountComplete = intent.getIntExtra(ImportComicsService_obsolete.PERCENT_COMPLETE_INT, -1);
                 gpbDeterminateBar.setProgress(iAmountComplete);
             }
             if(bUpdateStageIndication){
                 String 		sStage;
-                sStage = intent.getStringExtra(ImportComicsService.STAGE_STRING);
+                sStage = intent.getStringExtra(ImportComicsService_obsolete.STAGE_STRING);
                 gtvStage.setText(sStage);
             }
         }

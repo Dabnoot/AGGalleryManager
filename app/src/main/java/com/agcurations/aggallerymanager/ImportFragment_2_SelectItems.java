@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link FragmentImport_2_SelectItems#newInstance} factory method to
+ * Use the {@link ImportFragment_2_SelectItems#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentImport_2_SelectItems extends Fragment {
+public class ImportFragment_2_SelectItems extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -39,7 +39,7 @@ public class FragmentImport_2_SelectItems extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public FragmentImport_2_SelectItems() {
+    public ImportFragment_2_SelectItems() {
         // Required empty public constructor
     }
 
@@ -52,8 +52,8 @@ public class FragmentImport_2_SelectItems extends Fragment {
      * @return A new instance of fragment FragmentImport_2_SelectItems.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentImport_2_SelectItems newInstance(String param1, String param2) {
-        FragmentImport_2_SelectItems fragment = new FragmentImport_2_SelectItems();
+    public static ImportFragment_2_SelectItems newInstance(String param1, String param2) {
+        ImportFragment_2_SelectItems fragment = new ImportFragment_2_SelectItems();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -74,7 +74,7 @@ public class FragmentImport_2_SelectItems extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_2_select_items, container, false);
+        return inflater.inflate(R.layout.import_fragment_2_select_items, container, false);
     }
 
     @Override

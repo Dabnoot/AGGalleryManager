@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class ImportComicsService extends IntentService {
+public class ImportComicsService_obsolete extends IntentService {
 
     //Global Constants:
     public static final String IMPORT_METHOD = "IMPORT_METHOD";
@@ -38,7 +38,7 @@ public class ImportComicsService extends IntentService {
 
     private GlobalClass globalClass;
 
-    public ImportComicsService() {
+    public ImportComicsService_obsolete() {
         super("ImportComicsService");
     }
 
@@ -92,7 +92,7 @@ public class ImportComicsService extends IntentService {
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(ImportComicsActivity.ImportResponseReceiver.IMPORT_ACTION_RESPONSE);
+        broadcastIntent.setAction(ImportComicsActivity_obsolete.ImportResponseReceiver.IMPORT_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);

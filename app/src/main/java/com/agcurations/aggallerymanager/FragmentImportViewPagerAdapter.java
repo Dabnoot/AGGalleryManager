@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import java.util.ArrayList;
-import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -22,19 +21,19 @@ public class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         switch (position) {
             case ImportActivity.FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
-                return new FragmentImport_0_MediaCategory();
+                return new ImportFragment_0_MediaCategory();
             case ImportActivity.FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
-                return new FragmentImport_1_StorageLocation();
+                return new ImportFragment_1_StorageLocation();
             case ImportActivity.FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
-                return new FragmentImport_2_SelectItems();
+                return new ImportFragment_2_SelectItems();
             case ImportActivity.FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
-                return new FragmentImport_3_SelectTags();
+                return new ImportFragment_3_SelectTags();
             case ImportActivity.FRAGMENT_IMPORT_4_ID_IMPORT_METHOD:
-                return new FragmentImport_4_ImportMethod();
+                return new ImportFragment_4_ImportMethod();
             case ImportActivity.FRAGMENT_IMPORT_5_ID_CONFIRMATION:
-                return new FragmentImport_5_Confirmation();
+                return new ImportFragment_5_Confirmation();
             case ImportActivity.FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
-                return new FragmentImport_6_ExecuteImport();
+                return new ImportFragment_6_ExecuteImport();
 
         }
         return null;

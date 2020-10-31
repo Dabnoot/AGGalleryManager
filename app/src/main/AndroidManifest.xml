@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme.Launcher">
         <activity android:name=".ImportActivity" />
 
-        <activity android:name=".ImportComicsGuidedActivity" />
+        <activity android:name=".ImportComicsGuidedActivity_obsolete" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -52,7 +52,7 @@
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".ImportComicsActivity"
+            android:name=".ImportComicsActivity_obsolete"
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
         <service
@@ -72,7 +72,7 @@
             android:name=".ExportComicsService"
             android:exported="false" />
         <service
-            android:name=".ImportComicsService"
+            android:name=".ImportComicsService_obsolete"
             android:exported="false" />
     </application>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

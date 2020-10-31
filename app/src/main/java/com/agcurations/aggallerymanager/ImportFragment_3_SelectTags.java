@@ -20,10 +20,10 @@ import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link FragmentImport_3_SelectTags#newInstance} factory method to
+ * Use the {@link ImportFragment_3_SelectTags#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentImport_3_SelectTags extends Fragment {
+public class ImportFragment_3_SelectTags extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -34,7 +34,7 @@ public class FragmentImport_3_SelectTags extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    public FragmentImport_3_SelectTags() {
+    public ImportFragment_3_SelectTags() {
         // Required empty public constructor
     }
 
@@ -47,8 +47,8 @@ public class FragmentImport_3_SelectTags extends Fragment {
      * @return A new instance of fragment FragmentImport_3_VideoApplyTags.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentImport_3_SelectTags newInstance(String param1, String param2) {
-        FragmentImport_3_SelectTags fragment = new FragmentImport_3_SelectTags();
+    public static ImportFragment_3_SelectTags newInstance(String param1, String param2) {
+        ImportFragment_3_SelectTags fragment = new ImportFragment_3_SelectTags();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -69,7 +69,7 @@ public class FragmentImport_3_SelectTags extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_3_select_tags, container, false);
+        return inflater.inflate(R.layout.import_fragment_3_select_tags, container, false);
     }
 
     @Override

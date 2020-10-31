@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.core.app.ActivityCompat;
@@ -19,14 +18,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link FragmentImport_1_StorageLocation#newInstance} factory method to
+ * Use the {@link ImportFragment_1_StorageLocation#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentImport_1_StorageLocation extends Fragment {
+public class ImportFragment_1_StorageLocation extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -41,7 +38,7 @@ public class FragmentImport_1_StorageLocation extends Fragment {
 
 
 
-    public FragmentImport_1_StorageLocation() {
+    public ImportFragment_1_StorageLocation() {
         // Required empty public constructor
     }
 
@@ -54,8 +51,8 @@ public class FragmentImport_1_StorageLocation extends Fragment {
      * @return A new instance of fragment FragmentImportStorageLocation_1.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentImport_1_StorageLocation newInstance(String param1, String param2) {
-        FragmentImport_1_StorageLocation fragment = new FragmentImport_1_StorageLocation();
+    public static ImportFragment_1_StorageLocation newInstance(String param1, String param2) {
+        ImportFragment_1_StorageLocation fragment = new ImportFragment_1_StorageLocation();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -76,7 +73,7 @@ public class FragmentImport_1_StorageLocation extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_1_storage_location, container, false);
+        return inflater.inflate(R.layout.import_fragment_1_storage_location, container, false);
     }
 
     @Override

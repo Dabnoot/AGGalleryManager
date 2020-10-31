@@ -51,7 +51,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 
-public class ImportComicsGuidedActivity extends AppCompatActivity {
+public class ImportComicsGuidedActivity_obsolete extends AppCompatActivity {
 
     public static final int MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE = 2002;
     public static final int REQUEST_CODE_GET_IMPORT_FOLDER = 2004;
@@ -235,7 +235,7 @@ public class ImportComicsGuidedActivity extends AppCompatActivity {
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(final ImportComicsGuidedActivity.ViewPagerAdapter.ViewHolder holder, final int position) {
+        public void onBindViewHolder(final ImportComicsGuidedActivity_obsolete.ViewPagerAdapter.ViewHolder holder, final int position) {
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
