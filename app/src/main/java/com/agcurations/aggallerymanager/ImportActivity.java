@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -92,7 +93,7 @@ public class ImportActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_import);
+        setContentView(R.layout.import_activity);
 
         contextOfActivity = this;
 
@@ -272,7 +273,7 @@ public class ImportActivity extends AppCompatActivity {
         public Boolean isChecked;
         final public String uri;
         final public String mimeType;
-        final public long videoTimeInMilliseconds;
+        public long videoTimeInMilliseconds;
 
         public String videoTimeText;
 
@@ -284,7 +285,7 @@ public class ImportActivity extends AppCompatActivity {
                          Boolean _isChecked,
                          String _uri,
                          String _mime,
-                         long _videoTimeInMillisec)
+                         long _videoTimeInMilliseconds)
         {
             this.uri = _uri;
             this.type = _type;
@@ -294,7 +295,7 @@ public class ImportActivity extends AppCompatActivity {
             this.dateLastModified = _dateLastModified;
             this.isChecked = _isChecked;
             this.mimeType = _mime;
-            this.videoTimeInMilliseconds = _videoTimeInMillisec;
+            this.videoTimeInMilliseconds = _videoTimeInMilliseconds;
             this.videoTimeText = "";
         }
     }
@@ -310,7 +311,7 @@ public class ImportActivity extends AppCompatActivity {
         return sDurationText;
     }
 
-    public static class FileListCustomAdapter extends ArrayAdapter<fileModel> {
+    public class FileListCustomAdapter extends ArrayAdapter<fileModel> {
 
         final public ArrayList<fileModel> alFileList;
         private ArrayList<fileModel> alFileListDisplay;
@@ -366,6 +367,7 @@ public class ImportActivity extends AppCompatActivity {
                     }
                     if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
                         alFileListDisplay.get(position).videoTimeText = getDurationTextFromMilliseconds(durationInMilliseconds);
+                        alFileListDisplay.get(position).videoTimeInMilliseconds = durationInMilliseconds;
                     }
                 }
 
@@ -460,6 +462,27 @@ public class ImportActivity extends AppCompatActivity {
                 }
             });
 
+            //If the file item is video mimeType, set the preview button visibility to visible:
+            Button button_VideoPreview = row.findViewById(R.id.button_VideoPreview);
+            if(alFileListDisplay.get(position).mimeType.startsWith("video")){
+                button_VideoPreview.setVisibility(Button.VISIBLE);
+                button_VideoPreview.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        //Start the video preview popup activity:
+                        Intent intentVideoPreviewPopup = new Intent(ImportActivity.this, VideoPreviewPopup.class);
+                        Bundle b = new Bundle();
+                        b.putCharSequence(VideoPreviewPopup.FILE_URI_STRING, alFileListDisplay.get(position).uri);
+                        intentVideoPreviewPopup.putExtras(b);
+                        intentVideoPreviewPopup.putExtra(VideoPreviewPopup.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileListDisplay.get(position).videoTimeInMilliseconds);
+                        startActivity(intentVideoPreviewPopup);
+                    }
+                });
+            } else {
+                button_VideoPreview.setVisibility(Button.INVISIBLE);
+            }
+
+
             //Expand the width of the listItem to the width of the ListView.
             //  This makes it so that the listItem responds to the click even when
             //  the click is off of the text.
@@ -518,7 +541,7 @@ public class ImportActivity extends AppCompatActivity {
         //Allow sort by file name or modified date
 
         //Sort by file name ascending:
-        private static class FileNameAscComparator implements Comparator<fileModel> {
+        private class FileNameAscComparator implements Comparator<fileModel> {
             public int compare(fileModel fm1, fileModel fm2) {
                 String FileName1 = fm1.name.toUpperCase();
                 String FileName2 = fm2.name.toUpperCase();
@@ -529,7 +552,7 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Sort by file name descending:
-        private static class FileNameDescComparator implements Comparator<fileModel> {
+        private class FileNameDescComparator implements Comparator<fileModel> {
             public int compare(fileModel fm1, fileModel fm2) {
                 String FileName1 = fm1.name.toUpperCase();
                 String FileName2 = fm2.name.toUpperCase();
@@ -540,7 +563,7 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Sort by file modified date ascending:
-        private static class FileModifiedDateAscComparator implements Comparator<fileModel> {
+        private class FileModifiedDateAscComparator implements Comparator<fileModel> {
 
             public int compare(fileModel fm1, fileModel fm2) {
                 Date FileDate1 = fm1.dateLastModified;
@@ -552,7 +575,7 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Sort by file modified date descending:
-        private static class FileModifiedDateDescComparator implements Comparator<fileModel> {
+        private class FileModifiedDateDescComparator implements Comparator<fileModel> {
 
             public int compare(fileModel fm1, fileModel fm2) {
                 Date FileDate1 = fm1.dateLastModified;

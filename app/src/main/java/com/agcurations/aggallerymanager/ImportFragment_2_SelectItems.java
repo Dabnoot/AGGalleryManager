@@ -5,6 +5,7 @@ import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -86,10 +87,24 @@ public class ImportFragment_2_SelectItems extends Fragment {
 
     }
 
+    Parcelable ListViewState;
     @Override
     public void onResume() {
         super.onResume();
         initComponents();
+        if(ListViewState != null) {
+            ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
+            listView_FolderContents.onRestoreInstanceState(ListViewState);
+        }
+    }
+
+    @Override
+    public void onPause() {
+        ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
+        ListViewState = listView_FolderContents.onSaveInstanceState();
+        super.onPause();
+
+
     }
 
     public void initComponents(){
@@ -98,10 +113,10 @@ public class ImportFragment_2_SelectItems extends Fragment {
             return;
         }
 
-        Long lStartTime = 0L;
+        /*Long lStartTime = 0L;
         Long lEndTime = 0L;
 
-        lStartTime = System.nanoTime();
+        lStartTime = System.nanoTime();*/
         //Set the contents of the ListView:
         final ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
         if(listView_FolderContents != null) {
@@ -109,9 +124,9 @@ public class ImportFragment_2_SelectItems extends Fragment {
             listView_FolderContents.setAdapter(ImportActivity.fileListCustomAdapter);
         }
 
-        lEndTime = System.nanoTime();
+        /*lEndTime = System.nanoTime();
         Log.d("********Time used to read folder","*******Time used to assign adapter: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
-        lStartTime = System.nanoTime();
+        lStartTime = System.nanoTime();*/
 
         //Configure the "Select All" checkbox:
         CheckBox checkBox_SelectAllStorageItems = getView().findViewById(R.id.checkBox_SelectAllStorageItems);
@@ -201,8 +216,8 @@ public class ImportFragment_2_SelectItems extends Fragment {
 
             }
         });
-        lEndTime = System.nanoTime();
-        Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));
+        /*lEndTime = System.nanoTime();
+        Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));*/
     }
 
 

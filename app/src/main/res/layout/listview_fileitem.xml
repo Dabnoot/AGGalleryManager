@@ -18,29 +18,39 @@
         android:contentDescription="Filetype icon"
         android:src="@drawable/baseline_file_white_18dp" />
 
-        <LinearLayout
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical"
+        android:layout_gravity="center">
+
+        <TextView
+            android:id="@+id/textView_Line1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:orientation="vertical"
-            android:layout_gravity="center">
+            android:gravity="center_vertical"
+            android:text="Line1"
+            android:textSize="16sp" />
 
-            <TextView
-                android:id="@+id/textView_Line1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:text="Line1"
-                android:textSize="16sp" />
+        <TextView
+            android:id="@+id/textView_Line2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:text="Line2"
+            android:textSize="16sp" />
 
-            <TextView
-                android:id="@+id/textView_Line2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:text="Line2"
-                android:textSize="16sp" />
+    </LinearLayout>
 
-        </LinearLayout>
+    <Button
+        android:id="@+id/button_VideoPreview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:text="Preview"
+        android:textSize="16sp"
+        android:backgroundTint="@color/colorBlackboardRed"
+        android:visibility="invisible"/>
 
 </LinearLayout>

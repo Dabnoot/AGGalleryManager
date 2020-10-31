@@ -57,7 +57,7 @@
             android:theme="@style/AppTheme" />
         <service
             android:name=".ImportActivityDataService"
-            android:exported="false"></service>
+            android:exported="false"/>
 
         <service
             android:name=".MainActivityDataService"
@@ -74,6 +74,8 @@
         <service
             android:name=".ImportComicsService_obsolete"
             android:exported="false" />
+        <activity android:name=".VideoPreviewPopup"
+            android:theme="@style/AppTheme.VideoPreviewPopup" />
     </application>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
