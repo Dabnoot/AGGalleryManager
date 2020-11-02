@@ -35,7 +35,7 @@
             android:progress="50" />
 
         <TextView
-            android:id="@+id/textView_ImportProgress"
+            android:id="@+id/textView_ImportProgressBarText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="50%"
@@ -61,9 +61,10 @@
         android:layout_width="149dp"
         android:layout_height="67dp"
         android:layout_marginBottom="10dp"
-        android:onClick="buttonNextClick_ImportMethodComplete"
+        android:onClick="buttonNextClick_ImportFinish"
         android:text="Finish"
         android:textSize="24sp"
+        android:enabled="false"
         app:backgroundTint="@color/colorBlackboardRed"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>

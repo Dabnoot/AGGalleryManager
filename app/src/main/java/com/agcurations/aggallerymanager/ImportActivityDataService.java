@@ -27,6 +27,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import javax.security.auth.Destroyable;
+
+import androidx.core.content.FileProvider;
+import androidx.documentfile.provider.DocumentFile;
+
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
@@ -43,11 +48,19 @@ public class ImportActivityDataService extends IntentService {
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
-    private static final String EXTRA_IMPORT_FILES_ARRAY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_ARRAY";
+
+
+    private static final String EXTRA_IMPORT_FILES_DESTINATION = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_DESTINATION";
+    private static final String EXTRA_IMPORT_FILES_TAGS = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_TAGS";
+    private static final String EXTRA_IMPORT_FILES_FILELIST = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_FILELIST";
+    private static final String EXTRA_IMPORT_FILES_MOVE_OR_COPY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_MOVE_OR_COPY";
+
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
+
     public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is or is not a response to dir call.
     public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
+    public static final String EXTRA_BOOL_IMPORT_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_IMPORT_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is a response to import call.
 
     public ImportActivityDataService() {
         super("ImportActivityDataService");
@@ -66,14 +79,17 @@ public class ImportActivityDataService extends IntentService {
         context.startService(intent);
     }
 
-    /**
-     * Starts this service to perform actions with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     */
-    public static void startActionBaz(Context context, String param1, String param2) {
+    public static void startActionImportFiles(Context context,
+                                              String sDestination,
+                                              ArrayList<ImportActivity.fileModel> alImportFileList,
+                                              String sTags,
+                                              int iMoveOrCopy) {
         Intent intent = new Intent(context, ImportActivityDataService.class);
         intent.setAction(ACTION_IMPORT_FILES);
-        intent.putExtra(EXTRA_IMPORT_FILES_ARRAY, param2);
+        intent.putExtra(EXTRA_IMPORT_FILES_DESTINATION, sDestination);
+        intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
+        intent.putExtra(EXTRA_IMPORT_FILES_TAGS, sTags);
+        intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         context.startService(intent);
     }
 
@@ -89,26 +105,35 @@ public class ImportActivityDataService extends IntentService {
                 handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory);
 
             } else if (ACTION_IMPORT_FILES.equals(action)) {
-                final String param2 = intent.getStringExtra(EXTRA_IMPORT_FILES_ARRAY);
-                handleActionBaz(param2);
+                final String sDestination = intent.getStringExtra(EXTRA_IMPORT_FILES_DESTINATION);
+                final String sTags = intent.getStringExtra(EXTRA_IMPORT_FILES_TAGS);
+                //todo: check the cast below:
+                final ArrayList<ImportActivity.fileModel> alFileList = (ArrayList<ImportActivity.fileModel>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
+                final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+                handleAction_startActionImportDirectoryContents(
+                        sDestination,
+                        alFileList,
+                        sTags,
+                        iMoveOrCopy);
             }
         }
     }
 
-    Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();; //Make global to allow for problem notification string extras.
-    void problemNotificationConfig(String sMessage){
-        broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_STRING_PROBLEM, sMessage);
 
+    void problemNotificationConfig(String sMessage, Intent intent){
+        intent.putExtra(EXTRA_BOOL_PROBLEM, true);
+        intent.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+        sendBroadcast(intent);
     }
 
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
         if(ImportActivity.guriImportTreeURI != null){
+            Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
             ArrayList<ImportActivity.fileModel> alFileList = null;
             try {
                 alFileList = readFolderContent(uriImportTreeUri, ".+", iMediaCategory, FILES_ONLY);
             }catch (Exception e){
-                problemNotificationConfig(e.getMessage());
+                problemNotificationConfig(e.getMessage(), broadcastIntent_GetDirectoryContentsResponse);
             }
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE, alFileList);
@@ -120,9 +145,141 @@ public class ImportActivityDataService extends IntentService {
     }
 
 
-    private void handleActionBaz(String param2) {
-        // TODO: Handle action Baz
-        throw new UnsupportedOperationException("Not yet implemented");
+    private void handleAction_startActionImportDirectoryContents(String sDestination,
+                                                                 ArrayList<ImportActivity.fileModel> alFileList,
+                                                                 String sTags,
+                                                                 int iMoveOrCopy) {
+
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator;
+        int iProgressBarValue = 0;
+        String sProgressBarText;
+
+        iProgressDenominator = alFileList.size();
+
+        BroadcastProgress(true, "Verifying destination folder " + sDestination,
+                true, iProgressBarValue,
+                true, "Verifying destination folder...");
+
+        File fDestination = new File(sDestination);
+        if(!fDestination.exists()){
+            if(!fDestination.mkdir()){
+                //Unable to create directory
+                BroadcastProgress(true, "Unable to create destination folder at: " + sDestination,
+                        false, iProgressBarValue,
+                        true, "Operation halted.");
+                return;
+            }
+        }
+
+
+        if(fDestination.exists()){
+            BroadcastProgress(true, "Destination folder verified.",
+                    false, iProgressBarValue,
+                    false, "");
+            Uri uriSourceFile;
+            Uri uriDestination = null;
+            try {
+                uriDestination = FileProvider.getUriForFile(ImportActivity.getContextOfActivity(),
+                        ImportActivity.getContextOfActivity().getPackageName() + ".provider", fDestination);
+            }catch (Exception e){
+                BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
+                        false, iProgressBarValue,
+                        true, "Operation halted.");
+                return;
+            }
+            DocumentFile dfDestination = DocumentFile.fromSingleUri(ImportActivity.getContextOfActivity(), uriDestination);
+            Uri uriResult;
+            String sLogLine;
+            //Loop through the files and copy or move them:
+            for(ImportActivity.fileModel fm: alFileList){
+                uriSourceFile = Uri.parse(fm.uri);
+                DocumentFile dfSource = DocumentFile.fromSingleUri(ImportActivity.getContextOfActivity(), uriSourceFile);
+                try {
+                    //Write next behavior to the screen log:
+                    sLogLine = "Attempting ";
+                    if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE){
+                        sLogLine = sLogLine + "move ";
+                    } else {
+                        sLogLine = sLogLine + "copy ";
+                    }
+                    sLogLine = sLogLine + "of file " + fm.name + " to destination...";
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            false, "");
+
+                    //Attempt next behavior:
+                    if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
+                        uriResult = DocumentsContract.moveDocument(
+                                ImportActivity.getContextOfActivity().getContentResolver(),
+                                dfSource.getUri(),
+                                dfSource.getParentFile().getUri(),
+                                uriDestination);
+                    } else {
+                        uriResult = DocumentsContract.copyDocument(
+                                ImportActivity.getContextOfActivity().getContentResolver(),
+                                dfSource.getUri(),
+                                uriDestination);
+                    }
+
+                    if(uriResult != null){
+                        sLogLine = "success.";
+                    } else {
+                        sLogLine = "failed.";
+                    }
+
+                    iProgressNumerator++;
+                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+
+                    BroadcastProgress(true, sLogLine,
+                            true, iProgressBarValue,
+                            false, "");
+
+
+
+                } catch (Exception e){
+                    BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
+                            false, iProgressBarValue,
+                            true, "Operation halted.");
+                    return;
+                }
+
+            }
+
+
+        }
+
+
+
+
+    }
+
+    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
+    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
+    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
+    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
+    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
+    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
+
+    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
+                                  boolean bUpdatePercentComplete, int iAmountComplete,
+                                  boolean bUpdateStageIndication, String sStage){
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
+        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine);
+        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
+        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
+        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateStageIndication);
+        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sStage);
+
+        sendBroadcast(broadcastIntent);
+
     }
 
 

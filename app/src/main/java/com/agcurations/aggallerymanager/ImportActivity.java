@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -90,6 +91,9 @@ public class ImportActivity extends AppCompatActivity {
         return contextOfActivity;
     }
 
+
+
+    ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,7 +120,7 @@ public class ImportActivity extends AppCompatActivity {
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        ImportDataServiceResponseReceiver importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
+        importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         registerReceiver(importDataServiceResponseReceiver, filter);
 
     }
@@ -125,6 +129,7 @@ public class ImportActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mediaMetadataRetriever.release();
+        unregisterReceiver(importDataServiceResponseReceiver);
     }
 
     @SuppressWarnings("unchecked")
@@ -151,7 +156,6 @@ public class ImportActivity extends AppCompatActivity {
                 }
 
             }
-
 
         }
     }
@@ -250,8 +254,38 @@ public class ImportActivity extends AppCompatActivity {
     public void buttonNextClick_ImportConfirm(View v){
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT);
+
+        //Begin the import:
+        StringBuilder sb = new StringBuilder();
+        sb.append(alsImportTags.get(0));
+        for(int i = 1; i < alsImportTags.size(); i++){
+            sb.append(",");
+            sb.append(alsImportTags.get(i));
+        }
+        String sTags = sb.toString();
+
+        //Create list of files to import:
+        ArrayList<fileModel> alImportFileList = new ArrayList<>();
+        for(fileModel fm: fileListCustomAdapter.alFileList){
+            if(fm.isChecked){
+                alImportFileList.add(fm);
+            }
+        }
+
+        String sDestinationPath = globalClass.gfAppFolder + File.separator + gsMediaCategoryFolderName + File.separator + gsImportDestinationFolder + File.separator;
+
+        //Initiate the file import via ImportActivityDataService:
+        ImportActivityDataService.startActionImportFiles(getContextOfActivity(),
+                sDestinationPath,
+                alImportFileList,
+                sTags,
+                giImportMethod);
+
     }
 
+    public void buttonNextClick_ImportFinish(View v){
+        finish();
+    }
 
     //================================================
     //  Data Structures

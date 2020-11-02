@@ -1,5 +1,9 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -10,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -26,6 +31,10 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    ProgressBar gProgressBar_ImportProgress;
+    TextView gTextView_ImportProgressBarText;
+    TextView gtextView_ImportLog;
 
     public ImportFragment_6_ExecuteImport() {
         // Required empty public constructor
@@ -49,6 +58,8 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         return fragment;
     }
 
+
+    ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +67,18 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        //Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
+        requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        requireActivity().unregisterReceiver(importDataServiceResponseReceiver);
     }
 
     @Override
@@ -73,18 +96,74 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
     public void initComponents(){
 
         //Init progress:
-        ProgressBar progressBar_ImportProgress = getView().findViewById(R.id.progressBar_ImportProgress);
-        progressBar_ImportProgress.setProgress(0);
-        TextView textView_ImportProgress = getView().findViewById(R.id.textView_ImportProgress);
-        textView_ImportProgress.setText("0%");
+        gProgressBar_ImportProgress = getView().findViewById(R.id.progressBar_ImportProgress);
+        gProgressBar_ImportProgress.setProgress(0);
+        gTextView_ImportProgressBarText = getView().findViewById(R.id.textView_ImportProgressBarText);
+        gTextView_ImportProgressBarText.setText("0/0");
 
         //Set the log textView to be able to scroll vertically:
-        TextView textView_ImportLog = getView().findViewById(R.id.textView_ImportLog);
-        textView_ImportLog.setMovementMethod(new ScrollingMovementMethod());
+        gtextView_ImportLog = getView().findViewById(R.id.textView_ImportLog);
+        gtextView_ImportLog.setMovementMethod(new ScrollingMovementMethod());
         //Init log:
-        textView_ImportLog.setText("");
-
+        gtextView_ImportLog.setText("");
 
     }
+
+
+    @SuppressWarnings("unchecked")
+    public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
+        public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(ImportActivityDataService.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(ImportActivityDataService.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to request to get directory contents:
+                boolean 	bUpdateLog;
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdateLog = intent.getBooleanExtra(ImportActivityDataService.UPDATE_LOG_BOOLEAN,false);
+                bUpdatePercentComplete = intent.getBooleanExtra(ImportActivityDataService.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(ImportActivityDataService.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+                if(bUpdateLog){
+                    String sLogLine;
+                    sLogLine = intent.getStringExtra(ImportActivityDataService.LOG_LINE_STRING);
+                    if(gtextView_ImportLog != null) {
+                        gtextView_ImportLog.append(sLogLine);
+                    }
+                }
+                if(bUpdatePercentComplete){
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(ImportActivityDataService.PERCENT_COMPLETE_INT, -1);
+                    if(gProgressBar_ImportProgress != null) {
+                        gProgressBar_ImportProgress.setProgress(iAmountComplete);
+                    }
+                }
+                if(bUpdateProgressBarText){
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(ImportActivityDataService.PROGRESS_BAR_TEXT_STRING);
+                    if(gTextView_ImportProgressBarText != null) {
+                        gTextView_ImportProgressBarText.setText(sProgressBarText);
+                    }
+                }
+
+            }
+
+        }
+    }
+
+
+
 
 }
