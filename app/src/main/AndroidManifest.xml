@@ -2,8 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.agcurations.aggallerymanager">
 
-
-
     <application
         android:name=".GlobalClass"
         android:allowBackup="true"
@@ -13,9 +11,8 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
+        <activity android:name=".CatalogActivity"></activity>
         <activity android:name=".ImportActivity" />
-
-
         <activity android:name=".ImportComicsGuidedActivity_obsolete" />
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -58,10 +55,13 @@
             android:name=".ImportComicsActivity_obsolete"
             android:parentActivityName=".ComicsCatalogActivity"
             android:theme="@style/AppTheme" />
+
+        <activity
+            android:name=".VideoPreviewPopup"
+            android:theme="@style/AppTheme.VideoPreviewPopup" />
         <service
             android:name=".ImportActivityDataService"
-            android:exported="false"/>
-
+            android:exported="false" />
         <service
             android:name=".MainActivityDataService"
             android:exported="false" />
@@ -74,17 +74,15 @@
         <service
             android:name=".ExportComicsService"
             android:exported="false" />
+
         <service
             android:name=".ImportComicsService_obsolete"
             android:exported="false" />
-        <activity android:name=".VideoPreviewPopup"
-            android:theme="@style/AppTheme.VideoPreviewPopup" />
-
     </application>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 </manifest>

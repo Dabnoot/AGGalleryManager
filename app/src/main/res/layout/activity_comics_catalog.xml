@@ -16,6 +16,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+<!--    The above TextView is used to provide an darkening to the background.-->
 
     <TextView
         android:id="@+id/textView_CatalogStatus"
