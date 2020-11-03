@@ -279,6 +279,7 @@ public class ImportActivity extends AppCompatActivity {
                 sDestinationPath,
                 alImportFileList,
                 sTags,
+                giImportMediaCategory,
                 giImportMethod);
 
     }
@@ -302,7 +303,7 @@ public class ImportActivity extends AppCompatActivity {
         final public String type; //folder or file
         final public String name;
         final public String extension;
-        final public long size;
+        final public long sizeBytes;
         final public Date dateLastModified;
         public Boolean isChecked;
         final public String uri;
@@ -314,7 +315,7 @@ public class ImportActivity extends AppCompatActivity {
         public fileModel(String _type,
                          String _name,
                          String _extension,
-                         long _size,
+                         long _sizeBytes,
                          Date _dateLastModified,
                          Boolean _isChecked,
                          String _uri,
@@ -325,7 +326,7 @@ public class ImportActivity extends AppCompatActivity {
             this.type = _type;
             this.name = _name;
             this.extension = _extension;
-            this.size = _size;
+            this.sizeBytes = _sizeBytes;
             this.dateLastModified = _dateLastModified;
             this.isChecked = _isChecked;
             this.mimeType = _mime;

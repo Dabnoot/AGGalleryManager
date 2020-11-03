@@ -5,31 +5,22 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.ImageDecoder;
-import android.graphics.drawable.Animatable2;
-import android.graphics.drawable.AnimatedImageDrawable;
-import android.graphics.drawable.Drawable;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
-
-import com.bumptech.glide.load.resource.gif.GifDrawable;
+import android.provider.Settings;
 
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
-import javax.security.auth.Destroyable;
-
-import androidx.core.content.FileProvider;
 import androidx.documentfile.provider.DocumentFile;
 
 /**
@@ -62,6 +53,8 @@ public class ImportActivityDataService extends IntentService {
     public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
     public static final String EXTRA_BOOL_IMPORT_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_IMPORT_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is a response to import call.
 
+
+
     public ImportActivityDataService() {
         super("ImportActivityDataService");
     }
@@ -83,12 +76,14 @@ public class ImportActivityDataService extends IntentService {
                                               String sDestination,
                                               ArrayList<ImportActivity.fileModel> alImportFileList,
                                               String sTags,
+                                              int iMediaCategory,
                                               int iMoveOrCopy) {
         Intent intent = new Intent(context, ImportActivityDataService.class);
         intent.setAction(ACTION_IMPORT_FILES);
         intent.putExtra(EXTRA_IMPORT_FILES_DESTINATION, sDestination);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
         intent.putExtra(EXTRA_IMPORT_FILES_TAGS, sTags);
+        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         context.startService(intent);
     }
@@ -109,11 +104,13 @@ public class ImportActivityDataService extends IntentService {
                 final String sTags = intent.getStringExtra(EXTRA_IMPORT_FILES_TAGS);
                 //todo: check the cast below:
                 final ArrayList<ImportActivity.fileModel> alFileList = (ArrayList<ImportActivity.fileModel>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
+                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 handleAction_startActionImportDirectoryContents(
                         sDestination,
                         alFileList,
                         sTags,
+                        iMediaCategory,
                         iMoveOrCopy);
             }
         }
@@ -148,15 +145,23 @@ public class ImportActivityDataService extends IntentService {
     private void handleAction_startActionImportDirectoryContents(String sDestination,
                                                                  ArrayList<ImportActivity.fileModel> alFileList,
                                                                  String sTags,
+                                                                 int iMediaCategory,
                                                                  int iMoveOrCopy) {
 
 
-        int iProgressNumerator = 0;
-        int iProgressDenominator;
+        long lProgressNumerator = 0L;
+        long lProgressDenominator = 0L;
         int iProgressBarValue = 0;
+        long lTotalImportSize = 0L;
+        long lLoopBytesRead = 0L;
         String sProgressBarText;
 
-        iProgressDenominator = alFileList.size();
+
+        //Calculate total size of all files to import:
+        for(ImportActivity.fileModel fm: alFileList){
+            lTotalImportSize = lTotalImportSize + fm.sizeBytes;
+        }
+        lProgressDenominator = lTotalImportSize;
 
         BroadcastProgress(true, "Verifying destination folder " + sDestination,
                 true, iProgressBarValue,
@@ -179,19 +184,14 @@ public class ImportActivityDataService extends IntentService {
                     false, iProgressBarValue,
                     false, "");
             Uri uriSourceFile;
-            Uri uriDestination = null;
-            try {
-                uriDestination = FileProvider.getUriForFile(ImportActivity.getContextOfActivity(),
-                        ImportActivity.getContextOfActivity().getPackageName() + ".provider", fDestination);
-            }catch (Exception e){
-                BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
-                        false, iProgressBarValue,
-                        true, "Operation halted.");
-                return;
-            }
-            DocumentFile dfDestination = DocumentFile.fromSingleUri(ImportActivity.getContextOfActivity(), uriDestination);
-            Uri uriResult;
             String sLogLine;
+            InputStream inputStream = null;
+            OutputStream outputStream = null;
+            ContentResolver content = ImportActivity.getContextOfActivity().getContentResolver();
+
+            GlobalClass globalClass;
+            globalClass = (GlobalClass) getApplicationContext();
+
             //Loop through the files and copy or move them:
             for(ImportActivity.fileModel fm: alFileList){
                 uriSourceFile = Uri.parse(fm.uri);
@@ -207,43 +207,89 @@ public class ImportActivityDataService extends IntentService {
                     sLogLine = sLogLine + "of file " + fm.name + " to destination...";
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
-                            false, "");
+                            true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
 
-                    //Attempt next behavior:
+
+
+                    inputStream = content.openInputStream(dfSource.getUri());
+                    outputStream = new FileOutputStream( fDestination.getPath() + File.separator + dfSource.getName());
+                    if(outputStream != null) {
+                        int iLoopCount = 0;
+                        byte[] buffer = new byte[100000];
+                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                            outputStream.write(buffer, 0, buffer.length);
+                            lProgressNumerator += lLoopBytesRead;
+                            iLoopCount++;
+                            if(iLoopCount % 10 == 0){
+                                //Send update every 10 loops:
+                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                BroadcastProgress(false, "",
+                                        true, iProgressBarValue,
+                                        true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
+                            }
+                        }
+                        outputStream.flush();
+                        outputStream.close();
+                    }
+                    sLogLine = sLogLine + "success.";
+
+                    if(iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_VIDEOS) {
+                        //Add record to catalog contents:
+                        /*
+                            "VIDEO_ID",
+                            "VIDEO_FILENAME",
+                            "SIZE_MB",
+                            "DURATION",
+                            "RESOLUTION",
+                            "FOLDER_NAME",
+                            "TAGS",
+                            "CAST",
+                            "SOURCE",
+                            "DATETIME_LAST_VIEWED_BY_USER",
+                            "DATETIME_IMPORT"
+                        */
+                        //VIDEO_ID cannot be the "next count in the iteration".
+                        //  This is because a video could be deleted from the middle,
+                        //  and cause a duplicate ID. However, it can be 1 greater than max.
+
+                        //Find the next ID:
+                        int iMaxId = 0;
+                        int iThisId = 0;
+                        String[] sFields;
+                        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogVideoList.entrySet()) {
+
+                            iThisId = Integer.parseInt(entry.getValue()[GlobalClass.VIDEO_ID_INDEX]);
+                            //todo
+
+                        }
+                        //todo
+                        //CatalogDataFile_CreateNewRecord
+
+                    }
+
                     if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
-                        uriResult = DocumentsContract.moveDocument(
-                                ImportActivity.getContextOfActivity().getContentResolver(),
-                                dfSource.getUri(),
-                                dfSource.getParentFile().getUri(),
-                                uriDestination);
-                    } else {
-                        uriResult = DocumentsContract.copyDocument(
-                                ImportActivity.getContextOfActivity().getContentResolver(),
-                                dfSource.getUri(),
-                                uriDestination);
+                        if(!dfSource.delete()){
+                            sLogLine = sLogLine + " But could not delete source file after copy.";
+                        }
                     }
 
-                    if(uriResult != null){
-                        sLogLine = "success.";
-                    } else {
-                        sLogLine = "failed.";
-                    }
-
-                    iProgressNumerator++;
-                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
 
                     BroadcastProgress(true, sLogLine,
                             true, iProgressBarValue,
-                            false, "");
-
+                            true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
 
 
                 } catch (Exception e){
                     BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
                             false, iProgressBarValue,
-                            true, "Operation halted.");
+                            false, "");
                     return;
                 }
+
+                BroadcastProgress(true, "Operation complete.",
+                        true, iProgressBarValue,
+                        true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
 
             }
 
@@ -255,6 +301,7 @@ public class ImportActivityDataService extends IntentService {
 
     }
 
+
     public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
     public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
     public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
@@ -264,7 +311,7 @@ public class ImportActivityDataService extends IntentService {
 
     public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
                                   boolean bUpdatePercentComplete, int iAmountComplete,
-                                  boolean bUpdateStageIndication, String sStage){
+                                  boolean bUpdateProgressBarText, String sProgressBarText){
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
@@ -272,11 +319,11 @@ public class ImportActivityDataService extends IntentService {
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
-        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine);
+        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine + "\n");
         broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
         broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
-        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateStageIndication);
-        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sStage);
+        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
+        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
 
         sendBroadcast(broadcastIntent);
 
@@ -362,7 +409,7 @@ public class ImportActivityDataService extends IntentService {
             final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri,docId);
 
             //Determine the file size:
-            long lFileSize = Long.parseLong(sFileSize) / 1024; //size in kB
+            long lFileSize = Long.parseLong(sFileSize); //size in Bytes
 
             //Get date last modified:
             Calendar cal = Calendar.getInstance(Locale.ENGLISH);

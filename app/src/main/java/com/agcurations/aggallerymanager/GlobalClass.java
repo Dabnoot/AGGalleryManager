@@ -169,6 +169,36 @@ public class GlobalClass extends Application {
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
 
+    public void CatalogDataFile_CreateNewRecord(
+            File fCatalogContentsFile,
+            int iRecordID,
+            TreeMap<Integer, String[]> tmCatalogRecords,
+            String[] sFieldData){
+
+        try {
+            //Add the details to the TreeMap:
+            tmCatalogRecords.put(iRecordID, sFieldData);
+
+            //Add the new record to the catalog file:
+            StringBuilder sbLine = new StringBuilder();
+            sbLine.append(JumbleStorageText(sFieldData[0]));
+            for(int i = 1; i < sFieldData.length; i++){
+                sbLine.append(",");
+                sbLine.append(JumbleStorageText(sFieldData[i]));
+            }
+            //Write the data to the file:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
+            fwNewCatalogContentsFile.write(sbLine.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+
     public void CatalogDataFile_UpdateRecord(
             File fCatalogContentsFile,
             TreeMap<Integer, String[]> tmCatalogRecords,

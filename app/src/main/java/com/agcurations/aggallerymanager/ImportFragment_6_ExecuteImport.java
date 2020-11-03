@@ -12,6 +12,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -91,6 +92,7 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        initComponents();
     }
 
     public void initComponents(){
@@ -98,6 +100,7 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         //Init progress:
         gProgressBar_ImportProgress = getView().findViewById(R.id.progressBar_ImportProgress);
         gProgressBar_ImportProgress.setProgress(0);
+        gProgressBar_ImportProgress.setMax(100);
         gTextView_ImportProgressBarText = getView().findViewById(R.id.textView_ImportProgressBarText);
         gTextView_ImportProgressBarText.setText("0/0");
 
@@ -141,6 +144,12 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
                     sLogLine = intent.getStringExtra(ImportActivityDataService.LOG_LINE_STRING);
                     if(gtextView_ImportLog != null) {
                         gtextView_ImportLog.append(sLogLine);
+                    }
+                    if(sLogLine.contains("Operation complete.")){
+                        Button button_ImportFinish = getView().findViewById(R.id.button_ImportFinish);
+                        if(button_ImportFinish != null){
+                            button_ImportFinish.setEnabled(true);
+                        }
                     }
                 }
                 if(bUpdatePercentComplete){

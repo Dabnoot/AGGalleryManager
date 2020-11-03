@@ -95,7 +95,7 @@ public class ImportFragment_5_Confirmation extends Fragment {
             if(fm.isChecked) {
                 alImportFileNames.add(fm.name);
                 iFileCount++;
-                lRequiredStorageSpaceKB += fm.size;
+                lRequiredStorageSpaceKB += fm.sizeBytes;
             }
         }
 
