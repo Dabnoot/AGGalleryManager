@@ -58,9 +58,6 @@ public class ImportActivity extends AppCompatActivity {
 
     //FragmentImport_0_MediaCategory
     //Radiobutton selections:
-    public static final int IMPORT_MEDIA_CATEGORY_VIDEOS = 0;
-    public static final int IMPORT_MEDIA_CATEGORY_IMAGES = 1;
-    public static final int IMPORT_MEDIA_CATEGORY_COMICS = 2;
     public static int giImportMediaCategory; //Selected Category
     public static String gsMediaCategoryFolderName = "";
 
@@ -186,13 +183,13 @@ public class ImportActivity extends AppCompatActivity {
 
 
         if (rbVideos.isChecked()){
-            giImportMediaCategory = IMPORT_MEDIA_CATEGORY_VIDEOS;
+            giImportMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
             gsMediaCategoryFolderName =  "Videos";
         } else if (rbImages.isChecked()){
-            giImportMediaCategory = IMPORT_MEDIA_CATEGORY_IMAGES;
+            giImportMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
             gsMediaCategoryFolderName = "Images";
         } else {
-            giImportMediaCategory = IMPORT_MEDIA_CATEGORY_COMICS;
+            giImportMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
             gsMediaCategoryFolderName = "Comics";
         }
 
@@ -206,7 +203,7 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-        if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_VIDEOS) {
+        if (giImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
             //Create an array of tag strings from GlobalClass:
             List<String> alsTags = new ArrayList<String>();
@@ -223,7 +220,7 @@ public class ImportActivity extends AppCompatActivity {
 
     public void buttonNextClick_TagSelectComplete(View v){
         Integer iFolderID;
-        if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_VIDEOS){
+        if (giImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
             //Determine the folder into which the contents will be placed:
             for (Map.Entry<Integer, String[]> entry : globalClass.gtmVideoTagReferenceList.entrySet()){
                 //Get the key value associated with the text tag:
@@ -232,7 +229,7 @@ public class ImportActivity extends AppCompatActivity {
                     break;
                 }
             }
-        } else if (giImportMediaCategory == IMPORT_MEDIA_CATEGORY_IMAGES){
+        } else if (giImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
 
         }
 

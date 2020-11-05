@@ -233,7 +233,7 @@ public class ImportActivityDataService extends IntentService {
                     }
                     sLogLine = sLogLine + "success.";
 
-                    if(iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_VIDEOS) {
+                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         //Add record to catalog contents:
                         /*
                             "VIDEO_ID",
@@ -393,13 +393,13 @@ public class ImportActivityDataService extends IntentService {
                 //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
                 if (mimeType.startsWith("video") || fileExtension.equals("gif")) {
                     //If video...
-                    if ((iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_IMAGES)
-                            || (iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_COMICS)) {
+                    if ((iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)
+                            || (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS)) {
                         continue; //If requesting images or comics, and mimeType is video or the file a gif, go to next loop.
                         }
                 } else {
                     //If not video...
-                    if (iMediaCategory == ImportActivity.IMPORT_MEDIA_CATEGORY_VIDEOS) {
+                    if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         continue; //If requesting videos, and mimeType is not video nor is the file a gif, go to next loop.
                     }
                 }

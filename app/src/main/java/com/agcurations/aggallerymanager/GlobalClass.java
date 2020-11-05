@@ -31,6 +31,10 @@ public class GlobalClass extends Application {
     public File gfAppFolder;
     public File gfAppConfigFile;
 
+    public static final int MEDIA_CATEGORY_VIDEOS = 0;
+    public static final int MEDIA_CATEGORY_IMAGES = 1;
+    public static final int MEDIA_CATEGORY_COMICS = 2;
+
     public File gfVideosFolder;
     public File gfVideoLogsFolder;
     public File gfVideoCatalogContentsFile;

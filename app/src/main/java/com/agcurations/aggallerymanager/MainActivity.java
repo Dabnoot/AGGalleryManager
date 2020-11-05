@@ -191,14 +191,22 @@ public class MainActivity extends AppCompatActivity {
     //===== ImageView Click Code =================================================================
     //=====================================================================================
 
-    public void startComicsCatalogActivity(View v){
-        Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
-        startActivity(intentComicsCatalogActivity);
+    public void startVideoCatalogActivity(View v){
+        Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
+
+        intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
+
+        startActivity(intentCatalogActivity);
     }
 
     public void startPicturesCatalogActivity(View v){
         Intent intentPicturesCatalogActivity = new Intent(this, PicturesCatalogActivity.class);
         startActivity(intentPicturesCatalogActivity);
+    }
+
+    public void startComicsCatalogActivity(View v){
+        Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
+        startActivity(intentComicsCatalogActivity);
     }
 
 }
