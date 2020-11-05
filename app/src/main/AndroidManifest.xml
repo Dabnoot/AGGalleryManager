@@ -66,9 +66,6 @@
             android:name=".MainActivityDataService"
             android:exported="false" />
         <service
-            android:name=".ComicsCatalogDataService"
-            android:exported="false" />
-        <service
             android:name=".ComicDetailsDataService"
             android:exported="false" />
         <service
