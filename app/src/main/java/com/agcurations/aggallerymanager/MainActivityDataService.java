@@ -66,8 +66,8 @@ public class MainActivityDataService extends IntentService {
 
 
 
-            //--------------------------------------------------------------------------------
-            //Videos Folder Structure:
+/*            //--------------------------------------------------------------------------------
+            //Videos Folder Structure: todo
             globalClass.gfVideosFolder = new File(globalClass.gfAppFolder
                     + File.separator + "Videos");
             obtainFolderStructureItem(globalClass.gfVideosFolder);
@@ -80,11 +80,11 @@ public class MainActivityDataService extends IntentService {
             obtainFolderStructureItem(globalClass.gfVideoLogsFolder);
 
             globalClass.gfVideoTagsFile = new File(globalClass.gfVideosFolder.getAbsolutePath()
-                    + File.separator + "VideoTags.dat");
+                    + File.separator + "Tags.dat");
             //--------------------------------------------------------------------------------
 
             //--------------------------------------------------------------------------------
-            //Comics Folder Structure:
+            //Comics Folder Structure: todo
             globalClass.gfComicsFolder = new File(globalClass.gfAppFolder
                     + File.separator + "Comics");
             obtainFolderStructureItem(globalClass.gfComicsFolder);
@@ -97,8 +97,26 @@ public class MainActivityDataService extends IntentService {
             obtainFolderStructureItem(globalClass.gfComicLogsFolder);
 
             globalClass.gfComicTagsFile = new File(globalClass.gfComicsFolder.getAbsolutePath()
-                    + File.separator + "ComicTags.dat");
-            //--------------------------------------------------------------------------------
+                    + File.separator + "Tags.dat");
+            //--------------------------------------------------------------------------------*/
+            //Catalog Folder Structure:
+            for(int i = 0; i < 3; i++){
+                globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + globalClass.gsCatalogFolderNames[i]);
+                obtainFolderStructureItem(globalClass.gfCatalogFolders[i]);
+                //Identify the CatalogContents.dat file:
+                globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "CatalogContents.dat");
+                //Identify the Logs folder for the catalog:
+                globalClass.gfCatalogLogsFolders[i] = new File(globalClass.gfCatalogFolders[i]
+                        + File.separator + "Logs");
+                obtainFolderStructureItem(globalClass.gfCatalogLogsFolders[i]);
+                //Identify the tags file for the catalog:
+                globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "Tags.dat");
+            }
+
+
+
 
             //Attempt to read a pin number set by the user:
             globalClass.gfAppConfigFile = new File(globalClass.gfAppFolder.getAbsolutePath()
@@ -135,7 +153,7 @@ public class MainActivityDataService extends IntentService {
             }
         }
 
-        //Attempt to read or create the video tags file:
+/*        //Attempt to read or create the video tags file:
         globalClass.gtmVideoTagReferenceList =
                 InitTagData(globalClass.gfVideoTagsFile,
                         getResources().getStringArray(R.array.default_video_tags));
@@ -144,17 +162,37 @@ public class MainActivityDataService extends IntentService {
         globalClass.gtmComicTagReferenceList =
                 InitTagData(globalClass.gfComicTagsFile,
                         getResources().getStringArray(R.array.default_comic_tags));
+        */
+        //Get tag reference lists:
+        int[] oTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
+        for(int i = 0; i < 3; i++){
+            globalClass.gtmCatalogTagReferenceLists.add(
+                    InitTagData(globalClass.gfCatalogTagsFiles[i],
+                            getResources().getStringArray(oTagStringArrayResources[i])));
+        }
 
+        //Initialize NEW TreeMap instances:
+        globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
+        globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
+        globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
 
-        //readComicsCatalogFile();
-
-
-        globalClass.gtmCatalogComicList = readCatalogFile(
+        /*globalClass.gtmCatalogComicList = readCatalogFile(
                 globalClass.gfComicsFolder,
                 globalClass.gfComicCatalogContentsFile,
                 globalClass.gfComicLogsFolder,
                 GlobalClass.ComicRecordFields);
-
+        */
+        //Read the catalog list files into memory:
+        String[][] sRecordFields = {GlobalClass.VideoRecordFields,
+                                    GlobalClass.ImageRecordFields,
+                                    GlobalClass.ComicRecordFields};
+        for(int i = 0; i < 3; i++){
+            globalClass.gtmCatalogLists.add(readCatalogFile(
+                    globalClass.gfCatalogFolders[i],
+                    globalClass.gfCatalogContentsFiles[i],
+                    globalClass.gfCatalogLogsFolders[i],
+                    sRecordFields[i]));
+        }
 
 
     }

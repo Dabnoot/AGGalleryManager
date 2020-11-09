@@ -87,7 +87,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         gsComicFields = globalClass.gsSelectedComic; //Don't bother with using the intent to pass this data.
         if( gsComicFields == null) return;
 
-        String sComicFolder_AbsolutePath = globalClass.gfComicsFolder.getAbsolutePath();
+        String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
@@ -511,10 +511,10 @@ public class ComicDetailsActivity extends AppCompatActivity {
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
         Double dTimeStamp = globalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
-        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX};
+        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
         globalClass.CatalogDataFile_UpdateRecord(
-                globalClass.gfComicCatalogContentsFile,
-                globalClass.gtmCatalogComicList,
+                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS],
+                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS),
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 GlobalClass.COMIC_ID_INDEX,
                 iFields,
@@ -734,11 +734,11 @@ public class ComicDetailsActivity extends AppCompatActivity {
             iTemp[i] = iFieldIDs.get(i);
             sTemp[i] = sFieldUpdateData.get(i);
         }
-
+        
         //Update the applicable fields in the catalog file:
         globalClass.CatalogDataFile_UpdateRecord(
-                globalClass.gfComicCatalogContentsFile,
-                globalClass.gtmCatalogComicList,
+                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS],
+                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS),
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 GlobalClass.COMIC_ID_INDEX,
                 iTemp,

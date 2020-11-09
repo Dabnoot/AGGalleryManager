@@ -458,7 +458,7 @@ public class ImportComicsGuidedActivity_obsolete extends AppCompatActivity {
                         sSingleComicDataFields[GlobalClass.COMIC_DATETIME_IMPORT_INDEX] = sDateTime;
                         //Must provide a value for the last read by user or there will be an error
                         //  during interpretation during user-selected sort:
-                        sSingleComicDataFields[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX] = "0";
+                        sSingleComicDataFields[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX] = "0";
 
                         //Replace any illegal characters in the comic name to create the folder name:
                         //cleanGalleryName = thisGalleryName.replace(/[|&;$%@"<>()+,\[\]]/g, "-");

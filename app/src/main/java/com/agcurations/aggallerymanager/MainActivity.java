@@ -15,6 +15,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.TreeMap;
+
 public class MainActivity extends AppCompatActivity {
 
     //Global Variables:
@@ -43,7 +45,6 @@ public class MainActivity extends AppCompatActivity {
         registerReceiver(mainActivityDataServiceResponseReceiver, filter);
         //Call the MA Data Service, which will create a call to a service:
         MainActivityDataService.startActionLoadData(this);
-
 
 
     }
@@ -183,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tvComics = findViewById(R.id.textView_Comics);
 
         tvVideos.setText(R.string.videos);
-        tvPictures.setText(R.string.pictures);
+        tvPictures.setText(R.string.Images);
         tvComics.setText(R.string.comics);
     }
 
@@ -193,20 +194,23 @@ public class MainActivity extends AppCompatActivity {
 
     public void startVideoCatalogActivity(View v){
         Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
-
         intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
-
         startActivity(intentCatalogActivity);
     }
 
     public void startPicturesCatalogActivity(View v){
-        Intent intentPicturesCatalogActivity = new Intent(this, PicturesCatalogActivity.class);
-        startActivity(intentPicturesCatalogActivity);
+        Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
+        intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_IMAGES);
+        startActivity(intentCatalogActivity);
     }
 
     public void startComicsCatalogActivity(View v){
-        Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
-        startActivity(intentComicsCatalogActivity);
+        /*Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
+        startActivity(intentComicsCatalogActivity);*/
+        Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
+        intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_COMICS);
+        startActivity(intentCatalogActivity);
+
     }
 
 }

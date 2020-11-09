@@ -49,7 +49,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
-
+    private boolean gbComicRestrictionsOn;
     Spinner gspSpinnerSort;
 
     @Override
@@ -66,7 +66,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         if(globalClass.ObfuscationOn) {
             setTitle(globalClass.getObfuscatedProgramName());
         } else {
-            setTitle(globalClass.getNonObfuscatedProgramName());
+            setTitle(globalClass.sNonObfustatedProgramName[GlobalClass.MEDIA_CATEGORY_COMICS]);
         }
 
 
@@ -89,7 +89,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         }
 
 
-        globalClass.gbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+        gbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
 
         gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
@@ -136,7 +136,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
         //Set the restricted comics lock icon as appropriate:
         MenuItem restrictedItem = menu.findItem(R.id.icon_comics_restricted);
-        if(globalClass.gbComicRestrictionsOn){
+        if(gbComicRestrictionsOn){
             restrictedItem.setIcon(R.drawable.baseline_lock_white_18dp);
         } else {
             restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
@@ -209,7 +209,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
                 } else if(position == SPINNER_ITEM_IMPORT_DATE) {
                     globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
                 } else if(position == SPINNER_ITEM_LAST_READ_DATE) {
-                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX;
+                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX;
                 }
                 SetComicSortOrderDefault();
             }
@@ -231,8 +231,8 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.icon_comics_restricted:
-                globalClass.gbComicRestrictionsOn = !globalClass.gbComicRestrictionsOn;
-                if(globalClass.gbComicRestrictionsOn){
+                gbComicRestrictionsOn = !gbComicRestrictionsOn;
+                if(gbComicRestrictionsOn){
                     item.setIcon(R.drawable.baseline_lock_white_18dp);
                 } else {
                     item.setIcon(R.drawable.baseline_lock_open_white_18dp);
@@ -490,7 +490,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
     public TreeMap<Integer, String[]> FilterOutRestrictedComics(TreeMap<Integer, String[]> tmIncoming){
         TreeMap<Integer, String[]> tmOutgoing = new TreeMap<>();
         boolean bNoData = true;
-        if(globalClass.gbComicRestrictionsOn){
+        if(gbComicRestrictionsOn){
             //Format the restriction tag set so that we can process it:
             StringBuilder sbRestrictedTags = new StringBuilder();
             for(Map.Entry<Integer, String> entry: globalClass.gtmComicTagsRestricted.entrySet()){
@@ -557,7 +557,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
         String sTemp;
         double dDateTimeValue = 0d;
         double dTemp = 0d;
-        if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX) {
+        if(iField == GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX) {
             for (Map.Entry<Integer, String[]>
                     entry : tmCatalogComicList.entrySet()) {
                 sComicListRecord = entry.getValue();
@@ -583,7 +583,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
             //  The user might also decide to sort by # of pages, for which there might
             //  be duplicates.
             sKey = sComicListRecord[iField];
-            if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX) {
+            if(iField == GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX) {
                 if (Double.parseDouble(sKey) == 0d){
                     dTemp = dDateTimeValue - 1.0d;
                     sKey = Double.toString(dTemp);
@@ -776,7 +776,7 @@ public class ComicsCatalogActivity extends AppCompatActivity {
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(globalClass.getNonObfuscatedProgramName());
+        setTitle(globalClass.sNonObfustatedProgramName[GlobalClass.MEDIA_CATEGORY_COMICS]);
         //Update the RecyclerView:
         gRecyclerViewComicsAdapter.notifyDataSetChanged();
     }

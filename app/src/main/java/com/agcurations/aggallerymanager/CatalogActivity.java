@@ -43,17 +43,50 @@ public class CatalogActivity extends AppCompatActivity {
 
     //Global Variables:
     private GlobalClass globalClass;
-    private RecyclerView.Adapter<CatalogActivity.RecyclerViewComicsAdapter.ViewHolder> gRecyclerViewComicsAdapter;
+    private int giMediaCategory;
+    private RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> gRecyclerViewCatalogAdapter;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
-
+    private boolean gbCatalogTagsRestrictionsOn;
     Spinner gspSpinnerSort;
+    private int giRecyclerViewDefaultSortBySetting;
+    private boolean gbRecyclerViewSortAscending = true;
+
+    private int[] giDataRecordIDIndexes = {
+            GlobalClass.VIDEO_ID_INDEX,
+            GlobalClass.IMAGE_ID_INDEX,
+            GlobalClass.COMIC_ID_INDEX};
+
+    private int[] giDataRecordDateTimeImportIndexes = {
+            GlobalClass.VIDEO_DATETIME_IMPORT_INDEX,
+            GlobalClass.IMAGE_DATETIME_IMPORT_INDEX,
+            GlobalClass.COMIC_DATETIME_IMPORT_INDEX};
+
+    private int[] giDataRecordDateTimeViewedIndexes = {
+            GlobalClass.VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
+            GlobalClass.IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
+            GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
+
+    private int[] giDataRecordTagsIndexes = {
+            GlobalClass.VIDEO_TAGS_INDEX,
+            GlobalClass.IMAGE_TAGS_INDEX,
+            GlobalClass.COMIC_TAGS_INDEX};
+
+    private int[] giDataRecordFolderIndexes = {
+            GlobalClass.VIDEO_FOLDER_NAME_INDEX,
+            GlobalClass.IMAGE_FOLDER_NAME_INDEX,
+            GlobalClass.COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
+
+    private int[] giDataRecordRecylerViewImageIndexes = {
+            GlobalClass.VIDEO_FILENAME_INDEX,
+            GlobalClass.IMAGE_FILENAME_INDEX,
+            GlobalClass.COMIC_THUMBNAIL_FILE_INDEX};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
-        setTheme(R.style.ComicsTheme);
+        setTheme(R.style.MainTheme);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog);
@@ -61,39 +94,46 @@ public class CatalogActivity extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
+        Intent intent = getIntent();
+        giMediaCategory = intent.getIntExtra("MEDIA_CATEGORY", -1);
+
         if(globalClass.ObfuscationOn) {
             setTitle(globalClass.getObfuscatedProgramName());
         } else {
-            setTitle(globalClass.getNonObfuscatedProgramName());
+            setTitle(globalClass.sNonObfustatedProgramName[giMediaCategory]);
         }
 
 
-        //Update TextView to show 0 comics if applicable:
-        notifyZeroComicsIfApplicable();
+        //Update TextView to show 0 catalog items if applicable:
+        notifyZeroCatalogItemsIfApplicable();
 
-        //Get comic restrictions preferences:
+        //Get tag restrictions preferences:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> sssComicTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+        Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
         //Attempt to match the restricted tag text from the preferences to the Tag ID:
         String s;
-        for(String sRestrictedTag: sssComicTagsRestricted) {
-            for (Map.Entry<Integer, String[]> entry : globalClass.gtmComicTagReferenceList.entrySet()) {
+        for (String sRestrictedTag : ssCatalogTagsRestricted) {
+            for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).entrySet()) {
                 s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
-                if(sRestrictedTag.equals(s)){
+                if (sRestrictedTag.equals(s)) {
                     //If the restricted tag has been found, assign it to the restricted tags TreeMap:
-                    globalClass.gtmComicTagsRestricted.put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                    globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
                 }
             }
         }
 
 
-        globalClass.gbComicRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+
+        gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
 
-        gRecyclerView = findViewById(R.id.RecyclerView_ComicsCatalog);
-        configure_RecyclerViewComicsCatalog();
-        SetComicSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
-        //gspSpinnerSort.setOnItemSelected will call SetComicSortOrderDefault after menu load.
+        gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
+        configure_RecyclerViewCatalogItems();
+
+        giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
+
+        SetCatalogSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
+        //gspSpinnerSort.setOnItemSelected will call SetItemSortOrderDefault after menu load.
 
 
         if(globalClass.connectivityManager == null){
@@ -102,18 +142,18 @@ public class CatalogActivity extends AppCompatActivity {
             //network;
         }
 
-        gRecyclerViewComicsAdapter.notifyDataSetChanged();
+        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
 
         //See additional initialization in onCreateOptionsMenu().
     }
 
-    public void notifyZeroComicsIfApplicable(){
+    public void notifyZeroCatalogItemsIfApplicable(){
 
-        //Update TextView to show 0 comics if applicable:
+        //Update TextView to show 0 items if applicable:
         TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
-        if (globalClass.gtmCatalogComicList.size() == 0 ) {
+        if (globalClass.gtmCatalogLists.get(giMediaCategory).size() == 0 ) {
             tvCatalogStatus.setVisibility(View.VISIBLE);
-            String s = "Catalog contains 0 comics.";
+            String s = "Catalog contains 0 items.";
             tvCatalogStatus.setText(s);
         } else {
             tvCatalogStatus.setVisibility(View.INVISIBLE);
@@ -121,26 +161,23 @@ public class CatalogActivity extends AppCompatActivity {
 
     }
 
-    public static int SPINNER_ITEM_MISSING_TAGS = 0;
-    public static int SPINNER_ITEM_IMPORT_DATE = 1;
-    public static int SPINNER_ITEM_LAST_READ_DATE = 2;
-    String[] gsSpinnerItems={"Missing tags","Import Date","Last Read Date"};
+    public static int SPINNER_ITEM_IMPORT_DATE = 0;
+    public static int SPINNER_ITEM_LAST_READ_DATE = 1;
+    String[] gsSpinnerItems={"Import Date","Last Read Date"};
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
 
-        getMenuInflater().inflate(R.menu.comics_catalog_action_bar, menu);
+        getMenuInflater().inflate(R.menu.catalog_action_bar, menu);
 
-        //Set the restricted comics lock icon as appropriate:
-        MenuItem restrictedItem = menu.findItem(R.id.icon_comics_restricted);
-        if(globalClass.gbComicRestrictionsOn){
+        //Set the restricted tags lock icon as appropriate:
+        MenuItem restrictedItem = menu.findItem(R.id.icon_tags_restricted);
+        if(gbCatalogTagsRestrictionsOn){
             restrictedItem.setIcon(R.drawable.baseline_lock_white_18dp);
         } else {
             restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
         }
-
-
 
         // Initialise menu item search bar with id and take its object
         //https://www.geeksforgeeks.org/android-searchview-with-example/
@@ -153,7 +190,7 @@ public class CatalogActivity extends AppCompatActivity {
                     @Override
                     public boolean onQueryTextSubmit(String query)
                     {
-                        ComicsCatalogFilter(true, query);
+                        AssignCatalogFilter(true, query);
                         gbRecyclerViewFiltered = true;
                         return false;
                     }
@@ -167,7 +204,7 @@ public class CatalogActivity extends AppCompatActivity {
             @Override
             public boolean onClose() {
                 if(gbRecyclerViewFiltered) {
-                    SetComicSortOrderDefault();
+                    SetCatalogSortOrderDefault();
                 }
                 return false;
             }
@@ -177,47 +214,43 @@ public class CatalogActivity extends AppCompatActivity {
         MenuItem miSpinnerSort = menu.findItem(R.id.spinner_sort);
         gspSpinnerSort =(Spinner) miSpinnerSort.getActionView();
         //wrap the items in the Adapter
-        ArrayAdapter<String> adapter=new ArrayAdapter<>(this, R.layout.comics_action_bar_spinner_item, gsSpinnerItems);
+        ArrayAdapter<String> adapter=new ArrayAdapter<>(this, R.layout.catalog_action_bar_spinner_item, gsSpinnerItems);
         //assign adapter to the Spinner
         gspSpinnerSort.setAdapter(adapter);
 
-        //Change spinner position if we have just returned from an import operation.
-        //  The user will want to see the comic that they just imported has made it into the
+        //Change spinner position if we have just come in from an import operation.
+        //  The user will want to see that the item they just imported has made it into the
         //  catalog.
-        if(globalClass.gbComicJustImported) {
-            //Set sort by comic import datetime
-            globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
-            //Set the sort order to reverse:
-            if( globalClass.gbComicSortAscending) {
-                globalClass.gbComicSortAscending = false;
+        if(globalClass.gbJustImported[giMediaCategory]) {
+            //Set sort by to "import_datetime"
+            giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
+            //Set the sort order to reverse so that the newest appears at the top:
+            if( gbRecyclerViewSortAscending) {
+                gbRecyclerViewSortAscending = false;
             }
             gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
             //Get a reference to the sort order icon:
             MenuItem miSortOrder = menu.findItem(R.id.icon_sort_order);
             miSortOrder.setIcon(R.drawable.baseline_sort_descending_white_18dp);
-            globalClass.gbComicJustImported = false;
+            globalClass.gbJustImported[giMediaCategory] = false;
         }
 
         //Continue with configuring the spinner:
         gspSpinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                if(position == SPINNER_ITEM_MISSING_TAGS){
-                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_TAGS_INDEX;
-                } else if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_IMPORT_INDEX;
+                if(position == SPINNER_ITEM_IMPORT_DATE) {
+                    giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
                 } else if(position == SPINNER_ITEM_LAST_READ_DATE) {
-                    globalClass.giComicDefaultSortBySetting = GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX;
+                    giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
                 }
-                SetComicSortOrderDefault();
+                SetCatalogSortOrderDefault();
             }
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
                 // no need to code here
             }
         });
-
-
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -228,36 +261,25 @@ public class CatalogActivity extends AppCompatActivity {
         //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
         switch (item.getItemId()) {
 
-            case R.id.icon_comics_restricted:
-                globalClass.gbComicRestrictionsOn = !globalClass.gbComicRestrictionsOn;
-                if(globalClass.gbComicRestrictionsOn){
+            case R.id.icon_tags_restricted:
+                gbCatalogTagsRestrictionsOn = !gbCatalogTagsRestrictionsOn;
+                if(gbCatalogTagsRestrictionsOn){
                     item.setIcon(R.drawable.baseline_lock_white_18dp);
                 } else {
                     item.setIcon(R.drawable.baseline_lock_open_white_18dp);
                 }
-                //Repopulate the catalog comics list:
-                populate_RecyclerViewComicsCatalog(globalClass.gtmCatalogComicList);
+                //Repopulate the catalog list:
+                populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
                 return true;
 
             case R.id.icon_sort_order:
-                if( globalClass.gbComicSortAscending) {
+                if( gbRecyclerViewSortAscending) {
                     item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
-                    globalClass.gbComicSortAscending = false;
                 } else {
                     item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
-                    globalClass.gbComicSortAscending = true;
                 }
-                ApplyComicSortOrder();
-                return true;
-
-            case R.id.menu_import:
-                Intent intentImport = new Intent(this, ImportComicsActivity_obsolete.class);
-                startActivity(intentImport);
-                return true;
-
-            case R.id.menu_export:
-                Intent intentExport = new Intent(this, ExportComicsActivity.class);
-                startActivity(intentExport);
+                gbRecyclerViewSortAscending = !gbRecyclerViewSortAscending;
+                ApplyRecyclerViewSortOrder();
                 return true;
 
             case R.id.menu_FlipView:
@@ -288,9 +310,8 @@ public class CatalogActivity extends AppCompatActivity {
 
     }
 
-    public static class CCDataServiceResponseReceiver extends BroadcastReceiver {
-        //CCDataService = Comics Catalog Data Service
-        //public static final String CC_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CC_DATA_SERVICE";
+    public class CatalogDataServiceResponseReceiver extends BroadcastReceiver {
+        public static final String CATALOG_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CATALOG_DATA_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -299,7 +320,7 @@ public class CatalogActivity extends AppCompatActivity {
             boolean bError;
 
             //Get boolean indicating data acquisition was successful:
-            bCatalogDataChange = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_CATALOG_DATA_CHANGE,false);
+            bCatalogDataChange = intent.getBooleanExtra(CatalogDataService.EXTRA_BOOL_CATALOG_DATA_CHANGE,false);
             if( bCatalogDataChange) {
                 //Update TextView to show 0 comics if applicable:
                 notifyZeroComicsIfApplicable();
@@ -307,9 +328,9 @@ public class CatalogActivity extends AppCompatActivity {
             }
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(ComicsCatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
+            bError = intent.getBooleanExtra(CatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(ComicsCatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
+                String sMessage = intent.getStringExtra(CatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             }*/
 
@@ -321,7 +342,7 @@ public class CatalogActivity extends AppCompatActivity {
     //===== RecyclerView Code =================================================================
     //=====================================================================================
 
-    public void configure_RecyclerViewComicsCatalog(){
+    public void configure_RecyclerViewCatalogItems(){
 
         // use this setting to
         // improve performance if you know that changes
@@ -347,7 +368,7 @@ public class CatalogActivity extends AppCompatActivity {
 
     }
 
-    public class RecyclerViewComicsAdapter extends RecyclerView.Adapter<CatalogActivity.RecyclerViewComicsAdapter.ViewHolder> {
+    public class RecyclerViewCatalogAdapter extends RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> {
 
         private final TreeMap<Integer, String[]> treeMap;
         private final Integer[] mapKeys;
@@ -359,17 +380,17 @@ public class CatalogActivity extends AppCompatActivity {
             // each data item is just a string in this case
             public final ImageView ivThumbnail;
             public final TextView tvThumbnailText;
-            public final TextView tvComicDetails;
+            public final TextView tvDetails;
 
             public ViewHolder(View v) {
                 super(v);
-                ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvThumbnailText = v.findViewById(R.id.editText_ComicTitle);
-                tvComicDetails = v.findViewById(R.id.TextView_ComicDetails);
+                ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail); //todo
+                tvThumbnailText = v.findViewById(R.id.editText_Title);
+                tvDetails = v.findViewById(R.id.TextView_Details);
             }
         }
 
-        public RecyclerViewComicsAdapter(TreeMap<Integer, String[]> data) {
+        public RecyclerViewCatalogAdapter(TreeMap<Integer, String[]> data) {
             this.treeMap = data;
             mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
         }
@@ -381,25 +402,25 @@ public class CatalogActivity extends AppCompatActivity {
         // Create new views (invoked by the layout manager)
         @NonNull
         @Override
-        public CatalogActivity.RecyclerViewComicsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                                                             int viewType) {
+        public RecyclerViewCatalogAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+                                                                        int viewType) {
             // create a new view
             View v;
 
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             int orientation = getResources().getConfiguration().orientation;
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                v = inflater.inflate(R.layout.recycler_comics_grid, parent, false);
+                v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false); //todo
             } else {
-                v = inflater.inflate(R.layout.recycler_comics_row, parent, false);
+                v = inflater.inflate(R.layout.recycler_catalog_row, parent, false);
             }
 
-            return new CatalogActivity.RecyclerViewComicsAdapter.ViewHolder(v);
+            return new RecyclerViewCatalogAdapter.ViewHolder(v);
         }
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(@androidx.annotation.NonNull CatalogActivity.RecyclerViewComicsAdapter.ViewHolder holder, final int position) {
+        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdapter.ViewHolder holder, final int position) {
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
@@ -407,7 +428,7 @@ public class CatalogActivity extends AppCompatActivity {
             String[] sFields;
             sFields = treeMap.get(mapKeys[position]);
             if (sFields == null) {
-                sFields = new String[GlobalClass.ComicRecordFields.length]; //To prevent possible null pointer exception later.
+                sFields = new String[GlobalClass.CatalogRecordFields[giMediaCategory].length]; //To prevent possible null pointer exception later.
             }
             final String[] sFields_final = sFields;
 
@@ -425,17 +446,30 @@ public class CatalogActivity extends AppCompatActivity {
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = globalClass.gfComicsFolder.getAbsolutePath()
-                        + File.separator
-                        + sFields[GlobalClass.COMIC_FOLDER_NAME_INDEX] + File.separator
-                        + sFields[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];
+                String sThumbnailFilePath = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator
+                        + sFields[giDataRecordFolderIndexes[giMediaCategory]] + File.separator
+                        + sFields[giDataRecordRecylerViewImageIndexes[giMediaCategory]];
                 File fThumbnail = new File(sThumbnailFilePath);
 
                 if (fThumbnail.exists()) {
                     Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
                 }
 
-                holder.tvThumbnailText.setText(sFields[GlobalClass.COMIC_NAME_INDEX]);
+                String sThumbnailText = "";
+                switch(giMediaCategory){
+                    case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                        sThumbnailText = sFields[GlobalClass.VIDEO_FILENAME_INDEX] + ", " +
+                                sFields[GlobalClass.VIDEO_DURATION_INDEX];
+                        break;
+                    case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                        sThumbnailText = sFields[GlobalClass.IMAGE_FILENAME_INDEX] + ", " +
+                                sFields[GlobalClass.IMAGE_TAGS_INDEX];
+                        break;
+                    case GlobalClass.MEDIA_CATEGORY_COMICS:
+                        sThumbnailText = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        break;
+                }
+                holder.tvThumbnailText.setText(sThumbnailText);
 
             }
 
@@ -444,7 +478,9 @@ public class CatalogActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
-                    StartComicViewerActivity(sFields_final);
+                    if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                        StartComicViewerActivity(sFields_final);
+                    }
                 }
             });
 
@@ -457,12 +493,12 @@ public class CatalogActivity extends AppCompatActivity {
                 }
             });
 
-            if(holder.tvComicDetails != null) {
+            /*if(holder.tvComicDetails != null) {
                 //The landscape version (GridView) does not have a "Comic Details" TextView, so
                 //  don't try to set it if this object is null.
                 String s = "Comic ID: " + sFields[GlobalClass.COMIC_ID_INDEX];
                 holder.tvComicDetails.setText(s);
-            }
+            }*/
         }
 
         // Return the size of the data set (invoked by the layout manager)
@@ -473,25 +509,25 @@ public class CatalogActivity extends AppCompatActivity {
 
     }
 
-    public void populate_RecyclerViewComicsCatalog(TreeMap<Integer, String[]> tmCatalogComicList){
-        gRecyclerViewComicsAdapter = new CatalogActivity.RecyclerViewComicsAdapter(FilterOutRestrictedComics(tmCatalogComicList));
-        gRecyclerView.setAdapter(gRecyclerViewComicsAdapter);
-        Toast.makeText(this, "Showing " + gRecyclerViewComicsAdapter.getItemCount() + " comics.", Toast.LENGTH_SHORT).show();
+    public void populate_RecyclerViewCatalogItems(TreeMap<Integer, String[]> tmCatalogList){
+        gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(FilterOutRestrictedItems(tmCatalogList));
+        gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
+        Toast.makeText(this, "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
     }
 
-    public void SetComicSortOrderDefault(){
-        ChangeComicSortField(globalClass.giComicDefaultSortBySetting); //TODO, return to default sort.
+    public void SetCatalogSortOrderDefault(){
+        ChangeSortField(giRecyclerViewDefaultSortBySetting); //TODO, return to default sort.
         gbRecyclerViewFiltered = false;  //Removes filtering.
     }
 
 
-    public TreeMap<Integer, String[]> FilterOutRestrictedComics(TreeMap<Integer, String[]> tmIncoming){
+    public TreeMap<Integer, String[]> FilterOutRestrictedItems(TreeMap<Integer, String[]> tmIncoming){
         TreeMap<Integer, String[]> tmOutgoing = new TreeMap<>();
         boolean bNoData = true;
-        if(globalClass.gbComicRestrictionsOn){
+        if(gbCatalogTagsRestrictionsOn){
             //Format the restriction tag set so that we can process it:
             StringBuilder sbRestrictedTags = new StringBuilder();
-            for(Map.Entry<Integer, String> entry: globalClass.gtmComicTagsRestricted.entrySet()){
+            for(Map.Entry<Integer, String> entry: globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).entrySet()){
                 sbRestrictedTags.append(entry.getValue());
                 sbRestrictedTags.append(",");
             }
@@ -513,7 +549,7 @@ public class CatalogActivity extends AppCompatActivity {
                     boolean bHasRestrictedTag = false;
                     for (String s : sTagsArray) {
 
-                        if (sFields[GlobalClass.COMIC_TAGS_INDEX].contains(s.trim())) {
+                        if (sFields[giDataRecordTagsIndexes[giMediaCategory]].contains(s.trim())) {
                             bHasRestrictedTag = true;
                             break;
                         }
@@ -538,28 +574,28 @@ public class CatalogActivity extends AppCompatActivity {
 
 
 
-    public void ChangeComicSortField(int iField){
+    public void ChangeSortField(int iField){
 
-        //Create new TreeMap to presort the comics:
-        TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Comic data
+        //Create new TreeMap to presort the catalog items:
+        TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Catalog item data
         treeMapPreSort = new TreeMap<>();
 
         //Get existing data and load elements into the presorter:
-        TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.gtmCatalogComicList;
-        String[] sComicListRecord;
+        TreeMap<Integer, String[]> tmCatalogList;
+        tmCatalogList = globalClass.gtmCatalogLists.get(giMediaCategory);
+        String[] sCatalogListRecord;
         String sKey;
 
         //If the user has selected 'Sort by last read date', get the oldest read date and apply
-        //  that date plus one day to any comic that has a "zero" for the last read date.
+        //  that date plus one day to any item that has a "zero" for the last read date.
         String sTemp;
         double dDateTimeValue = 0d;
         double dTemp = 0d;
-        if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX) {
+        if(iField == giDataRecordDateTimeViewedIndexes[giMediaCategory]) {
             for (Map.Entry<Integer, String[]>
-                    entry : tmCatalogComicList.entrySet()) {
-                sComicListRecord = entry.getValue();
-                sTemp = sComicListRecord[iField];
+                    entry : tmCatalogList.entrySet()) {
+                sCatalogListRecord = entry.getValue();
+                sTemp = sCatalogListRecord[iField];
                 try {
                     dTemp = Double.parseDouble(sTemp);
                 }catch (Exception e){
@@ -573,133 +609,127 @@ public class CatalogActivity extends AppCompatActivity {
 
 
         for (Map.Entry<Integer, String[]>
-                entry : tmCatalogComicList.entrySet()) {
-            sComicListRecord = entry.getValue();
-            //Append the ComicID to the key field to ensure that the key is always unique.
+                entry : tmCatalogList.entrySet()) {
+            sCatalogListRecord = entry.getValue();
+            //Append the ItemID to the key field to ensure that the key is always unique.
             //  The user could choose to sort by "LAST_READ_DATE", and the LAST_READ_DATE
             //  could be 0, duplicated. There cannot be duplicate keys.
             //  The user might also decide to sort by # of pages, for which there might
             //  be duplicates.
-            sKey = sComicListRecord[iField];
-            if(iField == GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER_INDEX) {
+            sKey = sCatalogListRecord[iField];
+            if(iField == giDataRecordDateTimeViewedIndexes[giMediaCategory]) {
                 if (Double.parseDouble(sKey) == 0d){
                     dTemp = dDateTimeValue - 1.0d;
                     sKey = Double.toString(dTemp);
                 }
             }
-            sKey = sKey + sComicListRecord[GlobalClass.COMIC_ID_INDEX];
-            treeMapPreSort.put(sKey, sComicListRecord);
+            sKey = sKey + sCatalogListRecord[giDataRecordIDIndexes[giMediaCategory]];
+            treeMapPreSort.put(sKey, sCatalogListRecord);
         }
 
         //Review the sort (for debugging purposes):
         /*for (Map.Entry<String, String[]>
                 entry : treeMapPreSort.entrySet()) {
-            sComicListRecord = entry.getValue();
+            sCatalogListRecord = entry.getValue();
             sKey = entry.getKey();
             Log.d("CatalogActivity", "ChangeComicSortOrder: " +
-                    sComicListRecord[GlobalClass.COMIC_ID_INDEX] + ": " +
+                    sCatalogListRecord[GlobalClass.COMIC_ID_INDEX] + ": " +
                     sKey + ", " +
-                    sComicListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER]);
+                    sCatalogListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER]);
         }*/
 
 
         //Treemap presort will auto-sort itself.
 
         //Delete everything out of the old TreeMap, and re-populate it with the new sort order:
-        TreeMap<Integer, String[]> tmNewOrderCatalogComicList = new TreeMap<>();
-        int iComicRID, iIterator;
-        if(globalClass.gbComicSortAscending){
-            iComicRID = 0;
+        TreeMap<Integer, String[]> tmNewOrderCatalogList = new TreeMap<>();
+        int iRID, iIterator;
+        if(gbRecyclerViewSortAscending){
+            iRID = 0;
             iIterator = 1;
         } else {
-            iComicRID = treeMapPreSort.size();
+            iRID = treeMapPreSort.size();
             iIterator = -1;
         }
 
         for (Map.Entry<String, String[]>
                 entry : treeMapPreSort.entrySet()) {
-            sComicListRecord = entry.getValue();
-            tmNewOrderCatalogComicList.put(iComicRID, sComicListRecord);
-            iComicRID += iIterator;
+            sCatalogListRecord = entry.getValue();
+            tmNewOrderCatalogList.put(iRID, sCatalogListRecord);
+            iRID += iIterator;
         }
 
         //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
-        populate_RecyclerViewComicsCatalog(tmNewOrderCatalogComicList);
+        populate_RecyclerViewCatalogItems(tmNewOrderCatalogList);
     }
 
-    public void ApplyComicSortOrder(){
+    public void ApplyRecyclerViewSortOrder(){
 
-        //Create new TreeMap to presort the comics:
-        TreeMap<Integer, String[]> treeMapNewSortOrder; //String = field being sorted, String = Comic data
+        //Create new TreeMap to presort the catalog items:
+        TreeMap<Integer, String[]> treeMapNewSortOrder; //String = field being sorted, String = Catalog item data
         treeMapNewSortOrder = new TreeMap<>();
 
         //Get existing data and load elements into the presorter:
-        TreeMap<Integer, String[]> tmCatalogComicList;
-        tmCatalogComicList = globalClass.gtmCatalogComicList;
-        String[] sComicListRecord;
+        TreeMap<Integer, String[]> tmCatalogList;
+        tmCatalogList = globalClass.gtmCatalogLists.get(giMediaCategory);
+        String[] sCatalogListRecord;
         Integer iKey, iIterator;
 
-        if(globalClass.gbComicSortAscending){
+        if(gbRecyclerViewSortAscending){
             iKey = 0;
             iIterator = 1;
         } else {
-            iKey = tmCatalogComicList.size();
+            iKey = tmCatalogList.size();
             iIterator = -1;
         }
 
 
         //Reverse the sort of the catalog:
         for (Map.Entry<Integer, String[]>
-                entry : tmCatalogComicList.entrySet()) {
-            sComicListRecord = entry.getValue();
-            treeMapNewSortOrder.put(iKey, sComicListRecord);
+                entry : tmCatalogList.entrySet()) {
+            sCatalogListRecord = entry.getValue();
+            treeMapNewSortOrder.put(iKey, sCatalogListRecord);
             iKey = iKey + iIterator;
         }
 
         //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
-        populate_RecyclerViewComicsCatalog(treeMapNewSortOrder);
+        populate_RecyclerViewCatalogItems(treeMapNewSortOrder);
     }
 
-    public void ComicsCatalogFilter(boolean bFilterOn, String sFilterText){
+    public void AssignCatalogFilter(boolean bFilterOn, String sFilterText){
 
         if(bFilterOn){
-            //Create new TreeMap to presort the comics:
+            //Create new TreeMap to presort the Catalog items:
             TreeMap<Integer, String[]> treeMapFiltered;
             treeMapFiltered = new TreeMap<>();
 
             //Get existing data and load elements into the presorter:
-            TreeMap<Integer, String[]> tmCatalogComicList;
-            tmCatalogComicList = globalClass.gtmCatalogComicList;
-            String[] sComicListRecord;
+            TreeMap<Integer, String[]> tmCatalogList;
+            tmCatalogList = globalClass.gtmCatalogLists.get(giMediaCategory);
+            String[] sCatalogListRecord;
             StringBuilder sbKey;
-            int iComicRID = 0;
+            int iRID = 0;
             String sFilterText_LowerCase = sFilterText.toLowerCase();
             String sKey_LowerCase;
             for (Map.Entry<Integer, String[]>
-                    entry : tmCatalogComicList.entrySet()) {
-                sComicListRecord = entry.getValue();
+                    entry : tmCatalogList.entrySet()) {
+                sCatalogListRecord = entry.getValue();
                 sbKey = new StringBuilder();
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_ID_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_NAME_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_PARODIES_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_CHARACTERS_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_TAGS_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_ARTISTS_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_GROUPS_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_CATEGORIES_INDEX]);
-                sbKey.append(sComicListRecord[GlobalClass.COMIC_SOURCE_INDEX]);
+                for(int i = 0; i < GlobalClass.CatalogRecordFields[giMediaCategory].length; i++){
+                    sbKey.append(sCatalogListRecord[i]);
+                }
                 sKey_LowerCase = sbKey.toString().toLowerCase();
 
                 if(sKey_LowerCase.contains(sFilterText_LowerCase)){
-                    treeMapFiltered.put(iComicRID, sComicListRecord);
-                    iComicRID++;
+                    treeMapFiltered.put(iRID, sCatalogListRecord);
+                    iRID++;
                 }
             }
-            populate_RecyclerViewComicsCatalog(treeMapFiltered);
+            populate_RecyclerViewCatalogItems(treeMapFiltered);
 
         } else {
 
-            SetComicSortOrderDefault();
+            SetCatalogSortOrderDefault();
 
         }
     }
@@ -720,7 +750,7 @@ public class CatalogActivity extends AppCompatActivity {
 
 
     //=====================================================================================
-    //===== Obfuscation Code =================================================================
+    //===== Obfuscation Code ==============================================================
     //=====================================================================================
 
     @Override
@@ -730,15 +760,9 @@ public class CatalogActivity extends AppCompatActivity {
         //If we are returning from ComicDetailsActivity after deleting the comic,
         //  return the sort:
         if(globalClass.gbComicJustDeleted){
-            SetComicSortOrderDefault();
+            SetCatalogSortOrderDefault();
             globalClass.gbComicJustDeleted = false;
         }
-
-        //If a comic has just been imported, there are certain actions that take place to sort the
-        //  comics so that the user sees most recent imports. These actions cannot take place here,
-        //  but rather take place in the menu inflation routine, as the menu icons are changed
-        //  to indicate the new sort order.
-
 
         if(globalClass.ObfuscationOn) {
             //Obfuscate data:
@@ -769,20 +793,22 @@ public class CatalogActivity extends AppCompatActivity {
         }
         setTitle(globalClass.getObfuscatedProgramName());
         //Update the RecyclerView:
-        gRecyclerViewComicsAdapter.notifyDataSetChanged();
+        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
     }
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(globalClass.getNonObfuscatedProgramName());
+        setTitle(globalClass.sNonObfustatedProgramName[giMediaCategory]);
         //Update the RecyclerView:
-        gRecyclerViewComicsAdapter.notifyDataSetChanged();
+        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
     }
 
+    //=====================================================================================
+    //===== Local Utilities ===============================================================
+    //=====================================================================================
 
-
-
-
-
+    public Object MediaCategoryReturn(Object[] Options){
+        return Options[giMediaCategory];
+    }
 
 }

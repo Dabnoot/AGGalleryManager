@@ -203,7 +203,7 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         gsComicName = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
         giMaxFileCount = Integer.parseInt(gsComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
 
-        String sComicFolder_AbsolutePath = globalClass.gfComicsFolder.getAbsolutePath();
+        String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];

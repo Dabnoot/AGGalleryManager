@@ -15,6 +15,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -35,6 +37,64 @@ public class GlobalClass extends Application {
     public static final int MEDIA_CATEGORY_IMAGES = 1;
     public static final int MEDIA_CATEGORY_COMICS = 2;
 
+    public File[] gfCatalogFolders = new File[3];
+    public File[] gfCatalogLogsFolders = new File[3];
+    public File[] gfCatalogContentsFiles = new File[3];
+    public File[] gfCatalogTagsFiles = new File[3];
+    //Video tag variables:
+    public List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<TreeMap<Integer, String[]>>();
+    public List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<TreeMap<Integer, String>>(); //Key: TagID, Value: TagName
+    public List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<TreeMap<Integer, String[]>>();
+    public boolean[] gbJustImported = {false, false, false};
+    public String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
+
+    public static final String[][] CatalogRecordFields = new String[][]{
+            {"VIDEO_ID",
+                    "VIDEO_FILENAME",
+                    "SIZE_MB",
+                    "DURATION",
+                    "RESOLUTION",
+                    "FOLDER_NAME",
+                    "TAGS",
+                    "CAST",
+                    "SOURCE",
+                    "DATETIME_LAST_VIEWED_BY_USER",
+                    "DATETIME_IMPORT"},
+            {"IMAGE_ID",
+                    "IMAGE_FILENAME",
+                    "SIZE_KB",
+                    "RESOLUTION",
+                    "FOLDER_NAME",
+                    "TAGS",
+                    "CAST",
+                    "SOURCE",
+                    "DATETIME_LAST_VIEWED_BY_USER",
+                    "DATETIME_IMPORT"},
+            {"COMIC_ID",
+                    "COMIC_NAME",
+                    "FILE_COUNT",
+                    "MAX_PAGE_ID",
+                    "MISSING_PAGES",
+                    "COMIC_SIZE_KB",
+                    "FOLDER_NAME",
+                    "THUMBNAIL_FILE",
+                    "PARODIES",
+                    "CHARACTERS",
+                    "TAGS",
+                    "ARTISTS",
+                    "GROUPS",
+                    "LANGUAGES",
+                    "CATEGORIES",
+                    "PAGES",
+                    "SOURCE",
+                    "DATETIME_LAST_READ_BY_USER",
+                    "DATETIME_IMPORT",
+                    "ONLINE_DATA_ACQUIRED"}};
+
+
+
+
+
     public File gfVideosFolder;
     public File gfVideoLogsFolder;
     public File gfVideoCatalogContentsFile;
@@ -43,6 +103,18 @@ public class GlobalClass extends Application {
     public TreeMap<Integer, String[]> gtmVideoTagReferenceList = new TreeMap<>();
     public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
     public TreeMap<Integer, String[]> gtmCatalogVideoList = new TreeMap<>();
+    public boolean gbVideosJustImported = false;
+
+    public File gfImagesFolder;
+    public File gfImagesLogsFolder;
+    public File gfImagesCatalogContentsFile;
+    public File gfImagesTagsFile;
+    //Video tag variables:
+    public TreeMap<Integer, String[]> gtmImagesTagReferenceList = new TreeMap<>();
+    public TreeMap<Integer, String> gtmImagesTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
+    public TreeMap<Integer, String[]> gtmCatalogImagesList = new TreeMap<>();
+    public boolean gbImagesJustImported = false;
+
 
     public File gfComicsFolder;
     public File gfComicLogsFolder;
@@ -54,11 +126,14 @@ public class GlobalClass extends Application {
     public TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
     public TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
     public TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
-    public boolean gbComicRestrictionsOn = false;
     public int giComicDefaultSortBySetting = COMIC_TAGS_INDEX;
     public boolean gbComicSortAscending = true;
     public boolean gbComicJustImported = false;
     public String[] gsSelectedComic;
+
+    public int giCatalogDefaultSortBySetting = COMIC_DATETIME_IMPORT_INDEX;
+    public boolean gbCatalogSortAscending = true;
+
 
     //Each tags file has the same fields:
     public static final int TAG_ID_INDEX = 0;                    //Tag ID
@@ -398,6 +473,33 @@ public class GlobalClass extends Application {
 
 
     //=====================================================================================
+    //===== Images Variables Section ======================================================
+    //=====================================================================================
+
+    public static final int IMAGE_ID_INDEX = 0;                             //Image ID
+    public static final int IMAGE_FILENAME_INDEX = 1;
+    public static final int IMAGE_SIZE_KB_INDEX = 2;
+    public static final int IMAGE_RESOLUTION_INDEX = 3;
+    public static final int IMAGE_FOLDER_NAME_INDEX = 4;                    //Name of the folder holding the imGE
+    public static final int IMAGE_TAGS_INDEX = 5;                           //Tags given to the Image
+    public static final int IMAGE_CAST_INDEX = 6;
+    public static final int IMAGE_SOURCE_INDEX = 7;                         //Website, if relevant
+    public static final int IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX = 8;   //Date of last read by user. Used for sorting if desired
+    public static final int IMAGE_DATETIME_IMPORT_INDEX = 9;                //Date of import. Used for sorting if desired
+
+    public static final String[] ImageRecordFields = new String[]{
+            "IMAGE_ID",
+            "IMAGE_FILENAME",
+            "SIZE_KB",
+            "RESOLUTION",
+            "FOLDER_NAME",
+            "TAGS",
+            "CAST",
+            "SOURCE",
+            "DATETIME_LAST_VIEWED_BY_USER",
+            "DATETIME_IMPORT"};
+
+    //=====================================================================================
     //===== Comics Variables Section ======================================================
     //=====================================================================================
 
@@ -418,7 +520,7 @@ public class GlobalClass extends Application {
     public static final int COMIC_CATEGORIES_INDEX = 14;
     public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
     public static final int COMIC_SOURCE_INDEX = 16;                     //nHentai.net, other source, etc.
-    public static final int COMIC_DATETIME_LAST_READ_BY_USER_INDEX = 17; //Date of last read by user. Used for sorting if desired
+    public static final int COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX = 17; //Date of last read by user. Used for sorting if desired
     public static final int COMIC_DATETIME_IMPORT_INDEX = 18;            //Date of import. Used for sorting if desired
     public static final int COMIC_ONLINE_DATA_ACQUIRED_INDEX = 19;
 
@@ -617,7 +719,7 @@ public class GlobalClass extends Application {
             "Top Titles",
             "Quality Operations"
     };
-    String sNonObfustatedProgramName = "Comic Catalog";
+    String[] sNonObfustatedProgramName = new String[]{"Videos Catalog", "Images Catalog", "Comics Catalog"};
 
     public int getObfuscationImageCount(){
         return iImageList[iObfuscationSubjectSelection].length;
@@ -640,10 +742,6 @@ public class GlobalClass extends Application {
 
     public String getObfuscatedProgramName() {
         return sObfuscatedProgramNames[iObfuscationSubjectSelection];
-    }
-
-    public String getNonObfuscatedProgramName(){
-        return sNonObfustatedProgramName;
     }
 
     //End obfuscation section.
