@@ -53,32 +53,32 @@ public class CatalogActivity extends AppCompatActivity {
     private int giRecyclerViewDefaultSortBySetting;
     private boolean gbRecyclerViewSortAscending = true;
 
-    private int[] giDataRecordIDIndexes = {
+    private final int[] giDataRecordIDIndexes = {
             GlobalClass.VIDEO_ID_INDEX,
             GlobalClass.IMAGE_ID_INDEX,
             GlobalClass.COMIC_ID_INDEX};
 
-    private int[] giDataRecordDateTimeImportIndexes = {
+    private final int[] giDataRecordDateTimeImportIndexes = {
             GlobalClass.VIDEO_DATETIME_IMPORT_INDEX,
             GlobalClass.IMAGE_DATETIME_IMPORT_INDEX,
             GlobalClass.COMIC_DATETIME_IMPORT_INDEX};
 
-    private int[] giDataRecordDateTimeViewedIndexes = {
+    private final int[] giDataRecordDateTimeViewedIndexes = {
             GlobalClass.VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
             GlobalClass.IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
             GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
 
-    private int[] giDataRecordTagsIndexes = {
+    private final int[] giDataRecordTagsIndexes = {
             GlobalClass.VIDEO_TAGS_INDEX,
             GlobalClass.IMAGE_TAGS_INDEX,
             GlobalClass.COMIC_TAGS_INDEX};
 
-    private int[] giDataRecordFolderIndexes = {
+    private final int[] giDataRecordFolderIndexes = {
             GlobalClass.VIDEO_FOLDER_NAME_INDEX,
             GlobalClass.IMAGE_FOLDER_NAME_INDEX,
             GlobalClass.COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
 
-    private int[] giDataRecordRecylerViewImageIndexes = {
+    private final int[] giDataRecordRecylerViewImageIndexes = {
             GlobalClass.VIDEO_FILENAME_INDEX,
             GlobalClass.IMAGE_FILENAME_INDEX,
             GlobalClass.COMIC_THUMBNAIL_FILE_INDEX};
@@ -482,8 +482,14 @@ public class CatalogActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
-                    if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+
+
+                    if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                        StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.VIDEO_ID_INDEX]));
+
+                    } else if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         StartComicViewerActivity(sFields_final);
+
                     }
                 }
             });
@@ -512,6 +518,8 @@ public class CatalogActivity extends AppCompatActivity {
         }
 
     }
+
+
 
     public void populate_RecyclerViewCatalogItems(TreeMap<Integer, String[]> tmCatalogList){
         gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(FilterOutRestrictedItems(tmCatalogList));
@@ -739,8 +747,19 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     //=====================================================================================
-    //===== Comic Viewer Code =================================================================
+    //===== Player/Viewer Code =================================================================
     //=====================================================================================
+
+    public final static String RECYCLERVIEW_VIDEO_TREEMAP_FILTERED = "RECYCLERVIEW_VIDEO_TREEMAP_FILTERED";
+    public final static String RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY = "RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY";
+    private void StartVideoPlayerActivity(TreeMap<Integer, String[]> treeMap, int iKey) {
+        //Key is the TreeMap Key for the selected video.
+
+        Intent intentVideoPlayer = new Intent(this, VideoPlayerActivityFullScreen.class);
+        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
+        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY, iKey);
+        startActivity(intentVideoPlayer);
+    }
 
     public void StartComicViewerActivity(String[] sFields){
 
@@ -748,6 +767,7 @@ public class CatalogActivity extends AppCompatActivity {
 
         //intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
         globalClass.gsSelectedComic = sFields; //Don't bother with using the intent to pass this data.
+        // todo: Do bother, now that I understand better what I'm doing. Identified 11/11/2020.
 
         startActivity(intentComicViewer);
     }
@@ -807,12 +827,6 @@ public class CatalogActivity extends AppCompatActivity {
         gRecyclerViewCatalogAdapter.notifyDataSetChanged();
     }
 
-    //=====================================================================================
-    //===== Local Utilities ===============================================================
-    //=====================================================================================
 
-    public Object MediaCategoryReturn(Object[] Options){
-        return Options[giMediaCategory];
-    }
 
 }
