@@ -410,7 +410,11 @@ public class CatalogActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             int orientation = getResources().getConfiguration().orientation;
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false); //todo
+                if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+                    v = inflater.inflate(R.layout.recycler_catalog_grid_videos, parent, false); //todo
+                } else {
+                    v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false); //todo
+                }
             } else {
                 v = inflater.inflate(R.layout.recycler_catalog_row, parent, false);
             }
@@ -458,11 +462,11 @@ public class CatalogActivity extends AppCompatActivity {
                 String sThumbnailText = "";
                 switch(giMediaCategory){
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                        sThumbnailText = sFields[GlobalClass.VIDEO_FILENAME_INDEX] + ", " +
-                                sFields[GlobalClass.VIDEO_DURATION_INDEX];
+                        sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]) + ", " +
+                                sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                        sThumbnailText = sFields[GlobalClass.IMAGE_FILENAME_INDEX] + ", " +
+                        sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]) + ", " +
                                 sFields[GlobalClass.IMAGE_TAGS_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
@@ -531,37 +535,37 @@ public class CatalogActivity extends AppCompatActivity {
                 sbRestrictedTags.append(entry.getValue());
                 sbRestrictedTags.append(",");
             }
-            //Split restricted tags into array:
-            String[] sTagsArray = sbRestrictedTags.toString().split(",");
 
+            if(sbRestrictedTags.toString().contains(",")) {
+                //If there is at least 1 restricted tag...
+                //Split restricted tags into array:
+                String[] sTagsArray = sbRestrictedTags.toString().split(",");
 
-            if(sTagsArray.length > 0) { //If restricted tags exist...
+                if (sTagsArray.length > 0) { //If restricted tags exist...
+                    //Look for restricted tags in the incoming treeMap and transfer the entry if
+                    //  none are found:
+                    String[] sFields;
+                    int i = 0;
+                    for (Map.Entry<Integer, String[]>
+                            entry : tmIncoming.entrySet()) {
+                        sFields = entry.getValue();
+                        boolean bHasRestrictedTag = false;
+                        for (String s : sTagsArray) {
 
-
-
-                //Look for restricted tags in the incoming treeMap and transfer the entry if
-                //  none are found:
-                String[] sFields;
-                int i = 0;
-                for (Map.Entry<Integer, String[]>
-                        entry : tmIncoming.entrySet()) {
-                    sFields = entry.getValue();
-                    boolean bHasRestrictedTag = false;
-                    for (String s : sTagsArray) {
-
-                        if (sFields[giDataRecordTagsIndexes[giMediaCategory]].contains(s.trim())) {
-                            bHasRestrictedTag = true;
-                            break;
+                            if (sFields[giDataRecordTagsIndexes[giMediaCategory]].contains(s.trim())) {
+                                bHasRestrictedTag = true;
+                                break;
+                            }
+                        }
+                        if (!bHasRestrictedTag) {
+                            tmOutgoing.put(i, sFields);
+                            i++;
                         }
                     }
-                    if(!bHasRestrictedTag){
-                        tmOutgoing.put(i, sFields);
-                        i++;
-                    }
-                }
-                bNoData = false;
-            }
+                    bNoData = false;
 
+                }
+            }
         }
         if(bNoData) {
             return tmIncoming;

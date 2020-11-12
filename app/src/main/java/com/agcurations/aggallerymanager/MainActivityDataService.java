@@ -183,15 +183,13 @@ public class MainActivityDataService extends IntentService {
                 GlobalClass.ComicRecordFields);
         */
         //Read the catalog list files into memory:
-        String[][] sRecordFields = {GlobalClass.VideoRecordFields,
-                                    GlobalClass.ImageRecordFields,
-                                    GlobalClass.ComicRecordFields};
+
         for(int i = 0; i < 3; i++){
             globalClass.gtmCatalogLists.add(readCatalogFile(
                     globalClass.gfCatalogFolders[i],
                     globalClass.gfCatalogContentsFiles[i],
                     globalClass.gfCatalogLogsFolders[i],
-                    sRecordFields[i]));
+                    GlobalClass.CatalogRecordFields[i]));
         }
 
 

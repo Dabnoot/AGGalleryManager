@@ -203,35 +203,31 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-        if (giImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
-            //Create an array of tag strings from GlobalClass:
-            List<String> alsTags = new ArrayList<String>();
-            for (Map.Entry<Integer, String[]> entry : globalClass.gtmVideoTagReferenceList.entrySet()){
-                alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
-            }
-            String[] sTags = (String[]) alsTags.toArray(new String[0]);
-
-            sDefaultTags = sTags; //getResources().getStringArray(R.array.default_video_tags);
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
+        //Create an array of tag strings from GlobalClass:
+        List<String> alsTags = new ArrayList<String>();
+        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giImportMediaCategory).entrySet()){
+            alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
         }
+        String[] sTags = (String[]) alsTags.toArray(new String[0]);
+
+        sDefaultTags = sTags; //getResources().getStringArray(R.array.default_video_tags);
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
+
 
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
         Integer iFolderID;
-        if (giImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-            //Determine the folder into which the contents will be placed:
-            for (Map.Entry<Integer, String[]> entry : globalClass.gtmVideoTagReferenceList.entrySet()){
-                //Get the key value associated with the text tag:
-                if(alsImportTags.get(0).contentEquals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
-                    gsImportDestinationFolder = Integer.toString(entry.getKey());
-                    break;
-                }
+        //Determine the folder into which the contents will be placed:
+        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giImportMediaCategory).entrySet()){
+            //Get the key value associated with the text tag:
+            if(alsImportTags.get(0).contentEquals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
+                gsImportDestinationFolder = Integer.toString(entry.getKey());
+                break;
             }
-        } else if (giImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-
         }
+
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
     }
@@ -269,7 +265,7 @@ public class ImportActivity extends AppCompatActivity {
             }
         }
 
-        String sDestinationPath = globalClass.gfAppFolder + File.separator + gsMediaCategoryFolderName + File.separator + gsImportDestinationFolder + File.separator;
+        String sDestinationPath = gsImportDestinationFolder;
 
         //Initiate the file import via ImportActivityDataService:
         ImportActivityDataService.startActionImportFiles(getContextOfActivity(),

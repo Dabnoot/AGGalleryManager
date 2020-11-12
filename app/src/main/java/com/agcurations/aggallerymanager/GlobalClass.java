@@ -52,7 +52,8 @@ public class GlobalClass extends Application {
             {"VIDEO_ID",
                     "VIDEO_FILENAME",
                     "SIZE_MB",
-                    "DURATION",
+                    "DURATION_MILLISECONDS",
+                    "DURATION_TEXT",
                     "RESOLUTION",
                     "FOLDER_NAME",
                     "TAGS",
@@ -244,6 +245,17 @@ public class GlobalClass extends Application {
         return sFinalText;
     }
 
+    public String JumbleFileName(String sFileName){
+        //Reverse the text on the file so that the file does not get picked off by a search tool:
+        StringBuilder sFileNameExtJumble = new StringBuilder();
+        sFileNameExtJumble.append(sFileName.substring(sFileName.lastIndexOf(".") + 1));
+        StringBuilder sFileNameBody = new StringBuilder();
+        sFileNameBody.append(sFileName.substring(0,sFileName.lastIndexOf(".")));
+        sFileName = sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
+        return sFileName;
+    }
+
+
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
@@ -262,7 +274,7 @@ public class GlobalClass extends Application {
             StringBuilder sbLine = new StringBuilder();
             sbLine.append(JumbleStorageText(sFieldData[0]));
             for(int i = 1; i < sFieldData.length; i++){
-                sbLine.append(",");
+                sbLine.append("\t");
                 sbLine.append(JumbleStorageText(sFieldData[i]));
             }
             //Write the data to the file:
@@ -449,27 +461,16 @@ public class GlobalClass extends Application {
     public static final int VIDEO_ID_INDEX = 0;                             //Video ID
     public static final int VIDEO_FILENAME_INDEX = 1;
     public static final int VIDEO_SIZE_MB_INDEX = 2;
-    public static final int VIDEO_DURATION_INDEX = 3;                       //Duration of video
-    public static final int VIDEO_RESOLUTION_INDEX = 4;
-    public static final int VIDEO_FOLDER_NAME_INDEX = 5;                    //Name of the folder holding the video
-    public static final int VIDEO_TAGS_INDEX = 6;                           //Tags given to the video
-    public static final int VIDEO_CAST_INDEX = 7;
-    public static final int VIDEO_SOURCE_INDEX = 8;                         //Website, if relevant
-    public static final int VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX = 9;   //Date of last read by user. Used for sorting if desired
-    public static final int VIDEO_DATETIME_IMPORT_INDEX = 10;               //Date of import. Used for sorting if desired
+    public static final int VIDEO_DURATION_MILLISECONDS_INDEX = 3;          //Duration of video in Milliseconds
+    public static final int VIDEO_DURATION_TEXT_INDEX = 4;                  //Duration of video text
+    public static final int VIDEO_RESOLUTION_INDEX = 5;
+    public static final int VIDEO_FOLDER_NAME_INDEX = 6;                    //Name of the folder holding the video
+    public static final int VIDEO_TAGS_INDEX = 7;                           //Tags given to the video
+    public static final int VIDEO_CAST_INDEX = 8;
+    public static final int VIDEO_SOURCE_INDEX = 9;                         //Website, if relevant
+    public static final int VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX = 10;   //Date of last read by user. Used for sorting if desired
+    public static final int VIDEO_DATETIME_IMPORT_INDEX = 11;               //Date of import. Used for sorting if desired
 
-    public static final String[] VideoRecordFields = new String[]{
-            "VIDEO_ID",
-            "VIDEO_FILENAME",
-            "SIZE_MB",
-            "DURATION",
-            "RESOLUTION",
-            "FOLDER_NAME",
-            "TAGS",
-            "CAST",
-            "SOURCE",
-            "DATETIME_LAST_VIEWED_BY_USER",
-            "DATETIME_IMPORT"};
 
 
     //=====================================================================================
@@ -574,7 +575,7 @@ public class GlobalClass extends Application {
             //Don't transfer the line over.
             //Get a path to the comic's folder for deletion in the next step:
             for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gtmCatalogComicList.entrySet()) {
+                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
                 String[] sFields = CatalogEntry.getValue();
                 if( sFields[GlobalClass.COMIC_ID_INDEX].contains(sComicID)){
                     sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
@@ -582,7 +583,7 @@ public class GlobalClass extends Application {
                 }
             }
 
-            String  sComicFolderPath = gfComicsFolder.getPath() + File.separator
+            String  sComicFolderPath = gfCatalogFolders[MEDIA_CATEGORY_COMICS].getPath() + File.separator
                     + sComicFolderName;
 
             File fComicFolderToBeDeleted = new File(sComicFolderPath);
@@ -615,7 +616,7 @@ public class GlobalClass extends Application {
             //Now attempt to delete the comic record from the CatalogContentsFile:
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfComicCatalogContentsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS].getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -637,7 +638,7 @@ public class GlobalClass extends Application {
             brReader.close();
 
             //Re-write the CatalogContentsFile without the deleted comic's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfComicCatalogContentsFile, false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS], false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
@@ -646,7 +647,7 @@ public class GlobalClass extends Application {
             //Now update memory to no longer include the comic:
             int iKey = -1;
             for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gtmCatalogComicList.entrySet()) {
+                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
                 String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
                 if( sEntryComicID.contains(sComicID)){
                     iKey = CatalogEntry.getKey();
@@ -654,7 +655,7 @@ public class GlobalClass extends Application {
                 }
             }
             if(iKey >= 0){
-                gtmCatalogComicList.remove(iKey);
+                gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(iKey);
             }
 
             gbComicJustDeleted = true;

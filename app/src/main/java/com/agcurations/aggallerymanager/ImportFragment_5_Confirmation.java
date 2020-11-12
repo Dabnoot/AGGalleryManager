@@ -90,12 +90,12 @@ public class ImportFragment_5_Confirmation extends Fragment {
         // Construct the data source
         ArrayList<String> alImportFileNames = new ArrayList<String>();
         int iFileCount = 0;
-        long lRequiredStorageSpaceKB = 0L;
+        long lRequiredStorageSpaceBytes = 0L;
         for(ImportActivity.fileModel fm: ImportActivity.fileListCustomAdapter.alFileList){
             if(fm.isChecked) {
                 alImportFileNames.add(fm.name);
                 iFileCount++;
-                lRequiredStorageSpaceKB += fm.sizeBytes;
+                lRequiredStorageSpaceBytes += fm.sizeBytes;
             }
         }
 
@@ -126,10 +126,10 @@ public class ImportFragment_5_Confirmation extends Fragment {
         DecimalFormat decimalFormat = new DecimalFormat();
         decimalFormat.setGroupingUsed(true);
         decimalFormat.setGroupingSize(3);
-        if(lRequiredStorageSpaceKB < 5000L) {
-            s = decimalFormat.format(lRequiredStorageSpaceKB) + " KB";
+        if(lRequiredStorageSpaceBytes < 5000000L) {
+            s = decimalFormat.format(lRequiredStorageSpaceBytes / 1000) + " KB";
         } else {
-            s = decimalFormat.format(lRequiredStorageSpaceKB / 1000) + " MB";
+            s = decimalFormat.format(lRequiredStorageSpaceBytes / 1000000) + " MB";
         }
         textView_RequiredStorageSpace.setText(s);
 

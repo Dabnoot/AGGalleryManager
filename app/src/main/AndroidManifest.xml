@@ -33,13 +33,11 @@
         <activity
             android:name=".PicturesCatalogActivity"
             android:parentActivityName=".MainActivity" /> <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
-        <activity
-            android:name=".ComicsCatalogActivity"
-            android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".ComicDetailsActivity"
             android:label="@string/title_activity_comic_details"
-            android:parentActivityName=".ComicsCatalogActivity"
+            android:parentActivityName=".CatalogActivity"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".ComicPageViewerActivity"
@@ -49,11 +47,11 @@
             android:theme="@style/FullscreenTheme" />
         <activity
             android:name=".ExportComicsActivity"
-            android:parentActivityName=".ComicsCatalogActivity"
+            android:parentActivityName=".CatalogActivity"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".ImportComicsActivity_obsolete"
-            android:parentActivityName=".ComicsCatalogActivity"
+            android:parentActivityName=".CatalogActivity"
             android:theme="@style/AppTheme" />
 
         <activity

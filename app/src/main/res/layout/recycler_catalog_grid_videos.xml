@@ -7,12 +7,12 @@
     <ImageView
         android:id="@+id/ImageView_Thumbnail"
         android:layout_width="match_parent"
-        android:layout_height="430dp"
+        android:layout_height="230dp"
         android:layout_alignParentTop="true"
         android:contentDescription="@string/comic_cover_page"/>
 
     <TextView
-        android:id="@+id/editText_ComicTitle"
+        android:id="@+id/editText_Title"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/ImageView_Thumbnail"

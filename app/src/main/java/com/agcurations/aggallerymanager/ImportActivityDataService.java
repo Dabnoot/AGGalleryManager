@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 import androidx.documentfile.provider.DocumentFile;
 
@@ -167,7 +168,13 @@ public class ImportActivityDataService extends IntentService {
                 true, iProgressBarValue,
                 true, "Verifying destination folder...");
 
-        File fDestination = new File(sDestination);
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
+        String sDestinationFullPath = globalClass.gfCatalogFolders[iMediaCategory]  + File.separator +
+                                        sDestination + File.separator;
+
+        File fDestination = new File(sDestinationFullPath);
         if(!fDestination.exists()){
             if(!fDestination.mkdir()){
                 //Unable to create directory
@@ -189,8 +196,17 @@ public class ImportActivityDataService extends IntentService {
             OutputStream outputStream = null;
             ContentResolver content = ImportActivity.getContextOfActivity().getContentResolver();
 
-            GlobalClass globalClass;
-            globalClass = (GlobalClass) getApplicationContext();
+
+
+            //Find the next record ID:
+            int iNextRecordId = 0;
+            int iThisId = 0;
+            String[] sFields;
+            for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
+                iThisId = Integer.parseInt(entry.getValue()[GlobalClass.VIDEO_ID_INDEX]);
+                if(iThisId > iNextRecordId) iNextRecordId = iThisId + 1;
+            }
+            //New record ID identified.
 
             //Loop through the files and copy or move them:
             for(ImportActivity.fileModel fm: alFileList){
@@ -212,7 +228,11 @@ public class ImportActivityDataService extends IntentService {
 
 
                     inputStream = content.openInputStream(dfSource.getUri());
-                    outputStream = new FileOutputStream( fDestination.getPath() + File.separator + dfSource.getName());
+
+                    //Reverse the text on the file so that the file does not get picked off by a search tool:
+                    String sFileName = globalClass.JumbleFileName(dfSource.getName());
+
+                    outputStream = new FileOutputStream( fDestination.getPath() + File.separator + sFileName);
                     if(outputStream != null) {
                         int iLoopCount = 0;
                         byte[] buffer = new byte[100000];
@@ -233,13 +253,17 @@ public class ImportActivityDataService extends IntentService {
                     }
                     sLogLine = sLogLine + "success.";
 
+                    //This file has now been copied.
+                    //Next add the data to the catalog file and memory:
+
                     if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         //Add record to catalog contents:
                         /*
                             "VIDEO_ID",
                             "VIDEO_FILENAME",
                             "SIZE_MB",
-                            "DURATION",
+                            "DURATION_MILLISECONDS",
+                            "DURATION_TEXT",
                             "RESOLUTION",
                             "FOLDER_NAME",
                             "TAGS",
@@ -248,24 +272,42 @@ public class ImportActivityDataService extends IntentService {
                             "DATETIME_LAST_VIEWED_BY_USER",
                             "DATETIME_IMPORT"
                         */
-                        //VIDEO_ID cannot be the "next count in the iteration".
-                        //  This is because a video could be deleted from the middle,
-                        //  and cause a duplicate ID. However, it can be 1 greater than max.
 
-                        //Find the next ID:
-                        int iMaxId = 0;
-                        int iThisId = 0;
-                        String[] sFields;
-                        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogVideoList.entrySet()) {
+                        //Create a timestamp to be used to create the data record:
+                        Double dTimeStamp = globalClass.GetTimeStampFloat();
+                        String sDateTime = dTimeStamp.toString();
 
-                            iThisId = Integer.parseInt(entry.getValue()[GlobalClass.VIDEO_ID_INDEX]);
-                            //todo
+                        String[] sFieldData = new String[]{
+                                String.valueOf(iNextRecordId),
+                                sFileName,
+                                String.valueOf((fm.sizeBytes / 1024) / 1024),
+                                String.valueOf(fm.videoTimeInMilliseconds),
+                                String.valueOf(fm.videoTimeText),
+                                "",
+                                sDestination,
+                                sTags,
+                                "",
+                                "",
+                                sDateTime,
+                                sDateTime
+                        };
 
-                        }
-                        //todo
-                        //CatalogDataFile_CreateNewRecord
+                        /*public void CatalogDataFile_CreateNewRecord(
+                                File fCatalogContentsFile,
+                                int iRecordID,
+                                TreeMap<Integer, String[]> tmCatalogRecords,
+                                String[] sFieldData){*/
+
+                        //The below call should add the record to both the catalog contents file
+                        //  and memory:
+                        globalClass.CatalogDataFile_CreateNewRecord(
+                                globalClass.gfCatalogContentsFiles[iMediaCategory],
+                                iNextRecordId,
+                                globalClass.gtmCatalogLists.get(iMediaCategory),
+                                sFieldData);
 
                     }
+                    iNextRecordId += 1; //Identify the next record ID to assign.
 
                     if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
                         if(!dfSource.delete()){

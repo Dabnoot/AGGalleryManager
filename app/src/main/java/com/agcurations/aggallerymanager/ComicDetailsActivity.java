@@ -292,7 +292,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvThumbnailText = v.findViewById(R.id.editText_ComicTitle);
+                tvThumbnailText = v.findViewById(R.id.editText_Title);
 
                 tvComicID = v.findViewById(R.id.editText_ComicSource);
                 tvParodies = v.findViewById(R.id.editText_Parodies);
@@ -363,9 +363,9 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
             int orientation = getResources().getConfiguration().orientation;
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                v = inflater.inflate(R.layout.recycler_comics_grid, parent, false);
+                v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false);
             } else {
-                v = inflater.inflate(R.layout.recycler_comics_row, parent, false);
+                v = inflater.inflate(R.layout.recycler_catalog_row, parent, false);
             }
 
             return new ComicDetailsActivity.RecyclerViewComicPagesAdapter.ViewHolder(v);
