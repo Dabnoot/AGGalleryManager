@@ -12,16 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher">
         <activity
-            android:name=".FullscreenActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="@string/title_activity_fullscreen"
-            android:theme="@style/AppTheme.Launcher.Fullscreen"></activity>
-        <activity
             android:name=".VideoPlayerActivityFullScreen"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_video_player_full_screen"
             android:theme="@style/AppTheme.Launcher.Fullscreen" />
-        <activity android:name=".VideoPlayerActivity" />
         <activity android:name=".CatalogActivity" />
         <activity android:name=".ImportActivity" />
         <activity android:name=".ImportComicsGuidedActivity_obsolete" />
