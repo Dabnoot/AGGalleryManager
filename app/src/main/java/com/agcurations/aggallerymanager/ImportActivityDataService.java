@@ -204,7 +204,7 @@ public class ImportActivityDataService extends IntentService {
             String[] sFields;
             for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
                 iThisId = Integer.parseInt(entry.getValue()[GlobalClass.VIDEO_ID_INDEX]);
-                if(iThisId > iNextRecordId) iNextRecordId = iThisId + 1;
+                if(iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
             }
             //New record ID identified.
 
@@ -251,7 +251,10 @@ public class ImportActivityDataService extends IntentService {
                         outputStream.flush();
                         outputStream.close();
                     }
-                    sLogLine = sLogLine + "success.";
+                    sLogLine = "Copy success.";
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            false, "");
 
                     //This file has now been copied.
                     //Next add the data to the catalog file and memory:
@@ -311,7 +314,9 @@ public class ImportActivityDataService extends IntentService {
 
                     if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
                         if(!dfSource.delete()){
-                            sLogLine = sLogLine + " But could not delete source file after copy.";
+                            sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).";
+                        } else {
+                            sLogLine = "Success deleting source file after copy.";
                         }
                     }
 

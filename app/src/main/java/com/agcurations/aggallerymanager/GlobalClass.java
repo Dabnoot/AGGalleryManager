@@ -280,6 +280,7 @@ public class GlobalClass extends Application {
             //Write the data to the file:
             FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
             fwNewCatalogContentsFile.write(sbLine.toString());
+            fwNewCatalogContentsFile.write("\n");
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
 
