@@ -54,6 +54,42 @@
             app:layout_constraintTop_toBottomOf="@+id/textView_Label_Selected_Folder"
             android:visibility="invisible"/>
 
+        <RelativeLayout
+            android:id="@+id/relativeLayout_Progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView_Selected_Import_Folder"
+            android:visibility="invisible">
+
+            <TextView
+                android:id="@+id/textView_AnalyzingFolder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Analyzing folder contents..."
+                android:layout_centerInParent="true"
+                android:layout_alignParentTop="true"/>
+
+            <ProgressBar
+                android:id="@+id/progressBar_FileAnalysisProgress"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:progressDrawable="@drawable/progressbar_colors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_below="@+id/textView_AnalyzingFolder"/>
+
+            <TextView
+                android:id="@+id/textView_FileAnalysisProgressBarText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_below="@+id/textView_AnalyzingFolder"/>
+        </RelativeLayout>
+
         <Button
             android:id="@+id/button_FolderSelectComplete"
             android:layout_width="149dp"
@@ -66,7 +102,8 @@
             app:layout_constraintTop_toBottomOf="@+id/textView_Selected_Import_Folder"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:onClick="buttonNextClick_StorageLocation"/>
+            android:onClick="buttonNextClick_StorageLocation"
+            android:enabled="false"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

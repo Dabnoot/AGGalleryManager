@@ -37,7 +37,6 @@
             android:id="@+id/textView_ImportProgressBarText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="50%"
             android:layout_centerInParent="true"/>
     </RelativeLayout>
 

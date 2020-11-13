@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
@@ -75,13 +76,16 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         IntentFilter filter = new IntentFilter(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
-        requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
+        //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).registerReceiver(importDataServiceResponseReceiver,filter);
     }
 
     @Override
     public void onDestroy() {
+        //requireActivity().unregisterReceiver(importDataServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).unregisterReceiver(importDataServiceResponseReceiver);
         super.onDestroy();
-        requireActivity().unregisterReceiver(importDataServiceResponseReceiver);
+
     }
 
     @Override
@@ -147,6 +151,11 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            String sReceiver = intent.getStringExtra(ImportActivityDataService.RECEIVER_STRING);
+            if(!sReceiver.contentEquals(ImportActivityDataService.RECEIVER_EXECUTE_IMPORT)){
+                return;
+            }
 
             boolean bError;
 

@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.BroadcastReceiver;
@@ -80,7 +81,7 @@ public class ImportActivity extends AppCompatActivity {
 
     //=================================================
 
-    static MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+    static MediaMetadataRetriever mediaMetadataRetriever;
 
     // a static variable to get a reference of our activity context
     public static Context contextOfActivity;
@@ -118,15 +119,18 @@ public class ImportActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
-        registerReceiver(importDataServiceResponseReceiver, filter);
+        //registerReceiver(importDataServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(importDataServiceResponseReceiver,filter);
 
+        mediaMetadataRetriever = new MediaMetadataRetriever();
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         mediaMetadataRetriever.release();
-        unregisterReceiver(importDataServiceResponseReceiver);
+        //unregisterReceiver(importDataServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(importDataServiceResponseReceiver);
+        super.onDestroy();
     }
 
     @SuppressWarnings("unchecked")
