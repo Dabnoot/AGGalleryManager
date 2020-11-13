@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 
@@ -223,9 +224,7 @@ public class ImportActivityDataService extends IntentService {
                     sLogLine = sLogLine + "of file " + fm.name + " to destination...";
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
-                            true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
-
-
+                            true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB");
 
                     inputStream = content.openInputStream(dfSource.getUri());
 
@@ -245,7 +244,7 @@ public class ImportActivityDataService extends IntentService {
                                 iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                                 BroadcastProgress(false, "",
                                         true, iProgressBarValue,
-                                        true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
+                                        true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB");
                             }
                         }
                         outputStream.flush();
@@ -324,7 +323,7 @@ public class ImportActivityDataService extends IntentService {
 
                     BroadcastProgress(true, sLogLine,
                             true, iProgressBarValue,
-                            true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
+                            true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB");
 
 
                 } catch (Exception e){
@@ -336,7 +335,7 @@ public class ImportActivityDataService extends IntentService {
 
                 BroadcastProgress(true, "Operation complete.",
                         true, iProgressBarValue,
-                        true, lProgressDenominator/1024 + " / " + lProgressDenominator/1024 + " KB");
+                        true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB");
 
             }
 

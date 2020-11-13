@@ -248,32 +248,7 @@ public class ImportActivity extends AppCompatActivity {
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT);
 
-        //Begin the import:
-        StringBuilder sb = new StringBuilder();
-        sb.append(alsImportTags.get(0));
-        for(int i = 1; i < alsImportTags.size(); i++){
-            sb.append(",");
-            sb.append(alsImportTags.get(i));
-        }
-        String sTags = sb.toString();
 
-        //Create list of files to import:
-        ArrayList<fileModel> alImportFileList = new ArrayList<>();
-        for(fileModel fm: fileListCustomAdapter.alFileList){
-            if(fm.isChecked){
-                alImportFileList.add(fm);
-            }
-        }
-
-        String sDestinationPath = gsImportDestinationFolder;
-
-        //Initiate the file import via ImportActivityDataService:
-        ImportActivityDataService.startActionImportFiles(getContextOfActivity(),
-                sDestinationPath,
-                alImportFileList,
-                sTags,
-                giImportMediaCategory,
-                giImportMethod);
 
     }
 

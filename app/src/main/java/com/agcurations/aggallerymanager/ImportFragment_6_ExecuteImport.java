@@ -17,6 +17,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ImportFragment_6_ExecuteImport#newInstance} factory method to
@@ -109,6 +111,32 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         gtextView_ImportLog.setMovementMethod(new ScrollingMovementMethod());
         //Init log:
         gtextView_ImportLog.setText("");
+
+        //Begin the import:
+        StringBuilder sb = new StringBuilder();
+        sb.append(ImportActivity.alsImportTags.get(0));
+        for(int i = 1; i < ImportActivity.alsImportTags.size(); i++){
+            sb.append(",");
+            sb.append(ImportActivity.alsImportTags.get(i));
+        }
+        String sTags = sb.toString();
+
+        //Create list of files to import:
+        ArrayList<ImportActivity.fileModel> alImportFileList = new ArrayList<>();
+        for(ImportActivity.fileModel fm: ImportActivity.fileListCustomAdapter.alFileList){
+            if(fm.isChecked){
+                alImportFileList.add(fm);
+            }
+        }
+
+        //Initiate the file import via ImportActivityDataService:
+        ImportActivityDataService.startActionImportFiles(ImportActivity.getContextOfActivity(),
+                ImportActivity.gsImportDestinationFolder,
+                alImportFileList,
+                sTags,
+                ImportActivity.giImportMediaCategory,
+                ImportActivity.giImportMethod);
+
 
     }
 
