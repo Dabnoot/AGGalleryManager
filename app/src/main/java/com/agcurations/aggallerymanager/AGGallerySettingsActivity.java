@@ -89,8 +89,9 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
         gsPin = globalClass.gsPin;
 
         //Get a list of comic tags to populate the multiSelect dropdown list:
+        gtmTags = new TreeMap<>();
         for (Map.Entry<Integer, String[]>
-                entry : globalClass.gtmComicTagReferenceList.entrySet()) {
+                entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             String sTag = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
             gtmTags.put(entry.getKey(),sTag);
         }
