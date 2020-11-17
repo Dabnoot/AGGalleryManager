@@ -38,6 +38,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
     private static File gfAppFolder;
     private static String gsPin;
+    private static Boolean gbPinMatch = false;
     private static TreeMap<Integer, String> gtmTags;
     private static Set<String> gssSelectedTags;
     GlobalClass globalClass;
@@ -101,7 +102,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
         gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
 
 
-        if(!gsPin.isEmpty()) {
+        /*if(!gsPin.isEmpty()) {
             final String[] sPinEntry = new String[1];
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Preferences");
@@ -124,6 +125,8 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
                     } else {
                         if(!sPinEntry[0].equals(gsPin)){
                             bExit = true;
+                        } else {
+                            gbPinMatch = true;
                         }
                     }
                     if(bExit){
@@ -143,7 +146,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             builder.show();
 
 
-        }
+        }*/
 
     }
 

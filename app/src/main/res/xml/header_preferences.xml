@@ -5,7 +5,6 @@
 
     <Preference
         app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$ComicsFragment"
-
         app:key="comics_header"
         app:title="Comics" />
 

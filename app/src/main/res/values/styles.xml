@@ -111,6 +111,10 @@
         <item name="android:windowCloseOnTouchOutside">true</item>
     </style>
 
+    <style name="AppTheme.PinCodePopup">
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
     <style name="Widget.AppTheme.Launcher.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
         <item name="android:background">@color/black_overlay</item>
     </style>

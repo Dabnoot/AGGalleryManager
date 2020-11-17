@@ -18,6 +18,8 @@
             android:theme="@style/AppTheme.Launcher.Fullscreen" />
         <activity android:name=".CatalogActivity" />
         <activity android:name=".ImportActivity" />
+        <activity android:name=".PinCodePopup"
+            android:theme="@style/AppTheme.PinCodePopup"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

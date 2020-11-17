@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.BroadcastReceiver;
@@ -16,6 +17,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.TreeMap;
+
+import javax.xml.transform.Result;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -98,9 +101,10 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_Settings:
-                Intent intentSettings = new Intent(this, AGGallerySettingsActivity.class);
 
-                startActivity(intentSettings);
+                Intent intentPinCodeAccessSettings = new Intent(this, PinCodePopup.class);
+                startActivityForResult(intentPinCodeAccessSettings, PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS);
+
                 return true;
 
             case R.id.menu_About:
@@ -113,7 +117,18 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
+        if(requestCode == PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS){
+            if(resultCode == RESULT_OK){
+                Intent intentAbout = new Intent(this, AGGallerySettingsActivity.class);
+                startActivity(intentAbout);
+            }
+        }
+
+    }
 
     //=====================================================================================
     //===== Obfuscation Code =================================================================
