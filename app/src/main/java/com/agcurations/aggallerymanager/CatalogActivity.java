@@ -2,12 +2,17 @@ package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.view.menu.ActionMenuItem;
+import androidx.appcompat.view.menu.ActionMenuItemView;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +20,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -262,14 +268,19 @@ public class CatalogActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.icon_tags_restricted:
-                gbCatalogTagsRestrictionsOn = !gbCatalogTagsRestrictionsOn;
+
                 if(gbCatalogTagsRestrictionsOn){
-                    item.setIcon(R.drawable.baseline_lock_white_18dp);
+                    //If restrictions are on, ask for pin code before unlocking.
+                    Intent intentPinCodeAccessSettings = new Intent(this, PinCodePopup.class);
+                    startActivityForResult(intentPinCodeAccessSettings, PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
                 } else {
-                    item.setIcon(R.drawable.baseline_lock_open_white_18dp);
+                    //If restrictions are off...
+                    //Turn on restrictions, hide items, set icon to show lock symbol
+                    gbCatalogTagsRestrictionsOn = true;
+                    item.setIcon(R.drawable.baseline_lock_white_18dp);
+                    //Repopulate the catalog list:
+                    populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
                 }
-                //Repopulate the catalog list:
-                populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
                 return true;
 
             case R.id.icon_sort_order:
@@ -291,14 +302,29 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
 
-        //https://developer.android.com/training/data-storage/shared/documents-files
         try {
             super.onActivityResult(requestCode, resultCode, resultData);
+
+            if(requestCode == PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS){
+                if(resultCode == RESULT_OK){
+                    //Show catalog items with restricted tags.
+                    //Change the lock icon to 'unlocked':
+                    ActionMenuItemView item = findViewById(R.id.icon_tags_restricted);
+                    Drawable d = AppCompatResources.getDrawable(this, R.drawable.baseline_lock_open_white_18dp);
+                    item.setIcon(d);
+                    //Set the flag:
+                    gbCatalogTagsRestrictionsOn = false;
+                    //Repopulate the catalog list:
+                    populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
+                }
+            }
+
 
         } catch (Exception ex) {
             Context context = getApplicationContext();

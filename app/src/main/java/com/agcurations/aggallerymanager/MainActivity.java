@@ -68,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             }
 
-
         }
     }
 
@@ -101,10 +100,9 @@ public class MainActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_Settings:
-
+                //Ask for pin code in order to allow access to Settings:
                 Intent intentPinCodeAccessSettings = new Intent(this, PinCodePopup.class);
                 startActivityForResult(intentPinCodeAccessSettings, PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS);
-
                 return true;
 
             case R.id.menu_About:
