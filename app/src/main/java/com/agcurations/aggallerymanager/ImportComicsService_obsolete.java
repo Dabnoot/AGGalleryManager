@@ -320,7 +320,7 @@ public class ImportComicsService_obsolete extends IntentService {
                             sImportComicListRecord[GlobalClass.COMIC_SOURCE_INDEX] = "nHentai.net";
                             //Must provide a value for the last read by user or there will be an error
                             //  during interpretation during user-selected sort:
-                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX] = "0";
+                            sImportComicListRecord[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX] = sDateTime;
 
                             WriteLogLine("Found new comic: Comic ID: " + iComicID + ", Comic Name: " + sComicName + ".",true);
 

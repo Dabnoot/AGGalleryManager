@@ -496,7 +496,8 @@ public class CatalogActivity extends AppCompatActivity {
                                 sFields[GlobalClass.IMAGE_TAGS_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
-                        sThumbnailText = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        //sThumbnailText = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        sThumbnailText = GlobalClass.ConvertDoubleTimeStampToString(sFields[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX]);
                         break;
                 }
                 holder.tvThumbnailText.setText(sThumbnailText);

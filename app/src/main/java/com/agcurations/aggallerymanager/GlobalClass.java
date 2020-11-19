@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.text.Format;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -212,17 +213,17 @@ public class GlobalClass extends Application {
         return freeBytesExternal;
     }
 
-    String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
-    String gsDatePatternNumSort = "yyyyMMdd.HHmmss";
-    String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
-    DateTimeFormatter gdtfDateFormatter;
+    static final String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
+    static final String gsDatePatternNumSort = "yyyyMMdd.HHmmss";
+    static final String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
+    static DateTimeFormatter gdtfDateFormatter;
 
     public String GetTimeStampFileSafe(){
         //For putting a timestamp on a file name. Observant of illegal characters.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternFileSafe);
         return gdtfDateFormatter.format(LocalDateTime.now());
     }
-    public Double GetTimeStampFloat(){
+    public static Double GetTimeStampFloat(){
         //Get an easily-comparable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort);
         String sTimeStamp = gdtfDateFormatter.format(LocalDateTime.now());
@@ -234,8 +235,27 @@ public class GlobalClass extends Application {
         return gdtfDateFormatter.format(LocalDateTime.now());
     }
 
+    public static String ConvertDoubleTimeStampToString(String sTimeStamp){
+        double dTimeStamp = Double.parseDouble(sTimeStamp);
+        int iYear = (int) (dTimeStamp / 10000);
+        int iMonth = (int) ((dTimeStamp - iYear * 10000) / 100 );
+        int iDay = (int) ((dTimeStamp - iYear * 10000 - iMonth * 100));
+        int iHour = (int) ((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100);
+        int iMinute = (int) ((((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100) - iHour) * 100);
+        int iSecond = (int) ((((((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100) - iHour) * 100) - iMinute) * 100);
 
-    public String JumbleStorageText(String sSourceText){
+        String sTimeStampFinal = iYear + "-" +
+                String.format("%02d", iMonth) + "-" +
+                String.format("%02d", iDay) + " " +
+                String.format("%02d", iHour) + ":" +
+                String.format("%02d", iMinute) + ":" +
+                String.format("%02d", iSecond);
+
+        return sTimeStampFinal;
+    }
+
+
+    public static String JumbleStorageText(String sSourceText){
         //Render the text unsearchable so that no scanning system can pick up explicit tags.
         String sFinalText;
         StringBuilder sbReverse = new StringBuilder();
@@ -398,7 +418,7 @@ public class GlobalClass extends Application {
     public boolean CatalogDataFile_UpdateAllRecords(File fCatalogContentsFile, int[] iFieldIDs, String[] sFieldUpdateData) {
         //This routine used to update a single field across all record in a catalog file.
         //  Used primarily during development of the software.
-
+        //  CatalogDataFile_UpdateAllRecords = Update field(s) to a common value.
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
@@ -451,6 +471,67 @@ public class GlobalClass extends Application {
             return true;
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    public static boolean CatalogDataFile_UpdateAllRecords_TimeStamps(File fCatalogContentsFile) {
+        //This routine used to update a single field across all record in a catalog file.
+        //  Used primarily during development of the software.
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+            //finished header processing.
+
+            int iFieldIDToUpdate = COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX;
+            //Apply an import timestamp:
+            Double dTimeStamp = GetTimeStampFloat();
+            String sDateTime = dTimeStamp.toString();
+
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                dTimeStamp += 0.000100; //Increment the timestamp by one minute.
+                sDateTime = dTimeStamp.toString();
+                int j = 0; //To track requested field updates.
+                sFields = sLine.split("\t",-1);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(sFields[0]);
+
+                for (int i = 1; i < sFields.length; i++) {
+                    sb.append("\t");
+                    if (i == iFieldIDToUpdate) {
+                        //If this is the field to update...
+                        sb.append( JumbleStorageText(sDateTime));
+                        j++;
+                    } else {
+                        sb.append(sFields[i]);
+                    }
+
+                }
+                sLine = sb.toString();
+
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(MainActivity.getContextOfActivity(), "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
         }
     }

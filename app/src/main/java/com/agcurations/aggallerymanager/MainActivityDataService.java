@@ -29,7 +29,6 @@ public class MainActivityDataService extends IntentService {
         super("MainActivityDataService");
     }
 
-
     public static void startActionLoadData(Context context) {
         Intent intent = new Intent(context, MainActivityDataService.class);
         intent.setAction(ACTION_LOAD_APP_DATA);
@@ -50,7 +49,7 @@ public class MainActivityDataService extends IntentService {
 
 
 
-    Intent broadcastIntent_LoadAppDataResponse = new Intent();; //Make global to allow for problem notification string extras.
+    Intent broadcastIntent_LoadAppDataResponse = new Intent(); //Make global to allow for problem notification string extras.
     private void handleActionLoadAppData() {
 
         String sExternalStorageState;
@@ -64,41 +63,6 @@ public class MainActivityDataService extends IntentService {
                 globalClass.gfAppFolder = fAvailableDirs[0];
             }
 
-
-
-/*            //--------------------------------------------------------------------------------
-            //Videos Folder Structure: todo
-            globalClass.gfVideosFolder = new File(globalClass.gfAppFolder
-                    + File.separator + "Videos");
-            obtainFolderStructureItem(globalClass.gfVideosFolder);
-
-            globalClass.gfVideoCatalogContentsFile = new File(globalClass.gfVideosFolder.getAbsolutePath()
-                    + File.separator + "CatalogContents.dat");
-
-            globalClass.gfVideoLogsFolder = new File(globalClass.gfVideosFolder
-                    + File.separator + "Logs");
-            obtainFolderStructureItem(globalClass.gfVideoLogsFolder);
-
-            globalClass.gfVideoTagsFile = new File(globalClass.gfVideosFolder.getAbsolutePath()
-                    + File.separator + "Tags.dat");
-            //--------------------------------------------------------------------------------
-
-            //--------------------------------------------------------------------------------
-            //Comics Folder Structure: todo
-            globalClass.gfComicsFolder = new File(globalClass.gfAppFolder
-                    + File.separator + "Comics");
-            obtainFolderStructureItem(globalClass.gfComicsFolder);
-
-            globalClass.gfComicCatalogContentsFile = new File(globalClass.gfComicsFolder.getAbsolutePath()
-                    + File.separator + "CatalogContents.dat");
-
-            globalClass.gfComicLogsFolder = new File(globalClass.gfComicsFolder
-                    + File.separator + "Logs");
-            obtainFolderStructureItem(globalClass.gfComicLogsFolder);
-
-            globalClass.gfComicTagsFile = new File(globalClass.gfComicsFolder.getAbsolutePath()
-                    + File.separator + "Tags.dat");
-            //--------------------------------------------------------------------------------*/
             //Catalog Folder Structure:
             for(int i = 0; i < 3; i++){
                 globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + globalClass.gsCatalogFolderNames[i]);
@@ -153,16 +117,9 @@ public class MainActivityDataService extends IntentService {
             }
         }
 
-/*        //Attempt to read or create the video tags file:
-        globalClass.gtmVideoTagReferenceList =
-                InitTagData(globalClass.gfVideoTagsFile,
-                        getResources().getStringArray(R.array.default_video_tags));
+        /*GlobalClass.CatalogDataFile_UpdateAllRecords_TimeStamps(
+                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS]);*/
 
-        //Attempt to read or create the comic tags file:
-        globalClass.gtmComicTagReferenceList =
-                InitTagData(globalClass.gfComicTagsFile,
-                        getResources().getStringArray(R.array.default_comic_tags));
-        */
         //Get tag reference lists:
         int[] oTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
         for(int i = 0; i < 3; i++){
