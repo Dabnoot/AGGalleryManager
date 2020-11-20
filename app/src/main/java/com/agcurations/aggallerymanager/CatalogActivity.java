@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -636,6 +635,27 @@ public class CatalogActivity extends AppCompatActivity {
     private void StartVideoPlayerActivity(TreeMap<Integer, String[]> treeMap, int iKey) {
         //Key is the TreeMap Key for the selected video.
 
+        //Update the "last viewed" timestamp:
+
+        String[] sFields = treeMap.get(iKey);
+        if(sFields == null){
+            return;
+        }
+        String sVideoID = sFields[GlobalClass.VIDEO_ID_INDEX];
+
+        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+        String[] sDateTime = new String[]{dTimeStamp.toString()};
+        int[] iFields = new int[]{giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
+
+        globalClass.CatalogDataFile_UpdateRecord(
+                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_VIDEOS],
+                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS),
+                sVideoID,
+                GlobalClass.VIDEO_ID_INDEX,
+                iFields,
+                sDateTime);
+
+        //Start the video player:
         Intent intentVideoPlayer = new Intent(this, VideoPlayerActivityFullScreen.class);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY, iKey);

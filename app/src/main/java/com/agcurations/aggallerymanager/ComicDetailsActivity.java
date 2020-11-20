@@ -513,7 +513,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
         intentComicViewer.putExtra(ComicPageViewerActivity.EXTRA_COMIC_PAGE_START, iComicPage);
 
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
-        Double dTimeStamp = globalClass.GetTimeStampFloat();
+        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
         globalClass.CatalogDataFile_UpdateRecord(
