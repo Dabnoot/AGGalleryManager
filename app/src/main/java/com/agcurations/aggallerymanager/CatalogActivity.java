@@ -3,10 +3,8 @@ package com.agcurations.aggallerymanager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.view.menu.ActionMenuItem;
 import androidx.appcompat.view.menu.ActionMenuItemView;
 import androidx.appcompat.widget.SearchView;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -54,10 +52,15 @@ public class CatalogActivity extends AppCompatActivity {
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     private boolean gbRecyclerViewFiltered;
+    private String gsFilterText;
     private boolean gbCatalogTagsRestrictionsOn;
     Spinner gspSpinnerSort;
-    private int giRecyclerViewDefaultSortBySetting;
+    //private int giRecyclerViewDefaultSortBySetting;
+    private int giRecyclerViewSortBySetting;
     private boolean gbRecyclerViewSortAscending = true;
+
+    private Menu ActivityMenu;
+
 
     private final int[] giDataRecordIDIndexes = {
             GlobalClass.VIDEO_ID_INDEX,
@@ -128,27 +131,21 @@ public class CatalogActivity extends AppCompatActivity {
             }
         }
 
-
-
         gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
-
 
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
 
-        giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
+        //Always open with 'sort by DateTimeViewed':
+        //giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
 
-        SetCatalogSortOrderDefault(); //This routine also populates the RecyclerView Adapter.
-        //gspSpinnerSort.setOnItemSelected will call SetItemSortOrderDefault after menu load.
-
+        gsFilterText = "";
 
         if(globalClass.connectivityManager == null){
             globalClass.registerNetworkCallback();
             //This lets us check globalClass.isNetworkConnected to see if we are connected to the
             //network;
         }
-
-        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
 
         //See additional initialization in onCreateOptionsMenu().
     }
@@ -168,12 +165,13 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     public static int SPINNER_ITEM_IMPORT_DATE = 0;
-    public static int SPINNER_ITEM_LAST_READ_DATE = 1;
+    public static int SPINNER_ITEM_LAST_VIEWED_DATE = 1;
     String[] gsSpinnerItems={"Import Date","Last Read Date"};
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
+        ActivityMenu = menu;
 
         getMenuInflater().inflate(R.menu.catalog_action_bar, menu);
 
@@ -194,14 +192,18 @@ public class CatalogActivity extends AppCompatActivity {
                 new SearchView.OnQueryTextListener() {
                     // Override onQueryTextSubmit method
                     @Override
-                    public boolean onQueryTextSubmit(String query)
+                    public boolean onQueryTextSubmit(String sQuery)
                     {
-                        AssignCatalogFilter(true, query);
+                        //AssignCatalogFilter(true, query);
+                        gsFilterText = sQuery;
+                        populate_RecyclerViewCatalogItems();
+                        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
                         gbRecyclerViewFiltered = true;
                         return false;
                     }
                     @Override
-                    public boolean onQueryTextChange(String newText) {
+                    public boolean onQueryTextChange(String sQuery) {
+                        gsFilterText = sQuery;
                         return false;
                     }
                 });
@@ -210,7 +212,9 @@ public class CatalogActivity extends AppCompatActivity {
             @Override
             public boolean onClose() {
                 if(gbRecyclerViewFiltered) {
-                    SetCatalogSortOrderDefault();
+                    //SetCatalogSortOrderDefault();
+                    populate_RecyclerViewCatalogItems();
+                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
                 }
                 return false;
             }
@@ -224,21 +228,17 @@ public class CatalogActivity extends AppCompatActivity {
         //assign adapter to the Spinner
         gspSpinnerSort.setAdapter(adapter);
 
-        //Change spinner position if we have just come in from an import operation.
-        //  The user will want to see that the item they just imported has made it into the
-        //  catalog.
-        if(globalClass.gbJustImported[giMediaCategory]) {
-            //Set sort by to "import_datetime"
-            giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
-            //Set the sort order to reverse so that the newest appears at the top:
-            if( gbRecyclerViewSortAscending) {
-                gbRecyclerViewSortAscending = false;
-            }
+        //Initialize the spinner position:
+        //This is here because when onResume hits when the activity is first created,
+        //  the Spinner does not yet exist.
+        if(giRecyclerViewSortBySetting == giDataRecordDateTimeImportIndexes[giMediaCategory]){
             gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
-            //Get a reference to the sort order icon:
-            MenuItem miSortOrder = menu.findItem(R.id.icon_sort_order);
-            miSortOrder.setIcon(R.drawable.baseline_sort_descending_white_18dp);
-            globalClass.gbJustImported[giMediaCategory] = false;
+            //When sorting by import date, sort Descending by default (newest first):
+            SetSortIconToDescending();
+        } else if(giRecyclerViewSortBySetting == giDataRecordDateTimeViewedIndexes[giMediaCategory]){
+            gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
+            //When sorting by last viewed, sort Ascending by default:
+            SetSortIconToAscending();
         }
 
         //Continue with configuring the spinner:
@@ -246,11 +246,12 @@ public class CatalogActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
-                } else if(position == SPINNER_ITEM_LAST_READ_DATE) {
-                    giRecyclerViewDefaultSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
+                    giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
+                } else if(position == SPINNER_ITEM_LAST_VIEWED_DATE) {
+                    giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
                 }
-                SetCatalogSortOrderDefault();
+                //SetCatalogSortOrderDefault();
+                populate_RecyclerViewCatalogItems();
             }
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
@@ -261,6 +262,7 @@ public class CatalogActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         //Display a message showing the name of the item selected.
@@ -277,20 +279,30 @@ public class CatalogActivity extends AppCompatActivity {
                     //If restrictions are off...
                     //Turn on restrictions, hide items, set icon to show lock symbol
                     gbCatalogTagsRestrictionsOn = true;
-                    item.setIcon(R.drawable.baseline_lock_white_18dp);
+                    SetRestrictedIconToLock();
                     //Repopulate the catalog list:
-                    populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
+                    //populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
+                    populate_RecyclerViewCatalogItems();
+                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
                 }
                 return true;
 
             case R.id.icon_sort_order:
                 if( gbRecyclerViewSortAscending) {
-                    item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
+                    SetSortIconToDescending();
                 } else {
-                    item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
+                    SetSortIconToAscending();
                 }
-                gbRecyclerViewSortAscending = !gbRecyclerViewSortAscending;
-                ApplyRecyclerViewSortOrder();
+                //ApplyRecyclerViewSortOrder();
+                populate_RecyclerViewCatalogItems();
+
+                /*if(gbCatalogTagsRestrictionsOn == false) {
+                    //Change the lock icon to 'unlocked' (it has been changing to 'locked' state in error somehow [todo]):
+                    ActionMenuItemView item_tags_restricted = findViewById(R.id.icon_tags_restricted);
+                    Drawable d = AppCompatResources.getDrawable(this, R.drawable.baseline_lock_open_white_18dp);
+                    item_tags_restricted.setIcon(d);
+                }*/
+
                 return true;
 
             case R.id.menu_FlipView:
@@ -302,7 +314,7 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressLint("RestrictedApi")
+
     @Override
     //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void onActivityResult(int requestCode, int resultCode,
@@ -315,13 +327,13 @@ public class CatalogActivity extends AppCompatActivity {
                 if(resultCode == RESULT_OK){
                     //Show catalog items with restricted tags.
                     //Change the lock icon to 'unlocked':
-                    ActionMenuItemView item = findViewById(R.id.icon_tags_restricted);
-                    Drawable d = AppCompatResources.getDrawable(this, R.drawable.baseline_lock_open_white_18dp);
-                    item.setIcon(d);
+                    SetRestrictedIconToUnlock();
                     //Set the flag:
                     gbCatalogTagsRestrictionsOn = false;
                     //Repopulate the catalog list:
-                    populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
+                    //populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
+                    populate_RecyclerViewCatalogItems();
+                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -334,6 +346,29 @@ public class CatalogActivity extends AppCompatActivity {
         }
 
 
+    }
+
+
+    private void SetRestrictedIconToLock(){
+        MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
+        item.setIcon(R.drawable.baseline_lock_white_18dp);
+    }
+
+    private void SetRestrictedIconToUnlock(){
+        MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
+        item.setIcon(R.drawable.baseline_lock_open_white_18dp);
+    }
+
+    private void SetSortIconToAscending(){
+        MenuItem item = ActivityMenu.findItem(R.id.icon_sort_order);
+        item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
+        gbRecyclerViewSortAscending = true;
+    }
+
+    private void SetSortIconToDescending(){
+        MenuItem item = ActivityMenu.findItem(R.id.icon_sort_order);
+        item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
+        gbRecyclerViewSortAscending = false;
     }
 
     public class CatalogDataServiceResponseReceiver extends BroadcastReceiver {
@@ -496,8 +531,8 @@ public class CatalogActivity extends AppCompatActivity {
                                 sFields[GlobalClass.IMAGE_TAGS_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
-                        //sThumbnailText = sFields[GlobalClass.COMIC_NAME_INDEX];
-                        sThumbnailText = GlobalClass.ConvertDoubleTimeStampToString(sFields[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX]);
+                        sThumbnailText = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        //sThumbnailText = GlobalClass.ConvertDoubleTimeStampToString(sFields[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX]);
                         break;
                 }
                 holder.tvThumbnailText.setText(sThumbnailText);
@@ -546,124 +581,79 @@ public class CatalogActivity extends AppCompatActivity {
 
     }
 
+    public void populate_RecyclerViewCatalogItems(){
 
-
-    public void populate_RecyclerViewCatalogItems(TreeMap<Integer, String[]> tmCatalogList){
-        gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(FilterOutRestrictedItems(tmCatalogList));
-        gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
-        Toast.makeText(this, "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
-    }
-
-    public void SetCatalogSortOrderDefault(){
-        ChangeSortField(giRecyclerViewDefaultSortBySetting); //TODO, return to default sort.
-        gbRecyclerViewFiltered = false;  //Removes filtering.
-    }
-
-
-    public TreeMap<Integer, String[]> FilterOutRestrictedItems(TreeMap<Integer, String[]> tmIncoming){
-        TreeMap<Integer, String[]> tmOutgoing = new TreeMap<>();
-        boolean bNoData = true;
-        if(gbCatalogTagsRestrictionsOn){
-            //Format the restriction tag set so that we can process it:
-            StringBuilder sbRestrictedTags = new StringBuilder();
-            for(Map.Entry<Integer, String> entry: globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).entrySet()){
-                sbRestrictedTags.append(entry.getValue());
-                sbRestrictedTags.append(",");
-            }
-
-            if(sbRestrictedTags.toString().contains(",")) {
-                //If there is at least 1 restricted tag...
-                //Split restricted tags into array:
-                String[] sTagsArray = sbRestrictedTags.toString().split(",");
-
-                if (sTagsArray.length > 0) { //If restricted tags exist...
-                    //Look for restricted tags in the incoming treeMap and transfer the entry if
-                    //  none are found:
-                    String[] sFields;
-                    int i = 0;
-                    for (Map.Entry<Integer, String[]>
-                            entry : tmIncoming.entrySet()) {
-                        sFields = entry.getValue();
-                        boolean bHasRestrictedTag = false;
-                        for (String s : sTagsArray) {
-
-                            if (sFields[giDataRecordTagsIndexes[giMediaCategory]].contains(s.trim())) {
-                                bHasRestrictedTag = true;
-                                break;
-                            }
-                        }
-                        if (!bHasRestrictedTag) {
-                            tmOutgoing.put(i, sFields);
-                            i++;
-                        }
-                    }
-                    bNoData = false;
-
-                }
-            }
-        }
-        if(bNoData) {
-            return tmIncoming;
-        } else {
-            return tmOutgoing;
-        }
-
-
-    }
-
-
-
-    public void ChangeSortField(int iField){
+        //Apply the sort field.
+        //Copy over only items that match a filter, if applied.
+        //Copy over only non-restricted catalog items, if necessary.
+        //Sort the TreeMap.
 
         //Create new TreeMap to presort the catalog items:
         TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Catalog item data
         treeMapPreSort = new TreeMap<>();
 
-        //Get existing data and load elements into the presorter:
-        TreeMap<Integer, String[]> tmCatalogList;
-        tmCatalogList = globalClass.gtmCatalogLists.get(giMediaCategory);
+        //Format the restriction tag set so that we can process it:
+        StringBuilder sbRestrictedTags = new StringBuilder();
+        for(Map.Entry<Integer, String> entry: globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).entrySet()){
+            sbRestrictedTags.append(entry.getValue());
+            sbRestrictedTags.append(",");
+        }
+        //Split restricted tags into array:
+        String[] sTagsArray = new String[]{};
+        if(sbRestrictedTags.toString().contains(",")) {
+            //If there is at least 1 restricted tag...
+            sTagsArray = sbRestrictedTags.toString().split(",");
+        }
+
+        //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
         String[] sCatalogListRecord;
         String sKey;
-
-        //If the user has selected 'Sort by last read date', get the oldest read date and apply
-        //  that date plus one day to any item that has a "zero" for the last read date.
-        String sTemp;
-        double dDateTimeValue = 0d;
-        double dTemp = 0d;
-        if(iField == giDataRecordDateTimeViewedIndexes[giMediaCategory]) {
-            for (Map.Entry<Integer, String[]>
-                    entry : tmCatalogList.entrySet()) {
-                sCatalogListRecord = entry.getValue();
-                sTemp = sCatalogListRecord[iField];
-                try {
-                    dTemp = Double.parseDouble(sTemp);
-                }catch (Exception e){
-                    String s = e.getMessage();
-                    Toast.makeText(this, "Trouble with sort by datetime read by user.\n" + s, Toast.LENGTH_LONG).show();
-                }
-                if (dTemp < dDateTimeValue) dDateTimeValue = dTemp;
-            }
-        }  //if sort by last read datetime, finished getting oldest date.
-
-
-
         for (Map.Entry<Integer, String[]>
-                entry : tmCatalogList.entrySet()) {
+                entry : globalClass.gtmCatalogLists.get(giMediaCategory).entrySet()) {
             sCatalogListRecord = entry.getValue();
-            //Append the ItemID to the key field to ensure that the key is always unique.
-            //  The user could choose to sort by "LAST_READ_DATE", and the LAST_READ_DATE
-            //  could be 0, duplicated. There cannot be duplicate keys.
-            //  The user might also decide to sort by # of pages, for which there might
-            //  be duplicates.
-            sKey = sCatalogListRecord[iField];
-            if(iField == giDataRecordDateTimeViewedIndexes[giMediaCategory]) {
-                if (Double.parseDouble(sKey) == 0d){
-                    dTemp = dDateTimeValue - 1.0d;
-                    sKey = Double.toString(dTemp);
+
+            //Create a unique key to identify the record in the TreeMap, which includes
+            // the SortBy field. TreeMap automatically sorts by the Key field.
+            sKey = sCatalogListRecord[giRecyclerViewSortBySetting];
+            sKey = sKey + sCatalogListRecord[giDataRecordIDIndexes[giMediaCategory]];
+
+            //Apply a filter if requested - build a string out of the records contents, and if a
+            //  filter is to be applied, check for a match. If no match, don't add the record to
+            //  the TreeMap destined for the RecyclerView:
+            boolean bIsFilterMatch = true;
+            if(!gsFilterText.equals("")) {
+                StringBuilder sbRecordText;
+                String sFilterText_LowerCase = gsFilterText.toLowerCase();
+                String sKey_RecordText;
+
+                sbRecordText = new StringBuilder();
+                for (int i = 0; i < GlobalClass.CatalogRecordFields[giMediaCategory].length; i++) {
+                    sbRecordText.append(sCatalogListRecord[i]);
+                }
+                sKey_RecordText = sbRecordText.toString().toLowerCase();
+
+                if (!sKey_RecordText.contains(sFilterText_LowerCase)) {
+                    bIsFilterMatch = false;
                 }
             }
-            sKey = sKey + sCatalogListRecord[giDataRecordIDIndexes[giMediaCategory]];
-            treeMapPreSort.put(sKey, sCatalogListRecord);
+
+            //Check to see if the record needs to be skipped due to restriction settings:
+            boolean bIsRestricted = false;
+            if(gbCatalogTagsRestrictionsOn &&
+                    (sTagsArray.length > 0)) {
+                //If restricted tags exist...
+                //Look for restricted tags in the incoming record:
+                for (String s : sTagsArray) {
+                    if (sCatalogListRecord[giDataRecordTagsIndexes[giMediaCategory]].contains(s.trim())) {
+                        bIsRestricted = true;
+                    }
+                }
+            }
+
+            if(bIsFilterMatch && !bIsRestricted){
+                treeMapPreSort.put(sKey, sCatalogListRecord);
+            }
+
         }
 
         //Review the sort (for debugging purposes):
@@ -677,10 +667,9 @@ public class CatalogActivity extends AppCompatActivity {
                     sCatalogListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER]);
         }*/
 
+        //TreeMap presort will auto-sort itself.
 
-        //Treemap presort will auto-sort itself.
-
-        //Delete everything out of the old TreeMap, and re-populate it with the new sort order:
+        //Clean up the key, apply a reverse sort order, if applicable:
         TreeMap<Integer, String[]> tmNewOrderCatalogList = new TreeMap<>();
         int iRID, iIterator;
         if(gbRecyclerViewSortAscending){
@@ -698,80 +687,14 @@ public class CatalogActivity extends AppCompatActivity {
             iRID += iIterator;
         }
 
-        //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
-        populate_RecyclerViewCatalogItems(tmNewOrderCatalogList);
+
+        //Apply the new TreeMap to the RecyclerView:
+        gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(tmNewOrderCatalogList);
+        gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
+
+
     }
 
-    public void ApplyRecyclerViewSortOrder(){
-
-        //Create new TreeMap to presort the catalog items:
-        TreeMap<Integer, String[]> treeMapNewSortOrder; //String = field being sorted, String = Catalog item data
-        treeMapNewSortOrder = new TreeMap<>();
-
-        //Get existing data and load elements into the presorter:
-        TreeMap<Integer, String[]> tmCatalogList;
-        tmCatalogList = globalClass.gtmCatalogLists.get(giMediaCategory);
-        String[] sCatalogListRecord;
-        Integer iKey, iIterator;
-
-        if(gbRecyclerViewSortAscending){
-            iKey = 0;
-            iIterator = 1;
-        } else {
-            iKey = tmCatalogList.size();
-            iIterator = -1;
-        }
-
-
-        //Reverse the sort of the catalog:
-        for (Map.Entry<Integer, String[]>
-                entry : tmCatalogList.entrySet()) {
-            sCatalogListRecord = entry.getValue();
-            treeMapNewSortOrder.put(iKey, sCatalogListRecord);
-            iKey = iKey + iIterator;
-        }
-
-        //Re-populate the RecyclerVeiw adapter and tell the RecyclerView to update itself:
-        populate_RecyclerViewCatalogItems(treeMapNewSortOrder);
-    }
-
-    public void AssignCatalogFilter(boolean bFilterOn, String sFilterText){
-
-        if(bFilterOn){
-            //Create new TreeMap to presort the Catalog items:
-            TreeMap<Integer, String[]> treeMapFiltered;
-            treeMapFiltered = new TreeMap<>();
-
-            //Get existing data and load elements into the presorter:
-            TreeMap<Integer, String[]> tmCatalogList;
-            tmCatalogList = globalClass.gtmCatalogLists.get(giMediaCategory);
-            String[] sCatalogListRecord;
-            StringBuilder sbKey;
-            int iRID = 0;
-            String sFilterText_LowerCase = sFilterText.toLowerCase();
-            String sKey_LowerCase;
-            for (Map.Entry<Integer, String[]>
-                    entry : tmCatalogList.entrySet()) {
-                sCatalogListRecord = entry.getValue();
-                sbKey = new StringBuilder();
-                for(int i = 0; i < GlobalClass.CatalogRecordFields[giMediaCategory].length; i++){
-                    sbKey.append(sCatalogListRecord[i]);
-                }
-                sKey_LowerCase = sbKey.toString().toLowerCase();
-
-                if(sKey_LowerCase.contains(sFilterText_LowerCase)){
-                    treeMapFiltered.put(iRID, sCatalogListRecord);
-                    iRID++;
-                }
-            }
-            populate_RecyclerViewCatalogItems(treeMapFiltered);
-
-        } else {
-
-            SetCatalogSortOrderDefault();
-
-        }
-    }
 
     //=====================================================================================
     //===== Player/Viewer Code =================================================================
@@ -808,12 +731,24 @@ public class CatalogActivity extends AppCompatActivity {
     public void onResume(){
         super.onResume();
 
-        //If we are returning from ComicDetailsActivity after deleting the comic,
-        //  return the sort:
-        if(globalClass.gbComicJustDeleted){
-            SetCatalogSortOrderDefault();
-            globalClass.gbComicJustDeleted = false;
+        //Apply a resort.
+        //If a comic was just deleted, or a comic was just read, the view needs to be updated.
+        //  This includes removing a comic, or moving a comic to the end of the RecyclerView.
+
+        //Change spinner position if we have just come in from an import operation.
+        //  The user will want to see that the item they just imported has made it into the
+        //  catalog.
+        if(globalClass.gbJustImported[giMediaCategory]) {
+            //Set sort by to "import_datetime"
+            giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
+            globalClass.gbJustImported[giMediaCategory] = false;
+        } else {
+            //Set sort by to "viewed_datetime"
+            giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
         }
+
+        populate_RecyclerViewCatalogItems();
+        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
 
         if(globalClass.ObfuscationOn) {
             //Obfuscate data:
