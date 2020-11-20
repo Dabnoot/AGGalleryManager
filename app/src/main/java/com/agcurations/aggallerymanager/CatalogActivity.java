@@ -2,8 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.view.menu.ActionMenuItemView;
 import androidx.appcompat.widget.SearchView;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -11,14 +9,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -112,7 +108,6 @@ public class CatalogActivity extends AppCompatActivity {
             setTitle(globalClass.sNonObfustatedProgramName[giMediaCategory]);
         }
 
-
         //Update TextView to show 0 catalog items if applicable:
         notifyZeroCatalogItemsIfApplicable();
 
@@ -120,13 +115,15 @@ public class CatalogActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
         //Attempt to match the restricted tag text from the preferences to the Tag ID:
-        String s;
-        for (String sRestrictedTag : ssCatalogTagsRestricted) {
-            for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).entrySet()) {
-                s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
-                if (sRestrictedTag.equals(s)) {
-                    //If the restricted tag has been found, assign it to the restricted tags TreeMap:
-                    globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+        if(ssCatalogTagsRestricted != null) {
+            String s;
+            for (String sRestrictedTag : ssCatalogTagsRestricted) {
+                for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).entrySet()) {
+                    s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
+                    if (sRestrictedTag.equals(s)) {
+                        //If the restricted tag has been found, assign it to the restricted tags TreeMap:
+                        globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                    }
                 }
             }
         }
@@ -135,9 +132,6 @@ public class CatalogActivity extends AppCompatActivity {
 
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
-
-        //Always open with 'sort by DateTimeViewed':
-        //giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
 
         gsFilterText = "";
 
@@ -194,7 +188,6 @@ public class CatalogActivity extends AppCompatActivity {
                     @Override
                     public boolean onQueryTextSubmit(String sQuery)
                     {
-                        //AssignCatalogFilter(true, query);
                         gsFilterText = sQuery;
                         populate_RecyclerViewCatalogItems();
                         Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
@@ -212,7 +205,6 @@ public class CatalogActivity extends AppCompatActivity {
             @Override
             public boolean onClose() {
                 if(gbRecyclerViewFiltered) {
-                    //SetCatalogSortOrderDefault();
                     populate_RecyclerViewCatalogItems();
                     Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
                 }
@@ -250,7 +242,6 @@ public class CatalogActivity extends AppCompatActivity {
                 } else if(position == SPINNER_ITEM_LAST_VIEWED_DATE) {
                     giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
                 }
-                //SetCatalogSortOrderDefault();
                 populate_RecyclerViewCatalogItems();
             }
             @Override
@@ -266,52 +257,39 @@ public class CatalogActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         //Display a message showing the name of the item selected.
-        //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
-        switch (item.getItemId()) {
+        int itemID = item.getItemId();
 
-            case R.id.icon_tags_restricted:
-
-                if(gbCatalogTagsRestrictionsOn){
-                    //If restrictions are on, ask for pin code before unlocking.
-                    Intent intentPinCodeAccessSettings = new Intent(this, PinCodePopup.class);
-                    startActivityForResult(intentPinCodeAccessSettings, PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
-                } else {
-                    //If restrictions are off...
-                    //Turn on restrictions, hide items, set icon to show lock symbol
-                    gbCatalogTagsRestrictionsOn = true;
-                    SetRestrictedIconToLock();
-                    //Repopulate the catalog list:
-                    //populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
-                    populate_RecyclerViewCatalogItems();
-                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
-                }
-                return true;
-
-            case R.id.icon_sort_order:
-                if( gbRecyclerViewSortAscending) {
-                    SetSortIconToDescending();
-                } else {
-                    SetSortIconToAscending();
-                }
-                //ApplyRecyclerViewSortOrder();
+        if(itemID == R.id.icon_tags_restricted){
+            if(gbCatalogTagsRestrictionsOn){
+                //If restrictions are on, ask for pin code before unlocking.
+                Intent intentPinCodeAccessSettings = new Intent(this, PinCodePopup.class);
+                startActivityForResult(intentPinCodeAccessSettings, PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
+            } else {
+                //If restrictions are off...
+                //Turn on restrictions, hide items, set icon to show lock symbol
+                gbCatalogTagsRestrictionsOn = true;
+                SetRestrictedIconToLock();
+                //Repopulate the catalog list:
+                //populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
                 populate_RecyclerViewCatalogItems();
+                Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
+            }
 
-                /*if(gbCatalogTagsRestrictionsOn == false) {
-                    //Change the lock icon to 'unlocked' (it has been changing to 'locked' state in error somehow [todo]):
-                    ActionMenuItemView item_tags_restricted = findViewById(R.id.icon_tags_restricted);
-                    Drawable d = AppCompatResources.getDrawable(this, R.drawable.baseline_lock_open_white_18dp);
-                    item_tags_restricted.setIcon(d);
-                }*/
+        } else if(itemID == R.id.icon_sort_order){
+            if( gbRecyclerViewSortAscending) {
+                SetSortIconToDescending();
+            } else {
+                SetSortIconToAscending();
+            }
+            populate_RecyclerViewCatalogItems();
 
-                return true;
+        } else if(itemID == R.id.menu_FlipView){
+            FlipObfuscation();
 
-            case R.id.menu_FlipView:
-                FlipObfuscation();
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
+        } else {
+            return super.onOptionsItemSelected(item);
         }
+        return true;
     }
 
 
@@ -331,12 +309,10 @@ public class CatalogActivity extends AppCompatActivity {
                     //Set the flag:
                     gbCatalogTagsRestrictionsOn = false;
                     //Repopulate the catalog list:
-                    //populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
                     populate_RecyclerViewCatalogItems();
                     Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
                 }
             }
-
 
         } catch (Exception ex) {
             Context context = getApplicationContext();
@@ -344,7 +320,6 @@ public class CatalogActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
             Log.i(LOG_TAG, ex.toString());
         }
-
 
     }
 
@@ -371,33 +346,7 @@ public class CatalogActivity extends AppCompatActivity {
         gbRecyclerViewSortAscending = false;
     }
 
-    public class CatalogDataServiceResponseReceiver extends BroadcastReceiver {
-        public static final String CATALOG_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CATALOG_DATA_SERVICE";
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            /*boolean bCatalogDataChange;
-            boolean bError;
-
-            //Get boolean indicating data acquisition was successful:
-            bCatalogDataChange = intent.getBooleanExtra(CatalogDataService.EXTRA_BOOL_CATALOG_DATA_CHANGE,false);
-            if( bCatalogDataChange) {
-                //Update TextView to show 0 comics if applicable:
-                notifyZeroComicsIfApplicable();
-                gRecyclerViewComicsAdapter.notifyDataSetChanged();
-            }
-
-            //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(CatalogDataService.EXTRA_BOOL_DATA_IMPORT_PROBLEM,false);
-            if(bError) {
-                String sMessage = intent.getStringExtra(CatalogDataService.EXTRA_STRING_DATA_IMPORT_PROBLEM);
-                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-            }*/
-
-
-        }
-    }
 
     //=====================================================================================
     //===== RecyclerView Code =================================================================
@@ -445,7 +394,7 @@ public class CatalogActivity extends AppCompatActivity {
 
             public ViewHolder(View v) {
                 super(v);
-                ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail); //todo
+                ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
                 tvThumbnailText = v.findViewById(R.id.editText_Title);
                 tvDetails = v.findViewById(R.id.TextView_Details);
             }
@@ -472,9 +421,9 @@ public class CatalogActivity extends AppCompatActivity {
             int orientation = getResources().getConfiguration().orientation;
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-                    v = inflater.inflate(R.layout.recycler_catalog_grid_videos, parent, false); //todo
+                    v = inflater.inflate(R.layout.recycler_catalog_grid_videos, parent, false);
                 } else {
-                    v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false); //todo
+                    v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false);
                 }
             } else {
                 v = inflater.inflate(R.layout.recycler_catalog_row, parent, false);
@@ -565,12 +514,6 @@ public class CatalogActivity extends AppCompatActivity {
                 }
             });
 
-            /*if(holder.tvComicDetails != null) {
-                //The landscape version (GridView) does not have a "Comic Details" TextView, so
-                //  don't try to set it if this object is null.
-                String s = "Comic ID: " + sFields[GlobalClass.COMIC_ID_INDEX];
-                holder.tvComicDetails.setText(s);
-            }*/
         }
 
         // Return the size of the data set (invoked by the layout manager)
@@ -656,17 +599,6 @@ public class CatalogActivity extends AppCompatActivity {
 
         }
 
-        //Review the sort (for debugging purposes):
-        /*for (Map.Entry<String, String[]>
-                entry : treeMapPreSort.entrySet()) {
-            sCatalogListRecord = entry.getValue();
-            sKey = entry.getKey();
-            Log.d("CatalogActivity", "ChangeComicSortOrder: " +
-                    sCatalogListRecord[GlobalClass.COMIC_ID_INDEX] + ": " +
-                    sKey + ", " +
-                    sCatalogListRecord[GlobalClass.COMIC_DATETIME_LAST_READ_BY_USER]);
-        }*/
-
         //TreeMap presort will auto-sort itself.
 
         //Clean up the key, apply a reverse sort order, if applicable:
@@ -715,9 +647,7 @@ public class CatalogActivity extends AppCompatActivity {
 
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
 
-        //intentComicViewer.putExtra(ComicDetailsActivity.COMIC_FIELDS_STRING,sFields);
-        globalClass.gsSelectedComic = sFields; //Don't bother with using the intent to pass this data.
-        // todo: Do bother, now that I understand better what I'm doing. Identified 11/11/2020.
+        intentComicViewer.putExtra(ComicDetailsActivity.EXTRA_COMIC_FIELDS_STRING, sFields);
 
         startActivity(intentComicViewer);
     }

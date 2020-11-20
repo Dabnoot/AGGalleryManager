@@ -51,6 +51,8 @@ public class ComicDetailsActivity extends AppCompatActivity {
     private MenuItem gmiGetOnlineData;
     private MenuItem gmiSaveDetails;
 
+    public static final String EXTRA_COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
+
     private ComicDetailsActivity.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
 
     private boolean gbComicDetailsTitleUpdateAvailable = false;
@@ -84,7 +86,9 @@ public class ComicDetailsActivity extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        gsComicFields = globalClass.gsSelectedComic; //Don't bother with using the intent to pass this data.
+        Intent intent = getIntent();
+        gsComicFields = intent.getStringArrayExtra(EXTRA_COMIC_FIELDS_STRING);
+
         if( gsComicFields == null) return;
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
@@ -505,8 +509,8 @@ public class ComicDetailsActivity extends AppCompatActivity {
     public void StartComicViewerActivity(int iComicPage){
         Intent intentComicViewer = new Intent(this, ComicPageViewerActivity.class);
 
-        //intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_FIELDS_STRING, gsComicFields);
-        intentComicViewer.putExtra(ComicPageViewerActivity.COMIC_PAGE_START, iComicPage);
+        intentComicViewer.putExtra(ComicPageViewerActivity.EXTRA_COMIC_FIELDS_STRING, gsComicFields);
+        intentComicViewer.putExtra(ComicPageViewerActivity.EXTRA_COMIC_PAGE_START, iComicPage);
 
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
         Double dTimeStamp = globalClass.GetTimeStampFloat();

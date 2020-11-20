@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.media.MediaPlayer;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -168,6 +170,7 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
 
         gVideoView = findViewById(R.id.videoview_VideoPlayer);
         MediaController mediaController = new MediaController(this);
+
         mediaController.setMediaPlayer(gVideoView);
         gVideoView.setMediaController(mediaController);
 
@@ -299,5 +302,10 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
     }
 }

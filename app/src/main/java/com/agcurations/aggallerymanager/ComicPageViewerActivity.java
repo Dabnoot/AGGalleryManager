@@ -117,8 +117,8 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
 
     //Global constants
-    public static final String COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
-    public static final String COMIC_PAGE_START = "COMIC_PAGE_START";
+    public static final String EXTRA_COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
+    public static final String EXTRA_COMIC_PAGE_START = "COMIC_PAGE_START";
 
     //Global variables
 
@@ -187,17 +187,12 @@ public class ComicPageViewerActivity extends AppCompatActivity {
         gtvDebug = findViewById(R.id.textViewDebug);
 
 
-
-
-
         //Get the intent used to start this activity:
         Intent intentCaller = getIntent();
         //Get data from the intent:
-        giCurrentPageIndex = intentCaller.getIntExtra(COMIC_PAGE_START,0);
-        gsComicFields = globalClass.gsSelectedComic; //Don't bother with using the intent to pass this data.
-        //There are complications when the user presses the back button. The ComicDetailsActivty
-        //doesn't know what comic to display, and so it has problems. Better to just access
-        // the data from the global data class.
+        giCurrentPageIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START,0);
+        gsComicFields = intentCaller.getStringArrayExtra(EXTRA_COMIC_FIELDS_STRING);
+
 
         if( gsComicFields == null) return;
         gsComicName = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
