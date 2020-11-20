@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -16,6 +17,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -34,6 +36,9 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
     private int giCurrentPosition = 0;
     private static final String PLAYBACK_TIME = "play_time";
 
+
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,7 +82,7 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
         }
 
         //gVideoView = findViewById(R.id.videoView_VideoPlayer);
-        MediaController mediaController = new MediaController(this);
+        final MediaController mediaController = new MediaController(this);
 
         mediaController.setMediaPlayer(gVideoView);
         gVideoView.setMediaController(mediaController);
@@ -95,15 +100,18 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
         lpp.setMargins(0,0,0,iNavigationBarSizeInPixels);
         mediaController.setLayoutParams(lpp);
 
-
+        //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
+        //  double-tap:
         final GestureDetector gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener(){
 
             //Here is the method for double tap
             @Override
             public boolean onDoubleTap(MotionEvent e) {
 
-                //your action here for double tap e.g.
-                //Log.d("OnDoubleTapListener", "onDoubleTap");
+                gVideoView.pause();
+                ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
+                ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
+                Toast.makeText(getApplicationContext(), "Double tap detected.", Toast.LENGTH_SHORT).show();
 
                 return true;
             }
@@ -122,12 +130,23 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
             public boolean onDown(MotionEvent e) {
                 return true;
             }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                if(mediaController.isShowing()){
+                    mediaController.hide();
+                } else {
+                    mediaController.show();
+                }
+                return super.onSingleTapConfirmed(e);
+            }
         });
-
-
-
-
-
+        gVideoView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return gd.onTouchEvent(event);
+            }
+        });
 
         initializePlayer();
     }
@@ -186,7 +205,9 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
         gVideoView.stopPlayback();
     }
 
-
+    public void HideObfuscationImageButton(View v){
+        v.setVisibility(View.INVISIBLE);
+    }
 
 
 
