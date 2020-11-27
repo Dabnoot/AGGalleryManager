@@ -1,9 +1,13 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModelProvider;
+
 import android.content.Context;
 import android.os.Bundle;
 
-import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -15,70 +19,36 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ImportFragment_3_SelectTags#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class ImportFragment_3_SelectTags extends Fragment {
+public class Fragment_SelectTags extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private FragmentSelectTagsViewModel mViewModel;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public ImportFragment_3_SelectTags() {
-        // Required empty public constructor
+    public static Fragment_SelectTags newInstance() {
+        return new Fragment_SelectTags();
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentImport_3_VideoApplyTags.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ImportFragment_3_SelectTags newInstance(String param1, String param2) {
-        ImportFragment_3_SelectTags fragment = new ImportFragment_3_SelectTags();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public final static String MEDIA_CATEGORY = "MEDIA_CATEGORY";
+    public int iMediaCategory;
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_select_tags_fragment, container, false);
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mViewModel = new ViewModelProvider(this.getActivity()).get(FragmentSelectTagsViewModel.class);
+        // TODO: Use the ViewModel
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.import_fragment_3_select_tags, container, false);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        initComponents();
-    }
-
-    public void initComponents() {
+        //Get the Media Category argument passed to this fragment:
+        Bundle args = getArguments();
+        iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
 
         if (getView() == null) {
             return;
@@ -90,41 +60,24 @@ public class ImportFragment_3_SelectTags extends Fragment {
 
         final ListView listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
 
-        // Construct the data source
-        ArrayList<TagItem> alTagItems = new ArrayList<>();
-
-        for(String s: ImportActivity.sDefaultTags){
-            alTagItems.add(new TagItem(false, s, 0));
+        //Create a String array of the tags.
+        //todo: possible candidate for some refactoring - I just threw this together.
+        GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
+        List<String> alsTags = new ArrayList<String>();
+        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+            alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+        }
+        String[] sTags = (String[]) alsTags.toArray(new String[0]);
+        for(String s: sTags){
+            mViewModel.alTagsAll.add(new TagItem(false, s, 0));
         }
 
         // Create the adapter to convert the array to views
-        ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alTagItems);
+        ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll);
 
         listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
-
-    }
-
-
-    //============================================
-    //===  ListView Adapter ======================
-    //============================================
-
-    public class TagItem {
-        public Boolean isChecked;
-        public String Text;
-
-        //Create a variable to be used to preserve the order in which items are selected.
-        //  This is needed because the first tag will be used to select which folder to put
-        //  the items in for storage purposes. Similar to first ingredient in ingredient lists.
-        public int SelectionOrder;
-
-        public TagItem(Boolean _isChecked, String _Text, int _SelectionOrder) {
-            this.isChecked = _isChecked;
-            this.Text = _Text;
-            this.SelectionOrder = _SelectionOrder;
-        }
     }
 
     public class ListViewTagsAdapter extends ArrayAdapter<TagItem> {
@@ -174,12 +127,12 @@ public class ImportFragment_3_SelectTags extends Fragment {
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                     }
-                    TextView tvTags = v.getRootView().findViewById(R.id.textView_ImportTags);
 
-                    //Display the selected data:
                     //Reform the tags string listing all of the selected tags:
+
+                    //Iterate through all of the items in this ArrayAdapter, gathering the items,
+                    //  and using a TreeMap to automatically sort the items:
                     int iItemCount = getCount();
-                    //Use a TreeMap to automatically sort the items:
                     TreeMap<Integer, String> tmSelectedItems = new TreeMap<>();
                     for(int i=0; i< iItemCount; i++){
                         if(getItem(i) != null){
@@ -190,22 +143,17 @@ public class ImportFragment_3_SelectTags extends Fragment {
                             }
                         }
                     }
-                    //Transfer the treemap items back to ImportActivity as well as to a string for display:
-                    StringBuilder sb = new StringBuilder();
-                    ImportActivity.alsImportTags.clear();
+
+                    //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
+                    ArrayList<TagItem> alTagItems = new ArrayList<>();
+
                     for (Map.Entry<Integer, String>
                             entry : tmSelectedItems.entrySet()) {
-                        ImportActivity.alsImportTags.add(entry.getValue());
-                        sb.append(entry.getValue());
-                        sb.append(", ");
+                        alTagItems.add(new TagItem(true, entry.getValue(), entry.getKey()));
                     }
 
-                    String s = sb.toString();
-                    if(s.length() >= 2){
-                        s = s.substring(0, s.length() - 2);
-                    }
+                    mViewModel.alTagsSelected.setValue(alTagItems);
 
-                    tvTags.setText(s);
                 }
             });
 
@@ -213,9 +161,5 @@ public class ImportFragment_3_SelectTags extends Fragment {
             return v;
         }
     }
-
-
-
-
 
 }

@@ -76,6 +76,7 @@ public class ImportFragment_2_SelectItems extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.import_fragment_2_select_items, container, false);
+
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.widget.ViewPager2;
@@ -54,6 +55,9 @@ public class ImportActivity extends AppCompatActivity {
 
     public static int FRAGMENT_COUNT = 7;
 
+    //Constants for individualized tag application via adapter:
+    public static final int GET_TAGS_FOR_IMPORT_ITEM = 1050;
+
     //=================================================
     //User selection global variables:
 
@@ -96,6 +100,7 @@ public class ImportActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.import_activity);
+        setTitle("Import");
 
         contextOfActivity = this;
 
@@ -161,7 +166,23 @@ public class ImportActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
+        if(requestCode == GET_TAGS_FOR_IMPORT_ITEM){
+            if((resultCode == RESULT_OK) &&
+                    (data != null)){
+                Bundle b = data.getBundleExtra(VideoPreviewPopup_wTags.TAG_SELECTION_RESULT_BUNDLE);
+                String sFileURIString = (String) b.getCharSequence(VideoPreviewPopup_wTags.FILE_URI_STRING);
+                String sTagSelectionString = b.getString(VideoPreviewPopup_wTags.TAG_SELECTION_STRING);
+                //Apply the change to the fileListCustomAdapter:
+                fileListCustomAdapter.applyTagsToItem(sFileURIString, sTagSelectionString);
+            }
+        }
+
+
+    }
 
     //======================================================
     //======  FRAGMENT NAVIGATION ROUTINES  ================
@@ -214,7 +235,7 @@ public class ImportActivity extends AppCompatActivity {
             alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
         }
         String[] sTags = (String[]) alsTags.toArray(new String[0]);
-
+        //todo - obsolete?
         sDefaultTags = sTags; //getResources().getStringArray(R.array.default_video_tags);
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
 
@@ -281,6 +302,7 @@ public class ImportActivity extends AppCompatActivity {
         final public String uri;
         final public String mimeType;
         public long videoTimeInMilliseconds;
+        public String prospectiveTags;
 
         public String videoTimeText;
 
@@ -304,6 +326,7 @@ public class ImportActivity extends AppCompatActivity {
             this.mimeType = _mime;
             this.videoTimeInMilliseconds = _videoTimeInMilliseconds;
             this.videoTimeText = "";
+            this.prospectiveTags = null;
         }
     }
 
@@ -344,13 +367,11 @@ public class ImportActivity extends AppCompatActivity {
             ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
             TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
+            TextView tvLine3 = row.findViewById(R.id.textView_Line3);
 
             tvLine1.setText(alFileListDisplay.get(position).name);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             String sLine2 = dfDateFormat.format(alFileListDisplay.get(position).dateLastModified);
-
-
-
 
 
             //If type is video or gif, get the duration:
@@ -391,6 +412,12 @@ public class ImportActivity extends AppCompatActivity {
             tvLine2.setText(sLine2);
 
 
+            String sTags = "Tags: ";
+            if(alFileListDisplay.get(position).prospectiveTags != null){
+                sTags = sTags + alFileListDisplay.get(position).prospectiveTags;
+                sTags = sTags.replace(",", ", "); //Make the text pretty.
+            }
+            tvLine3.setText(sTags);
 
             //set the image type if folder or file
             if(alFileListDisplay.get(position).type.equals("folder")) {
@@ -401,10 +428,6 @@ public class ImportActivity extends AppCompatActivity {
                 //Get the Uri of the file and create/display a thumbnail:
                 String sUri = alFileListDisplay.get(position).uri;
                 Uri uri = Uri.parse(sUri);
-                /*Glide.with(getContext()).
-                        load(uri).
-                        thumbnail(1.0f).
-                        into(ivFileType);*/
                 Glide.with(getContext()).
                         load(uri).
                         into(ivFileType);
@@ -477,12 +500,12 @@ public class ImportActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         //Start the video preview popup activity:
-                        Intent intentVideoPreviewPopup = new Intent(ImportActivity.this, VideoPreviewPopup.class);
+                        Intent intentVideoPreviewPopup = new Intent(ImportActivity.this, VideoPreviewPopup_wTags.class);
                         Bundle b = new Bundle();
                         b.putCharSequence(VideoPreviewPopup.FILE_URI_STRING, alFileListDisplay.get(position).uri);
                         intentVideoPreviewPopup.putExtras(b);
                         intentVideoPreviewPopup.putExtra(VideoPreviewPopup.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileListDisplay.get(position).videoTimeInMilliseconds);
-                        startActivity(intentVideoPreviewPopup);
+                        startActivityForResult(intentVideoPreviewPopup, GET_TAGS_FOR_IMPORT_ITEM);
                     }
                 });
             } else {
@@ -497,6 +520,25 @@ public class ImportActivity extends AppCompatActivity {
 
             return row;
         }
+
+        public void applyTagsToItem(String sFileUri, String sTags){
+            boolean bFoundAndUpdated = false;
+            //Find the item to apply tags:
+            for(fileModel fm: alFileList){
+                if(fm.uri.contentEquals(sFileUri)){
+                    fm.prospectiveTags = sTags;
+                    bFoundAndUpdated = true;
+                    break;
+                }
+            }
+            if (bFoundAndUpdated) {
+                notifyDataSetChanged();
+            }
+
+        }
+
+
+
 
         //To prevent data resetting when scrolled
         @Override

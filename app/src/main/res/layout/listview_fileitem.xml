@@ -1,6 +1,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:layout_height="wrap_content"
     android:padding="6dip">
 
     <CheckBox
@@ -41,12 +41,20 @@
             android:text="Line2"
             android:textSize="16sp" />
 
+        <TextView
+            android:id="@+id/textView_Line3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:text="Line3"
+            android:textSize="16sp" />
+
     </LinearLayout>
 
     <Button
         android:id="@+id/button_VideoPreview"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="67dp"
         android:layout_marginStart="20dp"
         android:text="Preview"
         android:textSize="16sp"

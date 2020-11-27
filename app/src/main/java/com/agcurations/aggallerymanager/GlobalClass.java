@@ -17,9 +17,12 @@ import java.text.Format;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -43,9 +46,9 @@ public class GlobalClass extends Application {
     public File[] gfCatalogContentsFiles = new File[3];
     public File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
-    public List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<TreeMap<Integer, String[]>>();
-    public List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<TreeMap<Integer, String>>(); //Key: TagID, Value: TagName
-    public List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<TreeMap<Integer, String[]>>();
+    public List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
+    public List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
+    public List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
     public boolean[] gbJustImported = {false, false, false};
     public String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
@@ -97,44 +100,14 @@ public class GlobalClass extends Application {
 
 
 
-    public File gfVideosFolder;
-    public File gfVideoLogsFolder;
-    public File gfVideoCatalogContentsFile;
-    public File gfVideoTagsFile;
-    //Video tag variables:
-    public TreeMap<Integer, String[]> gtmVideoTagReferenceList = new TreeMap<>();
-    public TreeMap<Integer, String> gtmVideoTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
-    public TreeMap<Integer, String[]> gtmCatalogVideoList = new TreeMap<>();
-    public boolean gbVideosJustImported = false;
-
-    public File gfImagesFolder;
-    public File gfImagesLogsFolder;
-    public File gfImagesCatalogContentsFile;
-    public File gfImagesTagsFile;
-    //Video tag variables:
-    public TreeMap<Integer, String[]> gtmImagesTagReferenceList = new TreeMap<>();
-    public TreeMap<Integer, String> gtmImagesTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
-    public TreeMap<Integer, String[]> gtmCatalogImagesList = new TreeMap<>();
-    public boolean gbImagesJustImported = false;
 
 
     public File gfComicsFolder;
     public File gfComicLogsFolder;
     public File gfComicCatalogContentsFile;
-    public File gfComicTagsFile;
-    //Process comic tags in same manner as video and picture tags.
-    //  However, they are not interchangeable. The fictional nature of comics could cause problems
-    //  if the tags were applied to real videos or pictures.
-    public TreeMap<Integer, String[]> gtmComicTagReferenceList = new TreeMap<>();
-    public TreeMap<Integer, String> gtmComicTagsRestricted = new TreeMap<>(); //Key: TagID, Value: TagName
     public TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
-    public int giComicDefaultSortBySetting = COMIC_TAGS_INDEX;
-    public boolean gbComicSortAscending = true;
     public boolean gbComicJustImported = false;
-    public String[] gsSelectedComic;
 
-    public int giCatalogDefaultSortBySetting = COMIC_DATETIME_IMPORT_INDEX;
-    public boolean gbCatalogSortAscending = true;
 
 
     //Each tags file has the same fields:
@@ -145,9 +118,6 @@ public class GlobalClass extends Application {
             "TAG_ID",
             "TAG_NAME",
             "DESCRIPTION"};
-
-
-
 
 
     public void SendToast(Context context, String sMessage){
@@ -535,6 +505,35 @@ public class GlobalClass extends Application {
             return false;
         }
     }
+
+    public ArrayList<String> GetTagsInUse(TreeMap<Integer, String[]> tmCatalogList, int iTagsField){
+        //iTagsField is the field in String[] that contains the tags.
+
+        ArrayList<String> alsTagsInUse = new ArrayList<>();
+
+        SortedSet<String> ssTemp = new TreeSet<>();
+        for(Map.Entry<Integer, String[]>
+                CatalogEntry : tmCatalogList.entrySet()) {
+            //Sort the strings:
+            String[] sTempArray = CatalogEntry.getValue()[iTagsField].split(",");
+            for (String s : sTempArray) {
+                ssTemp.add(s.trim()); //This will not allow the addition of duplicate tags.
+            }
+        }
+
+        //Format the strings:
+        StringBuilder sb = new StringBuilder();
+        Iterator<String> isIterator = ssTemp.iterator();
+        sb.append(isIterator.next());
+        while(isIterator.hasNext()){
+            alsTagsInUse.add(isIterator.next());
+        }
+
+        return alsTagsInUse;
+    }
+
+
+
 
     //=====================================================================================
     //===== Videos Variables Section ======================================================
