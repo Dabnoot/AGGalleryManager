@@ -1,10 +1,13 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +18,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -88,134 +92,38 @@ public class ImportFragment_3_SelectTags extends Fragment {
             return;
         }
 
-        final ListView listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
+        //Start the tag selection fragment:
+        FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+        Fragment_SelectTags fst = new Fragment_SelectTags();
+        Bundle args = new Bundle();
+        args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, ImportActivity.giImportMediaCategory);
+        fst.setArguments(args);
+        ft.replace(R.id.child_fragment_tag_selector, fst);
+        ft.commit();
 
-        // Construct the data source
-        ArrayList<TagItem> alTagItems = new ArrayList<>();
+        //React to changes in the selected tag data in the ViewModel initiated in ImportActivity:
+        final Observer<ArrayList<TagItem>> selectedTagsObserver = new Observer<ArrayList<TagItem>>() {
+            @Override
+            public void onChanged(ArrayList<TagItem> tagItems) {
 
-        for(String s: ImportActivity.sDefaultTags){
-            alTagItems.add(new TagItem(false, s, 0));
-        }
-
-        // Create the adapter to convert the array to views
-        ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alTagItems);
-
-        listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
-        listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-
-
-    }
-
-
-    //============================================
-    //===  ListView Adapter ======================
-    //============================================
-
-    public class TagItem {
-        public Boolean isChecked;
-        public String Text;
-
-        //Create a variable to be used to preserve the order in which items are selected.
-        //  This is needed because the first tag will be used to select which folder to put
-        //  the items in for storage purposes. Similar to first ingredient in ingredient lists.
-        public int SelectionOrder;
-
-        public TagItem(Boolean _isChecked, String _Text, int _SelectionOrder) {
-            this.isChecked = _isChecked;
-            this.Text = _Text;
-            this.SelectionOrder = _SelectionOrder;
-        }
-    }
-
-    public class ListViewTagsAdapter extends ArrayAdapter<TagItem> {
-        int iOrderIterator = 0;
-
-        public ListViewTagsAdapter(Context context, ArrayList<TagItem> tagItems) {
-            super(context, 0, tagItems);
-        }
-
-        @Override
-        public View getView(int position, View v, ViewGroup parent) {
-            // Get the data item for this position
-            final TagItem tagItem = getItem(position);
-            // Check if an existing view is being reused, otherwise inflate the view
-            if (v == null) {
-                v = LayoutInflater.from(getContext()).inflate(R.layout.activity_import_listview_tag_item, parent, false);
-            }
-            // Lookup view for data population
-            final CheckedTextView checkedTextView_TagText = (CheckedTextView) v.findViewById(R.id.checkedTextView_TagText);
-            // Populate the data into the template view using the data object
-            String s = tagItem.Text;
-            checkedTextView_TagText.setText(s);
-
-
-            //Set the selection state (needed as views are recycled).
-            if(tagItem.isChecked){
-                checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
-                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBlack));
-            } else {
-                checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
-                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
-            }
-
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //Handle changing the checked state:
-                    tagItem.isChecked = !tagItem.isChecked;
-                    if(tagItem.isChecked){
-                        iOrderIterator++;
-                        tagItem.SelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
-                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
-                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBlack));
-                    } else {
-                        //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
-                        tagItem.SelectionOrder = 0; //Remove the index showing the order in which this item was selected.
-                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
-                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
-                    }
-                    TextView tvTags = v.getRootView().findViewById(R.id.textView_ImportTags);
-
-                    //Display the selected data:
-                    //Reform the tags string listing all of the selected tags:
-                    int iItemCount = getCount();
-                    //Use a TreeMap to automatically sort the items:
-                    TreeMap<Integer, String> tmSelectedItems = new TreeMap<>();
-                    for(int i=0; i< iItemCount; i++){
-                        if(getItem(i) != null){
-                            TagItem ti = getItem(i);
-                            assert ti != null;
-                            if(ti.isChecked) {
-                                tmSelectedItems.put(ti.SelectionOrder, ti.Text);
-                            }
-                        }
-                    }
-                    //Transfer the treemap items back to ImportActivity as well as to a string for display:
-                    StringBuilder sb = new StringBuilder();
-                    ImportActivity.alsImportTags.clear();
-                    for (Map.Entry<Integer, String>
-                            entry : tmSelectedItems.entrySet()) {
-                        ImportActivity.alsImportTags.add(entry.getValue());
-                        sb.append(entry.getValue());
+                //Get the text of the tags and display:
+                StringBuilder sb = new StringBuilder();
+                if(tagItems.size() > 0) {
+                    sb.append(tagItems.get(0).TagText);
+                    for (int i = 1; i < tagItems.size(); i++) {
                         sb.append(", ");
+                        sb.append(tagItems.get(i).TagText);
                     }
-
-                    String s = sb.toString();
-                    if(s.length() >= 2){
-                        s = s.substring(0, s.length() - 2);
-                    }
-
-                    tvTags.setText(s);
                 }
-            });
+                TextView tv = getView().findViewById(R.id.textView_ImportTags);
+                if(tv != null){
+                    tv.setText(sb.toString());
+                }
 
-            // Return the completed view to render on screen
-            return v;
-        }
+            }
+        };
+        ImportActivity.viewModelTags.alTagsSelected.observe(this, selectedTagsObserver);
+
     }
-
-
-
-
 
 }

@@ -60,24 +60,20 @@ public class Fragment_SelectTags extends Fragment {
 
         final ListView listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
 
-        //Create a String array of the tags.
-        //todo: possible candidate for some refactoring - I just threw this together.
+        //Get tags to put in the ListView:
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-        List<String> alsTags = new ArrayList<String>();
         for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
-        }
-        String[] sTags = (String[]) alsTags.toArray(new String[0]);
-        for(String s: sTags){
-            mViewModel.alTagsAll.add(new TagItem(false, s, 0));
+            mViewModel.alTagsAll.add(new TagItem(
+                    false,
+                    Integer.parseInt(entry.getValue()[GlobalClass.TAG_ID_INDEX]),
+                    entry.getValue()[GlobalClass.TAG_NAME_INDEX],
+                    0));
         }
 
-        // Create the adapter to convert the array to views
+        // Create the adapter for the ListView, and set the ListView adapter:
         ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll);
-
         listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-
     }
 
     public class ListViewTagsAdapter extends ArrayAdapter<TagItem> {
@@ -98,7 +94,7 @@ public class Fragment_SelectTags extends Fragment {
             // Lookup view for data population
             final CheckedTextView checkedTextView_TagText = (CheckedTextView) v.findViewById(R.id.checkedTextView_TagText);
             // Populate the data into the template view using the data object
-            String s = tagItem.Text;
+            String s = tagItem.TagText;
             checkedTextView_TagText.setText(s);
 
 
@@ -131,15 +127,15 @@ public class Fragment_SelectTags extends Fragment {
                     //Reform the tags string listing all of the selected tags:
 
                     //Iterate through all of the items in this ArrayAdapter, gathering the items,
-                    //  and using a TreeMap to automatically sort the items:
+                    //  and using a TreeMap to automatically sort the items by selection order:
                     int iItemCount = getCount();
-                    TreeMap<Integer, String> tmSelectedItems = new TreeMap<>();
+                    TreeMap<Integer, TagItem> tmSelectedItems = new TreeMap<>();
                     for(int i=0; i< iItemCount; i++){
                         if(getItem(i) != null){
-                            TagItem ti = getItem(i);
-                            assert ti != null;
-                            if(ti.isChecked) {
-                                tmSelectedItems.put(ti.SelectionOrder, ti.Text);
+                            TagItem tagItem1 = getItem(i);
+                            assert tagItem1 != null;
+                            if(tagItem1.isChecked) {
+                                tmSelectedItems.put(tagItem1.SelectionOrder, tagItem1);
                             }
                         }
                     }
@@ -147,9 +143,9 @@ public class Fragment_SelectTags extends Fragment {
                     //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
                     ArrayList<TagItem> alTagItems = new ArrayList<>();
 
-                    for (Map.Entry<Integer, String>
+                    for (Map.Entry<Integer, TagItem>
                             entry : tmSelectedItems.entrySet()) {
-                        alTagItems.add(new TagItem(true, entry.getValue(), entry.getKey()));
+                        alTagItems.add(entry.getValue());
                     }
 
                     mViewModel.alTagsSelected.setValue(alTagItems);

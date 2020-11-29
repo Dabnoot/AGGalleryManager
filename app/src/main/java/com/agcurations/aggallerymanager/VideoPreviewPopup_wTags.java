@@ -27,12 +27,11 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
     public static final String VIDEO_FILE_DURATION_MILLISECONDS_LONG = "VIDEO_FILE_DURATION_MILLISECONDS_LONG";
 
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
-    public static final String TAG_SELECTION_STRING = "TAG_SELECTION_STRING";
+    public static final String TAG_SELECTION_TAG_IDS = "TAG_SELECTION_TAG_IDS";
 
     private FragmentSelectTagsViewModel mViewModel;
 
     private String gsUriVideoFile;
-    private String gsSelectedTags;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,19 +48,26 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
         final Observer<ArrayList<TagItem>> selectedTagsObserver = new Observer<ArrayList<TagItem>>() {
             @Override
             public void onChanged(ArrayList<TagItem> tagItems) {
+
+                //Get the text of the tags and display:
                 StringBuilder sb = new StringBuilder();
-                sb.append(tagItems.get(0).Text);
-                for (int i = 1; i < tagItems.size(); i++){
-                    sb.append(",");
-                    sb.append(tagItems.get(i).Text);
+                sb.append("Tags: ");
+                if(tagItems.size() > 0) {
+                    sb.append(tagItems.get(0).TagText);
+                    for (int i = 1; i < tagItems.size(); i++) {
+                        sb.append(", ");
+                        sb.append(tagItems.get(i).TagText);
+                    }
                 }
-                gsSelectedTags = sb.toString();
                 TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
                 if(tv != null){
-                    String sTemp = gsSelectedTags;
-                    sTemp = sTemp.replace(",",", ");
-                    sTemp = "Tags: " + sTemp;
-                    tv.setText(sTemp);
+                    tv.setText(sb.toString());
+                }
+
+                //Get the tag IDs to pass back to the calling activity:
+                ArrayList<Integer> aliTagIDs = new ArrayList<>();
+                for(TagItem ti : tagItems){
+                    aliTagIDs.add(ti.TagID);
                 }
 
                 //Prepare a result to send back to the calling activity:
@@ -69,7 +75,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
                 Bundle b = new Bundle();
                 //Put back the file URI string so that the file can be located:
                 b.putCharSequence(FILE_URI_STRING, gsUriVideoFile);
-                b.putString(TAG_SELECTION_STRING, gsSelectedTags);
+                b.putIntegerArrayList(TAG_SELECTION_TAG_IDS, aliTagIDs);
                 data.putExtra(TAG_SELECTION_RESULT_BUNDLE, b);
                 setResult(RESULT_OK, data);
 
@@ -77,7 +83,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
         };
         mViewModel.alTagsSelected.observe(this, selectedTagsObserver);
 
-
+        //Start the tag selection fragment:
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment_SelectTags fst = new Fragment_SelectTags();
         Bundle args = new Bundle();

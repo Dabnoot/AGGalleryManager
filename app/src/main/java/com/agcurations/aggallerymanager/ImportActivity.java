@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 public class ImportActivity extends AppCompatActivity {
     private GlobalClass globalClass;
 
-    public static ViewPager2 ViewPager2_Import;
+    public static ViewPager2 ViewPager2_Import; //todo: Is this is what is driving all of my fragment components to be required static?
     FragmentImportViewPagerAdapter importViewPagerFragmentAdapter;
 
     //Fragment page indexes:
@@ -72,11 +73,13 @@ public class ImportActivity extends AppCompatActivity {
     //FragmentImport_2_SelectItems
     public static int SelectItemsListViewWidth = 1000;
     public static FileListCustomAdapter fileListCustomAdapter;
+    public static boolean gbSkipGlobalTagAssignmentFragment = false;
 
     //FragmentImport_3_SelectTags
     public static String[] sDefaultTags; //Default tags from which user may select.
     public static ArrayList<String> alsImportTags = new ArrayList<>();  //Tags to apply to the import.
     public static String gsImportDestinationFolder;
+    public static FragmentSelectTagsViewModel viewModelTags; //Used for applying tags globally to an entire import selection.
 
     //FragmentImport_4_ImportMethod
     public static int IMPORT_METHOD_MOVE = 0;
@@ -128,6 +131,10 @@ public class ImportActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(importDataServiceResponseReceiver,filter);
 
         mediaMetadataRetriever = new MediaMetadataRetriever();
+
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        viewModelTags = new ViewModelProvider(this).get(FragmentSelectTagsViewModel.class);
+
     }
 
     @Override
@@ -175,9 +182,10 @@ public class ImportActivity extends AppCompatActivity {
                     (data != null)){
                 Bundle b = data.getBundleExtra(VideoPreviewPopup_wTags.TAG_SELECTION_RESULT_BUNDLE);
                 String sFileURIString = (String) b.getCharSequence(VideoPreviewPopup_wTags.FILE_URI_STRING);
-                String sTagSelectionString = b.getString(VideoPreviewPopup_wTags.TAG_SELECTION_STRING);
+                ArrayList<Integer> aliTagIDs = new ArrayList<>();
+                aliTagIDs = b.getIntegerArrayList(VideoPreviewPopup_wTags.TAG_SELECTION_TAG_IDS);
                 //Apply the change to the fileListCustomAdapter:
-                fileListCustomAdapter.applyTagsToItem(sFileURIString, sTagSelectionString);
+                fileListCustomAdapter.applyTagsToItem(sFileURIString, aliTagIDs);
             }
         }
 
@@ -229,16 +237,11 @@ public class ImportActivity extends AppCompatActivity {
 
     public void buttonNextClick_ItemSelectComplete(View v){
 
-        //Create an array of tag strings from GlobalClass:
-        List<String> alsTags = new ArrayList<String>();
-        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giImportMediaCategory).entrySet()){
-            alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+        if(gbSkipGlobalTagAssignmentFragment){
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
+        } else {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
         }
-        String[] sTags = (String[]) alsTags.toArray(new String[0]);
-        //todo - obsolete?
-        sDefaultTags = sTags; //getResources().getStringArray(R.array.default_video_tags);
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
-
 
     }
 
@@ -302,7 +305,7 @@ public class ImportActivity extends AppCompatActivity {
         final public String uri;
         final public String mimeType;
         public long videoTimeInMilliseconds;
-        public String prospectiveTags;
+        public ArrayList<Integer> prospectiveTags; //"prospective" as in "about to be applied".
 
         public String videoTimeText;
 
@@ -411,13 +414,19 @@ public class ImportActivity extends AppCompatActivity {
 
             tvLine2.setText(sLine2);
 
+            //Get tag text to apply to list item if tags are assigned to the item:
+            StringBuilder sbTags = new StringBuilder();
+            sbTags.append("Tags: ");
+            ArrayList<Integer> aliTagIDs = alFileListDisplay.get(position).prospectiveTags;
 
-            String sTags = "Tags: ";
-            if(alFileListDisplay.get(position).prospectiveTags != null){
-                sTags = sTags + alFileListDisplay.get(position).prospectiveTags;
-                sTags = sTags.replace(",", ", "); //Make the text pretty.
+            if(aliTagIDs != null){
+                sbTags.append(globalClass.getTagFromID(aliTagIDs.get(0), giImportMediaCategory));
+                for(int i = 1; i < aliTagIDs.size(); i++){
+                    sbTags.append(", ");
+                    sbTags.append(globalClass.getTagFromID(aliTagIDs.get(i), giImportMediaCategory));
+                }
             }
-            tvLine3.setText(sTags);
+            tvLine3.setText(sbTags.toString());
 
             //set the image type if folder or file
             if(alFileListDisplay.get(position).type.equals("folder")) {
@@ -521,12 +530,14 @@ public class ImportActivity extends AppCompatActivity {
             return row;
         }
 
-        public void applyTagsToItem(String sFileUri, String sTags){
+        public void applyTagsToItem(String sFileUri, ArrayList<Integer> aliTagIDs){
             boolean bFoundAndUpdated = false;
             //Find the item to apply tags:
             for(fileModel fm: alFileList){
                 if(fm.uri.contentEquals(sFileUri)){
-                    fm.prospectiveTags = sTags;
+                    fm.prospectiveTags = aliTagIDs;
+                    fm.isChecked = true;
+                    gbSkipGlobalTagAssignmentFragment = true;
                     bFoundAndUpdated = true;
                     break;
                 }

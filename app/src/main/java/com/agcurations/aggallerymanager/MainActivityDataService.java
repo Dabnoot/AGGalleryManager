@@ -121,11 +121,11 @@ public class MainActivityDataService extends IntentService {
                 globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS]);*/
 
         //Get tag reference lists:
-        int[] oTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
+        int[] iTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
         for(int i = 0; i < 3; i++){
             globalClass.gtmCatalogTagReferenceLists.add(
                     InitTagData(globalClass.gfCatalogTagsFiles[i],
-                            getResources().getStringArray(oTagStringArrayResources[i])));
+                            getResources().getStringArray(iTagStringArrayResources[i])));
         }
 
         //Initialize NEW TreeMap instances:

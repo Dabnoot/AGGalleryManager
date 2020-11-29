@@ -506,16 +506,17 @@ public class GlobalClass extends Application {
         }
     }
 
-    public ArrayList<String> GetTagsInUse(TreeMap<Integer, String[]> tmCatalogList, int iTagsField){
-        //iTagsField is the field in String[] that contains the tags.
+    public ArrayList<String> GetTagsInUse(Integer iMediaCategory){
+
+        int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
 
         ArrayList<String> alsTagsInUse = new ArrayList<>();
 
         SortedSet<String> ssTemp = new TreeSet<>();
         for(Map.Entry<Integer, String[]>
-                CatalogEntry : tmCatalogList.entrySet()) {
+                CatalogEntry : gtmCatalogLists.get(iMediaCategory).entrySet()) {
             //Sort the strings:
-            String[] sTempArray = CatalogEntry.getValue()[iTagsField].split(",");
+            String[] sTempArray = CatalogEntry.getValue()[iTagsField[iMediaCategory]].split(",");
             for (String s : sTempArray) {
                 ssTemp.add(s.trim()); //This will not allow the addition of duplicate tags.
             }
@@ -532,6 +533,9 @@ public class GlobalClass extends Application {
         return alsTagsInUse;
     }
 
+    public String getTagFromID(Integer iTagID, Integer iMediaCategory){
+        return gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID)[TAG_NAME_INDEX];
+    }
 
 
 
