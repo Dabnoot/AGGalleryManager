@@ -621,7 +621,7 @@ public class CatalogActivity extends AppCompatActivity {
         //Apply the new TreeMap to the RecyclerView:
         gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(tmNewOrderCatalogList);
         gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
-
+        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
 
     }
 
@@ -631,18 +631,11 @@ public class CatalogActivity extends AppCompatActivity {
     //=====================================================================================
 
     public final static String RECYCLERVIEW_VIDEO_TREEMAP_FILTERED = "RECYCLERVIEW_VIDEO_TREEMAP_FILTERED";
-    public final static String RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY = "RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY";
-    private void StartVideoPlayerActivity(TreeMap<Integer, String[]> treeMap, int iKey) {
+    public final static String RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID = "RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY";
+    private void StartVideoPlayerActivity(TreeMap<Integer, String[]> treeMap, Integer iVideoID) {
         //Key is the TreeMap Key for the selected video.
 
-        //Update the "last viewed" timestamp:
-
-        String[] sFields = treeMap.get(iKey);
-        if(sFields == null){
-            return;
-        }
-        String sVideoID = sFields[GlobalClass.VIDEO_ID_INDEX];
-
+        //Create a time stamp for "last viewed" and update the catalog record and record in memory:
         Double dTimeStamp = GlobalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
@@ -650,7 +643,7 @@ public class CatalogActivity extends AppCompatActivity {
         globalClass.CatalogDataFile_UpdateRecord(
                 globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_VIDEOS],
                 globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS),
-                sVideoID,
+                iVideoID.toString(),
                 GlobalClass.VIDEO_ID_INDEX,
                 iFields,
                 sDateTime);
@@ -658,7 +651,7 @@ public class CatalogActivity extends AppCompatActivity {
         //Start the video player:
         Intent intentVideoPlayer = new Intent(this, VideoPlayerActivityFullScreen.class);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
-        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY, iKey);
+        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, iVideoID);
         startActivity(intentVideoPlayer);
     }
 

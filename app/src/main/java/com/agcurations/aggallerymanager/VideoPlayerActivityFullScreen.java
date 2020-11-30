@@ -2,7 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +23,7 @@ import android.widget.VideoView;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class VideoPlayerActivityFullScreen extends AppCompatActivity {
@@ -75,7 +75,16 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
             return;
         }
         treeMapRecyclerViewVideos.putAll(hashMapTemp);
-        giKey = intentVideoPlayer.getIntExtra(CatalogActivity.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY,0);
+        Integer iVideoID = intentVideoPlayer.getIntExtra(CatalogActivity.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID,0);
+
+        //Get the TreeMap key associated with the Video ID provided:
+        giKey = 0;
+        for (Map.Entry<Integer, String[]>
+                entry : treeMapRecyclerViewVideos.entrySet()) {
+            if(entry.getValue()[GlobalClass.VIDEO_ID_INDEX].equals(iVideoID.toString())) {
+                giKey = entry.getKey();
+            }
+        }
 
         if (savedInstanceState != null) {
             giCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
