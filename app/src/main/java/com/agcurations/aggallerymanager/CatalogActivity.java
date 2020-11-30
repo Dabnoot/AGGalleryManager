@@ -253,6 +253,45 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onResume(){
+        super.onResume();
+
+        //Apply a resort.
+        //If a comic was just deleted, or a comic was just read, the view needs to be updated.
+        //  This includes removing a comic, or moving a comic to the end of the RecyclerView.
+
+        //Change spinner position if we have just come in from an import operation.
+        //  The user will want to see that the item they just imported has made it into the
+        //  catalog.
+        if(globalClass.gbJustImported[giMediaCategory]) {
+            //Set sort by to "import_datetime"
+            giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
+            globalClass.gbJustImported[giMediaCategory] = false;
+            //Set the spinner:
+            if(gspSpinnerSort != null) {
+                gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
+            }
+        } else {
+            //Set sort by to "viewed_datetime"
+            giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
+            if(gspSpinnerSort != null) {
+                gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
+            }
+        }
+
+        populate_RecyclerViewCatalogItems();
+        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
+
+        if(globalClass.ObfuscationOn) {
+            //Obfuscate data:
+            Obfuscate();
+        } else {
+            //Remove obfuscation:
+            RemoveObfuscation();
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         //Display a message showing the name of the item selected.
         int itemID = item.getItemId();
@@ -290,7 +329,6 @@ public class CatalogActivity extends AppCompatActivity {
         return true;
     }
 
-
     @Override
     //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void onActivityResult(int requestCode, int resultCode,
@@ -320,7 +358,6 @@ public class CatalogActivity extends AppCompatActivity {
         }
 
     }
-
 
     private void SetRestrictedIconToLock(){
         MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
@@ -669,37 +706,6 @@ public class CatalogActivity extends AppCompatActivity {
     //===== Obfuscation Code ==============================================================
     //=====================================================================================
 
-    @Override
-    public void onResume(){
-        super.onResume();
-
-        //Apply a resort.
-        //If a comic was just deleted, or a comic was just read, the view needs to be updated.
-        //  This includes removing a comic, or moving a comic to the end of the RecyclerView.
-
-        //Change spinner position if we have just come in from an import operation.
-        //  The user will want to see that the item they just imported has made it into the
-        //  catalog.
-        if(globalClass.gbJustImported[giMediaCategory]) {
-            //Set sort by to "import_datetime"
-            giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
-            globalClass.gbJustImported[giMediaCategory] = false;
-        } else {
-            //Set sort by to "viewed_datetime"
-            giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
-        }
-
-        populate_RecyclerViewCatalogItems();
-        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
-
-        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }
-    }
 
     public void FlipObfuscation() {
         //This routine primarily accessed via the toggle option on the menu.
