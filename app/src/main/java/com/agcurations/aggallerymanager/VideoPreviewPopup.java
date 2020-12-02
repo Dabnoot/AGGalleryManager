@@ -15,7 +15,9 @@ import androidx.annotation.Nullable;
 
 public class VideoPreviewPopup extends Activity {
     public static final String FILE_URI_STRING = "FILE_URI_STRING";
+    public static final String FILE_ITEM = "FILE_ITEM";
     public static final String VIDEO_FILE_DURATION_MILLISECONDS_LONG = "VIDEO_FILE_DURATION_MILLISECONDS_LONG";
+    
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +37,8 @@ public class VideoPreviewPopup extends Activity {
         Bundle b = getIntent().getExtras();
 
         if(b != null) {
+            
+            
             String sUriVideoFile = b.getString(FILE_URI_STRING);
             long lVideoDuration = b.getLong(VIDEO_FILE_DURATION_MILLISECONDS_LONG,0);
 

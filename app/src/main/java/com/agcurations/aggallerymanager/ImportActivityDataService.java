@@ -6,9 +6,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.SystemClock;
 import android.provider.DocumentsContract;
-import android.provider.Settings;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -78,7 +75,7 @@ public class ImportActivityDataService extends IntentService {
 
     public static void startActionImportFiles(Context context,
                                               String sDestination,
-                                              ArrayList<ImportActivity.fileModel> alImportFileList,
+                                              ArrayList<FileItem> alImportFileList,
                                               String sTags,
                                               int iMediaCategory,
                                               int iMoveOrCopy) {
@@ -107,7 +104,7 @@ public class ImportActivityDataService extends IntentService {
                 final String sDestination = intent.getStringExtra(EXTRA_IMPORT_FILES_DESTINATION);
                 final String sTags = intent.getStringExtra(EXTRA_IMPORT_FILES_TAGS);
                 //todo: check the cast below:
-                final ArrayList<ImportActivity.fileModel> alFileList = (ArrayList<ImportActivity.fileModel>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
+                final ArrayList<FileItem> alFileList = (ArrayList<FileItem>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 handleAction_startActionImportDirectoryContents(
@@ -134,7 +131,7 @@ public class ImportActivityDataService extends IntentService {
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
         if(ImportActivity.guriImportTreeURI != null){
             Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
-            ArrayList<ImportActivity.fileModel> alFileList = null;
+            ArrayList<FileItem> alFileList = null;
             try {
                 alFileList = readFolderContent(uriImportTreeUri, ".+", iMediaCategory, FILES_ONLY);
             }catch (Exception e){
@@ -154,7 +151,7 @@ public class ImportActivityDataService extends IntentService {
 
 
     private void handleAction_startActionImportDirectoryContents(String sDestination,
-                                                                 ArrayList<ImportActivity.fileModel> alFileList,
+                                                                 ArrayList<FileItem> alFileList,
                                                                  String sTags,
                                                                  int iMediaCategory,
                                                                  int iMoveOrCopy) {
@@ -168,8 +165,8 @@ public class ImportActivityDataService extends IntentService {
 
 
         //Calculate total size of all files to import:
-        for(ImportActivity.fileModel fm: alFileList){
-            lTotalImportSize = lTotalImportSize + fm.sizeBytes;
+        for(FileItem fi: alFileList){
+            lTotalImportSize = lTotalImportSize + fi.sizeBytes;
         }
         lProgressDenominator = lTotalImportSize;
 
@@ -221,8 +218,8 @@ public class ImportActivityDataService extends IntentService {
             //New record ID identified.
 
             //Loop through the files and copy or move them:
-            for(ImportActivity.fileModel fm: alFileList){
-                uriSourceFile = Uri.parse(fm.uri);
+            for(FileItem fi: alFileList){
+                uriSourceFile = Uri.parse(fi.uri);
                 DocumentFile dfSource = DocumentFile.fromSingleUri(ImportActivity.getContextOfActivity(), uriSourceFile);
                 try {
                     //Write next behavior to the screen log:
@@ -232,7 +229,7 @@ public class ImportActivityDataService extends IntentService {
                     } else {
                         sLogLine = sLogLine + "copy ";
                     }
-                    sLogLine = sLogLine + "of file " + fm.name + " to destination...";
+                    sLogLine = sLogLine + "of file " + fi.name + " to destination...";
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
                             true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB",
@@ -296,9 +293,9 @@ public class ImportActivityDataService extends IntentService {
                         String[] sFieldData = new String[]{
                                 String.valueOf(iNextRecordId),
                                 sFileName,
-                                String.valueOf((fm.sizeBytes / 1024) / 1024),
-                                String.valueOf(fm.videoTimeInMilliseconds),
-                                String.valueOf(fm.videoTimeText),
+                                String.valueOf((fi.sizeBytes / 1024) / 1024),
+                                String.valueOf(fi.videoTimeInMilliseconds),
+                                String.valueOf(fi.videoTimeText),
                                 "",
                                 sDestination,
                                 sTags,
@@ -404,7 +401,7 @@ public class ImportActivityDataService extends IntentService {
     int FILES_ONLY = 1;
 
     //Use a Uri instead of a path to get folder contents:
-    public ArrayList<ImportActivity.fileModel> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iMediaCategory, int iSelectFoldersFilesOrBoth) {
+    public ArrayList<FileItem> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iMediaCategory, int iSelectFoldersFilesOrBoth) {
         //iMediaCategory: Specify media category. -1 ignore, 0 video, >0 images.
 
 
@@ -448,7 +445,7 @@ public class ImportActivityDataService extends IntentService {
                 RECEIVER_STORAGE_LOCATION);
 
 
-        ArrayList<ImportActivity.fileModel> alFileList = new ArrayList<>();
+        ArrayList<FileItem> alFileList = new ArrayList<>();
 
         while (cImport.moveToNext()) {
 
@@ -519,10 +516,10 @@ public class ImportActivityDataService extends IntentService {
 
             //create the file model and initialize:
             //Don't detect the duration of video files here. It could take too much time.
-            ImportActivity.fileModel file = new ImportActivity.fileModel(fileType, docName, fileExtension, lFileSize, dateLastModified, false, sUri, mimeType, -1L);
+            FileItem fileItem = new FileItem(fileType, docName, fileExtension, lFileSize, dateLastModified, false, sUri, mimeType, -1L);
 
             //Add the file model to the ArrayList:
-            alFileList.add(file);
+            alFileList.add(fileItem);
 
 
 

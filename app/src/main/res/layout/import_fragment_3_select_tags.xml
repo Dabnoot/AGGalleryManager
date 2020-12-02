@@ -20,7 +20,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp">
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_alignParentTop="true"
+            android:layout_above="@+id/button_NextStep">
 
             <TextView
                 android:id="@+id/textView_Label_Title"
@@ -47,6 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/textView_Label_Subtext"
+                android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
                 android:text="Tags:"
                 android:textSize="20sp" />
@@ -55,15 +59,24 @@
                 android:id="@+id/textView_ImportTags"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/textView_LabelImportTags"
-                android:layout_alignParentStart="true"
+                android:layout_toEndOf="@+id/textView_LabelImportTags"
+                android:layout_alignTop="@+id/textView_LabelImportTags"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="10dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="0dp"
                 android:layout_marginBottom="10dp"
                 android:textSize="20sp"
                 android:text=""/>
+
+            <ListView
+                android:id="@+id/listView_FilesToImport"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/textView_ImportTags"
+                android:layout_alignParentEnd="true"
+                android:scrollbarSize="20dp"/>
 
         </RelativeLayout>
 

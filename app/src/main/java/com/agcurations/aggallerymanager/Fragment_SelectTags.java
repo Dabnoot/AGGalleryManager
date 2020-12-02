@@ -4,6 +4,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Context;
+import android.nfc.Tag;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -16,10 +17,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -32,6 +31,7 @@ public class Fragment_SelectTags extends Fragment {
     }
 
     public final static String MEDIA_CATEGORY = "MEDIA_CATEGORY";
+    public final static String PRESELECTED_TAG_ITEMS = "PRESELECTED_TAG_ITEMS";
     public int iMediaCategory;
 
     @Override
@@ -49,6 +49,7 @@ public class Fragment_SelectTags extends Fragment {
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
         iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
+        ArrayList<Integer> aliPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
 
         if (getView() == null) {
             return;
@@ -61,26 +62,50 @@ public class Fragment_SelectTags extends Fragment {
         final ListView listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
 
         //Get tags to put in the ListView:
+        int iPreSelectedTagsCount = 0;
+        int iPreSelectedTagIterator = 0;
+        int iSelectionOrder;
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            mViewModel.alTagsAll.add(new TagItem(
-                    false,
-                    Integer.parseInt(entry.getValue()[GlobalClass.TAG_ID_INDEX]),
-                    entry.getValue()[GlobalClass.TAG_NAME_INDEX],
-                    0));
+        for (Map.Entry<Integer, String[]> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+
+            //Check to see if the list of preselected tags includes this tag from the reference list.
+            //  If so, set the item as "checked":
+            boolean bIsChecked = false;
+            iSelectionOrder = 0;
+            if(aliPreselectedTags != null){
+                iPreSelectedTagsCount = aliPreselectedTags.size();
+                int iReferenceTagID = Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]);
+                for(int iPreSelectedTagID: aliPreselectedTags){
+                    if(iReferenceTagID == iPreSelectedTagID){
+                        bIsChecked = true;
+                        iPreSelectedTagIterator++;
+                        iSelectionOrder = iPreSelectedTagIterator;
+                    }
+                }
+            }
+
+            TagItem tiNew = new TagItem(
+                    bIsChecked,
+                    Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]),
+                    tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_NAME_INDEX],
+                    iSelectionOrder);
+
+
+            mViewModel.alTagsAll.add(tiNew);
         }
 
         // Create the adapter for the ListView, and set the ListView adapter:
-        ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll);
+        ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
         listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
     public class ListViewTagsAdapter extends ArrayAdapter<TagItem> {
-        int iOrderIterator = 0;
+        int iOrderIterator;
 
-        public ListViewTagsAdapter(Context context, ArrayList<TagItem> tagItems) {
+        public ListViewTagsAdapter(Context context, ArrayList<TagItem> tagItems, int iPreselectedCount) {
             super(context, 0, tagItems);
+            iOrderIterator = iPreselectedCount;
         }
 
         @Override
@@ -148,7 +173,7 @@ public class Fragment_SelectTags extends Fragment {
                         alTagItems.add(entry.getValue());
                     }
 
-                    mViewModel.alTagsSelected.setValue(alTagItems);
+                    mViewModel.setSelectedTags(alTagItems);
 
                 }
             });

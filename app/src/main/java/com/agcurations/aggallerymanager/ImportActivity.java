@@ -26,7 +26,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 public class ImportActivity extends AppCompatActivity {
     private GlobalClass globalClass;
 
-    public static ViewPager2 ViewPager2_Import; //todo: Is this is what is driving all of my fragment components to be required static?
+    public ViewPager2 ViewPager2_Import; //todo: Is this is what is driving all of my fragment components to be required static?
     FragmentImportViewPagerAdapter importViewPagerFragmentAdapter;
 
     //Fragment page indexes:
@@ -71,9 +69,9 @@ public class ImportActivity extends AppCompatActivity {
     public static Uri guriImportTreeURI; //Uri of selected base folder holding files/folders to be imported.
 
     //FragmentImport_2_SelectItems
-    public static int SelectItemsListViewWidth = 1000;
-    public static FileListCustomAdapter fileListCustomAdapter;
-    public static boolean gbSkipGlobalTagAssignmentFragment = false;
+    public static int SelectItemsListViewWidth = 1000;  //Expands the listview items to the width of the listview.
+    public static FileListCustomAdapter fileListCustomAdapter; //For the file selector.
+
 
     //FragmentImport_3_SelectTags
     public static String[] sDefaultTags; //Default tags from which user may select.
@@ -164,7 +162,7 @@ public class ImportActivity extends AppCompatActivity {
                 //Check to see if this is a response to request to get directory contents:
                 boolean bGetDirContentsResponse = intent.getBooleanExtra(ImportActivityDataService.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
                 if(bGetDirContentsResponse) {
-                    ArrayList<ImportActivity.fileModel> alFileList = (ArrayList<ImportActivity.fileModel>) intent.getSerializableExtra(ImportActivityDataService.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
+                    ArrayList<FileItem> alFileList = (ArrayList<FileItem>) intent.getSerializableExtra(ImportActivityDataService.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
                     fileListCustomAdapter = new FileListCustomAdapter(getContextOfActivity(), R.id.listView_FolderContents, alFileList);
                 }
 
@@ -181,11 +179,11 @@ public class ImportActivity extends AppCompatActivity {
             if((resultCode == RESULT_OK) &&
                     (data != null)){
                 Bundle b = data.getBundleExtra(VideoPreviewPopup_wTags.TAG_SELECTION_RESULT_BUNDLE);
-                String sFileURIString = (String) b.getCharSequence(VideoPreviewPopup_wTags.FILE_URI_STRING);
-                ArrayList<Integer> aliTagIDs = new ArrayList<>();
+                FileItem fileItem = (FileItem) b.getSerializable(VideoPreviewPopup_wTags.FILE_ITEM);
+                ArrayList<Integer> aliTagIDs;
                 aliTagIDs = b.getIntegerArrayList(VideoPreviewPopup_wTags.TAG_SELECTION_TAG_IDS);
                 //Apply the change to the fileListCustomAdapter:
-                fileListCustomAdapter.applyTagsToItem(sFileURIString, aliTagIDs);
+                fileListCustomAdapter.applyTagsToItem(fileItem.uri, aliTagIDs);
             }
         }
 
@@ -236,13 +234,7 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-
-        if(gbSkipGlobalTagAssignmentFragment){
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
-        } else {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
-        }
-
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
@@ -294,44 +286,7 @@ public class ImportActivity extends AppCompatActivity {
     //References:
     //  https://thecodeprogram.com/build-your-own-file-selector-screen-on-android
 
-    public static class fileModel implements Serializable {
 
-        final public String type; //folder or file
-        final public String name;
-        final public String extension;
-        final public long sizeBytes;
-        final public Date dateLastModified;
-        public Boolean isChecked;
-        final public String uri;
-        final public String mimeType;
-        public long videoTimeInMilliseconds;
-        public ArrayList<Integer> prospectiveTags; //"prospective" as in "about to be applied".
-
-        public String videoTimeText;
-
-        public fileModel(String _type,
-                         String _name,
-                         String _extension,
-                         long _sizeBytes,
-                         Date _dateLastModified,
-                         Boolean _isChecked,
-                         String _uri,
-                         String _mime,
-                         long _videoTimeInMilliseconds)
-        {
-            this.uri = _uri;
-            this.type = _type;
-            this.name = _name;
-            this.extension = _extension;
-            this.sizeBytes = _sizeBytes;
-            this.dateLastModified = _dateLastModified;
-            this.isChecked = _isChecked;
-            this.mimeType = _mime;
-            this.videoTimeInMilliseconds = _videoTimeInMilliseconds;
-            this.videoTimeText = "";
-            this.prospectiveTags = null;
-        }
-    }
 
     public static String getDurationTextFromMilliseconds(long lMilliseconds){
         String sDurationText;
@@ -344,13 +299,13 @@ public class ImportActivity extends AppCompatActivity {
         return sDurationText;
     }
 
-    public class FileListCustomAdapter extends ArrayAdapter<fileModel> {
+    public class FileListCustomAdapter extends ArrayAdapter<FileItem> {
 
-        final public ArrayList<fileModel> alFileList;
-        private ArrayList<fileModel> alFileListDisplay;
+        final public ArrayList<FileItem> alFileList;
+        private ArrayList<FileItem> alFileListDisplay;
         private  boolean bSelectAllSelected = false;
 
-        public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<fileModel> xmlList) {
+        public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<FileItem> xmlList) {
             super(context, textViewResourceId, xmlList);
             alFileList = new ArrayList<>(xmlList);
             alFileListDisplay = new ArrayList<>(xmlList);
@@ -420,10 +375,12 @@ public class ImportActivity extends AppCompatActivity {
             ArrayList<Integer> aliTagIDs = alFileListDisplay.get(position).prospectiveTags;
 
             if(aliTagIDs != null){
-                sbTags.append(globalClass.getTagFromID(aliTagIDs.get(0), giImportMediaCategory));
-                for(int i = 1; i < aliTagIDs.size(); i++){
-                    sbTags.append(", ");
-                    sbTags.append(globalClass.getTagFromID(aliTagIDs.get(i), giImportMediaCategory));
+                if(aliTagIDs.size() > 0) {
+                    sbTags.append(globalClass.getTagFromID(aliTagIDs.get(0), giImportMediaCategory));
+                    for (int i = 1; i < aliTagIDs.size(); i++) {
+                        sbTags.append(", ");
+                        sbTags.append(globalClass.getTagFromID(aliTagIDs.get(i), giImportMediaCategory));
+                    }
                 }
             }
             tvLine3.setText(sbTags.toString());
@@ -467,7 +424,7 @@ public class ImportActivity extends AppCompatActivity {
 
                     alFileListDisplay.get(position).isChecked = bNewCheckedState;
 
-                    for(fileModel fm: alFileList){
+                    for(FileItem fm: alFileList){
                         if(fm.name.contentEquals(alFileListDisplay.get(position).name)){
                             fm.isChecked = bNewCheckedState;
                             break;
@@ -491,7 +448,7 @@ public class ImportActivity extends AppCompatActivity {
                     //  alFileListDisplay may be a subset of alFileList.
                     alFileListDisplay.get(position).isChecked = bNewCheckedState;
 
-                    for(fileModel fm: alFileList){
+                    for(FileItem fm: alFileList){
                         if(fm.name.contentEquals(alFileListDisplay.get(position).name)){
                             fm.isChecked = bNewCheckedState;
                             break;
@@ -511,7 +468,9 @@ public class ImportActivity extends AppCompatActivity {
                         //Start the video preview popup activity:
                         Intent intentVideoPreviewPopup = new Intent(ImportActivity.this, VideoPreviewPopup_wTags.class);
                         Bundle b = new Bundle();
-                        b.putCharSequence(VideoPreviewPopup.FILE_URI_STRING, alFileListDisplay.get(position).uri);
+                        b.putCharSequence(VideoPreviewPopup_wTags.FILE_URI_STRING, alFileListDisplay.get(position).uri);
+                        FileItem fileItem = alFileListDisplay.get(position);
+                        b.putSerializable(VideoPreviewPopup_wTags.FILE_ITEM, alFileListDisplay.get(position));
                         intentVideoPreviewPopup.putExtras(b);
                         intentVideoPreviewPopup.putExtra(VideoPreviewPopup.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileListDisplay.get(position).videoTimeInMilliseconds);
                         startActivityForResult(intentVideoPreviewPopup, GET_TAGS_FOR_IMPORT_ITEM);
@@ -533,11 +492,10 @@ public class ImportActivity extends AppCompatActivity {
         public void applyTagsToItem(String sFileUri, ArrayList<Integer> aliTagIDs){
             boolean bFoundAndUpdated = false;
             //Find the item to apply tags:
-            for(fileModel fm: alFileList){
+            for(FileItem fm: alFileList){
                 if(fm.uri.contentEquals(sFileUri)){
                     fm.prospectiveTags = aliTagIDs;
                     fm.isChecked = true;
-                    gbSkipGlobalTagAssignmentFragment = true;
                     bFoundAndUpdated = true;
                     break;
                 }
@@ -558,7 +516,7 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         @Override
-        public fileModel getItem(int position) {
+        public FileItem getItem(int position) {
             return alFileListDisplay.get(position);
         }
 
@@ -569,10 +527,10 @@ public class ImportActivity extends AppCompatActivity {
 
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
-            for(fileModel fmDisplayed:alFileListDisplay){
+            for(FileItem fmDisplayed:alFileListDisplay){
                 fmDisplayed.isChecked = bSelectAllSelected;
                 //Translate the selected item state to alFileList:
-                for(fileModel fm: alFileList){
+                for(FileItem fm: alFileList){
                     if(fm.name.contentEquals(fmDisplayed.name)){
                         fm.isChecked = bSelectAllSelected;
                         break;
@@ -586,7 +544,7 @@ public class ImportActivity extends AppCompatActivity {
 
         public void applySearch(String sSearch){
             alFileListDisplay.clear();
-            for(fileModel fm : alFileList){
+            for(FileItem fm : alFileList){
                 if(fm.name.contains(sSearch)){
                     alFileListDisplay.add(fm);
                 }
@@ -601,8 +559,8 @@ public class ImportActivity extends AppCompatActivity {
         //Allow sort by file name or modified date
 
         //Sort by file name ascending:
-        private class FileNameAscComparator implements Comparator<fileModel> {
-            public int compare(fileModel fm1, fileModel fm2) {
+        private class FileNameAscComparator implements Comparator<FileItem> {
+            public int compare(FileItem fm1, FileItem fm2) {
                 String FileName1 = fm1.name.toUpperCase();
                 String FileName2 = fm2.name.toUpperCase();
 
@@ -612,8 +570,8 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Sort by file name descending:
-        private class FileNameDescComparator implements Comparator<fileModel> {
-            public int compare(fileModel fm1, fileModel fm2) {
+        private class FileNameDescComparator implements Comparator<FileItem> {
+            public int compare(FileItem fm1, FileItem fm2) {
                 String FileName1 = fm1.name.toUpperCase();
                 String FileName2 = fm2.name.toUpperCase();
 
@@ -623,9 +581,9 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Sort by file modified date ascending:
-        private class FileModifiedDateAscComparator implements Comparator<fileModel> {
+        private class FileModifiedDateAscComparator implements Comparator<FileItem> {
 
-            public int compare(fileModel fm1, fileModel fm2) {
+            public int compare(FileItem fm1, FileItem fm2) {
                 Date FileDate1 = fm1.dateLastModified;
                 Date FileDate2 = fm2.dateLastModified;
 
@@ -635,9 +593,9 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         //Sort by file modified date descending:
-        private class FileModifiedDateDescComparator implements Comparator<fileModel> {
+        private class FileModifiedDateDescComparator implements Comparator<FileItem> {
 
-            public int compare(fileModel fm1, fileModel fm2) {
+            public int compare(FileItem fm1, FileItem fm2) {
                 Date FileDate1 = fm1.dateLastModified;
                 Date FileDate2 = fm2.dateLastModified;
 

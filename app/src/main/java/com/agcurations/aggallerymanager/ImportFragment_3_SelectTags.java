@@ -1,10 +1,7 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -12,15 +9,10 @@ import androidx.lifecycle.Observer;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -92,6 +84,14 @@ public class ImportFragment_3_SelectTags extends Fragment {
             return;
         }
 
+        //Populate the listview:
+        final ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
+        if(listView_FilesToImport != null) {
+            listView_FilesToImport.setAdapter(ImportActivity.fileListCustomAdapter);
+        }
+
+
+
         //Start the tag selection fragment:
         FragmentTransaction ft = getChildFragmentManager().beginTransaction();
         Fragment_SelectTags fst = new Fragment_SelectTags();
@@ -115,14 +115,18 @@ public class ImportFragment_3_SelectTags extends Fragment {
                         sb.append(tagItems.get(i).TagText);
                     }
                 }
+                //Display the tags:
                 TextView tv = getView().findViewById(R.id.textView_ImportTags);
                 if(tv != null){
                     tv.setText(sb.toString());
                 }
 
+                //Apply the selected tags to individual items:
+
+
             }
         };
-        ImportActivity.viewModelTags.alTagsSelected.observe(this, selectedTagsObserver);
+        ImportActivity.viewModelTags.altiTagsSelected.observe(this, selectedTagsObserver);
 
     }
 

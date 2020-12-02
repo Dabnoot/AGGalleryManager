@@ -7,10 +7,8 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,6 +22,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 public class VideoPreviewPopup_wTags extends AppCompatActivity {
     public static final String FILE_URI_STRING = "FILE_URI_STRING";
+    public static final String FILE_ITEM = "FILE_ITEM";
     public static final String VIDEO_FILE_DURATION_MILLISECONDS_LONG = "VIDEO_FILE_DURATION_MILLISECONDS_LONG";
 
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
@@ -31,7 +30,9 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
 
     private FragmentSelectTagsViewModel mViewModel;
 
-    private String gsUriVideoFile;
+    //private String gsUriVideoFile;
+
+    private FileItem gfileItem;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -74,24 +75,14 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
                 Intent data = new Intent();
                 Bundle b = new Bundle();
                 //Put back the file URI string so that the file can be located:
-                b.putCharSequence(FILE_URI_STRING, gsUriVideoFile);
+                b.putSerializable(FILE_ITEM, gfileItem);
                 b.putIntegerArrayList(TAG_SELECTION_TAG_IDS, aliTagIDs);
                 data.putExtra(TAG_SELECTION_RESULT_BUNDLE, b);
                 setResult(RESULT_OK, data);
 
             }
         };
-        mViewModel.alTagsSelected.observe(this, selectedTagsObserver);
-
-        //Start the tag selection fragment:
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        Fragment_SelectTags fst = new Fragment_SelectTags();
-        Bundle args = new Bundle();
-        args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, ImportActivity.giImportMediaCategory);
-        fst.setArguments(args);
-        ft.replace(R.id.child_fragment_tag_selector, fst);
-        ft.commit();
-
+        mViewModel.altiTagsSelected.observe(this, selectedTagsObserver);
 
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -104,12 +95,44 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
         getWindow().setLayout((int)(width * fSize), (int)(height * fSize));
 
         Bundle b = getIntent().getExtras();
-
         if(b != null) {
 
-            //Get the video URI:
-            gsUriVideoFile = b.getString(FILE_URI_STRING);
-            long lVideoDuration = b.getLong(VIDEO_FILE_DURATION_MILLISECONDS_LONG,0);
+            gfileItem = (FileItem) b.getSerializable(FILE_ITEM);
+
+            //Start the tag selection fragment:
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            Fragment_SelectTags fst = new Fragment_SelectTags();
+            Bundle args = new Bundle();
+            args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, ImportActivity.giImportMediaCategory);
+            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gfileItem.prospectiveTags);
+            fst.setArguments(args);
+            ft.replace(R.id.child_fragment_tag_selector, fst);
+            ft.commit();
+
+            //Init the tags list if there are tags already assigned to this item:
+            //Get the text of the tags and display:
+            if(gfileItem.prospectiveTags != null) {
+                if (gfileItem.prospectiveTags.size() > 0) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Tags: ");
+                    GlobalClass globalClass;
+                    globalClass = (GlobalClass) getApplicationContext();
+                    sb.append(globalClass.getTagFromID(gfileItem.prospectiveTags.get(0), ImportActivity.giImportMediaCategory));
+                    for (int i = 1; i < gfileItem.prospectiveTags.size(); i++) {
+                        sb.append(", ");
+                        sb.append(globalClass.getTagFromID(gfileItem.prospectiveTags.get(i), ImportActivity.giImportMediaCategory));
+                    }
+                    TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
+                    if (tv != null) {
+                        tv.setText(sb.toString());
+                    }
+                }
+            }
+
+
+
+            //Build the preview:
+            long lVideoDuration = gfileItem.videoTimeInMilliseconds;
 
             if(lVideoDuration < 0L){
                 //If there is no video length, exit this activity.
@@ -131,7 +154,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
             MediaMetadataRetriever retriever = new MediaMetadataRetriever();
 
             // Set data source to retriever.
-            Uri uriVideoFile = Uri.parse(gsUriVideoFile);
+            Uri uriVideoFile = Uri.parse(gfileItem.uri);
             retriever.setDataSource(ImportActivity.getContextOfActivity(), uriVideoFile);
 
             //Get frame bitmaps:

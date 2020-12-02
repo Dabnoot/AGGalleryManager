@@ -88,14 +88,14 @@ public class ImportFragment_5_Confirmation extends Fragment {
         //Populate the ListView with selected file names from an earlier step:
         ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
         // Construct the data source
-        ArrayList<String> alImportFileNames = new ArrayList<String>();
+        ArrayList<String> alImportFileNames = new ArrayList<>();
         int iFileCount = 0;
         long lRequiredStorageSpaceBytes = 0L;
-        for(ImportActivity.fileModel fm: ImportActivity.fileListCustomAdapter.alFileList){
-            if(fm.isChecked) {
-                alImportFileNames.add(fm.name);
+        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileList){
+            if(fileItem.isChecked) {
+                alImportFileNames.add(fileItem.name);
                 iFileCount++;
-                lRequiredStorageSpaceBytes += fm.sizeBytes;
+                lRequiredStorageSpaceBytes += fileItem.sizeBytes;
             }
         }
 

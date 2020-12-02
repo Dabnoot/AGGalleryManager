@@ -126,10 +126,10 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         String sTags = sb.toString();
 
         //Create list of files to import:
-        ArrayList<ImportActivity.fileModel> alImportFileList = new ArrayList<>();
-        for(ImportActivity.fileModel fm: ImportActivity.fileListCustomAdapter.alFileList){
-            if(fm.isChecked){
-                alImportFileList.add(fm);
+        ArrayList<FileItem> alImportFileList = new ArrayList<>();
+        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileList){
+            if(fileItem.isChecked){
+                alImportFileList.add(fileItem);
             }
         }
 
