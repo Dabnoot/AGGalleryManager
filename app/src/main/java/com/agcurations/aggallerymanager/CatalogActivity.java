@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -15,6 +16,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,6 +26,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +45,7 @@ public class CatalogActivity extends AppCompatActivity {
 
     //Global Variables:
     private GlobalClass globalClass;
-    private int giMediaCategory;
+    //private int giMediaCategory;
     private RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> gRecyclerViewCatalogAdapter;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
@@ -98,13 +101,13 @@ public class CatalogActivity extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        Intent intent = getIntent();
-        giMediaCategory = intent.getIntExtra("MEDIA_CATEGORY", -1);
+        //Intent intent = getIntent();
+        //giMediaCategory = intent.getIntExtra("MEDIA_CATEGORY", -1);
 
         if(globalClass.ObfuscationOn) {
             setTitle(globalClass.getObfuscatedProgramName());
         } else {
-            setTitle(globalClass.sNonObfustatedProgramName[giMediaCategory]);
+            setTitle(globalClass.sNonObfustatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
         }
 
         //Update TextView to show 0 catalog items if applicable:
@@ -117,11 +120,11 @@ public class CatalogActivity extends AppCompatActivity {
         if(ssCatalogTagsRestricted != null) {
             String s;
             for (String sRestrictedTag : ssCatalogTagsRestricted) {
-                for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).entrySet()) {
+                for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
                     s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
                     if (sRestrictedTag.equals(s)) {
                         //If the restricted tag has been found, assign it to the restricted tags TreeMap:
-                        globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                        globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
                     }
                 }
             }
@@ -147,7 +150,7 @@ public class CatalogActivity extends AppCompatActivity {
 
         //Update TextView to show 0 items if applicable:
         TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
-        if (globalClass.gtmCatalogLists.get(giMediaCategory).size() == 0 ) {
+        if (globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).size() == 0 ) {
             tvCatalogStatus.setVisibility(View.VISIBLE);
             String s = "Catalog contains 0 items.";
             tvCatalogStatus.setText(s);
@@ -222,11 +225,11 @@ public class CatalogActivity extends AppCompatActivity {
         //Initialize the spinner position:
         //This is here because when onResume hits when the activity is first created,
         //  the Spinner does not yet exist.
-        if(giRecyclerViewSortBySetting == giDataRecordDateTimeImportIndexes[giMediaCategory]){
+        if(giRecyclerViewSortBySetting == giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory]){
             gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
             //When sorting by import date, sort Descending by default (newest first):
             SetSortIconToDescending();
-        } else if(giRecyclerViewSortBySetting == giDataRecordDateTimeViewedIndexes[giMediaCategory]){
+        } else if(giRecyclerViewSortBySetting == giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory]){
             gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
             //When sorting by last viewed, sort Ascending by default:
             SetSortIconToAscending();
@@ -237,9 +240,9 @@ public class CatalogActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
+                    giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
                 } else if(position == SPINNER_ITEM_LAST_VIEWED_DATE) {
-                    giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
+                    giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
                 }
                 populate_RecyclerViewCatalogItems();
             }
@@ -252,9 +255,20 @@ public class CatalogActivity extends AppCompatActivity {
         return super.onCreateOptionsMenu(menu);
     }
 
+    private Parcelable recyclerViewState;
+    @Override
+    protected void onPause() {
+        //Attempt to save the state, ie scroll position, of the recyclerView:
+        recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
+        super.onPause();
+    }
+
     @Override
     public void onResume(){
         super.onResume();
+        //Attempt to restore the state, ie scroll position, of the recyclerView:
+        gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
+
 
         //Apply a resort.
         //If a comic was just deleted, or a comic was just read, the view needs to be updated.
@@ -263,17 +277,17 @@ public class CatalogActivity extends AppCompatActivity {
         //Change spinner position if we have just come in from an import operation.
         //  The user will want to see that the item they just imported has made it into the
         //  catalog.
-        if(globalClass.gbJustImported[giMediaCategory]) {
+        if(globalClass.gbJustImported[globalClass.giSelectedCatalogMediaCategory]) {
             //Set sort by to "import_datetime"
-            giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[giMediaCategory];
-            globalClass.gbJustImported[giMediaCategory] = false;
+            giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
+            globalClass.gbJustImported[globalClass.giSelectedCatalogMediaCategory] = false;
             //Set the spinner:
             if(gspSpinnerSort != null) {
                 gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
             }
         } else {
             //Set sort by to "viewed_datetime"
-            giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[giMediaCategory];
+            giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
             if(gspSpinnerSort != null) {
                 gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
             }
@@ -290,6 +304,8 @@ public class CatalogActivity extends AppCompatActivity {
             RemoveObfuscation();
         }
     }
+
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -429,9 +445,9 @@ public class CatalogActivity extends AppCompatActivity {
 
             public ViewHolder(View v) {
                 super(v);
-                ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvThumbnailText = v.findViewById(R.id.editText_Title);
-                tvDetails = v.findViewById(R.id.TextView_Details);
+                ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                tvThumbnailText = v.findViewById(R.id.textView_Title);
+                tvDetails = v.findViewById(R.id.textView_Details);
             }
         }
 
@@ -455,7 +471,7 @@ public class CatalogActivity extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             int orientation = getResources().getConfiguration().orientation;
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
                     v = inflater.inflate(R.layout.recycler_catalog_grid_videos, parent, false);
                 } else {
                     v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false);
@@ -477,7 +493,7 @@ public class CatalogActivity extends AppCompatActivity {
             String[] sFields;
             sFields = treeMap.get(mapKeys[position]);
             if (sFields == null) {
-                sFields = new String[GlobalClass.CatalogRecordFields[giMediaCategory].length]; //To prevent possible null pointer exception later.
+                sFields = new String[GlobalClass.CatalogRecordFields[globalClass.giSelectedCatalogMediaCategory].length]; //To prevent possible null pointer exception later.
             }
             final String[] sFields_final = sFields;
 
@@ -495,9 +511,9 @@ public class CatalogActivity extends AppCompatActivity {
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator
-                        + sFields[giDataRecordFolderIndexes[giMediaCategory]] + File.separator
-                        + sFields[giDataRecordRecylerViewImageIndexes[giMediaCategory]];
+                String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
+                        + sFields[giDataRecordFolderIndexes[globalClass.giSelectedCatalogMediaCategory]] + File.separator
+                        + sFields[giDataRecordRecylerViewImageIndexes[globalClass.giSelectedCatalogMediaCategory]];
                 File fThumbnail = new File(sThumbnailFilePath);
 
                 if (fThumbnail.exists()) {
@@ -505,7 +521,7 @@ public class CatalogActivity extends AppCompatActivity {
                 }
 
                 String sThumbnailText = "";
-                switch(giMediaCategory){
+                switch(globalClass.giSelectedCatalogMediaCategory){
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]) + ", " +
                                 sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
@@ -530,10 +546,10 @@ public class CatalogActivity extends AppCompatActivity {
                     if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
 
 
-                    if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.VIDEO_ID_INDEX]));
 
-                    } else if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         StartComicViewerActivity(sFields_final);
 
                     }
@@ -572,7 +588,7 @@ public class CatalogActivity extends AppCompatActivity {
 
         //Format the restriction tag set so that we can process it:
         StringBuilder sbRestrictedTags = new StringBuilder();
-        for(Map.Entry<Integer, String> entry: globalClass.gtmCatalogTagsRestricted.get(giMediaCategory).entrySet()){
+        for(Map.Entry<Integer, String> entry: globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).entrySet()){
             sbRestrictedTags.append(entry.getValue());
             sbRestrictedTags.append(",");
         }
@@ -587,13 +603,13 @@ public class CatalogActivity extends AppCompatActivity {
         String[] sCatalogListRecord;
         String sKey;
         for (Map.Entry<Integer, String[]>
-                entry : globalClass.gtmCatalogLists.get(giMediaCategory).entrySet()) {
+                entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
             sCatalogListRecord = entry.getValue();
 
             //Create a unique key to identify the record in the TreeMap, which includes
             // the SortBy field. TreeMap automatically sorts by the Key field.
             sKey = sCatalogListRecord[giRecyclerViewSortBySetting];
-            sKey = sKey + sCatalogListRecord[giDataRecordIDIndexes[giMediaCategory]];
+            sKey = sKey + sCatalogListRecord[giDataRecordIDIndexes[globalClass.giSelectedCatalogMediaCategory]];
 
             //Apply a filter if requested - build a string out of the records contents, and if a
             //  filter is to be applied, check for a match. If no match, don't add the record to
@@ -605,7 +621,7 @@ public class CatalogActivity extends AppCompatActivity {
                 String sKey_RecordText;
 
                 sbRecordText = new StringBuilder();
-                for (int i = 0; i < GlobalClass.CatalogRecordFields[giMediaCategory].length; i++) {
+                for (int i = 0; i < GlobalClass.CatalogRecordFields[globalClass.giSelectedCatalogMediaCategory].length; i++) {
                     sbRecordText.append(sCatalogListRecord[i]);
                 }
                 sKey_RecordText = sbRecordText.toString().toLowerCase();
@@ -622,7 +638,7 @@ public class CatalogActivity extends AppCompatActivity {
                 //If restricted tags exist...
                 //Look for restricted tags in the incoming record:
                 for (String s : sTagsArray) {
-                    if (sCatalogListRecord[giDataRecordTagsIndexes[giMediaCategory]].contains(s.trim())) {
+                    if (sCatalogListRecord[giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]].contains(s.trim())) {
                         bIsRestricted = true;
                     }
                 }
@@ -732,7 +748,7 @@ public class CatalogActivity extends AppCompatActivity {
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(globalClass.sNonObfustatedProgramName[giMediaCategory]);
+        setTitle(globalClass.sNonObfustatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
         //Update the RecyclerView:
         gRecyclerViewCatalogAdapter.notifyDataSetChanged();
     }

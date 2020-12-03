@@ -41,9 +41,12 @@ public class GlobalClass extends Application {
     public static final int MEDIA_CATEGORY_IMAGES = 1;
     public static final int MEDIA_CATEGORY_COMICS = 2;
 
+    public int giSelectedCatalogMediaCategory;
+
     public File[] gfCatalogFolders = new File[3];
     public File[] gfCatalogLogsFolders = new File[3];
     public File[] gfCatalogContentsFiles = new File[3];
+    public int giCatalogFileVersion = 4;
     public File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
     public List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
@@ -98,10 +101,70 @@ public class GlobalClass extends Application {
 
 
 
+//=====================================================================================
+    //===== Videos Variables Section ======================================================
+    //=====================================================================================
+
+    public static final int VIDEO_ID_INDEX = 0;                             //Video ID
+    public static final int VIDEO_FILENAME_INDEX = 1;
+    public static final int VIDEO_SIZE_MB_INDEX = 2;
+    public static final int VIDEO_DURATION_MILLISECONDS_INDEX = 3;          //Duration of video in Milliseconds
+    public static final int VIDEO_DURATION_TEXT_INDEX = 4;                  //Duration of video text
+    public static final int VIDEO_RESOLUTION_INDEX = 5;
+    public static final int VIDEO_FOLDER_NAME_INDEX = 6;                    //Name of the folder holding the video
+    public static final int VIDEO_TAGS_INDEX = 7;                           //Tags given to the video
+    public static final int VIDEO_CAST_INDEX = 8;
+    public static final int VIDEO_SOURCE_INDEX = 9;                         //Website, if relevant
+    public static final int VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX = 10;   //Date of last read by user. Used for sorting if desired
+    public static final int VIDEO_DATETIME_IMPORT_INDEX = 11;               //Date of import. Used for sorting if desired
 
 
 
+    //=====================================================================================
+    //===== Images Variables Section ======================================================
+    //=====================================================================================
 
+    public static final int IMAGE_ID_INDEX = 0;                             //Image ID
+    public static final int IMAGE_FILENAME_INDEX = 1;
+    public static final int IMAGE_SIZE_KB_INDEX = 2;
+    public static final int IMAGE_RESOLUTION_INDEX = 3;
+    public static final int IMAGE_FOLDER_NAME_INDEX = 4;                    //Name of the folder holding the imGE
+    public static final int IMAGE_TAGS_INDEX = 5;                           //Tags given to the Image
+    public static final int IMAGE_CAST_INDEX = 6;
+    public static final int IMAGE_SOURCE_INDEX = 7;                         //Website, if relevant
+    public static final int IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX = 8;   //Date of last read by user. Used for sorting if desired
+    public static final int IMAGE_DATETIME_IMPORT_INDEX = 9;                //Date of import. Used for sorting if desired
+
+    //=====================================================================================
+    //===== Comics Variables Section ======================================================
+    //=====================================================================================
+
+    public static final int COMIC_ID_INDEX = 0;                    //Comic ID
+    public static final int COMIC_NAME_INDEX = 1;                  //Comic Name
+    public static final int COMIC_FILE_COUNT_INDEX = 2;            //Files included with the comic
+    public static final int COMIC_MAX_PAGE_ID_INDEX = 3;           //Max page ID extracted from file names
+    public static final int COMIC_MISSING_PAGES_INDEX = 4;         //String of comma-delimited missing page numbers
+    public static final int COMIC_SIZE_KB_INDEX = 5;               //Total size of all files in the comic
+    public static final int COMIC_FOLDER_NAME_INDEX = 6;           //Name of the folder holding the comic pages
+    public static final int COMIC_THUMBNAIL_FILE_INDEX = 7;        //Name of the file used as the thumbnail for the comic
+    public static final int COMIC_PARODIES_INDEX = 8;
+    public static final int COMIC_CHARACTERS_INDEX = 9;
+    public static final int COMIC_TAGS_INDEX = 10;                 //Tags given to the comic
+    public static final int COMIC_ARTISTS_INDEX = 11;
+    public static final int COMIC_GROUPS_INDEX = 12;
+    public static final int COMIC_LANGUAGES_INDEX = 13;            //Language(s) found in the comic
+    public static final int COMIC_CATEGORIES_INDEX = 14;
+    public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
+    public static final int COMIC_SOURCE_INDEX = 16;                     //nHentai.net, other source, etc.
+    public static final int COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX = 17; //Date of last read by user. Used for sorting if desired
+    public static final int COMIC_DATETIME_IMPORT_INDEX = 18;            //Date of import. Used for sorting if desired
+    public static final int COMIC_ONLINE_DATA_ACQUIRED_INDEX = 19;
+
+    public static final String COMIC_ONLINE_DATA_ACQUIRED_NO = "No";
+    public static final String COMIC_ONLINE_DATA_ACQUIRED_YES = "Yes";
+
+
+    //todo: get rid of these variables as they are handled as arrayList items above:
     public File gfComicsFolder;
     public File gfComicLogsFolder;
     public File gfComicCatalogContentsFile;
@@ -386,7 +449,7 @@ public class GlobalClass extends Application {
     }
 
     public boolean CatalogDataFile_UpdateAllRecords(File fCatalogContentsFile, int[] iFieldIDs, String[] sFieldUpdateData) {
-        //This routine used to update a single field across all record in a catalog file.
+        //This routine used to update a single field across all records in a catalog file.
         //  Used primarily during development of the software.
         //  CatalogDataFile_UpdateAllRecords = Update field(s) to a common value.
         try {
@@ -442,6 +505,91 @@ public class GlobalClass extends Application {
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
+        }
+    }
+
+    public void CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(int iMediaCategory) {
+        //This routine used to update all record's tags field to integer IDs for the tags.
+        //  Used during development of the software.
+
+        try {
+
+            int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
+
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[iMediaCategory].getAbsolutePath()));
+            String sHeader = brReader.readLine();
+            //Determine the file version, and don't update it if it is up-to-date:
+            String[] sHeaderFields = sHeader.split("\t");
+            String sVersionField = sHeaderFields[sHeaderFields.length - 1];
+            String[] sVersionFields = sVersionField.split("\\.");
+            if(Integer.parseInt(sVersionFields[1]) >= giCatalogFileVersion){
+                return;
+            }
+            //Re-form the header line with the new file version:
+            String sNewHeaderLine;
+            StringBuilder sbNewHeaderLine = new StringBuilder();
+            for(int i = 0; i < sHeaderFields.length - 1; i++){
+                sbNewHeaderLine.append(sHeaderFields[i]);
+                sbNewHeaderLine.append("\t");
+            }
+            sbNewHeaderLine.append("FILEVERSION.");
+            sbNewHeaderLine.append(giCatalogFileVersion); //Append the current file version number.
+            sbBuffer.append(sbNewHeaderLine);
+            sbBuffer.append("\n"); //Append newline character.
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                sFields = sLine.split("\t",-1);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(sFields[0]); //Append the first field, which would not be the tags field.
+                for (int i = 1; i < sFields.length; i++) {
+                    sb.append("\t");
+
+                    if (i == iTagsField[iMediaCategory]) {
+                        //This is the tags field. Convert the tag text to integers.
+                        String[] sTagsText = sFields[i].split(",");
+                        StringBuilder sbTagsInt = new StringBuilder();
+                        for(String sTag: sTagsText){
+                            Integer iTagID = getTagIDFromText(JumbleStorageText(sTag.trim()), iMediaCategory);
+                            if(iTagID < 0){ //Tag Text not found.
+                                iTagID = 9999;
+                            }
+                            sbTagsInt.append(iTagID.toString());
+                            sbTagsInt.append(",");
+                        }
+                        String sTagsInt = sbTagsInt.toString();
+                        //Remove trailing comma:
+                        if(sTagsInt.contains(",")) {
+                            sTagsInt = sTagsInt.substring(0, sTagsInt.lastIndexOf(","));
+                        }
+                        sb.append(JumbleStorageText(sTagsInt));
+                    } else {
+                        sb.append(sFields[i]);
+                    }
+
+
+                }
+                sLine = sb.toString();
+
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[iMediaCategory], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -533,107 +681,44 @@ public class GlobalClass extends Application {
         return alsTagsInUse;
     }
 
-    public String getTagFromID(Integer iTagID, Integer iMediaCategory){
-        return gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID)[TAG_NAME_INDEX];
+    public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){
+        String sTagText = "[Tag ID " + iTagID + " not found]";
+        try{
+            sTagText = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID)[TAG_NAME_INDEX];;
+        } catch (Exception e){
+            String sMessage = e.getMessage();
+        }
+        return sTagText;
+    }
+
+    public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
+        Integer iKey = -1;
+        String[] sFields;
+        for(Map.Entry<Integer, String[]> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+            sFields = entry.getValue();
+            if(sFields[TAG_NAME_INDEX].equals(sTagText)){
+                iKey = entry.getKey();
+                break;
+            }
+        }
+        return iKey;
+    }
+
+    public String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
+        String sReturn = "";
+        StringBuilder sb = new StringBuilder();
+        for(Integer i : ali){
+            sb.append(i.toString());
+            sb.append(sDelimiter);
+        }
+        sReturn = sb.toString();
+        sReturn = sReturn.substring(0, sReturn.lastIndexOf(sDelimiter));
+
+        return sReturn;
     }
 
 
 
-    //=====================================================================================
-    //===== Videos Variables Section ======================================================
-    //=====================================================================================
-
-    public static final int VIDEO_ID_INDEX = 0;                             //Video ID
-    public static final int VIDEO_FILENAME_INDEX = 1;
-    public static final int VIDEO_SIZE_MB_INDEX = 2;
-    public static final int VIDEO_DURATION_MILLISECONDS_INDEX = 3;          //Duration of video in Milliseconds
-    public static final int VIDEO_DURATION_TEXT_INDEX = 4;                  //Duration of video text
-    public static final int VIDEO_RESOLUTION_INDEX = 5;
-    public static final int VIDEO_FOLDER_NAME_INDEX = 6;                    //Name of the folder holding the video
-    public static final int VIDEO_TAGS_INDEX = 7;                           //Tags given to the video
-    public static final int VIDEO_CAST_INDEX = 8;
-    public static final int VIDEO_SOURCE_INDEX = 9;                         //Website, if relevant
-    public static final int VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX = 10;   //Date of last read by user. Used for sorting if desired
-    public static final int VIDEO_DATETIME_IMPORT_INDEX = 11;               //Date of import. Used for sorting if desired
-
-
-
-    //=====================================================================================
-    //===== Images Variables Section ======================================================
-    //=====================================================================================
-
-    public static final int IMAGE_ID_INDEX = 0;                             //Image ID
-    public static final int IMAGE_FILENAME_INDEX = 1;
-    public static final int IMAGE_SIZE_KB_INDEX = 2;
-    public static final int IMAGE_RESOLUTION_INDEX = 3;
-    public static final int IMAGE_FOLDER_NAME_INDEX = 4;                    //Name of the folder holding the imGE
-    public static final int IMAGE_TAGS_INDEX = 5;                           //Tags given to the Image
-    public static final int IMAGE_CAST_INDEX = 6;
-    public static final int IMAGE_SOURCE_INDEX = 7;                         //Website, if relevant
-    public static final int IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX = 8;   //Date of last read by user. Used for sorting if desired
-    public static final int IMAGE_DATETIME_IMPORT_INDEX = 9;                //Date of import. Used for sorting if desired
-
-    public static final String[] ImageRecordFields = new String[]{
-            "IMAGE_ID",
-            "IMAGE_FILENAME",
-            "SIZE_KB",
-            "RESOLUTION",
-            "FOLDER_NAME",
-            "TAGS",
-            "CAST",
-            "SOURCE",
-            "DATETIME_LAST_VIEWED_BY_USER",
-            "DATETIME_IMPORT"};
-
-    //=====================================================================================
-    //===== Comics Variables Section ======================================================
-    //=====================================================================================
-
-    public static final int COMIC_ID_INDEX = 0;                    //Comic ID
-    public static final int COMIC_NAME_INDEX = 1;                  //Comic Name
-    public static final int COMIC_FILE_COUNT_INDEX = 2;            //Files included with the comic
-    public static final int COMIC_MAX_PAGE_ID_INDEX = 3;           //Max page ID extracted from file names
-    public static final int COMIC_MISSING_PAGES_INDEX = 4;         //String of comma-delimited missing page numbers
-    public static final int COMIC_SIZE_KB_INDEX = 5;               //Total size of all files in the comic
-    public static final int COMIC_FOLDER_NAME_INDEX = 6;           //Name of the folder holding the comic pages
-    public static final int COMIC_THUMBNAIL_FILE_INDEX = 7;        //Name of the file used as the thumbnail for the comic
-    public static final int COMIC_PARODIES_INDEX = 8;
-    public static final int COMIC_CHARACTERS_INDEX = 9;
-    public static final int COMIC_TAGS_INDEX = 10;                 //Tags given to the comic
-    public static final int COMIC_ARTISTS_INDEX = 11;
-    public static final int COMIC_GROUPS_INDEX = 12;
-    public static final int COMIC_LANGUAGES_INDEX = 13;            //Language(s) found in the comic
-    public static final int COMIC_CATEGORIES_INDEX = 14;
-    public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
-    public static final int COMIC_SOURCE_INDEX = 16;                     //nHentai.net, other source, etc.
-    public static final int COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX = 17; //Date of last read by user. Used for sorting if desired
-    public static final int COMIC_DATETIME_IMPORT_INDEX = 18;            //Date of import. Used for sorting if desired
-    public static final int COMIC_ONLINE_DATA_ACQUIRED_INDEX = 19;
-
-    public static final String[] ComicRecordFields = new String[]{
-            "COMIC_ID",
-            "COMIC_NAME",
-            "FILE_COUNT",
-            "MAX_PAGE_ID",
-            "MISSING_PAGES",
-            "COMIC_SIZE_KB",
-            "FOLDER_NAME",
-            "THUMBNAIL_FILE",
-            "PARODIES",
-            "CHARACTERS",
-            "TAGS",
-            "ARTISTS",
-            "GROUPS",
-            "LANGUAGES",
-            "CATEGORIES",
-            "PAGES",
-            "SOURCE",
-            "DATETIME_LAST_READ_BY_USER",
-            "DATETIME_IMPORT",
-            "ONLINE_DATA_ACQUIRED"};
-
-    public static final String COMIC_ONLINE_DATA_ACQUIRED_NO = "No";
-    public static final String COMIC_ONLINE_DATA_ACQUIRED_YES = "Yes";
 
 
 
@@ -641,9 +726,6 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Start Comic Catalog.dat Data Modification Routine(S) ================================
     //=====================================================================================
-
-
-
 
 
     public boolean gbComicJustDeleted = false;

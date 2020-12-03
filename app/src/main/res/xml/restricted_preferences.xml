@@ -16,7 +16,7 @@
     </SwitchPreferenceCompat>
 
     <MultiSelectListPreference
-        android:key="multi_select_list_restricted_tags"
+        android:key="multi_select_list_comics_restricted_tags"
         android:title="Restricted tags"
         android:summary="Select tags you wish to be restricted."
         android:defaultValue="@array/empty_array"/>

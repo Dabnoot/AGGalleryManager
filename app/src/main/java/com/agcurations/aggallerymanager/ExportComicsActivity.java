@@ -78,7 +78,7 @@ public class ExportComicsActivity extends AppCompatActivity {
             sFields = entry.getValue();
 
             if (sFields == null) {
-                sFields = new String[GlobalClass.ComicRecordFields.length]; //To prevent possible null pointer exception later.
+                sFields = new String[GlobalClass.CatalogRecordFields[GlobalClass.MEDIA_CATEGORY_COMICS].length]; //To prevent possible null pointer exception later.
             }
 
             if (sFields[GlobalClass.COMIC_SIZE_KB_INDEX] != null) {

@@ -215,13 +215,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void startVideoCatalogActivity(View v){
         Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
-        intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         startActivity(intentCatalogActivity);
     }
 
     public void startPicturesCatalogActivity(View v){
         Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
-        intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_IMAGES);
+        //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_IMAGES);
+        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentCatalogActivity);
     }
 
@@ -229,7 +231,8 @@ public class MainActivity extends AppCompatActivity {
         /*Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
         startActivity(intentComicsCatalogActivity);*/
         Intent intentCatalogActivity = new Intent(this, CatalogActivity.class);
-        intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_COMICS);
+        //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_COMICS);
+        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentCatalogActivity);
 
     }

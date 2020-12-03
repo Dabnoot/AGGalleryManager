@@ -375,10 +375,10 @@ public class ImportActivity extends AppCompatActivity {
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
-                    sbTags.append(globalClass.getTagFromID(aliTagIDs.get(0), giImportMediaCategory));
+                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), giImportMediaCategory));
                     for (int i = 1; i < aliTagIDs.size(); i++) {
                         sbTags.append(", ");
-                        sbTags.append(globalClass.getTagFromID(aliTagIDs.get(i), giImportMediaCategory));
+                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), giImportMediaCategory));
                     }
                 }
             }

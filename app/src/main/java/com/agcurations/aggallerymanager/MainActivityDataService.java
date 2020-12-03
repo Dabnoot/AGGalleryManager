@@ -128,6 +128,11 @@ public class MainActivityDataService extends IntentService {
                             getResources().getStringArray(iTagStringArrayResources[i])));
         }
 
+        //Switch from tag text in the catalog files to tag IDs:
+        /*globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_IMAGES);
+        globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_COMICS);*/
+
         //Initialize NEW TreeMap instances:
         globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
         globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
@@ -342,7 +347,7 @@ public class MainActivityDataService extends IntentService {
     }
 
 
-    public void Comic_Catalog_data_file_add_field() {
+    /*public void Comic_Catalog_data_file_add_field() {
         //Add the new field to GlobalClass.ComicRecordFields before running this routine.
         //  This will affect the creation of the dat file header.
 
@@ -445,8 +450,9 @@ public class MainActivityDataService extends IntentService {
             problemNotificationConfig("Could not open CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath()+ "\n" + e.getMessage());
         }
     }
+*/
 
-    public void Catalog_data_file_jumble_fields() {
+    /*public void Catalog_data_file_jumble_fields() {
         //Jumble the fields.
         //  This will affect the creation of the dat file header.
 
@@ -545,6 +551,7 @@ public class MainActivityDataService extends IntentService {
             problemNotificationConfig("Could not open CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath()+ "\n" + e.getMessage());
         }
     }
+*/
 
     void problemNotificationConfig(String sMessage){
         broadcastIntent_LoadAppDataResponse.putExtra(EXTRA_BOOL_DATA_LOAD_PROBLEM, true);

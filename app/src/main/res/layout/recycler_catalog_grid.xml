@@ -5,17 +5,17 @@
     android:padding="10dp">
 
     <ImageView
-        android:id="@+id/ImageView_Thumbnail"
+        android:id="@+id/imageView_Thumbnail"
         android:layout_width="match_parent"
         android:layout_height="430dp"
         android:layout_alignParentTop="true"
         android:contentDescription="@string/comic_cover_page"/>
 
     <TextView
-        android:id="@+id/editText_Title"
+        android:id="@+id/textView_Title"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/ImageView_Thumbnail"
+        android:layout_below="@id/imageView_Thumbnail"
         android:layout_alignWithParentIfMissing="true"
         android:textSize="16sp"
         android:gravity="center"/>

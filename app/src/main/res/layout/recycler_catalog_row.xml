@@ -5,7 +5,7 @@
     android:padding="6dip" >
 
     <ImageView
-        android:id="@+id/ImageView_Thumbnail"
+        android:id="@+id/imageView_Thumbnail"
         android:layout_width="200dp"
         android:layout_height="fill_parent"
         android:layout_alignParentBottom="true"
@@ -15,25 +15,25 @@
         android:src="@mipmap/ic_launcher"/>
 
     <TextView
-        android:id="@+id/editText_Title"
+        android:id="@+id/textView_Title"
         android:layout_width="wrap_content"
         android:layout_height="26dip"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:layout_toRightOf="@id/ImageView_Thumbnail"
+        android:layout_toRightOf="@id/imageView_Thumbnail"
         android:ellipsize="marquee"
         android:text="@string/comic_name"
         android:textSize="16sp"
         android:singleLine="true" />
 
     <TextView
-        android:id="@+id/TextView_Details"
+        android:id="@+id/textView_Details"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/editText_Title"
+        android:layout_below="@id/textView_Title"
         android:layout_alignParentRight="true"
         android:layout_alignWithParentIfMissing="true"
-        android:layout_toRightOf="@id/ImageView_Thumbnail"
+        android:layout_toRightOf="@id/imageView_Thumbnail"
         android:gravity="center_vertical"
         android:text="@string/comic_details"
         android:textSize="16sp"/>

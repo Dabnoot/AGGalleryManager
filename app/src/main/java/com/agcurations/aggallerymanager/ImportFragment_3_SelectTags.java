@@ -15,7 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -23,7 +22,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -246,10 +244,10 @@ public class ImportFragment_3_SelectTags extends Fragment {
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
-                    sbTags.append(globalClass.getTagFromID(aliTagIDs.get(0), ImportActivity.giImportMediaCategory));
+                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), ImportActivity.giImportMediaCategory));
                     for (int i = 1; i < aliTagIDs.size(); i++) {
                         sbTags.append(", ");
-                        sbTags.append(globalClass.getTagFromID(aliTagIDs.get(i), ImportActivity.giImportMediaCategory));
+                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), ImportActivity.giImportMediaCategory));
                     }
                 }
             }

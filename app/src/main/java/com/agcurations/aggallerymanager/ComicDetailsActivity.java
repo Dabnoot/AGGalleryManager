@@ -295,17 +295,17 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
             public ViewHolder(View v) {
                 super(v);
-                ivThumbnail = v.findViewById(R.id.ImageView_Thumbnail);
-                tvThumbnailText = v.findViewById(R.id.editText_Title);
+                ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                tvThumbnailText = v.findViewById(R.id.textView_Title);
 
-                tvComicID = v.findViewById(R.id.editText_ComicSource);
-                tvParodies = v.findViewById(R.id.editText_Parodies);
-                tvCharacters = v.findViewById(R.id.editText_Characters);
-                tvTags = v.findViewById(R.id.editText_Tags);
-                tvArtists = v.findViewById(R.id.editText_Artists);
-                tvGroups = v.findViewById(R.id.editText_Groups);
-                tvLanguages = v.findViewById(R.id.editText_Languages);
-                tvCategories = v.findViewById(R.id.editText_Categories);
+                tvComicID = v.findViewById(R.id.textView_ComicSource);
+                tvParodies = v.findViewById(R.id.textView_Parodies);
+                tvCharacters = v.findViewById(R.id.textView_Characters);
+                tvTags = v.findViewById(R.id.textView_Tags);
+                tvArtists = v.findViewById(R.id.textView_Artists);
+                tvGroups = v.findViewById(R.id.textView_Groups);
+                tvLanguages = v.findViewById(R.id.textView_Languages);
+                tvCategories = v.findViewById(R.id.textView_Categories);
                 tvPages = v.findViewById(R.id.textView_Pages);
 
                 tvLabelComicID = v.findViewById(R.id.textView_LabelComicSource);
@@ -453,7 +453,17 @@ public class ComicDetailsActivity extends AppCompatActivity {
                     holder.tvComicID.setText(gsComicFields[GlobalClass.COMIC_ID_INDEX]);
                     holder.tvParodies.setText(gsComicFields[GlobalClass.COMIC_PARODIES_INDEX]);
                     holder.tvCharacters.setText(gsComicFields[GlobalClass.COMIC_CHARACTERS_INDEX]);
-                    holder.tvTags.setText(gsComicFields[GlobalClass.COMIC_TAGS_INDEX]);
+                    StringBuilder sbTags = new StringBuilder();
+                    String[] sTagIDs = gsComicFields[GlobalClass.COMIC_TAGS_INDEX].split(",");
+                    for(String sTagID : sTagIDs){
+                        sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), GlobalClass.MEDIA_CATEGORY_COMICS));
+                        sbTags.append(", ");
+                    }
+                    String sTagTextAggregate = sbTags.toString();
+                    if(sTagTextAggregate.contains(",")){
+                        sTagTextAggregate = sTagTextAggregate.substring(0,sTagTextAggregate.lastIndexOf(", "));
+                    }
+                    holder.tvTags.setText(sTagTextAggregate);
                     holder.tvArtists.setText(gsComicFields[GlobalClass.COMIC_ARTISTS_INDEX]);
                     holder.tvGroups.setText(gsComicFields[GlobalClass.COMIC_GROUPS_INDEX]);
                     holder.tvLanguages.setText(gsComicFields[GlobalClass.COMIC_LANGUAGES_INDEX]);

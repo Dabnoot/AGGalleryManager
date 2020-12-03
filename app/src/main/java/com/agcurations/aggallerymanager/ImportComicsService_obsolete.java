@@ -223,8 +223,8 @@ public class ImportComicsService_obsolete extends IntentService {
             String sMissingPages = "";
             int iLPComicID = 0;
             boolean bDuplicateInCatalog = false;
-            String[] sImportComicListRecord = new String[GlobalClass.ComicRecordFields.length + 1];
-            int DUPLICATE_IN_CATALOG_INDEX = GlobalClass.ComicRecordFields.length; //Recall, index is 0-based.
+            String[] sImportComicListRecord = new String[GlobalClass.CatalogRecordFields[GlobalClass.MEDIA_CATEGORY_COMICS].length + 1];
+            int DUPLICATE_IN_CATALOG_INDEX = GlobalClass.CatalogRecordFields[GlobalClass.MEDIA_CATEGORY_COMICS].length; //Recall, index is 0-based.
 
 
             long lFileSize;
@@ -279,8 +279,8 @@ public class ImportComicsService_obsolete extends IntentService {
                         //D
                         if (!(iComicID == iLPComicID)) {
                             //New comic detected. Clear the fields.
-                            sImportComicListRecord = new String[GlobalClass.ComicRecordFields.length + 1];
-                            for (int i = 0; i < GlobalClass.ComicRecordFields.length; i++){
+                            sImportComicListRecord = new String[GlobalClass.CatalogRecordFields[GlobalClass.MEDIA_CATEGORY_COMICS].length + 1];
+                            for (int i = 0; i < GlobalClass.CatalogRecordFields[GlobalClass.MEDIA_CATEGORY_COMICS].length; i++){
                                 //Make sure that no fields are null.
                                 //  This would become a problem later when we start adding records to the contents file.
                                 sImportComicListRecord[i]="";
@@ -625,7 +625,7 @@ public class ImportComicsService_obsolete extends IntentService {
                                     }
                                     //Write a record to the CatalogContentsFile:
                                     sbCatalogContentRecord = new StringBuilder (sImportComicListRecord[0]);
-                                    for (int i = 1; i < GlobalClass.ComicRecordFields.length; i++){
+                                    for (int i = 1; i < GlobalClass.CatalogRecordFields[GlobalClass.MEDIA_CATEGORY_COMICS].length; i++){
                                         sbCatalogContentRecord.append("\t");
                                         sbCatalogContentRecord.append(sImportComicListRecord[i]);
                                     }

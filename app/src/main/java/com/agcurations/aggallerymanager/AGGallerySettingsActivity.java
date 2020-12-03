@@ -1,6 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
@@ -21,7 +20,6 @@ import java.util.TreeSet;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -36,11 +34,15 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
     private static final String TITLE_TAG = "AG Gallery Manager Preferences";
 
+    public static final String PREFERENCE_COMICS_TAGS_RESTRICTED = "com.agcurations.aggallerymanager.preferences.comics.tags.restricted";
+
     private static File gfAppFolder;
     private static String gsPin;
     private static Boolean gbPinMatch = false;
-    private static TreeMap<Integer, String> gtmTags;
+    private static TreeMap<Integer, String> gtmComicTags;
     private static Set<String> gssSelectedTags;
+    private static ArrayList<Integer> galiComicsRestrictedTags;
+
     GlobalClass globalClass;
 
     @Override
@@ -90,64 +92,34 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
         gsPin = globalClass.gsPin;
 
         //Get a list of comic tags to populate the multiSelect dropdown list:
-        gtmTags = new TreeMap<>();
+        gtmComicTags = new TreeMap<>();
         for (Map.Entry<Integer, String[]>
                 entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+            String sTagID = entry.getValue()[GlobalClass.TAG_ID_INDEX];
             String sTag = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
-            gtmTags.put(entry.getKey(),sTag);
+            gtmComicTags.put(Integer.parseInt(sTagID),sTag);
         }
 
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+        //gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
 
+        //Get Comics' restricted tags:
+        String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
+        galiComicsRestrictedTags = getTagIDIntegerArrayFromString(gsComicsRestrictedTags);
 
-        /*if(!gsPin.isEmpty()) {
-            final String[] sPinEntry = new String[1];
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Preferences");
-            builder.setMessage("Enter pin to view/set preferences.");
+    }
 
-            // Set up the input
-            final EditText input = new EditText(this);
-            // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-            input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-            builder.setView(input);
+    public ArrayList<Integer> getTagIDIntegerArrayFromString(String sTags){
+        ArrayList<Integer> aliTags = new ArrayList<>();
 
-            // Set up the buttons
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    sPinEntry[0] = input.getText().toString();
-                    boolean bExit = false;
-                    if(sPinEntry[0].isEmpty()){
-                        bExit = true;
-                    } else {
-                        if(!sPinEntry[0].equals(gsPin)){
-                            bExit = true;
-                        } else {
-                            gbPinMatch = true;
-                        }
-                    }
-                    if(bExit){
-                        finish();
-                    }
-                }
-            });
-            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.cancel();
-                    finish();
-
-
-                }
-            });
-            builder.show();
-
-
-        }*/
-
+        if(sTags != null){
+            String[] sacrt = sTags.split(",");
+            for(String s : sacrt){
+                aliTags.add(Integer.parseInt(s));
+            }
+        }
+        return aliTags;
     }
 
     @Override
@@ -161,7 +133,10 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
     public boolean onSupportNavigateUp() {
         if (getSupportFragmentManager().popBackStackImmediate()) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-            gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+            //gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+            //Get Comics' restricted tags:
+            String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
+            galiComicsRestrictedTags = getTagIDIntegerArrayFromString(gsComicsRestrictedTags);
             return true;
         }
         return super.onSupportNavigateUp();
@@ -192,8 +167,6 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             setPreferencesFromResource(R.xml.header_preferences, rootKey);
         }
     }
-
-
 
     public static class ComicsFragment extends PreferenceFragmentCompat {
 
@@ -268,25 +241,29 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
                 }
             });
 
-            //CONFIGURE THE restricted TAGS LIST PREFERENCE:
 
+
+            //CONFIGURE THE restricted TAGS LIST PREFERENCE:
             final MultiSelectListPreference pref_restricted_tags =
-                    findPreference("multi_select_list_restricted_tags");
+                    findPreference("multi_select_list_comics_restricted_tags");
 
             //Populate the MultiSelectListPreference drop-down menu:
-            CharSequence[] csEntries;
-            ArrayList<String> alTags = new ArrayList<>();
-            for (Map.Entry<Integer, String> entry : gtmTags.entrySet()) {
-                alTags.add(entry.getValue());
+            CharSequence[] csTagTexts, csTagIDs;
+            ArrayList<String> alTagTexts = new ArrayList<>();
+            ArrayList<String> alTagIDs = new ArrayList<>();
+            for (Map.Entry<Integer, String> entry : gtmComicTags.entrySet()) {
+                alTagIDs.add(entry.getKey().toString());
+                alTagTexts.add(entry.getValue());
             }
-            csEntries = alTags.toArray(new CharSequence[0]);
+            csTagIDs = alTagIDs.toArray(new CharSequence[0]);
+            csTagTexts = alTagTexts.toArray(new CharSequence[0]);
             assert pref_restricted_tags != null;
-            pref_restricted_tags.setEntries(csEntries);
-            pref_restricted_tags.setEntryValues(csEntries);
+            pref_restricted_tags.setEntries(csTagTexts);
+            pref_restricted_tags.setEntryValues(csTagIDs);
 
             //Fill out the "selected tags" summary text:
             //Sort the strings:
-            SortedSet<String> ssTemp = new TreeSet<>(gssSelectedTags);  //gssSelectedTags contains the tags selected by the user.
+/*            SortedSet<String> ssTemp = new TreeSet<>(gssSelectedTags);  //gssSelectedTags contains the tags selected by the user.
 
             //Format the strings:
             StringBuilder sb = new StringBuilder();
@@ -296,7 +273,15 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
                 sb.append(", ");
                 sb.append(isIterator.next());
             }
-            String sTemp = sb.toString();
+            String sTemp = sb.toString();*/
+
+            StringBuilder sb = new StringBuilder();
+            String sTemp = "";
+            if(galiComicsRestrictedTags.size() > 0){
+                for(int i : galiComicsRestrictedTags){
+
+                }
+            }
 
             //Apply the new data to the summary:
             if (!(sTemp.isEmpty())) {

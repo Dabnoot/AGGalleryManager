@@ -117,10 +117,10 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
                     sb.append("Tags: ");
                     GlobalClass globalClass;
                     globalClass = (GlobalClass) getApplicationContext();
-                    sb.append(globalClass.getTagFromID(gfileItem.prospectiveTags.get(0), ImportActivity.giImportMediaCategory));
+                    sb.append(globalClass.getTagTextFromID(gfileItem.prospectiveTags.get(0), ImportActivity.giImportMediaCategory));
                     for (int i = 1; i < gfileItem.prospectiveTags.size(); i++) {
                         sb.append(", ");
-                        sb.append(globalClass.getTagFromID(gfileItem.prospectiveTags.get(i), ImportActivity.giImportMediaCategory));
+                        sb.append(globalClass.getTagTextFromID(gfileItem.prospectiveTags.get(i), ImportActivity.giImportMediaCategory));
                     }
                     TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
                     if (tv != null) {
