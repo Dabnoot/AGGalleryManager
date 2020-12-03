@@ -3,6 +3,14 @@
     android:layout_height="wrap_content"
     android:padding="6dip">
 
+    <CheckBox
+        android:id="@+id/checkBox_StorageItemSelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@null"
+        android:buttonTint="@color/colorGrey1"/>
+
     <ImageView
         android:id="@+id/imageView_StorageItemIcon"
         android:layout_width="100dp"
@@ -43,5 +51,16 @@
             android:textSize="16sp" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/button_VideoPreview"
+        android:layout_width="wrap_content"
+        android:layout_height="67dp"
+        android:layout_marginStart="20dp"
+        android:text="Preview"
+        android:textSize="16sp"
+        android:layout_marginEnd="30dp"
+        android:backgroundTint="@color/colorBlackboardRed"
+        android:visibility="invisible" />
 
 </LinearLayout>

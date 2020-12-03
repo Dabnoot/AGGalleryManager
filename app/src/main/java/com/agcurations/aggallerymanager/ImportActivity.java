@@ -26,7 +26,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -301,14 +300,14 @@ public class ImportActivity extends AppCompatActivity {
 
     public class FileListCustomAdapter extends ArrayAdapter<FileItem> {
 
-        final public ArrayList<FileItem> alFileList;
-        private ArrayList<FileItem> alFileListDisplay;
+        final public ArrayList<FileItem> alFileItems;
+        private ArrayList<FileItem> alFileItemsDisplay;
         private  boolean bSelectAllSelected = false;
 
-        public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<FileItem> xmlList) {
-            super(context, textViewResourceId, xmlList);
-            alFileList = new ArrayList<>(xmlList);
-            alFileListDisplay = new ArrayList<>(xmlList);
+        public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<FileItem> alfi) {
+            super(context, textViewResourceId, alfi);
+            alFileItems = new ArrayList<>(alfi);
+            alFileItemsDisplay = new ArrayList<>(alfi);
             SortByFileNameAsc();
         }
 
@@ -318,7 +317,7 @@ public class ImportActivity extends AppCompatActivity {
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
                 //My custom list item design is here
-                row = inflater.inflate(R.layout.listview_fileitem, parent, false);
+                row = inflater.inflate(R.layout.listview_fileitem_selectable, parent, false);
             }
 
             CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
@@ -327,44 +326,44 @@ public class ImportActivity extends AppCompatActivity {
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
 
-            tvLine1.setText(alFileListDisplay.get(position).name);
+            tvLine1.setText(alFileItemsDisplay.get(position).name);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
-            String sLine2 = dfDateFormat.format(alFileListDisplay.get(position).dateLastModified);
+            String sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
 
 
             //If type is video or gif, get the duration:
             long durationInMilliseconds = -1L;
             //If mimeType is video or gif, get the duration:
             try {
-                if(alFileListDisplay.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
-                    if (alFileListDisplay.get(position).mimeType.startsWith("video")) {
-                        Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
+                if(alFileItemsDisplay.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                    if (alFileItemsDisplay.get(position).mimeType.startsWith("video")) {
+                        Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
                         mediaMetadataRetriever.setDataSource(getContextOfActivity(), docUri);
                         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileListDisplay.get(position).extension.contentEquals("gif")) {
+                        if (alFileItemsDisplay.get(position).extension.contentEquals("gif")) {
                             //Get the duration of the gif image:
-                            Uri docUri = Uri.parse(alFileListDisplay.get(position).uri);
+                            Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
                             Context activityContext = getContextOfActivity();
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             durationInMilliseconds = gd.getDuration();
                         }
                     }
                     if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                        alFileListDisplay.get(position).videoTimeText = getDurationTextFromMilliseconds(durationInMilliseconds);
-                        alFileListDisplay.get(position).videoTimeInMilliseconds = durationInMilliseconds;
+                        alFileItemsDisplay.get(position).videoTimeText = getDurationTextFromMilliseconds(durationInMilliseconds);
+                        alFileItemsDisplay.get(position).videoTimeInMilliseconds = durationInMilliseconds;
                     }
                 }
 
-                if(alFileListDisplay.get(position).videoTimeText.length() > 0){
+                if(alFileItemsDisplay.get(position).videoTimeText.length() > 0){
                     //If the video time text has been defined, recall and display the time:
-                    sLine2 = sLine2 + "\tDuration: " + alFileListDisplay.get(position).videoTimeText;
+                    sLine2 = sLine2 + "\tDuration: " + alFileItemsDisplay.get(position).videoTimeText;
                 }
 
             }catch (Exception e){
                 Context activityContext = ImportActivity.getContextOfActivity();
-                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileListDisplay.get(position).name, Toast.LENGTH_LONG).show();
+                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).name, Toast.LENGTH_LONG).show();
             }
 
             tvLine2.setText(sLine2);
@@ -372,7 +371,7 @@ public class ImportActivity extends AppCompatActivity {
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
-            ArrayList<Integer> aliTagIDs = alFileListDisplay.get(position).prospectiveTags;
+            ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).prospectiveTags;
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
@@ -386,13 +385,13 @@ public class ImportActivity extends AppCompatActivity {
             tvLine3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileListDisplay.get(position).type.equals("folder")) {
+            if(alFileItemsDisplay.get(position).type.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
                 //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
 
                 //Get the Uri of the file and create/display a thumbnail:
-                String sUri = alFileListDisplay.get(position).uri;
+                String sUri = alFileItemsDisplay.get(position).uri;
                 Uri uri = Uri.parse(sUri);
                 Glide.with(getContext()).
                         load(uri).
@@ -402,7 +401,7 @@ public class ImportActivity extends AppCompatActivity {
 
 
 
-            if(alFileListDisplay.get(position).isChecked ){
+            if(alFileItemsDisplay.get(position).isChecked ){
                 cbStorageItemSelect.setChecked(true);
             } else {
                 cbStorageItemSelect.setChecked(false);
@@ -422,10 +421,10 @@ public class ImportActivity extends AppCompatActivity {
                     //  The user will have clicked an item in alFileListDisplay, not alFileList.
                     //  alFileListDisplay may be a subset of alFileList.
 
-                    alFileListDisplay.get(position).isChecked = bNewCheckedState;
+                    alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
 
-                    for(FileItem fm: alFileList){
-                        if(fm.name.contentEquals(alFileListDisplay.get(position).name)){
+                    for(FileItem fm: alFileItems){
+                        if(fm.name.contentEquals(alFileItemsDisplay.get(position).name)){
                             fm.isChecked = bNewCheckedState;
                             break;
                         }
@@ -446,10 +445,10 @@ public class ImportActivity extends AppCompatActivity {
                     //Find the item that is checked/unchecked in alFileList and apply the property.
                     //  The user will have clicked an item in alFileListDisplay, not alFileList.
                     //  alFileListDisplay may be a subset of alFileList.
-                    alFileListDisplay.get(position).isChecked = bNewCheckedState;
+                    alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
 
-                    for(FileItem fm: alFileList){
-                        if(fm.name.contentEquals(alFileListDisplay.get(position).name)){
+                    for(FileItem fm: alFileItems){
+                        if(fm.name.contentEquals(alFileItemsDisplay.get(position).name)){
                             fm.isChecked = bNewCheckedState;
                             break;
                         }
@@ -460,7 +459,7 @@ public class ImportActivity extends AppCompatActivity {
 
             //If the file item is video mimeType, set the preview button visibility to visible:
             Button button_VideoPreview = row.findViewById(R.id.button_VideoPreview);
-            if(alFileListDisplay.get(position).mimeType.startsWith("video")){
+            if(alFileItemsDisplay.get(position).mimeType.startsWith("video")){
                 button_VideoPreview.setVisibility(Button.VISIBLE);
                 button_VideoPreview.setOnClickListener(new View.OnClickListener(){
                     @Override
@@ -468,11 +467,11 @@ public class ImportActivity extends AppCompatActivity {
                         //Start the video preview popup activity:
                         Intent intentVideoPreviewPopup = new Intent(ImportActivity.this, VideoPreviewPopup_wTags.class);
                         Bundle b = new Bundle();
-                        b.putCharSequence(VideoPreviewPopup_wTags.FILE_URI_STRING, alFileListDisplay.get(position).uri);
-                        FileItem fileItem = alFileListDisplay.get(position);
-                        b.putSerializable(VideoPreviewPopup_wTags.FILE_ITEM, alFileListDisplay.get(position));
+                        b.putCharSequence(VideoPreviewPopup_wTags.FILE_URI_STRING, alFileItemsDisplay.get(position).uri);
+                        FileItem fileItem = alFileItemsDisplay.get(position);
+                        b.putSerializable(VideoPreviewPopup_wTags.FILE_ITEM, alFileItemsDisplay.get(position));
                         intentVideoPreviewPopup.putExtras(b);
-                        intentVideoPreviewPopup.putExtra(VideoPreviewPopup.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileListDisplay.get(position).videoTimeInMilliseconds);
+                        intentVideoPreviewPopup.putExtra(VideoPreviewPopup.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileItemsDisplay.get(position).videoTimeInMilliseconds);
                         startActivityForResult(intentVideoPreviewPopup, GET_TAGS_FOR_IMPORT_ITEM);
                     }
                 });
@@ -492,7 +491,7 @@ public class ImportActivity extends AppCompatActivity {
         public void applyTagsToItem(String sFileUri, ArrayList<Integer> aliTagIDs){
             boolean bFoundAndUpdated = false;
             //Find the item to apply tags:
-            for(FileItem fm: alFileList){
+            for(FileItem fm: alFileItems){
                 if(fm.uri.contentEquals(sFileUri)){
                     fm.prospectiveTags = aliTagIDs;
                     fm.isChecked = true;
@@ -512,12 +511,12 @@ public class ImportActivity extends AppCompatActivity {
         //To prevent data resetting when scrolled
         @Override
         public int getCount() {
-            return alFileListDisplay.size();
+            return alFileItemsDisplay.size();
         }
 
         @Override
         public FileItem getItem(int position) {
-            return alFileListDisplay.get(position);
+            return alFileItemsDisplay.get(position);
         }
 
         @Override
@@ -527,10 +526,10 @@ public class ImportActivity extends AppCompatActivity {
 
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
-            for(FileItem fmDisplayed:alFileListDisplay){
+            for(FileItem fmDisplayed: alFileItemsDisplay){
                 fmDisplayed.isChecked = bSelectAllSelected;
                 //Translate the selected item state to alFileList:
-                for(FileItem fm: alFileList){
+                for(FileItem fm: alFileItems){
                     if(fm.name.contentEquals(fmDisplayed.name)){
                         fm.isChecked = bSelectAllSelected;
                         break;
@@ -543,16 +542,16 @@ public class ImportActivity extends AppCompatActivity {
         }
 
         public void applySearch(String sSearch){
-            alFileListDisplay.clear();
-            for(FileItem fm : alFileList){
+            alFileItemsDisplay.clear();
+            for(FileItem fm : alFileItems){
                 if(fm.name.contains(sSearch)){
-                    alFileListDisplay.add(fm);
+                    alFileItemsDisplay.add(fm);
                 }
             }
         }
 
         public void removeSearch(){
-            alFileListDisplay = alFileList;
+            alFileItemsDisplay = alFileItems;
         }
 
         //Comparators
@@ -610,19 +609,19 @@ public class ImportActivity extends AppCompatActivity {
         private final int SORT_METHOD_MODIFIED_DATE_ASC = 3;
         private final int SORT_METHOD_MODIFIED_DATE_DESC = 4;
         public void SortByFileNameAsc(){
-            Collections.sort(alFileListDisplay, new FileListCustomAdapter.FileNameAscComparator());
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileNameAscComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_ASC;
         }
         public void SortByFileNameDesc(){
-            Collections.sort(alFileListDisplay, new FileListCustomAdapter.FileNameDescComparator());
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileNameDescComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_DESC;
         }
         public void SortByDateModifiedAsc(){
-            Collections.sort(alFileListDisplay, new FileListCustomAdapter.FileModifiedDateAscComparator());
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileModifiedDateAscComparator());
             iCurrentSortMethod = SORT_METHOD_MODIFIED_DATE_ASC;
         }
         public void SortByDateModifiedDesc(){
-            Collections.sort(alFileListDisplay, new FileListCustomAdapter.FileModifiedDateDescComparator());
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileModifiedDateDescComparator());
             iCurrentSortMethod = SORT_METHOD_MODIFIED_DATE_DESC;
         }
         public boolean reverseSort(){

@@ -39,6 +39,6 @@ public class FileItem implements Serializable {
         this.mimeType = _mime;
         this.videoTimeInMilliseconds = _videoTimeInMilliseconds;
         this.videoTimeText = "";
-        this.prospectiveTags = null;
+        this.prospectiveTags = new ArrayList<>();
     }
 }

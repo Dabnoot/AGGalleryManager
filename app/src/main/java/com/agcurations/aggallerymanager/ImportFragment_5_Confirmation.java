@@ -91,7 +91,7 @@ public class ImportFragment_5_Confirmation extends Fragment {
         ArrayList<String> alImportFileNames = new ArrayList<>();
         int iFileCount = 0;
         long lRequiredStorageSpaceBytes = 0L;
-        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileList){
+        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileItems){
             if(fileItem.isChecked) {
                 alImportFileNames.add(fileItem.name);
                 iFileCount++;

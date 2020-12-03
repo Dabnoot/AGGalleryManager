@@ -127,7 +127,7 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
 
         //Create list of files to import:
         ArrayList<FileItem> alImportFileList = new ArrayList<>();
-        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileList){
+        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileItems){
             if(fileItem.isChecked){
                 alImportFileList.add(fileItem);
             }

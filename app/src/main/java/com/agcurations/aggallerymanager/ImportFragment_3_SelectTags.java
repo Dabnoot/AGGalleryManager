@@ -1,7 +1,12 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.Context;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -9,10 +14,20 @@ import androidx.lifecycle.Observer;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -52,6 +67,10 @@ public class ImportFragment_3_SelectTags extends Fragment {
         return fragment;
     }
 
+    private SelectedFileListCustomAdapter selectedFileListCustomAdapter;
+
+    GlobalClass globalClass;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +78,7 @@ public class ImportFragment_3_SelectTags extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+        globalClass = (GlobalClass) getActivity().getApplicationContext();
     }
 
     @Override
@@ -84,10 +104,18 @@ public class ImportFragment_3_SelectTags extends Fragment {
             return;
         }
 
-        //Populate the listview:
+        //Populate the listView:
         final ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
+        ArrayList<FileItem> alfi = new ArrayList<>();
+        for(FileItem fi: ImportActivity.fileListCustomAdapter.alFileItems){
+            if(fi.isChecked){
+                alfi.add(fi);
+            }
+        }
+        selectedFileListCustomAdapter = 
+                new SelectedFileListCustomAdapter(getActivity(), R.id.listView_FilesToImport, alfi);
         if(listView_FilesToImport != null) {
-            listView_FilesToImport.setAdapter(ImportActivity.fileListCustomAdapter);
+            listView_FilesToImport.setAdapter(selectedFileListCustomAdapter);
         }
 
 
@@ -122,11 +150,163 @@ public class ImportFragment_3_SelectTags extends Fragment {
                 }
 
                 //Apply the selected tags to individual items:
-
+                boolean bUpdateAdapter = false;
+                TagItem tiAdded = ImportActivity.viewModelTags.tiTagItemAdded.getValue();
+                if(tiAdded != null){
+                    selectedFileListCustomAdapter.applyTagToItems(tiAdded.TagID);
+                    bUpdateAdapter = true;
+                }
+                TagItem tiRemoved = ImportActivity.viewModelTags.tiTagItemRemoved.getValue();
+                if(tiRemoved != null){
+                    selectedFileListCustomAdapter.removeTagFromItems(tiRemoved.TagID);
+                    bUpdateAdapter = true;
+                }
+                if(bUpdateAdapter){
+                    selectedFileListCustomAdapter.notifyDataSetChanged();
+                }
 
             }
         };
         ImportActivity.viewModelTags.altiTagsSelected.observe(this, selectedTagsObserver);
+
+    }
+
+
+    public class SelectedFileListCustomAdapter extends ArrayAdapter<FileItem> {
+
+        final public ArrayList<FileItem> alFileItems;
+        
+        public SelectedFileListCustomAdapter(@NonNull Context context, int resource, ArrayList<FileItem> alfi) {
+            super(context, resource);
+            alFileItems = alfi;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View v, @NonNull ViewGroup parent) {
+
+            View row = v;
+            if (row == null) {
+                LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+                //My custom list item design is here
+                row = inflater.inflate(R.layout.listview_fileitem, parent, false);
+            }
+
+            ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
+            TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
+            TextView tvLine2 = row.findViewById(R.id.textView_Line2);
+            TextView tvLine3 = row.findViewById(R.id.textView_Line3);
+
+            tvLine1.setText(alFileItems.get(position).name);
+            DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
+            String sLine2 = dfDateFormat.format(alFileItems.get(position).dateLastModified);
+
+
+            //If type is video or gif, get the duration:
+            long durationInMilliseconds = -1L;
+            //If mimeType is video or gif, get the duration:
+            try {
+                if(alFileItems.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                    if (alFileItems.get(position).mimeType.startsWith("video")) {
+                        Uri docUri = Uri.parse(alFileItems.get(position).uri);
+                        ImportActivity.mediaMetadataRetriever.setDataSource(ImportActivity.getContextOfActivity(), docUri);
+                        String time = ImportActivity.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                        durationInMilliseconds = Long.parseLong(time);
+                    } else { //if it's not a video file, check to see if it's a gif:
+                        if (alFileItems.get(position).extension.contentEquals("gif")) {
+                            //Get the duration of the gif image:
+                            Uri docUri = Uri.parse(alFileItems.get(position).uri);
+                            Context activityContext = ImportActivity.getContextOfActivity();
+                            pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                            durationInMilliseconds = gd.getDuration();
+                        }
+                    }
+                    if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
+                        alFileItems.get(position).videoTimeText = ImportActivity.getDurationTextFromMilliseconds(durationInMilliseconds);
+                        alFileItems.get(position).videoTimeInMilliseconds = durationInMilliseconds;
+                    }
+                }
+
+                if(alFileItems.get(position).videoTimeText.length() > 0){
+                    //If the video time text has been defined, recall and display the time:
+                    sLine2 = sLine2 + "\tDuration: " + alFileItems.get(position).videoTimeText;
+                }
+
+            }catch (Exception e){
+                Context activityContext = ImportActivity.getContextOfActivity();
+                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItems.get(position).name, Toast.LENGTH_LONG).show();
+            }
+
+            tvLine2.setText(sLine2);
+
+            //Get tag text to apply to list item if tags are assigned to the item:
+            StringBuilder sbTags = new StringBuilder();
+            sbTags.append("Tags: ");
+            ArrayList<Integer> aliTagIDs = alFileItems.get(position).prospectiveTags;
+
+            if(aliTagIDs != null){
+                if(aliTagIDs.size() > 0) {
+                    sbTags.append(globalClass.getTagFromID(aliTagIDs.get(0), ImportActivity.giImportMediaCategory));
+                    for (int i = 1; i < aliTagIDs.size(); i++) {
+                        sbTags.append(", ");
+                        sbTags.append(globalClass.getTagFromID(aliTagIDs.get(i), ImportActivity.giImportMediaCategory));
+                    }
+                }
+            }
+            tvLine3.setText(sbTags.toString());
+
+            //set the image type if folder or file
+            if(alFileItems.get(position).type.equals("folder")) {
+                ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
+            } else {
+                //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
+
+                //Get the Uri of the file and create/display a thumbnail:
+                String sUri = alFileItems.get(position).uri;
+                Uri uri = Uri.parse(sUri);
+                Glide.with(getContext()).
+                        load(uri).
+                        into(ivFileType);
+            }
+            
+            
+            //return super.getView(position, row, parent);
+            return row;
+        }
+
+        @Override
+        public int getCount() {
+            return alFileItems.size();
+        }
+
+        @Override
+        public FileItem getItem(int position) {
+            return alFileItems.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        public void applyTagToItems(Integer iTagID){
+            //Apply tag to items if the item does not already have the tag:
+            for(FileItem fm: alFileItems){
+                if(!fm.prospectiveTags.contains(iTagID)){
+                    fm.prospectiveTags.add(iTagID);
+                }
+            }
+        }
+
+        public void removeTagFromItems(Integer iTagID){
+            //Remove tag from items if the item has the tag:
+            for(FileItem fm: alFileItems){
+                if(fm.prospectiveTags.contains(iTagID)){
+                    fm.prospectiveTags.remove(iTagID);
+                }
+            }
+        }
+
 
     }
 
