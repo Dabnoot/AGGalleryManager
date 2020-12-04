@@ -43,7 +43,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
     private static Set<String> gssSelectedTags;
     private static ArrayList<Integer> galiComicsRestrictedTags;
 
-    GlobalClass globalClass;
+    static GlobalClass globalClass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,21 +106,11 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
 
         //Get Comics' restricted tags:
         String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
-        galiComicsRestrictedTags = getTagIDIntegerArrayFromString(gsComicsRestrictedTags);
+        galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");
 
     }
 
-    public ArrayList<Integer> getTagIDIntegerArrayFromString(String sTags){
-        ArrayList<Integer> aliTags = new ArrayList<>();
 
-        if(sTags != null){
-            String[] sacrt = sTags.split(",");
-            for(String s : sacrt){
-                aliTags.add(Integer.parseInt(s));
-            }
-        }
-        return aliTags;
-    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -136,7 +126,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             //gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
             //Get Comics' restricted tags:
             String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
-            galiComicsRestrictedTags = getTagIDIntegerArrayFromString(gsComicsRestrictedTags);
+            galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");
             return true;
         }
         return super.onSupportNavigateUp();
@@ -275,13 +265,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             }
             String sTemp = sb.toString();*/
 
-            StringBuilder sb = new StringBuilder();
-            String sTemp = "";
-            if(galiComicsRestrictedTags.size() > 0){
-                for(int i : galiComicsRestrictedTags){
-
-                }
-            }
+            String sTemp = GlobalClass.formDelimitedString(galiComicsRestrictedTags,", ");
 
             //Apply the new data to the summary:
             if (!(sTemp.isEmpty())) {
@@ -304,12 +288,12 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
                         //Get rid of brackets:
                         sTemp = sTemp.substring(1, sTemp.length() - 1);
 
+                        //Get the tag text associated with each tag ID:
+                        ArrayList<Integer> aliTagIDs = GlobalClass.getIntegerArrayFromString(sTemp, ", ");
+                        ArrayList<String> alsTagTexts = globalClass.getTagTextsFromIDs(aliTagIDs, GlobalClass.MEDIA_CATEGORY_COMICS);
+
                         //Sort the strings:
-                        String[] sTempArray = sTemp.split(",");
-                        SortedSet<String> ssTemp = new TreeSet<>();
-                        for(String s: sTempArray) {
-                            ssTemp.add(s.trim());
-                        }
+                        SortedSet<String> ssTemp = new TreeSet<>(alsTagTexts);
 
                         //Format the strings:
                         sb = new StringBuilder();

@@ -305,8 +305,6 @@ public class CatalogActivity extends AppCompatActivity {
         }
     }
 
-
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         //Display a message showing the name of the item selected.
@@ -586,19 +584,6 @@ public class CatalogActivity extends AppCompatActivity {
         TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Catalog item data
         treeMapPreSort = new TreeMap<>();
 
-        //Format the restriction tag set so that we can process it:
-        StringBuilder sbRestrictedTags = new StringBuilder();
-        for(Map.Entry<Integer, String> entry: globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).entrySet()){
-            sbRestrictedTags.append(entry.getValue());
-            sbRestrictedTags.append(",");
-        }
-        //Split restricted tags into array:
-        String[] sTagsArray = new String[]{};
-        if(sbRestrictedTags.toString().contains(",")) {
-            //If there is at least 1 restricted tag...
-            sTagsArray = sbRestrictedTags.toString().split(",");
-        }
-
         //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
         String[] sCatalogListRecord;
         String sKey;
@@ -633,13 +618,15 @@ public class CatalogActivity extends AppCompatActivity {
 
             //Check to see if the record needs to be skipped due to restriction settings:
             boolean bIsRestricted = false;
-            if(gbCatalogTagsRestrictionsOn &&
-                    (sTagsArray.length > 0)) {
-                //If restricted tags exist...
-                //Look for restricted tags in the incoming record:
-                for (String s : sTagsArray) {
-                    if (sCatalogListRecord[giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]].contains(s.trim())) {
+            if(gbCatalogTagsRestrictionsOn) {
+                String sRecordTags = sCatalogListRecord[giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]];
+                String[] saRecordTags = sRecordTags.split(",");
+                for (String s : saRecordTags) {
+                    //if list of restricted tags contains this particular record tag, mark as restricted item:
+                    //if (globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).containsValue(s)) {
+                    if (globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).containsKey(Integer.parseInt(s))) {
                         bIsRestricted = true;
+                        break;
                     }
                 }
             }
@@ -709,6 +696,19 @@ public class CatalogActivity extends AppCompatActivity {
     }
 
     public void StartComicViewerActivity(String[] sFields){
+
+        //Record the COMIC_DATETIME_LAST_READ_BY_USER:
+        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+        String[] sDateTime = new String[]{dTimeStamp.toString()};
+        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
+        globalClass.CatalogDataFile_UpdateRecord(
+                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS],
+                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS),
+                sFields[GlobalClass.COMIC_ID_INDEX],
+                GlobalClass.COMIC_ID_INDEX,
+                iFields,
+                sDateTime);
+
 
         Intent intentComicViewer = new Intent(this, ComicDetailsActivity.class);
 

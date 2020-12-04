@@ -522,7 +522,10 @@ public class ComicDetailsActivity extends AppCompatActivity {
         intentComicViewer.putExtra(ComicPageViewerActivity.EXTRA_COMIC_FIELDS_STRING, gsComicFields);
         intentComicViewer.putExtra(ComicPageViewerActivity.EXTRA_COMIC_PAGE_START, iComicPage);
 
-        //Record the COMIC_DATETIME_LAST_READ_BY_USER:
+        /*//Record the COMIC_DATETIME_LAST_READ_BY_USER: <<<Moved to CatalogActivity to set last read to <preview>
+                                                            as user may preview, decide not to view, and go back.
+                                                            If this is the case, move the comic to the end of the
+                                                            stack so that it's not always on top.>>>
         Double dTimeStamp = GlobalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
@@ -532,7 +535,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
                 GlobalClass.COMIC_ID_INDEX,
                 iFields,
-                sDateTime);
+                sDateTime);*/
 
         startActivity(intentComicViewer);
     }

@@ -691,6 +691,14 @@ public class GlobalClass extends Application {
         return sTagText;
     }
 
+    public ArrayList<String> getTagTextsFromIDs(ArrayList<Integer> ali, int iMediaCategory){
+        ArrayList<String> als = new ArrayList<>();
+        for(Integer i : ali){
+            als.add(getTagTextFromID(i, iMediaCategory));
+        }
+        return als;
+    }
+
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
         Integer iKey = -1;
         String[] sFields;
@@ -704,7 +712,9 @@ public class GlobalClass extends Application {
         return iKey;
     }
 
-    public String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
+    public static String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
+        //Used by preferences for storing integer string representing restricted tags.
+        //Used to save tag IDs to catalog file.
         String sReturn = "";
         StringBuilder sb = new StringBuilder();
         for(Integer i : ali){
@@ -712,9 +722,23 @@ public class GlobalClass extends Application {
             sb.append(sDelimiter);
         }
         sReturn = sb.toString();
-        sReturn = sReturn.substring(0, sReturn.lastIndexOf(sDelimiter));
-
+        if(sReturn.contains(sDelimiter)) {
+            //Clear the trailing delimiter:
+            sReturn = sReturn.substring(0, sReturn.lastIndexOf(sDelimiter));
+        }
         return sReturn;
+    }
+
+    public static ArrayList<Integer> getIntegerArrayFromString(String sTags, String sDelimiter){
+        ArrayList<Integer> ali = new ArrayList<>();
+
+        if(sTags != null){
+            String[] sa = sTags.split(sDelimiter);
+            for(String s : sa){
+                ali.add(Integer.parseInt(s));
+            }
+        }
+        return ali;
     }
 
 
