@@ -84,14 +84,14 @@ public class ImportFragment_1_StorageLocation extends Fragment {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
-        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).registerReceiver(importDataServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
 
     }
 
     @Override
     public void onDestroy() {
         // unregister  like this
-        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).unregisterReceiver(importDataServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
         super.onDestroy();
     }
 
@@ -216,7 +216,7 @@ public class ImportFragment_1_StorageLocation extends Fragment {
                 gRelativeLayout_Progress = getView().findViewById(R.id.relativeLayout_Progress);
                 gRelativeLayout_Progress.setVisibility(View.VISIBLE);
 
-                ImportActivityDataService.startActionGetDirectoryContents(ImportActivity.getContextOfActivity(), ImportActivity.guriImportTreeURI, ImportActivity.giImportMediaCategory);
+                ImportActivityDataService.startActionGetDirectoryContents(getContext(), ImportActivity.guriImportTreeURI, ImportActivity.giImportMediaCategory);
 
 
             }

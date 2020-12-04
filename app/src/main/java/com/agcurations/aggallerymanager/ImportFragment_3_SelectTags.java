@@ -207,14 +207,14 @@ public class ImportFragment_3_SelectTags extends Fragment {
                 if(alFileItems.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
                     if (alFileItems.get(position).mimeType.startsWith("video")) {
                         Uri docUri = Uri.parse(alFileItems.get(position).uri);
-                        ImportActivity.mediaMetadataRetriever.setDataSource(ImportActivity.getContextOfActivity(), docUri);
+                        ImportActivity.mediaMetadataRetriever.setDataSource(getContext(), docUri);
                         String time = ImportActivity.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
                         if (alFileItems.get(position).extension.contentEquals("gif")) {
                             //Get the duration of the gif image:
                             Uri docUri = Uri.parse(alFileItems.get(position).uri);
-                            Context activityContext = ImportActivity.getContextOfActivity();
+                            Context activityContext = getContext();
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             durationInMilliseconds = gd.getDuration();
                         }
@@ -231,7 +231,7 @@ public class ImportFragment_3_SelectTags extends Fragment {
                 }
 
             }catch (Exception e){
-                Context activityContext = ImportActivity.getContextOfActivity();
+                Context activityContext = getContext();
                 Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItems.get(position).name, Toast.LENGTH_LONG).show();
             }
 

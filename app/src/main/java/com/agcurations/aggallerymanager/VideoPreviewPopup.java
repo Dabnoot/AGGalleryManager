@@ -63,7 +63,7 @@ public class VideoPreviewPopup extends Activity {
 
             // Set data source to retriever.
             Uri uriVideoFile = Uri.parse(sUriVideoFile);
-            retriever.setDataSource(ImportActivity.getContextOfActivity(), uriVideoFile);
+            retriever.setDataSource(getApplicationContext(), uriVideoFile);
 
             //Get frame bitmaps:
             for(int i = 0; i < iFrames; i++) {

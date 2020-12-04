@@ -77,13 +77,13 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
-        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).registerReceiver(importDataServiceResponseReceiver,filter);
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver,filter);
     }
 
     @Override
     public void onDestroy() {
         //requireActivity().unregisterReceiver(importDataServiceResponseReceiver);
-        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).unregisterReceiver(importDataServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
         super.onDestroy();
 
     }
@@ -134,7 +134,7 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         }
 
         //Initiate the file import via ImportActivityDataService:
-        ImportActivityDataService.startActionImportFiles(ImportActivity.getContextOfActivity(),
+        ImportActivityDataService.startActionImportFiles(getContext(),
                 ImportActivity.gsImportDestinationFolder,
                 alImportFileList,
                 sTags,

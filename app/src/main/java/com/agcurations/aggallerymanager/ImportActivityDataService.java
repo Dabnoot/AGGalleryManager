@@ -125,7 +125,8 @@ public class ImportActivityDataService extends IntentService {
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
         broadcastIntent_Problem.putExtra(RECEIVER_STRING, sReceiver);
         //sendBroadcast(broadcastIntent_Problem);
-        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).sendBroadcast(broadcastIntent_Problem);
+        //LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).sendBroadcast(broadcastIntent_Problem);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
     }
 
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
@@ -145,7 +146,7 @@ public class ImportActivityDataService extends IntentService {
             broadcastIntent_GetDirectoryContentsResponse.addCategory(Intent.CATEGORY_DEFAULT);
             broadcastIntent_GetDirectoryContentsResponse.putExtra(RECEIVER_STRING, RECEIVER_STORAGE_LOCATION);
             //sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
-            LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
         }
     }
 
@@ -203,7 +204,7 @@ public class ImportActivityDataService extends IntentService {
             String sLogLine;
             InputStream inputStream = null;
             OutputStream outputStream = null;
-            ContentResolver content = ImportActivity.getContextOfActivity().getContentResolver();
+            ContentResolver content = getApplicationContext().getContentResolver();
 
 
 
@@ -220,7 +221,7 @@ public class ImportActivityDataService extends IntentService {
             //Loop through the files and copy or move them:
             for(FileItem fi: alFileList){
                 uriSourceFile = Uri.parse(fi.uri);
-                DocumentFile dfSource = DocumentFile.fromSingleUri(ImportActivity.getContextOfActivity(), uriSourceFile);
+                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
                 try {
                     //Write next behavior to the screen log:
                     sLogLine = "Attempting ";
@@ -389,7 +390,7 @@ public class ImportActivityDataService extends IntentService {
         broadcastIntent.putExtra(RECEIVER_STRING, sReceiver);
 
         //sendBroadcast(broadcastIntent);
-        LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).sendBroadcast(broadcastIntent);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
     }
 

@@ -155,7 +155,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
 
             // Set data source to retriever.
             Uri uriVideoFile = Uri.parse(gfileItem.uri);
-            retriever.setDataSource(ImportActivity.getContextOfActivity(), uriVideoFile);
+            retriever.setDataSource(getApplicationContext(), uriVideoFile);
 
             //Get frame bitmaps:
             for(int i = 0; i < iFrames; i++) {

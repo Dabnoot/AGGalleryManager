@@ -73,7 +73,6 @@ public class ImportActivity extends AppCompatActivity {
 
 
     //FragmentImport_3_SelectTags
-    public static String[] sDefaultTags; //Default tags from which user may select.
     public static ArrayList<String> alsImportTags = new ArrayList<>();  //Tags to apply to the import.
     public static String gsImportDestinationFolder;
     public static FragmentSelectTagsViewModel viewModelTags; //Used for applying tags globally to an entire import selection.
@@ -88,10 +87,10 @@ public class ImportActivity extends AppCompatActivity {
     static MediaMetadataRetriever mediaMetadataRetriever;
 
     // a static variable to get a reference of our activity context
-    public static Context contextOfActivity;
+    /*public static Context contextOfActivity;
     public static Context getContextOfActivity(){
         return contextOfActivity;
-    }
+    }*/
 
 
 
@@ -102,7 +101,7 @@ public class ImportActivity extends AppCompatActivity {
         setContentView(R.layout.import_activity);
         setTitle("Import");
 
-        contextOfActivity = this;
+        //contextOfActivity = this;
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -162,7 +161,7 @@ public class ImportActivity extends AppCompatActivity {
                 boolean bGetDirContentsResponse = intent.getBooleanExtra(ImportActivityDataService.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
                 if(bGetDirContentsResponse) {
                     ArrayList<FileItem> alFileList = (ArrayList<FileItem>) intent.getSerializableExtra(ImportActivityDataService.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
-                    fileListCustomAdapter = new FileListCustomAdapter(getContextOfActivity(), R.id.listView_FolderContents, alFileList);
+                    fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
                 }
 
             }
@@ -338,14 +337,14 @@ public class ImportActivity extends AppCompatActivity {
                 if(alFileItemsDisplay.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
                     if (alFileItemsDisplay.get(position).mimeType.startsWith("video")) {
                         Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
-                        mediaMetadataRetriever.setDataSource(getContextOfActivity(), docUri);
+                        mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
                         if (alFileItemsDisplay.get(position).extension.contentEquals("gif")) {
                             //Get the duration of the gif image:
                             Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
-                            Context activityContext = getContextOfActivity();
+                            Context activityContext = getApplicationContext();
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             durationInMilliseconds = gd.getDuration();
                         }
@@ -362,8 +361,7 @@ public class ImportActivity extends AppCompatActivity {
                 }
 
             }catch (Exception e){
-                Context activityContext = ImportActivity.getContextOfActivity();
-                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).name, Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), e.getMessage() + "; File: " + alFileItemsDisplay.get(position).name, Toast.LENGTH_LONG).show();
             }
 
             tvLine2.setText(sLine2);
