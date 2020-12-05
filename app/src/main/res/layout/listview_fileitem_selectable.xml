@@ -15,7 +15,7 @@
         android:id="@+id/imageView_StorageItemIcon"
         android:layout_width="100dp"
         android:layout_height="match_parent"
-        android:contentDescription="Filetype icon"
+        android:contentDescription="Thumbnail icon"
         android:src="@drawable/baseline_file_white_18dp" />
 
     <LinearLayout

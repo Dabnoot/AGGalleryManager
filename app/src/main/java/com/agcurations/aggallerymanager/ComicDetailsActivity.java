@@ -68,7 +68,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
     private RecyclerViewComicPagesAdapter gRecyclerViewComicPagesAdapter;
 
 
-    private boolean gbDebugTouch = false;
+    private final boolean gbDebugTouch = false;
     private boolean gbAutoAcquireData = false;
 
     @Override
@@ -259,7 +259,6 @@ public class ComicDetailsActivity extends AppCompatActivity {
         //http://blog.sqisland.com/2014/12/recyclerview-grid-with-header.html
 
         private final TreeMap<Integer, String> treeMap;
-        private final Integer[] mapKeys;
 
         private static final int ITEM_VIEW_TYPE_HEADER = 0;
         private static final int ITEM_VIEW_TYPE_ITEM = 1;
@@ -324,7 +323,6 @@ public class ComicDetailsActivity extends AppCompatActivity {
 
         public RecyclerViewComicPagesAdapter(TreeMap<Integer, String> data) {
             this.treeMap = data;
-            mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
         }
 
         public int getCount() {
@@ -616,7 +614,7 @@ public class ComicDetailsActivity extends AppCompatActivity {
     }
 
     public class ComicDetailsResponseReceiver extends BroadcastReceiver {
-        public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.dabnoot.intent.action.FROM_COMIC_DETAILS_SERVICE";
+        public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_COMIC_DETAILS_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {

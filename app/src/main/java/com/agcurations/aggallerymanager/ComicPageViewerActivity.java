@@ -91,29 +91,6 @@ public class ComicPageViewerActivity extends AppCompatActivity {
             hide();
         }
     };
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            switch (motionEvent.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    if (AUTO_HIDE) {
-                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                    }
-                    break;
-                case MotionEvent.ACTION_UP:
-                    view.performClick();
-                    break;
-                default:
-                    break;
-            }
-            return false;
-        }
-    };
 
 
     //Global constants
@@ -127,7 +104,6 @@ public class ComicPageViewerActivity extends AppCompatActivity {
     String[] gsComicFields;
     private TreeMap<Integer, String> tmComicPages;
     private String gsComicName = "";
-    private int giSelectedComicSequenceNum;
     private int giCurrentPageIndex;
     private int giMaxFileCount;
 
@@ -140,8 +116,8 @@ public class ComicPageViewerActivity extends AppCompatActivity {
     Display gDisplay;
 
     // Matrices for moving and zooming image:
-    private Matrix matrix = new Matrix();
-    private Matrix savedMatrix = new Matrix();
+    private final Matrix matrix = new Matrix();
+    private final Matrix savedMatrix = new Matrix();
     // Scaling
     private float gfScaleFactor = 1.0f;
     private float gfMinScale = 1.0f;
@@ -161,12 +137,12 @@ public class ComicPageViewerActivity extends AppCompatActivity {
     private static final int ZOOM = 2;
     private int mode = NONE;
     // Zooming:
-    private PointF gpTouchStart = new PointF();
-    private PointF gpMidPoint = new PointF();
+    private final PointF gpTouchStart = new PointF();
+    private final PointF gpMidPoint = new PointF();
     private float gfPreviousPinchDistance = 1f;
 
     //Debug assistance global variables
-    private boolean gbDebugSwiping = false;
+    private final boolean gbDebugSwiping = false;
     private TextView gtvDebug;
     private int giDebugLineCount;
 
@@ -409,15 +385,15 @@ public class ComicPageViewerActivity extends AppCompatActivity {
 
             }
             options.inJustDecodeBounds = false;
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //!!!!!   REFACTOR USING createImageThumbnail ONCE API LEVEL 29 IS COMMON    !!!!!!!
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+            //todo: REFACTOR USING createImageThumbnail ONCE API LEVEL 29 IS COMMON
+
             Bitmap myBitmap;
 
             if(globalClass.ObfuscationOn) {
 
                 //Get the obfuscation image index:
-                int i = (giSelectedComicSequenceNum % globalClass.getObfuscationImageCount());
+                int i = (giCurrentPageIndex % globalClass.getObfuscationImageCount());
                 //Get the obfuscation image resource ID:
                 int iObfuscatorResourceID = globalClass.getObfuscationImage(i);
                 myBitmap = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
@@ -915,6 +891,9 @@ public class ComicPageViewerActivity extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
+                if (mVisible && AUTO_HIDE) {
+                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                }
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Single Tap Detected", Toast.LENGTH_SHORT).show();
                 return true;
             }

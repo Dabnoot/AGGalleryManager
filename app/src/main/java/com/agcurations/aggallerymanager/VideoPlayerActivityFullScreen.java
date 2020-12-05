@@ -75,13 +75,13 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
             return;
         }
         treeMapRecyclerViewVideos.putAll(hashMapTemp);
-        Integer iVideoID = intentVideoPlayer.getIntExtra(CatalogActivity.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID,0);
+        int iVideoID = intentVideoPlayer.getIntExtra(CatalogActivity.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID,0);
 
         //Get the TreeMap key associated with the Video ID provided:
         giKey = 0;
         for (Map.Entry<Integer, String[]>
                 entry : treeMapRecyclerViewVideos.entrySet()) {
-            if(entry.getValue()[GlobalClass.VIDEO_ID_INDEX].equals(iVideoID.toString())) {
+            if(entry.getValue()[GlobalClass.VIDEO_ID_INDEX].equals(Integer.toString(iVideoID))) {
                 giKey = entry.getKey();
             }
         }
@@ -286,36 +286,6 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
             hide();
         }
     };
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            switch (motionEvent.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    if (AUTO_HIDE) {
-                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                    }
-                    break;
-                case MotionEvent.ACTION_UP:
-                    view.performClick();
-                    break;
-                default:
-                    break;
-            }
-            return false;
-        }
-    };
-
-
-
-
-
-
-
 
 
 

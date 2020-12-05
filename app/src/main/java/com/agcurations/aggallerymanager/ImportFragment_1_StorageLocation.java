@@ -39,10 +39,6 @@ public class ImportFragment_1_StorageLocation extends Fragment {
     private static final int REQUEST_CODE_GET_IMPORT_FOLDER = 1000;
     public static final int MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE = 2002;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     ImportActivityViewModel importActivityViewModel;
 
     ProgressBar gProgressBar_FileAnalysisProgress;
@@ -77,10 +73,6 @@ public class ImportFragment_1_StorageLocation extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);

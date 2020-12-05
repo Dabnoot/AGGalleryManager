@@ -1,4 +1,4 @@
-<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Base application theme. -->
     <!--<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">-->
     <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
@@ -50,7 +50,7 @@
         <item name="android:windowBackground">@drawable/sora_sagano_unsplash</item>
     </style>
 
-    <style name="ComicsTheme" parent="MainTheme"></style>
+    <style name="ComicsTheme" parent="MainTheme" />
 
     <style name="ActionBarTheme" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
         <item name="popupTheme">@style/ActionBarPopupTheme</item>

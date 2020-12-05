@@ -3,8 +3,8 @@ package com.agcurations.aggallerymanager;
 public class TagItem {
     //Used for Tag ListViews
     public Boolean isChecked;
-    public int TagID;
-    public String TagText;
+    public final int TagID;
+    public final String TagText;
 
     //Create a variable to be used to preserve the order in which items are selected.
     //  This is needed because the first tag may be used for special purposes.

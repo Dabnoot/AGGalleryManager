@@ -40,9 +40,6 @@ public class ImportActivityDataService extends IntentService {
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
 
-
-    private static final String EXTRA_IMPORT_FILES_DESTINATION = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_DESTINATION";
-    private static final String EXTRA_IMPORT_FILES_TAGS = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_TAGS";
     private static final String EXTRA_IMPORT_FILES_FILELIST = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_FILELIST";
     private static final String EXTRA_IMPORT_FILES_MOVE_OR_COPY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_MOVE_OR_COPY";
 
@@ -51,7 +48,6 @@ public class ImportActivityDataService extends IntentService {
 
     public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is or is not a response to dir call.
     public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
-    public static final String EXTRA_BOOL_IMPORT_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_IMPORT_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is a response to import call.
 
     public static final String RECEIVER_STORAGE_LOCATION = "com.agcurations.aggallerymanager.extra.RECEIVER_STORAGE_LOCATION";
     public static final String RECEIVER_EXECUTE_IMPORT = "com.agcurations.aggallerymanager.extra.RECEIVER_EXECUTE_IMPORT";
@@ -97,10 +93,10 @@ public class ImportActivityDataService extends IntentService {
                 handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory);
 
             } else if (ACTION_IMPORT_FILES.equals(action)) {
-                //todo: check the cast below:
                 final ArrayList<FileItem> alFileList = (ArrayList<FileItem>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, -1);
+                if(alFileList==null) return;
                 handleAction_startActionImportDirectoryContents(
                         alFileList,
                         iMoveOrCopy,
@@ -116,15 +112,13 @@ public class ImportActivityDataService extends IntentService {
         broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
         broadcastIntent_Problem.putExtra(RECEIVER_STRING, sReceiver);
-        //sendBroadcast(broadcastIntent_Problem);
-        //LocalBroadcastManager.getInstance(ImportActivity.getContextOfActivity()).sendBroadcast(broadcastIntent_Problem);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
     }
 
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
         if(ImportActivity.guriImportTreeURI != null){
             Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
-            ArrayList<FileItem> alFileList = null;
+            ArrayList<FileItem> alFileList;
             try {
                 alFileList = readFolderContent(uriImportTreeUri, ".+", iMediaCategory, FILES_ONLY);
             }catch (Exception e){
@@ -150,10 +144,10 @@ public class ImportActivityDataService extends IntentService {
 
 
         long lProgressNumerator = 0L;
-        long lProgressDenominator = 0L;
+        long lProgressDenominator;
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
-        long lLoopBytesRead = 0L;
+        long lLoopBytesRead;
 
 
         ContentResolver content = getApplicationContext().getContentResolver();
@@ -173,8 +167,7 @@ public class ImportActivityDataService extends IntentService {
 
         //Find the next record ID:
         int iNextRecordId = 0;
-        int iThisId = 0;
-        String[] sFields;
+        int iThisId;
         for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
             iThisId = Integer.parseInt(entry.getValue()[iMediaIDs[iMediaCategory]]);
             if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
@@ -212,8 +205,8 @@ public class ImportActivityDataService extends IntentService {
                         RECEIVER_EXECUTE_IMPORT);
                 Uri uriSourceFile;
                 String sLogLine;
-                InputStream inputStream = null;
-                OutputStream outputStream = null;
+                InputStream inputStream;
+                OutputStream outputStream;
 
                 uriSourceFile = Uri.parse(fileItem.uri);
                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
@@ -231,31 +224,32 @@ public class ImportActivityDataService extends IntentService {
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             RECEIVER_EXECUTE_IMPORT);
 
+                    if(dfSource == null) continue;
                     inputStream = content.openInputStream(dfSource.getUri());
 
                     //Reverse the text on the file so that the file does not get picked off by a search tool:
+                    if(dfSource.getName()==null) continue;
                     String sFileName = globalClass.JumbleFileName(dfSource.getName());
 
                     outputStream = new FileOutputStream(fDestination.getPath() + File.separator + sFileName);
-                    if (outputStream != null) {
-                        int iLoopCount = 0;
-                        byte[] buffer = new byte[100000];
-                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                            outputStream.write(buffer, 0, buffer.length);
-                            lProgressNumerator += lLoopBytesRead;
-                            iLoopCount++;
-                            if (iLoopCount % 10 == 0) {
-                                //Send update every 10 loops:
-                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                                BroadcastProgress(false, "",
-                                        true, iProgressBarValue,
-                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                        RECEIVER_EXECUTE_IMPORT);
-                            }
+                    int iLoopCount = 0;
+                    byte[] buffer = new byte[100000];
+                    if(inputStream == null) continue;
+                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                        outputStream.write(buffer, 0, buffer.length);
+                        lProgressNumerator += lLoopBytesRead;
+                        iLoopCount++;
+                        if (iLoopCount % 10 == 0) {
+                            //Send update every 10 loops:
+                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                            BroadcastProgress(false, "",
+                                    true, iProgressBarValue,
+                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                    RECEIVER_EXECUTE_IMPORT);
                         }
-                        outputStream.flush();
-                        outputStream.close();
                     }
+                    outputStream.flush();
+                    outputStream.close();
                     sLogLine = "Copy success.";
                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     BroadcastProgress(true, sLogLine,
@@ -284,7 +278,7 @@ public class ImportActivityDataService extends IntentService {
                     */
 
                         //Create a timestamp to be used to create the data record:
-                        Double dTimeStamp = globalClass.GetTimeStampFloat();
+                        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
                         String sDateTime = dTimeStamp.toString();
 
                         String[] sFieldData = new String[]{
@@ -340,7 +334,6 @@ public class ImportActivityDataService extends IntentService {
                             false, iProgressBarValue,
                             false, "",
                             RECEIVER_EXECUTE_IMPORT);
-                    continue;
                 }
 
             }
@@ -390,8 +383,8 @@ public class ImportActivityDataService extends IntentService {
 
 
 
-    int FOLDERS_ONLY = 0;
-    int FILES_ONLY = 1;
+    final int FOLDERS_ONLY = 0;
+    final int FILES_ONLY = 1;
 
     //Use a Uri instead of a path to get folder contents:
     public ArrayList<FileItem> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iMediaCategory, int iSelectFoldersFilesOrBoth) {
@@ -427,7 +420,7 @@ public class ImportActivityDataService extends IntentService {
 
 
         long lProgressNumerator = 0L;
-        long lProgressDenominator = 0L;
+        long lProgressDenominator;
         int iProgressBarValue = 0;
 
         //Calculate total number of files for a progress bar:

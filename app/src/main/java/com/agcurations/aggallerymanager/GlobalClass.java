@@ -6,7 +6,6 @@ import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.net.NetworkRequest;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.text.DecimalFormat;
-import java.text.Format;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -44,16 +42,16 @@ public class GlobalClass extends Application {
 
     public int giSelectedCatalogMediaCategory;
 
-    public File[] gfCatalogFolders = new File[3];
-    public File[] gfCatalogLogsFolders = new File[3];
-    public File[] gfCatalogContentsFiles = new File[3];
-    public int giCatalogFileVersion = 4;
-    public File[] gfCatalogTagsFiles = new File[3];
+    public final File[] gfCatalogFolders = new File[3];
+    public final File[] gfCatalogLogsFolders = new File[3];
+    public final File[] gfCatalogContentsFiles = new File[3];
+    public final int giCatalogFileVersion = 4;
+    public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
-    public List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
-    public List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
-    public List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
-    public boolean[] gbJustImported = {false, false, false};
+    public final List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
+    public final List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
+    public final List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
+    public final boolean[] gbJustImported = {false, false, false};
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
     public static final String[][] CatalogRecordFields = new String[][]{
@@ -169,7 +167,7 @@ public class GlobalClass extends Application {
     public File gfComicsFolder;
     public File gfComicLogsFolder;
     public File gfComicCatalogContentsFile;
-    public TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
+    public final TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
     public boolean gbComicJustImported = false;
 
 
@@ -217,7 +215,7 @@ public class GlobalClass extends Application {
     }
 
     //User-set option:
-    public boolean bAutoDownloadOn = true; //By default, auto-download details is on.
+    public final boolean bAutoDownloadOn = true; //By default, auto-download details is on.
       //This uses little network resource because we are just getting html data.
 
 
@@ -271,14 +269,12 @@ public class GlobalClass extends Application {
         int iMinute = (int) ((((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100) - iHour) * 100);
         int iSecond = (int) ((((((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100) - iHour) * 100) - iMinute) * 100);
 
-        String sTimeStampFinal = iYear + "-" +
+        return iYear + "-" +
                 String.format("%02d", iMonth) + "-" +
                 String.format("%02d", iDay) + " " +
                 String.format("%02d", iHour) + ":" +
                 String.format("%02d", iMinute) + ":" +
                 String.format("%02d", iSecond);
-
-        return sTimeStampFinal;
     }
 
 
@@ -599,17 +595,16 @@ public class GlobalClass extends Application {
             sbBuffer.append("\n");
             //finished header processing.
 
-            int iFieldIDToUpdate = COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX;
             //Apply an import timestamp:
-            Double dTimeStamp = GetTimeStampFloat();
-            String sDateTime = dTimeStamp.toString();
+            double dTimeStamp = GetTimeStampFloat();
+            String sDateTime;
 
 
             String[] sFields;
             String sLine = brReader.readLine();
             while (sLine != null) {
                 dTimeStamp += 0.000100; //Increment the timestamp by one minute.
-                sDateTime = dTimeStamp.toString();
+                sDateTime = Double.toString(dTimeStamp);
                 int j = 0; //To track requested field updates.
                 sFields = sLine.split("\t",-1);
 
@@ -618,7 +613,7 @@ public class GlobalClass extends Application {
 
                 for (int i = 1; i < sFields.length; i++) {
                     sb.append("\t");
-                    if (i == iFieldIDToUpdate) {
+                    if (i == COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX) {
                         //If this is the field to update...
                         sb.append( JumbleStorageText(sDateTime));
                         j++;
@@ -677,11 +672,12 @@ public class GlobalClass extends Application {
 
     public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){
         String sTagText = "[Tag ID " + iTagID + " not found]";
-        try{
-            sTagText = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID)[TAG_NAME_INDEX];;
-        } catch (Exception e){
-            String sMessage = e.getMessage();
+
+        String[] sTagData = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
+        if (sTagData != null) {
+            sTagText = sTagData[TAG_NAME_INDEX];
         }
+
         return sTagText;
     }
 
@@ -709,7 +705,7 @@ public class GlobalClass extends Application {
     public static String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
         //Used by preferences for storing integer string representing restricted tags.
         //Used to save tag IDs to catalog file.
-        String sReturn = "";
+        String sReturn;
         StringBuilder sb = new StringBuilder();
         for(Integer i : ali){
             sb.append(i.toString());
@@ -757,9 +753,7 @@ public class GlobalClass extends Application {
         decimalFormat.setGroupingUsed(true);
         decimalFormat.setGroupingSize(3);
 
-        String sReturn = decimalFormat.format(lStorageSize) + sSizeSuffix;
-
-        return sReturn;
+        return decimalFormat.format(lStorageSize) + sSizeSuffix;
     }
 
 
@@ -800,8 +794,10 @@ public class GlobalClass extends Application {
                 try{
                     //First, the directory must be empty to delete. So delete all files in folder:
                     String[] sChildFiles = fComicFolderToBeDeleted.list();
-                    for (int i = 0; i < sChildFiles.length; i++) {
-                        new File(fComicFolderToBeDeleted, sChildFiles[i]).delete();
+                    if(sChildFiles != null) {
+                        for (String sChildFile : sChildFiles) {
+                            new File(fComicFolderToBeDeleted, sChildFile).delete();
+                        }
                     }
 
                     if(!fComicFolderToBeDeleted.delete()){
@@ -886,10 +882,10 @@ public class GlobalClass extends Application {
     public boolean ObfuscationOn = false;
     public int iObfuscationIndex;
     //public int OBFUSCATION_SUBJECT_VIDEOGAMES = 0;
-    public int OBFUSCATION_SUBJECT_QUALITY = 1;
-    public int iObfuscationSubjectSelection = OBFUSCATION_SUBJECT_QUALITY;
+    public final int OBFUSCATION_SUBJECT_QUALITY = 1;
+    public final int iObfuscationSubjectSelection = OBFUSCATION_SUBJECT_QUALITY;
 
-    int[][] iImageList = new int[][]{
+    final int[][] iImageList = new int[][]{
             {
                     R.drawable.ovg_death_stranding,
                     R.drawable.ovg_doom_eternal,
@@ -907,7 +903,7 @@ public class GlobalClass extends Application {
                     R.drawable.oq_mccalls_quality_factors
             }
     };
-    String[][] sObfuscationCategoryNames = new String[][]{
+    final String[][] sObfuscationCategoryNames = new String[][]{
             {
                     "Top 10 PS4 Games 2015",
                     "Top 10 PS4 Games 2016",
@@ -925,11 +921,11 @@ public class GlobalClass extends Application {
                     "McCall's Quality Factors"
             }
     };
-    String[] sObfuscatedProgramNames = new String[]{
+    final String[] sObfuscatedProgramNames = new String[]{
             "Top Titles",
             "Quality Operations"
     };
-    String[] sNonObfustatedProgramName = new String[]{"Videos Catalog", "Images Catalog", "Comics Catalog"};
+    final String[] sNonObfuscatedProgramName = new String[]{"Videos Catalog", "Images Catalog", "Comics Catalog"};
 
     public int getObfuscationImageCount(){
         return iImageList[iObfuscationSubjectSelection].length;
@@ -960,18 +956,18 @@ public class GlobalClass extends Application {
     //===== Comic Page Viewer Activity Options =====================================================
     //=====================================================================================
     //CPV = "Comic Page Viewer"
-    public float bCPV_MaxScale = 4.0f; //Max zoom.
-    public boolean bCPV_AllowZoomJump = true;
-    public float fCPV_ZoomJumpOutThreshold = 100.0f;
-    public float fCPV_ZoomJumpInThreshold = -200.0f;
+    public final float bCPV_MaxScale = 4.0f; //Max zoom.
+    public final boolean bCPV_AllowZoomJump = true;
+    public final float fCPV_ZoomJumpOutThreshold = 100.0f;
+    public final float fCPV_ZoomJumpInThreshold = -200.0f;
 
     //When image is zoomed, options for pan speed:
-    public boolean bCPV_PanAcceleration = true;
+    public final boolean bCPV_PanAcceleration = true;
     public static final int CPV_PAN_SPEED_SCALED = 1; //Pan based on zoom level.
     public static final int CPV_PAN_SPEED_FIXED = 2;  //Pan based on user-selected speed.
-    public int iCPV_PanSpeedMethod = CPV_PAN_SPEED_SCALED;
-    public float fCPV_VerticalPanScalar = 1.5f;
-    public float fCPV_HorizontalPanScalar = 1.5f;
+    public final int iCPV_PanSpeedMethod = CPV_PAN_SPEED_SCALED;
+    public final float fCPV_VerticalPanScalar = 1.5f;
+    public final float fCPV_HorizontalPanScalar = 1.5f;
 
     //=====================================================================================
     //===== Comic Details Activity Options =====================================================
@@ -979,11 +975,11 @@ public class GlobalClass extends Application {
 
     //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
     //public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
-    public String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
+    public final String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
     //public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    public String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    public final String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
     //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public final String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
 
 
 

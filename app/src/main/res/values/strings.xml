@@ -97,7 +97,7 @@
     <string name="cover_page">Cover page.</string>
     <string name="comic_title">Comic Title</string>
     <string name="comic_id">Comic ID:</string>
-    <string name="comicid">ComicID</string>
+    <string name="comicid_">ComicID</string>
     <string name="parodies">Parodies:</string>
     <string name="parodies_">Parodies</string>
     <string name="characters">Characters:</string>

@@ -3,7 +3,6 @@ package com.agcurations.aggallerymanager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -26,7 +25,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -85,7 +83,7 @@ public class CatalogActivity extends AppCompatActivity {
             GlobalClass.IMAGE_FOLDER_NAME_INDEX,
             GlobalClass.COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
 
-    private final int[] giDataRecordRecylerViewImageIndexes = {
+    private final int[] giDataRecordRecyclerViewImageIndexes = {
             GlobalClass.VIDEO_FILENAME_INDEX,
             GlobalClass.IMAGE_FILENAME_INDEX,
             GlobalClass.COMIC_THUMBNAIL_FILE_INDEX};
@@ -107,7 +105,7 @@ public class CatalogActivity extends AppCompatActivity {
         if(globalClass.ObfuscationOn) {
             setTitle(globalClass.getObfuscatedProgramName());
         } else {
-            setTitle(globalClass.sNonObfustatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
+            setTitle(globalClass.sNonObfuscatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
         }
 
         //Update TextView to show 0 catalog items if applicable:
@@ -160,9 +158,9 @@ public class CatalogActivity extends AppCompatActivity {
 
     }
 
-    public static int SPINNER_ITEM_IMPORT_DATE = 0;
-    public static int SPINNER_ITEM_LAST_VIEWED_DATE = 1;
-    String[] gsSpinnerItems={"Import Date","Last Read Date"};
+    public static final int SPINNER_ITEM_IMPORT_DATE = 0;
+    public static final int SPINNER_ITEM_LAST_VIEWED_DATE = 1;
+    final String[] gsSpinnerItems={"Import Date","Last Read Date"};
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -511,7 +509,7 @@ public class CatalogActivity extends AppCompatActivity {
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
                 String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
                         + sFields[giDataRecordFolderIndexes[globalClass.giSelectedCatalogMediaCategory]] + File.separator
-                        + sFields[giDataRecordRecylerViewImageIndexes[globalClass.giSelectedCatalogMediaCategory]];
+                        + sFields[giDataRecordRecyclerViewImageIndexes[globalClass.giSelectedCatalogMediaCategory]];
                 File fThumbnail = new File(sThumbnailFilePath);
 
                 if (fThumbnail.exists()) {
@@ -748,7 +746,7 @@ public class CatalogActivity extends AppCompatActivity {
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(globalClass.sNonObfustatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
+        setTitle(globalClass.sNonObfuscatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
         //Update the RecyclerView:
         gRecyclerViewCatalogAdapter.notifyDataSetChanged();
     }

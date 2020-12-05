@@ -38,9 +38,6 @@
             android:parentActivityName=".MainActivity"
             android:theme="@style/AppTheme.Launcher.NoActionBar" />
         <activity
-            android:name=".PicturesCatalogActivity"
-            android:parentActivityName=".MainActivity" /> <!-- https://stackoverflow.com/questions/37437037/android-prevent-white-screen-at-startup ! -->
-        <activity
             android:name=".ComicDetailsActivity"
             android:label="@string/title_activity_comic_details"
             android:parentActivityName=".CatalogActivity"

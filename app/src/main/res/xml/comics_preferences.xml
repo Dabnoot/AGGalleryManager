@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <SwitchPreferenceCompat
         app:key="comic_auto_online_data_acquisition"
@@ -9,14 +8,14 @@
 
     <SwitchPreferenceCompat
         app:dependency="comic_auto_online_data_acquisition"
-        app:key="comic_auto_online_data_acquitistion_onImport"
+        app:key="comic_auto_online_data_acquisition_onImport"
         app:summaryOff="Do not automatically download comic data on import."
         app:summaryOn="Automatically download comic data on import."
         app:title="Download comic data on import" />
 
     <SwitchPreferenceCompat
         app:dependency="comic_auto_online_data_acquisition"
-        app:key="comic_auto_online_data_acquitistion_onDetailsView"
+        app:key="comic_auto_online_data_acquisition_onDetailsView"
         app:summaryOff="Do not automatically download comic data when comic is previewed."
         app:summaryOn="Automatically download comic data when comic is previewed."
         app:title="Download comic data on comic preview" />

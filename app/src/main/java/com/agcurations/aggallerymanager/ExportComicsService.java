@@ -40,6 +40,7 @@ public class ExportComicsService extends IntentService {
         globalClass = (GlobalClass) getApplicationContext();
 
         //Get the list of files and folders to be zipped:
+        if(intent == null) return;
         ArrayList<String> alZipList = intent.getStringArrayListExtra(ZIP_LIST);
 
         try {

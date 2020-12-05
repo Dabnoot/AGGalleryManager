@@ -49,7 +49,7 @@ public class MainActivityDataService extends IntentService {
 
 
 
-    Intent broadcastIntent_LoadAppDataResponse = new Intent(); //Make global to allow for problem notification string extras.
+    final Intent broadcastIntent_LoadAppDataResponse = new Intent(); //Make global to allow for problem notification string extras.
     private void handleActionLoadAppData() {
 
         String sExternalStorageState;
@@ -65,7 +65,7 @@ public class MainActivityDataService extends IntentService {
 
             //Catalog Folder Structure:
             for(int i = 0; i < 3; i++){
-                globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + globalClass.gsCatalogFolderNames[i]);
+                globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
                 obtainFolderStructureItem(globalClass.gfCatalogFolders[i]);
                 //Identify the CatalogContents.dat file:
                 globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
@@ -183,7 +183,7 @@ public class MainActivityDataService extends IntentService {
 
                     //Reverse the text of each field (except the TagID):
                     for(int j = 1; j < sFields.length; j++){
-                        sFields[j] = globalClass.JumbleStorageText(sFields[j]);
+                        sFields[j] = GlobalClass.JumbleStorageText(sFields[j]);
                     }
 
 
@@ -212,7 +212,7 @@ public class MainActivityDataService extends IntentService {
                         //Write data records:
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(i.toString() + "," + globalClass.JumbleStorageText(sEntry) + "\n");
+                                fwTagsFile.write(i.toString() + "," + GlobalClass.JumbleStorageText(sEntry) + "\n");
                                 String[] s = new String[]{i.toString(), sEntry};
                                 tmTags.put(i, s);
                                 i++;
@@ -324,7 +324,7 @@ public class MainActivityDataService extends IntentService {
                     //De-jumble the data:
                     String[] sFields2 = new String[sFields.length];
                     for(int i = 0; i < sFields.length; i++){
-                        sFields2[i] = globalClass.JumbleStorageText(sFields[i]);
+                        sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
                     }
 
                     tmCatalogListings.put(iRID, sFields2);

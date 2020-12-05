@@ -7,7 +7,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Parcelable;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +22,6 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ImportFragment_2_SelectItems#newInstance} factory method to
@@ -32,16 +29,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class ImportFragment_2_SelectItems extends Fragment {
 
-    private ImportActivityViewModel importActivityViewModel;
-
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     public ImportFragment_2_SelectItems() {
         // Required empty public constructor
@@ -68,12 +59,7 @@ public class ImportFragment_2_SelectItems extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
 
-        importActivityViewModel = new ViewModelProvider(getActivity()).get(ImportActivityViewModel.class);
     }
 
     @Override

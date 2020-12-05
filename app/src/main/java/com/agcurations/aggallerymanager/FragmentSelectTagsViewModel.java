@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel;
 
 public class FragmentSelectTagsViewModel extends ViewModel {
     // TODO: Implement the ViewModel
-    public ArrayList<TagItem> alTagsAll = new ArrayList<>();  //All possible tags //todo: Exclude restricted tags?
+    public final ArrayList<TagItem> alTagsAll = new ArrayList<>();  //All possible tags //todo: Exclude restricted tags?
     public ArrayList<TagItem> alTagsInUse = new ArrayList<>(); //Tags currently in-use //todo: Exclude restricted tags?
     public final MutableLiveData<ArrayList<TagItem>> altiTagsSelected =
             new MutableLiveData<>(); //Tags selected by the user, or already applied to a selected item.

@@ -19,8 +19,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link ImportFragment_6_ExecuteImport#newInstance} factory method to
@@ -34,10 +32,6 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     ProgressBar gProgressBar_ImportProgress;
     TextView gTextView_ImportProgressBarText;
@@ -70,10 +64,6 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
@@ -130,7 +120,6 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
     }
 
 
-    @SuppressWarnings("unchecked")
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
         public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
 

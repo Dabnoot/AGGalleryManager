@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -37,10 +36,7 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
     public static final String PREFERENCE_COMICS_TAGS_RESTRICTED = "com.agcurations.aggallerymanager.preferences.comics.tags.restricted";
 
     private static File gfAppFolder;
-    private static String gsPin;
-    private static Boolean gbPinMatch = false;
     private static TreeMap<Integer, String> gtmComicTags;
-    private static Set<String> gssSelectedTags;
     private static ArrayList<Integer> galiComicsRestrictedTags;
 
     static GlobalClass globalClass;
@@ -88,8 +84,6 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
             //Create the folder on the likely Internal storage.
             gfAppFolder = new File(fAvailableDirs[0].toString());
         }
-
-        gsPin = globalClass.gsPin;
 
         //Get a list of comic tags to populate the multiSelect dropdown list:
         gtmComicTags = new TreeMap<>();
@@ -218,7 +212,6 @@ public class AGGallerySettingsActivity extends AppCompatActivity implements
                                 fwAppConfigFile.write(newValue.toString());
                                 fwAppConfigFile.flush();
                                 fwAppConfigFile.close();
-                                gsPin = newValue.toString();
                             } catch (IOException e) {
                                 Toast.makeText(getContext(),"Trouble writing AppConfig.dat at" + fAppConfigFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
                             }

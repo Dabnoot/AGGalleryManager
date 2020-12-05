@@ -314,7 +314,7 @@ public class ImportComicsService_obsolete extends IntentService {
                             }
 
                             //Apply an import timestamp:
-                            Double dTimeStamp = globalClass.GetTimeStampFloat();
+                            Double dTimeStamp = GlobalClass.GetTimeStampFloat();
                             String sDateTime = dTimeStamp.toString();
                             sImportComicListRecord[GlobalClass.COMIC_DATETIME_IMPORT_INDEX] = sDateTime;
                             sImportComicListRecord[GlobalClass.COMIC_SOURCE_INDEX] = "nHentai.net";
@@ -633,7 +633,7 @@ public class ImportComicsService_obsolete extends IntentService {
                                     sbCatalogContentRecord.append("\n");
                                     fwCatalogContentsFile.append(sbCatalogContentRecord.toString());
 
-                                    //Add the record to the global memory memory treemap:
+                                    //Add the record to the global memory memory treeMap:
                                     globalClass.gtmCatalogComicList.put(
                                             globalClass.gtmCatalogComicList.size(),
                                             sImportComicListRecord);

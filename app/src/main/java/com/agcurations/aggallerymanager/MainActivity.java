@@ -16,10 +16,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.TreeMap;
-
-import javax.xml.transform.Result;
-
 public class MainActivity extends AppCompatActivity {
 
     //Global Variables:

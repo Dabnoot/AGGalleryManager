@@ -213,7 +213,7 @@ public class ImportComicsActivity_obsolete extends AppCompatActivity {
 
 
     public class ImportResponseReceiver extends BroadcastReceiver {
-        public static final String IMPORT_ACTION_RESPONSE = "com.dabnoot.intent.action.FROM_IMPORT";
+        public static final String IMPORT_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT";
 
         @Override
         public void onReceive(Context context, Intent intent) {

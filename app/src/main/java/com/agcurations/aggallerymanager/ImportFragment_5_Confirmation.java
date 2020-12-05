@@ -43,10 +43,6 @@ public class ImportFragment_5_Confirmation extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     public ImportFragment_5_Confirmation() {
         // Required empty public constructor
     }
@@ -72,10 +68,7 @@ public class ImportFragment_5_Confirmation extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         importActivityViewModel = new ViewModelProvider(getActivity()).get(ImportActivityViewModel.class);
@@ -103,7 +96,6 @@ public class ImportFragment_5_Confirmation extends Fragment {
 
         // Construct the data source
         long lRequiredStorageSpaceBytes = 0L;
-        ArrayList<FileItem> alfiFileItemsImportConfirmation = new ArrayList<>();
         for(FileItem fileItem: importActivityViewModel.alfiConfirmedFileImports){
             lRequiredStorageSpaceBytes += fileItem.sizeBytes;
 
@@ -136,7 +128,7 @@ public class ImportFragment_5_Confirmation extends Fragment {
         textView_RequiredStorageSpace.setText(s);
 
         //Display the available space:
-        long lAvailableStorageSpaceBytes = 0L;
+        long lAvailableStorageSpaceBytes;
         GlobalClass globalClass;
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         lAvailableStorageSpaceBytes = globalClass.AvailableStorageSpace(getActivity().getApplicationContext(), 1);

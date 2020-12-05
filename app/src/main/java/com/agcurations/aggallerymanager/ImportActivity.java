@@ -50,7 +50,7 @@ public class ImportActivity extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 5;
     public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 6;
 
-    public static int FRAGMENT_COUNT = 7;
+    public static final int FRAGMENT_COUNT = 7;
 
     //Constants for individualized tag application via adapter:
     public static final int GET_TAGS_FOR_IMPORT_ITEM = 1050;
@@ -62,20 +62,17 @@ public class ImportActivity extends AppCompatActivity {
     public static Uri guriImportTreeURI; //Uri of selected base folder holding files/folders to be imported.
 
     //FragmentImport_2_SelectItems
-    public static int SelectItemsListViewWidth = 1000;  //Expands the listview items to the width of the listview.
+    public static int SelectItemsListViewWidth = 1000;  //Expands the listView items to the width of the listview.
     public static FileListCustomAdapter fileListCustomAdapter; //For the file selector.
 
 
     //FragmentImport_3_SelectTags
-    public static ArrayList<String> alsImportTags = new ArrayList<>();  //Tags to apply to the import.
-    public static String gsImportDestinationFolder;
     public static FragmentSelectTagsViewModel viewModelTags; //Used for applying tags globally to an entire import selection.
     public static ImportActivityViewModel importActivityViewModel; //Used to transfer data between fragments.
 
     //FragmentImport_4_ImportMethod
-    public static int IMPORT_METHOD_MOVE = 0;
-    public static int IMPORT_METHOD_COPY = 1;
-    public static int giImportMethod; //Selected import method.
+    public static final int IMPORT_METHOD_MOVE = 0;
+    public static final int IMPORT_METHOD_COPY = 1;
 
     //=================================================
 
@@ -175,7 +172,9 @@ public class ImportActivity extends AppCompatActivity {
             if((resultCode == RESULT_OK) &&
                     (data != null)){
                 Bundle b = data.getBundleExtra(VideoPreviewPopup_wTags.TAG_SELECTION_RESULT_BUNDLE);
+                if(b == null) return;
                 FileItem fileItem = (FileItem) b.getSerializable(VideoPreviewPopup_wTags.FILE_ITEM);
+               if(fileItem == null) return;
                 ArrayList<Integer> aliTagIDs;
                 aliTagIDs = b.getIntegerArrayList(VideoPreviewPopup_wTags.TAG_SELECTION_TAG_IDS);
                 //Apply the change to the fileListCustomAdapter:
@@ -377,13 +376,7 @@ public class ImportActivity extends AppCompatActivity {
             }
 
 
-
-
-            if(alFileItemsDisplay.get(position).isChecked ){
-                cbStorageItemSelect.setChecked(true);
-            } else {
-                cbStorageItemSelect.setChecked(false);
-            }
+            cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).isChecked);
 
 
             //Set the onClickListener for the row to toggle the checkbox:

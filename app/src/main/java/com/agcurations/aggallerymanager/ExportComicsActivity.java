@@ -221,7 +221,7 @@ public class ExportComicsActivity extends AppCompatActivity {
     }
 
     public class ExportResponseReceiver extends BroadcastReceiver {
-        public static final String EXPORT_ACTION_RESPONSE = "com.dabnoot.intent.action.FROM_EXPORT";
+        public static final String EXPORT_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_EXPORT";
 
         @Override
         public void onReceive(Context context, Intent intent) {

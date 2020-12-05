@@ -46,7 +46,7 @@ public class ComicDetailsDataService extends IntentService {
     private GlobalClass globalClass;
 
     //We don't grab the title from one of the html data blocks on nHentai.net.
-    private String[] gsDataBlockIDs = new String[]{
+    private final String[] gsDataBlockIDs = new String[]{
             "Parodies:",
             "Characters:",
             "Tags:",
@@ -57,7 +57,7 @@ public class ComicDetailsDataService extends IntentService {
             "Pages:",
             "Uploaded:"}; //We ignore the upload date data, but still include it.
 
-    private String[] gsComicDetailsDataBooleans = new String[]{
+    private final String[] gsComicDetailsDataBooleans = new String[]{
             COMIC_DETAILS_PARODIES_DATA_ACQUIRED,
             COMIC_DETAILS_CHARACTERS_DATA_ACQUIRED,
             COMIC_DETAILS_TAGS_DATA_ACQUIRED,
@@ -67,7 +67,7 @@ public class ComicDetailsDataService extends IntentService {
             COMIC_DETAILS_CATEGORIES_DATA_ACQUIRED,
             COMIC_DETAILS_PAGES_DATA_ACQUIRED};
 
-    private String[] gsComicDetailsDataContentMarkers = new String[]{
+    private final String[] gsComicDetailsDataContentMarkers = new String[]{
             COMIC_DETAILS_PARODIES_DATA,
             COMIC_DETAILS_CHARACTERS_DATA,
             COMIC_DETAILS_TAGS_DATA,
@@ -138,7 +138,7 @@ public class ComicDetailsDataService extends IntentService {
 
 
     //Return data order for getOnlineComicDetails:
-    public static int COMIC_DETAILS_TITLE_INDEX = 0;
+    public static final int COMIC_DETAILS_TITLE_INDEX = 0;
     public static int COMIC_DETAILS_PARODIES_DATA_INDEX = 1;
     public static int COMIC_DETAILS_CHARACTERS_DATA_INDEX = 2;
     public static int COMIC_DETAILS_TAGS_DATA_INDEX = 3;
@@ -147,7 +147,7 @@ public class ComicDetailsDataService extends IntentService {
     public static int COMIC_DETAILS_LANGUAGES_DATA_INDEX = 6;
     public static int COMIC_DETAILS_CATEGORIES_DATA_INDEX = 7;
     public static int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
-    public static int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
+    public static final int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
 
     public String[] getOnlineComicDetails(String sComicID){
 
@@ -225,7 +225,7 @@ public class ComicDetailsDataService extends IntentService {
             }
 
             //Replace spacing with tabs and reduce the tab count.
-            sData = sData.replaceAll("  ","\t");
+            sData = sData.replaceAll(" {2}","\t");
             sData = sData.replaceAll("\t\t","\t");
             sData = sData.replaceAll("\t\t","\t");
             sData = sData.replaceAll("\t\t","\t");

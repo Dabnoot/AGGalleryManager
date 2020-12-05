@@ -4,7 +4,6 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Context;
-import android.nfc.Tag;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -43,13 +42,19 @@ public class Fragment_SelectTags extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mViewModel = new ViewModelProvider(this.getActivity()).get(FragmentSelectTagsViewModel.class);
-        // TODO: Use the ViewModel
+        if(getActivity() == null) return;
+        mViewModel = new ViewModelProvider(getActivity()).get(FragmentSelectTagsViewModel.class);
 
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
-        iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
-        ArrayList<Integer> aliPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
+        ArrayList<Integer> aliPreselectedTags;
+        if(args == null) {
+            iMediaCategory = 0;
+            aliPreselectedTags = new ArrayList<>();
+        } else {
+            iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
+            aliPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
+        }
 
         if (getView() == null) {
             return;
@@ -112,12 +117,15 @@ public class Fragment_SelectTags extends Fragment {
         public View getView(int position, View v, ViewGroup parent) {
             // Get the data item for this position
             final TagItem tagItem = getItem(position);
+            if(tagItem == null){
+                return v;
+            }
             // Check if an existing view is being reused, otherwise inflate the view
             if (v == null) {
                 v = LayoutInflater.from(getContext()).inflate(R.layout.activity_import_listview_tag_item, parent, false);
             }
             // Lookup view for data population
-            final CheckedTextView checkedTextView_TagText = (CheckedTextView) v.findViewById(R.id.checkedTextView_TagText);
+            final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
             // Populate the data into the template view using the data object
             String s = tagItem.TagText;
             checkedTextView_TagText.setText(s);
