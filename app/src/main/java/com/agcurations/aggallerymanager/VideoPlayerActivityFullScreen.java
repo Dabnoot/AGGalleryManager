@@ -146,6 +146,9 @@ public class VideoPlayerActivityFullScreen extends AppCompatActivity {
                     mediaController.hide();
                 } else {
                     mediaController.show();
+                    if (AUTO_HIDE) {
+                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                    }
                 }
                 return super.onSingleTapConfirmed(e);
             }
