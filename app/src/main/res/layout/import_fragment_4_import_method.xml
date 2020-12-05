@@ -31,13 +31,13 @@
             android:text="Please choose the import method you would like to use."/>
 
 
-        <TextView
+        <!--<TextView
             android:id="@+id/TextView_AppStorageLocationMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginBottom="10dp"
-            android:text="The destination location is: " />
+            android:text="The destination location is: " />-->
 
         <RadioGroup
             android:id="@+id/radioGroup_ImportMethod"

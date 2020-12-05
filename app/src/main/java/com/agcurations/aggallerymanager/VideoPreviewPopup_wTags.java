@@ -103,7 +103,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             Fragment_SelectTags fst = new Fragment_SelectTags();
             Bundle args = new Bundle();
-            args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, ImportActivity.giImportMediaCategory);
+            args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS);
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gfileItem.prospectiveTags);
             fst.setArguments(args);
             ft.replace(R.id.child_fragment_tag_selector, fst);
@@ -117,10 +117,10 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
                     sb.append("Tags: ");
                     GlobalClass globalClass;
                     globalClass = (GlobalClass) getApplicationContext();
-                    sb.append(globalClass.getTagTextFromID(gfileItem.prospectiveTags.get(0), ImportActivity.giImportMediaCategory));
+                    sb.append(globalClass.getTagTextFromID(gfileItem.prospectiveTags.get(0), GlobalClass.MEDIA_CATEGORY_VIDEOS));
                     for (int i = 1; i < gfileItem.prospectiveTags.size(); i++) {
                         sb.append(", ");
-                        sb.append(globalClass.getTagTextFromID(gfileItem.prospectiveTags.get(i), ImportActivity.giImportMediaCategory));
+                        sb.append(globalClass.getTagTextFromID(gfileItem.prospectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
                     }
                     TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
                     if (tv != null) {

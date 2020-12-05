@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +20,8 @@ import android.widget.TextView;
 public class ImportFragment_4_ImportMethod extends Fragment {
 
     private GlobalClass globalClass;
+
+    private ImportActivityViewModel importActivityViewModel;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -61,7 +64,7 @@ public class ImportFragment_4_ImportMethod extends Fragment {
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getActivity().getApplicationContext();
-
+        importActivityViewModel = new ViewModelProvider(getActivity()).get(ImportActivityViewModel.class);
     }
 
     @Override
@@ -75,10 +78,10 @@ public class ImportFragment_4_ImportMethod extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        if(getView() == null)
-            return;
-        TextView TextView_AppStorageLocationMessage = getView().findViewById(R.id.TextView_AppStorageLocationMessage);
+        /*if(getView() == null)
+            return;*/
+        /*TextView TextView_AppStorageLocationMessage = getView().findViewById(R.id.TextView_AppStorageLocationMessage);
         String sMessage = "The destination location is: " + globalClass.gfAppFolder;
-        TextView_AppStorageLocationMessage.setText(sMessage);
+        TextView_AppStorageLocationMessage.setText(sMessage);*/
     }
 }

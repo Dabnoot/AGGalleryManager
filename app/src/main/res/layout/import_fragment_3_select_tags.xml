@@ -42,7 +42,7 @@
                 android:layout_below="@+id/textView_Label_Title"
                 android:layout_gravity="start"
                 android:textAlignment="textStart"
-                android:text="Choose tags applicable to the selection. A new tag can be added from the main menu. Additional tags can be added or removed from individual files when the import is completed, or by using the preview feature in the selection process."
+                android:text="Choose tags applicable to the selection. A new tag can be added from the main menu. Additional tags can be added or removed from individual files when the import is completed, or by using the preview feature in the file selection process."
                 android:textSize="20sp" />
 
             <TextView

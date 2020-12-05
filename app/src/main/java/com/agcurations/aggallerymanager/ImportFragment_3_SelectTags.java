@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +34,9 @@ import java.util.Locale;
  * create an instance of this fragment.
  */
 public class ImportFragment_3_SelectTags extends Fragment {
+
+    GlobalClass globalClass;
+    private ImportActivityViewModel importActivityViewModel;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -67,7 +71,6 @@ public class ImportFragment_3_SelectTags extends Fragment {
 
     private SelectedFileListCustomAdapter selectedFileListCustomAdapter;
 
-    GlobalClass globalClass;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -77,6 +80,7 @@ public class ImportFragment_3_SelectTags extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
         globalClass = (GlobalClass) getActivity().getApplicationContext();
+        importActivityViewModel = new ViewModelProvider(getActivity()).get(ImportActivityViewModel.class);
     }
 
     @Override
@@ -90,6 +94,12 @@ public class ImportFragment_3_SelectTags extends Fragment {
     public void onResume() {
         super.onResume();
         initComponents();
+    }
+
+    @Override
+    public void onPause() {
+        importActivityViewModel.alfiConfirmedFileImports = selectedFileListCustomAdapter.alFileItems;
+        super.onPause();
     }
 
     public void initComponents() {
@@ -122,7 +132,7 @@ public class ImportFragment_3_SelectTags extends Fragment {
         FragmentTransaction ft = getChildFragmentManager().beginTransaction();
         Fragment_SelectTags fst = new Fragment_SelectTags();
         Bundle args = new Bundle();
-        args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, ImportActivity.giImportMediaCategory);
+        args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, importActivityViewModel.iImportMediaCategory);
         fst.setArguments(args);
         ft.replace(R.id.child_fragment_tag_selector, fst);
         ft.commit();
@@ -244,10 +254,10 @@ public class ImportFragment_3_SelectTags extends Fragment {
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
-                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), ImportActivity.giImportMediaCategory));
+                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), importActivityViewModel.iImportMediaCategory));
                     for (int i = 1; i < aliTagIDs.size(); i++) {
                         sbTags.append(", ");
-                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), ImportActivity.giImportMediaCategory));
+                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), importActivityViewModel.iImportMediaCategory));
                     }
                 }
             }
@@ -304,8 +314,8 @@ public class ImportFragment_3_SelectTags extends Fragment {
                 }
             }
         }
-
-
     }
+
+
 
 }

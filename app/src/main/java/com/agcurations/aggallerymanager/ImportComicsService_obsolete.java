@@ -514,8 +514,8 @@ public class ImportComicsService_obsolete extends IntentService {
 
                 }
                 WriteLogLine("Size required for file move: " + lSpaceRequiredKB + " KB.",true);
-                long lSizeKB;
-                lSizeKB = globalClass.AvailableStorageSpace(this, 1);
+                long lSizeBytes;
+                lSizeBytes = globalClass.AvailableStorageSpace(this, 1);
 
                 BroadcastProgress(false, "",
                         true, 100,
@@ -527,7 +527,7 @@ public class ImportComicsService_obsolete extends IntentService {
 
 
                 //M
-                if (lSizeKB > lSpaceRequiredKB){
+                if ((lSizeBytes/1024) > lSpaceRequiredKB){
                     //Begin loop for comic folder creation and execution of file moves:
                     File fSourceFile;
                     File fDestinationFile;
@@ -670,7 +670,7 @@ public class ImportComicsService_obsolete extends IntentService {
                             true, sStageName + " completed.");
 
                 } else {
-                    WriteLogLine( "Insufficient space, " + lSizeKB + " KB, in storage to move " + lSpaceRequiredKB + " KB of comic files.",true);
+                    WriteLogLine( "Insufficient space, " + (lSizeBytes/1024) + " KB, in storage to move " + lSpaceRequiredKB + " KB of comic files.",true);
                 }
 
             } else {

@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.text.DecimalFormat;
 import java.text.Format;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -53,7 +54,7 @@ public class GlobalClass extends Application {
     public List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
     public List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
     public boolean[] gbJustImported = {false, false, false};
-    public String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
+    public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
     public static final String[][] CatalogRecordFields = new String[][]{
             {"VIDEO_ID",
@@ -234,13 +235,6 @@ public class GlobalClass extends Application {
             freeBytesExternal = new File(fAvailableDirs[iDevice].toString()).getFreeSpace();
         } else {
             Toast.makeText(c, "Storage device " + iDevice + " not found.", Toast.LENGTH_LONG).show();
-        }
-
-        if (freeBytesExternal >= 1024) {
-            //contains at least 1 KB.
-            freeBytesExternal /= 1024;
-        } else {
-            freeBytesExternal = 0;
         }
 
         return freeBytesExternal;
@@ -742,7 +736,31 @@ public class GlobalClass extends Application {
     }
 
 
+    public static String CleanStorageSize(Long lStorageSize){
+        //Returns a string of size to 2 significant figures plus units of B, KB, MB, or GB.
 
+        String sSizeSuffix = " B";
+        if(lStorageSize > 1000) {
+            lStorageSize /= 1024;
+            sSizeSuffix = " KB";
+        }
+        if(lStorageSize > 1000) {
+            lStorageSize /= 1024;
+            sSizeSuffix = " MB";
+        }
+        if(lStorageSize > 1000) {
+            lStorageSize /= 1024;
+            sSizeSuffix = " GB";
+        }
+
+        DecimalFormat decimalFormat = new DecimalFormat();
+        decimalFormat.setGroupingUsed(true);
+        decimalFormat.setGroupingSize(3);
+
+        String sReturn = decimalFormat.format(lStorageSize) + sSizeSuffix;
+
+        return sReturn;
+    }
 
 
 

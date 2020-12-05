@@ -16,6 +16,7 @@ public class FileItem implements Serializable {
     final public String mimeType;
     public long videoTimeInMilliseconds;
     public ArrayList<Integer> prospectiveTags; //"prospective" as in "about to be applied".
+    public String destinationFolder; //Used for moving/copying.
 
     public String videoTimeText;
 
@@ -40,5 +41,6 @@ public class FileItem implements Serializable {
         this.videoTimeInMilliseconds = _videoTimeInMilliseconds;
         this.videoTimeText = "";
         this.prospectiveTags = new ArrayList<>();
+        this.destinationFolder = "";
     }
 }

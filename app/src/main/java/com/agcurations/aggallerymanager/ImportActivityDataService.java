@@ -74,18 +74,14 @@ public class ImportActivityDataService extends IntentService {
     }
 
     public static void startActionImportFiles(Context context,
-                                              String sDestination,
                                               ArrayList<FileItem> alImportFileList,
-                                              String sTags,
-                                              int iMediaCategory,
-                                              int iMoveOrCopy) {
+                                              int iMoveOrCopy,
+                                              int iMediaCategory) {
         Intent intent = new Intent(context, ImportActivityDataService.class);
         intent.setAction(ACTION_IMPORT_FILES);
-        intent.putExtra(EXTRA_IMPORT_FILES_DESTINATION, sDestination);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
-        intent.putExtra(EXTRA_IMPORT_FILES_TAGS, sTags);
-        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
+        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
         context.startService(intent);
     }
 
@@ -101,18 +97,14 @@ public class ImportActivityDataService extends IntentService {
                 handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory);
 
             } else if (ACTION_IMPORT_FILES.equals(action)) {
-                final String sDestination = intent.getStringExtra(EXTRA_IMPORT_FILES_DESTINATION);
-                final String sTags = intent.getStringExtra(EXTRA_IMPORT_FILES_TAGS);
                 //todo: check the cast below:
                 final ArrayList<FileItem> alFileList = (ArrayList<FileItem>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
-                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, -1);
                 handleAction_startActionImportDirectoryContents(
-                        sDestination,
                         alFileList,
-                        sTags,
-                        iMediaCategory,
-                        iMoveOrCopy);
+                        iMoveOrCopy,
+                        iMediaCategory);
             }
         }
     }
@@ -151,11 +143,10 @@ public class ImportActivityDataService extends IntentService {
     }
 
 
-    private void handleAction_startActionImportDirectoryContents(String sDestination,
-                                                                 ArrayList<FileItem> alFileList,
-                                                                 String sTags,
-                                                                 int iMediaCategory,
-                                                                 int iMoveOrCopy) {
+    private void handleAction_startActionImportDirectoryContents(
+            ArrayList<FileItem> alFileList,
+            int iMoveOrCopy,
+            int iMediaCategory) {
 
 
         long lProgressNumerator = 0L;
@@ -165,75 +156,79 @@ public class ImportActivityDataService extends IntentService {
         long lLoopBytesRead = 0L;
 
 
+        ContentResolver content = getApplicationContext().getContentResolver();
+
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
         //Calculate total size of all files to import:
         for(FileItem fi: alFileList){
             lTotalImportSize = lTotalImportSize + fi.sizeBytes;
         }
         lProgressDenominator = lTotalImportSize;
 
-        BroadcastProgress(true, "Verifying destination folder " + sDestination,
-                true, iProgressBarValue,
-                true, "Verifying destination folder...",
-                RECEIVER_EXECUTE_IMPORT);
+        int[] iMediaIDs = {GlobalClass.VIDEO_ID_INDEX,
+                            GlobalClass.IMAGE_ID_INDEX,
+                            GlobalClass.COMIC_ID_INDEX};
 
-        GlobalClass globalClass;
-        globalClass = (GlobalClass) getApplicationContext();
-
-        String sDestinationFullPath = globalClass.gfCatalogFolders[iMediaCategory]  + File.separator +
-                                        sDestination + File.separator;
-
-        File fDestination = new File(sDestinationFullPath);
-        if(!fDestination.exists()){
-            if(!fDestination.mkdir()){
-                //Unable to create directory
-                BroadcastProgress(true, "Unable to create destination folder at: " + sDestination,
-                        false, iProgressBarValue,
-                        true, "Operation halted.",
-                        RECEIVER_EXECUTE_IMPORT);
-                return;
-            }
+        //Find the next record ID:
+        int iNextRecordId = 0;
+        int iThisId = 0;
+        String[] sFields;
+        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
+            iThisId = Integer.parseInt(entry.getValue()[iMediaIDs[iMediaCategory]]);
+            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
         }
+        //New record ID identified.
 
+        //Loop and import files:
+        for(FileItem fileItem: alFileList) {
 
-        if(fDestination.exists()){
-            BroadcastProgress(true, "Destination folder verified.",
-                    false, iProgressBarValue,
-                    false, "",
+            File fDestination = new File(
+                    globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                            fileItem.destinationFolder);
+
+            BroadcastProgress(true, "Verifying destination folder " + fDestination.getPath(),
+                    true, iProgressBarValue,
+                    true, "Verifying destination folder...",
                     RECEIVER_EXECUTE_IMPORT);
-            Uri uriSourceFile;
-            String sLogLine;
-            InputStream inputStream = null;
-            OutputStream outputStream = null;
-            ContentResolver content = getApplicationContext().getContentResolver();
 
 
-
-            //Find the next record ID:
-            int iNextRecordId = 0;
-            int iThisId = 0;
-            String[] sFields;
-            for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
-                iThisId = Integer.parseInt(entry.getValue()[GlobalClass.VIDEO_ID_INDEX]);
-                if(iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
+            if (!fDestination.exists()) {
+                if (!fDestination.mkdir()) {
+                    //Unable to create directory
+                    BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath(),
+                            false, iProgressBarValue,
+                            true, "Operation halted.",
+                            RECEIVER_EXECUTE_IMPORT);
+                    continue; //Skip to the end of the loop.
+                }
             }
-            //New record ID identified.
 
-            //Loop through the files and copy or move them:
-            for(FileItem fi: alFileList){
-                uriSourceFile = Uri.parse(fi.uri);
+            if (fDestination.exists()) {
+                BroadcastProgress(true, "Destination folder verified.",
+                        false, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
+                Uri uriSourceFile;
+                String sLogLine;
+                InputStream inputStream = null;
+                OutputStream outputStream = null;
+
+                uriSourceFile = Uri.parse(fileItem.uri);
                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
                 try {
                     //Write next behavior to the screen log:
                     sLogLine = "Attempting ";
-                    if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE){
+                    if (iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
                         sLogLine = sLogLine + "move ";
                     } else {
                         sLogLine = sLogLine + "copy ";
                     }
-                    sLogLine = sLogLine + "of file " + fi.name + " to destination...";
+                    sLogLine = sLogLine + "of file " + fileItem.name + " to destination...";
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
-                            true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB",
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             RECEIVER_EXECUTE_IMPORT);
 
                     inputStream = content.openInputStream(dfSource.getUri());
@@ -241,20 +236,20 @@ public class ImportActivityDataService extends IntentService {
                     //Reverse the text on the file so that the file does not get picked off by a search tool:
                     String sFileName = globalClass.JumbleFileName(dfSource.getName());
 
-                    outputStream = new FileOutputStream( fDestination.getPath() + File.separator + sFileName);
-                    if(outputStream != null) {
+                    outputStream = new FileOutputStream(fDestination.getPath() + File.separator + sFileName);
+                    if (outputStream != null) {
                         int iLoopCount = 0;
                         byte[] buffer = new byte[100000];
                         while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
                             outputStream.write(buffer, 0, buffer.length);
                             lProgressNumerator += lLoopBytesRead;
                             iLoopCount++;
-                            if(iLoopCount % 10 == 0){
+                            if (iLoopCount % 10 == 0) {
                                 //Send update every 10 loops:
                                 iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                                 BroadcastProgress(false, "",
                                         true, iProgressBarValue,
-                                        true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB",
+                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                                         RECEIVER_EXECUTE_IMPORT);
                             }
                         }
@@ -262,30 +257,31 @@ public class ImportActivityDataService extends IntentService {
                         outputStream.close();
                     }
                     sLogLine = "Copy success.";
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
-                            false, "",
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             RECEIVER_EXECUTE_IMPORT);
 
                     //This file has now been copied.
                     //Next add the data to the catalog file and memory:
 
-                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         //Add record to catalog contents:
-                        /*
-                            "VIDEO_ID",
-                            "VIDEO_FILENAME",
-                            "SIZE_MB",
-                            "DURATION_MILLISECONDS",
-                            "DURATION_TEXT",
-                            "RESOLUTION",
-                            "FOLDER_NAME",
-                            "TAGS",
-                            "CAST",
-                            "SOURCE",
-                            "DATETIME_LAST_VIEWED_BY_USER",
-                            "DATETIME_IMPORT"
-                        */
+                    /*
+                        "VIDEO_ID",
+                        "VIDEO_FILENAME",
+                        "SIZE_MB",
+                        "DURATION_MILLISECONDS",
+                        "DURATION_TEXT",
+                        "RESOLUTION",
+                        "FOLDER_NAME",
+                        "TAGS",
+                        "CAST",
+                        "SOURCE",
+                        "DATETIME_LAST_VIEWED_BY_USER",
+                        "DATETIME_IMPORT"
+                    */
 
                         //Create a timestamp to be used to create the data record:
                         Double dTimeStamp = globalClass.GetTimeStampFloat();
@@ -294,23 +290,23 @@ public class ImportActivityDataService extends IntentService {
                         String[] sFieldData = new String[]{
                                 String.valueOf(iNextRecordId),
                                 sFileName,
-                                String.valueOf((fi.sizeBytes / 1024) / 1024),
-                                String.valueOf(fi.videoTimeInMilliseconds),
-                                String.valueOf(fi.videoTimeText),
+                                String.valueOf((fileItem.sizeBytes / 1024) / 1024),
+                                String.valueOf(fileItem.videoTimeInMilliseconds),
+                                String.valueOf(fileItem.videoTimeText),
                                 "",
-                                sDestination,
-                                sTags,
+                                fileItem.destinationFolder,
+                                GlobalClass.formDelimitedString(fileItem.prospectiveTags,","),
                                 "",
                                 "",
                                 sDateTime,
                                 sDateTime
                         };
 
-                        /*public void CatalogDataFile_CreateNewRecord(
-                                File fCatalogContentsFile,
-                                int iRecordID,
-                                TreeMap<Integer, String[]> tmCatalogRecords,
-                                String[] sFieldData){*/
+                    /*public void CatalogDataFile_CreateNewRecord(
+                            File fCatalogContentsFile,
+                            int iRecordID,
+                            TreeMap<Integer, String[]> tmCatalogRecords,
+                            String[] sFieldData){*/
 
                         //The below call should add the record to both the catalog contents file
                         //  and memory:
@@ -323,8 +319,8 @@ public class ImportActivityDataService extends IntentService {
                     }
                     iNextRecordId += 1; //Identify the next record ID to assign.
 
-                    if(iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
-                        if(!dfSource.delete()){
+                    if (iMoveOrCopy == ImportActivity.IMPORT_METHOD_MOVE) {
+                        if (!dfSource.delete()) {
                             sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).";
                         } else {
                             sLogLine = "Success deleting source file after copy.";
@@ -335,29 +331,25 @@ public class ImportActivityDataService extends IntentService {
 
                     BroadcastProgress(true, sLogLine,
                             true, iProgressBarValue,
-                            true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB",
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             RECEIVER_EXECUTE_IMPORT);
 
 
-                } catch (Exception e){
+                } catch (Exception e) {
                     BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
                             false, iProgressBarValue,
                             false, "",
                             RECEIVER_EXECUTE_IMPORT);
-                    return;
+                    continue;
                 }
-
-                BroadcastProgress(true, "Operation complete.",
-                        true, iProgressBarValue,
-                        true, lProgressNumerator/1024 + " / " + lProgressDenominator/1024 + " KB",
-                        RECEIVER_EXECUTE_IMPORT);
 
             }
 
-
         }
-
-
+        BroadcastProgress(true, "Operation complete.",
+                true, iProgressBarValue,
+                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                RECEIVER_EXECUTE_IMPORT);
 
 
     }

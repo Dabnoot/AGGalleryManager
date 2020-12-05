@@ -83,48 +83,6 @@
                 android:layout_alignTop="@+id/textView_Label_AvailableStorageSpace"/>
 
             <TextView
-                android:id="@+id/textView_Label_DestinationFolder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Destination Folder:"
-                android:textSize="20sp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="10dp"
-                android:layout_below="@+id/textView_Label_AvailableStorageSpace"/>
-
-            <TextView
-                android:id="@+id/textView_DestinationFolder"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:text=""
-                android:textSize="20sp"
-                android:layout_toRightOf="@+id/textView_Label_DestinationFolder"
-                android:layout_alignTop="@+id/textView_Label_DestinationFolder"/>
-
-            <TextView
-                android:id="@+id/textView_Label_TagsToApply"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tag(s) to Apply:"
-                android:textSize="20sp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="10dp"
-                android:layout_below="@+id/textView_DestinationFolder"/>
-
-            <TextView
-                android:id="@+id/textView_TagsToApply"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:text=""
-                android:textSize="20sp"
-                android:layout_toRightOf="@+id/textView_Label_TagsToApply"
-                android:layout_alignTop="@+id/textView_Label_TagsToApply"/>
-
-            <TextView
                 android:id="@+id/textView_Label_ImportFileList"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -132,7 +90,7 @@
                 android:textSize="20sp"
                 android:layout_marginStart="20dp"
                 android:layout_marginTop="10dp"
-                android:layout_below="@+id/textView_TagsToApply"/>
+                android:layout_below="@+id/textView_AvailableStorageSpace"/>
 
         </RelativeLayout>
 

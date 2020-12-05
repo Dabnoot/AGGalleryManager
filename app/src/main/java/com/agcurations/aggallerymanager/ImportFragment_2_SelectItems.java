@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Parcelable;
 import android.util.Log;
@@ -30,6 +31,8 @@ import java.util.concurrent.TimeUnit;
  * create an instance of this fragment.
  */
 public class ImportFragment_2_SelectItems extends Fragment {
+
+    private ImportActivityViewModel importActivityViewModel;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -69,6 +72,8 @@ public class ImportFragment_2_SelectItems extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        importActivityViewModel = new ViewModelProvider(getActivity()).get(ImportActivityViewModel.class);
     }
 
     @Override

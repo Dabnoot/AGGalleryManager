@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ImportActivity extends AppCompatActivity {
@@ -59,11 +58,6 @@ public class ImportActivity extends AppCompatActivity {
     //=================================================
     //User selection global variables:
 
-    //FragmentImport_0_MediaCategory
-    //Radiobutton selections:
-    public static int giImportMediaCategory; //Selected Category
-    public static String gsMediaCategoryFolderName = "";
-
     //FragmentImport_1_StorageLocation
     public static Uri guriImportTreeURI; //Uri of selected base folder holding files/folders to be imported.
 
@@ -76,6 +70,7 @@ public class ImportActivity extends AppCompatActivity {
     public static ArrayList<String> alsImportTags = new ArrayList<>();  //Tags to apply to the import.
     public static String gsImportDestinationFolder;
     public static FragmentSelectTagsViewModel viewModelTags; //Used for applying tags globally to an entire import selection.
+    public static ImportActivityViewModel importActivityViewModel; //Used to transfer data between fragments.
 
     //FragmentImport_4_ImportMethod
     public static int IMPORT_METHOD_MOVE = 0;
@@ -130,6 +125,9 @@ public class ImportActivity extends AppCompatActivity {
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
         viewModelTags = new ViewModelProvider(this).get(FragmentSelectTagsViewModel.class);
+
+        //Instantiate the ViewModel sharing data between fragments:
+        importActivityViewModel = new ViewModelProvider(this).get(ImportActivityViewModel.class);
 
     }
 
@@ -212,14 +210,11 @@ public class ImportActivity extends AppCompatActivity {
 
 
         if (rbVideos.isChecked()){
-            giImportMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
-            gsMediaCategoryFolderName =  "Videos";
+            importActivityViewModel.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         } else if (rbImages.isChecked()){
-            giImportMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
-            gsMediaCategoryFolderName = "Images";
+            importActivityViewModel.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         } else {
-            giImportMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
-            gsMediaCategoryFolderName = "Comics";
+            importActivityViewModel.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         }
 
         //Go to the import folder selection fragment:
@@ -236,17 +231,6 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
-        Integer iFolderID;
-        //Determine the folder into which the contents will be placed:
-        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(giImportMediaCategory).entrySet()){
-            //Get the key value associated with the text tag:
-            if(alsImportTags.get(0).contentEquals(entry.getValue()[GlobalClass.TAG_NAME_INDEX])){
-                gsImportDestinationFolder = Integer.toString(entry.getKey());
-                break;
-            }
-        }
-
-
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
     }
 
@@ -254,20 +238,16 @@ public class ImportActivity extends AppCompatActivity {
         RadioButton rbMove = findViewById(R.id.radioButton_MoveFiles);
 
         if (rbMove.isChecked()){
-            giImportMethod = IMPORT_METHOD_MOVE;
+            importActivityViewModel.iImportMethod = IMPORT_METHOD_MOVE;
         } else{
-            giImportMethod = IMPORT_METHOD_COPY;
+            importActivityViewModel.iImportMethod = IMPORT_METHOD_COPY;
         }
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION);
     }
 
     public void buttonNextClick_ImportConfirm(View v){
-
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT);
-
-
-
     }
 
     public void buttonNextClick_ImportFinish(View v){
@@ -373,10 +353,10 @@ public class ImportActivity extends AppCompatActivity {
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
-                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), giImportMediaCategory));
+                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), importActivityViewModel.iImportMediaCategory));
                     for (int i = 1; i < aliTagIDs.size(); i++) {
                         sbTags.append(", ");
-                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), giImportMediaCategory));
+                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), importActivityViewModel.iImportMediaCategory));
                     }
                 }
             }
@@ -414,13 +394,11 @@ public class ImportActivity extends AppCompatActivity {
                     CheckBox checkBox_StorageItemSelect = view.findViewById(R.id.checkBox_StorageItemSelect);
                     boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
                     checkBox_StorageItemSelect.setChecked(bNewCheckedState);
+                    alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
 
                     //Find the item that is checked/unchecked in alFileList and apply the property.
                     //  The user will have clicked an item in alFileListDisplay, not alFileList.
                     //  alFileListDisplay may be a subset of alFileList.
-
-                    alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
-
                     for(FileItem fm: alFileItems){
                         if(fm.name.contentEquals(alFileItemsDisplay.get(position).name)){
                             fm.isChecked = bNewCheckedState;

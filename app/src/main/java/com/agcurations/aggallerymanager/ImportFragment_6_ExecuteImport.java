@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.text.method.ScrollingMovementMethod;
@@ -26,6 +27,8 @@ import java.util.ArrayList;
  * create an instance of this fragment.
  */
 public class ImportFragment_6_ExecuteImport extends Fragment {
+
+    private ImportActivityViewModel importActivityViewModel;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -78,6 +81,7 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver,filter);
+        importActivityViewModel = new ViewModelProvider(getActivity()).get(ImportActivityViewModel.class);
     }
 
     @Override
@@ -116,30 +120,11 @@ public class ImportFragment_6_ExecuteImport extends Fragment {
         //Init log:
         gtextView_ImportLog.setText("");
 
-        //Begin the import:
-        StringBuilder sb = new StringBuilder();
-        sb.append(ImportActivity.alsImportTags.get(0));
-        for(int i = 1; i < ImportActivity.alsImportTags.size(); i++){
-            sb.append(",");
-            sb.append(ImportActivity.alsImportTags.get(i));
-        }
-        String sTags = sb.toString();
-
-        //Create list of files to import:
-        ArrayList<FileItem> alImportFileList = new ArrayList<>();
-        for(FileItem fileItem: ImportActivity.fileListCustomAdapter.alFileItems){
-            if(fileItem.isChecked){
-                alImportFileList.add(fileItem);
-            }
-        }
-
         //Initiate the file import via ImportActivityDataService:
         ImportActivityDataService.startActionImportFiles(getContext(),
-                ImportActivity.gsImportDestinationFolder,
-                alImportFileList,
-                sTags,
-                ImportActivity.giImportMediaCategory,
-                ImportActivity.giImportMethod);
+                importActivityViewModel.alfiConfirmedFileImports,
+                importActivityViewModel.iImportMethod,
+                importActivityViewModel.iImportMediaCategory);
 
 
     }
