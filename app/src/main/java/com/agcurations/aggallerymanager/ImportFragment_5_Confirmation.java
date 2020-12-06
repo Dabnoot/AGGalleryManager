@@ -189,7 +189,7 @@ public class ImportFragment_5_Confirmation extends Fragment {
                         }
                     }
                     if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                        alFileItems.get(position).videoTimeText = ImportActivity.getDurationTextFromMilliseconds(durationInMilliseconds);
+                        alFileItems.get(position).videoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
                         alFileItems.get(position).videoTimeInMilliseconds = durationInMilliseconds;
                     }
                 }

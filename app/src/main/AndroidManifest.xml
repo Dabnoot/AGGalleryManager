@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <!--android:theme="@style/AppTheme.Launcher">  To set startup screen  -->
+        <activity android:name=".TagEditorActivity"></activity>
+        <!-- android:theme="@style/AppTheme.Launcher">  To set startup screen -->
         <activity
             android:name=".VideoPlayerActivityFullScreen"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -19,8 +20,9 @@
             android:theme="@style/AppTheme.Launcher.Fullscreen" />
         <activity android:name=".CatalogActivity" />
         <activity android:name=".ImportActivity" />
-        <activity android:name=".PinCodePopup"
-            android:theme="@style/AppTheme.PinCodePopup"/>
+        <activity
+            android:name=".PinCodePopup"
+            android:theme="@style/AppTheme.PinCodePopup" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -62,6 +64,7 @@
         <activity
             android:name=".VideoPreviewPopup_wTags"
             android:theme="@style/AppTheme.VideoPreviewPopup" />
+
         <service
             android:name=".ImportActivityDataService"
             android:exported="false" />
@@ -78,10 +81,10 @@
             android:name=".ImportComicsService_obsolete"
             android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 </manifest>

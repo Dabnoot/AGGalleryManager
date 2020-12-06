@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -755,7 +756,16 @@ public class GlobalClass extends Application {
         return decimalFormat.format(lStorageSize) + sSizeSuffix;
     }
 
-
+    public static String getDurationTextFromMilliseconds(long lMilliseconds){
+        String sDurationText;
+        sDurationText = String.format("%02d:%02d:%02d",
+                TimeUnit.MILLISECONDS.toHours(lMilliseconds),
+                TimeUnit.MILLISECONDS.toMinutes(lMilliseconds) -
+                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(lMilliseconds)),
+                TimeUnit.MILLISECONDS.toSeconds(lMilliseconds) -
+                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(lMilliseconds)));
+        return sDurationText;
+    }
 
 
     //=====================================================================================

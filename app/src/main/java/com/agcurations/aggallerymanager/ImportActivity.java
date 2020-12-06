@@ -265,22 +265,13 @@ public class ImportActivity extends AppCompatActivity {
 
 
 
-    public static String getDurationTextFromMilliseconds(long lMilliseconds){
-        String sDurationText;
-        sDurationText = String.format("%02d:%02d:%02d",
-                TimeUnit.MILLISECONDS.toHours(lMilliseconds),
-                TimeUnit.MILLISECONDS.toMinutes(lMilliseconds) -
-                        TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(lMilliseconds)),
-                TimeUnit.MILLISECONDS.toSeconds(lMilliseconds) -
-                        TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(lMilliseconds)));
-        return sDurationText;
-    }
+
 
     public class FileListCustomAdapter extends ArrayAdapter<FileItem> {
 
         final public ArrayList<FileItem> alFileItems;
         private ArrayList<FileItem> alFileItemsDisplay;
-        private  boolean bSelectAllSelected = false;
+        private boolean bSelectAllSelected = false;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<FileItem> alfi) {
             super(context, textViewResourceId, alfi);
@@ -310,10 +301,10 @@ public class ImportActivity extends AppCompatActivity {
 
 
             //If type is video or gif, get the duration:
-            long durationInMilliseconds = -1L;
+            long durationInMilliseconds = alFileItemsDisplay.get(position).videoTimeInMilliseconds;
             //If mimeType is video or gif, get the duration:
             try {
-                if(alFileItemsDisplay.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                if(durationInMilliseconds == -1L) { //If the time has not already been determined for the video file...
                     if (alFileItemsDisplay.get(position).mimeType.startsWith("video")) {
                         Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
                         mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
@@ -329,9 +320,11 @@ public class ImportActivity extends AppCompatActivity {
                         }
                     }
                     if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                        alFileItemsDisplay.get(position).videoTimeText = getDurationTextFromMilliseconds(durationInMilliseconds);
                         alFileItemsDisplay.get(position).videoTimeInMilliseconds = durationInMilliseconds;
                     }
+                }
+                if(durationInMilliseconds > -1L){
+                    alFileItemsDisplay.get(position).videoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
                 }
 
                 if(alFileItemsDisplay.get(position).videoTimeText.length() > 0){
@@ -572,11 +565,38 @@ public class ImportActivity extends AppCompatActivity {
             }
         }
 
-        private int iCurrentSortMethod;
+        //Sort by file modified date ascending:
+        private class FileDurationAscComparator implements Comparator<FileItem> {
+
+            public int compare(FileItem fm1, FileItem fm2) {
+                Long FileDuration1 = fm1.videoTimeInMilliseconds;
+                Long FileDuration2 = fm2.videoTimeInMilliseconds;
+
+                //ascending order
+                return FileDuration1.compareTo(FileDuration2);
+            }
+        }
+
+        //Sort by file modified date descending:
+        private class FileDurationDescComparator implements Comparator<FileItem> {
+
+            public int compare(FileItem fm1, FileItem fm2) {
+                Long FileDuration1 = fm1.videoTimeInMilliseconds;
+                Long FileDuration2 = fm2.videoTimeInMilliseconds;
+
+                //descending order
+                return FileDuration2.compareTo(FileDuration1);
+            }
+        }
+
+
+        public int iCurrentSortMethod;
         private final int SORT_METHOD_FILENAME_ASC = 1;
         private final int SORT_METHOD_FILENAME_DESC = 2;
         private final int SORT_METHOD_MODIFIED_DATE_ASC = 3;
         private final int SORT_METHOD_MODIFIED_DATE_DESC = 4;
+        private final int SORT_METHOD_DURATION_ASC = 5;
+        private final int SORT_METHOD_DURATION_DESC = 6;
         public void SortByFileNameAsc(){
             Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileNameAscComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_ASC;
@@ -592,6 +612,14 @@ public class ImportActivity extends AppCompatActivity {
         public void SortByDateModifiedDesc(){
             Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileModifiedDateDescComparator());
             iCurrentSortMethod = SORT_METHOD_MODIFIED_DATE_DESC;
+        }
+        public void SortByDurationAsc(){
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileDurationAscComparator());
+            iCurrentSortMethod = SORT_METHOD_DURATION_ASC;
+        }
+        public void SortByDurationDesc(){
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileDurationDescComparator());
+            iCurrentSortMethod = SORT_METHOD_DURATION_DESC;
         }
         public boolean reverseSort(){
             //Return true if new sort order is ascending, false if descending.
@@ -611,6 +639,14 @@ public class ImportActivity extends AppCompatActivity {
                     break;
                 case SORT_METHOD_MODIFIED_DATE_DESC:
                     SortByDateModifiedAsc();
+                    bSortOrderIsAscending =  true;
+                    break;
+                case SORT_METHOD_DURATION_ASC:
+                    SortByDurationDesc();
+                    bSortOrderIsAscending =  false;
+                    break;
+                case SORT_METHOD_DURATION_DESC:
+                    SortByDurationAsc();
                     bSortOrderIsAscending =  true;
                     break;
             }

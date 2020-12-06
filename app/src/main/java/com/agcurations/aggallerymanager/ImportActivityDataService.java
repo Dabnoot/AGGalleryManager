@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
 import android.database.Cursor;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 
@@ -23,17 +24,8 @@ import java.util.Map;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
 public class ImportActivityDataService extends IntentService {
 
-    // TODO: Rename actions, choose action names that describe tasks that this
     private static final String ACTION_GET_DIRECTORY_CONTENTS = "com.agcurations.aggallerymanager.action.GET_DIRECTORY_CONTENTS";
     private static final String ACTION_IMPORT_FILES = "com.agcurations.aggallerymanager.action.IMPORT_FILES";
 
@@ -108,6 +100,7 @@ public class ImportActivityDataService extends IntentService {
 
     void problemNotificationConfig(String sMessage, String sReceiver){
         Intent broadcastIntent_Problem = new Intent();
+        broadcastIntent_Problem.setAction(ImportActivity.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
         broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
@@ -390,11 +383,6 @@ public class ImportActivityDataService extends IntentService {
     public ArrayList<FileItem> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iMediaCategory, int iSelectFoldersFilesOrBoth) {
         //iMediaCategory: Specify media category. -1 ignore, 0 video, >0 images.
 
-
-
-
-
-
         //Get data about the files from the UriTree:
         ContentResolver contentResolver = getApplicationContext().getContentResolver();
         Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder, DocumentsContract.getTreeDocumentId(uriFolder));
@@ -432,6 +420,9 @@ public class ImportActivityDataService extends IntentService {
 
 
         ArrayList<FileItem> alFileList = new ArrayList<>();
+
+        MediaMetadataRetriever mediaMetadataRetriever;
+        mediaMetadataRetriever = new MediaMetadataRetriever();
 
         while (cImport.moveToNext()) {
 
@@ -496,13 +487,41 @@ public class ImportActivityDataService extends IntentService {
             Date dateLastModified = cal.getTime();
 
 
+            //If the file is video, get the duration so that the file list can be sorted by duration if requested.
+            long lDurationInMilliseconds = -1L;
+            if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                if (mimeType.startsWith("video")) {
+                    try {
+                        mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
+                    } catch (Exception e) {
+                        //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
+                        continue; //Skip the rest of this loop.
+                    }
+                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                    lDurationInMilliseconds = Long.parseLong(time);
+                } else { //if it's not a video file, check to see if it's a gif:
+                    if (fileExtension.equals("gif")) {
+                        //Get the duration of the gif image:
+                        Context activityContext = getApplicationContext();
+                        try {
+                            pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                            lDurationInMilliseconds = gd.getDuration();
+                        } catch (Exception e) {
+                            problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
+                            continue; //Skip the rest of this loop.
+                        }
+                    }
+                }
+            }
+
+
 
             //Convert the file Uri to string. Uri's don't transport well as intent extras.
             String sUri = docUri.toString();
 
             //create the file model and initialize:
             //Don't detect the duration of video files here. It could take too much time.
-            FileItem fileItem = new FileItem(fileType, docName, fileExtension, lFileSize, dateLastModified, false, sUri, mimeType, -1L);
+            FileItem fileItem = new FileItem(fileType, docName, fileExtension, lFileSize, dateLastModified, false, sUri, mimeType, lDurationInMilliseconds);
 
             //Add the file model to the ArrayList:
             alFileList.add(fileItem);
@@ -511,6 +530,7 @@ public class ImportActivityDataService extends IntentService {
 
         }
         cImport.close();
+        mediaMetadataRetriever.release();
 
         return alFileList;
     }

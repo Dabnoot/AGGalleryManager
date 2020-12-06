@@ -29,6 +29,8 @@ import android.widget.TextView;
  */
 public class ImportFragment_2_SelectItems extends Fragment {
 
+    public static ImportActivityViewModel importActivityViewModel; //Used to transfer data between fragments.
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -38,15 +40,7 @@ public class ImportFragment_2_SelectItems extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentImport_2_SelectItems.
-     */
-    // TODO: Rename and change types and number of parameters
+
     public static ImportFragment_2_SelectItems newInstance(String param1, String param2) {
         ImportFragment_2_SelectItems fragment = new ImportFragment_2_SelectItems();
         Bundle args = new Bundle();
@@ -59,7 +53,8 @@ public class ImportFragment_2_SelectItems extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        //Instantiate the ViewModel sharing data between fragments:
+        importActivityViewModel = new ViewModelProvider(this).get(ImportActivityViewModel.class);
     }
 
     @Override
@@ -83,10 +78,12 @@ public class ImportFragment_2_SelectItems extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        initComponents();
+
         if(ListViewState != null) {
             ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
             listView_FolderContents.onRestoreInstanceState(ListViewState);
+        } else {
+            initComponents();
         }
     }
 
@@ -157,7 +154,13 @@ public class ImportFragment_2_SelectItems extends Fragment {
         //Configure the "Sort by" selection Spinner:
         final int SPINNER_ITEM_FILE_NAME = 0;
         final int SPINNER_ITEM_MODIFIED_DATE = 1;
-        String[] sSpinnerItems={"Filename","Modified Date"};
+        final int SPINNER_ITEM_DURATION = 2;
+        String[] sSpinnerItems;
+        if(importActivityViewModel.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+            sSpinnerItems = new String[]{"Filename","Modified Date", "Duration"};
+        } else {
+            sSpinnerItems = new String[]{"Filename","Modified Date"};
+        }
         Spinner spinner_SortBy = getView().findViewById(R.id.spinner_SortBy);
         //wrap the items in the Adapter
         if(getActivity() == null){
@@ -179,6 +182,11 @@ public class ImportFragment_2_SelectItems extends Fragment {
                 } else if(position == SPINNER_ITEM_MODIFIED_DATE) {
                     if(ImportActivity.fileListCustomAdapter != null) {
                         ImportActivity.fileListCustomAdapter.SortByDateModifiedAsc();
+                        ImportActivity.fileListCustomAdapter.notifyDataSetChanged();
+                    }
+                } else if(position == SPINNER_ITEM_DURATION) {
+                    if(ImportActivity.fileListCustomAdapter != null) {
+                        ImportActivity.fileListCustomAdapter.SortByDurationAsc();
                         ImportActivity.fileListCustomAdapter.notifyDataSetChanged();
                     }
                 }
