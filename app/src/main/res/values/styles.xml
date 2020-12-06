@@ -109,10 +109,12 @@
     <style name="AppTheme.VideoPreviewPopup">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowCloseOnTouchOutside">true</item>
+        <item name="android:background">@color/colorBlack</item>
     </style>
 
     <style name="AppTheme.PinCodePopup">
         <item name="android:windowIsTranslucent">true</item>
+        <item name="android:background">@color/colorBlack</item>
     </style>
 
     <style name="Widget.AppTheme.Launcher.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
