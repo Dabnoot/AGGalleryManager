@@ -638,7 +638,6 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.close();
             return true;
         } catch (Exception e) {
-            Toast.makeText(MainActivity.getContextOfActivity(), "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
         }
     }

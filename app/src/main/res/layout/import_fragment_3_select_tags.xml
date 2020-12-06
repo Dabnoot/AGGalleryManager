@@ -7,7 +7,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ImportActivity"
     android:orientation="horizontal"
-    android:weightSum="100">
+    android:weightSum="100"
+    android:baselineAligned="false">
 
     <RelativeLayout
         android:layout_width="wrap_content"

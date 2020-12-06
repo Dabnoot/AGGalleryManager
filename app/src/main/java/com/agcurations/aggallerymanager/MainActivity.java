@@ -21,20 +21,12 @@ public class MainActivity extends AppCompatActivity {
     //Global Variables:
     GlobalClass globalClass;
 
-    // a static variable to get a reference of our activity context
-    public static Context contextOfActivity;
-    public static Context getContextOfActivity(){
-        return contextOfActivity;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
         setTheme(R.style.MainTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        contextOfActivity = this;
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
