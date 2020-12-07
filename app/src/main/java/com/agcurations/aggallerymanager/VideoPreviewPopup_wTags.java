@@ -1,16 +1,16 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.media.MediaMetadataRetriever;
+import android.content.res.Resources;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.widget.ImageView;
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import android.widget.MediaController;
 import android.widget.TextView;
+import android.widget.VideoView;
 
 import java.util.ArrayList;
 
@@ -30,6 +30,9 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
     //private String gsUriVideoFile;
 
     private FileItem gFileItem;
+
+    VideoView gVideoView;
+    MediaController gMediaController;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,7 +84,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
         };
         mViewModel.altiTagsSelected.observe(this, selectedTagsObserver);
 
-        DisplayMetrics dm = new DisplayMetrics();
+        /*DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
 
         int width = dm.widthPixels;
@@ -89,7 +92,7 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
 
         float fSize = 0.8f;
 
-        getWindow().setLayout((int)(width * fSize), (int)(height * fSize));
+        getWindow().setLayout((int)(width * fSize), (int)(height * fSize));*/
 
         Bundle b = getIntent().getExtras();
         if(b != null) {
@@ -136,7 +139,18 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
                 finish();
             }
 
-            int iLengthOfLoopInSeconds = 10;
+/*
+            //Equation for length of loop (from "what seems acceptable" put into an Excel sheet and plotted):
+            //y = 30 * ln(x) - 110.
+            int iVideoLengthSeconds = (int) (lVideoDuration / 1000);
+            int iFormulaLengthOfLoopInSeconds = (int) (30 * Math.log((double) iVideoLengthSeconds) - 110); //Assymptote at about 140 seconds.
+            //Don't let the loop length be less than 10 seconds,
+            // or the length of the clip (whichever of those two is shorter):
+            int iLengthOfLoopInSeconds = Math.max(Math.min(10, iVideoLengthSeconds),
+                    iFormulaLengthOfLoopInSeconds);
+
+
+            //int iLengthOfLoopInSeconds = 10;
             int iImageChangeFrequencyHz = 1;
             int iFrames = iLengthOfLoopInSeconds * iImageChangeFrequencyHz;
             long lSampleFrequencyMicroSeconds = (lVideoDuration * 1000) / iFrames;
@@ -171,10 +185,43 @@ public class VideoPreviewPopup_wTags extends AppCompatActivity {
             ImageView imageView_Video = findViewById(R.id.imageView_Video);
             imageView_Video.setImageDrawable(animationDrawable);
             animationDrawable.setOneShot(false);
-            animationDrawable.start();
+            animationDrawable.start();*/
 
+
+            gVideoView = findViewById(R.id.videoView_VideoPlayerPreview);
+            gMediaController = new MediaController(this);
+            gMediaController.setMediaPlayer(gVideoView);
+            gVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    gMediaController.setAnchorView(gVideoView);
+                }
+            });
+            gVideoView.setMediaController(gMediaController);
+            Uri uriVideoFile = Uri.parse(gFileItem.uri);
+            //uriVideoFile = Uri.parse("/storage/0000-0000/Android/data/com.agcurations.aggallerymanager/files/Videos/76/p027_gnitsif_naibsel_37849901_moc.retsmahx.4pm");
+            gVideoView.setVideoURI(uriVideoFile);
+            gVideoView.seekTo(1);
+            gVideoView.setZOrderOnTop(true);
+            gVideoView.start();
         }
+
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        gVideoView.seekTo(1);
+        gVideoView.start();
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        gVideoView.stopPlayback();
+    }
+
 
 
 }

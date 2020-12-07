@@ -186,6 +186,7 @@ public class Fragment_SelectTags extends Fragment {
                 }
             });
 
+
             // Return the completed view to render on screen
             return v;
         }

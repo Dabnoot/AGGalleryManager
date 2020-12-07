@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal"
     android:weightSum="100"
     android:baselineAligned="false">
@@ -14,11 +14,19 @@
         android:layout_weight="23"
         android:weightSum="100">
 
-        <ImageView
+        <!--<ImageView
             android:id="@+id/imageView_Video"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:contentDescription="Video preview popup."
+            android:layout_weight="90"/>-->
+
+        <VideoView
+            android:id="@+id/videoView_VideoPlayerPreview"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:backgroundTint="@color/colorBlack"
+            android:layout_gravity="center"
             android:layout_weight="90"/>
 
         <TextView
