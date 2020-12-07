@@ -8,39 +8,35 @@
     tools:context=".Fragment_SelectTags"
     android:orientation="vertical">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select tags:"
+        android:layout_margin="20dp"
+        android:textSize="24sp"/>
 
+    <com.google.android.material.tabs.TabLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        app:tabTextColor="@color/colorGrey1">
 
-        <TextView
+        <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select tags:"
-            android:layout_margin="20dp"
-            android:textSize="24sp"/>
+            android:text="ALL" />
 
-        <com.google.android.material.tabs.TabLayout
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            app:tabTextColor="@color/colorGrey1">
+            android:text="IN USE" />
 
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="ALL" />
+    </com.google.android.material.tabs.TabLayout>
 
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="IN USE" />
-
-        </com.google.android.material.tabs.TabLayout>
-
-        <ListView
-            android:id="@+id/listView_ImportTagSelection"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:defaultValue="@array/empty_array"
-            android:scrollbarSize="20dp"/>
-
-
+    <ListView
+        android:id="@+id/listView_ImportTagSelection"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:defaultValue="@array/empty_array"
+        android:scrollbarSize="20dp"/>
 
 </LinearLayout>

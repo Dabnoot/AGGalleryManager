@@ -1070,6 +1070,17 @@ public class GlobalClass extends Application {
     //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public final String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
 
+    //=====================================================================================
+    //===== Import Options ================================================================
+    //=====================================================================================
+
+    //A flag to turn on/off video file duration analysis:
+    public static boolean bVideoDeepDirectoryContentFileAnalysis = true;
+        //This flag allows the program to analyze video duration prior to import to allow
+        //  sorting video files by duration in the file listView presented to the user. The user
+        //  selects which files to import, and may wish to sort by video duration. If the user
+        //  does this without this option turned on, the sort will be inaccurate.
+        //  This deep analysis takes longer.
 
 
 }

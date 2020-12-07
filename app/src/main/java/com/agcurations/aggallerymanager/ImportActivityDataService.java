@@ -488,16 +488,16 @@ public class ImportActivityDataService extends IntentService {
 
             //If the file is video, get the duration so that the file list can be sorted by duration if requested.
             long lDurationInMilliseconds = -1L;
-            if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS && GlobalClass.bVideoDeepDirectoryContentFileAnalysis) {
                 if (mimeType.startsWith("video")) {
                     try {
-                        //mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
+                        mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                     } catch (Exception e) {
                         //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
                         continue; //Skip the rest of this loop.
                     }
-                    //String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                    //lDurationInMilliseconds = Long.parseLong(time);
+                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                    lDurationInMilliseconds = Long.parseLong(time);
                 } else { //if it's not a video file, check to see if it's a gif:
                     if (fileExtension.equals("gif")) {
                         //Get the duration of the gif image:

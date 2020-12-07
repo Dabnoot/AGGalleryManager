@@ -391,9 +391,12 @@ public class ImportActivity extends AppCompatActivity {
                             break;
                         }
                     }
-
                 }
             });
+            //Expand the width of the listItem to the width of the ListView.
+            //  This makes it so that the listItem responds to the click even when
+            //  the click is off of the text.
+            row.setMinimumWidth(SelectItemsListViewWidth);
 
             //Set the onClickListener for the checkbox to toggle the checkbox:
             CheckBox checkBox_StorageItemSelect = row.findViewById(R.id.checkBox_StorageItemSelect);
@@ -442,10 +445,7 @@ public class ImportActivity extends AppCompatActivity {
             }
 
 
-            //Expand the width of the listItem to the width of the ListView.
-            //  This makes it so that the listItem responds to the click even when
-            //  the click is off of the text.
-            row.setMinimumWidth(SelectItemsListViewWidth);
+
 
             return row;
         }
