@@ -298,10 +298,9 @@ public class ImportActivityDataService extends IntentService {
                         //The below call should add the record to both the catalog contents file
                         //  and memory:
                         globalClass.CatalogDataFile_CreateNewRecord(
-                                globalClass.gfCatalogContentsFiles[iMediaCategory],
                                 iNextRecordId,
-                                globalClass.gtmCatalogLists.get(iMediaCategory),
-                                sFieldData);
+                                sFieldData,
+                                iMediaCategory);
 
                     }
                     iNextRecordId += 1; //Identify the next record ID to assign.

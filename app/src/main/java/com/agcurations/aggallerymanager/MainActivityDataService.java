@@ -144,14 +144,15 @@ public class MainActivityDataService extends IntentService {
                 globalClass.gfComicLogsFolder,
                 GlobalClass.ComicRecordFields);
         */
-        //Read the catalog list files into memory:
 
-        for(int i = 0; i < 3; i++){
-            globalClass.gtmCatalogLists.add(readCatalogFile(
-                    globalClass.gfCatalogFolders[i],
-                    globalClass.gfCatalogContentsFiles[i],
-                    globalClass.gfCatalogLogsFolders[i],
-                    GlobalClass.CatalogRecordFields[i]));
+        //Change the video file names to match with their actual names in storage (non-jumbled):
+        //(Otherwise the actual file name shows up in CatalogContents.dat because the video files
+        //  are renamed on import)
+        //globalClass.CatalogDataFile_UpdateAllRecords_UnJumbleVideoFileName();
+
+        //Read the catalog list files into memory:
+        for(int i = 0; i < 3; i++){ //GlobalClass.MEDIA_CATEGORY_VIDEOS, GlobalClass.MEDIA_CATEGORY_IMAGES, GlobalClass.MEDIA_CATEGORY_COMICS
+            globalClass.gtmCatalogLists.add(readCatalogFile(i));
         }
 
 
@@ -240,7 +241,12 @@ public class MainActivityDataService extends IntentService {
         return tmTags;
     }
 
-    private TreeMap<Integer, String[]> readCatalogFile(File fCatalogFolder, File fCatalogContentsFile, File fLogsFolder, String[] sRecordFields){
+    private TreeMap<Integer, String[]> readCatalogFile(int iMediaCategory){
+
+        File fCatalogFolder = globalClass.gfCatalogFolders[iMediaCategory];
+        File fCatalogContentsFile = globalClass.gfCatalogContentsFiles[iMediaCategory];
+        File fLogsFolder = globalClass.gfCatalogLogsFolders[iMediaCategory];
+        String[] sRecordFields = GlobalClass.CatalogRecordFields[iMediaCategory];
 
         boolean bFolderOk = false ;
         if(!fCatalogFolder.exists()) {
@@ -324,7 +330,11 @@ public class MainActivityDataService extends IntentService {
                     //De-jumble the data:
                     String[] sFields2 = new String[sFields.length];
                     for(int i = 0; i < sFields.length; i++){
-                        sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                        if(i == GlobalClass.iNoJumbleFileNameIndex[iMediaCategory]){
+                            sFields2[i] = sFields[i];
+                        } else {
+                            sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
+                        }
                     }
 
                     tmCatalogListings.put(iRID, sFields2);

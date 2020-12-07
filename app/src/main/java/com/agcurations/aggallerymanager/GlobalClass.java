@@ -46,7 +46,7 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogFolders = new File[3];
     public final File[] gfCatalogLogsFolders = new File[3];
     public final File[] gfCatalogContentsFiles = new File[3];
-    public final int giCatalogFileVersion = 4;
+    public final int giCatalogFileVersion = 5;
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
     public final List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
@@ -299,16 +299,23 @@ public class GlobalClass extends Application {
         return sFileName;
     }
 
+    static final int[] iNoJumbleFileNameIndex =
+            {GlobalClass.VIDEO_FILENAME_INDEX, GlobalClass.IMAGE_FILENAME_INDEX, -1};
+    //Filenames that may contain descriptive information are jumbled at import, and
+    //  the catalog file should maintain that jumbled name, since the file is ascii.
+
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
 
     public void CatalogDataFile_CreateNewRecord(
-            File fCatalogContentsFile,
             int iRecordID,
-            TreeMap<Integer, String[]> tmCatalogRecords,
-            String[] sFieldData){
+            String[] sFieldData,
+            int iMediaCategory){
+
+        File fCatalogContentsFile = gfCatalogContentsFiles[iMediaCategory];
+        TreeMap<Integer, String[]> tmCatalogRecords = gtmCatalogLists.get(iMediaCategory);
 
         try {
             //Add the details to the TreeMap:
@@ -319,7 +326,13 @@ public class GlobalClass extends Application {
             sbLine.append(JumbleStorageText(sFieldData[0]));
             for(int i = 1; i < sFieldData.length; i++){
                 sbLine.append("\t");
-                sbLine.append(JumbleStorageText(sFieldData[i]));
+                if(i == iNoJumbleFileNameIndex[iMediaCategory]){
+                    //Don't jumble the filename, as it was jumbled on import. The catalog file is
+                    //  ascii, so any descriptive information in the filename would then be readable.
+                    sbLine.append(sFieldData[i]);
+                } else {
+                    sbLine.append(JumbleStorageText(sFieldData[i]));
+                }
             }
             //Write the data to the file:
             FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
@@ -640,6 +653,73 @@ public class GlobalClass extends Application {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    public void CatalogDataFile_UpdateAllRecords_UnJumbleVideoFileName() {
+        //This routine used to update all video records such that the file name matches the
+        //  storage file name.
+
+        try {
+
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[MEDIA_CATEGORY_VIDEOS].getAbsolutePath()));
+            String sHeader = brReader.readLine();
+            //Determine the file version, and don't update it if it is up-to-date:
+            String[] sHeaderFields = sHeader.split("\t");
+            String sVersionField = sHeaderFields[sHeaderFields.length - 1];
+            String[] sVersionFields = sVersionField.split("\\.");
+            if(Integer.parseInt(sVersionFields[1]) >= giCatalogFileVersion){
+                return;
+            }
+            //Re-form the header line with the new file version:
+            String sNewHeaderLine;
+            StringBuilder sbNewHeaderLine = new StringBuilder();
+            for(int i = 0; i < sHeaderFields.length - 1; i++){
+                sbNewHeaderLine.append(sHeaderFields[i]);
+                sbNewHeaderLine.append("\t");
+            }
+            sbNewHeaderLine.append("FILEVERSION.");
+            sbNewHeaderLine.append(giCatalogFileVersion); //Append the current file version number.
+            sbBuffer.append(sbNewHeaderLine);
+            sbBuffer.append("\n"); //Append newline character.
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                sFields = sLine.split("\t",-1);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(sFields[0]); //Append the first field, which would not be the tags field.
+                for (int i = 1; i < sFields.length; i++) {
+                    sb.append("\t");
+
+                    if (i == VIDEO_FILENAME_INDEX) {
+                        //This is the filename field. Reverse the jumble:
+                        sb.append(JumbleStorageText(sFields[i]));
+                    } else {
+                        sb.append(sFields[i]);
+                    }
+
+                }
+                sLine = sb.toString();
+
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[MEDIA_CATEGORY_VIDEOS], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
