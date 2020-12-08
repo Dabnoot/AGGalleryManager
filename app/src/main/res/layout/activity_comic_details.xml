@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:theme="@style/ComicDetailsTheme"
-    tools:context=".ComicDetailsActivity">
+    tools:context=".Activity_ComicDetails">
 
 
 

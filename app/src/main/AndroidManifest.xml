@@ -11,19 +11,19 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".TagEditorActivity"></activity>
+        <activity android:name=".Activity_TagEditor"></activity>
         <!-- android:theme="@style/AppTheme.Launcher">  To set startup screen -->
         <activity
-            android:name=".VideoPlayerActivityFullScreen"
+            android:name=".Activity_VideoPlayerFullScreen"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_video_player_full_screen"
             android:theme="@style/AppTheme.Launcher.Fullscreen" />
-        <activity android:name=".CatalogActivity" />
-        <activity android:name=".ImportActivity" />
+        <activity android:name=".Activity_CatalogViewer" />
+        <activity android:name=".Activity_Import" />
         <activity
-            android:name=".PinCodePopup"
+            android:name=".Activity_PinCodePopup"
             android:theme="@style/AppTheme.PinCodePopup" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".Activity_Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -31,54 +31,54 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".AGGallerySettingsActivity"
+            android:name=".Activity_AppSettings"
             android:label="@string/title_activity_a_g_gallery_settings"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".Activity_Main" />
         <activity
-            android:name=".ScrollingAboutActivity"
+            android:name=".Activity_ScrollingAbout"
             android:label="@string/title_activity_scrolling_about"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".Activity_Main"
             android:theme="@style/AppTheme.Launcher.NoActionBar" />
         <activity
-            android:name=".ComicDetailsActivity"
+            android:name=".Activity_ComicDetails"
             android:label="@string/title_activity_comic_details"
-            android:parentActivityName=".CatalogActivity"
+            android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".ComicPageViewerActivity"
+            android:name=".Activity_ComicPageViewer"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer"
-            android:parentActivityName=".ComicDetailsActivity"
+            android:parentActivityName=".Activity_ComicDetails"
             android:theme="@style/FullscreenTheme" />
         <activity
-            android:name=".ExportComicsActivity"
-            android:parentActivityName=".CatalogActivity"
+            android:name=".Activity_ExportComics"
+            android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".ImportComicsActivity_obsolete"
-            android:parentActivityName=".CatalogActivity"
+            android:name=".Activity_ImportComics_obsolete"
+            android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".VideoPreviewPopup"
+            android:name=".Activity_VideoPreviewPopup"
             android:theme="@style/AppTheme.VideoPreviewPopup" />
         <activity
-            android:name=".VideoPreviewPopup_wTags"
+            android:name=".Activity_VideoPreviewPopup_wTags"
             android:theme="@style/AppTheme.VideoPreviewPopup" />
 
         <service
-            android:name=".ImportActivityDataService"
+            android:name=".Service_Import"
             android:exported="false" />
         <service
-            android:name=".MainActivityDataService"
+            android:name=".Service_Main"
             android:exported="false" />
         <service
-            android:name=".ComicDetailsDataService"
+            android:name=".Service_ComicDetails"
             android:exported="false" />
         <service
-            android:name=".ExportComicsService"
+            android:name=".Service_ExportComics"
             android:exported="false" />
         <service
-            android:name=".ImportComicsService_obsolete"
+            android:name=".Service_ImportComics_obsolete"
             android:exported="false" />
     </application>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

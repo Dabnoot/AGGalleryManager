@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/relativeLayout_PinCode"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activity_PinCodePopup">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true">
+
+        <TextView
+            android:id="@+id/textView_PinText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enter Pin:"
+            android:textSize="30sp"
+            android:layout_centerHorizontal="true"/>
+
+        <EditText
+            android:id="@+id/editText_NumberPassword"
+            android:layout_width="140sp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="numberPassword"
+            android:textSize="30sp"
+            android:layout_centerHorizontal="true"
+            android:textAlignment="center"
+            android:layout_below="@+id/textView_PinText"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/editText_NumberPassword">
+
+            <Button
+                android:id="@+id/button_PinCodeCancel"
+                android:layout_width="120dp"
+                android:layout_height="60dp"
+                android:onClick="buttonCancelClick"
+                android:text="Cancel"
+                android:textSize="20sp"
+                android:background="@color/colorBlackboardRed"
+                style="@android:style/ButtonBar"/>
+
+            <Button
+                android:id="@+id/button_PinCodeOK"
+                android:layout_width="120dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="20dp"
+                android:onClick="buttonOkClick"
+                android:text="OK"
+                android:textSize="20sp"
+                android:background="@color/colorBlackboardRed"
+                style="@android:style/ButtonBar"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</RelativeLayout>

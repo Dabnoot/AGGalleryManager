@@ -23,7 +23,7 @@ import java.util.TreeMap;
 
 public class Fragment_SelectTags extends Fragment {
 
-    private FragmentSelectTagsViewModel mViewModel;
+    private ViewModel_Fragment_SelectTags mViewModel;
 
     public static Fragment_SelectTags newInstance() {
         return new Fragment_SelectTags();
@@ -43,7 +43,7 @@ public class Fragment_SelectTags extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if(getActivity() == null) return;
-        mViewModel = new ViewModelProvider(getActivity()).get(FragmentSelectTagsViewModel.class);
+        mViewModel = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
 
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
@@ -89,7 +89,7 @@ public class Fragment_SelectTags extends Fragment {
                 }
             }
 
-            TagItem tiNew = new TagItem(
+            ItemClass_Tag tiNew = new ItemClass_Tag(
                     bIsChecked,
                     Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]),
                     tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_NAME_INDEX],
@@ -105,10 +105,10 @@ public class Fragment_SelectTags extends Fragment {
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
-    public class ListViewTagsAdapter extends ArrayAdapter<TagItem> {
+    public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
         int iOrderIterator;
 
-        public ListViewTagsAdapter(Context context, ArrayList<TagItem> tagItems, int iPreselectedCount) {
+        public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems, int iPreselectedCount) {
             super(context, 0, tagItems);
             iOrderIterator = iPreselectedCount;
         }
@@ -116,7 +116,7 @@ public class Fragment_SelectTags extends Fragment {
         @Override
         public View getView(int position, View v, ViewGroup parent) {
             // Get the data item for this position
-            final TagItem tagItem = getItem(position);
+            final ItemClass_Tag tagItem = getItem(position);
             if(tagItem == null){
                 return v;
             }
@@ -162,10 +162,10 @@ public class Fragment_SelectTags extends Fragment {
                     //Iterate through all of the items in this ArrayAdapter, gathering the items,
                     //  and using a TreeMap to automatically sort the items by selection order:
                     int iItemCount = getCount();
-                    TreeMap<Integer, TagItem> tmSelectedItems = new TreeMap<>();
+                    TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
                     for(int i=0; i< iItemCount; i++){
                         if(getItem(i) != null){
-                            TagItem tagItem1 = getItem(i);
+                            ItemClass_Tag tagItem1 = getItem(i);
                             assert tagItem1 != null;
                             if(tagItem1.isChecked) {
                                 tmSelectedItems.put(tagItem1.SelectionOrder, tagItem1);
@@ -174,9 +174,9 @@ public class Fragment_SelectTags extends Fragment {
                     }
 
                     //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
-                    ArrayList<TagItem> alTagItems = new ArrayList<>();
+                    ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
 
-                    for (Map.Entry<Integer, TagItem>
+                    for (Map.Entry<Integer, ItemClass_Tag>
                             entry : tmSelectedItems.entrySet()) {
                         alTagItems.add(entry.getValue());
                     }
