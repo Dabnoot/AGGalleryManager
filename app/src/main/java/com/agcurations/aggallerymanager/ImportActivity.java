@@ -1,9 +1,14 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.BroadcastReceiver;
@@ -38,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 public class ImportActivity extends AppCompatActivity {
     private GlobalClass globalClass;
 
-    public ViewPager2 ViewPager2_Import; //todo: Is this is what is driving all of my fragment components to be required static?
+    public ViewPager2 ViewPager2_Import;
     FragmentImportViewPagerAdapter importViewPagerFragmentAdapter;
 
     //Fragment page indexes:
@@ -78,22 +83,12 @@ public class ImportActivity extends AppCompatActivity {
 
     static MediaMetadataRetriever mediaMetadataRetriever;
 
-    // a static variable to get a reference of our activity context
-    /*public static Context contextOfActivity;
-    public static Context getContextOfActivity(){
-        return contextOfActivity;
-    }*/
-
-
-
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.import_activity);
         setTitle("Import");
-
-        //contextOfActivity = this;
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -109,7 +104,7 @@ public class ImportActivity extends AppCompatActivity {
         //Stop the user from swiping left and right on the ViewPager (control with Next button):
         ViewPager2_Import.setUserInputEnabled(false);
 
-        //myViewPager2.setPageTransformer(new MarginPageTransformer(1500));
+        //myViewPager2.setPageTransformer(new MarginPageTransformer(1500)); todo
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
@@ -254,18 +249,8 @@ public class ImportActivity extends AppCompatActivity {
     }
 
     //================================================
-    //  Data Structures
+    //  Adapters
     //================================================
-    //======================================================================================
-    //===== File ListView Adapter ==========================================================
-    //======================================================================================
-
-    //References:
-    //  https://thecodeprogram.com/build-your-own-file-selector-screen-on-android
-
-
-
-
 
     public class FileListCustomAdapter extends ArrayAdapter<FileItem> {
 
@@ -654,5 +639,42 @@ public class ImportActivity extends AppCompatActivity {
         }
 
     }
+
+    public static class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
+
+        public FragmentImportViewPagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle) {
+            super(fragmentManager, lifecycle);
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            switch (position) {
+                case FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
+                    return new ImportFragment_0_MediaCategory();
+                case FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
+                    return new ImportFragment_1_StorageLocation();
+                case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
+                    return new ImportFragment_2_SelectItems();
+                case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
+                    return new ImportFragment_3_SelectTags();
+                case FRAGMENT_IMPORT_4_ID_IMPORT_METHOD:
+                    return new ImportFragment_4_ImportMethod();
+                case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
+                    return new ImportFragment_5_Confirmation();
+                case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
+                    return new ImportFragment_6_ExecuteImport();
+
+            }
+            return null;
+        }
+
+        @Override
+        public int getItemCount() {
+            return ImportActivity.FRAGMENT_COUNT;
+        }
+
+    }
+
 
 }
