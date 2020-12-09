@@ -90,7 +90,7 @@ public class Activity_Main extends AppCompatActivity {
                 FlipObfuscation();
                 return true;
 
-            case R.id.menu_import_guided:
+            case R.id.menu_import:
                 Intent intentImportGuided = new Intent(this, Activity_Import.class);
                 startActivity(intentImportGuided);
                 return true;
@@ -99,6 +99,11 @@ public class Activity_Main extends AppCompatActivity {
                 //Ask for pin code in order to allow access to Settings:
                 Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
                 startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS);
+                return true;
+
+            case R.id.menu_TagEditor:
+                Intent intentTagEditor = new Intent(this, Activity_TagEditor.class);
+                startActivity(intentTagEditor);
                 return true;
 
             case R.id.menu_About:

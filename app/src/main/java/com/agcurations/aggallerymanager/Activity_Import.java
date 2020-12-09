@@ -195,7 +195,7 @@ public class Activity_Import extends AppCompatActivity {
 
     }
 
-    public void buttonNextClick_MediaCategory(View v){
+    public void buttonNextClick_MediaCategorySelected(View v){
         RadioButton rbVideos = findViewById(R.id.radioButton_ImportVideos);
         RadioButton rbImages = findViewById(R.id.radioButton_ImportImages);
         //RadioButton rbComics = findViewById(R.id.radioButton_ImportComics);
@@ -650,7 +650,7 @@ public class Activity_Import extends AppCompatActivity {
         public Fragment createFragment(int position) {
             switch (position) {
                 case FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
-                    return new Fragment_0_MediaCategory();
+                    return new Fragment_Import_0_MediaCategory();
                 case FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
                     return new Fragment_Import_1_StorageLocation();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:

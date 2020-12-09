@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager_Import"
+        android:id="@+id/viewPager_TagEditor"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

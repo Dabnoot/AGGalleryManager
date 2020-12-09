@@ -2,10 +2,12 @@ package com.agcurations.aggallerymanager;
 
 
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -49,6 +51,7 @@ public class GlobalClass extends Application {
     public final int giCatalogFileVersion = 5;
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
+    public final int giTagFileVersion = 1;
     public final List<TreeMap<Integer, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public final List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
     public final List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
@@ -224,6 +227,17 @@ public class GlobalClass extends Application {
     //===== Utilities =====================================================================
     //=====================================================================================
 
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager inputMethodManager =
+                (InputMethodManager) activity.getSystemService(
+                        Activity.INPUT_METHOD_SERVICE);
+        try {
+            inputMethodManager.hideSoftInputFromWindow(
+                    activity.getCurrentFocus().getWindowToken(), 0);
+        } catch (Exception e){
+            //Most likely null pointer if keyboard is not shown.
+        }
+    }
 
     public long AvailableStorageSpace(Context c, Integer iDevice) {
         //Returns space available in kB.
@@ -449,6 +463,113 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.close();
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public boolean gbComicJustDeleted = false;
+    public boolean ComicCatalog_DeleteComic(String sComicID) {
+
+        //Delete the comic record from the CatalogContentsFile:
+
+        try {
+
+            //Attempt to delete the selected comic folder first.
+            //If that fails, abort the operation.
+            String sComicFolderName = "";
+
+            //Don't transfer the line over.
+            //Get a path to the comic's folder for deletion in the next step:
+            for (Map.Entry<Integer, String[]>
+                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
+                String[] sFields = CatalogEntry.getValue();
+                if( sFields[GlobalClass.COMIC_ID_INDEX].contains(sComicID)){
+                    sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
+                    break;
+                }
+            }
+
+            String  sComicFolderPath = gfCatalogFolders[MEDIA_CATEGORY_COMICS].getPath() + File.separator
+                    + sComicFolderName;
+
+            File fComicFolderToBeDeleted = new File(sComicFolderPath);
+            if(fComicFolderToBeDeleted.exists() && fComicFolderToBeDeleted.isDirectory()){
+                try{
+                    //First, the directory must be empty to delete. So delete all files in folder:
+                    String[] sChildFiles = fComicFolderToBeDeleted.list();
+                    if(sChildFiles != null) {
+                        for (String sChildFile : sChildFiles) {
+                            new File(fComicFolderToBeDeleted, sChildFile).delete();
+                        }
+                    }
+
+                    if(!fComicFolderToBeDeleted.delete()){
+                        Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
+                                Toast.LENGTH_LONG).show();
+                        return false;
+                    }
+                } catch (Exception e){
+                    Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
+                            Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            } else {
+                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + sComicID + ".",
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
+
+
+
+            //Now attempt to delete the comic record from the CatalogContentsFile:
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS].getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                sFields = sLine.split("\t",-1);
+                if (!(JumbleStorageText(sFields[COMIC_ID_INDEX]).equals(sComicID))) {
+                    //If the line is not the comic we are trying to delete, transfer it over:
+                    sbBuffer.append(sLine);
+                    sbBuffer.append("\n");
+
+                }
+
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            //Re-write the CatalogContentsFile without the deleted comic's data record:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+
+            //Now update memory to no longer include the comic:
+            int iKey = -1;
+            for (Map.Entry<Integer, String[]>
+                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
+                String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
+                if( sEntryComicID.contains(sComicID)){
+                    iKey = CatalogEntry.getKey();
+                    break;
+                }
+            }
+            if(iKey >= 0){
+                gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(iKey);
+            }
+
+            gbComicJustDeleted = true;
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
         }
     }
 
@@ -723,6 +844,112 @@ public class GlobalClass extends Application {
         }
     }
 
+    //=====================================================================================
+    //===== Tag Subroutines Section ===================================================
+    //=====================================================================================
+
+    public boolean TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
+
+        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+        TreeMap<Integer, String[]> tmTagRecords = gtmCatalogTagReferenceLists.get(iMediaCategory);
+
+        try {
+            int iNextRecordId = 0;
+            int iThisId;
+            for (Map.Entry<Integer, String[]> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                iThisId = Integer.parseInt(entry.getValue()[TAG_ID_INDEX]);
+                if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
+                if (entry.getValue()[TAG_NAME_INDEX].toLowerCase().equals(sTagName.toLowerCase())){
+                    return false;
+                }
+            }
+            //New record ID identified.
+
+            String[] sFieldData = {Integer.toString(iNextRecordId), sTagName};
+            //Add the details to the TreeMap:
+            tmTagRecords.put(iNextRecordId, sFieldData);
+
+            //Add the new record to the catalog file:
+            StringBuilder sbLine = new StringBuilder();
+            sbLine.append(JumbleStorageText(sFieldData[0]));
+            for(int i = 1; i < sFieldData.length; i++){
+                sbLine.append("\t");
+                sbLine.append(JumbleStorageText(sFieldData[i]));
+            }
+            //Write the data to the file:
+            FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
+            fwNewTagsFile.write(sbLine.toString());
+            fwNewTagsFile.write("\n");
+            fwNewTagsFile.flush();
+            fwNewTagsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+        return true;
+
+    }
+
+    public void TagsFile_UpdateAllRecords_JumbleTagID(int iMediaCategory) {
+        //This routine used to update all tag records such that the tag ID is jumbled.
+
+        try {
+
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(gfCatalogTagsFiles[iMediaCategory].getAbsolutePath()));
+            String sHeader = brReader.readLine();
+            //Determine the file version, and don't update it if it is up-to-date:
+            String[] sHeaderFields = sHeader.split("\t");
+            /*String sVersionField = sHeaderFields[sHeaderFields.length - 1];
+            String[] sVersionFields = sVersionField.split("\\.");
+            if(Integer.parseInt(sVersionFields[1]) >= giCatalogFileVersion){
+                return;
+            }*/
+            //Re-form the header line with the new file version:
+            String sNewHeaderLine;
+            StringBuilder sbNewHeaderLine = new StringBuilder();
+            for(int i = 0; i < sHeaderFields.length - 1; i++){
+                sbNewHeaderLine.append(sHeaderFields[i]);
+                sbNewHeaderLine.append("\t");
+            }
+            sbNewHeaderLine.append("FILEVERSION.");
+            sbNewHeaderLine.append(giTagFileVersion); //Append the current file version number.
+            sbBuffer.append(sbNewHeaderLine);
+            sbBuffer.append("\n"); //Append newline character.
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                sFields = sLine.split("\t",-1);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append(JumbleStorageText(sFields[0]));
+                for (int i = 1; i < sFields.length; i++) {
+                    sb.append("\t");
+                    sb.append(sFields[i]);
+                }
+                sLine = sb.toString();
+
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogTagsFiles[iMediaCategory], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+
     public ArrayList<String> GetTagsInUse(Integer iMediaCategory){
 
         int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
@@ -811,6 +1038,9 @@ public class GlobalClass extends Application {
         return ali;
     }
 
+    //=====================================================================================
+    //===== Other Subroutines Section ===================================================
+    //=====================================================================================
 
     public static String CleanStorageSize(Long lStorageSize){
         //Returns a string of size to 2 significant figures plus units of B, KB, MB, or GB.
@@ -848,121 +1078,10 @@ public class GlobalClass extends Application {
     }
 
 
-    //=====================================================================================
-    //===== Start Comic Catalog.dat Data Modification Routine(S) ================================
-    //=====================================================================================
-
-
-    public boolean gbComicJustDeleted = false;
-    public boolean ComicCatalog_DeleteComic(String sComicID) {
-
-        //Delete the comic record from the CatalogContentsFile:
-
-        try {
-
-            //Attempt to delete the selected comic folder first.
-            //If that fails, abort the operation.
-            String sComicFolderName = "";
-
-            //Don't transfer the line over.
-            //Get a path to the comic's folder for deletion in the next step:
-            for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
-                String[] sFields = CatalogEntry.getValue();
-                if( sFields[GlobalClass.COMIC_ID_INDEX].contains(sComicID)){
-                    sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
-                    break;
-                }
-            }
-
-            String  sComicFolderPath = gfCatalogFolders[MEDIA_CATEGORY_COMICS].getPath() + File.separator
-                    + sComicFolderName;
-
-            File fComicFolderToBeDeleted = new File(sComicFolderPath);
-            if(fComicFolderToBeDeleted.exists() && fComicFolderToBeDeleted.isDirectory()){
-                try{
-                    //First, the directory must be empty to delete. So delete all files in folder:
-                    String[] sChildFiles = fComicFolderToBeDeleted.list();
-                    if(sChildFiles != null) {
-                        for (String sChildFile : sChildFiles) {
-                            new File(fComicFolderToBeDeleted, sChildFile).delete();
-                        }
-                    }
-
-                    if(!fComicFolderToBeDeleted.delete()){
-                        Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
-                                Toast.LENGTH_LONG).show();
-                        return false;
-                    }
-                } catch (Exception e){
-                    Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
-                            Toast.LENGTH_LONG).show();
-                    return false;
-                }
-            } else {
-                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + sComicID + ".",
-                        Toast.LENGTH_LONG).show();
-                return false;
-            }
 
 
 
-            //Now attempt to delete the comic record from the CatalogContentsFile:
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS].getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
-            sbBuffer.append("\n");
 
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                sFields = sLine.split("\t",-1);
-                if (!(JumbleStorageText(sFields[COMIC_ID_INDEX]).equals(sComicID))) {
-                    //If the line is not the comic we are trying to delete, transfer it over:
-                    sbBuffer.append(sLine);
-                    sbBuffer.append("\n");
-
-                }
-
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            //Re-write the CatalogContentsFile without the deleted comic's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-
-
-            //Now update memory to no longer include the comic:
-            int iKey = -1;
-            for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
-                String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
-                if( sEntryComicID.contains(sComicID)){
-                    iKey = CatalogEntry.getKey();
-                    break;
-                }
-            }
-            if(iKey >= 0){
-                gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(iKey);
-            }
-
-            gbComicJustDeleted = true;
-            return true;
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
-
-    //=====================================================================================
-    //===== End Comic Catalog.dat Data Modification Routine(S) ================================
-    //=====================================================================================
 
 
 

@@ -120,6 +120,13 @@ public class Service_Main extends IntentService {
         /*GlobalClass.CatalogDataFile_UpdateAllRecords_TimeStamps(
                 globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS]);*/
 
+        //Fix the tags files so that the tag ID is also jumbled to be in alignment with the storage
+        //  method of the catalog files:
+        /*for(int i = 0; i < 3; i++){
+            globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
+        }*/
+
+
         //Get tag reference lists:
         int[] iTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
         for(int i = 0; i < 3; i++){
@@ -179,16 +186,15 @@ public class Service_Main extends IntentService {
 
                 while(sLine != null) {
                     String[] sFields;
-                    sFields = sLine.split(",");
-                    Integer iTagID = Integer.parseInt(sFields[0]);
+                    sFields = sLine.split("\t");
 
-                    //Reverse the text of each field (except the TagID):
-                    for(int j = 1; j < sFields.length; j++){
+                    //Reverse the text of each field:
+                    for(int j = 0; j < sFields.length; j++){
                         sFields[j] = GlobalClass.JumbleStorageText(sFields[j]);
                     }
+                    Integer iTagID = Integer.parseInt(sFields[0]);
 
-
-                    tmTags.put(iTagID, sFields); //Yes, even though the TagID is the key, value sFields also includes the tagID.
+                    tmTags.put(iTagID, sFields);
                     sLine = brReader.readLine();
                 }
 
@@ -206,14 +212,14 @@ public class Service_Main extends IntentService {
                         //Write the header record:
                         fwTagsFile.write(globalClass.TagRecordFields[0]);
                         for(int j = 1; j < globalClass.TagRecordFields.length; j++){
-                            fwTagsFile.write("," + globalClass.TagRecordFields[j]);
+                            fwTagsFile.write("\t" + globalClass.TagRecordFields[j]);
                         }
                         fwTagsFile.write("\n");
 
                         //Write data records:
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(i.toString() + "," + GlobalClass.JumbleStorageText(sEntry) + "\n");
+                                fwTagsFile.write(GlobalClass.JumbleStorageText(i.toString()) + "\t" + GlobalClass.JumbleStorageText(sEntry) + "\n");
                                 String[] s = new String[]{i.toString(), sEntry};
                                 tmTags.put(i, s);
                                 i++;

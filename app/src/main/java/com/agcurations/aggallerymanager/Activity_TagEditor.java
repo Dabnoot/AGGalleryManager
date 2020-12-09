@@ -10,21 +10,25 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.RadioButton;
 
 public class Activity_TagEditor extends AppCompatActivity {
     private GlobalClass globalClass;
 
     public ViewPager2 ViewPager2_TagEditor;
-    private FragmentTagEditorViewPagerAdapter fragmentTagEditorViewPagerAdapter;
+    private ViewPagerAdapter_TagEditor viewPagerAdapter_tagEditor;
     private ViewModel_TagEditor viewModelTagEditor;
 
     //Fragment page indexes:
     public static final int FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY = 0;
-    public static final int FRAGMENT_TAG_EDITOR_1_ID_ACTION = 1; //Add/Delete tags
-    public static final int FRAGMENT_TAG_EDITOR_2_ID_EDIT_TAG = 2; //Edit existing tag
-    public static final int FRAGMENT_TAG_EDITOR_3_ID_MERGE_TAG = 3; //Merge tag
-    public static final int FRAGMENT_TAG_EDITOR_4_ID_CONFIRM = 4; //Confirmation
-    public static final int FRAGMENT_COUNT = 5;
+    public static final int FRAGMENT_TAG_EDITOR_1_ID_ACTION = 1; //Choose action to perform on tags
+    public static final int FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG = 2; //Add a new tag
+    public static final int FRAGMENT_TAG_EDITOR_3_ID_EDIT_DELETE_TAG = 3; //Edit or delete a tag
+    public static final int FRAGMENT_TAG_EDITOR_4_ID_MERGE_TAGS = 4; //Merge tags
+    public static final int FRAGMENT_TAG_EDITOR_5_ID_CONFIRM = 5; //Confirmation (for delete and merge operations)
+    public static final int FRAGMENT_TAG_EDITOR_5_ID_EXECUTE = 6; //Execute (for delete and merge operations)
+    public static final int FRAGMENT_COUNT = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,11 +39,65 @@ public class Activity_TagEditor extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        ViewPager2_TagEditor = findViewById(R.id.tag_editor_activity);
+        ViewPager2_TagEditor = findViewById(R.id.viewPager_TagEditor);
+        // set Orientation in your ViewPager2
+        ViewPager2_TagEditor.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
+        //Set adapter for ViewPager2:
+        viewPagerAdapter_tagEditor = new ViewPagerAdapter_TagEditor(getSupportFragmentManager(), getLifecycle());
+        ViewPager2_TagEditor.setAdapter(viewPagerAdapter_tagEditor);
+        //Stop the user from swiping left and right on the ViewPager (control with Next button):
+        ViewPager2_TagEditor.setUserInputEnabled(false);
 
         //Instantiate the ViewModel sharing data between fragments:
         viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
 
+    }
+
+    //======================================================
+    //======  FRAGMENT NAVIGATION ROUTINES  ================
+    //======================================================
+
+
+    @Override
+    public void onBackPressed() {
+
+        if (ViewPager2_TagEditor.getCurrentItem() != 0) {
+            ViewPager2_TagEditor.setCurrentItem(ViewPager2_TagEditor.getCurrentItem() - 1,false);
+        }else{
+            finish();
+        }
+
+    }
+
+    public void buttonNextClick_MediaCategorySelected(View v){
+        RadioButton rbVideos = findViewById(R.id.radioButton_VideoTags);
+        RadioButton rbImages = findViewById(R.id.radioButton_ImageTags);
+        //RadioButton rbComics = findViewById(R.id.radioButton_ComicTags);
+
+        if (rbVideos.isChecked()){
+            viewModelTagEditor.iTagEditorMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
+        } else if (rbImages.isChecked()){
+            viewModelTagEditor.iTagEditorMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
+        } else {
+            viewModelTagEditor.iTagEditorMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+        }
+
+        //Go to the import folder selection fragment:
+        ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION);
+    }
+
+    public void buttonNextClick_TagActionSelected(View v){
+        RadioButton rbAddTags = findViewById(R.id.radioButton_AddTags);
+        RadioButton rbEditDeleteTags = findViewById(R.id.radioButton_EditDeleteTags);
+        //RadioButton rbMergeTags = findViewById(R.id.radioButton_MergeTags);
+
+        if (rbAddTags.isChecked()){
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG);
+        } else if (rbEditDeleteTags.isChecked()){
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_3_ID_EDIT_DELETE_TAG);
+        } else {
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_MERGE_TAGS);
+        }
     }
 
 
@@ -49,9 +107,9 @@ public class Activity_TagEditor extends AppCompatActivity {
     //================================================
 
 
-    public static class FragmentTagEditorViewPagerAdapter extends FragmentStateAdapter {
+    public static class ViewPagerAdapter_TagEditor extends FragmentStateAdapter {
 
-        public FragmentTagEditorViewPagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle) {
+        public ViewPagerAdapter_TagEditor(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle) {
             super(fragmentManager, lifecycle);
         }
 
@@ -60,15 +118,19 @@ public class Activity_TagEditor extends AppCompatActivity {
         public Fragment createFragment(int position) {
             switch (position) {
                 case FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY:
-                    return new Fragment_0_MediaCategory();
+                    return new Fragment_TagEditor_0_MediaCategory();
                 case FRAGMENT_TAG_EDITOR_1_ID_ACTION:
-                    return new Fragment_Import_1_StorageLocation();
-                case FRAGMENT_TAG_EDITOR_2_ID_EDIT_TAG:
-                    return new Fragment_Import_2_SelectItems();
-                case FRAGMENT_TAG_EDITOR_3_ID_MERGE_TAG:
-                    return new Fragment_Import_3_SelectTags();
-                case FRAGMENT_TAG_EDITOR_4_ID_CONFIRM:
-                    return new Fragment_Import_4_ImportMethod();
+                    return new Fragment_TagEditor_1_Action();
+                case FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG:
+                    return new Fragment_TagEditor_2_AddTag();
+                case FRAGMENT_TAG_EDITOR_3_ID_EDIT_DELETE_TAG:
+                    return null;
+                case FRAGMENT_TAG_EDITOR_4_ID_MERGE_TAGS:
+                    return null;
+                case FRAGMENT_TAG_EDITOR_5_ID_CONFIRM:
+                    return null;
+                case FRAGMENT_TAG_EDITOR_5_ID_EXECUTE:
+                    return null;
             }
             return null;
         }
