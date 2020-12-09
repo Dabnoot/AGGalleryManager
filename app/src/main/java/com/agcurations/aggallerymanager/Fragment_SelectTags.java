@@ -71,7 +71,7 @@ public class Fragment_SelectTags extends Fragment {
         int iPreSelectedTagIterator = 0;
         int iSelectionOrder;
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-        for (Map.Entry<Integer, String[]> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for (Map.Entry<String, String[]> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
 
             //Check to see if the list of preselected tags includes this tag from the reference list.
             //  If so, set the item as "checked":

@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -118,11 +119,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(ssCatalogTagsRestricted != null) {
             String s;
             for (String sRestrictedTag : ssCatalogTagsRestricted) {
-                for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
+                for (Map.Entry<String, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
                     s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
                     if (sRestrictedTag.equals(s)) {
                         //If the restricted tag has been found, assign it to the restricted tags TreeMap:
-                        globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).put(entry.getKey(), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                        globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory)
+                                .put(Integer.parseInt(entry.getValue()[GlobalClass.TAG_ID_INDEX]), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
                     }
                 }
             }
@@ -603,9 +605,23 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 String sFilterText_LowerCase = gsFilterText.toLowerCase();
                 String sKey_RecordText;
 
+                //Loop through all of the field data, append it together, and search the resulting
+                //  string for a filter match:
                 sbRecordText = new StringBuilder();
                 for (int i = 0; i < GlobalClass.CatalogRecordFields[globalClass.giSelectedCatalogMediaCategory].length; i++) {
-                    sbRecordText.append(sCatalogListRecord[i]);
+
+                    if(i == giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]){
+                        //if the field is the tags field, translate the tags to text:
+                        StringBuilder sbTags = new StringBuilder();
+                        String[] sTagIDs = sCatalogListRecord[i].split(",");
+                        for(String sTagID : sTagIDs){
+                            sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), globalClass.giSelectedCatalogMediaCategory));
+                            sbTags.append(", ");
+                        }
+                        sbRecordText.append(sbTags.toString());
+                    } else {
+                        sbRecordText.append(sCatalogListRecord[i]);
+                    }
                 }
                 sKey_RecordText = sbRecordText.toString().toLowerCase();
 

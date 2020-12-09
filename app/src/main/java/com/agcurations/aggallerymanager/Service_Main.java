@@ -10,6 +10,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import java.util.TreeMap;
 
 
@@ -79,9 +82,6 @@ public class Service_Main extends IntentService {
                         + File.separator + "Tags.dat");
             }
 
-
-
-
             //Attempt to read a pin number set by the user:
             globalClass.gfAppConfigFile = new File(globalClass.gfAppFolder.getAbsolutePath()
                     + File.separator + "AppConfig.dat");
@@ -126,13 +126,8 @@ public class Service_Main extends IntentService {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
-
-        //Get tag reference lists:
-        int[] iTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
-        for(int i = 0; i < 3; i++){
-            globalClass.gtmCatalogTagReferenceLists.add(
-                    InitTagData(globalClass.gfCatalogTagsFiles[i],
-                            getResources().getStringArray(iTagStringArrayResources[i])));
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+            globalClass.gtmCatalogTagReferenceLists.add(globalClass.InitTagData(iMediaCategory));
         }
 
         //Switch from tag text in the catalog files to tag IDs:
@@ -158,10 +153,9 @@ public class Service_Main extends IntentService {
         //globalClass.CatalogDataFile_UpdateAllRecords_UnJumbleVideoFileName();
 
         //Read the catalog list files into memory:
-        for(int i = 0; i < 3; i++){ //GlobalClass.MEDIA_CATEGORY_VIDEOS, GlobalClass.MEDIA_CATEGORY_IMAGES, GlobalClass.MEDIA_CATEGORY_COMICS
-            globalClass.gtmCatalogLists.add(readCatalogFile(i));
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+            globalClass.gtmCatalogLists.add(readCatalogFile(iMediaCategory));
         }
-
 
     }
 
@@ -173,79 +167,7 @@ public class Service_Main extends IntentService {
         }
     }
 
-    private TreeMap<Integer, String[]> InitTagData(File fTagsFile, String[] sDefaultTags ){
-        TreeMap<Integer, String[]> tmTags = new TreeMap<>();
-        if(fTagsFile.exists()) {
-            //Get Tags from file:
-            BufferedReader brReader;
-            try {
 
-                brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
-                brReader.readLine();//First line is the header, skip it.
-                String sLine = brReader.readLine();
-
-                while(sLine != null) {
-                    String[] sFields;
-                    sFields = sLine.split("\t");
-
-                    //Reverse the text of each field:
-                    for(int j = 0; j < sFields.length; j++){
-                        sFields[j] = GlobalClass.JumbleStorageText(sFields[j]);
-                    }
-                    Integer iTagID = Integer.parseInt(sFields[0]);
-
-                    tmTags.put(iTagID, sFields);
-                    sLine = brReader.readLine();
-                }
-
-                brReader.close();
-
-            } catch (IOException e) {
-                problemNotificationConfig("Trouble reading tags file at" + fTagsFile.getAbsolutePath());
-            }
-        } else { //If the tags file does not exist, create it and populate it with default values:
-            try {
-                if(fTagsFile.createNewFile()) {
-                    try {
-                        FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
-                        Integer i = 0;
-                        //Write the header record:
-                        fwTagsFile.write(globalClass.TagRecordFields[0]);
-                        for(int j = 1; j < globalClass.TagRecordFields.length; j++){
-                            fwTagsFile.write("\t" + globalClass.TagRecordFields[j]);
-                        }
-                        fwTagsFile.write("\n");
-
-                        //Write data records:
-                        for (String sEntry : sDefaultTags) {
-                            if(!sEntry.equals("")) {
-                                fwTagsFile.write(GlobalClass.JumbleStorageText(i.toString()) + "\t" + GlobalClass.JumbleStorageText(sEntry) + "\n");
-                                String[] s = new String[]{i.toString(), sEntry};
-                                tmTags.put(i, s);
-                                i++;
-                            }
-                        }
-
-                        //Close the tags file:
-                        fwTagsFile.flush();
-                        fwTagsFile.close();
-
-                    } catch (IOException e) {
-                        problemNotificationConfig( "Trouble writing file at "
-                                + fTagsFile.getAbsolutePath());
-                    }
-                } else {
-                    problemNotificationConfig( "Could not create file at "
-                            + fTagsFile.getAbsolutePath());
-                }
-            }catch (IOException e){
-                problemNotificationConfig("Could not create file at "
-                        + fTagsFile.getAbsolutePath());
-            }
-        }
-
-        return tmTags;
-    }
 
     private TreeMap<Integer, String[]> readCatalogFile(int iMediaCategory){
 
