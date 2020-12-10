@@ -169,6 +169,44 @@ public class GlobalClass extends Application {
     public static final String COMIC_ONLINE_DATA_ACQUIRED_YES = "Yes";
 
 
+    //Lookup tables
+    public static final int[] giDataRecordIDIndexes = {
+            GlobalClass.VIDEO_ID_INDEX,
+            GlobalClass.IMAGE_ID_INDEX,
+            GlobalClass.COMIC_ID_INDEX};
+
+    public static final int[] giDataRecordFileNameIndexes = {
+            GlobalClass.VIDEO_FILENAME_INDEX,
+            GlobalClass.IMAGE_FILENAME_INDEX,
+            -1};// -1, there is no descriptive comic file name.
+
+    public static final int[] giDataRecordDateTimeImportIndexes = {
+            GlobalClass.VIDEO_DATETIME_IMPORT_INDEX,
+            GlobalClass.IMAGE_DATETIME_IMPORT_INDEX,
+            GlobalClass.COMIC_DATETIME_IMPORT_INDEX};
+
+    public static final int[] giDataRecordDateTimeViewedIndexes = {
+            GlobalClass.VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
+            GlobalClass.IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
+            GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
+
+    public static final int[] giDataRecordTagsIndexes = {
+            GlobalClass.VIDEO_TAGS_INDEX,
+            GlobalClass.IMAGE_TAGS_INDEX,
+            GlobalClass.COMIC_TAGS_INDEX};
+
+    public static final int[] giDataRecordFolderIndexes = {
+            GlobalClass.VIDEO_FOLDER_NAME_INDEX,
+            GlobalClass.IMAGE_FOLDER_NAME_INDEX,
+            GlobalClass.COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
+
+    public static final int[] giDataRecordRecyclerViewImageIndexes = {
+            GlobalClass.VIDEO_FILENAME_INDEX,
+            GlobalClass.IMAGE_FILENAME_INDEX,
+            GlobalClass.COMIC_THUMBNAIL_FILE_INDEX};
+
+
+
     //todo: get rid of these variables as they are handled as arrayList items above:
     public File gfComicsFolder;
     public File gfComicLogsFolder;
@@ -364,14 +402,13 @@ public class GlobalClass extends Application {
 
 
     public void CatalogDataFile_UpdateRecord(
-            File fCatalogContentsFile,
-            TreeMap<Integer, String[]> tmCatalogRecords,
             String sRecordID,
-            int iRecordIDIndex,
             int[] iFieldIDs,
-            String[] sFieldUpdateData) {
+            String[] sFieldUpdateData,
+            int iMediaCategory) {
 
-        //iRecordIDIndex is the index in the record at which the ID can be found.
+        File fCatalogContentsFile = gfCatalogContentsFiles[iMediaCategory];
+        TreeMap<Integer, String[]> tmCatalogRecords = gtmCatalogLists.get(iMediaCategory);
 
         try {
             StringBuilder sbBuffer = new StringBuilder();
@@ -390,11 +427,18 @@ public class GlobalClass extends Application {
                 String[] sFields2 = new String[sFields.length];
                 for(int i = 0; i < sFields.length; i++){
                     sFields2[i] = JumbleStorageText(sFields[i]);
+                    if(i == iNoJumbleFileNameIndex[iMediaCategory]){
+                        //Don't jumble the filename, as it was jumbled on import. The catalog file is
+                        //  ascii, so any descriptive information in the filename would then be readable.
+                        sFields2[i] = sFields[i];
+                    } else {
+                        sFields2[i] = JumbleStorageText(sFields[i]);
+                    }
                 }
                 sFields = sFields2;
 
                 //Check to see if this record is the one that we want to update:
-                if (sFields[iRecordIDIndex].equals(sRecordID)) {
+                if (sFields[giDataRecordIDIndexes[iMediaCategory]].equals(sRecordID)) {
                     StringBuilder sb = new StringBuilder();
 
                     if (iFieldIDs[j] == 0) {
@@ -427,8 +471,8 @@ public class GlobalClass extends Application {
                     int iKey = -1;
                     for (Map.Entry<Integer, String[]>
                             CatalogEntry : tmCatalogRecords.entrySet()) {
-                        String sEntryRecordID = CatalogEntry.getValue()[iRecordIDIndex];
-                        if( sEntryRecordID.contains(sFields[iRecordIDIndex])){
+                        String sEntryRecordID = CatalogEntry.getValue()[giDataRecordIDIndexes[iMediaCategory]];
+                        if( sEntryRecordID.contains(sFields[giDataRecordIDIndexes[iMediaCategory]])){
                             iKey = CatalogEntry.getKey();
                             break;
                         }
@@ -443,7 +487,13 @@ public class GlobalClass extends Application {
                     sbJumble.append(JumbleStorageText(sFields2[0]));
                     for(int i = 1; i < sFields.length; i++){
                         sbJumble.append("\t");
-                        sbJumble.append(JumbleStorageText(sFields2[i]));
+                        if(i == iNoJumbleFileNameIndex[iMediaCategory]){
+                            //Don't jumble the filename, as it was jumbled on import. The catalog file is
+                            //  ascii, so any descriptive information in the filename would then be readable.
+                            sbJumble.append(sFields2[i]);
+                        } else {
+                            sbJumble.append(JumbleStorageText(sFields2[i]));
+                        }
                     }
                     sLine = sbJumble.toString();
 

@@ -59,40 +59,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     private Menu ActivityMenu;
 
 
-    private final int[] giDataRecordIDIndexes = {
-            GlobalClass.VIDEO_ID_INDEX,
-            GlobalClass.IMAGE_ID_INDEX,
-            GlobalClass.COMIC_ID_INDEX};
 
-    private final int[] giDataRecordFileNameIndexes = {
-            GlobalClass.VIDEO_FILENAME_INDEX,
-            GlobalClass.IMAGE_FILENAME_INDEX,
-            -1};// -1, there is no descriptive comic file name.
-
-    private final int[] giDataRecordDateTimeImportIndexes = {
-            GlobalClass.VIDEO_DATETIME_IMPORT_INDEX,
-            GlobalClass.IMAGE_DATETIME_IMPORT_INDEX,
-            GlobalClass.COMIC_DATETIME_IMPORT_INDEX};
-
-    private final int[] giDataRecordDateTimeViewedIndexes = {
-            GlobalClass.VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
-            GlobalClass.IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
-            GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
-
-    private final int[] giDataRecordTagsIndexes = {
-            GlobalClass.VIDEO_TAGS_INDEX,
-            GlobalClass.IMAGE_TAGS_INDEX,
-            GlobalClass.COMIC_TAGS_INDEX};
-
-    private final int[] giDataRecordFolderIndexes = {
-            GlobalClass.VIDEO_FOLDER_NAME_INDEX,
-            GlobalClass.IMAGE_FOLDER_NAME_INDEX,
-            GlobalClass.COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
-
-    private final int[] giDataRecordRecyclerViewImageIndexes = {
-            GlobalClass.VIDEO_FILENAME_INDEX,
-            GlobalClass.IMAGE_FILENAME_INDEX,
-            GlobalClass.COMIC_THUMBNAIL_FILE_INDEX};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,11 +197,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Initialize the spinner position:
         //This is here because when onResume hits when the activity is first created,
         //  the Spinner does not yet exist.
-        if(giRecyclerViewSortBySetting == giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory]){
+        if(giRecyclerViewSortBySetting == GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory]){
             gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
             //When sorting by import date, sort Descending by default (newest first):
             SetSortIconToDescending();
-        } else if(giRecyclerViewSortBySetting == giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory]){
+        } else if(giRecyclerViewSortBySetting == GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory]){
             gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
             //When sorting by last viewed, sort Ascending by default:
             SetSortIconToAscending();
@@ -245,9 +212,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
+                    giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
                 } else if(position == SPINNER_ITEM_LAST_VIEWED_DATE) {
-                    giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
+                    giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
                 }
                 populate_RecyclerViewCatalogItems();
             }
@@ -284,7 +251,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //  catalog.
         if(globalClass.gbJustImported[globalClass.giSelectedCatalogMediaCategory]) {
             //Set sort by to "import_datetime"
-            giRecyclerViewSortBySetting = giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
+            giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
             globalClass.gbJustImported[globalClass.giSelectedCatalogMediaCategory] = false;
             //Set the spinner:
             if(gspSpinnerSort != null) {
@@ -292,7 +259,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
         } else {
             //Set sort by to "viewed_datetime"
-            giRecyclerViewSortBySetting = giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
+            giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
             if(gspSpinnerSort != null) {
                 gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
             }
@@ -515,8 +482,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
                 String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
-                        + sFields[giDataRecordFolderIndexes[globalClass.giSelectedCatalogMediaCategory]] + File.separator
-                        + sFields[giDataRecordRecyclerViewImageIndexes[globalClass.giSelectedCatalogMediaCategory]];
+                        + sFields[GlobalClass.giDataRecordFolderIndexes[globalClass.giSelectedCatalogMediaCategory]] + File.separator
+                        + sFields[GlobalClass.giDataRecordRecyclerViewImageIndexes[globalClass.giSelectedCatalogMediaCategory]];
                 File fThumbnail = new File(sThumbnailFilePath);
 
                 if (fThumbnail.exists()) {
@@ -526,12 +493,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 String sThumbnailText = "";
                 switch(globalClass.giSelectedCatalogMediaCategory){
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                        sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]) + ", " +
+                        String sTemp = sFields[GlobalClass.VIDEO_FILENAME_INDEX];
+                        sThumbnailText = globalClass.JumbleFileName(sTemp) + ", " +
                                 sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
-                        if(sThumbnailText.contains("fig")){
-                            sThumbnailText = sThumbnailText + " OhNoes!";
-                        }
-
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
                         sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]) + ", " +
@@ -551,7 +515,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
-
 
                     if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.VIDEO_ID_INDEX]));
@@ -603,7 +566,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             //Create a unique key to identify the record in the TreeMap, which includes
             // the SortBy field. TreeMap automatically sorts by the Key field.
             sKey = sCatalogListRecord[giRecyclerViewSortBySetting];
-            sKey = sKey + sCatalogListRecord[giDataRecordIDIndexes[globalClass.giSelectedCatalogMediaCategory]];
+            sKey = sKey + sCatalogListRecord[GlobalClass.giDataRecordIDIndexes[globalClass.giSelectedCatalogMediaCategory]];
 
             //Apply a filter if requested - build a string out of the records contents, and if a
             //  filter is to be applied, check for a match. If no match, don't add the record to
@@ -619,7 +582,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 sbRecordText = new StringBuilder();
                 for (int i = 0; i < GlobalClass.CatalogRecordFields[globalClass.giSelectedCatalogMediaCategory].length; i++) {
 
-                    if(i == giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]){
+                    if(i == GlobalClass.giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]){
                         //if the field is the tags field, translate the tags to text:
                         StringBuilder sbTags = new StringBuilder();
                         String[] sTagIDs = sCatalogListRecord[i].split(",");
@@ -628,7 +591,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             sbTags.append(", ");
                         }
                         sbRecordText.append(sbTags.toString());
-                    } else if (i == giDataRecordFileNameIndexes[globalClass.giSelectedCatalogMediaCategory]){
+                    } else if (i == GlobalClass.giDataRecordFileNameIndexes[globalClass.giSelectedCatalogMediaCategory]){
                         //if the field is a jumbled filename, unjumble it for the search:
                         String sFileName = GlobalClass.JumbleFileName(sCatalogListRecord[i]);
                         sbRecordText.append(sFileName);
@@ -646,7 +609,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             //Check to see if the record needs to be skipped due to restriction settings:
             boolean bIsRestricted = false;
             if(gbCatalogTagsRestrictionsOn) {
-                String sRecordTags = sCatalogListRecord[giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]];
+                String sRecordTags = sCatalogListRecord[GlobalClass.giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]];
                 String[] saRecordTags = sRecordTags.split(",");
                 for (String s : saRecordTags) {
                     //if list of restricted tags contains this particular record tag, mark as restricted item:
@@ -705,15 +668,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Create a time stamp for "last viewed" and update the catalog record and record in memory:
         Double dTimeStamp = GlobalClass.GetTimeStampFloat();
         String[] sDateTime = new String[]{dTimeStamp.toString()};
-        int[] iFields = new int[]{giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
+        int[] iFields = new int[]{GlobalClass.giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
 
         globalClass.CatalogDataFile_UpdateRecord(
-                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_VIDEOS],
-                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS),
                 iVideoID.toString(),
-                GlobalClass.VIDEO_ID_INDEX,
                 iFields,
-                sDateTime);
+                sDateTime,
+                GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         //Start the video player:
         Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayerFullScreen.class);
@@ -729,12 +690,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         String[] sDateTime = new String[]{dTimeStamp.toString()};
         int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
         globalClass.CatalogDataFile_UpdateRecord(
-                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS],
-                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS),
                 sFields[GlobalClass.COMIC_ID_INDEX],
-                GlobalClass.COMIC_ID_INDEX,
                 iFields,
-                sDateTime);
+                sDateTime,
+                GlobalClass.MEDIA_CATEGORY_COMICS);
 
 
         Intent intentComicViewer = new Intent(this, Activity_ComicDetails.class);

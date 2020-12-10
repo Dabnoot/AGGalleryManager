@@ -752,12 +752,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
         
         //Update the applicable fields in the catalog file:
         globalClass.CatalogDataFile_UpdateRecord(
-                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS],
-                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS),
                 gsComicFields[GlobalClass.COMIC_ID_INDEX],
-                GlobalClass.COMIC_ID_INDEX,
                 iTemp,
-                sTemp);
+                sTemp,
+                GlobalClass.MEDIA_CATEGORY_COMICS);
 
         gmiSaveDetails.setEnabled(false);
         Toast.makeText(getApplicationContext(), "Data saved.", Toast.LENGTH_LONG).show();
