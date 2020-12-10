@@ -267,10 +267,6 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                /*if (AUTO_HIDE) {
-                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                }*/
-                //toggle();
                 return super.onSingleTapConfirmed(e);
             }
 
