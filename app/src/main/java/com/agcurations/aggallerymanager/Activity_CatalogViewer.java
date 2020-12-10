@@ -528,6 +528,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]) + ", " +
                                 sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
+                        if(sThumbnailText.contains("fig")){
+                            sThumbnailText = sThumbnailText + " OhNoes!";
+                        }
+
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
                         sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]) + ", " +

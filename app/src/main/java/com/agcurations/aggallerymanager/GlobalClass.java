@@ -311,8 +311,7 @@ public class GlobalClass extends Application {
         sFileNameExtJumble.append(sFileName.substring(sFileName.lastIndexOf(".") + 1));
         StringBuilder sFileNameBody = new StringBuilder();
         sFileNameBody.append(sFileName.substring(0,sFileName.lastIndexOf(".")));
-        sFileName = sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
-        return sFileName;
+        return sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
     }
 
     static final int[] iNoJumbleFileNameIndex =
