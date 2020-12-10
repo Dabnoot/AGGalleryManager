@@ -40,8 +40,10 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
     private int giCurrentPosition = 0;
     private static final String PLAYBACK_TIME = "play_time";
 
+    private FrameLayout gFrameLayout_VideoPlayer;
     private VideoView gVideoView_VideoPlayer;
     private ImageView gImageView_GifViewer;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -54,6 +56,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         mControlsView = findViewById(R.id.fullscreen_content_controls);
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
+        gFrameLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
 
         // Set up the user interaction to manually show or hide the system UI.
         gVideoView_VideoPlayer.setOnClickListener(new View.OnClickListener() {
@@ -152,9 +155,10 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                     mediaController.hide();
                 } else {
                     mediaController.show();
-                    if (AUTO_HIDE) {
-                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                    }
+                }
+                toggle();
+                if (mVisible && AUTO_HIDE) {
+                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
                 }
                 return super.onSingleTapConfirmed(e);
             }
@@ -225,7 +229,6 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
             }
         });
 
-
         gVideoView_VideoPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
@@ -242,11 +245,9 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
             //Here is the method for double tap
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-
                 ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
                 ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
                 Toast.makeText(getApplicationContext(), "Double tap detected.", Toast.LENGTH_SHORT).show();
-
                 return true;
             }
 
@@ -267,6 +268,10 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
+                toggle();
+                if (mVisible && AUTO_HIDE) {
+                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                }
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -411,10 +416,6 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
     }
 
 
-
-
-
-
     //==============================================================================================
     //==============================================================================================
     //==============================================================================================
@@ -447,19 +448,13 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
             // Note that some of these constants are new as of API 16 (Jelly Bean)
             // and API 19 (KitKat). It is safe to use them, as they are inlined
             // at compile-time and do nothing on earlier devices.
-            gVideoView_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+            gFrameLayout_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
-            gImageView_GifViewer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
     private View mControlsView;
@@ -518,8 +513,8 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
     private void show() {
         // Show the system bar
-        //mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        //        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        gFrameLayout_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+               | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         mVisible = true;
 
         // Schedule a runnable to display UI elements after a delay
