@@ -305,7 +305,7 @@ public class GlobalClass extends Application {
         return sFinalText;
     }
 
-    public String JumbleFileName(String sFileName){
+    public static String JumbleFileName(String sFileName){
         //Reverse the text on the file so that the file does not get picked off by a search tool:
         StringBuilder sFileNameExtJumble = new StringBuilder();
         sFileNameExtJumble.append(sFileName.substring(sFileName.lastIndexOf(".") + 1));

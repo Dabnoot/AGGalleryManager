@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.content.res.Resources;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -152,11 +153,82 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                 }
                 return super.onSingleTapConfirmed(e);
             }
+
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                boolean result = false;
+                try {
+                    float diffY = e2.getY() - e1.getY();
+                    float diffX = e2.getX() - e1.getX();
+                    if (Math.abs(diffX) > Math.abs(diffY)) {
+                        if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                            if (diffX > 0) {
+                                onSwipeRight();
+                            } else {
+                                onSwipeLeft();
+                            }
+                            result = true;
+                        }
+                    }
+                    else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffY > 0) {
+                            onSwipeBottom();
+                        } else {
+                            onSwipeTop();
+                        }
+                        result = true;
+                    }
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                }
+                return result;
+            }
+
+            public void onSwipeRight() {
+                int iTempKey = giKey - 1;
+                if(treeMapRecyclerViewVideos.containsKey(iTempKey)) {
+                    gVideoView.stopPlayback();
+                    giKey--;
+                    initializePlayer();
+                }
+            }
+
+            public void onSwipeLeft() {
+                int iTempKey = giKey + 1;
+                if(treeMapRecyclerViewVideos.containsKey(iTempKey)) {
+                    gVideoView.stopPlayback();
+                    giKey++;
+                    initializePlayer();
+                }
+            }
+
+            public void onSwipeTop() {
+            }
+
+            public void onSwipeBottom() {
+            }
+
         });
         gVideoView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 return gd.onTouchEvent(event);
+            }
+        });
+
+        /*gVideoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            public void onCompletion(MediaPlayer mp) {
+                gVideoView.start();
+            }
+        });*/
+
+        gVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.setLooping(true);
             }
         });
 
@@ -190,14 +262,15 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
     private Uri getMedia() {
 
-        String[] sFields = treeMapRecyclerViewVideos.get(giKey);
-        if(sFields != null) {
-            String sVideoPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() + File.separator +
-                    sFields[GlobalClass.VIDEO_FOLDER_NAME_INDEX] + File.separator +
-                    sFields[GlobalClass.VIDEO_FILENAME_INDEX];
-            return Uri.parse(sVideoPath);
+        if(treeMapRecyclerViewVideos.containsKey(giKey)) {
+            String[] sFields = treeMapRecyclerViewVideos.get(giKey);
+            if (sFields != null) {
+                String sVideoPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() + File.separator +
+                        sFields[GlobalClass.VIDEO_FOLDER_NAME_INDEX] + File.separator +
+                        sFields[GlobalClass.VIDEO_FILENAME_INDEX];
+                return Uri.parse(sVideoPath);
+            }
         }
-
         return null;
     }
 

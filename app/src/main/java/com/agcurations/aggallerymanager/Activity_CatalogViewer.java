@@ -64,6 +64,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             GlobalClass.IMAGE_ID_INDEX,
             GlobalClass.COMIC_ID_INDEX};
 
+    private final int[] giDataRecordFileNameIndexes = {
+            GlobalClass.VIDEO_FILENAME_INDEX,
+            GlobalClass.IMAGE_FILENAME_INDEX,
+            -1};// -1, there is no descriptive comic file name.
+
     private final int[] giDataRecordDateTimeImportIndexes = {
             GlobalClass.VIDEO_DATETIME_IMPORT_INDEX,
             GlobalClass.IMAGE_DATETIME_IMPORT_INDEX,
@@ -619,6 +624,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             sbTags.append(", ");
                         }
                         sbRecordText.append(sbTags.toString());
+                    } else if (i == giDataRecordFileNameIndexes[globalClass.giSelectedCatalogMediaCategory]){
+                        //if the field is a jumbled filename, unjumble it for the search:
+                        String sFileName = GlobalClass.JumbleFileName(sCatalogListRecord[i]);
+                        sbRecordText.append(sFileName);
                     } else {
                         sbRecordText.append(sCatalogListRecord[i]);
                     }
