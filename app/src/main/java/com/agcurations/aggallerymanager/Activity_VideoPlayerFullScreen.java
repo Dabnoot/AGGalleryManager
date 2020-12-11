@@ -5,22 +5,27 @@ import android.annotation.SuppressLint;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.FrameLayout;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
+import android.widget.Toolbar;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
@@ -40,9 +45,11 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
     private int giCurrentPosition = 0;
     private static final String PLAYBACK_TIME = "play_time";
 
-    private FrameLayout gFrameLayout_VideoPlayer;
+    private RelativeLayout gRelativeLayout_VideoPlayer;
     private VideoView gVideoView_VideoPlayer;
     private ImageView gImageView_GifViewer;
+
+    private Uri gMediaUri;
 
 
     @SuppressLint("ClickableViewAccessibility")
@@ -56,7 +63,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         mControlsView = findViewById(R.id.fullscreen_content_controls);
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
-        gFrameLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
+        gRelativeLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
 
         // Set up the user interaction to manually show or hide the system UI.
         gVideoView_VideoPlayer.setOnClickListener(new View.OnClickListener() {
@@ -104,8 +111,9 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
         mediaController.setMediaPlayer(gVideoView_VideoPlayer);
         gVideoView_VideoPlayer.setMediaController(mediaController);
+        mediaController.setAnchorView(findViewById(R.id.fullscreen_content_controls));
 
-        DisplayMetrics dm = new DisplayMetrics();
+        /*DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         FrameLayout.LayoutParams lpp = new FrameLayout.LayoutParams(dm.widthPixels, 170);
         lpp.gravity= Gravity.BOTTOM;
@@ -116,7 +124,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
             iNavigationBarSizeInPixels = resources.getDimensionPixelSize(resourceId);
         }
         lpp.setMargins(0,0,0,iNavigationBarSizeInPixels);
-        mediaController.setLayoutParams(lpp);
+        mediaController.setLayoutParams(lpp);*/
 
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
         //  double-tap, as well as swipe to go to the next video:
@@ -377,6 +385,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                         sFields[GlobalClass.VIDEO_FOLDER_NAME_INDEX] + File.separator +
                         sFields[GlobalClass.VIDEO_FILENAME_INDEX];
                 //Determine if this is a gif file, which the VideoView will not play:
+                setTitle(GlobalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]));
                 bFileIsGif = GlobalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]).contains(".gif");
                 return Uri.parse(sVideoPath);
             }
@@ -384,10 +393,13 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         return null;
     }
 
+
+
+
     private void initializePlayer() {
-        Uri uriMedia = getMedia();
+        gMediaUri = getMedia();
         if(bFileIsGif){
-            File fGif = new File(uriMedia.getPath());
+            File fGif = new File(gMediaUri.getPath());
             Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
             gImageView_GifViewer.setVisibility(View.VISIBLE);
             gVideoView_VideoPlayer.setZOrderOnTop(false);
@@ -395,7 +407,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         } else {
             gImageView_GifViewer.setVisibility(View.INVISIBLE);
             gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
-            gVideoView_VideoPlayer.setVideoURI(uriMedia);
+            gVideoView_VideoPlayer.setVideoURI(gMediaUri);
             if (giCurrentPosition > 0) {
                 gVideoView_VideoPlayer.seekTo(giCurrentPosition);
             } else {
@@ -403,13 +415,120 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                 gVideoView_VideoPlayer.seekTo(1);
             }
             gVideoView_VideoPlayer.setZOrderOnTop(true);
+
+            gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsInVisible(gMediaUri));
+            gVideoView_VideoPlayer.invalidate();
+
             gVideoView_VideoPlayer.start();
         }
     }
 
+    private ViewGroup.LayoutParams getLayoutParamsBarsVisible(Uri uriMedia){
+        //Get the aspect ratio:
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(this, uriMedia);
+        int iVideoWidth = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+        int iVideoHeight = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+        retriever.close();
+        retriever.release();
+
+        //Set gVideoView size:
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+
+        int iStatBarHeight = getStatusBarHeight();
+        int iNavBarHeight = getNavigationBarHeight();
+        int iActionBarHeight = getActionBarHeight();
+        int y = dm.heightPixels;
+        y -= iStatBarHeight;
+        //y -= iNavBarHeight;
+        y -= iActionBarHeight;
+        //int x = dm.widthPixels;
+        int x = (int) ((float) iVideoWidth / iVideoHeight * y);
+
+        RelativeLayout.LayoutParams videoviewlp = new RelativeLayout.LayoutParams(x, y);
+        videoviewlp.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
+        videoviewlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
+        videoviewlp.setMargins(0,iStatBarHeight,0,0);
+
+        return  videoviewlp;
+    }
+
+    private ViewGroup.LayoutParams getLayoutParamsBarsInVisible(Uri uriMedia){
+        //Get the aspect ratio:
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(this, uriMedia);
+        int iVideoWidth = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
+        int iVideoHeight = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
+        retriever.close();
+        retriever.release();
+
+        //Set gVideoView size:
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+
+        int iStatBarHeight = getStatusBarHeight();
+        int iNavBarHeight = getNavigationBarHeight();
+        int iActionBarHeight = getActionBarHeight();
+        int y = dm.heightPixels;
+        //y -= iStatBarHeight;
+        //y -= iNavBarHeight;
+        //y -= iActionBarHeight;
+        //int x = dm.widthPixels;
+        int x = (int) ((float) iVideoWidth / iVideoHeight * y);
+
+        RelativeLayout.LayoutParams videoviewlp = new RelativeLayout.LayoutParams(x, y);
+        videoviewlp.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
+        videoviewlp.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
+        videoviewlp.setMargins(0,0,0,0);
+
+        return  videoviewlp;
+    }
+
+
+
+    public int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    public int getNavigationBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    public int getActionBarHeight() {
+        int result = 0;
+        // Calculate ActionBar height
+        TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
+        {
+            result = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+        }
+        return result;
+    }
+
+
+
     private void releasePlayer() {
         gVideoView_VideoPlayer.stopPlayback();
     }
+
+
+
+
+
+
+
+
 
     public void HideObfuscationImageButton(View v){
         v.setVisibility(View.INVISIBLE);
@@ -448,12 +567,17 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
             // Note that some of these constants are new as of API 16 (Jelly Bean)
             // and API 19 (KitKat). It is safe to use them, as they are inlined
             // at compile-time and do nothing on earlier devices.
-            gFrameLayout_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+            gRelativeLayout_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
+            if(!bFileIsGif){
+                gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsInVisible(gMediaUri));
+                gVideoView_VideoPlayer.invalidate();
+            }
 
         }
     };
@@ -467,6 +591,12 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                 actionBar.show();
             }
             mControlsView.setVisibility(View.VISIBLE);
+            if(!bFileIsGif){
+                gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsVisible(gMediaUri));
+                gVideoView_VideoPlayer.invalidate();
+            }
+
+
         }
     };
     private boolean mVisible;
@@ -513,7 +643,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
     private void show() {
         // Show the system bar
-        gFrameLayout_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        gRelativeLayout_VideoPlayer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         mVisible = true;
 
