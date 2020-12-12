@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -8,17 +8,30 @@
     tools:context=".Fragment_SelectTags"
     android:orientation="vertical">
 
-    <TextView
+    <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select tags:"
+        android:background="@color/colorBlack"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_above="@+id/tabLayout_TagListings"/>
+
+    <TextView
+        android:id="@+id/textView_Title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TAGS"
         android:layout_margin="20dp"
-        android:textSize="24sp"/>
+        android:textSize="24sp"
+        android:layout_centerHorizontal="true"/>
 
     <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout_TagListings"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        app:tabTextColor="@color/colorGrey1">
+        app:tabTextColor="@color/colorGrey1"
+        android:layout_below="@+id/textView_Title">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -37,6 +50,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:defaultValue="@array/empty_array"
-        android:scrollbarSize="20dp"/>
+        android:scrollbarSize="20dp"
+        android:layout_below="@+id/tabLayout_TagListings"
+        android:layout_above="@+id/button_TagEditor"/>
 
-</LinearLayout>
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/colorBlack"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/listView_ImportTagSelection"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"/>
+
+    <Button
+        android:id="@+id/button_TagEditor"
+        android:layout_width="wrap_content"
+        android:layout_height="67dp"
+        android:text="Tag EDITOR"
+        android:textSize="20sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        app:backgroundTint="@color/colorBlackboardRed"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"/>
+
+</RelativeLayout>

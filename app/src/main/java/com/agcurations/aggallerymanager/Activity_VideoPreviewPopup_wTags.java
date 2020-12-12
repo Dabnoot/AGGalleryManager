@@ -80,16 +80,6 @@ public class Activity_VideoPreviewPopup_wTags extends AppCompatActivity {
         };
         mViewModel.altiTagsSelected.observe(this, selectedTagsObserver);
 
-        /*DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-
-        int width = dm.widthPixels;
-        int height = dm.heightPixels;
-
-        float fSize = 0.8f;
-
-        getWindow().setLayout((int)(width * fSize), (int)(height * fSize));*/
-
         Bundle b = getIntent().getExtras();
         if(b != null) {
 

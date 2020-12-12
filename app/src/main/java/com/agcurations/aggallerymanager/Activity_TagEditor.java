@@ -9,7 +9,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.view.View;
 import android.widget.RadioButton;
 
@@ -30,6 +33,10 @@ public class Activity_TagEditor extends AppCompatActivity {
     public static final int FRAGMENT_TAG_EDITOR_5_ID_EXECUTE = 6; //Execute (for delete and merge operations)
     public static final int FRAGMENT_COUNT = 3;
 
+    public static final String EXTRA_INT_MEDIA_CATEGORY = "EXTRA_INT_MEDIA_CATEGORY";
+                                 //If the tag editor is being started from somewhere other than
+                                 // Main activity, it must be in an area applicable to a particular media type.
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,8 +55,23 @@ public class Activity_TagEditor extends AppCompatActivity {
         //Stop the user from swiping left and right on the ViewPager (control with Next button):
         ViewPager2_TagEditor.setUserInputEnabled(false);
 
+
+
+
         //Instantiate the ViewModel sharing data between fragments:
         viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
+
+        //Check to see if this activity has been started by an activity desiring mods to a
+        //  particular media category set of tags:
+        Intent iStartingIntent = getIntent();
+        if(iStartingIntent != null){
+            int iMediaCategory = iStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
+            if(iMediaCategory != -1){
+                viewModelTagEditor.iTagEditorMediaCategory = iMediaCategory;
+                //Go to the import folder selection fragment:
+                ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION);
+            }
+        }
 
     }
 

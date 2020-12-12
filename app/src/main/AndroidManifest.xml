@@ -62,8 +62,7 @@
             android:name=".Activity_VideoPreviewPopup"
             android:theme="@style/AppTheme.VideoPreviewPopup" />
         <activity
-            android:name=".Activity_VideoPreviewPopup_wTags"
-            android:theme="@style/AppTheme.VideoPreviewPopup" />
+            android:name=".Activity_VideoPreviewPopup_wTags" />
 
         <service
             android:name=".Service_Import"

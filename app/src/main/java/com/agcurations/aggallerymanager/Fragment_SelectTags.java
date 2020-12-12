@@ -3,7 +3,9 @@ package com.agcurations.aggallerymanager;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -14,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
 
@@ -33,6 +36,10 @@ public class Fragment_SelectTags extends Fragment {
     public final static String PRESELECTED_TAG_ITEMS = "PRESELECTED_TAG_ITEMS";
     public int iMediaCategory;
 
+    private ArrayList<Integer> galiPreselectedTags;
+
+    public final static int RESULT_CODE_TAGS_MODIFIED = 202;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -47,13 +54,13 @@ public class Fragment_SelectTags extends Fragment {
 
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
-        ArrayList<Integer> aliPreselectedTags;
+
         if(args == null) {
             iMediaCategory = 0;
-            aliPreselectedTags = new ArrayList<>();
+            galiPreselectedTags = new ArrayList<>();
         } else {
             iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
-            aliPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
+            galiPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
         }
 
         if (getView() == null) {
@@ -64,6 +71,24 @@ public class Fragment_SelectTags extends Fragment {
             return;
         }
 
+        initListViewData();
+
+        Button button_TagEditor = getView().findViewById(R.id.button_TagEditor);
+        button_TagEditor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, iMediaCategory);
+                startActivityForResult(intentTagEditor, RESULT_CODE_TAGS_MODIFIED);
+
+
+            }
+        });
+
+    }
+
+    private void initListViewData(){
         final ListView listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
 
         //Get tags to put in the ListView:
@@ -71,16 +96,19 @@ public class Fragment_SelectTags extends Fragment {
         int iPreSelectedTagIterator = 0;
         int iSelectionOrder;
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
+
+        mViewModel.alTagsAll.clear();
+
         for (Map.Entry<String, String[]> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
 
             //Check to see if the list of preselected tags includes this tag from the reference list.
             //  If so, set the item as "checked":
             boolean bIsChecked = false;
             iSelectionOrder = 0;
-            if(aliPreselectedTags != null){
-                iPreSelectedTagsCount = aliPreselectedTags.size();
+            if(galiPreselectedTags != null){
+                iPreSelectedTagsCount = galiPreselectedTags.size();
                 int iReferenceTagID = Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]);
-                for(int iPreSelectedTagID: aliPreselectedTags){
+                for(int iPreSelectedTagID: galiPreselectedTags){
                     if(iReferenceTagID == iPreSelectedTagID){
                         bIsChecked = true;
                         iPreSelectedTagIterator++;
@@ -104,6 +132,18 @@ public class Fragment_SelectTags extends Fragment {
         listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        getActivity();
+        if(requestCode == RESULT_CODE_TAGS_MODIFIED && resultCode == Activity.RESULT_OK) {
+            //If we are coming back from the tag editor, rebuilt the listview contents:
+            initListViewData();
+        }
+    }
+
 
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
         int iOrderIterator;

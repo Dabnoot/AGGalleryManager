@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
@@ -20,8 +21,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,7 +44,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
     ProgressBar gProgressBar_FileAnalysisProgress;
     TextView gTextView_FileAnalysisProgressBarText;
-    RelativeLayout gRelativeLayout_Progress;
+    LinearLayout gLinearLayout_Progress;
     Button gbutton_FolderSelectComplete;
 
     public Fragment_Import_1_StorageLocation() {
@@ -208,8 +209,14 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                 TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
                 textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
                 textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
-                gRelativeLayout_Progress = getView().findViewById(R.id.relativeLayout_Progress);
-                gRelativeLayout_Progress.setVisibility(View.VISIBLE);
+                gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
+                gLinearLayout_Progress.setVisibility(View.VISIBLE);
+
+                //Make some more space to show the progress bar:
+                Button button_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+                ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) button_FolderSelectComplete.getLayoutParams();
+                lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
+                button_FolderSelectComplete.setLayoutParams(lp);
 
                 Service_Import.startActionGetDirectoryContents(getContext(), Activity_Import.guriImportTreeURI, viewModelImportActivity.iImportMediaCategory);
 

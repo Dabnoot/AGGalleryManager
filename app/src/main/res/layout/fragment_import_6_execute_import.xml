@@ -18,7 +18,7 @@
         android:layout_alignParentTop="true"/>
 
     <RelativeLayout
-        android:id="@+id/relativeLayout_Progress"
+        android:id="@+id/linearLayout_Progress"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -50,7 +50,7 @@
         android:layout_marginBottom="10dp"
         android:gravity="top"
         android:scrollbars="vertical"
-        android:layout_below="@+id/relativeLayout_Progress"
+        android:layout_below="@+id/linearLayout_Progress"
         android:layout_above="@+id/button_ImportFinish"/>
 
     <Button

@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
@@ -127,6 +128,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         Button button_Finish = getView().findViewById(R.id.button_Finish);
         button_Finish.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                getActivity().setResult(Activity.RESULT_OK);
                 getActivity().finish();
             }
         });
