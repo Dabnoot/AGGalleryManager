@@ -1104,9 +1104,10 @@ public class GlobalClass extends Application {
         }
 
         TreeMap<String, String[]> tmTagsInUse = new TreeMap<>();
-        for(String s : alsTagsInUse){
-            String[] ss = new String[]{s.toString().toString(), getTagTextFromID(Integer.parseInt(s), iMediaCategory)};
-            tmTagsInUse.put(s, ss);
+        for(String sTagID : alsTagsInUse){
+            String sTagText = getTagTextFromID(Integer.parseInt(sTagID), iMediaCategory);
+            String[] sTagRecord = new String[]{sTagID, sTagText};
+            tmTagsInUse.put(sTagText, sTagRecord);
         }
 
         return tmTagsInUse;
