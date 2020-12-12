@@ -1079,7 +1079,7 @@ public class GlobalClass extends Application {
     }
 
 
-    public ArrayList<String> GetTagsInUse(Integer iMediaCategory){
+    public TreeMap<String, String[]> GetTagsInUse(Integer iMediaCategory){
 
         int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
 
@@ -1103,7 +1103,13 @@ public class GlobalClass extends Application {
             alsTagsInUse.add(isIterator.next());
         }
 
-        return alsTagsInUse;
+        TreeMap<String, String[]> tmTagsInUse = new TreeMap<>();
+        for(String s : alsTagsInUse){
+            String[] ss = new String[]{s.toString().toString(), getTagTextFromID(Integer.parseInt(s), iMediaCategory)};
+            tmTagsInUse.put(s, ss);
+        }
+
+        return tmTagsInUse;
     }
 
     public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){

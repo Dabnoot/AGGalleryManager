@@ -20,6 +20,8 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
 
+import com.google.android.material.tabs.TabLayout;
+
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -34,7 +36,6 @@ public class Fragment_SelectTags extends Fragment {
 
     public final static String MEDIA_CATEGORY = "MEDIA_CATEGORY";
     public final static String PRESELECTED_TAG_ITEMS = "PRESELECTED_TAG_ITEMS";
-    public int iMediaCategory;
 
     private ArrayList<Integer> galiPreselectedTags;
 
@@ -56,10 +57,10 @@ public class Fragment_SelectTags extends Fragment {
         Bundle args = getArguments();
 
         if(args == null) {
-            iMediaCategory = 0;
+            mViewModel.iMediaCategory = 0;
             galiPreselectedTags = new ArrayList<>();
         } else {
-            iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
+            mViewModel.iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
             galiPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
         }
 
@@ -71,18 +72,37 @@ public class Fragment_SelectTags extends Fragment {
             return;
         }
 
+        //Configure the tabLayout to change the ListView:
+        TabLayout tabLayout_TagListings = getView().findViewById(R.id.tabLayout_TagListings);
+        tabLayout_TagListings.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                mViewModel.iTabLayoutListingSelection = tab.getPosition();
+                initListViewData();
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
+
+
         initListViewData();
 
+        //Configure the button to start the tag editor:
         Button button_TagEditor = getView().findViewById(R.id.button_TagEditor);
         button_TagEditor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, iMediaCategory);
+                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
                 startActivityForResult(intentTagEditor, RESULT_CODE_TAGS_MODIFIED);
-
-
             }
         });
 
@@ -99,17 +119,25 @@ public class Fragment_SelectTags extends Fragment {
 
         mViewModel.alTagsAll.clear();
 
-        for (Map.Entry<String, String[]> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        TreeMap<String, String[]> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(mViewModel.iMediaCategory);
+
+        if(mViewModel.iTabLayoutListingSelection == 1) {
+            //Show only tags which are in-use.
+            tmTagPool = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
+        }
+
+        //Go through the tags treeMap and put the ListView together:
+        for (Map.Entry<String, String[]> tmEntryTagReferenceItem : tmTagPool.entrySet()) {
 
             //Check to see if the list of preselected tags includes this tag from the reference list.
             //  If so, set the item as "checked":
             boolean bIsChecked = false;
             iSelectionOrder = 0;
-            if(galiPreselectedTags != null){
+            if (galiPreselectedTags != null) {
                 iPreSelectedTagsCount = galiPreselectedTags.size();
                 int iReferenceTagID = Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]);
-                for(int iPreSelectedTagID: galiPreselectedTags){
-                    if(iReferenceTagID == iPreSelectedTagID){
+                for (int iPreSelectedTagID : galiPreselectedTags) {
+                    if (iReferenceTagID == iPreSelectedTagID) {
                         bIsChecked = true;
                         iPreSelectedTagIterator++;
                         iSelectionOrder = iPreSelectedTagIterator;
@@ -126,6 +154,11 @@ public class Fragment_SelectTags extends Fragment {
 
             mViewModel.alTagsAll.add(tiNew);
         }
+
+
+
+
+
 
         // Create the adapter for the ListView, and set the ListView adapter:
         ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
