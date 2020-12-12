@@ -28,6 +28,8 @@ import java.util.TreeMap;
 
 public class Fragment_SelectTags extends Fragment {
 
+    GlobalClass globalClass;
+
     private ViewModel_Fragment_SelectTags mViewModel;
 
     public static Fragment_SelectTags newInstance() {
@@ -41,6 +43,10 @@ public class Fragment_SelectTags extends Fragment {
 
     public final static int RESULT_CODE_TAGS_MODIFIED = 202;
 
+    private TreeMap<String, String[]> tmOneTimeTagsInUse; //Gather tags in use only once.
+    // This is require for when the user switches between tabs. We will transfer selected tags here
+    //  in addition to globally-used tags so that the user's choices are not wiped out when switching tabs.
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
@@ -52,6 +58,8 @@ public class Fragment_SelectTags extends Fragment {
         super.onActivityCreated(savedInstanceState);
         if(getActivity() == null) return;
         mViewModel = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+
+        globalClass = (GlobalClass) getActivity().getApplicationContext();
 
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
@@ -92,6 +100,7 @@ public class Fragment_SelectTags extends Fragment {
             }
         });
 
+        tmOneTimeTagsInUse = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
 
         initListViewData();
 
@@ -115,7 +124,6 @@ public class Fragment_SelectTags extends Fragment {
         int iPreSelectedTagsCount = 0;
         int iPreSelectedTagIterator = 0;
         int iSelectionOrder;
-        GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
 
         mViewModel.alTagsAll.clear();
 
@@ -123,7 +131,7 @@ public class Fragment_SelectTags extends Fragment {
 
         if(mViewModel.iTabLayoutListingSelection == 1) {
             //Show only tags which are in-use.
-            tmTagPool = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
+            tmTagPool = tmOneTimeTagsInUse;
         }
 
         //Go through the tags treeMap and put the ListView together:
@@ -223,11 +231,17 @@ public class Fragment_SelectTags extends Fragment {
                         tagItem.SelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBlack));
+                        galiPreselectedTags.add(tagItem.TagID);
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.SelectionOrder = 0; //Remove the index showing the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
+                        for(int i = 0; i < galiPreselectedTags.size(); i++) {
+                            if(galiPreselectedTags.get(i) == tagItem.TagID){
+                                galiPreselectedTags.remove(i);
+                            }
+                        }
                     }
 
                     //Reform the tags string listing all of the selected tags:

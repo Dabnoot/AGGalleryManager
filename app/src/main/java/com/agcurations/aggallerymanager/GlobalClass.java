@@ -1096,9 +1096,8 @@ public class GlobalClass extends Application {
         }
 
         //Format the strings:
-        StringBuilder sb = new StringBuilder();
         Iterator<String> isIterator = ssTemp.iterator();
-        sb.append(isIterator.next());
+        alsTagsInUse.add(isIterator.next());
         while(isIterator.hasNext()){
             alsTagsInUse.add(isIterator.next());
         }
