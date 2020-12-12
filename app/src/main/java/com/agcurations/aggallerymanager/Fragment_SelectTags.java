@@ -230,13 +230,20 @@ public class Fragment_SelectTags extends Fragment {
                         iOrderIterator++;
                         tagItem.SelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
-                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBlack));
+                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
+                        if(galiPreselectedTags == null){
+                            galiPreselectedTags = new ArrayList<>();
+                        }
                         galiPreselectedTags.add(tagItem.TagID);
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.SelectionOrder = 0; //Remove the index showing the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
+                        if(galiPreselectedTags == null){
+                            //Not a likely case, but just in case.
+                            galiPreselectedTags = new ArrayList<>();
+                        }
                         for(int i = 0; i < galiPreselectedTags.size(); i++) {
                             if(galiPreselectedTags.get(i) == tagItem.TagID){
                                 galiPreselectedTags.remove(i);
