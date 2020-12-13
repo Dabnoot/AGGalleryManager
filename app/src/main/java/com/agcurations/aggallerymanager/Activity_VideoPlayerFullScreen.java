@@ -5,18 +5,17 @@ import android.annotation.SuppressLint;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,7 +24,6 @@ import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
-import android.widget.Toolbar;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
@@ -48,6 +46,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
     private RelativeLayout gRelativeLayout_VideoPlayer;
     private VideoView gVideoView_VideoPlayer;
     private ImageView gImageView_GifViewer;
+    private MediaController gMediaController;
 
     private Uri gMediaUri;
 
@@ -60,18 +59,10 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         setContentView(R.layout.activity_video_player_full_screen);
 
         mVisible = true;
-        mControlsView = findViewById(R.id.fullscreen_content_controls);
+        //mControlsView = findViewById(R.id.fullscreen_content_controls);
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gRelativeLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
-
-        // Set up the user interaction to manually show or hide the system UI.
-        gVideoView_VideoPlayer.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                toggle();
-            }
-        });
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
@@ -86,7 +77,6 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                 intentVideoPlayer.getSerializableExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_FILTERED);
         treeMapRecyclerViewVideos = new TreeMap<>();
         if(hashMapTemp == null){
-            //todo: Add message to user as to what went wrong.
             finish();
             return;
         }
@@ -107,24 +97,26 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         }
 
         //gVideoView = findViewById(R.id.videoView_VideoPlayer);
-        final MediaController mediaController = new MediaController(this);
+        gMediaController = new MediaController(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
+                @Override
+                public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
+                    //Handle BACK button
+                    if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                        //mediaController.hide(); //Hide mediaController,according to your needs, you can also called here onBackPressed() or finish()
+                        onBackPressed();
+                        return true;
+                    }
 
-        mediaController.setMediaPlayer(gVideoView_VideoPlayer);
-        gVideoView_VideoPlayer.setMediaController(mediaController);
-        mediaController.setAnchorView(findViewById(R.id.fullscreen_content_controls));
-
-        /*DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-        FrameLayout.LayoutParams lpp = new FrameLayout.LayoutParams(dm.widthPixels, 170);
-        lpp.gravity= Gravity.BOTTOM;
-        Resources resources = this.getResources();
-        int resourceId = resources.getIdentifier("navigation_bar_height", "dimen", "android");
-        int iNavigationBarSizeInPixels = 100;
-        if (resourceId > 0) {
-            iNavigationBarSizeInPixels = resources.getDimensionPixelSize(resourceId);
+                    return false;
+                }
+            });
         }
-        lpp.setMargins(0,0,0,iNavigationBarSizeInPixels);
-        mediaController.setLayoutParams(lpp);*/
+
+        gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
+        gVideoView_VideoPlayer.setMediaController(gMediaController);
+        //mediaController.setAnchorView(findViewById(R.id.videoView_VideoPlayer));
 
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
         //  double-tap, as well as swipe to go to the next video:
@@ -159,11 +151,11 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                if(mediaController.isShowing()){
+                /*if(mediaController.isShowing()){
                     mediaController.hide();
                 } else {
                     mediaController.show();
-                }
+                }*/
                 toggle();
                 if (mVisible && AUTO_HIDE) {
                     delayedHide(AUTO_HIDE_DELAY_MILLIS);
@@ -351,6 +343,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         initializePlayer();
     }
 
+
     @Override
     protected void onStop() {
         super.onStop();
@@ -437,7 +430,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         getWindowManager().getDefaultDisplay().getMetrics(dm);
 
         int iStatBarHeight = getStatusBarHeight();
-        int iNavBarHeight = getNavigationBarHeight();
+        //int iNavBarHeight = getNavigationBarHeight();
         int iActionBarHeight = getActionBarHeight();
         int y = dm.heightPixels;
         y -= iStatBarHeight;
@@ -467,9 +460,9 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        int iStatBarHeight = getStatusBarHeight();
-        int iNavBarHeight = getNavigationBarHeight();
-        int iActionBarHeight = getActionBarHeight();
+        //int iStatBarHeight = getStatusBarHeight();
+        //int iNavBarHeight = getNavigationBarHeight();
+        //int iActionBarHeight = getActionBarHeight();
         int y = dm.heightPixels;
         //y -= iStatBarHeight;
         //y -= iNavBarHeight;
@@ -496,14 +489,14 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         return result;
     }
 
-    public int getNavigationBarHeight() {
+    /*public int getNavigationBarHeight() {
         int result = 0;
         int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
         if (resourceId > 0) {
             result = getResources().getDimensionPixelSize(resourceId);
         }
         return result;
-    }
+    }*/
 
     public int getActionBarHeight() {
         int result = 0;
@@ -579,9 +572,13 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
                 gVideoView_VideoPlayer.invalidate();
             }
 
+
+            gMediaController.hide();
+
+
         }
     };
-    private View mControlsView;
+    //private View mControlsView;
     private final Runnable mShowPart2Runnable = new Runnable() {
         @Override
         public void run() {
@@ -590,11 +587,13 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
             if (actionBar != null) {
                 actionBar.show();
             }
-            mControlsView.setVisibility(View.VISIBLE);
+            //mControlsView.setVisibility(View.VISIBLE);
             if(!bFileIsGif){
                 gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsVisible(gMediaUri));
                 gVideoView_VideoPlayer.invalidate();
             }
+            gMediaController.show();
+
 
 
         }
@@ -633,7 +632,7 @@ public class Activity_VideoPlayerFullScreen extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-        mControlsView.setVisibility(View.GONE);
+        //mControlsView.setVisibility(View.GONE);
         mVisible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
