@@ -677,7 +677,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         //Start the video player:
-        Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayerFullScreen.class);
+        Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayerFullScreen2.class);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, iVideoID);
         startActivity(intentVideoPlayer);

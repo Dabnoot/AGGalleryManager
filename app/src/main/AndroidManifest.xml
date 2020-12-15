@@ -18,6 +18,11 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_video_player_full_screen"
             android:theme="@style/AppTheme.Launcher.Fullscreen" />
+        <activity
+            android:name=".Activity_VideoPlayerFullScreen2"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_video_player_full_screen"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity android:name=".Activity_CatalogViewer" />
         <activity android:name=".Activity_Import" />
         <activity

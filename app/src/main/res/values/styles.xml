@@ -72,6 +72,11 @@
         <item name="android:windowBackground">@color/colorBlueGrey3</item>
     </style>
 
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
     <style name="AppTheme.Launcher.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.Launcher.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
