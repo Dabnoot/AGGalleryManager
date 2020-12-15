@@ -3,7 +3,10 @@ package com.agcurations.aggallerymanager;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.View;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -125,56 +128,10 @@ public class Activity_VideoPreviewPopup_wTags extends AppCompatActivity {
                 finish();
             }
 
-/*
-            //Equation for length of loop (from "what seems acceptable" put into an Excel sheet and plotted):
-            //y = 30 * ln(x) - 110.
-            int iVideoLengthSeconds = (int) (lVideoDuration / 1000);
-            int iFormulaLengthOfLoopInSeconds = (int) (30 * Math.log((double) iVideoLengthSeconds) - 110); //Assymptote at about 140 seconds.
-            //Don't let the loop length be less than 10 seconds,
-            // or the length of the clip (whichever of those two is shorter):
-            int iLengthOfLoopInSeconds = Math.max(Math.min(10, iVideoLengthSeconds),
-                    iFormulaLengthOfLoopInSeconds);
-
-
-            //int iLengthOfLoopInSeconds = 10;
-            int iImageChangeFrequencyHz = 1;
-            int iFrames = iLengthOfLoopInSeconds * iImageChangeFrequencyHz;
-            long lSampleFrequencyMicroSeconds = (lVideoDuration * 1000) / iFrames;
-
-            // 2 Hz = 2x/sec = 500 ms. 1/2 = .5; .5 * 1000 = 500.
-            //10 Hz = 10/sec = 100 ms. 1/10 = .1; .1 * 1000 = 100.
-            int iFrameDurationMilliseconds = (int)(1.0 / iImageChangeFrequencyHz * 1000);
-
-
-            Bitmap[] bitmapFrames = new Bitmap[iFrames];
-
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-
-            // Set data source to retriever.
-            Uri uriVideoFile = Uri.parse(gFileItem.uri);
-            retriever.setDataSource(getApplicationContext(), uriVideoFile);
-
-            //Get frame bitmaps:
-            for(int i = 0; i < iFrames; i++) {
-                // Get a frame in Bitmap by specifying time.
-                // Be aware that the parameter must be in "microseconds", not milliseconds.
-                bitmapFrames[i] = retriever.getFrameAtTime(i * lSampleFrequencyMicroSeconds);
-            }
-            retriever.release();
-
-            //Create the animation:
-            AnimationDrawable animationDrawable = new AnimationDrawable();
-            for(int i = 0; i < iFrames; i++) {
-                Drawable d = new BitmapDrawable(getResources(), bitmapFrames[i]);
-                animationDrawable.addFrame(d, iFrameDurationMilliseconds);
-            }
-            ImageView imageView_Video = findViewById(R.id.imageView_Video);
-            imageView_Video.setImageDrawable(animationDrawable);
-            animationDrawable.setOneShot(false);
-            animationDrawable.start();*/
-
 
             gVideoView = findViewById(R.id.videoView_VideoPlayerPreview);
+
+            //Configure the media controller:
             gMediaController = new MediaController(this);
             gMediaController.setMediaPlayer(gVideoView);
             gVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -183,9 +140,21 @@ public class Activity_VideoPreviewPopup_wTags extends AppCompatActivity {
                     gMediaController.setAnchorView(gVideoView);
                 }
             });
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
+                    @Override
+                    public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
+                        //Handle BACK button
+                        if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                            onBackPressed();
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+            }
             gVideoView.setMediaController(gMediaController);
             Uri uriVideoFile = Uri.parse(gFileItem.uri);
-            //uriVideoFile = Uri.parse("/storage/0000-0000/Android/data/com.agcurations.aggallerymanager/files/Videos/76/p027_gnitsif_naibsel_37849901_moc.retsmahx.4pm");
             gVideoView.setVideoURI(uriVideoFile);
             gVideoView.seekTo(1);
             gVideoView.setZOrderOnTop(true);

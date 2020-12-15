@@ -2,23 +2,18 @@ package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -50,9 +45,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
     private ImageView gImageView_GifViewer;
     private MediaController gMediaController;
 
-    private Uri gMediaUri;
-
-
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,15 +53,9 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
         setContentView(R.layout.activity_video_player_full_screen_2);
 
         mVisible = true;
-        //mControlsView = findViewById(R.id.fullscreen_content_controls);
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gDrawerLayout = findViewById(R.id.drawer_layout);
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        //findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
 
         globalClass = (GlobalClass) getApplicationContext();
 
@@ -98,7 +84,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
             giCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
         }
 
-        //gVideoView = findViewById(R.id.videoView_VideoPlayer);
         gMediaController = new MediaController(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
@@ -106,7 +91,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
                 public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
                     //Handle BACK button
                     if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                        //mediaController.hide(); //Hide mediaController,according to your needs, you can also called here onBackPressed() or finish()
                         onBackPressed();
                         return true;
                     }
@@ -117,7 +101,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
 
         gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
         gVideoView_VideoPlayer.setMediaController(gMediaController);
-        //mediaController.setAnchorView(findViewById(R.id.videoView_VideoPlayer));
 
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
         //  double-tap, as well as swipe to go to the next video:
@@ -126,12 +109,10 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
             //Here is the method for double tap
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-
                 gVideoView_VideoPlayer.pause();
                 ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
                 ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
-                Toast.makeText(getApplicationContext(), "Double tap detected.", Toast.LENGTH_SHORT).show();
-
+                Toast.makeText(getApplicationContext(), "Double tap detected. Obfuscating...", Toast.LENGTH_SHORT).show();
                 return true;
             }
 
@@ -152,15 +133,10 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                /*if(mediaController.isShowing()){
-                    mediaController.hide();
-                } else {
-                    mediaController.show();
-                }*/
                 toggle();
-                if (mVisible && AUTO_HIDE) {
+                /*if (mVisible && AUTO_HIDE) {
                     delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                }
+                }*/
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -248,7 +224,7 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
             public boolean onDoubleTap(MotionEvent e) {
                 ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
                 ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
-                Toast.makeText(getApplicationContext(), "Double tap detected.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Double tap detected. Obfuscating...", Toast.LENGTH_SHORT).show();
                 return true;
             }
 
@@ -270,9 +246,9 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
-                if (mVisible && AUTO_HIDE) {
+                /*if (mVisible && AUTO_HIDE) {
                     delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                }
+                }*/
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -353,7 +329,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Toast.makeText(getApplicationContext(), "Swipe up to access Switch, Home, and Back buttons.", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -390,8 +365,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
                 fst.setArguments(args);
                 ft.replace(R.id.fragment_tag_selector, fst);
                 ft.commit();
-
-
                 return Uri.parse(sVideoPath);
             }
         }
@@ -399,14 +372,17 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
     }
 
     private void initializePlayer() {
-        gMediaUri = getMedia();
+        Uri gMediaUri = getMedia();
         if(bFileIsGif){
-            File fGif = new File(gMediaUri.getPath());
-            Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
+            if(gMediaUri != null) {
+                if (gMediaUri.getPath() != null) {
+                    File fGif = new File(gMediaUri.getPath());
+                    Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
+                }
+            }
             gImageView_GifViewer.setVisibility(View.VISIBLE);
             gVideoView_VideoPlayer.setZOrderOnTop(false);
             gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
-
         } else {
             gImageView_GifViewer.setVisibility(View.INVISIBLE);
             gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
@@ -417,17 +393,12 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
                 // Skipping to 1 shows the first frame of the video.
                 gVideoView_VideoPlayer.seekTo(1);
             }
-            //gVideoView_VideoPlayer.setZOrderOnTop(true);
-
-            //gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsInVisible(gMediaUri));
-            //gVideoView_VideoPlayer.invalidate();
-
             gVideoView_VideoPlayer.start();
         }
 
     }
 
-    private ViewGroup.LayoutParams getLayoutParamsBarsVisible(Uri uriMedia){
+    /*private ViewGroup.LayoutParams getLayoutParamsBarsVisible(Uri uriMedia){
         //Get the aspect ratio:
         int iVideoWidth;
         int iVideoHeight;
@@ -531,7 +502,7 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
         }
         return result;
     }
-
+*/
 
     private void releasePlayer() {
         gVideoView_VideoPlayer.stopPlayback();
@@ -548,17 +519,17 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
     //==============================================================================================
     // Full-Screen Activity Functions (Auto-Created)
 
-    /**
+    /*
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
      */
-    private static final boolean AUTO_HIDE = true;
+    //private static final boolean AUTO_HIDE = true;
 
-    /**
+    /*
      * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
      * user interaction before hiding the system UI.
      */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    //private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
     /**
      * Some older devices needs a small delay between UI widget updates
@@ -566,8 +537,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
      */
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
-
-    private int giSysUiVis;
 
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -578,7 +547,6 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
             // Note that some of these constants are new as of API 16 (Jelly Bean)
             // and API 19 (KitKat). It is safe to use them, as they are inlined
             // at compile-time and do nothing on earlier devices.
-            giSysUiVis = gDrawerLayout.getSystemUiVisibility();
             gDrawerLayout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
                     | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -586,20 +554,12 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
                     | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
 
-
-
-            if(!bFileIsGif){
-                //gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsInVisible(gMediaUri));
-                //gVideoView_VideoPlayer.invalidate();
-            } else {
-                //gImageView_GifViewer.setLayoutParams(getLayoutParamsBarsVisible(gMediaUri));
-            }
             gMediaController.hide();
 
 
         }
     };
-    //private View mControlsView;
+
     private final Runnable mShowPart2Runnable = new Runnable() {
         @Override
         public void run() {
@@ -608,17 +568,9 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
             if (actionBar != null) {
                 actionBar.show();
             }
-            //mControlsView.setVisibility(View.VISIBLE);
             if(!bFileIsGif){
-                //gVideoView_VideoPlayer.setLayoutParams(getLayoutParamsBarsVisible(gMediaUri));
-                //gVideoView_VideoPlayer.invalidate();
-                int iNavBarHeight = getNavigationBarHeight();
-                //gMediaController. setPadding(0, 0, 0, iNavBarHeight);
                 gMediaController.show();
-            } else {
-                //gImageView_GifViewer.setLayoutParams(getLayoutParamsBarsVisible(gMediaUri));
             }
-
         }
     };
     private boolean mVisible;
@@ -638,7 +590,8 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls
         // are available.
-        delayedHide(100);
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, 500);
     }
 
     private void toggle() {
@@ -655,7 +608,7 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-        //mControlsView.setVisibility(View.GONE);
+
         mVisible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
@@ -664,15 +617,8 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
     }
 
     private void show() {
-        // Show the system bar
-        //if(giSysUiVis != 0 ){
-            gDrawerLayout.setSystemUiVisibility(giSysUiVis);
-        /*} else {
-            giSysUiVis = gDrawerLayout.getSystemUiVisibility();
-            gDrawerLayout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-            giSysUiVis = gDrawerLayout.getSystemUiVisibility();
-        }*/
+        // Clear system visibility settings:
+        gDrawerLayout.setSystemUiVisibility(0);
 
         mVisible = true;
 
@@ -681,14 +627,15 @@ public class Activity_VideoPlayerFullScreen2 extends AppCompatActivity {
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
     }
 
-    /**
+     /*
      * Schedules a call to hide() in delay milliseconds, canceling any
      * previously scheduled calls.
      */
-    private void delayedHide(int delayMillis) {
+    /* private void delayedHide(int delayMillis) {
+        //Use with caution. It makes trouble for the user when combined with a mediaController.
+        //  Above note from AGGalleryManager author, WRC.
         mHideHandler.removeCallbacks(mHideRunnable);
-        //mHideHandler.postDelayed(mHideRunnable, delayMillis); Don't auto hide. It make trouble for the user
-        //  when combined with a mediaController.
-    }
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }*/
 
 }
