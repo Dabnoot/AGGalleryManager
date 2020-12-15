@@ -101,6 +101,12 @@ public class Fragment_SelectTags extends Fragment {
         });
 
         tmOneTimeTagsInUse = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
+        if(tmOneTimeTagsInUse.size() == 0){
+            TabLayout.Tab tab = tabLayout_TagListings.getTabAt(1);
+            if(tab != null) {
+                tab.select();
+            }
+        }
 
         initListViewData();
 
@@ -129,7 +135,7 @@ public class Fragment_SelectTags extends Fragment {
 
         TreeMap<String, String[]> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(mViewModel.iMediaCategory);
 
-        if(mViewModel.iTabLayoutListingSelection == 1) {
+        if(mViewModel.iTabLayoutListingSelection == 0) {
             //Show only tags which are in-use.
             tmTagPool = tmOneTimeTagsInUse;
         }
@@ -162,11 +168,6 @@ public class Fragment_SelectTags extends Fragment {
 
             mViewModel.alTagsAll.add(tiNew);
         }
-
-
-
-
-
 
         // Create the adapter for the ListView, and set the ListView adapter:
         ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);

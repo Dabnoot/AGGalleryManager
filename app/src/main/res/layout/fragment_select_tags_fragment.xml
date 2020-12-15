@@ -9,15 +9,6 @@
     android:orientation="vertical"
     android:background="@color/colorActionBarPurple">
 
-    <!--<ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@color/colorBlack"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_above="@+id/tabLayout_TagListings"/>-->
-
     <TextView
         android:id="@+id/textView_Title"
         android:layout_width="wrap_content"
@@ -37,12 +28,12 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ALL" />
+            android:text="IN USE" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="IN USE" />
+            android:text="ALL" />
 
     </com.google.android.material.tabs.TabLayout>
 
