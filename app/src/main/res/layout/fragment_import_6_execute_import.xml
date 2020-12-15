@@ -48,7 +48,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
-        android:gravity="top"
+        android:gravity="bottom"
         android:scrollbars="vertical"
         android:layout_below="@+id/linearLayout_Progress"
         android:layout_above="@+id/button_ImportFinish"/>

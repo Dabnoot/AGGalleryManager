@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activity_TagEditor"></activity>
+        <activity android:name=".Activity_TagEditor"/>
         <!-- android:theme="@style/AppTheme.Launcher">  To set startup screen -->
         <activity
             android:name=".Activity_VideoPlayerFullScreen"

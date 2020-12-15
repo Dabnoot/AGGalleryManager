@@ -48,17 +48,4 @@
         android:background="@color/design_default_color_error">
     </FrameLayout>
 
-    <!--<LinearLayout
-        android:id="@+id/lineraLayout_Drawer"
-        android:layout_width="240dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="@color/design_default_color_error">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="World"/>
-    </LinearLayout>-->
-
-
 </androidx.drawerlayout.widget.DrawerLayout>
