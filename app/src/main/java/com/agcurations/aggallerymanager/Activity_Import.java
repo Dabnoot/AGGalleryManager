@@ -2,7 +2,9 @@ package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
@@ -13,6 +15,7 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.MediaMetadataRetriever;
@@ -31,6 +34,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -402,6 +407,60 @@ public class Activity_Import extends AppCompatActivity {
                             break;
                         }
                     }
+
+                }
+            });
+
+            //Code the button to delete a file in the ListView:
+            Button button_Delete = row.findViewById(R.id.button_Delete);
+            button_Delete.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View view) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this);
+                    builder.setTitle("Delete Item");
+                    builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).name);
+                    //builder.setIcon(R.drawable.ic_launcher);
+                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                            Uri uriSourceFile;
+                            uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).uri);
+                            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+
+                            if(dfSource != null) {
+                                String sMessage;
+                                if (!dfSource.delete()) {
+                                    sMessage = "Could not delete file.";
+                                } else {
+                                    sMessage = "File deleted.";
+                                }
+                                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
+                            }
+                            //Find the item in the alFileItems list and delete it:
+                            ItemClass_File fmSelected = alFileItemsDisplay.get(position);
+                            ItemClass_File fmSource;
+                            for(int i = 0; i < alFileItems.size(); i++){
+                                fmSource = alFileItems.get(i);
+                                if(fmSelected.name.equals(fmSource.name)){
+                                    alFileItems.remove(i);
+                                    break;
+                                }
+                            }
+                            alFileItemsDisplay.remove(position);
+                            notifyDataSetChanged();
+                        }
+                    });
+                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+                    AlertDialog alert = builder.create();
+                    alert.show();
+
+
+
+
 
                 }
             });

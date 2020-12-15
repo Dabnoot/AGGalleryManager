@@ -59,8 +59,15 @@
         android:layout_marginStart="20dp"
         android:text="Preview"
         android:textSize="16sp"
-        android:layout_marginEnd="30dp"
+        android:layout_marginEnd="20dp"
         android:backgroundTint="@color/colorBlackboardRed"
         android:visibility="invisible" />
+
+    <Button
+        android:id="@+id/button_Delete"
+        android:layout_width="70dp"
+        android:layout_height="67dp"
+        android:layout_marginEnd="30dp"
+        android:drawableLeft="@drawable/baseline_delete_white_18dp"/>
 
 </LinearLayout>
