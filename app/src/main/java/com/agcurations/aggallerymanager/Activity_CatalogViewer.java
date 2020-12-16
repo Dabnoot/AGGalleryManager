@@ -664,16 +664,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     private void StartVideoPlayerActivity(TreeMap<Integer, String[]> treeMap, Integer iVideoID) {
         //Key is the TreeMap Key for the selected video.
 
-        //Create a time stamp for "last viewed" and update the catalog record and record in memory:
-        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-        String[] sDateTime = new String[]{dTimeStamp.toString()};
-        int[] iFields = new int[]{GlobalClass.giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
-
-        globalClass.CatalogDataFile_UpdateRecord(
-                iVideoID.toString(),
-                iFields,
-                sDateTime,
-                GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        //A timestamp for last viewed is handled within the video player. This is because the
+        //  user can swipe left or right in the player to play an adjacent video. The adjacent video
+        //  needs its last viewed timestamp to be updated as well.
 
         //Start the video player:
         Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayer.class);

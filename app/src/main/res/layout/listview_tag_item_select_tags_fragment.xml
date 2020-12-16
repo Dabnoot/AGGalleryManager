@@ -7,4 +7,4 @@
     android:textColor="@color/colorGrey1"
     android:textSize="20sp"
     android:textAlignment="center"
-    android:padding="15dp"/>
+    android:padding="5dp"/>

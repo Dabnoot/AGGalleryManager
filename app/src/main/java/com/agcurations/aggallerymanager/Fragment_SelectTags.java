@@ -43,7 +43,7 @@ public class Fragment_SelectTags extends Fragment {
 
     public final static int RESULT_CODE_TAGS_MODIFIED = 202;
 
-    private TreeMap<String, String[]> tmOneTimeTagsInUse; //Gather tags in use only once.
+    private TreeMap<String, String[]> tmTagsInUse; //Gather tags in use only once.
     // This is require for when the user switches between tabs. We will transfer selected tags here
     //  in addition to globally-used tags so that the user's choices are not wiped out when switching tabs.
 
@@ -100,8 +100,8 @@ public class Fragment_SelectTags extends Fragment {
             }
         });
 
-        tmOneTimeTagsInUse = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
-        if(tmOneTimeTagsInUse.size() == 0){
+        tmTagsInUse = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
+        if(tmTagsInUse.size() == 0){
             TabLayout.Tab tab = tabLayout_TagListings.getTabAt(1);
             if(tab != null) {
                 tab.select();
@@ -137,7 +137,7 @@ public class Fragment_SelectTags extends Fragment {
 
         if(mViewModel.iTabLayoutListingSelection == 0) {
             //Show only tags which are in-use.
-            tmTagPool = tmOneTimeTagsInUse;
+            tmTagPool = tmTagsInUse;
         }
 
         //Go through the tags treeMap and put the ListView together:
@@ -204,7 +204,7 @@ public class Fragment_SelectTags extends Fragment {
             }
             // Check if an existing view is being reused, otherwise inflate the view
             if (v == null) {
-                v = LayoutInflater.from(getContext()).inflate(R.layout.activity_import_listview_tag_item, parent, false);
+                v = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
             }
             // Lookup view for data population
             final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
@@ -236,6 +236,11 @@ public class Fragment_SelectTags extends Fragment {
                             galiPreselectedTags = new ArrayList<>();
                         }
                         galiPreselectedTags.add(tagItem.TagID);
+                        //The user may be in the ALL tags section, selecting a tag that is not in the IN USE tags section.
+                        //  If this is the case, and the user switches over to the IN USE section, the program will not have a "preselected tag"
+                        //  that matches the IN USE list. Add this tag to the IN USE section. If it is already there, it will automatically fail to add without error
+                        //  by the nature of the TreeMap class:
+                        tmTagsInUse.put(tagItem.TagText, new String[]{Integer.toString(tagItem.TagID), tagItem.TagText});
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.SelectionOrder = 0; //Remove the index showing the order in which this item was selected.

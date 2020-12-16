@@ -1,16 +1,11 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
-import android.content.Context;
-import android.media.MediaMetadataRetriever;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
@@ -20,19 +15,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RadioButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -149,7 +135,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         String[] sTemp = new String[alsTags.size()];
         sTemp = alsTags.toArray(sTemp);
-        ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tagtext, sTemp);
+        ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
         listView_TagViewer.setAdapter(aasTags);
 
         EditText etNewTagName = getView().findViewById(R.id.editText_NewTagText);

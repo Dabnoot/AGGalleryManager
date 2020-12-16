@@ -365,6 +365,20 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 fst.setArguments(args);
                 ft.replace(R.id.fragment_tag_selector, fst);
                 ft.commit();
+
+
+                //Create a time stamp for "last viewed" and update the catalog record and record in memory:
+                Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+                String[] sDateTime = new String[]{dTimeStamp.toString()};
+                int[] iFields = new int[]{GlobalClass.giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
+
+                globalClass.CatalogDataFile_UpdateRecord(
+                        sFields[GlobalClass.VIDEO_ID_INDEX],
+                        iFields,
+                        sDateTime,
+                        GlobalClass.MEDIA_CATEGORY_VIDEOS);
+
+
                 return Uri.parse(sVideoPath);
             }
         }
