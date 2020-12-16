@@ -19,12 +19,14 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-public class Activity_VideoPreviewPopup_wTags extends AppCompatActivity {
+public class Activity_VideoPreview extends AppCompatActivity {
     public static final String FILE_URI_STRING = "FILE_URI_STRING";
     public static final String FILE_ITEM = "FILE_ITEM";
 
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
     public static final String TAG_SELECTION_TAG_IDS = "TAG_SELECTION_TAG_IDS";
+
+    public static final String VIDEO_FILE_DURATION_MILLISECONDS_LONG = "VIDEO_FILE_DURATION_MILLISECONDS_LONG";
 
     //private String gsUriVideoFile;
 
@@ -40,7 +42,7 @@ public class Activity_VideoPreviewPopup_wTags extends AppCompatActivity {
         this.getSupportActionBar().hide();
 
         //Source: https://www.youtube.com/watch?v=fn5OlqQuOCk
-        setContentView(R.layout.activity_video_preview_popup_wtags);
+        setContentView(R.layout.activity_video_preview);
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
         ViewModel_Fragment_SelectTags mViewModel = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);

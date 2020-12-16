@@ -34,8 +34,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -170,12 +168,12 @@ public class Activity_Import extends AppCompatActivity {
         if(requestCode == GET_TAGS_FOR_IMPORT_ITEM){
             if((resultCode == RESULT_OK) &&
                     (data != null)){
-                Bundle b = data.getBundleExtra(Activity_VideoPreviewPopup_wTags.TAG_SELECTION_RESULT_BUNDLE);
+                Bundle b = data.getBundleExtra(Activity_VideoPreview.TAG_SELECTION_RESULT_BUNDLE);
                 if(b == null) return;
-                ItemClass_File fileItem = (ItemClass_File) b.getSerializable(Activity_VideoPreviewPopup_wTags.FILE_ITEM);
+                ItemClass_File fileItem = (ItemClass_File) b.getSerializable(Activity_VideoPreview.FILE_ITEM);
                if(fileItem == null) return;
                 ArrayList<Integer> aliTagIDs;
-                aliTagIDs = b.getIntegerArrayList(Activity_VideoPreviewPopup_wTags.TAG_SELECTION_TAG_IDS);
+                aliTagIDs = b.getIntegerArrayList(Activity_VideoPreview.TAG_SELECTION_TAG_IDS);
                 //Apply the change to the fileListCustomAdapter:
                 fileListCustomAdapter.applyTagsToItem(fileItem.uri, aliTagIDs);
             }
@@ -473,13 +471,13 @@ public class Activity_Import extends AppCompatActivity {
                     @Override
                     public void onClick(View view) {
                         //Start the video preview popup activity:
-                        Intent intentVideoPreviewPopup = new Intent(Activity_Import.this, Activity_VideoPreviewPopup_wTags.class);
+                        Intent intentVideoPreviewPopup = new Intent(Activity_Import.this, Activity_VideoPreview.class);
                         Bundle b = new Bundle();
-                        b.putCharSequence(Activity_VideoPreviewPopup_wTags.FILE_URI_STRING, alFileItemsDisplay.get(position).uri);
+                        b.putCharSequence(Activity_VideoPreview.FILE_URI_STRING, alFileItemsDisplay.get(position).uri);
                         ItemClass_File fileItem = alFileItemsDisplay.get(position);
-                        b.putSerializable(Activity_VideoPreviewPopup_wTags.FILE_ITEM, alFileItemsDisplay.get(position));
+                        b.putSerializable(Activity_VideoPreview.FILE_ITEM, alFileItemsDisplay.get(position));
                         intentVideoPreviewPopup.putExtras(b);
-                        intentVideoPreviewPopup.putExtra(Activity_VideoPreviewPopup.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileItemsDisplay.get(position).videoTimeInMilliseconds);
+                        intentVideoPreviewPopup.putExtra(Activity_VideoPreview.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileItemsDisplay.get(position).videoTimeInMilliseconds);
                         startActivityForResult(intentVideoPreviewPopup, GET_TAGS_FOR_IMPORT_ITEM);
                     }
                 });

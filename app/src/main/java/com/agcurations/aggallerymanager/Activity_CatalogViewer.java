@@ -32,7 +32,6 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -677,7 +676,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         //Start the video player:
-        Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayerFullScreen2.class);
+        Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayer.class);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, iVideoID);
         startActivity(intentVideoPlayer);
