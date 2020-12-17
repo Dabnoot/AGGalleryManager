@@ -23,7 +23,6 @@ import android.widget.ListView;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -188,11 +187,10 @@ public class Fragment_SelectTags extends Fragment {
             }
 
             ItemClass_Tag tiNew = new ItemClass_Tag(
-                    bIsChecked,
                     Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]),
-                    tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_NAME_INDEX],
-                    iSelectionOrder);
-
+                    tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_NAME_INDEX]);
+            tiNew.isChecked = bIsChecked;
+            tiNew.iSelectionOrder = iSelectionOrder;
 
             mViewModel.alTagsAll.add(tiNew);
         }
@@ -262,7 +260,7 @@ public class Fragment_SelectTags extends Fragment {
                     tagItem.isChecked = !tagItem.isChecked;
                     if(tagItem.isChecked){
                         iOrderIterator++;
-                        tagItem.SelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
+                        tagItem.iSelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                         if(galiPreselectedTags == null){
@@ -276,7 +274,7 @@ public class Fragment_SelectTags extends Fragment {
                         tmCatalogTagsInUse.put(tagItem.TagText, new String[]{Integer.toString(tagItem.TagID), tagItem.TagText});
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
-                        tagItem.SelectionOrder = 0; //Remove the index showing the order in which this item was selected.
+                        tagItem.iSelectionOrder = 0; //Remove the index showing the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                         //Remove the item from preselected tags, if it exists there:
@@ -303,7 +301,7 @@ public class Fragment_SelectTags extends Fragment {
                             ItemClass_Tag tagItem1 = getItem(i);
                             assert tagItem1 != null;
                             if(tagItem1.isChecked) {
-                                tmSelectedItems.put(tagItem1.SelectionOrder, tagItem1);
+                                tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
                             }
                         }
                     }
