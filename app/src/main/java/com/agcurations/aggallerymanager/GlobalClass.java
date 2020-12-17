@@ -1079,7 +1079,7 @@ public class GlobalClass extends Application {
     }
 
 
-    public TreeMap<String, String[]> GetTagsInUse(Integer iMediaCategory){
+    public TreeMap<String, String[]> GetCatalogTagsInUse(Integer iMediaCategory){
 
         int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
 

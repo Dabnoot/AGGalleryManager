@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TreeMap;
 
 public class Activity_Import extends AppCompatActivity {
     private GlobalClass globalClass;
@@ -345,8 +346,6 @@ public class Activity_Import extends AppCompatActivity {
             if(alFileItemsDisplay.get(position).type.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
-                //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
-
                 //Get the Uri of the file and create/display a thumbnail:
                 String sUri = alFileItemsDisplay.get(position).uri;
                 Uri uri = Uri.parse(sUri);
@@ -455,11 +454,6 @@ public class Activity_Import extends AppCompatActivity {
                     });
                     AlertDialog alert = builder.create();
                     alert.show();
-
-
-
-
-
                 }
             });
 
@@ -473,7 +467,23 @@ public class Activity_Import extends AppCompatActivity {
                         //Start the video preview popup activity:
                         Intent intentVideoPreviewPopup = new Intent(Activity_Import.this, Activity_VideoPreview.class);
                         Bundle b = new Bundle();
-                        b.putCharSequence(Activity_VideoPreview.FILE_URI_STRING, alFileItemsDisplay.get(position).uri);
+
+                        //Form a list of tags in use by the selected items. There may be a tag that has just been applied
+                        //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
+                        //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector. The
+                        //  user would otherwise be
+                        TreeMap<String, String[]> tmImportSessionTagsInUse = new TreeMap<>();
+                        for(ItemClass_File fm: alFileItems){ //Loop through file items in this listView.
+                            if(fm.isChecked){               //If the user has selected this fileItem...
+                                for(Integer iTagID: fm.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
+                                    String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
+                                    tmImportSessionTagsInUse.put(sTagText,new String[]{iTagID.toString(), sTagText});
+                                }
+                            }
+                        }
+                        //Add the treeMap to the bundle to send to the preview:
+                        b.putSerializable(Activity_VideoPreview.IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
+
                         ItemClass_File fileItem = alFileItemsDisplay.get(position);
                         b.putSerializable(Activity_VideoPreview.FILE_ITEM, alFileItemsDisplay.get(position));
                         intentVideoPreviewPopup.putExtras(b);
@@ -484,9 +494,6 @@ public class Activity_Import extends AppCompatActivity {
             } else {
                 button_VideoPreview.setVisibility(Button.INVISIBLE);
             }
-
-
-
 
             return row;
         }

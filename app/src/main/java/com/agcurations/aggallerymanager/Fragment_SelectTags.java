@@ -23,6 +23,7 @@ import android.widget.ListView;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -38,14 +39,18 @@ public class Fragment_SelectTags extends Fragment {
 
     public final static String MEDIA_CATEGORY = "MEDIA_CATEGORY";
     public final static String PRESELECTED_TAG_ITEMS = "PRESELECTED_TAG_ITEMS";
+    public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
 
     private ArrayList<Integer> galiPreselectedTags;
 
     public final static int RESULT_CODE_TAGS_MODIFIED = 202;
 
-    private TreeMap<String, String[]> tmTagsInUse; //Gather tags in use only once.
+    private TreeMap<String, String[]> tmCatalogTagsInUse; //Gather tags in use only once.
     // This is require for when the user switches between tabs. We will transfer selected tags here
     //  in addition to globally-used tags so that the user's choices are not wiped out when switching tabs.
+
+    TreeMap<String, String[]> tmImportSessionTagsInUse = null;
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -64,12 +69,16 @@ public class Fragment_SelectTags extends Fragment {
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
 
+
         if(args == null) {
             mViewModel.iMediaCategory = 0;
             galiPreselectedTags = new ArrayList<>();
         } else {
             mViewModel.iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
             galiPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
+
+            tmImportSessionTagsInUse = (TreeMap<String, String[]>) args.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
+
         }
 
         if (getView() == null) {
@@ -100,8 +109,13 @@ public class Fragment_SelectTags extends Fragment {
             }
         });
 
-        tmTagsInUse = globalClass.GetTagsInUse(mViewModel.iMediaCategory);
-        if(tmTagsInUse.size() == 0){
+
+        //During the import preview process, use a list of tags in use by the selected items.
+        //  There may be a tag that has just been applied that is not currently used by any
+        //  tags in the catalog. Such a tag would not get picked up by the IN-USE function
+        //  in globalClass, and get listed in the IN-USE section of the tag selector.
+        tmCatalogTagsInUse = globalClass.GetCatalogTagsInUse(mViewModel.iMediaCategory);
+        if(tmCatalogTagsInUse.size() == 0){
             TabLayout.Tab tab = tabLayout_TagListings.getTabAt(1);
             if(tab != null) {
                 tab.select();
@@ -124,7 +138,12 @@ public class Fragment_SelectTags extends Fragment {
     }
 
     private void initListViewData(){
-        final ListView listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
+        ListView listView_ImportTagSelection;
+        if(getView() != null) {
+            listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
+        } else {
+            return;
+        }
 
         //Get tags to put in the ListView:
         int iPreSelectedTagsCount = 0;
@@ -137,7 +156,16 @@ public class Fragment_SelectTags extends Fragment {
 
         if(mViewModel.iTabLayoutListingSelection == 0) {
             //Show only tags which are in-use.
-            tmTagPool = tmTagsInUse;
+            tmTagPool = tmCatalogTagsInUse;
+            //If this fragment is running as part of the Import and Preview activities,
+            //  bring in tags that have been selected by the user for other items. The case may be that
+            //  the user has selected a tag that is not already in use in the catalog, so it would not
+            //  be picked up in tmCatalogTagsInUse.
+            if(tmImportSessionTagsInUse != null) {
+                for (Map.Entry<String, String[]> entry : tmImportSessionTagsInUse.entrySet()) {
+                    tmTagPool.put(entry.getKey(), entry.getValue()); //TreeMap will not allow duplicate keys, so no issue here.
+                }
+            }
         }
 
         //Go through the tags treeMap and put the ListView together:
@@ -170,6 +198,9 @@ public class Fragment_SelectTags extends Fragment {
         }
 
         // Create the adapter for the ListView, and set the ListView adapter:
+        if(getActivity() == null){
+            return;
+        }
         ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
         listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
@@ -214,12 +245,14 @@ public class Fragment_SelectTags extends Fragment {
 
 
             //Set the selection state (needed as views are recycled).
-            if(tagItem.isChecked){
-                checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
-                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBlack));
-            } else {
-                checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
-                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
+            if(getActivity() != null) {
+                if (tagItem.isChecked) {
+                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
+                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBlack));
+                } else {
+                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
+                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
+                }
             }
 
             v.setOnClickListener(new View.OnClickListener() {
@@ -240,12 +273,13 @@ public class Fragment_SelectTags extends Fragment {
                         //  If this is the case, and the user switches over to the IN USE section, the program will not have a "preselected tag"
                         //  that matches the IN USE list. Add this tag to the IN USE section. If it is already there, it will automatically fail to add without error
                         //  by the nature of the TreeMap class:
-                        tmTagsInUse.put(tagItem.TagText, new String[]{Integer.toString(tagItem.TagID), tagItem.TagText});
+                        tmCatalogTagsInUse.put(tagItem.TagText, new String[]{Integer.toString(tagItem.TagID), tagItem.TagText});
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.SelectionOrder = 0; //Remove the index showing the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
                         checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
+                        //Remove the item from preselected tags, if it exists there:
                         if(galiPreselectedTags == null){
                             //Not a likely case, but just in case.
                             galiPreselectedTags = new ArrayList<>();
@@ -253,6 +287,7 @@ public class Fragment_SelectTags extends Fragment {
                         for(int i = 0; i < galiPreselectedTags.size(); i++) {
                             if(galiPreselectedTags.get(i) == tagItem.TagID){
                                 galiPreselectedTags.remove(i);
+                                break;
                             }
                         }
                     }

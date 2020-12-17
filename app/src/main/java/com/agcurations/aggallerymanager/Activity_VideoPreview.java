@@ -12,6 +12,8 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,7 +22,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 public class Activity_VideoPreview extends AppCompatActivity {
-    public static final String FILE_URI_STRING = "FILE_URI_STRING";
+    public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
     public static final String FILE_ITEM = "FILE_ITEM";
 
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
@@ -90,12 +92,28 @@ public class Activity_VideoPreview extends AppCompatActivity {
 
             gFileItem = (ItemClass_File) b.getSerializable(FILE_ITEM);
 
+            HashMap<String , String[]> hashMapTemp = (HashMap<String , String[]>) b.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
+            TreeMap<String, String[]> tmImportSessionTagsInUse = null;
+            if(hashMapTemp != null){
+                tmImportSessionTagsInUse = new TreeMap<>(hashMapTemp);
+            }
+
             //Start the tag selection fragment:
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             Fragment_SelectTags fst = new Fragment_SelectTags();
             Bundle args = new Bundle();
             args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS);
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItem.prospectiveTags);
+            if(tmImportSessionTagsInUse != null){
+                if(tmImportSessionTagsInUse.size() > 0){
+                    //During import preview of other items, the user may have selected tags that
+                    // have not yet been used in the catalog. These new items will not show up in
+                    //  Fragment_SelectTags IN-USE tag tab, as that function only queries what is
+                    //  already in the catalog. Send the list of tags that have been selected by the
+                    //  user for other selected items to the tags fragment:
+                    args.putSerializable(Fragment_SelectTags.IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
+                }
+            }
             fst.setArguments(args);
             ft.replace(R.id.child_fragment_tag_selector, fst);
             ft.commit();
