@@ -56,7 +56,6 @@ public class GlobalClass extends Application {
     //Video tag variables:
     public final int giTagFileVersion = 1;
     public final List<TreeMap<String, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
-    public final List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
     public final List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
     public final boolean[] gbJustImported = {false, false, false};
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};

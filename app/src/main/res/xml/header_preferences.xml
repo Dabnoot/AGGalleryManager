@@ -3,12 +3,12 @@
 
 
     <Preference
-        app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$ComicsFragment"
+        app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$ComicsFragment"
         app:key="comics_header"
         app:title="Comics" />
 
     <Preference
-        app:fragment="com.agcurations.aggallerymanager.AGGallerySettingsActivity$RestrictedFragment"
+        app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$RestrictedFragment"
         app:key="restricted_header"
         app:title="Restricted Preferences" />
 

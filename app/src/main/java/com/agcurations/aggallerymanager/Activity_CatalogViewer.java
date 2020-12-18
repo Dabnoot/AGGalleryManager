@@ -83,9 +83,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Update TextView to show 0 catalog items if applicable:
         notifyZeroCatalogItemsIfApplicable();
 
-        //Get tag restrictions preferences:
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+        //Get tag restrictions preferences:
+        /*Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
         //Attempt to match the restricted tag text from the preferences to the Tag ID:
         if(ssCatalogTagsRestricted != null) {
             String s;
@@ -99,7 +100,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                 }
             }
-        }
+        }*/
 
         gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
@@ -612,10 +613,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 String[] saRecordTags = sRecordTags.split(",");
                 for (String s : saRecordTags) {
                     //if list of restricted tags contains this particular record tag, mark as restricted item:
-                    //if (globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).containsValue(s)) {
-                    if (globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory).containsKey(Integer.parseInt(s))) {
-                        bIsRestricted = true;
-                        break;
+                    Integer iTagID = Integer.parseInt(s);
+                    ItemClass_Tag ict  = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID,globalClass.giSelectedCatalogMediaCategory));
+                    if(ict != null) {
+                        if (ict.isRestricted) {
+                            bIsRestricted = true;
+                            break;
+                        }
                     }
                 }
             }

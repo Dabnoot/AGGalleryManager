@@ -188,8 +188,9 @@ public class Activity_VideoPreview extends AppCompatActivity {
         super.onResume();
         gVideoView.seekTo(1);
         gVideoView.start();
-
     }
+
+    //todo: save and restore video position. The user may have gone to create a new tag.
 
     @Override
     protected void onStop() {

@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Environment;
 
 import java.io.BufferedReader;
@@ -13,7 +14,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+
+import androidx.preference.PreferenceManager;
 
 
 public class Service_Main extends IntentService {
@@ -135,17 +139,22 @@ public class Service_Main extends IntentService {
         globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_IMAGES);
         globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_COMICS);*/
 
-        //Initialize NEW TreeMap instances:
-        globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
-        globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
-        globalClass.gtmCatalogTagsRestricted.add(new TreeMap<Integer, String>());
-
-        /*globalClass.gtmCatalogComicList = readCatalogFile(
-                globalClass.gfComicsFolder,
-                globalClass.gfComicCatalogContentsFile,
-                globalClass.gfComicLogsFolder,
-                GlobalClass.ComicRecordFields);
-        */
+        //Get tag restrictions preferences:
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_comics_restricted_tags", null);
+        //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
+        if(ssCatalogTagsRestricted != null) {
+            String s;
+            for (String sRestrictedTag : ssCatalogTagsRestricted) {
+                Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
+                for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+                    if (entry.getValue().TagID.equals(iRestrictedTag)) {
+                        //If the restricted tag has been found, mark it as restricted:
+                        entry.getValue().isRestricted = true;
+                    }
+                }
+            }
+        }
 
         //Change the video file names to match with their actual names in storage (non-jumbled):
         //(Otherwise the actual file name shows up in CatalogContents.dat because the video files

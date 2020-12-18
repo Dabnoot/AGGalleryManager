@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -64,6 +65,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
                             setTitle(R.string.title_activity_a_g_gallery_settings);
                         }
                     }
+
                 });
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -115,10 +117,12 @@ public class Activity_AppSettings extends AppCompatActivity implements
     public boolean onSupportNavigateUp() {
         if (getSupportFragmentManager().popBackStackImmediate()) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-            //gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
+
             //Get Comics' restricted tags:
             String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
             galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");
+            //todo: I don't think this section s=does anything anymore, nor does it get hit.
+
             return true;
         }
         return super.onSupportNavigateUp();
@@ -242,19 +246,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
             pref_restricted_tags.setEntries(csTagTexts);
             pref_restricted_tags.setEntryValues(csTagIDs);
 
-            //Fill out the "selected tags" summary text:
-            //Sort the strings:
-/*            SortedSet<String> ssTemp = new TreeSet<>(gssSelectedTags);  //gssSelectedTags contains the tags selected by the user.
-
-            //Format the strings:
-            StringBuilder sb = new StringBuilder();
-            Iterator<String> isIterator = ssTemp.iterator();
-            sb.append(isIterator.next());
-            while(isIterator.hasNext()){
-                sb.append(", ");
-                sb.append(isIterator.next());
-            }
-            String sTemp = sb.toString();*/
 
             String sTemp = GlobalClass.formDelimitedString(galiComicsRestrictedTags,", ");
 
@@ -272,6 +263,11 @@ public class Activity_AppSettings extends AppCompatActivity implements
                     //The user has modified the tag selection.
                     //Build-out the summary text.
 
+                    //First turn off all restricted tags, and then turn back on based on newValue:
+                    for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+                        entry.getValue().isRestricted = false;
+                    }
+
                     StringBuilder sb = new StringBuilder();
                     sb.append(newValue);
                     String sTemp = sb.toString();
@@ -279,29 +275,50 @@ public class Activity_AppSettings extends AppCompatActivity implements
                         //Get rid of brackets:
                         sTemp = sTemp.substring(1, sTemp.length() - 1);
 
-                        //Get the tag text associated with each tag ID:
-                        ArrayList<Integer> aliTagIDs = GlobalClass.getIntegerArrayFromString(sTemp, ", ");
-                        ArrayList<String> alsTagTexts = globalClass.getTagTextsFromIDs(aliTagIDs, GlobalClass.MEDIA_CATEGORY_COMICS);
+                        if(sTemp.length() > 0) {
+                            //Get the tag text associated with each tag ID:
+                            ArrayList<Integer> aliTagIDs = GlobalClass.getIntegerArrayFromString(sTemp, ", ");
+                            ArrayList<String> alsTagTexts = globalClass.getTagTextsFromIDs(aliTagIDs, GlobalClass.MEDIA_CATEGORY_COMICS);
 
-                        //Sort the strings:
-                        SortedSet<String> ssTemp = new TreeSet<>(alsTagTexts);
+                            //Sort the strings:
+                            SortedSet<String> ssTemp = new TreeSet<>(alsTagTexts);
 
-                        //Format the strings:
-                        sb = new StringBuilder();
-                        Iterator<String> isIterator = ssTemp.iterator();
-                        sb.append(isIterator.next());
-                        while(isIterator.hasNext()){
-                            sb.append(", ");
+                            //Format the strings:
+                            sb = new StringBuilder();
+                            Iterator<String> isIterator = ssTemp.iterator();
                             sb.append(isIterator.next());
-                        }
-                        sTemp = sb.toString();
+                            while (isIterator.hasNext()) {
+                                sb.append(", ");
+                                sb.append(isIterator.next());
+                            }
+                            sTemp = sb.toString();
 
-                        //Apply the new data to the summary:
-                        if (!(sTemp.isEmpty())) {
-                            sTemp = "Restricted tags: " + sTemp;
-                            pref_restricted_tags.setSummary(sTemp);
+                            //Apply the new data to the summary:
+                            if (!(sTemp.isEmpty())) {
+                                sTemp = "Restricted tags: " + sTemp;
+                                pref_restricted_tags.setSummary(sTemp);
+                            }
+
+                            //Update the globalClass restricted tag listings:
+                            for (Integer iRestrictedTag : aliTagIDs) {
+                                for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+                                    if (entry.getValue().TagID.equals(iRestrictedTag)) {
+                                        //If the restricted tag has been found, mark it as restricted:
+                                        entry.getValue().isRestricted = true;
+                                    }
+                                }
+                            }
+                        } else {
+                            pref_restricted_tags.setSummary("Select tags you wish to be restricted.");
                         }
                     }
+
+
+
+
+
+
+
 
                     return true;
                 }
