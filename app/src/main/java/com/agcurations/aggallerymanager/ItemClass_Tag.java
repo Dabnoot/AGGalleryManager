@@ -2,7 +2,7 @@ package com.agcurations.aggallerymanager;
 
 public class ItemClass_Tag {
 
-    public final int TagID;
+    public final Integer TagID;
     public final String TagText;
     public Boolean isRestricted = false;
 

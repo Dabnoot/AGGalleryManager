@@ -4,6 +4,7 @@ package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.ClipData;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -54,7 +55,7 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
     public final int giTagFileVersion = 1;
-    public final List<TreeMap<String, String[]>> gtmCatalogTagReferenceLists = new ArrayList<>();
+    public final List<TreeMap<String, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public final List<TreeMap<Integer, String>> gtmCatalogTagsRestricted = new ArrayList<>(); //Key: TagID, Value: TagName
     public final List<TreeMap<Integer, String[]>> gtmCatalogLists = new ArrayList<>();
     public final boolean[] gbJustImported = {false, false, false};
@@ -704,7 +705,6 @@ public class GlobalClass extends Application {
                 return;
             }
             //Re-form the header line with the new file version:
-            String sNewHeaderLine;
             StringBuilder sbNewHeaderLine = new StringBuilder();
             for(int i = 0; i < sHeaderFields.length - 1; i++){
                 sbNewHeaderLine.append(sHeaderFields[i]);
@@ -791,7 +791,6 @@ public class GlobalClass extends Application {
             while (sLine != null) {
                 dTimeStamp += 0.000100; //Increment the timestamp by one minute.
                 sDateTime = Double.toString(dTimeStamp);
-                int j = 0; //To track requested field updates.
                 sFields = sLine.split("\t",-1);
 
                 StringBuilder sb = new StringBuilder();
@@ -802,7 +801,6 @@ public class GlobalClass extends Application {
                     if (i == COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX) {
                         //If this is the field to update...
                         sb.append( JumbleStorageText(sDateTime));
-                        j++;
                     } else {
                         sb.append(sFields[i]);
                     }
@@ -846,7 +844,6 @@ public class GlobalClass extends Application {
                 return;
             }
             //Re-form the header line with the new file version:
-            String sNewHeaderLine;
             StringBuilder sbNewHeaderLine = new StringBuilder();
             for(int i = 0; i < sHeaderFields.length - 1; i++){
                 sbNewHeaderLine.append(sHeaderFields[i]);
@@ -899,8 +896,8 @@ public class GlobalClass extends Application {
     //===== Tag Subroutines Section ===================================================
     //=====================================================================================
 
-    public TreeMap<String, String[]> InitTagData(int iMediaCategory){
-        TreeMap<String, String[]> tmTags = new TreeMap<>();
+    public TreeMap<String, ItemClass_Tag> InitTagData(int iMediaCategory){
+        TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>();
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
 
@@ -928,7 +925,9 @@ public class GlobalClass extends Application {
                     }
                     Integer iTagID = Integer.parseInt(sFields[0]);
 
-                    tmTags.put(sFields[TAG_NAME_INDEX], sFields);
+                    ItemClass_Tag ict = new ItemClass_Tag(Integer.parseInt(sFields[TAG_ID_INDEX]), sFields[TAG_NAME_INDEX]);
+
+                    tmTags.put(sFields[TAG_NAME_INDEX], ict);
                     sLine = brReader.readLine();
                 }
 
@@ -955,7 +954,8 @@ public class GlobalClass extends Application {
                             if(!sEntry.equals("")) {
                                 fwTagsFile.write(GlobalClass.JumbleStorageText(i.toString()) + "\t" + GlobalClass.JumbleStorageText(sEntry) + "\n");
                                 String[] s = new String[]{i.toString(), sEntry};
-                                tmTags.put(sEntry, s);
+                                ItemClass_Tag ict = new ItemClass_Tag(i, sEntry);
+                                tmTags.put(sEntry, ict);
                                 i++;
                             }
                         }
@@ -981,33 +981,28 @@ public class GlobalClass extends Application {
     public boolean TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
-        TreeMap<String, String[]> tmTagRecords = gtmCatalogTagReferenceLists.get(iMediaCategory);
+        TreeMap<String, ItemClass_Tag> tmTagRecords = gtmCatalogTagReferenceLists.get(iMediaCategory);
 
         try {
             int iNextRecordId = 0;
             int iThisId;
-            for (Map.Entry<String, String[]> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                iThisId = Integer.parseInt(entry.getValue()[TAG_ID_INDEX]);
+            for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                iThisId = entry.getValue().TagID;
                 if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-                if (entry.getValue()[TAG_NAME_INDEX].toLowerCase().equals(sTagName.toLowerCase())){
+                if (entry.getValue().TagText.toLowerCase().equals(sTagName.toLowerCase())){
+                    //If the tag already exists, abort adding a new tag.
                     return false;
                 }
             }
             //New record ID identified.
 
-            String[] sFieldData = {Integer.toString(iNextRecordId), sTagName};
-            gtmCatalogTagReferenceLists.get(iMediaCategory).put(sTagName, sFieldData);
+            ItemClass_Tag ictNewTag = new ItemClass_Tag(iNextRecordId, sTagName);
+            gtmCatalogTagReferenceLists.get(iMediaCategory).put(sTagName, ictNewTag);
 
             //Add the new record to the catalog file:
-            StringBuilder sbLine = new StringBuilder();
-            sbLine.append(JumbleStorageText(sFieldData[0]));
-            for(int i = 1; i < sFieldData.length; i++){
-                sbLine.append("\t");
-                sbLine.append(JumbleStorageText(sFieldData[i]));
-            }
-            //Write the data to the file:
+            String sLine = getTagRecordString(ictNewTag);
             FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
-            fwNewTagsFile.write(sbLine.toString());
+            fwNewTagsFile.write(sLine);
             fwNewTagsFile.write("\n");
             fwNewTagsFile.flush();
             fwNewTagsFile.close();
@@ -1017,6 +1012,14 @@ public class GlobalClass extends Application {
         }
         return true;
 
+    }
+
+    public String getTagRecordString(ItemClass_Tag ict){
+
+        String sTagRecord =
+                JumbleStorageText(ict.TagID.toString()) + "\t" +
+                JumbleStorageText(ict.TagText);
+        return sTagRecord;
     }
 
     public void TagsFile_UpdateAllRecords_JumbleTagID(int iMediaCategory) {
@@ -1079,13 +1082,13 @@ public class GlobalClass extends Application {
     }
 
 
-    public TreeMap<String, String[]> GetCatalogTagsInUse(Integer iMediaCategory){
+    public TreeMap<String, ItemClass_Tag> GetCatalogTagsInUse(Integer iMediaCategory){
 
         int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
 
-        ArrayList<String> alsTagsInUse = new ArrayList<>();
 
-        SortedSet<String> ssTemp = new TreeSet<>();
+
+        SortedSet<String> ssTemp = new TreeSet<>();//todo: refactor.
         for(Map.Entry<Integer, String[]>
                 CatalogEntry : gtmCatalogLists.get(iMediaCategory).entrySet()) {
             //Sort the strings:
@@ -1096,17 +1099,18 @@ public class GlobalClass extends Application {
         }
 
         //Format the strings:
+        ArrayList<Integer> aliTagsInUse = new ArrayList<>();
         Iterator<String> isIterator = ssTemp.iterator();
-        alsTagsInUse.add(isIterator.next());
+        aliTagsInUse.add(Integer.parseInt(isIterator.next()));
         while(isIterator.hasNext()){
-            alsTagsInUse.add(isIterator.next());
+            aliTagsInUse.add(Integer.parseInt(isIterator.next()));
         }
 
-        TreeMap<String, String[]> tmTagsInUse = new TreeMap<>();
-        for(String sTagID : alsTagsInUse){
-            String sTagText = getTagTextFromID(Integer.parseInt(sTagID), iMediaCategory);
-            String[] sTagRecord = new String[]{sTagID, sTagText};
-            tmTagsInUse.put(sTagText, sTagRecord);
+        TreeMap<String, ItemClass_Tag> tmTagsInUse = new TreeMap<>();
+        for(Integer iTagID : aliTagsInUse){
+            String sTagText = getTagTextFromID(iTagID, iMediaCategory);
+            ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
+            tmTagsInUse.put(sTagText, ict);
         }
 
         return tmTagsInUse;
@@ -1115,9 +1119,10 @@ public class GlobalClass extends Application {
     public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){
         String sTagText = "[Tag ID " + iTagID + " not found]";
 
-        for(Map.Entry<String, String[]> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            if(Integer.parseInt(entry.getValue()[TAG_ID_INDEX]) == iTagID){
-                sTagText = entry.getValue()[TAG_NAME_INDEX];
+        for(Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+            Integer iRefTag = entry.getValue().TagID;
+            if(iRefTag.equals(iTagID)){
+                sTagText = entry.getValue().TagText;
                 break;
             }
         }
@@ -1136,11 +1141,9 @@ public class GlobalClass extends Application {
 
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
         Integer iKey = -1;
-        String[] sFields;
-        for(Map.Entry<String, String[]> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            sFields = entry.getValue();
-            if(sFields[TAG_NAME_INDEX].equals(sTagText)){
-                iKey = Integer.parseInt(entry.getValue()[TAG_ID_INDEX]);
+        for(Map.Entry<String, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+            if(entry.getValue().TagText.equals(sTagText)){
+                iKey = entry.getValue().TagID;
                 break;
             }
         }

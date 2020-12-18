@@ -44,11 +44,11 @@ public class Fragment_SelectTags extends Fragment {
 
     public final static int RESULT_CODE_TAGS_MODIFIED = 202;
 
-    private TreeMap<String, String[]> tmCatalogTagsInUse; //Gather tags in use only once.
+    private TreeMap<String, ItemClass_Tag> tmCatalogTagsInUse; //Gather tags in use only once.
     // This is require for when the user switches between tabs. We will transfer selected tags here
     //  in addition to globally-used tags so that the user's choices are not wiped out when switching tabs.
 
-    TreeMap<String, String[]> tmImportSessionTagsInUse = null;
+    TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
 
 
     @Override
@@ -76,7 +76,7 @@ public class Fragment_SelectTags extends Fragment {
             mViewModel.iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
             galiPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
 
-            tmImportSessionTagsInUse = (TreeMap<String, String[]>) args.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
+            tmImportSessionTagsInUse = (TreeMap<String, ItemClass_Tag>) args.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
 
         }
 
@@ -151,7 +151,7 @@ public class Fragment_SelectTags extends Fragment {
 
         mViewModel.alTagsAll.clear();
 
-        TreeMap<String, String[]> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(mViewModel.iMediaCategory);
+        TreeMap<String, ItemClass_Tag> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(mViewModel.iMediaCategory);
 
         if(mViewModel.iTabLayoutListingSelection == 0) {
             //Show only tags which are in-use.
@@ -161,14 +161,14 @@ public class Fragment_SelectTags extends Fragment {
             //  the user has selected a tag that is not already in use in the catalog, so it would not
             //  be picked up in tmCatalogTagsInUse.
             if(tmImportSessionTagsInUse != null) {
-                for (Map.Entry<String, String[]> entry : tmImportSessionTagsInUse.entrySet()) {
+                for (Map.Entry<String, ItemClass_Tag> entry : tmImportSessionTagsInUse.entrySet()) {
                     tmTagPool.put(entry.getKey(), entry.getValue()); //TreeMap will not allow duplicate keys, so no issue here.
                 }
             }
         }
 
         //Go through the tags treeMap and put the ListView together:
-        for (Map.Entry<String, String[]> tmEntryTagReferenceItem : tmTagPool.entrySet()) {
+        for (Map.Entry<String, ItemClass_Tag> tmEntryTagReferenceItem : tmTagPool.entrySet()) {
 
             //Check to see if the list of preselected tags includes this tag from the reference list.
             //  If so, set the item as "checked":
@@ -176,7 +176,7 @@ public class Fragment_SelectTags extends Fragment {
             iSelectionOrder = 0;
             if (galiPreselectedTags != null) {
                 iPreSelectedTagsCount = galiPreselectedTags.size();
-                int iReferenceTagID = Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]);
+                int iReferenceTagID = tmEntryTagReferenceItem.getValue().TagID;
                 for (int iPreSelectedTagID : galiPreselectedTags) {
                     if (iReferenceTagID == iPreSelectedTagID) {
                         bIsChecked = true;
@@ -187,8 +187,8 @@ public class Fragment_SelectTags extends Fragment {
             }
 
             ItemClass_Tag tiNew = new ItemClass_Tag(
-                    Integer.parseInt(tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_ID_INDEX]),
-                    tmEntryTagReferenceItem.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                    tmEntryTagReferenceItem.getValue().TagID,
+                    tmEntryTagReferenceItem.getValue().TagText);
             tiNew.isChecked = bIsChecked;
             tiNew.iSelectionOrder = iSelectionOrder;
 
@@ -271,7 +271,7 @@ public class Fragment_SelectTags extends Fragment {
                         //  If this is the case, and the user switches over to the IN USE section, the program will not have a "preselected tag"
                         //  that matches the IN USE list. Add this tag to the IN USE section. If it is already there, it will automatically fail to add without error
                         //  by the nature of the TreeMap class:
-                        tmCatalogTagsInUse.put(tagItem.TagText, new String[]{Integer.toString(tagItem.TagID), tagItem.TagText});
+                        tmCatalogTagsInUse.put(tagItem.TagText, new ItemClass_Tag(tagItem.TagID, tagItem.TagText));
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.iSelectionOrder = 0; //Remove the index showing the order in which this item was selected.

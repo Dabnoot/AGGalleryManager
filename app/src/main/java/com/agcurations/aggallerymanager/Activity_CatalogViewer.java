@@ -90,12 +90,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(ssCatalogTagsRestricted != null) {
             String s;
             for (String sRestrictedTag : ssCatalogTagsRestricted) {
-                for (Map.Entry<String, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
-                    s = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
+                for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
+                    s = entry.getValue().TagText;
                     if (sRestrictedTag.equals(s)) {
                         //If the restricted tag has been found, assign it to the restricted tags TreeMap:
                         globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory)
-                                .put(Integer.parseInt(entry.getValue()[GlobalClass.TAG_ID_INDEX]), entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+                                .put(entry.getValue().TagID, entry.getValue().TagText);
                     }
                 }
             }

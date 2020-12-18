@@ -129,8 +129,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
 
         ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<String, String[]> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
-            alsTags.add(entry.getValue()[GlobalClass.TAG_NAME_INDEX]);
+        for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
+            alsTags.add(entry.getValue().TagText);
         }
 
         String[] sTemp = new String[alsTags.size()];

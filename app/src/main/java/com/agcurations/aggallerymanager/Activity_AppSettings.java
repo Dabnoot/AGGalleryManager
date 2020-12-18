@@ -87,11 +87,9 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
         //Get a list of comic tags to populate the multiSelect dropdown list:
         gtmComicTags = new TreeMap<>();
-        for (Map.Entry<String, String[]>
+        for (Map.Entry<String, ItemClass_Tag>
                 entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-            String sTagID = entry.getValue()[GlobalClass.TAG_ID_INDEX];
-            String sTag = entry.getValue()[GlobalClass.TAG_NAME_INDEX];
-            gtmComicTags.put(Integer.parseInt(sTagID),sTag);
+            gtmComicTags.put(entry.getValue().TagID,entry.getValue().TagText);
         }
 
 
