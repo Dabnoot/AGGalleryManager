@@ -12,12 +12,24 @@
 
     <SwitchPreferenceCompat
         app:key="hide_restricted_tags"
-        app:title="Hide comics with restricted tags">
+        app:title="Hide restricted tags and items with restricted tags.">
     </SwitchPreferenceCompat>
 
     <MultiSelectListPreference
+        android:key="multi_select_list_videos_restricted_tags"
+        android:title="Restricted video tags"
+        android:summary="Select tags you wish to be restricted."
+        android:defaultValue="@array/empty_array"/>
+
+    <MultiSelectListPreference
+        android:key="multi_select_list_images_restricted_tags"
+        android:title="Restricted image tags"
+        android:summary="Select tags you wish to be restricted."
+        android:defaultValue="@array/empty_array"/>
+
+    <MultiSelectListPreference
         android:key="multi_select_list_comics_restricted_tags"
-        android:title="Restricted tags"
+        android:title="Restricted comic tags"
         android:summary="Select tags you wish to be restricted."
         android:defaultValue="@array/empty_array"/>
 

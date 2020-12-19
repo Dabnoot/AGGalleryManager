@@ -7,6 +7,8 @@ import android.text.InputType;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.jdom2.Parent;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -87,12 +89,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
             gfAppFolder = new File(fAvailableDirs[0].toString());
         }
 
-        //Get a list of comic tags to populate the multiSelect dropdown list:
-        gtmComicTags = new TreeMap<>();
-        for (Map.Entry<String, ItemClass_Tag>
-                entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-            gtmComicTags.put(entry.getValue().TagID,entry.getValue().TagText);
-        }
 
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -226,105 +222,128 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 }
             });
 
+            //CONFIGURE THE RESTRICTED TAGS LIST PREFERENCES:
 
+            MultiSelectListPreference[] pref_restricted_tags =
+                    {findPreference("multi_select_list_videos_restricted_tags"),
+                            findPreference("multi_select_list_images_restricted_tags"),
+                            findPreference("multi_select_list_comics_restricted_tags")};
 
-            //CONFIGURE THE restricted TAGS LIST PREFERENCE:
-            final MultiSelectListPreference pref_restricted_tags =
-                    findPreference("multi_select_list_comics_restricted_tags");
+            for(int i = 0; i < 3; i++) {
 
-            //Populate the MultiSelectListPreference drop-down menu:
-            CharSequence[] csTagTexts, csTagIDs;
-            ArrayList<String> alTagTexts = new ArrayList<>();
-            ArrayList<String> alTagIDs = new ArrayList<>();
-            for (Map.Entry<Integer, String> entry : gtmComicTags.entrySet()) {
-                alTagIDs.add(entry.getKey().toString());
-                alTagTexts.add(entry.getValue());
-            }
-            csTagIDs = alTagIDs.toArray(new CharSequence[0]);
-            csTagTexts = alTagTexts.toArray(new CharSequence[0]);
-            assert pref_restricted_tags != null;
-            pref_restricted_tags.setEntries(csTagTexts);
-            pref_restricted_tags.setEntryValues(csTagIDs);
+                if(pref_restricted_tags != null) {  //This line is the lesser evil of two misleading code checks.
 
+                    //Populate the MultiSelectListPreference drop-down menu:
+                    CharSequence[] csTagTexts, csTagIDs;
+                    ArrayList<String> alTagTexts = new ArrayList<>();
+                    ArrayList<String> alTagIDs = new ArrayList<>();
 
-            String sTemp = GlobalClass.formDelimitedString(galiComicsRestrictedTags,", ");
-
-            //Apply the new data to the summary:
-            if (!(sTemp.isEmpty())) {
-                sTemp = "Restricted tags: " + sTemp;
-                pref_restricted_tags.setSummary(sTemp);
-            }
-
-
-            //Configure the change listener for when the user modifies the selection:
-            pref_restricted_tags.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    //The user has modified the tag selection.
-                    //Build-out the summary text.
-
-                    //First turn off all restricted tags, and then turn back on based on newValue:
-                    for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-                        entry.getValue().isRestricted = false;
+                    //Get a list of comic tags to populate the multiSelect dropdown list:
+                    for (Map.Entry<String, ItemClass_Tag>
+                            entry : globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()) {
+                        alTagIDs.add(entry.getValue().TagID.toString());
+                        alTagTexts.add(entry.getValue().TagText);
                     }
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(newValue);
-                    String sTemp = sb.toString();
-                    if(sTemp.length() > 0) {
-                        //Get rid of brackets:
-                        sTemp = sTemp.substring(1, sTemp.length() - 1);
+                    csTagIDs = alTagIDs.toArray(new CharSequence[0]);
+                    csTagTexts = alTagTexts.toArray(new CharSequence[0]);
 
-                        if(sTemp.length() > 0) {
-                            //Get the tag text associated with each tag ID:
-                            ArrayList<Integer> aliTagIDs = GlobalClass.getIntegerArrayFromString(sTemp, ", ");
-                            ArrayList<String> alsTagTexts = globalClass.getTagTextsFromIDs(aliTagIDs, GlobalClass.MEDIA_CATEGORY_COMICS);
+                    pref_restricted_tags[i].setEntries(csTagTexts);
+                    pref_restricted_tags[i].setEntryValues(csTagIDs);
 
-                            //Sort the strings:
-                            SortedSet<String> ssTemp = new TreeSet<>(alsTagTexts);
 
-                            //Format the strings:
-                            sb = new StringBuilder();
-                            Iterator<String> isIterator = ssTemp.iterator();
-                            sb.append(isIterator.next());
-                            while (isIterator.hasNext()) {
-                                sb.append(", ");
-                                sb.append(isIterator.next());
-                            }
-                            sTemp = sb.toString();
-
-                            //Apply the new data to the summary:
-                            if (!(sTemp.isEmpty())) {
-                                sTemp = "Restricted tags: " + sTemp;
-                                pref_restricted_tags.setSummary(sTemp);
-                            }
-
-                            //Update the globalClass restricted tag listings:
-                            for (Integer iRestrictedTag : aliTagIDs) {
-                                for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-                                    if (entry.getValue().TagID.equals(iRestrictedTag)) {
-                                        //If the restricted tag has been found, mark it as restricted:
-                                        entry.getValue().isRestricted = true;
-                                    }
-                                }
-                            }
-                        } else {
-                            pref_restricted_tags.setSummary("Select tags you wish to be restricted.");
+                    StringBuilder sbRestrictedTagTextInit = new StringBuilder();
+                    for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()) {
+                        if (entry.getValue().isRestricted) {
+                            sbRestrictedTagTextInit.append(entry.getValue().TagText);
+                            sbRestrictedTagTextInit.append(", ");
                         }
                     }
+                    String sRestrictedTagsTextInit = sbRestrictedTagTextInit.toString();
 
+                    if (sRestrictedTagsTextInit.length() > 2) {
+                        //Apply the new data to the summary:
+                        sRestrictedTagsTextInit = sRestrictedTagsTextInit.substring(0, sRestrictedTagsTextInit.lastIndexOf(", "));
+                        String sTemp = "Restricted tags: " + sRestrictedTagsTextInit;
+                        pref_restricted_tags[i].setSummary(sTemp);
+                    }
 
+                    //Configure the change listener for when the user modifies the selection:
+                    pref_restricted_tags[i].setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                        @Override
+                        public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        //The user has modified the tag selection.
+                        //Build-out the summary text.
 
+                        int iMediaCategory = 0;
+                        switch (preference.getKey()) {
+                            case "multi_select_list_videos_restricted_tags":
+                                iMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
+                                break;
+                            case "multi_select_list_images_restricted_tags":
+                                iMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
+                                break;
+                            case "multi_select_list_comics_restricted_tags":
+                                iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+                                break;
+                        }
 
+                        //First turn off all restricted tags, and then turn back on based on newValue:
+                        for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                            entry.getValue().isRestricted = false;
+                        }
 
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(newValue);
+                        String sTemp = sb.toString();
+                        if (sTemp.length() > 0) {
+                            //Get rid of brackets:
+                            sTemp = sTemp.substring(1, sTemp.length() - 1);
 
+                            if (sTemp.length() > 0) {
+                                //Get the tag text associated with each tag ID:
+                                ArrayList<Integer> aliTagIDs = GlobalClass.getIntegerArrayFromString(sTemp, ", ");
+                                ArrayList<String> alsTagTexts = globalClass.getTagTextsFromIDs(aliTagIDs, iMediaCategory);
 
+                                //Sort the strings:
+                                SortedSet<String> ssTemp = new TreeSet<>(alsTagTexts);
 
-                    return true;
+                                //Format the strings:
+                                sb = new StringBuilder();
+                                Iterator<String> isIterator = ssTemp.iterator();
+                                sb.append(isIterator.next());
+                                while (isIterator.hasNext()) {
+                                    sb.append(", ");
+                                    sb.append(isIterator.next());
+                                }
+                                sTemp = sb.toString();
+
+                                //Apply the new data to the summary:
+                                if (!(sTemp.isEmpty())) {
+                                    sTemp = "Restricted tags: " + sTemp;
+                                    preference.setSummary(sTemp);
+                                }
+
+                                //Update the globalClass restricted tag listings:
+                                for (Integer iRestrictedTag : aliTagIDs) {
+                                    for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                                        if (entry.getValue().TagID.equals(iRestrictedTag)) {
+                                            //If the restricted tag has been found, mark it as restricted:
+                                            entry.getValue().isRestricted = true;
+                                        }
+                                    }
+                                }
+                            } else {
+                                preference.setSummary("Select tags you wish to be restricted.");
+                            }
+                        }
+
+                        return true;
+                        }
+
+                    });
                 }
-
-
-            });
+            } //End for loop setting the 3 restricted tags listings.
 
         }
 
