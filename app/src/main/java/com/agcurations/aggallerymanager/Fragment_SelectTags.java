@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -174,6 +175,7 @@ public class Fragment_SelectTags extends Fragment {
             //  If so, set the item as "checked":
             boolean bIsChecked = false;
             iSelectionOrder = 0;
+            //Log.d("Tag identification", tmEntryTagReferenceItem.getKey());
             if (galiPreselectedTags != null) {
                 iPreSelectedTagsCount = galiPreselectedTags.size();
                 int iReferenceTagID = tmEntryTagReferenceItem.getValue().TagID;

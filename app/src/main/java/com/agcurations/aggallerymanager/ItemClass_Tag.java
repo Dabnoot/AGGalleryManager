@@ -1,6 +1,8 @@
 package com.agcurations.aggallerymanager;
 
-public class ItemClass_Tag {
+import java.io.Serializable;
+
+public class ItemClass_Tag implements Serializable {
 
     public final Integer TagID;
     public final String TagText;

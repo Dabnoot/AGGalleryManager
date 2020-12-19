@@ -472,12 +472,12 @@ public class Activity_Import extends AppCompatActivity {
                         //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
                         //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector. The
                         //  user would otherwise be
-                        TreeMap<String, String[]> tmImportSessionTagsInUse = new TreeMap<>();
+                        TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
                         for(ItemClass_File fm: alFileItems){ //Loop through file items in this listView.
                             if(fm.isChecked){               //If the user has selected this fileItem...
                                 for(Integer iTagID: fm.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
                                     String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
-                                    tmImportSessionTagsInUse.put(sTagText,new String[]{iTagID.toString(), sTagText});
+                                    tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
                                 }
                             }
                         }

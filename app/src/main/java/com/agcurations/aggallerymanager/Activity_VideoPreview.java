@@ -92,8 +92,8 @@ public class Activity_VideoPreview extends AppCompatActivity {
 
             gFileItem = (ItemClass_File) b.getSerializable(FILE_ITEM);
 
-            HashMap<String , String[]> hashMapTemp = (HashMap<String , String[]>) b.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
-            TreeMap<String, String[]> tmImportSessionTagsInUse = null;
+            HashMap<String , ItemClass_Tag> hashMapTemp = (HashMap<String , ItemClass_Tag>) b.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
+            TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
             if(hashMapTemp != null){
                 tmImportSessionTagsInUse = new TreeMap<>(hashMapTemp);
             }
