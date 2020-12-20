@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -84,6 +85,7 @@ public class Activity_Main extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         //Display a message showing the name of the item selected.
         //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
+        Intent intentPinCodeAccessSettings;
         switch (item.getItemId()) {
 
             case R.id.menu_FlipView:
@@ -97,13 +99,15 @@ public class Activity_Main extends AppCompatActivity {
 
             case R.id.menu_Settings:
                 //Ask for pin code in order to allow access to Settings:
-                Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
+                intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
                 startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS);
                 return true;
 
             case R.id.menu_TagEditor:
-                Intent intentTagEditor = new Intent(this, Activity_TagEditor.class);
-                startActivity(intentTagEditor);
+                //Ask for pin code in order to allow access to the Tag Editor:
+                intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
+                startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS);
+
                 return true;
 
             case R.id.menu_About:
@@ -120,11 +124,14 @@ public class Activity_Main extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS){
-            if(resultCode == RESULT_OK){
-                Intent intentAbout = new Intent(this, Activity_AppSettings.class);
-                startActivity(intentAbout);
-            }
+        if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS && resultCode == RESULT_OK){
+            Intent intentAbout = new Intent(this, Activity_AppSettings.class);
+            startActivity(intentAbout);
+
+        } else if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS && resultCode == RESULT_OK){
+            Intent intentTagEditor = new Intent(this, Activity_TagEditor.class);
+            startActivity(intentTagEditor);
+
         }
 
     }

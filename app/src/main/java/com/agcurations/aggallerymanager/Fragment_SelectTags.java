@@ -21,6 +21,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 
@@ -43,6 +44,8 @@ public class Fragment_SelectTags extends Fragment {
     public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
 
     private ArrayList<Integer> galiPreselectedTags;
+
+    ListViewTagsAdapter gListViewTagsAdapter;
 
     public final static int RESULT_CODE_TAGS_MODIFIED = 202;
 
@@ -95,13 +98,29 @@ public class Fragment_SelectTags extends Fragment {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
         Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
-        setTagsRestrictedButtonDrawable(button_tags_restricted);
+        //Set locked/unlocked icon:
+        if(gbCatalogTagsRestrictionsOn){
+            button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
+        } else {
+            button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
+        }
         button_tags_restricted.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                gbCatalogTagsRestrictionsOn = !gbCatalogTagsRestrictionsOn;
-                setTagsRestrictedButtonDrawable(view);
-                initListViewData();
+                if(gbCatalogTagsRestrictionsOn){
+                    //If restrictions are on, ask for pin code before unlocking.
+                    Intent intentPinCodeAccessSettings = new Intent(getActivity(), Activity_PinCodePopup.class);
+                    startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
+                } else {
+                    //If restrictions are off...
+                    //Turn on restrictions, hide items, set icon to show lock symbol
+                    gbCatalogTagsRestrictionsOn = true;
+                    initListViewData();
+                    ((Button)view).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
+                    Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
+                }
+
+
             }
         });
 
@@ -146,9 +165,9 @@ public class Fragment_SelectTags extends Fragment {
         button_TagEditor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
-                startActivityForResult(intentTagEditor, RESULT_CODE_TAGS_MODIFIED);
+                //Ask for pin code in order to allow access to the Tag Editor:
+                Intent intentPinCodeAccessSettings = new Intent(getActivity(), Activity_PinCodePopup.class);
+                startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS);
             }
         });
 
@@ -222,19 +241,11 @@ public class Fragment_SelectTags extends Fragment {
         if(getActivity() == null){
             return;
         }
-        ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
-        listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
+        gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
+        listView_ImportTagSelection.setAdapter(gListViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
-
-    private void setTagsRestrictedButtonDrawable(View v){
-        if(gbCatalogTagsRestrictionsOn){
-            ((Button) v).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
-        } else {
-            ((Button) v).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
-        }
-    }
 
 
     @Override
@@ -244,8 +255,23 @@ public class Fragment_SelectTags extends Fragment {
         if(requestCode == RESULT_CODE_TAGS_MODIFIED && resultCode == Activity.RESULT_OK) {
             //If we are coming back from the tag editor, rebuilt the listview contents:
             initListViewData();
+        } else if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS && resultCode == Activity.RESULT_OK){
+            //Show catalog items with restricted tags.
+            gbCatalogTagsRestrictionsOn = false;
+            initListViewData();
+            //Change the lock icon to 'unlocked':
+            if(getView() != null) {
+                Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
+                button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
+            }
+            Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
+        } else if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS && resultCode == Activity.RESULT_OK){
+            Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+            intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
+            startActivityForResult(intentTagEditor, RESULT_CODE_TAGS_MODIFIED);
         }
     }
+
 
 
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {

@@ -15,6 +15,7 @@ public class Activity_PinCodePopup extends Activity {
 
     public static final int START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS = 2100;
     public static final int START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS = 2200;
+    public static final int START_ACTIVITY_FOR_RESULT_EDIT_TAGS = 2300;
 
     public static final int PIN_CODE_MATCH = -1;
     public static final int PIN_CODE_NO_MATCH = 0;
