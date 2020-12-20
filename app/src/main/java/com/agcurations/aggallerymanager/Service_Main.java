@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import androidx.preference.MultiSelectListPreference;
 import androidx.preference.PreferenceManager;
 
 
@@ -130,31 +131,33 @@ public class Service_Main extends IntentService {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
+        String[]  pref_restricted_tags = new String[]{
+                "multi_select_list_videos_restricted_tags",
+                "multi_select_list_images_restricted_tags",
+                "multi_select_list_comics_restricted_tags"};
+
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogTagReferenceLists.add(globalClass.InitTagData(iMediaCategory));
-        }
 
-        //Switch from tag text in the catalog files to tag IDs:
-        /*globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_VIDEOS);
-        globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_IMAGES);
-        globalClass.CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(GlobalClass.MEDIA_CATEGORY_COMICS);*/
-
-        //Get tag restrictions preferences:
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_comics_restricted_tags", null);
-        //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
-        if(ssCatalogTagsRestricted != null) {
-            String s;
-            for (String sRestrictedTag : ssCatalogTagsRestricted) {
-                Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
-                for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-                    if (entry.getValue().TagID.equals(iRestrictedTag)) {
-                        //If the restricted tag has been found, mark it as restricted:
-                        entry.getValue().isRestricted = true;
+            //Get tag restrictions preferences:
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet(pref_restricted_tags[iMediaCategory], null);
+            //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
+            if(ssCatalogTagsRestricted != null) {
+                String s;
+                for (String sRestrictedTag : ssCatalogTagsRestricted) {
+                    Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
+                    for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                        if (entry.getValue().TagID.equals(iRestrictedTag)) {
+                            //If the restricted tag has been found, mark it as restricted:
+                            entry.getValue().isRestricted = true;
+                        }
                     }
                 }
             }
         }
+
+
 
         //Change the video file names to match with their actual names in storage (non-jumbled):
         //(Otherwise the actual file name shows up in CatalogContents.dat because the video files

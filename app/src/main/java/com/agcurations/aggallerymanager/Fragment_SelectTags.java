@@ -6,13 +6,14 @@ import androidx.lifecycle.ViewModelProvider;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,6 +52,7 @@ public class Fragment_SelectTags extends Fragment {
 
     TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
 
+    private boolean gbCatalogTagsRestrictionsOn;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -88,6 +90,21 @@ public class Fragment_SelectTags extends Fragment {
         if(getActivity() == null){
             return;
         }
+
+        //Process button_tags_restricted:
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+        Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
+        setTagsRestrictedButtonDrawable(button_tags_restricted);
+        button_tags_restricted.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gbCatalogTagsRestrictionsOn = !gbCatalogTagsRestrictionsOn;
+                setTagsRestrictedButtonDrawable(view);
+                initListViewData();
+            }
+        });
+
 
         //Configure the tabLayout to change the ListView:
         TabLayout tabLayout_TagListings = getView().findViewById(R.id.tabLayout_TagListings);
@@ -193,8 +210,12 @@ public class Fragment_SelectTags extends Fragment {
                     tmEntryTagReferenceItem.getValue().TagText);
             tiNew.isChecked = bIsChecked;
             tiNew.iSelectionOrder = iSelectionOrder;
+            tiNew.isRestricted = tmEntryTagReferenceItem.getValue().isRestricted;
 
-            mViewModel.alTagsAll.add(tiNew);
+            if(!(gbCatalogTagsRestrictionsOn && tiNew.isRestricted)) {
+                //Don't add the tag if TagRestrictions are on and this is a restricted tag.
+                mViewModel.alTagsAll.add(tiNew);
+            }
         }
 
         // Create the adapter for the ListView, and set the ListView adapter:
@@ -204,6 +225,15 @@ public class Fragment_SelectTags extends Fragment {
         ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
         listView_ImportTagSelection.setAdapter(listViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+    }
+
+
+    private void setTagsRestrictedButtonDrawable(View v){
+        if(gbCatalogTagsRestrictionsOn){
+            ((Button) v).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
+        } else {
+            ((Button) v).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
+        }
     }
 
 

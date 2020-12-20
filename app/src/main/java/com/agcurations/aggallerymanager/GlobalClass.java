@@ -1109,6 +1109,10 @@ public class GlobalClass extends Application {
         for(Integer iTagID : aliTagsInUse){
             String sTagText = getTagTextFromID(iTagID, iMediaCategory);
             ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
+            ItemClass_Tag ictTemp = gtmCatalogTagReferenceLists.get(iMediaCategory).get(ict.TagText);
+            if(ictTemp != null) {
+                ict.isRestricted = ictTemp.isRestricted;
+            }
             tmTagsInUse.put(sTagText, ict);
         }
 
