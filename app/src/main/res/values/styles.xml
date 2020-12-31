@@ -17,8 +17,8 @@
         <item name="android:textColorPrimary">@color/colorGrey1
         </item>         <!-- sets AlertDialog summaryText color -->
         <item name="android:textColorSecondary">@color/colorGrey1</item>
-        <item name="colorBackgroundFloating">@color/colorLightOrange
-        </item>    <!-- Sets AlertDialog color -->
+        <!--<item name="colorBackgroundFloating">@color/colorLightOrange
+        </item>    &lt;!&ndash; Sets AlertDialog color &ndash;&gt;-->
         <item name="textColorAlertDialogListItem">@color/colorGrey1
         </item>     <!-- Sets AlertDialog text color -->
         <item name="android:editTextColor">@color/colorGrey1</item>
@@ -129,5 +129,22 @@
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
 
+    <style name="AlertDialogConfirmation" parent="@style/Theme.AppCompat.DayNight.Dialog">
+        <item name="android:textColor">@color/colorGrey3</item>
+        <item name="android:textColorPrimary">@color/colorGrey3</item>
+        <item name="android:background">@color/colorBlack</item>
+        <item name="buttonBarButtonStyle">@style/ButtonBarStyleCustom</item>
+    </style>
+    <style name="ButtonBarStyleCustom" parent="@style/Theme.AppCompat.DayNight.Dialog">
+        <item name="android:textColor">@color/colorBlack</item>
+        <item name="textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+<!--        <item name="android:background">?android:attr/selectableItemBackground</item> Hide the button edges. -->
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_gravity">start</item>
+        <item name="android:gravity">center</item> <!-- Affects the text position in the button -->
+        <item name="android:layout_marginStart">15dp</item>
+        <item name="backgroundTint">@color/colorBlackboardRed</item>
+    </style>
 
 </resources>
