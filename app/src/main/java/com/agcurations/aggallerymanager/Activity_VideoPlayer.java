@@ -134,9 +134,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
-                /*if (mVisible && AUTO_HIDE) {
+                if (mVisible && AUTO_HIDE) {
                     delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                }*/
+                }
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -246,9 +246,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
-                /*if (mVisible && AUTO_HIDE) {
+                if (mVisible && AUTO_HIDE) {
                     delayedHide(AUTO_HIDE_DELAY_MILLIS);
-                }*/
+                }
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -537,13 +537,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
      */
-    //private static final boolean AUTO_HIDE = true;
+    private static final boolean AUTO_HIDE = true;
 
     /*
      * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
      * user interaction before hiding the system UI.
      */
-    //private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
     /**
      * Some older devices needs a small delay between UI widget updates
@@ -645,11 +645,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
      * Schedules a call to hide() in delay milliseconds, canceling any
      * previously scheduled calls.
      */
-    /* private void delayedHide(int delayMillis) {
+    private void delayedHide(int delayMillis) {
         //Use with caution. It makes trouble for the user when combined with a mediaController.
         //  Above note from AGGalleryManager author, WRC.
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
-    }*/
+    }
 
 }
