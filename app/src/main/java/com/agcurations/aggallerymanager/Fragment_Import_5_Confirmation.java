@@ -104,7 +104,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             if(fileItem.prospectiveTags.size() > 0){
                 sPrimaryTag = fileItem.prospectiveTags.get(0).toString();
             } else {
-                sPrimaryTag = "Untagged";
+                sPrimaryTag = GlobalClass.gsUnsortedFolderName;
             }
             fileItem.destinationFolder = sPrimaryTag;
         }
@@ -180,7 +180,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                         String time = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileItems.get(position).extension.contentEquals("gif")) {
+                        if (alFileItems.get(position).extension.contentEquals(".gif")) {
                             //Get the duration of the gif image:
                             Uri docUri = Uri.parse(alFileItems.get(position).uri);
                             Context activityContext = getContext();

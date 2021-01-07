@@ -6,15 +6,19 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.view.View;
 import android.widget.RadioButton;
+import android.widget.Toast;
+
 
 public class Activity_TagEditor extends AppCompatActivity {
     private GlobalClass globalClass;
@@ -27,15 +31,17 @@ public class Activity_TagEditor extends AppCompatActivity {
     public static final int FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY = 0;
     public static final int FRAGMENT_TAG_EDITOR_1_ID_ACTION = 1; //Choose action to perform on tags
     public static final int FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG = 2; //Add a new tag
-    public static final int FRAGMENT_TAG_EDITOR_3_ID_EDIT_DELETE_TAG = 3; //Edit or delete a tag
-    public static final int FRAGMENT_TAG_EDITOR_4_ID_MERGE_TAGS = 4; //Merge tags
+    public static final int FRAGMENT_TAG_EDITOR_3_ID_DELETE_TAG = 3; //Edit or delete a tag
+    public static final int FRAGMENT_TAG_EDITOR_4_ID_EDIT_TAG = 4; //Merge tags
     public static final int FRAGMENT_TAG_EDITOR_5_ID_CONFIRM = 5; //Confirmation (for delete and merge operations)
     public static final int FRAGMENT_TAG_EDITOR_5_ID_EXECUTE = 6; //Execute (for delete and merge operations)
-    public static final int FRAGMENT_COUNT = 3;
+    public static final int FRAGMENT_COUNT = 4;
 
     public static final String EXTRA_INT_MEDIA_CATEGORY = "EXTRA_INT_MEDIA_CATEGORY";
                                  //If the tag editor is being started from somewhere other than
                                  // Main activity, it must be in an area applicable to a particular media type.
+
+//    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +79,14 @@ public class Activity_TagEditor extends AppCompatActivity {
             }
         }
 
+
+        /*//Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter(TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        tagEditorServiceResponseReceiver = new TagEditorServiceResponseReceiver();
+        //registerReceiver(tagEditorServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(tagEditorServiceResponseReceiver,filter);*/
+
     }
 
     //======================================================
@@ -89,6 +103,13 @@ public class Activity_TagEditor extends AppCompatActivity {
             finish();
         }
 
+    }
+
+    @Override
+    protected void onDestroy() {
+        //unregisterReceiver(tagEditorServiceResponseReceiver);
+//        LocalBroadcastManager.getInstance(this).unregisterReceiver(tagEditorServiceResponseReceiver);
+        super.onDestroy();
     }
 
     public void buttonNextClick_MediaCategorySelected(View v){
@@ -110,19 +131,40 @@ public class Activity_TagEditor extends AppCompatActivity {
 
     public void buttonNextClick_TagActionSelected(View v){
         RadioButton rbAddTags = findViewById(R.id.radioButton_AddTags);
-        RadioButton rbEditDeleteTags = findViewById(R.id.radioButton_EditDeleteTags);
+        RadioButton rbEditDeleteTags = findViewById(R.id.radioButton_EditTags);
         //RadioButton rbMergeTags = findViewById(R.id.radioButton_MergeTags);
 
         if (rbAddTags.isChecked()){
-            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG);
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG, false);
         } else if (rbEditDeleteTags.isChecked()){
-            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_3_ID_EDIT_DELETE_TAG);
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_3_ID_DELETE_TAG, false);
         } else {
-            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_MERGE_TAGS);
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_EDIT_TAG, false);
         }
     }
 
 
+    /*public class TagEditorServiceResponseReceiver extends BroadcastReceiver {
+        public static final String TAG_EDITOR_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_TAG_EDITOR_SERVICE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(Service_TagEditor.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                //Perform actions
+                int i = 0;
+
+            }
+
+        }
+    }*/
 
     //================================================
     //  Adapters
@@ -145,9 +187,9 @@ public class Activity_TagEditor extends AppCompatActivity {
                     return new Fragment_TagEditor_1_Action();
                 case FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG:
                     return new Fragment_TagEditor_2_AddTag();
-                case FRAGMENT_TAG_EDITOR_3_ID_EDIT_DELETE_TAG:
-                    return null;
-                case FRAGMENT_TAG_EDITOR_4_ID_MERGE_TAGS:
+                case FRAGMENT_TAG_EDITOR_3_ID_DELETE_TAG:
+                    return new Fragment_TagEditor_4_DeleteTag();
+                case FRAGMENT_TAG_EDITOR_4_ID_EDIT_TAG:
                     return null;
                 case FRAGMENT_TAG_EDITOR_5_ID_CONFIRM:
                     return null;

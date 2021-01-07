@@ -5,6 +5,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.MediaController;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -37,6 +39,9 @@ public class Activity_VideoPreview extends AppCompatActivity {
     VideoView gVideoView;
     MediaController gMediaController;
 
+    private int giCurrentPosition = 0;
+    private static final String PLAYBACK_TIME = "play_time";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +50,10 @@ public class Activity_VideoPreview extends AppCompatActivity {
 
         //Source: https://www.youtube.com/watch?v=fn5OlqQuOCk
         setContentView(R.layout.activity_video_preview);
+
+        if (savedInstanceState != null) {
+            giCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+        }
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
         ViewModel_Fragment_SelectTags mViewModel = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
@@ -176,7 +185,12 @@ public class Activity_VideoPreview extends AppCompatActivity {
             gVideoView.setMediaController(gMediaController);
             Uri uriVideoFile = Uri.parse(gFileItem.uri);
             gVideoView.setVideoURI(uriVideoFile);
-            gVideoView.seekTo(1);
+            if (giCurrentPosition > 0) {
+                gVideoView.seekTo(giCurrentPosition);
+            } else {
+                // Skipping to 1 shows the first frame of the video.
+                gVideoView.seekTo(1);
+            }
             gVideoView.setZOrderOnTop(true);
             gVideoView.start();
         }
@@ -198,6 +212,10 @@ public class Activity_VideoPreview extends AppCompatActivity {
         gVideoView.stopPlayback();
     }
 
-
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        outState.putInt(PLAYBACK_TIME, gVideoView.getCurrentPosition());
+    }
 
 }

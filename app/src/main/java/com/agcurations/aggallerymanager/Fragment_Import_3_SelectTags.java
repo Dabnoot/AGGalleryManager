@@ -208,13 +208,15 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             //If mimeType is video or gif, get the duration:
             try {
                 if(alFileItems.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
-                    if (alFileItems.get(position).mimeType.startsWith("video")) {
+                    if (alFileItems.get(position).mimeType.startsWith("video")||
+                            (alFileItems.get(position).mimeType.equals("application/octet-stream") &&
+                                    alFileItems.get(position).extension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid){
                         Uri docUri = Uri.parse(alFileItems.get(position).uri);
                         Activity_Import.mediaMetadataRetriever.setDataSource(getContext(), docUri);
                         String time = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileItems.get(position).extension.contentEquals("gif")) {
+                        if (alFileItems.get(position).extension.contentEquals(".gif")) {
                             //Get the duration of the gif image:
                             Uri docUri = Uri.parse(alFileItems.get(position).uri);
                             Context activityContext = getContext();

@@ -188,6 +188,7 @@ public class Activity_Import extends AppCompatActivity {
     //======================================================
 
 
+
     @Override
     public void onBackPressed() {
 
@@ -299,7 +300,7 @@ public class Activity_Import extends AppCompatActivity {
                         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileItemsDisplay.get(position).extension.contentEquals("gif")) {
+                        if (alFileItemsDisplay.get(position).extension.contentEquals(".gif")) {
                             //Get the duration of the gif image:
                             Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
                             Context activityContext = getApplicationContext();
@@ -459,7 +460,9 @@ public class Activity_Import extends AppCompatActivity {
 
             //If the file item is video mimeType, set the preview button visibility to visible:
             Button button_VideoPreview = row.findViewById(R.id.button_VideoPreview);
-            if(alFileItemsDisplay.get(position).mimeType.startsWith("video")){
+            if(alFileItemsDisplay.get(position).mimeType.startsWith("video")  ||
+                    (alFileItemsDisplay.get(position).mimeType.equals("application/octet-stream") &&
+                            alFileItemsDisplay.get(position).extension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
                 button_VideoPreview.setVisibility(Button.VISIBLE);
                 button_VideoPreview.setOnClickListener(new View.OnClickListener(){
                     @Override

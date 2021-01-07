@@ -98,13 +98,13 @@ public class Service_Import extends IntentService {
     }
 
 
-    void problemNotificationConfig(String sMessage, String sReceiver){
+    void problemNotificationConfig(String sMessage){
         Intent broadcastIntent_Problem = new Intent();
         broadcastIntent_Problem.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
         broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        broadcastIntent_Problem.putExtra(RECEIVER_STRING, sReceiver);
+        broadcastIntent_Problem.putExtra(RECEIVER_STRING, Service_Import.RECEIVER_STORAGE_LOCATION);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
     }
 
@@ -115,7 +115,7 @@ public class Service_Import extends IntentService {
             try {
                 alFileList = readFolderContent(uriImportTreeUri, ".+", iMediaCategory, FILES_ONLY);
             }catch (Exception e){
-                problemNotificationConfig(e.getMessage(), RECEIVER_STORAGE_LOCATION);
+                problemNotificationConfig(e.getMessage());
                 return;
             }
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
@@ -169,6 +169,10 @@ public class Service_Import extends IntentService {
 
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
+
+            if(fileItem.destinationFolder.equals("")){
+                fileItem.destinationFolder = GlobalClass.gsUnsortedFolderName;
+            }
 
             File fDestination = new File(
                     globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
@@ -452,7 +456,7 @@ public class Service_Import extends IntentService {
             }
 
             //Record the file extension:
-            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".") + 1) : "";
+            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
             //If the file extension does not match the file extension regex, skip the remainder of the loop.
             if (!fileExtension.matches(sFileExtensionRegEx)) {
                 continue;  //skip the rest of the loop if the file extension does not match.
@@ -460,7 +464,8 @@ public class Service_Import extends IntentService {
 
             if(!isDirectory) {
                 //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
-                if (mimeType.startsWith("video") || fileExtension.equals("gif")) {
+                if (mimeType.startsWith("video") || fileExtension.equals(".gif") ||
+                        (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                     //If video...
                     if ((iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)
                             || (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS)) {
@@ -489,7 +494,8 @@ public class Service_Import extends IntentService {
             //If the file is video, get the duration so that the file list can be sorted by duration if requested.
             long lDurationInMilliseconds = -1L;
             if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS && GlobalClass.bVideoDeepDirectoryContentFileAnalysis) {
-                if (mimeType.startsWith("video")) {
+                if (mimeType.startsWith("video") ||
+                        (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                     try {
                         mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                     } catch (Exception e) {
@@ -499,14 +505,14 @@ public class Service_Import extends IntentService {
                     String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                     lDurationInMilliseconds = Long.parseLong(time);
                 } else { //if it's not a video file, check to see if it's a gif:
-                    if (fileExtension.equals("gif")) {
+                    if (fileExtension.equals(".gif")) {
                         //Get the duration of the gif image:
                         Context activityContext = getApplicationContext();
                         try {
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             lDurationInMilliseconds = gd.getDuration();
                         } catch (Exception e) {
-                            problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
+                            problemNotificationConfig(e.getMessage() + "\n" + docName);
                             continue; //Skip the rest of this loop.
                         }
                     }

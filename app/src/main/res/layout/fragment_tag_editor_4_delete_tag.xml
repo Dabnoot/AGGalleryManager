@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/linearLayout_fragment_tag_editor_2_add_tag"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true">
+
+            <TextView
+                android:id="@+id/textView_DeleteTagTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete Tag"
+                android:textSize="40sp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"/>
+
+            <TextView
+                android:id="@+id/textView_DeleteTagSubText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select a tag from the drop down to delete."
+                android:textSize="20sp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/textView_DeleteTagTitle"/>
+
+            <ListView
+                android:id="@+id/listView_TagDelete"
+                android:layout_width="200dp"
+                android:layout_height="0dp"
+                android:scrollbarSize="20dp"
+                android:layout_marginTop="15dp"
+                android:layout_below="@id/textView_DeleteTagSubText"
+                android:layout_centerHorizontal="true"
+                android:layout_above="@id/linearLayout_DeleteTagButtons"/>
+
+            <LinearLayout
+                android:id="@+id/linearLayout_DeleteTagButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true"
+                android:layout_marginTop="15dp"
+                android:paddingBottom="15dp">
+
+                <Button
+                    android:id="@+id/button_DeleteTag"
+                    android:layout_width="220dp"
+                    android:layout_height="67dp"
+                    android:text="Delete tag"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorBlackboardRed" />
+
+                <Button
+                    android:id="@+id/button_Finish"
+                    android:layout_width="220dp"
+                    android:layout_height="67dp"
+                    android:layout_marginStart="30dp"
+                    android:text="Finish"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorBlackboardRed" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+
+
+    </RelativeLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

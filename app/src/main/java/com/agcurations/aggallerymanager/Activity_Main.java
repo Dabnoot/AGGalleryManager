@@ -1,18 +1,23 @@
 package com.agcurations.aggallerymanager;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +26,8 @@ public class Activity_Main extends AppCompatActivity {
 
     //Global Variables:
     GlobalClass globalClass;
+
+    MainActivityDataServiceResponseReceiver mainActivityDataServiceResponseReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,13 +48,51 @@ public class Activity_Main extends AppCompatActivity {
         //  This will load the tags files for videos, pictures, and comics.
         IntentFilter filter = new IntentFilter(MainActivityDataServiceResponseReceiver.MA_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        MainActivityDataServiceResponseReceiver mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
+        mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
         registerReceiver(mainActivityDataServiceResponseReceiver, filter);
         //Call the MA Data Service, which will create a call to a service:
         Service_Main.startActionLoadData(this);
 
 
+
+
+
     }
+
+    private void AlertDialogTest2(){
+
+    }
+
+    private void AlertDialogTest1(){
+        //Testing of AlertDialog style:
+        String sConfirmationMessage = "Confirm item: Test test test test test test test";
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogConfirmation);
+        builder.setTitle("Delete Tag");
+        builder.setMessage(sConfirmationMessage);
+        // Set up the input
+        final EditText editText_DialogInput = new EditText(this);
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        editText_DialogInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
+
+        builder.setView(editText_DialogInput);
+        //builder.setIcon(R.drawable.ic_launcher);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog adConfirmationDialog = builder.create();
+        adConfirmationDialog.show();
+    }
+
+
+
+
 
     public static class MainActivityDataServiceResponseReceiver extends BroadcastReceiver {
         //MADataService = Main Activity Data Service
@@ -68,7 +113,11 @@ public class Activity_Main extends AppCompatActivity {
         }
     }
 
-
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(mainActivityDataServiceResponseReceiver);
+        super.onDestroy();
+    }
 
     //=====================================================================================
     //===== Menu Code =================================================================

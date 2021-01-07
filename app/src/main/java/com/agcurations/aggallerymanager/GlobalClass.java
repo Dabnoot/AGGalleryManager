@@ -1095,7 +1095,9 @@ public class GlobalClass extends Application {
             //Sort the strings:
             String[] sTempArray = CatalogEntry.getValue()[iTagsField[iMediaCategory]].split(",");
             for (String s : sTempArray) {
-                ssTemp.add(s.trim()); //This will not allow the addition of duplicate tags.
+                if(s.length() > 0) { //Zero-length string will cause problem for parseInt used later.
+                    ssTemp.add(s.trim()); //This will not allow the addition of duplicate tags.
+                }
             }
         }
 
@@ -1176,9 +1178,11 @@ public class GlobalClass extends Application {
         ArrayList<Integer> ali = new ArrayList<>();
 
         if(sTags != null){
-            String[] sa = sTags.split(sDelimiter);
-            for(String s : sa){
-                ali.add(Integer.parseInt(s));
+            if(sTags.length() > 0) {
+                String[] sa = sTags.split(sDelimiter);
+                for (String s : sa) {
+                    ali.add(Integer.parseInt(s));
+                }
             }
         }
         return ali;

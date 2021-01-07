@@ -11,13 +11,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import androidx.preference.MultiSelectListPreference;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
 
@@ -56,8 +54,6 @@ public class Service_Main extends IntentService {
     }
 
 
-
-    final Intent broadcastIntent_LoadAppDataResponse = new Intent(); //Make global to allow for problem notification string extras.
     private void handleActionLoadAppData() {
 
         String sExternalStorageState;
@@ -131,20 +127,15 @@ public class Service_Main extends IntentService {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
-        String[]  pref_restricted_tags = new String[]{
-                "multi_select_list_videos_restricted_tags",
-                "multi_select_list_images_restricted_tags",
-                "multi_select_list_comics_restricted_tags"};
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogTagReferenceLists.add(globalClass.InitTagData(iMediaCategory));
 
             //Get tag restrictions preferences:
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-            Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet(pref_restricted_tags[iMediaCategory], null);
+            Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet(GlobalClass.gsRestrictedTagsPreferenceNames[iMediaCategory], null);
             //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
             if(ssCatalogTagsRestricted != null) {
-                String s;
                 for (String sRestrictedTag : ssCatalogTagsRestricted) {
                     Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
                     for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
@@ -198,7 +189,7 @@ public class Service_Main extends IntentService {
         }
 
         if (!bFolderOk) {
-            problemNotificationConfig("Could not create catalog data folder 'Comics'.");
+            problemNotificationConfig("Could not create catalog data folder " + fCatalogFolder.getPath() + ".");
             return null;
         } else {
 
@@ -504,9 +495,10 @@ public class Service_Main extends IntentService {
 */
 
     void problemNotificationConfig(String sMessage){
-        broadcastIntent_LoadAppDataResponse.putExtra(EXTRA_BOOL_DATA_LOAD_PROBLEM, true);
-        broadcastIntent_LoadAppDataResponse.putExtra(EXTRA_STRING_DATA_LOAD_PROBLEM, sMessage);
-
+        Intent broadcastIntent_Notification = new Intent();
+        broadcastIntent_Notification.putExtra(EXTRA_BOOL_DATA_LOAD_PROBLEM, true);
+        broadcastIntent_Notification.putExtra(EXTRA_STRING_DATA_LOAD_PROBLEM, sMessage);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Notification);
     }
 
 

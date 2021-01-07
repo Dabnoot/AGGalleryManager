@@ -12,7 +12,7 @@ public class ItemClass_Tag implements Serializable {
     //  This is needed because the first tag may be used for special purposes.
     public int iSelectionOrder;
     //Used for Tag ListViews in selecting tags:
-    public Boolean isChecked;
+    public Boolean isChecked = false;
 
     public ItemClass_Tag(int _TagID, String _TagText) {
         this.TagID = _TagID;

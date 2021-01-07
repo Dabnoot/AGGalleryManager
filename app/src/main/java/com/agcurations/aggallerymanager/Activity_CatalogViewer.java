@@ -716,15 +716,17 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             boolean bIsRestricted = false;
             if(gbCatalogTagsRestrictionsOn) {
                 String sRecordTags = sCatalogListRecord[GlobalClass.giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]];
-                String[] saRecordTags = sRecordTags.split(",");
-                for (String s : saRecordTags) {
-                    //if list of restricted tags contains this particular record tag, mark as restricted item:
-                    Integer iTagID = Integer.parseInt(s);
-                    ItemClass_Tag ict  = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID,globalClass.giSelectedCatalogMediaCategory));
-                    if(ict != null) {
-                        if (ict.isRestricted) {
-                            bIsRestricted = true;
-                            break;
+                if(sRecordTags.length() > 0) {
+                    String[] saRecordTags = sRecordTags.split(",");
+                    for (String s : saRecordTags) {
+                        //if list of restricted tags contains this particular record tag, mark as restricted item:
+                        Integer iTagID = Integer.parseInt(s);
+                        ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
+                        if (ict != null) {
+                            if (ict.isRestricted) {
+                                bIsRestricted = true;
+                                break;
+                            }
                         }
                     }
                 }
