@@ -559,12 +559,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 switch(globalClass.giSelectedCatalogMediaCategory){
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         String sTemp = sFields[GlobalClass.VIDEO_FILENAME_INDEX];
-                        sItemName = globalClass.JumbleFileName(sTemp);
+                        sItemName = GlobalClass.JumbleFileName(sTemp);
                         sThumbnailText = sItemName + ", " +
                                 sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                        sItemName = globalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]);
+                        sItemName = GlobalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]);
                         sThumbnailText = sItemName + ", " +
                                 sFields[GlobalClass.IMAGE_TAGS_INDEX];
                         break;
