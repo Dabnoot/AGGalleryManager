@@ -1015,6 +1015,118 @@ public class GlobalClass extends Application {
 
     }
 
+    public boolean TagDataFile_UpdateRecord(
+            String sTagID,
+            String sData,
+            int iMediaCategory) {
+
+        int[] iFieldIDs = {TAG_NAME_INDEX};
+        String[] sFieldUpdateData = new String[]{sData};
+
+        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String[] sFields;
+            String sLine = brReader.readLine();
+            while (sLine != null) {
+                int j = 0; //To track requested field updates.
+
+                sFields = sLine.split("\t",-1);
+                //De-jumble the data read from the file:
+                String[] sFields2 = new String[sFields.length];
+                for(int i = 0; i < sFields.length; i++){
+                    sFields2[i] = JumbleStorageText(sFields[i]);
+                }
+                sFields = sFields2;
+
+                //Check to see if this record is the one that we want to update:
+                if (sFields[giDataRecordIDIndexes[iMediaCategory]].equals(sTagID)) {
+                    StringBuilder sb = new StringBuilder();
+
+                    if (iFieldIDs[j] == 0) {
+                        //If the caller wishes to update field 0...
+                        sb.append(sFieldUpdateData[j]);
+                        j++;
+                    } else {
+                        sb.append(sFields[0]);
+                    }
+
+                    for (int i = 1; i < sFields.length; i++) {
+                        sb.append("\t");
+                        if(j < iFieldIDs.length) {
+                            if (iFieldIDs[j] == i) {
+                                //If the caller wishes to update field i...
+                                sb.append(sFieldUpdateData[j]);
+                                j++;
+                            } else {
+                                sb.append(sFields[i]);
+                            }
+                        } else {
+                            sb.append(sFields[i]);
+                        }
+                    }
+
+                    sLine = sb.toString();
+
+                    //Now update the record in the treeMap:
+                    sFields = sLine.split("\t",-1);
+                    int iKey = -1;
+
+
+                    String sKey = "";
+                    for (Map.Entry<String, ItemClass_Tag>
+                            TagEntry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                        if( TagEntry.getValue().TagID.equals(Integer.parseInt(sTagID))){
+                            sKey = TagEntry.getKey();
+                            break;
+                        }
+                    }
+
+                    //Delete the pre-Existing tag item from the reference list because it hold the previous tag name as the
+                    //  key value:
+                    gtmCatalogTagReferenceLists.get(iMediaCategory).remove(sKey);
+                    ItemClass_Tag ictNew = new ItemClass_Tag(Integer.parseInt(sTagID), sData);
+                    gtmCatalogTagReferenceLists.get(iMediaCategory).put(sData, ictNew);
+
+                    //Jumble the fields in preparation for writing to file:
+                    sFields2 = sLine.split("\t",-1);
+                    StringBuilder sbJumble = new StringBuilder();
+                    sbJumble.append(JumbleStorageText(sFields2[0]));
+                    for(int i = 1; i < sFields.length; i++){
+                        sbJumble.append("\t");
+                        sbJumble.append(JumbleStorageText(sFields2[i]));
+                    }
+                    sLine = sbJumble.toString();
+
+                }
+                //Write the current record to the buffer:
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            //Write the data to the file:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(fTagsFile, false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
+
     public String getTagRecordString(ItemClass_Tag ict){
 
         String sTagRecord =

@@ -31,11 +31,10 @@ public class Activity_TagEditor extends AppCompatActivity {
     public static final int FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY = 0;
     public static final int FRAGMENT_TAG_EDITOR_1_ID_ACTION = 1; //Choose action to perform on tags
     public static final int FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG = 2; //Add a new tag
-    public static final int FRAGMENT_TAG_EDITOR_3_ID_DELETE_TAG = 3; //Edit or delete a tag
-    public static final int FRAGMENT_TAG_EDITOR_4_ID_EDIT_TAG = 4; //Merge tags
-    public static final int FRAGMENT_TAG_EDITOR_5_ID_CONFIRM = 5; //Confirmation (for delete and merge operations)
-    public static final int FRAGMENT_TAG_EDITOR_5_ID_EXECUTE = 6; //Execute (for delete and merge operations)
-    public static final int FRAGMENT_COUNT = 4;
+    public static final int FRAGMENT_TAG_EDITOR_3_ID_EDIT_TAG = 3; //Edit a tag
+    public static final int FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG = 4; //Delete a tag
+
+    public static final int FRAGMENT_COUNT = 5;
 
     public static final String EXTRA_INT_MEDIA_CATEGORY = "EXTRA_INT_MEDIA_CATEGORY";
                                  //If the tag editor is being started from somewhere other than
@@ -131,15 +130,15 @@ public class Activity_TagEditor extends AppCompatActivity {
 
     public void buttonNextClick_TagActionSelected(View v){
         RadioButton rbAddTags = findViewById(R.id.radioButton_AddTags);
-        RadioButton rbEditDeleteTags = findViewById(R.id.radioButton_EditTags);
+        RadioButton rbEditTags = findViewById(R.id.radioButton_EditTags);
         //RadioButton rbMergeTags = findViewById(R.id.radioButton_MergeTags);
 
         if (rbAddTags.isChecked()){
             ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG, false);
-        } else if (rbEditDeleteTags.isChecked()){
-            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_3_ID_DELETE_TAG, false);
+        } else if (rbEditTags.isChecked()){
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_3_ID_EDIT_TAG, false);
         } else {
-            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_EDIT_TAG, false);
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG, false);
         }
     }
 
@@ -187,14 +186,11 @@ public class Activity_TagEditor extends AppCompatActivity {
                     return new Fragment_TagEditor_1_Action();
                 case FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG:
                     return new Fragment_TagEditor_2_AddTag();
-                case FRAGMENT_TAG_EDITOR_3_ID_DELETE_TAG:
+                case FRAGMENT_TAG_EDITOR_3_ID_EDIT_TAG:
+                    return new Fragment_TagEditor_3_EditTag();
+                case FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG:
                     return new Fragment_TagEditor_4_DeleteTag();
-                case FRAGMENT_TAG_EDITOR_4_ID_EDIT_TAG:
-                    return null;
-                case FRAGMENT_TAG_EDITOR_5_ID_CONFIRM:
-                    return null;
-                case FRAGMENT_TAG_EDITOR_5_ID_EXECUTE:
-                    return null;
+
             }
             return null;
         }

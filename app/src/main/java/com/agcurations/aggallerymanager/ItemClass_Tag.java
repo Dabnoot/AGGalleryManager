@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class ItemClass_Tag implements Serializable {
 
     public final Integer TagID;
-    public final String TagText;
+    public String TagText;
     public Boolean isRestricted = false;
 
     //Create a variable to be used to preserve the order in which items are selected.

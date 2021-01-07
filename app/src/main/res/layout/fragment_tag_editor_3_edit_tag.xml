@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:id="@+id/linearLayout_fragment_tag_editor_2_add_tag"
+    android:id="@+id/linearLayout_fragment_tag_editor_2_edit_tag"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -8,7 +8,6 @@
     android:orientation="horizontal"
     android:weightSum="100"
     android:baselineAligned="false">
-
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -30,43 +29,68 @@
                 android:layout_height="wrap_content">
 
                 <TextView
-                    android:id="@+id/textView_NewTagTitle"
+                    android:id="@+id/textView_EditTagTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="New Tag"
+                    android:text="Edit Tag"
                     android:textSize="40sp"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"/>
 
                 <TextView
-                    android:id="@+id/textView_NewTagSubText"
+                    android:id="@+id/textView_EditTagSubText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Enter new tag details below."
+                    android:text="Select a tag from the right and edit tag details below."
                     android:textSize="20sp"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_NewTagTitle"/>
+                    android:layout_below="@+id/textView_EditTagTitle"/>
 
                 <TextView
-                    android:id="@+id/textView_NewTagText"
+                    android:id="@+id/textView_TagLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="40dp"
                     android:layout_marginBottom="20dp"
+                    android:text="Tag ID: "
+                    android:textSize="30sp"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/textView_EditTagSubText"/>
+
+                <TextView
+                    android:id="@+id/textView_TagID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginBottom="20dp"
+                    android:text=""
+                    android:textSize="30sp"
+                    android:layout_below="@+id/textView_EditTagSubText"
+                    android:layout_toEndOf="@id/textView_TagLabel"/>
+
+                <TextView
+                    android:id="@+id/textView_TagText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="20dp"
                     android:text="Tag text:"
                     android:textSize="30sp"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_NewTagSubText"/>
+                    android:layout_below="@+id/textView_TagID"/>
 
                 <EditText
-                    android:id="@+id/editText_NewTagText"
+                    android:id="@+id/editText_TagText"
                     android:layout_width="wrap_content"
                     android:minWidth="200dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
                     android:textSize="30sp"
-                    android:layout_alignBaseline="@+id/textView_NewTagText"
-                    android:layout_toEndOf="@+id/textView_NewTagText"/>
+                    android:layout_alignBaseline="@+id/textView_TagText"
+                    android:layout_toEndOf="@+id/textView_TagText"/>
+
+
 
             </RelativeLayout>
 
@@ -76,17 +100,17 @@
                 android:orientation="horizontal">
 
                 <Button
-                    android:id="@+id/button_AddTag"
-                    android:layout_width="160dp"
+                    android:id="@+id/button_Apply"
+                    android:layout_width="149dp"
                     android:layout_height="67dp"
                     android:layout_marginTop="40dp"
-                    android:text="Add Tag"
+                    android:text="Apply"
                     android:textSize="24sp"
                     app:backgroundTint="@color/colorBlackboardRed"/>
 
                 <Button
                     android:id="@+id/button_Finish"
-                    android:layout_width="160dp"
+                    android:layout_width="149dp"
                     android:layout_height="67dp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="40dp"
