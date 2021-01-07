@@ -38,9 +38,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class Activity_CatalogViewer extends AppCompatActivity {
