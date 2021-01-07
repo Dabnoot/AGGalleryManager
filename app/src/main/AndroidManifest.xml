@@ -11,8 +11,8 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activity_TagEditor"/>
-        <!-- android:theme="@style/AppTheme.Launcher">  To set startup screen -->
+        <activity android:name=".Activity_TagEditor" />
+
         <activity
             android:name=".Activity_VideoPlayer"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -22,7 +22,7 @@
         <activity android:name=".Activity_Import" />
         <activity
             android:name=".Activity_PinCodePopup"
-            android:theme="@style/AppTheme.PinCodePopup" />
+            android:theme="@style/AppTheme.PinCodePopup" /> <!-- android:theme="@style/AppTheme.Launcher">  To set startup screen -->
         <activity android:name=".Activity_Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -58,8 +58,14 @@
             android:name=".Activity_ImportComics_obsolete"
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
-        <activity
-            android:name=".Activity_VideoPreview" />
+        <activity android:name=".Activity_VideoPreview" />
+        <service
+            android:name=".Service_CatalogViewer"
+            android:exported="false"></service>
+
+        <service
+            android:name=".Service_TagEditor"
+            android:exported="false" />
         <service
             android:name=".Service_Import"
             android:exported="false" />

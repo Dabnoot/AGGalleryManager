@@ -1,15 +1,20 @@
 package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -24,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -32,6 +38,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -58,7 +65,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     private Menu ActivityMenu;
 
 
-
+    private CatalogViewerServiceResponseReceiver catalogViewerServiceResponseReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,7 +122,24 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             //network;
         }
 
+
+
+        //Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter(CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        catalogViewerServiceResponseReceiver = new CatalogViewerServiceResponseReceiver();
+        //registerReceiver(importDataServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(catalogViewerServiceResponseReceiver,filter);
+
+
         //See additional initialization in onCreateOptionsMenu().
+    }
+
+    @Override
+    protected void onDestroy() {
+        //unregisterReceiver(importDataServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(catalogViewerServiceResponseReceiver);
+        super.onDestroy();
     }
 
     public void notifyZeroCatalogItemsIfApplicable(){
@@ -345,6 +369,37 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     }
 
+    public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {
+        public static final String CATALOG_VIEWER_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CATALOG_VIEWER_SERVICE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(Service_CatalogViewer.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to request to delete an item:
+                boolean bIsDeleteItemResponse = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_DELETE_ITEM, false);
+                if(bIsDeleteItemResponse) {
+                    boolean bDeleteItemResult = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
+                    if (bDeleteItemResult) {
+                        populate_RecyclerViewCatalogItems(); //Refresh the catalog recycler view.
+                    } else {
+                        Toast.makeText(getApplicationContext(),"Could not successfully delete item.", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+            }
+
+        }
+    }
+
     private void SetRestrictedIconToLock(){
         MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
         item.setIcon(R.drawable.baseline_lock_white_18dp);
@@ -403,6 +458,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         private final TreeMap<Integer, String[]> treeMap;
         private final Integer[] mapKeys;
+        private final Context context;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
@@ -410,20 +466,23 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder {
             // each data item is just a string in this case
             public final ImageView ivThumbnail;
+            public final Button btnDelete;
             public final TextView tvThumbnailText;
             public final TextView tvDetails;
 
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                btnDelete = v.findViewById(R.id.button_Delete);
                 tvThumbnailText = v.findViewById(R.id.textView_Title);
                 tvDetails = v.findViewById(R.id.textView_Details);
             }
         }
 
-        public RecyclerViewCatalogAdapter(TreeMap<Integer, String[]> data) {
+        public RecyclerViewCatalogAdapter(TreeMap<Integer, String[]> data, Context _context) {
             this.treeMap = data;
             mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
+            context = _context;
         }
 
         public int getCount() {
@@ -467,6 +526,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
             final String[] sFields_final = sFields;
 
+            String sItemName = "";
 
             if(globalClass.ObfuscationOn) {
 
@@ -478,6 +538,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 Bitmap bmObfuscator = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
                 holder.ivThumbnail.setImageBitmap(bmObfuscator);
                 holder.tvThumbnailText.setText(globalClass.getObfuscationImageText(i));
+
+                if(holder.btnDelete != null){
+                    //Don't allow delete during obfuscation.
+                    holder.btnDelete.setVisibility(View.INVISIBLE);
+                }
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
@@ -494,20 +559,26 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 switch(globalClass.giSelectedCatalogMediaCategory){
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         String sTemp = sFields[GlobalClass.VIDEO_FILENAME_INDEX];
-                        sThumbnailText = globalClass.JumbleFileName(sTemp) + ", " +
+                        sItemName = globalClass.JumbleFileName(sTemp);
+                        sThumbnailText = sItemName + ", " +
                                 sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                        sThumbnailText = globalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]) + ", " +
+                        sItemName = globalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]);
+                        sThumbnailText = sItemName + ", " +
                                 sFields[GlobalClass.IMAGE_TAGS_INDEX];
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
-                        sThumbnailText = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        sItemName = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        sThumbnailText = sItemName;
                         //sThumbnailText = GlobalClass.ConvertDoubleTimeStampToString(sFields[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX]);
                         break;
                 }
                 holder.tvThumbnailText.setText(sThumbnailText);
 
+                if(holder.btnDelete != null){
+                    holder.btnDelete.setVisibility(View.VISIBLE);
+                }
             }
 
 
@@ -534,6 +605,43 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     return true;// returning true instead of false, works for me
                 }
             });
+
+
+            if(holder.btnDelete != null) {
+                final String sItemNameToDelete = sItemName;
+                final String sItemID = sFields[GlobalClass.giDataRecordIDIndexes[globalClass.giSelectedCatalogMediaCategory]];
+                holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        //Present confirmation that the user wishes to delete this item.
+                        if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                            //Please use comic details view to delete comic.
+                            Toast.makeText(getApplicationContext(), "Select comic and delete from comic preview.", Toast.LENGTH_SHORT).show();
+                        }
+                        String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogConfirmation);
+                        builder.setTitle("Delete Item");
+                        builder.setMessage(sConfirmationMessage);
+                        //builder.setIcon(R.drawable.ic_launcher);
+                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                                Service_CatalogViewer.startActionDeleteCatalogItem(getApplicationContext(), sItemID, globalClass.giSelectedCatalogMediaCategory);
+                            }
+                        });
+                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                            }
+                        });
+                        AlertDialog adConfirmationDialog = builder.create();
+                        adConfirmationDialog.show();
+
+
+                    }
+                });
+            }
 
         }
 
@@ -652,7 +760,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
         //Apply the new TreeMap to the RecyclerView:
-        gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(tmNewOrderCatalogList);
+        gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(tmNewOrderCatalogList, this);
         gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
         gRecyclerViewCatalogAdapter.notifyDataSetChanged();
 

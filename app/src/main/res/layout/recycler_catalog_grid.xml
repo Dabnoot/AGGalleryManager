@@ -9,7 +9,16 @@
         android:layout_width="match_parent"
         android:layout_height="430dp"
         android:layout_alignParentTop="true"
-        android:contentDescription="@string/comic_cover_page"/>
+        android:contentDescription="Thumbnail image"/>
+
+    <Button
+        android:id="@+id/button_Delete"
+        android:layout_width="50dp"
+        android:layout_height="40dp"
+        android:drawableLeft="@drawable/baseline_delete_white_18dp"
+        android:layout_alignBottom="@id/imageView_Thumbnail"
+        android:layout_alignEnd="@id/imageView_Thumbnail"
+        android:background="@android:color/transparent"/>
 
     <TextView
         android:id="@+id/textView_Title"

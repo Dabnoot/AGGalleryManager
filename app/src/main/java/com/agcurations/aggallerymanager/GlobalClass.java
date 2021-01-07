@@ -171,41 +171,46 @@ public class GlobalClass extends Application {
 
     //Lookup tables
     public static final int[] giDataRecordIDIndexes = {
-            GlobalClass.VIDEO_ID_INDEX,
-            GlobalClass.IMAGE_ID_INDEX,
-            GlobalClass.COMIC_ID_INDEX};
+            VIDEO_ID_INDEX,
+            IMAGE_ID_INDEX,
+            COMIC_ID_INDEX};
 
     public static final int[] giDataRecordFileNameIndexes = {
-            GlobalClass.VIDEO_FILENAME_INDEX,
-            GlobalClass.IMAGE_FILENAME_INDEX,
+            VIDEO_FILENAME_INDEX,
+            IMAGE_FILENAME_INDEX,
             -1};// -1, there is no descriptive comic file name.
 
     public static final int[] giDataRecordDateTimeImportIndexes = {
-            GlobalClass.VIDEO_DATETIME_IMPORT_INDEX,
-            GlobalClass.IMAGE_DATETIME_IMPORT_INDEX,
-            GlobalClass.COMIC_DATETIME_IMPORT_INDEX};
+            VIDEO_DATETIME_IMPORT_INDEX,
+            IMAGE_DATETIME_IMPORT_INDEX,
+            COMIC_DATETIME_IMPORT_INDEX};
 
     public static final int[] giDataRecordDateTimeViewedIndexes = {
-            GlobalClass.VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
-            GlobalClass.IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
-            GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
+            VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
+            IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
+            COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
 
     public static final int[] giDataRecordTagsIndexes = {
-            GlobalClass.VIDEO_TAGS_INDEX,
-            GlobalClass.IMAGE_TAGS_INDEX,
-            GlobalClass.COMIC_TAGS_INDEX};
+            VIDEO_TAGS_INDEX,
+            IMAGE_TAGS_INDEX,
+            COMIC_TAGS_INDEX};
 
     public static final int[] giDataRecordFolderIndexes = {
-            GlobalClass.VIDEO_FOLDER_NAME_INDEX,
-            GlobalClass.IMAGE_FOLDER_NAME_INDEX,
-            GlobalClass.COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
+            VIDEO_FOLDER_NAME_INDEX,
+            IMAGE_FOLDER_NAME_INDEX,
+            COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
 
     public static final int[] giDataRecordRecyclerViewImageIndexes = {
-            GlobalClass.VIDEO_FILENAME_INDEX,
-            GlobalClass.IMAGE_FILENAME_INDEX,
-            GlobalClass.COMIC_THUMBNAIL_FILE_INDEX};
+            VIDEO_FILENAME_INDEX,
+            IMAGE_FILENAME_INDEX,
+            COMIC_THUMBNAIL_FILE_INDEX};
 
+    public static final String[]  gsRestrictedTagsPreferenceNames = new String[]{
+            "multi_select_list_videos_restricted_tags",
+            "multi_select_list_images_restricted_tags",
+            "multi_select_list_comics_restricted_tags"};
 
+    public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
     //todo: get rid of these variables as they are handled as arrayList items above:
     public File gfComicsFolder;
@@ -353,7 +358,7 @@ public class GlobalClass extends Application {
     }
 
     static final int[] iNoJumbleFileNameIndex =
-            {GlobalClass.VIDEO_FILENAME_INDEX, GlobalClass.IMAGE_FILENAME_INDEX, -1};
+            {VIDEO_FILENAME_INDEX, IMAGE_FILENAME_INDEX, -1};
     //Filenames that may contain descriptive information are jumbled at import, and
     //  the catalog file should maintain that jumbled name, since the file is ascii.
 
@@ -517,7 +522,6 @@ public class GlobalClass extends Application {
         }
     }
 
-    public boolean gbComicJustDeleted = false;
     public boolean ComicCatalog_DeleteComic(String sComicID) {
 
         //Delete the comic record from the CatalogContentsFile:
@@ -533,7 +537,7 @@ public class GlobalClass extends Application {
             for (Map.Entry<Integer, String[]>
                     CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
                 String[] sFields = CatalogEntry.getValue();
-                if( sFields[GlobalClass.COMIC_ID_INDEX].contains(sComicID)){
+                if( sFields[COMIC_ID_INDEX].contains(sComicID)){
                     sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
                     break;
                 }
@@ -606,7 +610,7 @@ public class GlobalClass extends Application {
             int iKey = -1;
             for (Map.Entry<Integer, String[]>
                     CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
-                String sEntryComicID = CatalogEntry.getValue()[GlobalClass.COMIC_ID_INDEX];
+                String sEntryComicID = CatalogEntry.getValue()[COMIC_ID_INDEX];
                 if( sEntryComicID.contains(sComicID)){
                     iKey = CatalogEntry.getKey();
                     break;
@@ -616,7 +620,6 @@ public class GlobalClass extends Application {
                 gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(iKey);
             }
 
-            gbComicJustDeleted = true;
             return true;
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -920,7 +923,7 @@ public class GlobalClass extends Application {
 
                     //Reverse the text of each field:
                     for(int j = 0; j < sFields.length; j++){
-                        sFields[j] = GlobalClass.JumbleStorageText(sFields[j]);
+                        sFields[j] = JumbleStorageText(sFields[j]);
                     }
                     Integer iTagID = Integer.parseInt(sFields[0]);
 
@@ -951,7 +954,7 @@ public class GlobalClass extends Application {
                         //Write data records:
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(GlobalClass.JumbleStorageText(i.toString()) + "\t" + GlobalClass.JumbleStorageText(sEntry) + "\n");
+                                fwTagsFile.write(JumbleStorageText(i.toString()) + "\t" + JumbleStorageText(sEntry) + "\n");
                                 String[] s = new String[]{i.toString(), sEntry};
                                 ItemClass_Tag ict = new ItemClass_Tag(i, sEntry);
                                 tmTags.put(sEntry, ict);
@@ -980,7 +983,6 @@ public class GlobalClass extends Application {
     public boolean TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
-        TreeMap<String, ItemClass_Tag> tmTagRecords = gtmCatalogTagReferenceLists.get(iMediaCategory);
 
         try {
             int iNextRecordId = 0;
@@ -1222,14 +1224,10 @@ public class GlobalClass extends Application {
     }
 
 
+    //=====================================================================================
+    //===== Obfuscation Section ===========================================================
+    //=====================================================================================
 
-
-
-
-
-
-
-    //Begin Obfuscation section:
 
     public boolean ObfuscationOn = false;
     public int iObfuscationIndex;
