@@ -54,13 +54,33 @@ public class Activity_Main extends AppCompatActivity {
         Service_Main.startActionLoadData(this);
 
 
-
+        //AlertDialogTest2();
 
 
     }
 
     private void AlertDialogTest2(){
+        //Testing of AlertDialog style:
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogConfirmation);
+        builder.setTitle("Enter pin code:");
+        //builder.setMessage("Enter pin code:");
 
+        // set the custom layout
+        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+        builder.setView(customLayout);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.dismiss();
+            }
+        });
+        AlertDialog adConfirmationDialog = builder.create();
+        adConfirmationDialog.show();
     }
 
     private void AlertDialogTest1(){

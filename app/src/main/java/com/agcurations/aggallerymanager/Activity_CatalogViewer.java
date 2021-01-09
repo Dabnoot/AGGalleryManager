@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,6 +31,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -90,22 +92,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        //Get tag restrictions preferences:
-        /*Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
-        //Attempt to match the restricted tag text from the preferences to the Tag ID:
-        if(ssCatalogTagsRestricted != null) {
-            String s;
-            for (String sRestrictedTag : ssCatalogTagsRestricted) {
-                for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
-                    s = entry.getValue().TagText;
-                    if (sRestrictedTag.equals(s)) {
-                        //If the restricted tag has been found, assign it to the restricted tags TreeMap:
-                        globalClass.gtmCatalogTagsRestricted.get(globalClass.giSelectedCatalogMediaCategory)
-                                .put(entry.getValue().TagID, entry.getValue().TagText);
-                    }
-                }
-            }
-        }*/
 
         gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
@@ -253,7 +239,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     @Override
     protected void onPause() {
         //Attempt to save the state, ie scroll position, of the recyclerView:
-        recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
+        if(gRecyclerView.getLayoutManager() != null) {
+            recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
+        }
         super.onPause();
     }
 
@@ -261,8 +249,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     public void onResume(){
         super.onResume();
         //Attempt to restore the state, ie scroll position, of the recyclerView:
-        gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
-
+        if(gRecyclerView.getLayoutManager() != null) {
+            gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
+        }
 
         //Apply a resort.
         //If a comic was just deleted, or a comic was just read, the view needs to be updated.
@@ -307,8 +296,44 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(itemID == R.id.icon_tags_restricted){
             if(gbCatalogTagsRestrictionsOn){
                 //If restrictions are on, ask for pin code before unlocking.
-                Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
-                startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
+                //Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
+                //startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
+
+                if(!globalClass.gsPin.equals("")) { //If the user has specified a pin in the settings...
+                    //Ask for the pin before revealing restricted tags.
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogConfirmation);
+                    builder.setTitle("Enter pin code:");
+
+                    // set the custom layout
+                    final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+                    builder.setView(customLayout);
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                            String sPinEntered = editText_DialogInput.getText().toString();
+                            dialog.dismiss();
+                            if(sPinEntered.equals(globalClass.gsPin)){
+                                unlockRestrictedTags();
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                    builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+                    AlertDialog alertDialogPinEntry = builder.create();
+                    alertDialogPinEntry.show();
+                } else {
+                    //If the user has NOT specified a pin in the settings...
+                    //Go ahead and reveal the restricted tags.
+                    unlockRestrictedTags();
+                }
+
+
+
             } else {
                 //If restrictions are off...
                 //Turn on restrictions, hide items, set icon to show lock symbol
@@ -337,6 +362,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         return true;
     }
 
+    private void unlockRestrictedTags(){
+        //Show catalog items with restricted tags.
+        //Change the lock icon to 'unlocked':
+        SetRestrictedIconToUnlock();
+        //Set the flag:
+        gbCatalogTagsRestrictionsOn = false;
+        //Repopulate the catalog list:
+        populate_RecyclerViewCatalogItems();
+        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
+    }
+
+
     @Override
     //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public void onActivityResult(int requestCode, int resultCode,
@@ -347,14 +384,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS){
                 if(resultCode == RESULT_OK){
-                    //Show catalog items with restricted tags.
-                    //Change the lock icon to 'unlocked':
-                    SetRestrictedIconToUnlock();
-                    //Set the flag:
-                    gbCatalogTagsRestrictionsOn = false;
-                    //Repopulate the catalog list:
-                    populate_RecyclerViewCatalogItems();
-                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
+
                 }
             }
 
