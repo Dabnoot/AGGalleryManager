@@ -40,7 +40,7 @@ public class GlobalClass extends Application {
     public String gsPin = "";
 
     public File gfAppFolder;
-    public File gfAppConfigFile;
+    //public File gfAppConfigFile;
 
     public static final int MEDIA_CATEGORY_VIDEOS = 0;
     public static final int MEDIA_CATEGORY_IMAGES = 1;
@@ -209,6 +209,8 @@ public class GlobalClass extends Application {
             "multi_select_list_videos_restricted_tags",
             "multi_select_list_images_restricted_tags",
             "multi_select_list_comics_restricted_tags"};
+
+    public static final String gsPinPreference = "preferences_pin";
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 

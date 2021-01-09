@@ -84,38 +84,9 @@ public class Service_Main extends IntentService {
             }
 
             //Attempt to read a pin number set by the user:
-            globalClass.gfAppConfigFile = new File(globalClass.gfAppFolder.getAbsolutePath()
-                    + File.separator + "AppConfig.dat");
-            if (!globalClass.gfAppConfigFile.exists()) {
-                try {
-                    if (!globalClass.gfAppConfigFile.createNewFile()) {
-                        problemNotificationConfig("Could not create AppConfig.dat at " + globalClass.gfAppConfigFile.getAbsolutePath());
-                    }
-                } catch (IOException e) {
-                    problemNotificationConfig("Could not create AppConfig.dat at " + globalClass.gfAppConfigFile.getAbsolutePath());
-                }
-            } else {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            globalClass.gsPin = sharedPreferences.getString(GlobalClass.gsPinPreference, "");
 
-                //Read the AppConfig data. This file, at the time of design, was only intended to
-                //  hold 1 piece of data - a pin/password set by the user to unlock certain settings.
-                //  Specifically, settings for restricted tags, and turning the restriction on and off.
-                BufferedReader brReader;
-                String sLine = "";
-                try {
-                    brReader = new BufferedReader(new FileReader(globalClass.gfAppConfigFile.getAbsolutePath()));
-                    sLine = brReader.readLine();
-                    brReader.close();
-                } catch (IOException e) {
-                    problemNotificationConfig("Trouble reading AppConfig.dat at" + globalClass.gfAppConfigFile.getAbsolutePath());
-                }
-
-                //Set the global variable holding the pin:
-                if (sLine == null) {
-                    globalClass.gsPin = "";
-                } else {
-                    globalClass.gsPin = sLine;
-                }
-            }
         }
 
         /*GlobalClass.CatalogDataFile_UpdateAllRecords_TimeStamps(

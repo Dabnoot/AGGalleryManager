@@ -167,7 +167,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
             //CONFIGURE THE PIN PREFERENCE:
             final EditTextPreference pref_preferences_pin =
-                    findPreference("preferences_pin");
+                    findPreference(GlobalClass.gsPinPreference);
 
             //Set keyboard to be numeric:
             assert pref_preferences_pin != null;
@@ -175,7 +175,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 @Override
                 public void onBindEditText(@NonNull EditText editText) {
                     editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-
                 }
             });
 
@@ -183,40 +182,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
 
-                    //Attempt to write to file a pin number set by the user:
-                    File fAppConfigFile;
-
-                    String sExternalStorageState;
-                    sExternalStorageState = Environment.getExternalStorageState();
-                    if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ){
-
-                        //Look for the AppConfig file:
-                        fAppConfigFile = new File(gfAppFolder.getAbsolutePath() + File.separator + "AppConfig.dat");
-                        if (!fAppConfigFile.exists()){
-                            try {
-                                if(!fAppConfigFile.createNewFile()){
-                                    Toast.makeText(getContext(),"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-                                }
-                            }catch (IOException e){
-                                Toast.makeText(getContext(),"Could not create AppConfig.dat at " + fAppConfigFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-                            }
-                        }
-
-                        if (fAppConfigFile.exists()){
-
-
-                            try {
-                                FileWriter fwAppConfigFile = new FileWriter(fAppConfigFile, false);
-                                fwAppConfigFile.write(newValue.toString());
-                                fwAppConfigFile.flush();
-                                fwAppConfigFile.close();
-                            } catch (IOException e) {
-                                Toast.makeText(getContext(),"Trouble writing AppConfig.dat at" + fAppConfigFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-                            }
-
-                        }
-
-                    }
+                    globalClass.gsPin = newValue.toString();
 
                     return true;
                 }
