@@ -21,7 +21,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -301,31 +300,42 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                 if(!globalClass.gsPin.equals("")) { //If the user has specified a pin in the settings...
                     //Ask for the pin before revealing restricted tags.
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogConfirmation);
-                    builder.setTitle("Enter pin code:");
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
 
                     // set the custom layout
                     final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
                     builder.setView(customLayout);
-                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
+
+                    final AlertDialog adConfirmationDialog = builder.create();
+
+                    //Code action for the Cancel button:
+                    Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
+                        @Override
+                        public void onClick(View view) {
+                            adConfirmationDialog.dismiss();
+                        }
+                    });
+
+                    //Code action for the OK button:
+                    Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+                    button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
+                        @Override
+                        public void onClick(View view) {
                             EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
                             String sPinEntered = editText_DialogInput.getText().toString();
-                            dialog.dismiss();
+
                             if(sPinEntered.equals(globalClass.gsPin)){
                                 unlockRestrictedTags();
                             } else {
                                 Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
                             }
+
+                            adConfirmationDialog.dismiss();
                         }
                     });
-                    builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.dismiss();
-                        }
-                    });
-                    AlertDialog alertDialogPinEntry = builder.create();
-                    alertDialogPinEntry.show();
+
+                    adConfirmationDialog.show();
                 } else {
                     //If the user has NOT specified a pin in the settings...
                     //Go ahead and reveal the restricted tags.
@@ -648,7 +658,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         }
                         String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogConfirmation);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogCustomStyle);
                         builder.setTitle("Delete Item");
                         builder.setMessage(sConfirmationMessage);
                         //builder.setIcon(R.drawable.ic_launcher);

@@ -6,14 +6,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -23,14 +20,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -179,7 +173,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         ListView listView_TagDelete = getView().findViewById(R.id.listView_TagDelete);
         String sConfirmationMessage = "Confirm tag deletion: " + gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected).TagText;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogConfirmation);
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
         builder.setTitle("Delete Tag");
         builder.setMessage(sConfirmationMessage);
         //builder.setIcon(R.drawable.ic_launcher);

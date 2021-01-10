@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -20,6 +21,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -63,9 +65,11 @@ public class Fragment_SelectTags extends Fragment {
         return inflater.inflate(R.layout.fragment_select_tags, container, false);
     }
 
+
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
         if(getActivity() == null) return;
         mViewModel = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
 
@@ -109,8 +113,56 @@ public class Fragment_SelectTags extends Fragment {
             public void onClick(View view) {
                 if(gbCatalogTagsRestrictionsOn){
                     //If restrictions are on, ask for pin code before unlocking.
-                    Intent intentPinCodeAccessSettings = new Intent(getActivity(), Activity_PinCodePopup.class);
-                    startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
+
+                    if(getActivity() == null){
+                        return;
+                    }
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
+
+                    // set the custom layout
+                    final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+                    builder.setView(customLayout);
+
+                    final AlertDialog adConfirmationDialog = builder.create();
+
+                    //Code action for the Cancel button:
+                    Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
+                        @Override
+                        public void onClick(View view) {
+                            adConfirmationDialog.dismiss();
+                        }
+                    });
+
+                    //Code action for the OK button:
+                    Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+                    button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
+                        @Override
+                        public void onClick(View view) {
+                            EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                            String sPinEntered = editText_DialogInput.getText().toString();
+
+                            if(sPinEntered.equals(globalClass.gsPin)){
+                                //Show catalog items with restricted tags.
+                                gbCatalogTagsRestrictionsOn = false;
+                                initListViewData();
+                                //Change the lock icon to 'unlocked':
+                                if(getView() != null) {
+                                    Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
+                                    button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
+                                }
+                                Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                            }
+
+                            adConfirmationDialog.dismiss();
+                        }
+                    });
+
+                    adConfirmationDialog.show();
+
+
                 } else {
                     //If restrictions are off...
                     //Turn on restrictions, hide items, set icon to show lock symbol
@@ -158,19 +210,82 @@ public class Fragment_SelectTags extends Fragment {
             }
         }
 
-        initListViewData();
-
         //Configure the button to start the tag editor:
+        if (getView() == null) {
+            return;
+        }
         Button button_TagEditor = getView().findViewById(R.id.button_TagEditor);
         button_TagEditor.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //Ask for pin code in order to allow access to the Tag Editor:
-                Intent intentPinCodeAccessSettings = new Intent(getActivity(), Activity_PinCodePopup.class);
-                startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS);
+
+
+                if (getActivity() == null) {
+                    return;
+                }
+                final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
+
+                // set the custom layout
+                final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+                builder.setView(customLayout);
+
+                final AlertDialog adConfirmationDialog = builder.create();
+
+                //Code action for the Cancel button:
+                Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+                button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        adConfirmationDialog.dismiss();
+                    }
+                });
+
+                //Code action for the OK button:
+                Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+                button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                        String sPinEntered = editText_DialogInput.getText().toString();
+
+                        if(sPinEntered.equals(globalClass.gsPin)){
+                            Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                            intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
+                            startActivity(intentTagEditor);
+                        } else {
+                            Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                        }
+
+                        adConfirmationDialog.dismiss();
+                    }
+                });
+
+                adConfirmationDialog.show();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             }
         });
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        initListViewData();
     }
 
     private void initListViewData(){
@@ -245,33 +360,6 @@ public class Fragment_SelectTags extends Fragment {
         listView_ImportTagSelection.setAdapter(gListViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
-
-
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        getActivity();
-        if(requestCode == RESULT_CODE_TAGS_MODIFIED && resultCode == Activity.RESULT_OK) {
-            //If we are coming back from the tag editor, rebuilt the listview contents:
-            initListViewData();
-        } else if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS && resultCode == Activity.RESULT_OK){
-            //Show catalog items with restricted tags.
-            gbCatalogTagsRestrictionsOn = false;
-            initListViewData();
-            //Change the lock icon to 'unlocked':
-            if(getView() != null) {
-                Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
-                button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
-            }
-            Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
-        } else if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS && resultCode == Activity.RESULT_OK){
-            Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-            intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
-            startActivityForResult(intentTagEditor, RESULT_CODE_TAGS_MODIFIED);
-        }
-    }
-
 
 
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {

@@ -4,7 +4,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,7 +15,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -61,32 +60,48 @@ public class Activity_Main extends AppCompatActivity {
 
     private void AlertDialogTest2(){
         //Testing of AlertDialog style:
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogConfirmation);
-        builder.setTitle("Enter pin code:");
-        //builder.setMessage("Enter pin code:");
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
 
         // set the custom layout
         final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
         builder.setView(customLayout);
 
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
+        final AlertDialog adConfirmationDialog = builder.create();
+
+        //Code action for the Cancel button:
+        Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+        button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                adConfirmationDialog.dismiss();
             }
         });
-        builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
+
+        //Code action for the OK button:
+        Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+        button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                String sPinEntered = editText_DialogInput.getText().toString();
+
+                if(sPinEntered.equals(globalClass.gsPin)){
+                    Toast.makeText(getApplicationContext(), "Correct pin entered.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                }
+
+                adConfirmationDialog.dismiss();
             }
         });
-        AlertDialog adConfirmationDialog = builder.create();
+
         adConfirmationDialog.show();
     }
 
     private void AlertDialogTest1(){
         //Testing of AlertDialog style:
         String sConfirmationMessage = "Confirm item: Test test test test test test test";
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogConfirmation);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
         builder.setTitle("Delete Tag");
         builder.setMessage(sConfirmationMessage);
         // Set up the input
@@ -152,9 +167,31 @@ public class Activity_Main extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //Display a message showing the name of the item selected.
-        //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
-        Intent intentPinCodeAccessSettings;
+
+        //Configure the AlertDialog that will gather the pin code if necessary to begina particular behavior:
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
+
+        // set the custom layout
+        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+        builder.setView(customLayout);
+
+        final AlertDialog adConfirmationDialog = builder.create();
+
+        //Code action for the Cancel button:
+        Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+        button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                adConfirmationDialog.dismiss();
+            }
+        });
+
+        //Code action for the OK button:
+        Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+
+
+
+
         switch (item.getItemId()) {
 
             case R.id.menu_FlipView:
@@ -168,14 +205,57 @@ public class Activity_Main extends AppCompatActivity {
 
             case R.id.menu_Settings:
                 //Ask for pin code in order to allow access to Settings:
-                intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
-                startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS);
+
+                button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        adConfirmationDialog.dismiss();
+                    }
+                });
+
+                //Code action for the OK button:
+                button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                        String sPinEntered = editText_DialogInput.getText().toString();
+
+                        if(sPinEntered.equals(globalClass.gsPin)){
+                            Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
+                            startActivity(intentSettings);
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                        }
+
+                        adConfirmationDialog.dismiss();
+                    }
+                });
+
+                adConfirmationDialog.show();
+
                 return true;
 
             case R.id.menu_TagEditor:
                 //Ask for pin code in order to allow access to the Tag Editor:
-                intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
-                startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS);
+
+                button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View view) {
+                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                        String sPinEntered = editText_DialogInput.getText().toString();
+
+                        if(sPinEntered.equals(globalClass.gsPin)){
+                            Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
+                            startActivity(intentTagEditor);
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                        }
+
+                        adConfirmationDialog.dismiss();
+                    }
+                });
+
+                adConfirmationDialog.show();
 
                 return true;
 
@@ -189,21 +269,6 @@ public class Activity_Main extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS && resultCode == RESULT_OK){
-            Intent intentAbout = new Intent(this, Activity_AppSettings.class);
-            startActivity(intentAbout);
-
-        } else if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_EDIT_TAGS && resultCode == RESULT_OK){
-            Intent intentTagEditor = new Intent(this, Activity_TagEditor.class);
-            startActivity(intentTagEditor);
-
-        }
-
-    }
 
     //=====================================================================================
     //===== Obfuscation Code =================================================================
