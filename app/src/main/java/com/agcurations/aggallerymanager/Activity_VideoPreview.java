@@ -36,17 +36,19 @@ public class Activity_VideoPreview extends AppCompatActivity {
 
     private ItemClass_File gFileItem;
 
-    VideoView gVideoView;
+    VideoView gVideoView_VideoPlayer;
     MediaController gMediaController;
 
-    private int giCurrentPosition = 0;
+    private int giCurrentPosition = 1;
     private static final String PLAYBACK_TIME = "play_time";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        this.getSupportActionBar().hide();
+        if(this.getSupportActionBar() != null) {
+            this.getSupportActionBar().hide();
+        }
 
         //Source: https://www.youtube.com/watch?v=fn5OlqQuOCk
         setContentView(R.layout.activity_video_preview);
@@ -158,15 +160,15 @@ public class Activity_VideoPreview extends AppCompatActivity {
             }
 
 
-            gVideoView = findViewById(R.id.videoView_VideoPlayerPreview);
+            gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayerPreview);
 
             //Configure the media controller:
             gMediaController = new MediaController(this);
-            gMediaController.setMediaPlayer(gVideoView);
-            gVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
+            gVideoView_VideoPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mp) {
-                    gMediaController.setAnchorView(gVideoView);
+                    gMediaController.setAnchorView(gVideoView_VideoPlayer);
                 }
             });
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -182,17 +184,17 @@ public class Activity_VideoPreview extends AppCompatActivity {
                     }
                 });
             }
-            gVideoView.setMediaController(gMediaController);
+            gVideoView_VideoPlayer.setMediaController(gMediaController);
             Uri uriVideoFile = Uri.parse(gFileItem.uri);
-            gVideoView.setVideoURI(uriVideoFile);
+            gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
             if (giCurrentPosition > 0) {
-                gVideoView.seekTo(giCurrentPosition);
+                gVideoView_VideoPlayer.seekTo(giCurrentPosition);
             } else {
                 // Skipping to 1 shows the first frame of the video.
-                gVideoView.seekTo(1);
+                gVideoView_VideoPlayer.seekTo(1);
             }
-            gVideoView.setZOrderOnTop(true);
-            gVideoView.start();
+            gVideoView_VideoPlayer.setZOrderOnTop(true);
+            gVideoView_VideoPlayer.start();
         }
 
     }
@@ -200,22 +202,26 @@ public class Activity_VideoPreview extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        gVideoView.seekTo(1);
-        gVideoView.start();
+        gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+        gVideoView_VideoPlayer.start();
     }
 
-    //todo: save and restore video position. The user may have gone to create a new tag.
+    @Override
+    protected void onPause() {
+        giCurrentPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        super.onPause();
+    }
 
     @Override
     protected void onStop() {
         super.onStop();
-        gVideoView.stopPlayback();
+        gVideoView_VideoPlayer.stopPlayback();
     }
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
-        outState.putInt(PLAYBACK_TIME, gVideoView.getCurrentPosition());
+        outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
     }
 
 }

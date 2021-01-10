@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -37,7 +38,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private TreeMap<Integer, String[]> treeMapRecyclerViewVideos;
     private Integer giKey;
 
-    private int giCurrentPosition = 0;
+    private int giCurrentPosition = 1;
     private static final String PLAYBACK_TIME = "play_time";
 
     private DrawerLayout gDrawerLayout;
@@ -320,21 +321,31 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        releasePlayer();
-    }
+
 
     @Override
     protected void onResume() {
         super.onResume();
+        gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+        gVideoView_VideoPlayer.start();
+    }
+
+    @Override
+    protected void onPause() {
+        giCurrentPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        gVideoView_VideoPlayer.stopPlayback();
+        super.onStop();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
+        outState.putInt(PLAYBACK_TIME, giCurrentPosition);
     }
 
     //==============================================================================================
@@ -401,12 +412,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             gImageView_GifViewer.setVisibility(View.INVISIBLE);
             gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
             gVideoView_VideoPlayer.setVideoURI(gMediaUri);
-            if (giCurrentPosition > 0) {
-                gVideoView_VideoPlayer.seekTo(giCurrentPosition);
-            } else {
-                // Skipping to 1 shows the first frame of the video.
-                gVideoView_VideoPlayer.seekTo(1);
+
+            if(gVideoView_VideoPlayer.getDuration() > giCurrentPosition){
+                giCurrentPosition = 1;
             }
+            gVideoView_VideoPlayer.seekTo(giCurrentPosition);
             gVideoView_VideoPlayer.start();
         }
 
@@ -518,9 +528,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     }
 */
 
-    private void releasePlayer() {
-        gVideoView_VideoPlayer.stopPlayback();
-    }
 
 
     public void HideObfuscationImageButton(View v){
