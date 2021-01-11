@@ -70,14 +70,20 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver,filter);
-        viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
+        }
+        if (getActivity() != null) {
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        }
     }
 
     @Override
     public void onDestroy() {
         //requireActivity().unregisterReceiver(importDataServiceResponseReceiver);
-        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
+        }
         super.onDestroy();
 
     }
@@ -98,6 +104,9 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     public void initComponents(){
 
         //Init progress:
+        if(getView() == null){
+            return;
+        }
         gProgressBar_ImportProgress = getView().findViewById(R.id.progressBar_ImportProgress);
         gProgressBar_ImportProgress.setProgress(0);
         gProgressBar_ImportProgress.setMax(100);
@@ -127,6 +136,10 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         public void onReceive(Context context, Intent intent) {
 
             String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
+            if (sReceiver == null) {
+                return;
+            }
+
             if(!sReceiver.contentEquals(Service_Import.RECEIVER_EXECUTE_IMPORT)){
                 return;
             }
@@ -153,13 +166,17 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 if(bUpdateLog){
                     String sLogLine;
                     sLogLine = intent.getStringExtra(Service_Import.LOG_LINE_STRING);
-                    if(gtextView_ImportLog != null) {
-                        gtextView_ImportLog.append(sLogLine);
-                    }
-                    if(sLogLine.contains("Operation complete.")){
-                        Button button_ImportFinish = getView().findViewById(R.id.button_ImportFinish);
-                        if(button_ImportFinish != null){
-                            button_ImportFinish.setEnabled(true);
+                    if(sLogLine != null) {
+                        if (gtextView_ImportLog != null) {
+                            gtextView_ImportLog.append(sLogLine);
+                        }
+                        if (sLogLine.contains("Operation complete.")) {
+                            if(getView() != null) {
+                                Button button_ImportFinish = getView().findViewById(R.id.button_ImportFinish);
+                                if (button_ImportFinish != null) {
+                                    button_ImportFinish.setEnabled(true);
+                                }
+                            }
                         }
                     }
                 }

@@ -7,8 +7,7 @@ import androidx.lifecycle.ViewModel;
 
 public class ViewModel_Fragment_SelectTags extends ViewModel {
     // TODO: Implement the ViewModel
-    public final ArrayList<ItemClass_Tag> alTagsAll = new ArrayList<>();  //All possible tags //todo: Exclude restricted tags?
-    public ArrayList<ItemClass_Tag> alTagsInUse = new ArrayList<>(); //Tags currently in-use //todo: Exclude restricted tags?
+    public final ArrayList<ItemClass_Tag> alTagsAll = new ArrayList<>();  //All possible tags
     public final MutableLiveData<ArrayList<ItemClass_Tag>> altiTagsSelected =
             new MutableLiveData<>(); //Tags selected by the user, or already applied to a selected item.
     public final MutableLiveData<ItemClass_Tag> tiTagItemRemoved =
@@ -35,7 +34,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
                 for(ItemClass_Tag tiOld : altiTagsSelected.getValue()){
                     bTagFound = false;
                     for (ItemClass_Tag tiIncoming : altiNew) {
-                        if(tiIncoming.TagID == tiOld.TagID){
+                        if(tiIncoming.TagID.equals(tiOld.TagID)){
                             bTagFound = true;
                             break;
                         }
@@ -54,7 +53,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
                 for (ItemClass_Tag tiIncoming : altiNew) {
                     bTagFound = false;
                     for(ItemClass_Tag tiOld : altiTagsSelected.getValue()){
-                        if(tiIncoming.TagID == tiOld.TagID){
+                        if(tiIncoming.TagID.equals(tiOld.TagID)){
                             bTagFound = true;
                             break;
                         }

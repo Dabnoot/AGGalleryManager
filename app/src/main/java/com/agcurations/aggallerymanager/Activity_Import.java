@@ -716,8 +716,8 @@ public class Activity_Import extends AppCompatActivity {
         @Override
         public Fragment createFragment(int position) {
             switch (position) {
-                case FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
-                    return new Fragment_Import_0_MediaCategory();
+                //case FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
+                //    return new Fragment_Import_0_MediaCategory();
                 case FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
                     return new Fragment_Import_1_StorageLocation();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
@@ -730,9 +730,9 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_5_Confirmation();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
-
+                default:
+                    return new Fragment_Import_0_MediaCategory();
             }
-            return null;
         }
 
         @Override

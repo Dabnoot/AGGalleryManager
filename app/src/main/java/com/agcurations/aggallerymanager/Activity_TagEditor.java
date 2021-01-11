@@ -6,25 +6,18 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioButton;
-import android.widget.Toast;
 
 
 public class Activity_TagEditor extends AppCompatActivity {
-    private GlobalClass globalClass;
 
     public ViewPager2 ViewPager2_TagEditor;
-    private ViewPagerAdapter_TagEditor viewPagerAdapter_tagEditor;
     private ViewModel_TagEditor viewModelTagEditor;
 
     //Fragment page indexes:
@@ -48,14 +41,11 @@ public class Activity_TagEditor extends AppCompatActivity {
         setContentView(R.layout.activity_tag_editor);
         setTitle("Tag Editor");
 
-        // Calling Application class (see application tag in AndroidManifest.xml)
-        globalClass = (GlobalClass) getApplicationContext();
-
         ViewPager2_TagEditor = findViewById(R.id.viewPager_TagEditor);
         // set Orientation in your ViewPager2
         ViewPager2_TagEditor.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
         //Set adapter for ViewPager2:
-        viewPagerAdapter_tagEditor = new ViewPagerAdapter_TagEditor(getSupportFragmentManager(), getLifecycle());
+        ViewPagerAdapter_TagEditor viewPagerAdapter_tagEditor = new ViewPagerAdapter_TagEditor(getSupportFragmentManager(), getLifecycle());
         ViewPager2_TagEditor.setAdapter(viewPagerAdapter_tagEditor);
         //Stop the user from swiping left and right on the ViewPager (control with Next button):
         ViewPager2_TagEditor.setUserInputEnabled(false);
@@ -79,13 +69,6 @@ public class Activity_TagEditor extends AppCompatActivity {
         }
 
 
-        /*//Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE);
-        filter.addCategory(Intent.CATEGORY_DEFAULT);
-        tagEditorServiceResponseReceiver = new TagEditorServiceResponseReceiver();
-        //registerReceiver(tagEditorServiceResponseReceiver, filter);
-        LocalBroadcastManager.getInstance(this).registerReceiver(tagEditorServiceResponseReceiver,filter);*/
-
     }
 
     //======================================================
@@ -102,13 +85,6 @@ public class Activity_TagEditor extends AppCompatActivity {
             finish();
         }
 
-    }
-
-    @Override
-    protected void onDestroy() {
-        //unregisterReceiver(tagEditorServiceResponseReceiver);
-//        LocalBroadcastManager.getInstance(this).unregisterReceiver(tagEditorServiceResponseReceiver);
-        super.onDestroy();
     }
 
     public void buttonNextClick_MediaCategorySelected(View v){
@@ -180,8 +156,8 @@ public class Activity_TagEditor extends AppCompatActivity {
         @Override
         public Fragment createFragment(int position) {
             switch (position) {
-                case FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY:
-                    return new Fragment_TagEditor_0_MediaCategory();
+                //case FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY:
+                //    return new Fragment_TagEditor_0_MediaCategory();
                 case FRAGMENT_TAG_EDITOR_1_ID_ACTION:
                     return new Fragment_TagEditor_1_Action();
                 case FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG:
@@ -190,9 +166,9 @@ public class Activity_TagEditor extends AppCompatActivity {
                     return new Fragment_TagEditor_3_EditTag();
                 case FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG:
                     return new Fragment_TagEditor_4_DeleteTag();
-
+                default:
+                    return new Fragment_TagEditor_0_MediaCategory();
             }
-            return null;
         }
 
         @Override

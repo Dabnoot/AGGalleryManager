@@ -246,6 +246,7 @@ public class Service_ComicDetails extends IntentService {
                             //If we are here, then it means that there was no data between the current
                             //  data block and the next data block. Skip gathering the data for this
                             //  data block.
+                            continue;
                         } else {
                             iterator = k + 1;
                         }

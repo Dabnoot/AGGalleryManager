@@ -61,7 +61,7 @@
         <activity android:name=".Activity_VideoPreview" />
         <service
             android:name=".Service_CatalogViewer"
-            android:exported="false"></service>
+            android:exported="false"/>
 
         <service
             android:name=".Service_TagEditor"

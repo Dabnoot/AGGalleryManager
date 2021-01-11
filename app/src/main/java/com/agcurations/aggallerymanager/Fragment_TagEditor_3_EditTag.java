@@ -36,10 +36,6 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     public Fragment_TagEditor_3_EditTag() {
         // Required empty public constructor
     }
@@ -66,11 +62,14 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            // TODO: Rename and change types of parameters
+            String mParam1 = getArguments().getString(ARG_PARAM1);
+            String mParam2 = getArguments().getString(ARG_PARAM2);
         }
         // Calling Application class (see application tag in AndroidManifest.xml)
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
+        if(getActivity() != null) {
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
         //Instantiate the ViewModel sharing data between fragments:
         viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
     }
@@ -98,20 +97,26 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             return;
         }
 
-        Button button_Apply = getView().findViewById(R.id.button_Apply);
-        button_Apply.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                button_Apply_Click(v);
-            }
-        });
+        if(getView() != null) {
+            Button button_Apply = getView().findViewById(R.id.button_Apply);
+            button_Apply.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    button_Apply_Click(v);
+                }
+            });
+        }
 
-        Button button_Finish = getView().findViewById(R.id.button_Finish);
-        button_Finish.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                getActivity().setResult(Activity.RESULT_OK);
-                getActivity().finish();
-            }
-        });
+        if(getView() != null) {
+            Button button_Finish = getView().findViewById(R.id.button_Finish);
+            button_Finish.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    if(getActivity() != null) {
+                        getActivity().setResult(Activity.RESULT_OK);
+                        getActivity().finish();
+                    }
+                }
+            });
+        }
 
         setupUI(getView().findViewById(R.id.linearLayout_fragment_tag_editor_2_add_tag));
 
@@ -120,6 +125,9 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
 
     private void RefreshTagListView(){
         //Populate the listView:
+        if (getView() == null) {
+            return;
+        }
         final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
 
         ArrayList<String> alsTags = new ArrayList<>();
@@ -130,6 +138,9 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
 
         String[] sTemp = new String[alsTags.size()];
         sTemp = alsTags.toArray(sTemp);
+        if (getActivity() == null) {
+            return;
+        }
         ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
         listView_TagViewer.setAdapter(aasTags);
 
@@ -154,6 +165,9 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
 
     public void button_Apply_Click(View v){
 
+        if(getView() == null){
+            return;
+        }
         EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
         String sNewTagName = editText_TagText.getText().toString();
         if(globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).containsKey(sNewTagName)){
@@ -179,7 +193,9 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         if (!(view instanceof EditText) && view != null) {
             view.setOnTouchListener(new View.OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
-                    GlobalClass.hideSoftKeyboard(getActivity());
+                    if(getActivity() != null) {
+                        GlobalClass.hideSoftKeyboard(getActivity());
+                    }
                     return false;
                 }
             });

@@ -72,6 +72,9 @@ public class Fragment_Import_3_SelectTags extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (getActivity() == null) {
+            return;
+        }
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
     }
@@ -145,9 +148,11 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     }
                 }
                 //Display the tags:
-                TextView tv = getView().findViewById(R.id.textView_ImportTags);
-                if(tv != null){
-                    tv.setText(sb.toString());
+                if(getView() != null) {
+                    TextView tv = getView().findViewById(R.id.textView_ImportTags);
+                    if (tv != null) {
+                        tv.setText(sb.toString());
+                    }
                 }
 
                 //Apply the selected tags to individual items:

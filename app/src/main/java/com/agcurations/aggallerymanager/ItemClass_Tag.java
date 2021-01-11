@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class ItemClass_Tag implements Serializable {
 
     public final Integer TagID;
+    @SuppressWarnings("CanBeFinal")
     public String TagText;
     public Boolean isRestricted = false;
 

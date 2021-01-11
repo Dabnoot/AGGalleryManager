@@ -70,6 +70,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         super.onCreate(savedInstanceState);
 
         // Calling Application class (see application tag in AndroidManifest.xml)
+        if (getActivity() == null) {
+            return;
+        }
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
     }
@@ -111,6 +114,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
         //Populate the ListView with selected file names from an earlier step:
         ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
+        if (getActivity() == null) {
+            return;
+        }
         confirmationFileListCustomAdapter = new ConfirmationFileListCustomAdapter(getActivity(), R.id.listView_FilesToImport, viewModelImportActivity.alfiConfirmedFileImports);
         if(listView_FilesToImport != null) {
             listView_FilesToImport.setAdapter(confirmationFileListCustomAdapter);

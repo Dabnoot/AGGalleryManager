@@ -99,9 +99,12 @@ public class Service_CatalogViewer extends IntentService {
 
                 //Delete the folder if the folder is now empty:
                 File fFolder = new File(sFileFolder);
-                if (fFolder.list().length == 0) {
-                    if (!fFolder.delete()) {
-                        problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + sFileFolder);
+                String[] sFilesRemaining = fFolder.list();
+                if(sFilesRemaining != null) {
+                    if (sFilesRemaining.length == 0) {
+                        if (!fFolder.delete()) {
+                            problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + sFileFolder);
+                        }
                     }
                 }
 

@@ -4,7 +4,6 @@ package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
 import android.app.Application;
-import android.content.ClipData;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -20,7 +19,6 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -279,8 +277,10 @@ public class GlobalClass extends Application {
                 (InputMethodManager) activity.getSystemService(
                         Activity.INPUT_METHOD_SERVICE);
         try {
-            inputMethodManager.hideSoftInputFromWindow(
-                    activity.getCurrentFocus().getWindowToken(), 0);
+            if(activity.getCurrentFocus() != null) {
+                inputMethodManager.hideSoftInputFromWindow(
+                        activity.getCurrentFocus().getWindowToken(), 0);
+            }
         } catch (Exception e){
             //Most likely null pointer if keyboard is not shown.
         }
@@ -322,14 +322,15 @@ public class GlobalClass extends Application {
         return gdtfDateFormatter.format(LocalDateTime.now());
     }
 
-    public static String ConvertDoubleTimeStampToString(String sTimeStamp){
+/*    public static String ConvertDoubleTimeStampToString(String sTimeStamp){
         double dTimeStamp = Double.parseDouble(sTimeStamp);
         int iYear = (int) (dTimeStamp / 10000);
         int iMonth = (int) ((dTimeStamp - iYear * 10000) / 100 );
         int iDay = (int) ((dTimeStamp - iYear * 10000 - iMonth * 100));
-        int iHour = (int) ((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100);
-        int iMinute = (int) ((((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100) - iHour) * 100);
-        int iSecond = (int) ((((((dTimeStamp - iYear * 10000 - iMonth * 100 - iDay) * 100) - iHour) * 100) - iMinute) * 100);
+        double dDatePortion = iYear * 10000 - iMonth * 100 - iDay;
+        int iHour = (int) ((dTimeStamp - dDatePortion) * 100);
+        int iMinute = (int) ((((dTimeStamp - dDatePortion) * 100) - iHour) * 100);
+        int iSecond = (int) ((((((dTimeStamp - dDatePortion) * 100) - iHour) * 100) - iMinute) * 100);
 
         return iYear + "-" +
                 String.format("%02d", iMonth) + "-" +
@@ -337,7 +338,7 @@ public class GlobalClass extends Application {
                 String.format("%02d", iHour) + ":" +
                 String.format("%02d", iMinute) + ":" +
                 String.format("%02d", iSecond);
-    }
+    }*/
 
 
     public static String JumbleStorageText(String sSourceText){
@@ -555,7 +556,12 @@ public class GlobalClass extends Application {
                     String[] sChildFiles = fComicFolderToBeDeleted.list();
                     if(sChildFiles != null) {
                         for (String sChildFile : sChildFiles) {
-                            new File(fComicFolderToBeDeleted, sChildFile).delete();
+                            File fChildFile = new File(fComicFolderToBeDeleted, sChildFile);
+                            if(!fChildFile.delete()){
+                                Toast.makeText(this, "Could not delete file of comic ID " + sComicID + ":\n" +
+                                                sChildFile,
+                                                Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
 
@@ -924,10 +930,9 @@ public class GlobalClass extends Application {
                     sFields = sLine.split("\t");
 
                     //Reverse the text of each field:
-                    for(int j = 0; j < sFields.length; j++){
+                    for(int j = 0; j < sFields.length; j++) {
                         sFields[j] = JumbleStorageText(sFields[j]);
                     }
-                    Integer iTagID = Integer.parseInt(sFields[0]);
 
                     ItemClass_Tag ict = new ItemClass_Tag(Integer.parseInt(sFields[TAG_ID_INDEX]), sFields[TAG_NAME_INDEX]);
 
@@ -945,7 +950,7 @@ public class GlobalClass extends Application {
                 if(fTagsFile.createNewFile()) {
                     try {
                         FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
-                        Integer i = 0;
+                        int i = 0;
                         //Write the header record:
                         fwTagsFile.write(TagRecordFields[0]);
                         for(int j = 1; j < TagRecordFields.length; j++){
@@ -956,8 +961,7 @@ public class GlobalClass extends Application {
                         //Write data records:
                         for (String sEntry : sDefaultTags) {
                             if(!sEntry.equals("")) {
-                                fwTagsFile.write(JumbleStorageText(i.toString()) + "\t" + JumbleStorageText(sEntry) + "\n");
-                                String[] s = new String[]{i.toString(), sEntry};
+                                fwTagsFile.write(JumbleStorageText(Integer.toString(i)) + "\t" + JumbleStorageText(sEntry) + "\n");
                                 ItemClass_Tag ict = new ItemClass_Tag(i, sEntry);
                                 tmTags.put(sEntry, ict);
                                 i++;
@@ -1129,6 +1133,7 @@ public class GlobalClass extends Application {
     }
 
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public String getTagRecordString(ItemClass_Tag ict){
 
         String sTagRecord =
@@ -1261,7 +1266,7 @@ public class GlobalClass extends Application {
     }
 
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
-        Integer iKey = -1;
+        int iKey = -1;
         for(Map.Entry<String, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             if(entry.getValue().TagText.equals(sTagText)){
                 iKey = entry.getValue().TagID;
@@ -1454,7 +1459,7 @@ public class GlobalClass extends Application {
     //=====================================================================================
 
     //A flag to turn on/off video file duration analysis:
-    public static boolean bVideoDeepDirectoryContentFileAnalysis = true;
+    public final static boolean bVideoDeepDirectoryContentFileAnalysis = true;
         //This flag allows the program to analyze video duration prior to import to allow
         //  sorting video files by duration in the file listView presented to the user. The user
         //  selects which files to import, and may wish to sort by video duration. If the user

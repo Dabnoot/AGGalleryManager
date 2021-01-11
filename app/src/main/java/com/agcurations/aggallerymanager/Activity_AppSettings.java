@@ -2,20 +2,13 @@ package com.agcurations.aggallerymanager;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.InputType;
 import android.widget.EditText;
-import android.widget.Toast;
-
-import org.jdom2.Parent;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -38,7 +31,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
     public static final String PREFERENCE_COMICS_TAGS_RESTRICTED = "com.agcurations.aggallerymanager.preferences.comics.tags.restricted";
 
-    private static File gfAppFolder;
     private static TreeMap<Integer, String> gtmComicTags;
     private static ArrayList<Integer> galiComicsRestrictedTags;
 
@@ -79,24 +71,13 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
         globalClass = (GlobalClass) getApplicationContext();
 
-        // Get the app directory:
-        File[] fAvailableDirs = getExternalFilesDirs(null);
-        if (fAvailableDirs.length == 2) {
-            //Create the folder on the likely SDCard:
-            gfAppFolder = new File(fAvailableDirs[1].toString());
-        }else{
-            //Create the folder on the likely Internal storage.
-            gfAppFolder = new File(fAvailableDirs[0].toString());
-        }
-
-
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         //gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
 
         //Get Comics' restricted tags:
-        String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
-        galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");
+        /*String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
+        galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");*/
 
     }
 
@@ -109,7 +90,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
         outState.putCharSequence(TITLE_TAG, getTitle());
     }
 
-    @Override
+    /*@Override
     public boolean onSupportNavigateUp() {
         if (getSupportFragmentManager().popBackStackImmediate()) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -117,12 +98,11 @@ public class Activity_AppSettings extends AppCompatActivity implements
             //Get Comics' restricted tags:
             String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
             galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");
-            //todo: I don't think this section s=does anything anymore, nor does it get hit.
 
             return true;
         }
         return super.onSupportNavigateUp();
-    }
+    }*/
 
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {

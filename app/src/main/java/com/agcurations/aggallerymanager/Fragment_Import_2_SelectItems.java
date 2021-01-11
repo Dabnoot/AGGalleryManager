@@ -80,6 +80,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         super.onResume();
 
         if(ListViewState != null) {
+            if(getView() == null){
+                return;
+            }
             ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
             listView_FolderContents.onRestoreInstanceState(ListViewState);
         } else {
@@ -89,6 +92,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
     @Override
     public void onPause() {
+        if(getView() == null){
+            return;
+        }
         ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
         ListViewState = listView_FolderContents.onSaveInstanceState();
         super.onPause();

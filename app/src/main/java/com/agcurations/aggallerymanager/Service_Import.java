@@ -226,7 +226,7 @@ public class Service_Import extends IntentService {
 
                     //Reverse the text on the file so that the file does not get picked off by a search tool:
                     if(dfSource.getName()==null) continue;
-                    String sFileName = globalClass.JumbleFileName(dfSource.getName());
+                    String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
 
                     outputStream = new FileOutputStream(fDestination.getPath() + File.separator + sFileName);
                     int iLoopCount = 0;

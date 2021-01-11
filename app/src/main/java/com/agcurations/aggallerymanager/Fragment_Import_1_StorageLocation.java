@@ -80,14 +80,20 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
-        viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
+        }
+        if(getActivity() != null) {
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        }
     }
 
     @Override
     public void onDestroy() {
         // unregister  like this
-        LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
+        if (getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
+        }
         super.onDestroy();
     }
 
@@ -234,9 +240,13 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         public void onReceive(Context context, Intent intent) {
 
             String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
-            if(!sReceiver.contentEquals(Service_Import.RECEIVER_STORAGE_LOCATION)){
+            if(sReceiver == null) {
                 return;
             }
+            if (!sReceiver.contentEquals(Service_Import.RECEIVER_STORAGE_LOCATION)) {
+                return;
+            }
+
 
             boolean bError;
 

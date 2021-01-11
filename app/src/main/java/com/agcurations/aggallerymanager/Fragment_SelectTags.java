@@ -4,7 +4,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -392,11 +391,10 @@ public class Fragment_SelectTags extends Fragment {
             if(getActivity() != null) {
                 if (tagItem.isChecked) {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                 } else {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                 }
+                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
             }
 
             v.setOnClickListener(new View.OnClickListener() {
@@ -429,7 +427,7 @@ public class Fragment_SelectTags extends Fragment {
                             galiPreselectedTags = new ArrayList<>();
                         }
                         for(int i = 0; i < galiPreselectedTags.size(); i++) {
-                            if(galiPreselectedTags.get(i) == tagItem.TagID){
+                            if(galiPreselectedTags.get(i).equals(tagItem.TagID)){
                                 galiPreselectedTags.remove(i);
                                 break;
                             }

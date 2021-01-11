@@ -7,7 +7,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.DragEvent;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -136,7 +135,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
                 if (mVisible && AUTO_HIDE) {
-                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                    delayedHide();
                 }
                 return super.onSingleTapConfirmed(e);
             }
@@ -161,11 +160,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         }
                     }
                     else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffY > 0) {
+                        /*if (diffY > 0) {
                             onSwipeBottom();
                         } else {
                             onSwipeTop();
-                        }
+                        }*/
                         result = true;
                     }
                 } catch (Exception exception) {
@@ -192,11 +191,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 }
             }
 
-            public void onSwipeTop() {
-            }
+//            public void onSwipeTop() {
+//            }
 
-            public void onSwipeBottom() {
-            }
+            /*public void onSwipeBottom() {
+            }*/
 
         });
 
@@ -248,7 +247,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
                 if (mVisible && AUTO_HIDE) {
-                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                    delayedHide();
                 }
                 return super.onSingleTapConfirmed(e);
             }
@@ -273,11 +272,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         }
                     }
                     else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        if (diffY > 0) {
+                        /*if (diffY > 0) {
                             onSwipeBottom();
                         } else {
                             onSwipeTop();
-                        }
+                        }*/
                         result = true;
                     }
                 } catch (Exception exception) {
@@ -302,11 +301,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 }
             }
 
-            public void onSwipeTop() {
-            }
+//            public void onSwipeTop() {
+//            }
 
-            public void onSwipeBottom() {
-            }
+            /*public void onSwipeBottom() {
+            }*/
 
         });
 
@@ -649,11 +648,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
      * Schedules a call to hide() in delay milliseconds, canceling any
      * previously scheduled calls.
      */
-    private void delayedHide(int delayMillis) {
+    private void delayedHide() {
         //Use with caution. It makes trouble for the user when combined with a mediaController.
         //  Above note from AGGalleryManager author, WRC.
         mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+        mHideHandler.postDelayed(mHideRunnable, Activity_VideoPlayer.AUTO_HIDE_DELAY_MILLIS);
     }
 
 }

@@ -19,10 +19,6 @@ public class Activity_PinCodePopup extends Activity {
 
     GlobalClass globalClass;
 
-    public static final int START_ACTIVITY_FOR_RESULT_PIN_CODE_ACCESS_SETTINGS = 2100;
-    public static final int START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS = 2200;
-    public static final int START_ACTIVITY_FOR_RESULT_EDIT_TAGS = 2300;
-
     public static final int PIN_CODE_MATCH = -1;
     public static final int PIN_CODE_NO_MATCH = 0;
 
@@ -105,12 +101,6 @@ public class Activity_PinCodePopup extends Activity {
     public void buttonCancelClick(View v){
         setResult(PIN_CODE_NO_MATCH);
         finish();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
     }
 
     public int getStatusBarHeight() {

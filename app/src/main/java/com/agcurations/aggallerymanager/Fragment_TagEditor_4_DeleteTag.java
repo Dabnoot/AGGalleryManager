@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -44,10 +45,6 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     public Fragment_TagEditor_4_DeleteTag() {
         // Required empty public constructor
@@ -77,12 +74,15 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            // TODO: Rename and change types of parameters
+            String mParam1 = getArguments().getString(ARG_PARAM1);
+            String mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
         // Calling Application class (see application tag in AndroidManifest.xml)
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
+        if(getActivity() != null) {
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
         //Instantiate the ViewModel sharing data between fragments:
         viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
 
@@ -107,15 +107,13 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         initComponents();
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
 
     @Override
     public void onDestroy() {
         //unregisterReceiver(tagEditorServiceResponseReceiver);
-        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(tagEditorServiceResponseReceiver);
+        if(getActivity() != null) {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(tagEditorServiceResponseReceiver);
+        }
         super.onDestroy();
     }
 
@@ -131,24 +129,33 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
         RefreshTagListView();
 
-        Button button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
-        button_DeleteTag.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                button_DeleteTag_Click(v);
-            }
-        });
+        if(getView() != null) {
+            Button button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
+            button_DeleteTag.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    button_DeleteTag_Click(v);
+                }
+            });
+        }
 
-        Button button_Finish = getView().findViewById(R.id.button_Finish);
-        button_Finish.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                getActivity().setResult(Activity.RESULT_OK);
-                getActivity().finish();
-            }
-        });
+        if(getView() != null) {
+            Button button_Finish = getView().findViewById(R.id.button_Finish);
+            button_Finish.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    if(getActivity() != null) {
+                        getActivity().setResult(Activity.RESULT_OK);
+                        getActivity().finish();
+                    }
+                }
+            });
+        }
     }
 
     private void RefreshTagListView(){
         //Populate the listView:
+        if (getView() == null) {
+            return;
+        }
         final ListView listView_TagDelete = getView().findViewById(R.id.listView_TagDelete);
 
         // Create the adapter for the ListView, and set the ListView adapter:
@@ -170,9 +177,16 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
 
     private void button_DeleteTag_Click(View v){
+        if (getView() == null) {
+            return;
+        }
         ListView listView_TagDelete = getView().findViewById(R.id.listView_TagDelete);
-        String sConfirmationMessage = "Confirm tag deletion: " + gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected).TagText;
+        String sConfirmationMessage = "Confirm tag geletion: ";
+        sConfirmationMessage = sConfirmationMessage + Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)).TagText;
 
+        if (getActivity() == null) {
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
         builder.setTitle("Delete Tag");
         builder.setMessage(sConfirmationMessage);
@@ -259,11 +273,10 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             if(getActivity() != null) {
                 if (tagItem.isChecked) {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                 } else {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
                 }
+                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorGrey1));
             }
 
             v.setOnClickListener(new View.OnClickListener() {
@@ -281,9 +294,11 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
                     ItemClass_Tag tagItem_Clicked = getItem(position);
 
-                    tagItem_Clicked.isChecked = !tagItem_Clicked.isChecked;
-                    if(tagItem_Clicked.isChecked){
-                        iTagItemSelected = position;
+                    if(tagItem_Clicked != null) {
+                        tagItem_Clicked.isChecked = !tagItem_Clicked.isChecked;
+                        if (tagItem_Clicked.isChecked) {
+                            iTagItemSelected = position;
+                        }
                     }
 
                     //Tell the listView adapter to redraw everything, thus "unselecting" any previously selected item:

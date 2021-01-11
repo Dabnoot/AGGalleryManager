@@ -180,22 +180,24 @@ public class Service_TagEditor extends IntentService {
             File fTagFolderPath = new File(sTagFolderPath);
             if(fTagFolderPath.exists()){
                 File[] fFileList = fTagFolderPath.listFiles();
-                if(fFileList.length == 0){
-                    try{
-                        if(!fTagFolderPath.delete()){
-                            String sMessage = "Could not delete tag folder:\n" + fTagFolderPath.getPath();
+                if(fFileList != null) {
+                    if (fFileList.length == 0) {
+                        try {
+                            if (!fTagFolderPath.delete()) {
+                                String sMessage = "Could not delete tag folder:\n" + fTagFolderPath.getPath();
+                                problemNotificationConfig(sMessage);
+                                return;
+                            }
+                        } catch (Exception e) {
+                            String sMessage = "Could not delete tag folder:\n" + fTagFolderPath.getPath() + "\n" + e.getMessage();
                             problemNotificationConfig(sMessage);
                             return;
                         }
-                    } catch (Exception e){
-                        String sMessage = "Could not delete tag folder:\n" + fTagFolderPath.getPath() + "\n" + e.getMessage();
+                    } else {
+                        String sMessage = "Tag delete aborted. Tag folder not empty. Could not delete tag folder:\n" + fTagFolderPath.getPath();
                         problemNotificationConfig(sMessage);
                         return;
                     }
-                } else {
-                    String sMessage = "Tag delete aborted. Tag folder not empty. Could not delete tag folder:\n" + fTagFolderPath.getPath();
-                    problemNotificationConfig(sMessage);
-                    return;
                 }
             }
         }

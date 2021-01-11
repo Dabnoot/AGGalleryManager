@@ -384,29 +384,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     }
 
 
-    @Override
-    //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void onActivityResult(int requestCode, int resultCode,
-                                 Intent resultData) {
-
-        try {
-            super.onActivityResult(requestCode, resultCode, resultData);
-
-            if(requestCode == Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS){
-                if(resultCode == RESULT_OK){
-
-                }
-            }
-
-        } catch (Exception ex) {
-            Context context = getApplicationContext();
-            Toast.makeText(context, ex.toString(),
-                    Toast.LENGTH_SHORT).show();
-            Log.i(LOG_TAG, ex.toString());
-        }
-
-    }
-
     public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {
         public static final String CATALOG_VIEWER_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CATALOG_VIEWER_SERVICE";
 
