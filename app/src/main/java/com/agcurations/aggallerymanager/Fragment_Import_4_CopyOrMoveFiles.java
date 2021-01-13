@@ -12,17 +12,17 @@ import android.view.ViewGroup;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_4_ImportMethod#newInstance} factory method to
+ * Use the {@link Fragment_Import_4_CopyOrMoveFiles#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class Fragment_Import_4_ImportMethod extends Fragment {
+public class Fragment_Import_4_CopyOrMoveFiles extends Fragment {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
-    public Fragment_Import_4_ImportMethod() {
+    public Fragment_Import_4_CopyOrMoveFiles() {
         // Required empty public constructor
     }
 
@@ -35,8 +35,8 @@ public class Fragment_Import_4_ImportMethod extends Fragment {
      * @return A new instance of fragment FragmentImport_4_ImportMethod.
      */
     // TODO: Rename and change types and number of parameters
-    public static Fragment_Import_4_ImportMethod newInstance(String param1, String param2) {
-        Fragment_Import_4_ImportMethod fragment = new Fragment_Import_4_ImportMethod();
+    public static Fragment_Import_4_CopyOrMoveFiles newInstance(String param1, String param2) {
+        Fragment_Import_4_CopyOrMoveFiles fragment = new Fragment_Import_4_CopyOrMoveFiles();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);

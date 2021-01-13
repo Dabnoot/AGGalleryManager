@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.DocumentsContract;
@@ -143,7 +144,7 @@ public class Service_Import extends IntentService {
         long lLoopBytesRead;
 
 
-        ContentResolver content = getApplicationContext().getContentResolver();
+        ContentResolver contentResolver = getApplicationContext().getContentResolver();
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
@@ -222,7 +223,7 @@ public class Service_Import extends IntentService {
                             RECEIVER_EXECUTE_IMPORT);
 
                     if(dfSource == null) continue;
-                    inputStream = content.openInputStream(dfSource.getUri());
+                    inputStream = contentResolver.openInputStream(dfSource.getUri());
 
                     //Reverse the text on the file so that the file does not get picked off by a search tool:
                     if(dfSource.getName()==null) continue;
@@ -293,12 +294,6 @@ public class Service_Import extends IntentService {
                                 sDateTime
                         };
 
-                    /*public void CatalogDataFile_CreateNewRecord(
-                            File fCatalogContentsFile,
-                            int iRecordID,
-                            TreeMap<Integer, String[]> tmCatalogRecords,
-                            String[] sFieldData){*/
-
                         //The below call should add the record to both the catalog contents file
                         //  and memory:
                         globalClass.CatalogDataFile_CreateNewRecord(
@@ -306,7 +301,46 @@ public class Service_Import extends IntentService {
                                 sFieldData,
                                 iMediaCategory);
 
+                    } else if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                        //Add record to catalog contents:
+                    /*
+                        "IMAGE_ID",
+                        "IMAGE_FILENAME",
+                        "SIZE_KB",
+                        "DIMENSIONS",
+                        "FOLDER_NAME",
+                        "TAGS",
+                        "CAST",
+                        "SOURCE",
+                        "DATETIME_LAST_VIEWED_BY_USER",
+                        "DATETIME_IMPORT"
+                    */
+
+                        //Create a timestamp to be used to create the data record:
+                        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+                        String sDateTime = dTimeStamp.toString();
+
+                        String[] sFieldData = new String[]{
+                                String.valueOf(iNextRecordId),
+                                sFileName,
+                                String.valueOf(fileItem.sizeBytes),
+                                fileItem.width + "x" + fileItem.height,
+                                fileItem.destinationFolder,
+                                GlobalClass.formDelimitedString(fileItem.prospectiveTags,","),
+                                "",
+                                "",
+                                sDateTime,
+                                sDateTime
+                        };
+
+                        //The below call should add the record to both the catalog contents file
+                        //  and memory:
+                        globalClass.CatalogDataFile_CreateNewRecord(
+                                iNextRecordId,
+                                sFieldData,
+                                iMediaCategory);
                     }
+
                     iNextRecordId += 1; //Identify the next record ID to assign.
 
                     if (iMoveOrCopy == Activity_Import.IMPORT_METHOD_MOVE) {
@@ -493,6 +527,8 @@ public class Service_Import extends IntentService {
 
             //If the file is video, get the duration so that the file list can be sorted by duration if requested.
             long lDurationInMilliseconds = -1L;
+            String sWidth = "";  //We are not doing math with the width and height. Therefore no need to convert to int.
+            String sHeight = "";
             if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS && GlobalClass.bVideoDeepDirectoryContentFileAnalysis) {
                 if (mimeType.startsWith("video") ||
                         (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
@@ -502,6 +538,8 @@ public class Service_Import extends IntentService {
                         //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
                         continue; //Skip the rest of this loop.
                     }
+                    sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                    sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
                     String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                     lDurationInMilliseconds = Long.parseLong(time);
                 } else { //if it's not a video file, check to see if it's a gif:
@@ -511,12 +549,31 @@ public class Service_Import extends IntentService {
                         try {
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             lDurationInMilliseconds = gd.getDuration();
+                            sWidth = "" + gd.getIntrinsicWidth();
+                            sHeight = "" + gd.getIntrinsicHeight();
                         } catch (Exception e) {
                             problemNotificationConfig(e.getMessage() + "\n" + docName);
                             continue; //Skip the rest of this loop.
                         }
                     }
                 }
+            } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+                //Get the width and height of the image:
+                try {
+                    InputStream input = this.getContentResolver().openInputStream(docUri);
+                    if(input != null) {
+                        BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                        onlyBoundsOptions.inJustDecodeBounds = true;
+                        BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                        input.close();
+                        sWidth = "" + onlyBoundsOptions.outWidth;
+                        sHeight = "" + onlyBoundsOptions.outHeight;
+                    }
+
+                } catch (Exception e){
+                    continue; //Skip the rest of this loop.
+                }
+
             }
 
 
@@ -526,7 +583,7 @@ public class Service_Import extends IntentService {
 
             //create the file model and initialize:
             //Don't detect the duration of video files here. It could take too much time.
-            ItemClass_File fileItem = new ItemClass_File(fileType, docName, fileExtension, lFileSize, dateLastModified, false, sUri, mimeType, lDurationInMilliseconds);
+            ItemClass_File fileItem = new ItemClass_File(fileType, docName, fileExtension, lFileSize, dateLastModified, sWidth, sHeight, false, sUri, mimeType, lDurationInMilliseconds);
 
             //Add the file model to the ArrayList:
             alFileList.add(fileItem);

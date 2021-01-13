@@ -725,7 +725,7 @@ public class Activity_Import extends AppCompatActivity {
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
                     return new Fragment_Import_3_SelectTags();
                 case FRAGMENT_IMPORT_4_ID_IMPORT_METHOD:
-                    return new Fragment_Import_4_ImportMethod();
+                    return new Fragment_Import_4_CopyOrMoveFiles();
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                     return new Fragment_Import_5_Confirmation();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:

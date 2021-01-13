@@ -74,7 +74,7 @@ public class GlobalClass extends Application {
             {"IMAGE_ID",
                     "IMAGE_FILENAME",
                     "SIZE_KB",
-                    "RESOLUTION",
+                    "DIMENSIONS",
                     "FOLDER_NAME",
                     "TAGS",
                     "CAST",
@@ -113,7 +113,7 @@ public class GlobalClass extends Application {
     public static final int VIDEO_SIZE_MB_INDEX = 2;
     public static final int VIDEO_DURATION_MILLISECONDS_INDEX = 3;          //Duration of video in Milliseconds
     public static final int VIDEO_DURATION_TEXT_INDEX = 4;                  //Duration of video text
-    public static final int VIDEO_RESOLUTION_INDEX = 5;
+    public static final int VIDEO_RESOLUTION_INDEX = 5;                     //Width x Height
     public static final int VIDEO_FOLDER_NAME_INDEX = 6;                    //Name of the folder holding the video
     public static final int VIDEO_TAGS_INDEX = 7;                           //Tags given to the video
     public static final int VIDEO_CAST_INDEX = 8;
@@ -130,7 +130,7 @@ public class GlobalClass extends Application {
     public static final int IMAGE_ID_INDEX = 0;                             //Image ID
     public static final int IMAGE_FILENAME_INDEX = 1;
     public static final int IMAGE_SIZE_KB_INDEX = 2;
-    public static final int IMAGE_RESOLUTION_INDEX = 3;
+    public static final int IMAGE_DIMENSIONS_INDEX = 3;
     public static final int IMAGE_FOLDER_NAME_INDEX = 4;                    //Name of the folder holding the imGE
     public static final int IMAGE_TAGS_INDEX = 5;                           //Tags given to the Image
     public static final int IMAGE_CAST_INDEX = 6;
@@ -1220,23 +1220,25 @@ public class GlobalClass extends Application {
             }
         }
 
-        //Format the strings:
-        ArrayList<Integer> aliTagsInUse = new ArrayList<>();
-        Iterator<String> isIterator = ssTemp.iterator();
-        aliTagsInUse.add(Integer.parseInt(isIterator.next()));
-        while(isIterator.hasNext()){
-            aliTagsInUse.add(Integer.parseInt(isIterator.next()));
-        }
-
         TreeMap<String, ItemClass_Tag> tmTagsInUse = new TreeMap<>();
-        for(Integer iTagID : aliTagsInUse){
-            String sTagText = getTagTextFromID(iTagID, iMediaCategory);
-            ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
-            ItemClass_Tag ictTemp = gtmCatalogTagReferenceLists.get(iMediaCategory).get(ict.TagText);
-            if(ictTemp != null) {
-                ict.isRestricted = ictTemp.isRestricted;
+        if(ssTemp.size() > 0) {
+            //Format the strings:
+            ArrayList<Integer> aliTagsInUse = new ArrayList<>();
+            Iterator<String> isIterator = ssTemp.iterator();
+            aliTagsInUse.add(Integer.parseInt(isIterator.next()));
+            while (isIterator.hasNext()) {
+                aliTagsInUse.add(Integer.parseInt(isIterator.next()));
             }
-            tmTagsInUse.put(sTagText, ict);
+
+            for (Integer iTagID : aliTagsInUse) {
+                String sTagText = getTagTextFromID(iTagID, iMediaCategory);
+                ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
+                ItemClass_Tag ictTemp = gtmCatalogTagReferenceLists.get(iMediaCategory).get(ict.TagText);
+                if (ictTemp != null) {
+                    ict.isRestricted = ictTemp.isRestricted;
+                }
+                tmTagsInUse.put(sTagText, ict);
+            }
         }
 
         return tmTagsInUse;

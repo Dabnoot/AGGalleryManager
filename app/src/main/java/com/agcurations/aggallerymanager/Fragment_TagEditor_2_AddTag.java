@@ -69,7 +69,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
         //Instantiate the ViewModel sharing data between fragments:
-        viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
+        viewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
     }
 
     @Override
