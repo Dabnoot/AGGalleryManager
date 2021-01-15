@@ -135,16 +135,26 @@
         <item name="android:background">@color/colorBlack</item>
         <item name="buttonBarButtonStyle">@style/ButtonBarStyleCustom</item>
     </style>
+
     <style name="ButtonBarStyleCustom" parent="@style/Theme.AppCompat.DayNight.Dialog">
         <item name="android:textColor">@color/colorBlack</item>
         <item name="textAllCaps">true</item>
         <item name="android:textStyle">bold</item>
-<!--        <item name="android:background">?android:attr/selectableItemBackground</item> Hide the button edges. -->
+        <!--        <item name="android:background">?android:attr/selectableItemBackground</item> Hide the button edges. -->
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_gravity">start</item>
         <item name="android:gravity">center</item> <!-- Affects the text position in the button -->
         <item name="android:layout_marginStart">15dp</item>
         <item name="backgroundTint">@color/colorBlackboardRed</item>
+    </style>
+
+    <style name="Widget.AppTheme.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
+    </style>
+
+    <style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
 
 </resources>

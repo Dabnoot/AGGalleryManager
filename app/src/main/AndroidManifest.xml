@@ -12,7 +12,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".Activity_TagEditor" />
-
         <activity
             android:name=".Activity_VideoPlayer"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -45,7 +44,7 @@
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".Activity_ComicPageViewer"
+            android:name=".Activity_SeriesImageViewer"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer"
             android:parentActivityName=".Activity_ComicDetails"
@@ -59,10 +58,10 @@
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_VideoPreview" />
+
         <service
             android:name=".Service_CatalogViewer"
-            android:exported="false"/>
-
+            android:exported="false" />
         <service
             android:name=".Service_TagEditor"
             android:exported="false" />
@@ -82,10 +81,10 @@
             android:name=".Service_ImportComics_obsolete"
             android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

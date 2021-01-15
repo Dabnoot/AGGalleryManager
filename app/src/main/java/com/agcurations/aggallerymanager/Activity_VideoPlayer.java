@@ -128,6 +128,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             @Override
             public boolean onDown(MotionEvent e) {
+
+                if (AUTO_HIDE) {
+                    //Delay hide while the user is interacting with controls
+                    delayedHide();
+                }
+
                 return true;
             }
 

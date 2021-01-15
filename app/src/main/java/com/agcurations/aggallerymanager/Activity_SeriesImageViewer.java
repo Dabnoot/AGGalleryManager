@@ -35,7 +35,7 @@ import java.util.TreeMap;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class Activity_ComicPageViewer extends AppCompatActivity {
+public class Activity_SeriesImageViewer extends AppCompatActivity {
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -101,14 +101,13 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
 
     //Comic global variables
     private GlobalClass globalClass;
-    String[] gsComicFields;
-    private TreeMap<Integer, String> tmComicPages;
-    private String gsComicName = "";
-    private int giCurrentPageIndex;
+    private TreeMap<Integer, String> tmImagePaths;
+    private String gsActivityTitleString = "";
+    private int giCurrentImageIndex;
     private int giMaxFileCount;
 
     //Graphics global variables
-    private ImageView givComicPage;
+    private ImageView givImageViewer;
     private Point gpDisplaySize;
     private Point gpLastDisplaySize;
     private int giImageWidth = 0;
@@ -166,12 +165,13 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         //Get the intent used to start this activity:
         Intent intentCaller = getIntent();
         //Get data from the intent:
-        giCurrentPageIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START,0);
+        giCurrentImageIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START,0);
+        String[] gsComicFields;
         gsComicFields = intentCaller.getStringArrayExtra(EXTRA_COMIC_FIELDS_STRING);
 
 
         if( gsComicFields == null) return;
-        gsComicName = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
+        gsActivityTitleString = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
         giMaxFileCount = Integer.parseInt(gsComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
@@ -181,12 +181,12 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
-        tmComicPages = new TreeMap<>();
+        tmImagePaths = new TreeMap<>();
         if(fComicFolder.exists()){
             File[] fComicPages = fComicFolder.listFiles();
             if(fComicPages != null) {
                 for (int i = 0; i < fComicPages.length; i++) {
-                    tmComicPages.put(i, fComicPages[i].getAbsolutePath());
+                    tmImagePaths.put(i, fComicPages[i].getAbsolutePath());
                 }
             }
         }
@@ -205,7 +205,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         mContentView.post(new Runnable(){
             public void run(){
                 //https://stackoverflow.com/questions/12829653/content-view-width-and-height/21426049
-                LoadComicPage(giCurrentPageIndex);
+                LoadComicPage(giCurrentImageIndex);
             }
         });
 
@@ -229,7 +229,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
             public void onSwipeRight() {
                 if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped right", Toast.LENGTH_SHORT).show();
                 if(gfScaleFactor <= gfJumpOutAxisScale) {
-                    if(giCurrentPageIndex == 0){
+                    if(giCurrentImageIndex == 0){
                         if(iSwipeToExitCounter == 0) {
                             Toast.makeText(getApplicationContext(), "Start of comic", Toast.LENGTH_SHORT).show();
                         } else if (iSwipeToExitCounter == 1){
@@ -250,7 +250,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
 
                 if(gfScaleFactor <= gfJumpOutAxisScale){
 
-                    if(giCurrentPageIndex == (giMaxFileCount - 1)){
+                    if(giCurrentImageIndex == (giMaxFileCount - 1)){
                         if(iSwipeToExitCounter == 0) {
                             Toast.makeText(getApplicationContext(), "End of comic", Toast.LENGTH_SHORT).show();
                         } else if (iSwipeToExitCounter == 1){
@@ -268,15 +268,8 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         });
 
 
-        givComicPage = findViewById(R.id.imageView_ComicPage);
-        givComicPage.setScaleType(ImageView.ScaleType.MATRIX);
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        //findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
-
-
+        givImageViewer = findViewById(R.id.imageView_ComicPage);
+        givImageViewer.setScaleType(ImageView.ScaleType.MATRIX);
 
     }
 
@@ -323,10 +316,6 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
     }
 
-    /**
-     * Schedules a call to hide() in delay milliseconds, canceling any
-     * previously scheduled calls.
-     */
     private void delayedHide(int delayMillis) {
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, delayMillis);
@@ -340,15 +329,15 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
 
 
 
-        if(tmComicPages.containsKey(iPageIndex)){
-            if(tmComicPages.get(iPageIndex) == null){
+        if(tmImagePaths.containsKey(iPageIndex)){
+            if(tmImagePaths.get(iPageIndex) == null){
                 return;
             }
         } else {
             return;
         }
 
-        File fComicPage = new File(Objects.requireNonNull(tmComicPages.get(iPageIndex)));
+        File fComicPage = new File(Objects.requireNonNull(tmImagePaths.get(iPageIndex)));
 
 
         if (fComicPage.exists()) {
@@ -393,7 +382,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
             if(globalClass.ObfuscationOn) {
 
                 //Get the obfuscation image index:
-                int i = (giCurrentPageIndex % globalClass.getObfuscationImageCount());
+                int i = (giCurrentImageIndex % globalClass.getObfuscationImageCount());
                 //Get the obfuscation image resource ID:
                 int iObfuscatorResourceID = globalClass.getObfuscationImage(i);
                 myBitmap = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
@@ -402,10 +391,10 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                 setTitle(globalClass.getObfuscationCategoryName());
             } else {
                 myBitmap = BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
-                setTitle(gsComicName);
+                setTitle(gsActivityTitleString);
             }
 
-            givComicPage.setImageBitmap(myBitmap);
+            givImageViewer.setImageBitmap(myBitmap);
             CenterComicPage();
         }
     }
@@ -414,14 +403,14 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         //This routine gets called after a page is loaded, and when an orientation change has
         //  been detected.
         //Get the dimensions of the image loaded into the ImageView:
-        Drawable d = givComicPage.getDrawable();
+        Drawable d = givImageViewer.getDrawable();
         if( d == null) return;
 
         giImageWidth = d.getIntrinsicWidth();
         giImageHeight = d.getIntrinsicHeight();
 
         RectF imageRectF = new RectF(0, 0, giImageWidth, giImageHeight);
-        RectF viewRectF = new RectF(0, 0, givComicPage.getWidth(), gpDisplaySize.y);
+        RectF viewRectF = new RectF(0, 0, givImageViewer.getWidth(), gpDisplaySize.y);
         matrix.setRectToRect(imageRectF, viewRectF, Matrix.ScaleToFit.CENTER);
 
         //Get the values from the matrix:
@@ -444,20 +433,20 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         gfImageViewOriginX = values[Matrix.MTRANS_X];
         gfImageViewOriginY = values[Matrix.MTRANS_Y];
 
-        givComicPage.setImageMatrix(matrix);
+        givImageViewer.setImageMatrix(matrix);
     }
 
     private void gotoNextComicPage(){
-        if(giCurrentPageIndex < tmComicPages.size() - 1){
-            giCurrentPageIndex++;
-            LoadComicPage(giCurrentPageIndex);
+        if(giCurrentImageIndex < tmImagePaths.size() - 1){
+            giCurrentImageIndex++;
+            LoadComicPage(giCurrentImageIndex);
         }
     }
 
     private void gotoPreviousComicPage(){
-        if(giCurrentPageIndex > 0){
-            giCurrentPageIndex--;
-            LoadComicPage(giCurrentPageIndex);
+        if(giCurrentImageIndex > 0){
+            giCurrentImageIndex--;
+            LoadComicPage(giCurrentImageIndex);
         }
     }
 
@@ -518,7 +507,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                 case MotionEvent.ACTION_UP: //first finger lifted
                 case MotionEvent.ACTION_POINTER_UP: //second finger lifted
 
-                    savedMatrix.set(givComicPage.getImageMatrix());
+                    savedMatrix.set(givImageViewer.getImageMatrix());
                     mode = NONE;
                     break;
                 case MotionEvent.ACTION_POINTER_DOWN: //second finger down
@@ -632,7 +621,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                         }
 
                         // Perform the transformation
-                        givComicPage.setImageMatrix(matrix);
+                        givImageViewer.setImageMatrix(matrix);
                     }
 
                     //========================================
@@ -657,7 +646,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                         float fMidPointX = gpMidPoint.x;
                         float fMidPointY = gpMidPoint.y;
                         float[] fImageMatrixValues = new float[9];
-                        givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                        givImageViewer.getImageMatrix().getValues(fImageMatrixValues);
                         float fScaledWidth = fImageMatrixValues[Matrix.MSCALE_X] * giImageWidth;
                         if(fScaledWidth < gpDisplaySize.x) {
                             //if the width of the image is less than the width of the screen,
@@ -692,7 +681,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                             values[Matrix.MSCALE_X] = globalClass.bCPV_MaxScale;
                             values[Matrix.MSCALE_Y] = globalClass.bCPV_MaxScale;
                             //Restore the translated X & Y coordinates to the values array:
-                            givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                            givImageViewer.getImageMatrix().getValues(fImageMatrixValues);
                             values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
                             values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
                             //Place the values in the matrix:
@@ -723,13 +712,13 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                                     //Set the translated x-value to the left edge of the screen:
                                     values[Matrix.MTRANS_X] = 0;
                                     //Retain the translated y-value of the image:
-                                    givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                                    givImageViewer.getImageMatrix().getValues(fImageMatrixValues);
                                     values[Matrix.MTRANS_Y] = fImageMatrixValues[Matrix.MTRANS_Y];
                                 } else {
                                     //Set the translated y-value to the left edge of the screen:
                                     values[Matrix.MTRANS_Y] = 0;
                                     //Retain the translated x-value of the image:
-                                    givComicPage.getImageMatrix().getValues(fImageMatrixValues);
+                                    givImageViewer.getImageMatrix().getValues(fImageMatrixValues);
                                     values[Matrix.MTRANS_X] = fImageMatrixValues[Matrix.MTRANS_X];
                                 }
 
@@ -838,7 +827,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
                         gfScaleFactor = values[Matrix.MSCALE_X];
 
                         // Perform the transformation
-                        givComicPage.setImageMatrix(matrix);
+                        givImageViewer.setImageMatrix(matrix);
 
                     }
 
@@ -956,7 +945,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
     public void FlipObfuscation() {
         globalClass.ObfuscationOn = !globalClass.ObfuscationOn;
         //LoadComicPage will automatically load the obfuscated/non-obfuscated image as required:
-        LoadComicPage(giCurrentPageIndex);
+        LoadComicPage(giCurrentImageIndex);
     }
 
     public void Obfuscate() {
@@ -964,7 +953,7 @@ public class Activity_ComicPageViewer extends AppCompatActivity {
         // by either a long-press or the toggle option on the menu.
         if(!globalClass.ObfuscationOn) {
             globalClass.ObfuscationOn = true;
-            LoadComicPage(giCurrentPageIndex);
+            LoadComicPage(giCurrentImageIndex);
         }
     }
 

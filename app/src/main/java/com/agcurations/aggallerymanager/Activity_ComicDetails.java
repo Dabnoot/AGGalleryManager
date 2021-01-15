@@ -515,10 +515,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
     //=====================================================================================
 
     public void StartComicViewerActivity(int iComicPage){
-        Intent intentComicViewer = new Intent(this, Activity_ComicPageViewer.class);
+        Intent intentComicViewer = new Intent(this, Activity_SeriesImageViewer.class);
 
-        intentComicViewer.putExtra(Activity_ComicPageViewer.EXTRA_COMIC_FIELDS_STRING, gsComicFields);
-        intentComicViewer.putExtra(Activity_ComicPageViewer.EXTRA_COMIC_PAGE_START, iComicPage);
+        intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_COMIC_FIELDS_STRING, gsComicFields);
+        intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_COMIC_PAGE_START, iComicPage);
 
         /*//Record the COMIC_DATETIME_LAST_READ_BY_USER: <<<Moved to CatalogActivity to set last read to <preview>
                                                             as user may preview, decide not to view, and go back.
