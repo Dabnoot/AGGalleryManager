@@ -359,24 +359,27 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private boolean bFileIsGif;
     private Uri getMedia() {
-
+        int iMediaCategory = globalClass.giSelectedCatalogMediaCategory;
         if(treeMapRecyclerViewVideos.containsKey(giKey)) {
             String[] sFields = treeMapRecyclerViewVideos.get(giKey);
             if (sFields != null) {
-                String sVideoPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() + File.separator +
-                        sFields[GlobalClass.VIDEO_FOLDER_NAME_INDEX] + File.separator +
-                        sFields[GlobalClass.VIDEO_FILENAME_INDEX];
+                String sFileName = sFields[GlobalClass.giDataRecordFileNameIndexes[iMediaCategory]];
+                String sFilePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                        sFields[GlobalClass.giDataRecordFolderIndexes[iMediaCategory]] + File.separator +
+                        sFileName;
+
+                setTitle(GlobalClass.JumbleFileName(sFileName));
+
                 //Determine if this is a gif file, which the VideoView will not play:
-                setTitle(GlobalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]));
-                bFileIsGif = GlobalClass.JumbleFileName(sFields[GlobalClass.VIDEO_FILENAME_INDEX]).contains(".gif");
+                bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
                 //Populate the tags fragment:
-                ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sFields[GlobalClass.VIDEO_TAGS_INDEX], ",");
+                ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sFields[GlobalClass.giDataRecordTagsIndexes[iMediaCategory]], ",");
                 //Start the tag selection fragment:
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
                 Fragment_SelectTags fst = new Fragment_SelectTags();
                 Bundle args = new Bundle();
-                args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS);
+                args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, iMediaCategory);
                 args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTags);
                 fst.setArguments(args);
                 ft.replace(R.id.fragment_tag_selector, fst);
@@ -386,16 +389,15 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 Double dTimeStamp = GlobalClass.GetTimeStampFloat();
                 String[] sDateTime = new String[]{dTimeStamp.toString()};
-                int[] iFields = new int[]{GlobalClass.giDataRecordDateTimeViewedIndexes[GlobalClass.MEDIA_CATEGORY_VIDEOS]};
+                int[] iFields = new int[]{GlobalClass.giDataRecordDateTimeViewedIndexes[iMediaCategory]};
 
                 globalClass.CatalogDataFile_UpdateRecord(
-                        sFields[GlobalClass.VIDEO_ID_INDEX],
+                        sFields[GlobalClass.giDataRecordIDIndexes[iMediaCategory]],
                         iFields,
                         sDateTime,
-                        GlobalClass.MEDIA_CATEGORY_VIDEOS);
+                        iMediaCategory);
 
-
-                return Uri.parse(sVideoPath);
+                return Uri.parse(sFilePath);
             }
         }
         return null;
@@ -403,7 +405,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private void initializePlayer() {
         Uri gMediaUri = getMedia();
-        if(bFileIsGif){
+        if(bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)){
             if(gMediaUri != null) {
                 if (gMediaUri.getPath() != null) {
                     File fGif = new File(gMediaUri.getPath());
@@ -591,7 +593,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             if (actionBar != null) {
                 actionBar.show();
             }
-            if(!bFileIsGif){
+            if(!bFileIsGif && (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
                 gMediaController.show();
             }
         }

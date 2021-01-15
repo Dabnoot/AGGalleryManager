@@ -605,6 +605,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.VIDEO_ID_INDEX]));
 
+                    } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                        //Temporarily set the image catalog to use the video player activity to display images until the
+                        // SeriesImageViewer activity is genericized (was previously comic page viewer):
+                        StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.IMAGE_ID_INDEX]));
+
                     } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         StartComicViewerActivity(sFields_final);
 
