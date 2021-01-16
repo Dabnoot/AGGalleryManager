@@ -17,18 +17,18 @@ public class ItemClass_CatalogItem {
     public long lSize;                             //Size of video, image, or size of all files in the comic, in Bytes
     public String sThumbnail_File;                 //Name of the file used as the thumbnail for a video or comic
 
-    public String[] sArtists;                      //Common comic tag category
-    public String[] sCategories;                   //Common comic tag category
-    public String[] sCharacters;                   //Common comic tag category
-    public String[] sGroups;                       //Common comic tag category
-    public String[] sLanguages;                    //Language(s) found in the comic
-
-    public String[] sParodies;                     //Common comic tag category
+    //Comic-related variables:
+    public String[] sComicArtists;                 //Common comic tag category
+    public String[] sComicCategories;              //Common comic tag category
+    public String[] sComicCharacters;              //Common comic tag category
+    public String[] sComicGroups;                  //Common comic tag category
+    public String[] sComicLanguages;               //Language(s) found in the comic
+    public String[] sComicParodies;                //Common comic tag category
     public String sComicName;                      //Comic name
-    public int iPages;                             //Total number of pages as defined at the comic source
-    public int iMax_Page_ID;                       //Max comic page id extracted from file names
-    public int[] iMissing_Pages;                   //String of comma-delimited missing page numbers
-    public int iFile_Count;                        //Files included with the comic. Can be used for integrity check.
-    public boolean bOnline_Data_Acquired;          //Typically used to gather tag data from an online comic source, if automatic.
-    public String sSource;                         //Website, if relevant. Intended for comics.
+    public int iComicPages;                        //Total number of pages as defined at the comic source
+    public int iComic_Max_Page_ID;                 //Max comic page id extracted from file names
+    public int[] iComic_Missing_Pages;             //String of comma-delimited missing page numbers
+    public int iComic_File_Count;                  //Files included with the comic. Can be used for integrity check.
+    public boolean bComic_Online_Data_Acquired;    //Typically used to gather tag data from an online comic source, if automatic.
+    public String sComic_Source;                   //Website, if relevant. Intended for comics.
 }
