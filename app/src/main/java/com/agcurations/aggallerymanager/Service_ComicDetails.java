@@ -18,26 +18,7 @@ import org.htmlcleaner.HtmlCleaner;
 public class Service_ComicDetails extends IntentService {
 
     //Global Constants
-    public static final String COMIC_DETAILS_COMIC_ID = "COMIC_DETAILS_COMIC_ID";
-
-    public static final String COMIC_DETAILS_COMIC_TITLE_ACQUIRED = "COMIC_DETAILS_COMIC_TITLE_ACQUIRED";
-    public static final String COMIC_DETAILS_COMIC_TITLE = "COMIC_DETAILS_COMIC_TITLE";
-    public static final String COMIC_DETAILS_PARODIES_DATA_ACQUIRED = "COMIC_DETAILS_PARODIES_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_PARODIES_DATA = "COMIC_DETAILS_PARODIES_DATA";
-    public static final String COMIC_DETAILS_CHARACTERS_DATA_ACQUIRED = "COMIC_DETAILS_CHARACTERS_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_CHARACTERS_DATA = "COMIC_DETAILS_CHARACTERS_DATA";
-    public static final String COMIC_DETAILS_TAGS_DATA_ACQUIRED = "COMIC_DETAILS_TAGS_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_TAGS_DATA = "COMIC_DETAILS_TAGS_DATA";
-    public static final String COMIC_DETAILS_ARTISTS_DATA_ACQUIRED = "COMIC_DETAILS_ARTISTS_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_ARTISTS_DATA = "COMIC_DETAILS_ARTISTS_DATA";
-    public static final String COMIC_DETAILS_GROUPS_DATA_ACQUIRED = "COMIC_DETAILS_GROUPS_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_GROUPS_DATA = "COMIC_DETAILS_GROUPS_DATA";
-    public static final String COMIC_DETAILS_LANGUAGES_DATA_ACQUIRED = "COMIC_DETAILS_LANGUAGES_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_LANGUAGES_DATA = "COMIC_DETAILS_LANGUAGES_DATA";
-    public static final String COMIC_DETAILS_CATEGORIES_DATA_ACQUIRED = "COMIC_DETAILS_CATEGORIES_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_CATEGORIES_DATA = "COMIC_DETAILS_CATEGORIES_DATA";
-    public static final String COMIC_DETAILS_PAGES_DATA_ACQUIRED = "COMIC_DETAILS_PAGES_DATA_ACQUIRED";
-    public static final String COMIC_DETAILS_PAGES_DATA = "COMIC_DETAILS_PAGES_DATA";
+    public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
 
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_DETAILS_ERROR_MESSAGE = "COMIC_DETAILS_ERROR_MESSAGE";
@@ -57,29 +38,6 @@ public class Service_ComicDetails extends IntentService {
             "Pages:",
             "Uploaded:"}; //We ignore the upload date data, but still include it.
 
-    private final String[] gsComicDetailsDataBooleans = new String[]{
-            COMIC_DETAILS_PARODIES_DATA_ACQUIRED,
-            COMIC_DETAILS_CHARACTERS_DATA_ACQUIRED,
-            COMIC_DETAILS_TAGS_DATA_ACQUIRED,
-            COMIC_DETAILS_ARTISTS_DATA_ACQUIRED,
-            COMIC_DETAILS_GROUPS_DATA_ACQUIRED,
-            COMIC_DETAILS_LANGUAGES_DATA_ACQUIRED,
-            COMIC_DETAILS_CATEGORIES_DATA_ACQUIRED,
-            COMIC_DETAILS_PAGES_DATA_ACQUIRED};
-
-    private final String[] gsComicDetailsDataContentMarkers = new String[]{
-            COMIC_DETAILS_PARODIES_DATA,
-            COMIC_DETAILS_CHARACTERS_DATA,
-            COMIC_DETAILS_TAGS_DATA,
-            COMIC_DETAILS_ARTISTS_DATA,
-            COMIC_DETAILS_GROUPS_DATA,
-            COMIC_DETAILS_LANGUAGES_DATA,
-            COMIC_DETAILS_CATEGORIES_DATA,
-            COMIC_DETAILS_PAGES_DATA};
-
-
-
-
     public Service_ComicDetails() { super("ComicDetailsDataService"); }
 
     @Override
@@ -88,46 +46,20 @@ public class Service_ComicDetails extends IntentService {
         globalClass = (GlobalClass) getApplicationContext();
 
         assert intent != null;
-        String sComicID = intent.getStringExtra(COMIC_DETAILS_COMIC_ID);
+        ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
 
-        String[] sComicData =  getOnlineComicDetails(sComicID);
-
+        ci =  getOnlineComicDetails(ci);
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(Activity_ComicDetails.ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
-
-        //Apply booleans to the intent to tell the receiver if there is data available,
+        //Apply booleans to the intent to tell the receiver success, data available,
         //  and set the data where appropriate:
 
-        //Set to return the title data:
-        int i = 0;
-        if(sComicData[i].length()>0) {
-            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE_ACQUIRED, true);
-            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE, sComicData[i]);
-        } else {
-            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE_ACQUIRED, false);
-        }
-
-        //set to return the datablock data:
-        for(i = 1; i < gsComicDetailsDataContentMarkers.length + 1; i++){
-            if(sComicData[i].length()>0) {
-                broadcastIntent.putExtra(gsComicDetailsDataBooleans[i - 1], true);
-                broadcastIntent.putExtra(gsComicDetailsDataContentMarkers[i - 1], sComicData[i]);
-            } else {
-                broadcastIntent.putExtra(gsComicDetailsDataBooleans[i - 1], false);
-            }
-        }
-
-        //set to return any error message that arose:
-        if(sComicData[i].length()>0) {  //'i' iterates to the next entry at exit from For loop, above.
-            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
-            broadcastIntent.putExtra(COMIC_DETAILS_COMIC_TITLE, sComicData[i]);
-        } else {
-            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
-        }
+        broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
+        broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
 
         sendBroadcast(broadcastIntent);
     }
@@ -149,9 +81,9 @@ public class Service_ComicDetails extends IntentService {
     public static int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
     public static final int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
 
-    public String[] getOnlineComicDetails(String sComicID){
+    public ItemClass_CatalogItem getOnlineComicDetails(ItemClass_CatalogItem ci){
 
-        int j = gsComicDetailsDataContentMarkers.length + 2;
+        int j = gsDataBlockIDs.length + 1;
         String[] sReturnData = new String[j];
         //First array element is for comic title.
         //Elements 1-8 are data block results.
@@ -165,7 +97,7 @@ public class Service_ComicDetails extends IntentService {
 
         try {
             //Get the data from the WebPage:
-            URL url = new URL(globalClass.snHentai_Comic_Address_Prefix + sComicID);
+            URL url = new URL(globalClass.snHentai_Comic_Address_Prefix + ci.sItemID);
             URLConnection conn = url.openConnection();
             conn.setDoInput(true);
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -284,7 +216,17 @@ public class Service_ComicDetails extends IntentService {
             sReturnData[COMIC_DETAILS_ERROR_MSG_INDEX] =  sMsg;
         }
 
-        return sReturnData;
+        ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
+        ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
+        ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
+        ci.sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX];
+        ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
+        ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
+        ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
+        ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
+        ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+
+        return ci;
 
     }
 

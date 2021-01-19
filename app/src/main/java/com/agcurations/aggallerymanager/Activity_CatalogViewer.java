@@ -21,7 +21,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,27 +38,19 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.util.Map;
 import java.util.TreeMap;
 
 public class Activity_CatalogViewer extends AppCompatActivity {
 
-    //Global Constants:
-    private static final String LOG_TAG = "CatalogActivity";
 
     //Global Variables:
     private GlobalClass globalClass;
-    //private int giMediaCategory;
     private RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> gRecyclerViewCatalogAdapter;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
-    private boolean gbRecyclerViewFiltered;
-    private String gsFilterText;
-    private boolean gbCatalogTagsRestrictionsOn;
+
     Spinner gspSpinnerSort;
-    //private int giRecyclerViewDefaultSortBySetting;
-    private int giRecyclerViewSortBySetting;
-    private boolean gbRecyclerViewSortAscending = true;
+
 
     private Menu ActivityMenu;
 
@@ -92,12 +83,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+        globalClass.gbCatalogViewerTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
-
-        gsFilterText = "";
 
         if(globalClass.connectivityManager == null){
             globalClass.registerNetworkCallback();
@@ -152,7 +141,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         //Set the restricted tags lock icon as appropriate:
         MenuItem restrictedItem = menu.findItem(R.id.icon_tags_restricted);
-        if(gbCatalogTagsRestrictionsOn){
+        if(globalClass.gbCatalogViewerTagsRestrictionsOn){
             restrictedItem.setIcon(R.drawable.baseline_lock_white_18dp);
         } else {
             restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
@@ -162,6 +151,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //https://www.geeksforgeeks.org/android-searchview-with-example/
         MenuItem searchViewItem = menu.findItem(R.id.search_bar);
         SearchView searchView = (SearchView) searchViewItem.getActionView();
+
+
+        if(!globalClass.ObfuscationOn) {
+            //If not obfuscated, and there is an active search filter, apply the text and show the filter:
+            if(globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory]){
+                searchView.setQuery(globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory], false);
+                searchView.setIconified(false);
+            }
+        }
+
+
+
         // attach setOnQueryTextListener to search view defined above
         searchView.setOnQueryTextListener(
                 new SearchView.OnQueryTextListener() {
@@ -169,15 +170,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     @Override
                     public boolean onQueryTextSubmit(String sQuery)
                     {
-                        gsFilterText = sQuery;
+                        globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory] = sQuery;
                         populate_RecyclerViewCatalogItems();
-                        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
-                        gbRecyclerViewFiltered = true;
+                        globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory] = true;
                         return false;
                     }
                     @Override
                     public boolean onQueryTextChange(String sQuery) {
-                        gsFilterText = sQuery;
                         return false;
                     }
                 });
@@ -185,10 +184,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         searchView.setOnCloseListener(new SearchView.OnCloseListener() {
             @Override
             public boolean onClose() {
-                if(gbRecyclerViewFiltered) {
-                    populate_RecyclerViewCatalogItems();
-                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
-                }
+                globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory] = "";
+                globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory] = false;
+                populate_RecyclerViewCatalogItems();
                 return false;
             }
         });
@@ -204,14 +202,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Initialize the spinner position:
         //This is here because when onResume hits when the activity is first created,
         //  the Spinner does not yet exist.
-        if(giRecyclerViewSortBySetting == GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory]){
+        if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
             gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
-            //When sorting by import date, sort Descending by default (newest first):
-            SetSortIconToDescending();
-        } else if(giRecyclerViewSortBySetting == GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory]){
+        } else if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
             gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
-            //When sorting by last viewed, sort Ascending by default:
+        }
+
+        if(globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory]){
             SetSortIconToAscending();
+        } else {
+            SetSortIconToDescending();
         }
 
         //Continue with configuring the spinner:
@@ -219,9 +219,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                 if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
+                    //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
+                    globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
                 } else if(position == SPINNER_ITEM_LAST_VIEWED_DATE) {
-                    giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
+                    //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
+                    globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_LAST_VIEWED;
                 }
                 populate_RecyclerViewCatalogItems();
             }
@@ -252,31 +254,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
         }
 
-        //Apply a resort.
-        //If a comic was just deleted, or a comic was just read, the view needs to be updated.
-        //  This includes removing a comic, or moving a comic to the end of the RecyclerView.
-
-        //Change spinner position if we have just come in from an import operation.
-        //  The user will want to see that the item they just imported has made it into the
-        //  catalog.
-        if(globalClass.gbJustImported[globalClass.giSelectedCatalogMediaCategory]) {
-            //Set sort by to "import_datetime"
-            giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
-            globalClass.gbJustImported[globalClass.giSelectedCatalogMediaCategory] = false;
-            //Set the spinner:
-            if(gspSpinnerSort != null) {
-                gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
-            }
-        } else {
-            //Set sort by to "viewed_datetime"
-            giRecyclerViewSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
-            if(gspSpinnerSort != null) {
-                gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
-            }
-        }
-
         populate_RecyclerViewCatalogItems();
-        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
 
         if(globalClass.ObfuscationOn) {
             //Obfuscate data:
@@ -293,7 +271,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         int itemID = item.getItemId();
 
         if(itemID == R.id.icon_tags_restricted){
-            if(gbCatalogTagsRestrictionsOn){
+            if(globalClass.gbCatalogViewerTagsRestrictionsOn){
                 //If restrictions are on, ask for pin code before unlocking.
                 //Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
                 //startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
@@ -347,16 +325,14 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             } else {
                 //If restrictions are off...
                 //Turn on restrictions, hide items, set icon to show lock symbol
-                gbCatalogTagsRestrictionsOn = true;
+                globalClass.gbCatalogViewerTagsRestrictionsOn = true;
                 SetRestrictedIconToLock();
                 //Repopulate the catalog list:
-                //populate_RecyclerViewCatalogItems(globalClass.gtmCatalogLists.get(giMediaCategory));
                 populate_RecyclerViewCatalogItems();
-                Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
             }
 
         } else if(itemID == R.id.icon_sort_order){
-            if( gbRecyclerViewSortAscending) {
+            if(globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory]) {
                 SetSortIconToDescending();
             } else {
                 SetSortIconToAscending();
@@ -377,10 +353,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Change the lock icon to 'unlocked':
         SetRestrictedIconToUnlock();
         //Set the flag:
-        gbCatalogTagsRestrictionsOn = false;
+        globalClass.gbCatalogViewerTagsRestrictionsOn = false;
         //Repopulate the catalog list:
         populate_RecyclerViewCatalogItems();
-        Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -410,6 +385,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                 }
 
+                //Check to see if this is a response to request to SortAndFilterCatalogDisplay:
+                boolean bIsSortAndFilterCatalogDisplayResponse = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
+                if(bIsSortAndFilterCatalogDisplayResponse) {
+                    //Apply the new TreeMap to the RecyclerView:
+                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap, getApplicationContext());
+                    gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
+                    gRecyclerViewCatalogAdapter.notifyDataSetChanged();
+                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
+                }
+
+
+
             }
 
         }
@@ -428,13 +415,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     private void SetSortIconToAscending(){
         MenuItem item = ActivityMenu.findItem(R.id.icon_sort_order);
         item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
-        gbRecyclerViewSortAscending = true;
+        globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] = true;
     }
 
     private void SetSortIconToDescending(){
         MenuItem item = ActivityMenu.findItem(R.id.icon_sort_order);
         item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
-        gbRecyclerViewSortAscending = false;
+        globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] = false;
     }
 
 
@@ -471,7 +458,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     public class RecyclerViewCatalogAdapter extends RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> {
 
-        private final TreeMap<Integer, String[]> treeMap;
+        private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
         private final Integer[] mapKeys;
         private final Context context;
 
@@ -494,7 +481,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
         }
 
-        public RecyclerViewCatalogAdapter(TreeMap<Integer, String[]> data, Context _context) {
+        public RecyclerViewCatalogAdapter(TreeMap<Integer, ItemClass_CatalogItem> data, Context _context) {
             this.treeMap = data;
             mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
             context = _context;
@@ -534,12 +521,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             // - replace the contents of the view with that element
 
             //Get the data for the row:
-            String[] sFields;
-            sFields = treeMap.get(mapKeys[position]);
-            if (sFields == null) {
-                sFields = new String[GlobalClass.CatalogRecordFields[globalClass.giSelectedCatalogMediaCategory].length]; //To prevent possible null pointer exception later.
-            }
-            final String[] sFields_final = sFields;
+            ItemClass_CatalogItem ci;
+            ci = treeMap.get(mapKeys[position]);
+            final ItemClass_CatalogItem ci_final = ci;
 
             String sItemName = "";
 
@@ -562,8 +546,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
                 String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
-                        + sFields[GlobalClass.giDataRecordFolderIndexes[globalClass.giSelectedCatalogMediaCategory]] + File.separator
-                        + sFields[GlobalClass.giDataRecordRecyclerViewImageIndexes[globalClass.giSelectedCatalogMediaCategory]];
+                        + ci.sFolder_Name + File.separator
+                        + ci.sFilename;
+
+
+
+
                 File fThumbnail = new File(sThumbnailFilePath);
 
                 if (fThumbnail.exists()) {
@@ -573,20 +561,19 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 String sThumbnailText = "";
                 switch(globalClass.giSelectedCatalogMediaCategory){
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                        String sTemp = sFields[GlobalClass.VIDEO_FILENAME_INDEX];
+                        String sTemp = ci.sFilename;
                         sItemName = GlobalClass.JumbleFileName(sTemp);
                         sThumbnailText = sItemName + ", " +
-                                sFields[GlobalClass.VIDEO_DURATION_TEXT_INDEX];
+                                ci.sDuration_Text;
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                        sItemName = GlobalClass.JumbleFileName(sFields[GlobalClass.IMAGE_FILENAME_INDEX]);
+                        sItemName = GlobalClass.JumbleFileName(ci.sFilename);
                         sThumbnailText = sItemName + ", " +
-                                sFields[GlobalClass.IMAGE_TAGS_INDEX];
+                                ci.sTags;
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
-                        sItemName = sFields[GlobalClass.COMIC_NAME_INDEX];
+                        sItemName = ci.sComicName;
                         sThumbnailText = sItemName;
-                        //sThumbnailText = GlobalClass.ConvertDoubleTimeStampToString(sFields[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX]);
                         break;
                 }
                 holder.tvThumbnailText.setText(sThumbnailText);
@@ -603,15 +590,15 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
 
                     if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                        StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.VIDEO_ID_INDEX]));
+                        StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
 
                     } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                         //Temporarily set the image catalog to use the video player activity to display images until the
                         // SeriesImageViewer activity is genericized (was previously comic page viewer):
-                        StartVideoPlayerActivity(treeMap, Integer.parseInt(sFields_final[GlobalClass.IMAGE_ID_INDEX]));
+                        StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
 
                     } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                        StartComicViewerActivity(sFields_final);
+                        StartComicViewerActivity(ci_final);
 
                     }
                 }
@@ -629,7 +616,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             if(holder.btnDelete != null) {
                 final String sItemNameToDelete = sItemName;
-                final String sItemID = sFields[GlobalClass.giDataRecordIDIndexes[globalClass.giSelectedCatalogMediaCategory]];
                 holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -647,7 +633,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
-                                Service_CatalogViewer.startActionDeleteCatalogItem(getApplicationContext(), sItemID, globalClass.giSelectedCatalogMediaCategory);
+                                Service_CatalogViewer.startActionDeleteCatalogItem(getApplicationContext(), ci_final);
                             }
                         });
                         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -673,118 +659,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     }
 
+    private int popCalls = 0;
     public void populate_RecyclerViewCatalogItems(){
 
-        //Apply the sort field.
-        //Copy over only items that match a filter, if applied.
-        //Copy over only non-restricted catalog items, if necessary.
-        //Sort the TreeMap.
-
-        //Create new TreeMap to presort the catalog items:
-        TreeMap<String, String[]> treeMapPreSort; //String = field being sorted, String = Catalog item data
-        treeMapPreSort = new TreeMap<>();
-
-        //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
-        String[] sCatalogListRecord;
-        String sKey;
-        for (Map.Entry<Integer, String[]>
-                entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
-            sCatalogListRecord = entry.getValue();
-
-            //Create a unique key to identify the record in the TreeMap, which includes
-            // the SortBy field. TreeMap automatically sorts by the Key field.
-            sKey = sCatalogListRecord[giRecyclerViewSortBySetting];
-            sKey = sKey + sCatalogListRecord[GlobalClass.giDataRecordIDIndexes[globalClass.giSelectedCatalogMediaCategory]];
-
-            //Apply a filter if requested - build a string out of the records contents, and if a
-            //  filter is to be applied, check for a match. If no match, don't add the record to
-            //  the TreeMap destined for the RecyclerView:
-            boolean bIsFilterMatch = true;
-            if(!gsFilterText.equals("")) {
-                StringBuilder sbRecordText;
-                String sFilterText_LowerCase = gsFilterText.toLowerCase();
-                String sKey_RecordText;
-
-                //Loop through all of the field data, append it together, and search the resulting
-                //  string for a filter match:
-                sbRecordText = new StringBuilder();
-                for (int i = 0; i < GlobalClass.CatalogRecordFields[globalClass.giSelectedCatalogMediaCategory].length; i++) {
-
-                    if(i == GlobalClass.giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]){
-                        //if the field is the tags field, translate the tags to text:
-                        StringBuilder sbTags = new StringBuilder();
-                        String[] sTagIDs = sCatalogListRecord[i].split(",");
-                        for(String sTagID : sTagIDs){
-                            sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), globalClass.giSelectedCatalogMediaCategory));
-                            sbTags.append(", ");
-                        }
-                        sbRecordText.append(sbTags.toString());
-                    } else if (i == GlobalClass.giDataRecordFileNameIndexes[globalClass.giSelectedCatalogMediaCategory]){
-                        //if the field is a jumbled filename, unjumble it for the search:
-                        String sFileName = GlobalClass.JumbleFileName(sCatalogListRecord[i]);
-                        sbRecordText.append(sFileName);
-                    } else {
-                        sbRecordText.append(sCatalogListRecord[i]);
-                    }
-                }
-                sKey_RecordText = sbRecordText.toString().toLowerCase();
-
-                if (!sKey_RecordText.contains(sFilterText_LowerCase)) {
-                    bIsFilterMatch = false;
-                }
-            }
-
-            //Check to see if the record needs to be skipped due to restriction settings:
-            boolean bIsRestricted = false;
-            if(gbCatalogTagsRestrictionsOn) {
-                String sRecordTags = sCatalogListRecord[GlobalClass.giDataRecordTagsIndexes[globalClass.giSelectedCatalogMediaCategory]];
-                if(sRecordTags.length() > 0) {
-                    String[] saRecordTags = sRecordTags.split(",");
-                    for (String s : saRecordTags) {
-                        //if list of restricted tags contains this particular record tag, mark as restricted item:
-                        Integer iTagID = Integer.parseInt(s);
-                        ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
-                        if (ict != null) {
-                            if (ict.isRestricted) {
-                                bIsRestricted = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(bIsFilterMatch && !bIsRestricted){
-                treeMapPreSort.put(sKey, sCatalogListRecord);
-            }
-
-        }
-
-        //TreeMap presort will auto-sort itself.
-
-        //Clean up the key, apply a reverse sort order, if applicable:
-        TreeMap<Integer, String[]> tmNewOrderCatalogList = new TreeMap<>();
-        int iRID, iIterator;
-        if(gbRecyclerViewSortAscending){
-            iRID = 0;
-            iIterator = 1;
-        } else {
-            iRID = treeMapPreSort.size();
-            iIterator = -1;
-        }
-
-        for (Map.Entry<String, String[]>
-                entry : treeMapPreSort.entrySet()) {
-            sCatalogListRecord = entry.getValue();
-            tmNewOrderCatalogList.put(iRID, sCatalogListRecord);
-            iRID += iIterator;
-        }
-
-
-        //Apply the new TreeMap to the RecyclerView:
-        gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(tmNewOrderCatalogList, this);
-        gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
-        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
+        popCalls++; //This line just to allow catch of the debugger here. Call after is optimized away.
+        Service_CatalogViewer.startActionSortAndFilterCatalogDisplay(this);
 
     }
 
@@ -793,9 +672,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     //===== Player/Viewer Code =================================================================
     //=====================================================================================
 
-    public final static String RECYCLERVIEW_VIDEO_TREEMAP_FILTERED = "RECYCLERVIEW_VIDEO_TREEMAP_FILTERED";
     public final static String RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID = "RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY";
-    private void StartVideoPlayerActivity(TreeMap<Integer, String[]> treeMap, Integer iVideoID) {
+    private void StartVideoPlayerActivity(TreeMap<Integer, ItemClass_CatalogItem> treeMap, Integer iVideoID) {
         //Key is the TreeMap Key for the selected video.
 
         //A timestamp for last viewed is handled within the video player. This is because the
@@ -804,27 +682,23 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         //Start the video player:
         Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayer.class);
-        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
+        //intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
+        globalClass.gtmCatalogViewerDisplayTreeMap = treeMap;
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, iVideoID);
         startActivity(intentVideoPlayer);
     }
 
-    public void StartComicViewerActivity(String[] sFields){
+    public void StartComicViewerActivity(ItemClass_CatalogItem ci){
 
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
-        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-        String[] sDateTime = new String[]{dTimeStamp.toString()};
-        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
-        globalClass.CatalogDataFile_UpdateRecord(
-                sFields[GlobalClass.COMIC_ID_INDEX],
-                iFields,
-                sDateTime,
-                GlobalClass.MEDIA_CATEGORY_COMICS);
+        ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampFloat();
+
+        globalClass.CatalogDataFile_UpdateRecord(ci);
 
 
         Intent intentComicViewer = new Intent(this, Activity_ComicDetails.class);
 
-        intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_COMIC_FIELDS_STRING, sFields);
+        intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM, ci);
 
         startActivity(intentComicViewer);
     }
@@ -862,7 +736,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Remove obfuscation:
         setTitle(globalClass.sNonObfuscatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
         //Update the RecyclerView:
-        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
+        //gRecyclerViewCatalogAdapter.notifyDataSetChanged();
     }
 
 

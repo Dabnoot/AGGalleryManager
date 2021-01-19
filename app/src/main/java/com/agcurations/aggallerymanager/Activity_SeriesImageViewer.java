@@ -94,7 +94,7 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
 
 
     //Global constants
-    public static final String EXTRA_COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
+    public static final String EXTRA_CATALOG_ITEM = "COMIC_FIELDS_STRING";
     public static final String EXTRA_COMIC_PAGE_START = "COMIC_PAGE_START";
 
     //Global variables
@@ -166,18 +166,18 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
         Intent intentCaller = getIntent();
         //Get data from the intent:
         giCurrentImageIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START,0);
-        String[] gsComicFields;
-        gsComicFields = intentCaller.getStringArrayExtra(EXTRA_COMIC_FIELDS_STRING);
+        ItemClass_CatalogItem gciCatalogItem;
+        gciCatalogItem = (ItemClass_CatalogItem) intentCaller.getSerializableExtra(EXTRA_CATALOG_ITEM);
 
 
-        if( gsComicFields == null) return;
-        gsActivityTitleString = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
-        giMaxFileCount = Integer.parseInt(gsComicFields[GlobalClass.COMIC_FILE_COUNT_INDEX]);
+        if( gciCatalogItem == null) return;
+        gsActivityTitleString = gciCatalogItem.sComicName;
+        giMaxFileCount = gciCatalogItem.iComic_File_Count;
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
+                + gciCatalogItem.sFolder_Name;
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);

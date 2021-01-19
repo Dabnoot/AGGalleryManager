@@ -94,6 +94,7 @@ public class Service_Import extends IntentService {
                         alFileList,
                         iMoveOrCopy,
                         iMediaCategory);
+
             }
         }
     }
@@ -155,15 +156,11 @@ public class Service_Import extends IntentService {
         }
         lProgressDenominator = lTotalImportSize;
 
-        int[] iMediaIDs = {GlobalClass.VIDEO_ID_INDEX,
-                            GlobalClass.IMAGE_ID_INDEX,
-                            GlobalClass.COMIC_ID_INDEX};
-
         //Find the next record ID:
         int iNextRecordId = 0;
         int iThisId;
-        for (Map.Entry<Integer, String[]> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
-            iThisId = Integer.parseInt(entry.getValue()[iMediaIDs[iMediaCategory]]);
+        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
+            iThisId = Integer.parseInt(entry.getValue().sItemID);
             if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
         }
         //New record ID identified.
@@ -258,92 +255,34 @@ public class Service_Import extends IntentService {
                     //This file has now been copied.
                     //Next add the data to the catalog file and memory:
 
-                    if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                        //Add record to catalog contents:
-                    /*
-                        "VIDEO_ID",
-                        "VIDEO_FILENAME",
-                        "SIZE_MB",
-                        "DURATION_MILLISECONDS",
-                        "DURATION_TEXT",
-                        "RESOLUTION",
-                        "FOLDER_NAME",
-                        "TAGS",
-                        "CAST",
-                        "SOURCE",
-                        "DATETIME_LAST_VIEWED_BY_USER",
-                        "DATETIME_IMPORT"
-                    */
+                    //Create a timestamp to be used to create the data record:
+                    Double dTimeStamp = GlobalClass.GetTimeStampFloat();
 
-                        //Create a timestamp to be used to create the data record:
-                        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-                        String sDateTime = dTimeStamp.toString();
+                    ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+                    ciNew.iMediaCategory = iMediaCategory;
+                    ciNew.sItemID = String.valueOf(iNextRecordId);
+                    ciNew.sFilename = sFileName;
 
-                        String[] sFieldData = new String[]{
-                                String.valueOf(iNextRecordId),
-                                sFileName,
-                                String.valueOf((fileItem.sizeBytes / 1024) / 1024),
-                                String.valueOf(fileItem.videoTimeInMilliseconds),
-                                String.valueOf(fileItem.videoTimeText),
-                                "",
-                                fileItem.destinationFolder,
-                                GlobalClass.formDelimitedString(fileItem.prospectiveTags,","),
-                                "",
-                                "",
-                                sDateTime,
-                                sDateTime
-                        };
+                    ciNew.lSize = fileItem.sizeBytes;
 
-                        //The below call should add the record to both the catalog contents file
-                        //  and memory:
-                        globalClass.CatalogDataFile_CreateNewRecord(
-                                iNextRecordId,
-                                sFieldData,
-                                iMediaCategory);
+                    ciNew.lDuration_Milliseconds = fileItem.videoTimeInMilliseconds;
+                    ciNew.sDuration_Text = fileItem.videoTimeText;
+                    ciNew.iWidth = Integer.parseInt(fileItem.width);
+                    ciNew.iHeight = Integer.parseInt(fileItem.height);
+                    ciNew.sFolder_Name = fileItem.destinationFolder;
+                    ciNew.sTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags,",");
+                    ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
+                    ciNew.dDatetime_Import = dTimeStamp;
 
-                    } else if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                        //Add record to catalog contents:
-                    /*
-                        "IMAGE_ID",
-                        "IMAGE_FILENAME",
-                        "SIZE_KB",
-                        "DIMENSIONS",
-                        "FOLDER_NAME",
-                        "TAGS",
-                        "CAST",
-                        "SOURCE",
-                        "DATETIME_LAST_VIEWED_BY_USER",
-                        "DATETIME_IMPORT"
-                    */
-
-                        //Create a timestamp to be used to create the data record:
-                        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-                        String sDateTime = dTimeStamp.toString();
-
-                        String[] sFieldData = new String[]{
-                                String.valueOf(iNextRecordId),
-                                sFileName,
-                                String.valueOf(fileItem.sizeBytes),
-                                fileItem.width + "x" + fileItem.height,
-                                fileItem.destinationFolder,
-                                GlobalClass.formDelimitedString(fileItem.prospectiveTags,","),
-                                "",
-                                "",
-                                sDateTime,
-                                sDateTime
-                        };
-
-                        //The below call should add the record to both the catalog contents file
-                        //  and memory:
-                        globalClass.CatalogDataFile_CreateNewRecord(
-                                iNextRecordId,
-                                sFieldData,
-                                iMediaCategory);
-                    }
+                    //The below call should add the record to both the catalog contents file
+                    //  and memory:
+                    globalClass.CatalogDataFile_CreateNewRecord(ciNew);
 
                     iNextRecordId += 1; //Identify the next record ID to assign.
 
+                    boolean bUpdateLogOneMoreTime = false;
                     if (iMoveOrCopy == Activity_Import.IMPORT_METHOD_MOVE) {
+                        bUpdateLogOneMoreTime = true;
                         if (!dfSource.delete()) {
                             sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).";
                         } else {
@@ -353,7 +292,7 @@ public class Service_Import extends IntentService {
 
                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
 
-                    BroadcastProgress(true, sLogLine,
+                    BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
                             true, iProgressBarValue,
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             RECEIVER_EXECUTE_IMPORT);
@@ -369,6 +308,11 @@ public class Service_Import extends IntentService {
             }
 
         }
+
+        //Modify viewer settings to show the newly-imported files:
+        globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;
+
         BroadcastProgress(true, "Operation complete.",
                 true, iProgressBarValue,
                 true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",

@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.Map;
+import java.util.TreeMap;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -21,19 +22,24 @@ public class Service_CatalogViewer extends IntentService {
     // Action names that describe tasks that this
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_DELETE_CATALOG_ITEM = "com.agcurations.aggallerymanager.action.delete_catalog_item";
+    private static final String ACTION_SORT_AND_FILTER_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.action.sort_and_filter_catalog_display";
 
-    private static final String EXTRA_ITEM_ID = "com.agcurations.aggallerymanager.extra.item_id";
-    private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.media_category";
+    private static final String EXTRA_CATALOG_ITEM = "com.agcurations.aggallerymanager.extra.catalog_item";
 
     public Service_CatalogViewer() {
         super("Service_CatalogViewer");
     }
 
-    public static void startActionDeleteCatalogItem(Context context, String sItemID, int iMediaCategory) {
+    public static void startActionDeleteCatalogItem(Context context, ItemClass_CatalogItem ciToDelete) {
         Intent intent = new Intent(context, Service_CatalogViewer.class);
         intent.setAction(ACTION_DELETE_CATALOG_ITEM);
-        intent.putExtra(EXTRA_ITEM_ID, sItemID);
-        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
+        intent.putExtra(EXTRA_CATALOG_ITEM, ciToDelete);
+        context.startService(intent);
+    }
+
+    public static void startActionSortAndFilterCatalogDisplay(Context context) {
+        Intent intent = new Intent(context, Service_CatalogViewer.class);
+        intent.setAction(ACTION_SORT_AND_FILTER_CATALOG_DISPLAY);
         context.startService(intent);
     }
 
@@ -42,9 +48,10 @@ public class Service_CatalogViewer extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_DELETE_CATALOG_ITEM.equals(action)) {
-                final String param1 = intent.getStringExtra(EXTRA_ITEM_ID);
-                final int param2 = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, 0);
-                handleActionDeleteCatalogItem(param1, param2);
+                final ItemClass_CatalogItem ciToDelete = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
+                handleActionDeleteCatalogItem(ciToDelete);
+            } else if (ACTION_SORT_AND_FILTER_CATALOG_DISPLAY.equals(action)) {
+                handleActionSortAndFilterCatalogDisplay();
             }
         }
     }
@@ -56,7 +63,7 @@ public class Service_CatalogViewer extends IntentService {
      */
     public static final String EXTRA_BOOL_DELETE_ITEM = "com.agcurations.aggallerymanager.extra.delete_item";
     public static final String EXTRA_BOOL_DELETE_ITEM_RESULT = "com.agcurations.aggallerymanager.extra.delete_item_result";
-    private void handleActionDeleteCatalogItem(String sItemID, int iMediaCategory) {
+    private void handleActionDeleteCatalogItem(ItemClass_CatalogItem ci) {
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
@@ -68,18 +75,10 @@ public class Service_CatalogViewer extends IntentService {
             //Delete the file:
 
             //Get a path to the file to delete:
-            String sCatalogFolderPath = globalClass.gfCatalogFolders[iMediaCategory].getPath();
-            String sItemFolderName = "";
-            String sItemFileName = "";
-            for (Map.Entry<Integer, String[]>
-                    CatalogEntry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
-                String[] sFields = CatalogEntry.getValue();
-                if( sFields[GlobalClass.giDataRecordIDIndexes[iMediaCategory]].contains(sItemID)){
-                    sItemFolderName = sFields[GlobalClass.giDataRecordFolderIndexes[iMediaCategory]];
-                    sItemFileName = sFields[GlobalClass.giDataRecordFileNameIndexes[iMediaCategory]];
-                    break;
-                }
-            }
+            String sCatalogFolderPath = globalClass.gfCatalogFolders[ci.iMediaCategory].getPath();
+            String sItemFolderName = ci.sFolder_Name;
+            String sItemFileName = ci.sFilename;
+
             String sFileFolder = sCatalogFolderPath + File.separator +
                     sItemFolderName;
             String sFullPath = sFileFolder + File.separator +
@@ -111,16 +110,17 @@ public class Service_CatalogViewer extends IntentService {
                 //Now delete the item record from the Catalog File:
                 StringBuilder sbBuffer = new StringBuilder();
                 BufferedReader brReader;
-                brReader = new BufferedReader(new FileReader(globalClass.gfCatalogContentsFiles[iMediaCategory].getAbsolutePath()));
+                brReader = new BufferedReader(new FileReader(globalClass.gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
                 sbBuffer.append(brReader.readLine());
                 sbBuffer.append("\n");
 
                 String[] sFields;
                 String sLine = brReader.readLine();
                 bSuccess = false;
+                ItemClass_CatalogItem ciFromFile;
                 while (sLine != null) {
-                    sFields = sLine.split("\t", -1);
-                    if (!(GlobalClass.JumbleStorageText(sFields[GlobalClass.giDataRecordIDIndexes[iMediaCategory]]).equals(sItemID))) {
+                    ciFromFile = GlobalClass.ConvertStringToCatalogItem(sLine);
+                    if (!(ciFromFile.sItemID.equals(ci.sItemID))) {
                         //If the line is not the comic we are trying to delete, transfer it over:
                         sbBuffer.append(sLine);
                         sbBuffer.append("\n");
@@ -135,36 +135,22 @@ public class Service_CatalogViewer extends IntentService {
                 brReader.close();
 
                 if(!bSuccess){
-                    problemNotificationConfig("Could not located item data record (ID: " +
-                            GlobalClass.JumbleStorageText(sItemID) +
+                    problemNotificationConfig("Could not locate item data record (ID: " +
+                            GlobalClass.JumbleStorageText(ci.sItemID) +
                             ") in CatalogContents.dat.\n" +
-                            globalClass.gfCatalogContentsFiles[iMediaCategory]);
+                            globalClass.gfCatalogContentsFiles[ci.iMediaCategory]);
 
                 }
 
                 //Re-write the CatalogContentsFile without the deleted comic's data record:
-                FileWriter fwNewCatalogContentsFile = new FileWriter(globalClass.gfCatalogContentsFiles[iMediaCategory], false);
+                FileWriter fwNewCatalogContentsFile = new FileWriter(globalClass.gfCatalogContentsFiles[ci.iMediaCategory], false);
                 fwNewCatalogContentsFile.write(sbBuffer.toString());
                 fwNewCatalogContentsFile.flush();
                 fwNewCatalogContentsFile.close();
 
 
                 //Now update memory to no longer include the item:
-                int iKey = -1;
-                for (Map.Entry<Integer, String[]>
-                        CatalogEntry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
-                    String sEntryID = CatalogEntry.getValue()[GlobalClass.giDataRecordIDIndexes[iMediaCategory]];
-                    if (sEntryID.contains(sItemID)) {
-                        iKey = CatalogEntry.getKey();
-                        break;
-                    }
-                }
-                if (iKey >= 0) {
-                    globalClass.gtmCatalogLists.get(iMediaCategory).remove(iKey);
-                } else {
-                    problemNotificationConfig("Could not locate item to be deleted in memory.");
-                    //This message should only appear if I am having trouble with coding.
-                }
+                globalClass.gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
 
             } //End if for continuing after successful file deletion.
 
@@ -181,6 +167,112 @@ public class Service_CatalogViewer extends IntentService {
         broadcastIntent_DeleteCatalogItemResponse.addCategory(Intent.CATEGORY_DEFAULT);
         //sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);
+
+
+    }
+
+    public static final String EXTRA_BOOL_REFRESH_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.extra.refresh_catalog_display";
+    private void handleActionSortAndFilterCatalogDisplay(){
+
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
+        //Apply the sort field.
+        //Copy over only items that match a filter, if applied.
+        //Copy over only non-restricted catalog items, if necessary.
+        //Sort the TreeMap.
+
+        //Create new TreeMap to presort the catalog items:
+        TreeMap<String, ItemClass_CatalogItem> treeMapPreSort; //String = field being sorted, String = Catalog item data
+        treeMapPreSort = new TreeMap<>();
+
+        //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
+        String sKey;
+        for (Map.Entry<String, ItemClass_CatalogItem>
+                entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
+            sKey = "";
+            //Create a unique key to identify the record in the TreeMap, which includes
+            // the SortBy field. TreeMap automatically sorts by the Key field.
+            if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
+                sKey = entry.getValue().dDatetime_Last_Viewed_by_User.toString();
+            } else if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
+                sKey = entry.getValue().dDatetime_Import.toString();
+            }
+            sKey = sKey + entry.getValue().sItemID;
+
+
+            //Apply a filter if requested - build a string out of the records contents, and if a
+            //  filter is to be applied, check for a match. If no match, don't add the record to
+            //  the TreeMap destined for the RecyclerView:
+            boolean bIsFilterMatch = true;
+            if(!globalClass.gsCatalogViewerFilterText.equals("")) {
+                StringBuilder sbRecordText;
+                String sFilterText_LowerCase = globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
+                String sKey_RecordText;
+
+                //Append all of the field data and search the resulting
+                //  string for a filter match:
+                sKey_RecordText = GlobalClass.getCatalogRecordString(entry.getValue())[1];
+                sKey_RecordText = sKey_RecordText.toLowerCase();
+
+                if (!sKey_RecordText.contains(sFilterText_LowerCase)) {
+                    bIsFilterMatch = false;
+                }
+            }
+
+            //Check to see if the record needs to be skipped due to restriction settings:
+            boolean bIsRestricted = false;
+            if(globalClass.gbCatalogViewerTagsRestrictionsOn) {
+                String sRecordTags = entry.getValue().sTags;
+                if(sRecordTags.length() > 0) {
+                    String[] saRecordTags = sRecordTags.split(",");
+                    for (String s : saRecordTags) {
+                        //if list of restricted tags contains this particular record tag, mark as restricted item:
+                        Integer iTagID = Integer.parseInt(s);
+                        ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
+                        if (ict != null) {
+                            if (ict.isRestricted) {
+                                bIsRestricted = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(bIsFilterMatch && !bIsRestricted){
+                treeMapPreSort.put(sKey, entry.getValue());
+            }
+
+        }
+
+        //TreeMap presort will auto-sort itself.
+
+        //Clean up the key, apply a reverse sort order, if applicable:
+        TreeMap<Integer, ItemClass_CatalogItem> tmNewOrderCatalogList = new TreeMap<>();
+        int iRID, iIterator;
+        if(globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory]){
+            iRID = 0;
+            iIterator = 1;
+        } else {
+            iRID = treeMapPreSort.size();
+            iIterator = -1;
+        }
+
+        for (Map.Entry<String, ItemClass_CatalogItem>
+                entry : treeMapPreSort.entrySet()) {
+            tmNewOrderCatalogList.put(iRID, entry.getValue());
+            iRID += iIterator;
+        }
+
+        globalClass.gtmCatalogViewerDisplayTreeMap = tmNewOrderCatalogList;
+
+        //Broadcast the ready state of the SortAndFilterCatalogDisplay operation:
+        Intent broadcastIntent_SortAndFilterCatalogDisplayResponse = new Intent();
+        broadcastIntent_SortAndFilterCatalogDisplayResponse.putExtra(EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, true);
+        broadcastIntent_SortAndFilterCatalogDisplayResponse.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_SortAndFilterCatalogDisplayResponse.addCategory(Intent.CATEGORY_DEFAULT);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_SortAndFilterCatalogDisplayResponse);
 
 
     }

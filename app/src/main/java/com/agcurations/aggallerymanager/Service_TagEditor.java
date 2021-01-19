@@ -74,14 +74,14 @@ public class Service_TagEditor extends IntentService {
 
 
         //Loop through all catalog items and look for items that contain the tag to delete:
-        for(Map.Entry<Integer, String[]> tmEntryCatalogRecord : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
-            String sTags = tmEntryCatalogRecord.getValue()[GlobalClass.giDataRecordTagsIndexes[iMediaCategory]];
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
+            String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
 
             if(aliTags.contains(ict_TagToDelete.TagID)){
                 //If this item contains the tag:
 
-                String sNewTagFolderDestination = tmEntryCatalogRecord.getValue()[GlobalClass.giDataRecordFolderIndexes[iMediaCategory]];
+                String sNewTagFolderDestination;
 
 
                 //Videos and images are sorted into folders based on their first tag.
@@ -94,8 +94,8 @@ public class Service_TagEditor extends IntentService {
 
 
                     String sSourcePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                            tmEntryCatalogRecord.getValue()[GlobalClass.giDataRecordFolderIndexes[iMediaCategory]] + File.separator +
-                            tmEntryCatalogRecord.getValue()[GlobalClass.giDataRecordFileNameIndexes[iMediaCategory]];
+                            tmEntryCatalogRecord.getValue().sFolder_Name + File.separator +
+                            tmEntryCatalogRecord.getValue().sFilename;
 
                     if (aliTags.size() > 1) {
                         sNewTagFolderDestination = aliTags.get(1).toString();
@@ -103,7 +103,7 @@ public class Service_TagEditor extends IntentService {
 
                     String sDestinationPath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
                             sNewTagFolderDestination + File.separator +
-                            tmEntryCatalogRecord.getValue()[GlobalClass.giDataRecordFileNameIndexes[iMediaCategory]];
+                            tmEntryCatalogRecord.getValue().sFilename;
                     String sDestinationFolder = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
                             sNewTagFolderDestination;
 
@@ -159,12 +159,7 @@ public class Service_TagEditor extends IntentService {
                 }
                 String sNewTags = GlobalClass.formDelimitedString(aliNewTags, ",");
                 //Update the record and the catalog file:
-                globalClass.CatalogDataFile_UpdateRecord(
-                        tmEntryCatalogRecord.getValue()[GlobalClass.giDataRecordIDIndexes[iMediaCategory]],
-                        new int[]{GlobalClass.giDataRecordFolderIndexes[iMediaCategory], GlobalClass.giDataRecordTagsIndexes[iMediaCategory]},
-                        new String[]{sNewTagFolderDestination, sNewTags},
-                        iMediaCategory
-                );
+                globalClass.CatalogDataFile_UpdateRecord(tmEntryCatalogRecord.getValue());
 
             } //End if the record contains the tag
 

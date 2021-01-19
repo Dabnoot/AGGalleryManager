@@ -21,7 +21,6 @@ import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -34,7 +33,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private GlobalClass globalClass;
 
-    private TreeMap<Integer, String[]> treeMapRecyclerViewVideos;
+    private TreeMap<Integer, ItemClass_CatalogItem> treeMapRecyclerViewVideos;
     private Integer giKey;
 
     private int giCurrentPosition = 1;
@@ -61,21 +60,23 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         //Get the treeMap and the key identifying the treeMap data to use for the first video to show:
         Intent intentVideoPlayer = this.getIntent();
-        HashMap<Integer, String[]> hashMapTemp = (HashMap<Integer, String[]>)
+        /*HashMap<Integer, ItemClass_CatalogItem> hashMapTemp = (HashMap<Integer, ItemClass_CatalogItem>)
                 intentVideoPlayer.getSerializableExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_FILTERED);
         treeMapRecyclerViewVideos = new TreeMap<>();
         if(hashMapTemp == null){
             finish();
             return;
         }
-        treeMapRecyclerViewVideos.putAll(hashMapTemp);
+        treeMapRecyclerViewVideos.putAll(hashMapTemp);*/
+        treeMapRecyclerViewVideos = globalClass.gtmCatalogViewerDisplayTreeMap;
+
         int iVideoID = intentVideoPlayer.getIntExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID,0);
 
         //Get the TreeMap key associated with the Video ID provided:
         giKey = 0;
-        for (Map.Entry<Integer, String[]>
+        for (Map.Entry<Integer, ItemClass_CatalogItem>
                 entry : treeMapRecyclerViewVideos.entrySet()) {
-            if(entry.getValue()[GlobalClass.VIDEO_ID_INDEX].equals(Integer.toString(iVideoID))) {
+            if(entry.getValue().sItemID.equals(Integer.toString(iVideoID))) {
                 giKey = entry.getKey();
             }
         }
@@ -361,11 +362,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private Uri getMedia() {
         int iMediaCategory = globalClass.giSelectedCatalogMediaCategory;
         if(treeMapRecyclerViewVideos.containsKey(giKey)) {
-            String[] sFields = treeMapRecyclerViewVideos.get(giKey);
-            if (sFields != null) {
-                String sFileName = sFields[GlobalClass.giDataRecordFileNameIndexes[iMediaCategory]];
+            ItemClass_CatalogItem ci;
+            ci = treeMapRecyclerViewVideos.get(giKey);
+            if (ci != null) {
+                String sFileName = ci.sFilename;
                 String sFilePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                        sFields[GlobalClass.giDataRecordFolderIndexes[iMediaCategory]] + File.separator +
+                        ci.sFolder_Name + File.separator +
                         sFileName;
 
                 setTitle(GlobalClass.JumbleFileName(sFileName));
@@ -374,7 +376,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
                 //Populate the tags fragment:
-                ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sFields[GlobalClass.giDataRecordTagsIndexes[iMediaCategory]], ",");
+                ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
                 //Start the tag selection fragment:
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
                 Fragment_SelectTags fst = new Fragment_SelectTags();
@@ -387,15 +389,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
 
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
-                Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-                String[] sDateTime = new String[]{dTimeStamp.toString()};
-                int[] iFields = new int[]{GlobalClass.giDataRecordDateTimeViewedIndexes[iMediaCategory]};
+                ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampFloat();
 
-                globalClass.CatalogDataFile_UpdateRecord(
-                        sFields[GlobalClass.giDataRecordIDIndexes[iMediaCategory]],
-                        iFields,
-                        sDateTime,
-                        iMediaCategory);
+                globalClass.CatalogDataFile_UpdateRecord(ci);
 
                 return Uri.parse(sFilePath);
             }

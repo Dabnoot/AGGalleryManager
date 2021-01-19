@@ -32,7 +32,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class Activity_ComicDetails extends AppCompatActivity {
@@ -43,7 +42,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     private GlobalClass globalClass;
 
-    private String[] gsComicFields;
+    private ItemClass_CatalogItem gciCatalogItem;
     private TreeMap<Integer, String> gtmComicPages;
 
 
@@ -51,7 +50,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private MenuItem gmiGetOnlineData;
     private MenuItem gmiSaveDetails;
 
-    public static final String EXTRA_COMIC_FIELDS_STRING = "COMIC_FIELDS_STRING";
+    public static final String EXTRA_CATALOG_ITEM = "CATALOG_ITEM";
 
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
 
@@ -87,14 +86,14 @@ public class Activity_ComicDetails extends AppCompatActivity {
         globalClass = (GlobalClass) getApplicationContext();
 
         Intent intent = getIntent();
-        gsComicFields = intent.getStringArrayExtra(EXTRA_COMIC_FIELDS_STRING);
+        gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
 
-        if( gsComicFields == null) return;
+        if( gciCatalogItem == null) return;
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                + gsComicFields[GlobalClass.COMIC_FOLDER_NAME_INDEX];
+                + gciCatalogItem.sFolder_Name;
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
@@ -131,7 +130,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
 
         if(globalClass.bAutoDownloadOn) {
-            if (gsComicFields[GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_INDEX].equals(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_NO)) {
+            if (!gciCatalogItem.bComic_Online_Data_Acquired) {
                 //If there is no tag data, automatically go out and try to get it.
                 gbAutoAcquireData = true;
                 SyncOnlineData();
@@ -143,23 +142,20 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //Display a message showing the name of the item selected.
-        //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
-        switch (item.getItemId()) {
-            case R.id.menu_FlipView:
-                FlipObfuscation();
-                return true;
-            case R.id.menu_GetOnlineData:
-                SyncOnlineData();
-                return true;
-            case R.id.menu_SaveDetails:
-                SaveDetails();
-                return true;
-            case R.id.menu_DeleteComic:
-                DeleteComicPrompt();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.menu_FlipView) {
+            FlipObfuscation();
+            return true;
+        } else if (item.getItemId() == R.id.menu_GetOnlineData) {
+            SyncOnlineData();
+            return true;
+        } else if (item.getItemId() == R.id.menu_SaveDetails) {
+            SaveDetails(gciCatalogItem);
+            return true;
+        } else if (item.getItemId() == R.id.menu_DeleteComic) {
+            DeleteComicPrompt();
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 
@@ -189,7 +185,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     public void DeleteComic(){
         gtmComicPages = new TreeMap<>();
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
-        if(globalClass.ComicCatalog_DeleteComic(gsComicFields[GlobalClass.COMIC_ID_INDEX])) {
+        if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem.sItemID)) {
             //If comic deletion successful, close the activity. Otherwise remain open so that
             //  the user can view the toast message.
             finish();
@@ -447,12 +443,12 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLabelCategories.setVisibility(View.VISIBLE);
                     holder.tvLabelPages.setVisibility(View.VISIBLE);
 
-                    sThumbnailText = gsComicFields[GlobalClass.COMIC_NAME_INDEX];
-                    holder.tvComicID.setText(gsComicFields[GlobalClass.COMIC_ID_INDEX]);
-                    holder.tvParodies.setText(gsComicFields[GlobalClass.COMIC_PARODIES_INDEX]);
-                    holder.tvCharacters.setText(gsComicFields[GlobalClass.COMIC_CHARACTERS_INDEX]);
+                    sThumbnailText = gciCatalogItem.sComicName;
+                    holder.tvComicID.setText(gciCatalogItem.sItemID);
+                    holder.tvParodies.setText(gciCatalogItem.sComicParodies);
+                    holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
                     StringBuilder sbTags = new StringBuilder();
-                    String[] sTagIDs = gsComicFields[GlobalClass.COMIC_TAGS_INDEX].split(",");
+                    String[] sTagIDs = gciCatalogItem.sTags.split(",");
                     for(String sTagID : sTagIDs){
                         sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), GlobalClass.MEDIA_CATEGORY_COMICS));
                         sbTags.append(", ");
@@ -462,13 +458,14 @@ public class Activity_ComicDetails extends AppCompatActivity {
                         sTagTextAggregate = sTagTextAggregate.substring(0,sTagTextAggregate.lastIndexOf(", "));
                     }
                     holder.tvTags.setText(sTagTextAggregate);
-                    holder.tvArtists.setText(gsComicFields[GlobalClass.COMIC_ARTISTS_INDEX]);
-                    holder.tvGroups.setText(gsComicFields[GlobalClass.COMIC_GROUPS_INDEX]);
-                    holder.tvLanguages.setText(gsComicFields[GlobalClass.COMIC_LANGUAGES_INDEX]);
-                    holder.tvCategories.setText(gsComicFields[GlobalClass.COMIC_CATEGORIES_INDEX]);
-                    holder.tvPages.setText(gsComicFields[GlobalClass.COMIC_PAGES_INDEX]);
+                    holder.tvArtists.setText(gciCatalogItem.sComicArtists);
+                    holder.tvGroups.setText(gciCatalogItem.sComicGroups);
+                    holder.tvLanguages.setText(gciCatalogItem.sComicLanguages);
+                    holder.tvCategories.setText(gciCatalogItem.sComicCategories);
+                    String sPages = "" + gciCatalogItem.iComicPages;
+                    holder.tvPages.setText(sPages);
                 } else {
-                    sThumbnailText = String.format("Page %d of %d", position + 1, getItemCount());  //Position is 0-based.
+                    sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
                 }
 
 
@@ -517,23 +514,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
     public void StartComicViewerActivity(int iComicPage){
         Intent intentComicViewer = new Intent(this, Activity_SeriesImageViewer.class);
 
-        intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_COMIC_FIELDS_STRING, gsComicFields);
+        intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_CATALOG_ITEM, gciCatalogItem);
         intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_COMIC_PAGE_START, iComicPage);
-
-        /*//Record the COMIC_DATETIME_LAST_READ_BY_USER: <<<Moved to CatalogActivity to set last read to <preview>
-                                                            as user may preview, decide not to view, and go back.
-                                                            If this is the case, move the comic to the end of the
-                                                            stack so that it's not always on top.>>>
-        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-        String[] sDateTime = new String[]{dTimeStamp.toString()};
-        int[] iFields = new int[]{GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
-        globalClass.CatalogDataFile_UpdateRecord(
-                globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS],
-                globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS),
-                gsComicFields[GlobalClass.COMIC_ID_INDEX],
-                GlobalClass.COMIC_ID_INDEX,
-                iFields,
-                sDateTime);*/
 
         startActivity(intentComicViewer);
     }
@@ -582,7 +564,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(gsComicFields[GlobalClass.COMIC_NAME_INDEX]);
+        setTitle(gciCatalogItem.sComicName);
 
         //Update the RecyclerView:
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
@@ -600,8 +582,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
             Intent intentGetComicDetails;
 
             intentGetComicDetails = new Intent(this, Service_ComicDetails.class);
-            intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_DETAILS_COMIC_ID,
-                    gsComicFields[GlobalClass.COMIC_ID_INDEX]);
+            intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_CATALOG_ITEM, gciCatalogItem);
 
             gmiGetOnlineData.setEnabled(false);
 
@@ -624,50 +605,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             String sErrorMessage;
             if(bComicDetailsDataServiceSuccess) {
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_COMIC_TITLE_ACQUIRED,false)){
-                    gbComicDetailsTitleUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_NAME_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_COMIC_TITLE);
-                }
 
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_PARODIES_DATA_ACQUIRED,false)){
-                    gbComicDetailsParodiesDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_PARODIES_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_PARODIES_DATA);
-                }
 
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_CHARACTERS_DATA_ACQUIRED,false)){
-                    gbComicDetailsCharactersDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_CHARACTERS_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_CHARACTERS_DATA);
-                }
-
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_TAGS_DATA_ACQUIRED,false)){
-                    gbComicDetailsTagsDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_TAGS_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_TAGS_DATA);
-                }
-
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_ARTISTS_DATA_ACQUIRED,false)){
-                    gbComicDetailsArtistsDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_ARTISTS_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_ARTISTS_DATA);
-                }
-
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_GROUPS_DATA_ACQUIRED,false)){
-                    gbComicDetailsGroupsDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_GROUPS_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_GROUPS_DATA);
-                }
-
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_LANGUAGES_DATA_ACQUIRED,false)){
-                    gbComicDetailsLanguagesDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_LANGUAGES_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_LANGUAGES_DATA);
-                }
-
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_CATEGORIES_DATA_ACQUIRED,false)){
-                    gbComicDetailsCategoriesDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_CATEGORIES_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_CATEGORIES_DATA);
-                }
-
-                if(intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_PAGES_DATA_ACQUIRED,false)){
-                    gbComicDetailsPagesDataUpdateAvailable = true;
-                    gsComicFields[GlobalClass.COMIC_PAGES_INDEX] = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_PAGES_DATA);
-                }
+                gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(Service_ComicDetails.COMIC_CATALOG_ITEM);
 
                 gmiSaveDetails.setEnabled(true);
 
@@ -675,7 +615,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
                 if(gbAutoAcquireData){
                     Toast.makeText(getApplicationContext(), "Online data acquired. Auto saving...", Toast.LENGTH_LONG).show();
-                    SaveDetails();
+                    SaveDetails(gciCatalogItem);
                 } else {
                     Toast.makeText(getApplicationContext(), "Online data acquired. Don't forget to save.", Toast.LENGTH_LONG).show();
                 }
@@ -690,72 +630,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
     }
 
 
-    public void SaveDetails(){
+    public void SaveDetails(ItemClass_CatalogItem ci){
 
-        boolean[] bFieldUpdateBooleans = new boolean[]{
-                gbComicDetailsTitleUpdateAvailable,
-                gbComicDetailsParodiesDataUpdateAvailable,
-                gbComicDetailsCharactersDataUpdateAvailable,
-                gbComicDetailsTagsDataUpdateAvailable,
-                gbComicDetailsArtistsDataUpdateAvailable,
-                gbComicDetailsGroupsDataUpdateAvailable,
-                gbComicDetailsLanguagesDataUpdateAvailable,
-                gbComicDetailsCategoriesDataUpdateAvailable,
-                gbComicDetailsPagesDataUpdateAvailable
-        };
-
-        String[] sFieldUpdateText = new String[]{
-                gsComicFields[GlobalClass.COMIC_NAME_INDEX],
-                gsComicFields[GlobalClass.COMIC_PARODIES_INDEX],
-                gsComicFields[GlobalClass.COMIC_CHARACTERS_INDEX],
-                gsComicFields[GlobalClass.COMIC_TAGS_INDEX],
-                gsComicFields[GlobalClass.COMIC_ARTISTS_INDEX],
-                gsComicFields[GlobalClass.COMIC_GROUPS_INDEX],
-                gsComicFields[GlobalClass.COMIC_LANGUAGES_INDEX],
-                gsComicFields[GlobalClass.COMIC_CATEGORIES_INDEX],
-                gsComicFields[GlobalClass.COMIC_PAGES_INDEX]
-        };
-
-        int[] iPossibleFieldIDs = new int[]{
-                GlobalClass.COMIC_NAME_INDEX,
-                GlobalClass.COMIC_PARODIES_INDEX,
-                GlobalClass.COMIC_CHARACTERS_INDEX,
-                GlobalClass.COMIC_TAGS_INDEX,
-                GlobalClass.COMIC_ARTISTS_INDEX,
-                GlobalClass.COMIC_GROUPS_INDEX,
-                GlobalClass.COMIC_LANGUAGES_INDEX,
-                GlobalClass.COMIC_CATEGORIES_INDEX,
-                GlobalClass.COMIC_PAGES_INDEX
-        };
-
-        ArrayList<Integer> iFieldIDs = new ArrayList<>();
-        ArrayList<String> sFieldUpdateData = new ArrayList<>();
-
-        for(int i = 0; i< bFieldUpdateBooleans.length; i++){
-            if(bFieldUpdateBooleans[i]){
-                iFieldIDs.add(iPossibleFieldIDs[i]);
-                sFieldUpdateData.add(sFieldUpdateText[i]);
-            }
-        }
-
-        //Update the field indicating that the comic data has been acquired:
-        iFieldIDs.add(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_INDEX);
-        sFieldUpdateData.add(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_YES);
-
-        //Convert ArrayLists to arrays:
-        int[] iTemp = new int[iFieldIDs.size()];
-        String[] sTemp = new String[sFieldUpdateData.size()];
-        for(int i = 0; i < iFieldIDs.size(); i++){
-            iTemp[i] = iFieldIDs.get(i);
-            sTemp[i] = sFieldUpdateData.get(i);
-        }
         
-        //Update the applicable fields in the catalog file:
-        globalClass.CatalogDataFile_UpdateRecord(
-                gsComicFields[GlobalClass.COMIC_ID_INDEX],
-                iTemp,
-                sTemp,
-                GlobalClass.MEDIA_CATEGORY_COMICS);
+        //Update the catalog file:
+        globalClass.CatalogDataFile_UpdateRecord(ci);
 
         gmiSaveDetails.setEnabled(false);
         Toast.makeText(getApplicationContext(), "Data saved.", Toast.LENGTH_LONG).show();
