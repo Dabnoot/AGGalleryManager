@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Stack;
 import java.util.TreeMap;
 
 public class Activity_Import extends AppCompatActivity {
@@ -51,14 +52,15 @@ public class Activity_Import extends AppCompatActivity {
 
     //Fragment page indexes:
     public static final int FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY = 0;
-    public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 1;
-    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 2;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 3;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 4;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 5;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 6;
+    public static final int FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE = 1;
+    public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 2;
+    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 3;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 4;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 5;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 6;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 7;
 
-    public static final int FRAGMENT_COUNT = 7;
+    public static final int FRAGMENT_COUNT = 8;
 
     //Constants for individualized tag application via adapter:
     public static final int GET_TAGS_FOR_IMPORT_ITEM = 1050;
@@ -79,12 +81,13 @@ public class Activity_Import extends AppCompatActivity {
     public static ViewModel_ImportActivity viewModelImportActivity; //Used to transfer data between fragments.
 
     //FragmentImport_4_ImportMethod
-    public static final int IMPORT_METHOD_MOVE = 0;
-    public static final int IMPORT_METHOD_COPY = 1;
+
 
     //=================================================
 
     static MediaMetadataRetriever mediaMetadataRetriever;
+
+    static Stack<Integer> stackFragmentOrder;
 
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
@@ -124,6 +127,8 @@ public class Activity_Import extends AppCompatActivity {
         //Instantiate the ViewModel sharing data between fragments:
         viewModelImportActivity = new ViewModelProvider(this).get(ViewModel_ImportActivity.class);
 
+        stackFragmentOrder = new Stack<>();
+        stackFragmentOrder.push(FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY);
     }
 
     @Override
@@ -192,60 +197,106 @@ public class Activity_Import extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if (ViewPager2_Import.getCurrentItem() != 0) {
-            ViewPager2_Import.setCurrentItem(ViewPager2_Import.getCurrentItem() - 1,false);
-        }else{
+        if(stackFragmentOrder.empty()){
             finish();
+        } else {
+            //Go back through the fragments in the order by which we progressed.
+            //  Some user selections will cause a fragment to be skipped, and we don't want
+            //  to go back to those skipped fragments, hence the use of a Stack, and pop().
+            int iCurrentFragment = ViewPager2_Import.getCurrentItem();
+            int iPrevFragment = stackFragmentOrder.pop();
+            if(iCurrentFragment == iPrevFragment){
+                //To handle interesting behavior about how the stack is built.
+                iPrevFragment = stackFragmentOrder.pop();
+            }
+            ViewPager2_Import.setCurrentItem(iPrevFragment, false);
         }
 
     }
 
     public void buttonNextClick_MediaCategorySelected(View v){
-        RadioButton rbVideos = findViewById(R.id.radioButton_ImportVideos);
-        RadioButton rbImages = findViewById(R.id.radioButton_ImportImages);
+        RadioButton radioButton_ImportVideos = findViewById(R.id.radioButton_ImportVideos);
+        RadioButton radioButton_ImportImages = findViewById(R.id.radioButton_ImportImages);
         //RadioButton rbComics = findViewById(R.id.radioButton_ImportComics);
 
-
-
-        if (rbVideos.isChecked()){
+        if (radioButton_ImportVideos.isChecked()){
             viewModelImportActivity.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
-        } else if (rbImages.isChecked()){
+        } else if (radioButton_ImportImages.isChecked()){
             viewModelImportActivity.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         } else {
             viewModelImportActivity.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         }
 
         //Go to the import folder selection fragment:
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
+        if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+            ViewPager2_Import.setCurrentItem(
+                    FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION,
+                    false); //smoothScroll false => don't show slide over animation,
+                                        // as it will slide past the COMIC_SOURCE fragment, which
+                                        // should not be shown for this selection.
+        } else {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE); //Prompt user to select comic source.
+        }
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
+    public void buttonNextClick_ComicSourceSelected(View v){
+        RadioButton radioButton_ComicSourceNHDownloader = findViewById(R.id.radioButton_ComicSourceNHDownloader);
+        RadioButton radioButton_ComicSourceFolder = findViewById(R.id.radioButton_ComicSourceFolder);
+
+        if (radioButton_ComicSourceNHDownloader.isChecked()){
+            viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER;
+        } else if (radioButton_ComicSourceFolder.isChecked()){
+            viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
+        } else {
+            viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+        }
+
+        //Go to the import folder selection fragment:
+        if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
+        } //else { //Allow user to import web address of a comic to import.
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_StorageLocation(View v){
         //Go to the import folder selection fragment:
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+        if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+        } else {
+            if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+            }
+        }
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_ImportMethodComplete(View v){
         RadioButton rbMove = findViewById(R.id.radioButton_MoveFiles);
 
         if (rbMove.isChecked()){
-            viewModelImportActivity.iImportMethod = IMPORT_METHOD_MOVE;
+            viewModelImportActivity.iImportMethod = ViewModel_ImportActivity.IMPORT_METHOD_MOVE;
         } else{
-            viewModelImportActivity.iImportMethod = IMPORT_METHOD_COPY;
+            viewModelImportActivity.iImportMethod = ViewModel_ImportActivity.IMPORT_METHOD_COPY;
         }
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_ImportConfirm(View v){
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_ImportFinish(View v){
@@ -265,7 +316,16 @@ public class Activity_Import extends AppCompatActivity {
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<ItemClass_File> alfi) {
             super(context, textViewResourceId, alfi);
             alFileItems = new ArrayList<>(alfi);
-            alFileItemsDisplay = new ArrayList<>(alfi);
+
+            if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
+                    (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER)) {
+                //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
+                alFileItemsDisplay = new ArrayList<>(); //initialize.
+                applyFilter("^\\d{5,6}_Cover.+");
+            } else {
+                alFileItemsDisplay = new ArrayList<>(alfi);
+            }
+
             SortByFileNameAsc();
         }
 
@@ -473,8 +533,7 @@ public class Activity_Import extends AppCompatActivity {
 
                         //Form a list of tags in use by the selected items. There may be a tag that has just been applied
                         //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
-                        //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector. The
-                        //  user would otherwise be
+                        //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
                         TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
                         for(ItemClass_File fm: alFileItems){ //Loop through file items in this listView.
                             if(fm.isChecked){               //If the user has selected this fileItem...
@@ -558,6 +617,15 @@ public class Activity_Import extends AppCompatActivity {
             alFileItemsDisplay.clear();
             for(ItemClass_File fm : alFileItems){
                 if(fm.name.contains(sSearch)){
+                    alFileItemsDisplay.add(fm);
+                }
+            }
+        }
+
+        public void applyFilter(String sFilter){
+            alFileItemsDisplay.clear();
+            for(ItemClass_File fm : alFileItems){
+                if(fm.name.matches(sFilter)){
                     alFileItemsDisplay.add(fm);
                 }
             }
@@ -718,6 +786,8 @@ public class Activity_Import extends AppCompatActivity {
             switch (position) {
                 //case FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
                 //    return new Fragment_Import_0_MediaCategory();
+                case FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE:
+                    return new Fragment_Import_0a_ComicSource();
                 case FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
                     return new Fragment_Import_1_StorageLocation();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
