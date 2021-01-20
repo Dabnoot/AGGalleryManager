@@ -1,5 +1,9 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -167,26 +171,26 @@ public class Activity_Import extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+    ActivityResultLauncher<Intent> garlGetTagsForImportItem = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if(result.getResultCode() == RESULT_OK){
+                        Intent data = result.getData();
+                        Bundle b = data.getBundleExtra(Activity_VideoPreview.TAG_SELECTION_RESULT_BUNDLE);
+                        if(b == null) return;
+                        ItemClass_File fileItem = (ItemClass_File) b.getSerializable(Activity_VideoPreview.FILE_ITEM);
+                        if(fileItem == null) return;
+                        ArrayList<Integer> aliTagIDs;
+                        aliTagIDs = b.getIntegerArrayList(Activity_VideoPreview.TAG_SELECTION_TAG_IDS);
+                        //Apply the change to the fileListCustomAdapter:
+                        fileListCustomAdapter.applyTagsToItem(fileItem.uri, aliTagIDs);
+                    }
+                }
+            });
 
-        if(requestCode == GET_TAGS_FOR_IMPORT_ITEM){
-            if((resultCode == RESULT_OK) &&
-                    (data != null)){
-                Bundle b = data.getBundleExtra(Activity_VideoPreview.TAG_SELECTION_RESULT_BUNDLE);
-                if(b == null) return;
-                ItemClass_File fileItem = (ItemClass_File) b.getSerializable(Activity_VideoPreview.FILE_ITEM);
-               if(fileItem == null) return;
-                ArrayList<Integer> aliTagIDs;
-                aliTagIDs = b.getIntegerArrayList(Activity_VideoPreview.TAG_SELECTION_TAG_IDS);
-                //Apply the change to the fileListCustomAdapter:
-                fileListCustomAdapter.applyTagsToItem(fileItem.uri, aliTagIDs);
-            }
-        }
 
-
-    }
 
     //======================================================
     //======  FRAGMENT NAVIGATION ROUTINES  ================
@@ -550,7 +554,11 @@ public class Activity_Import extends AppCompatActivity {
                         b.putSerializable(Activity_VideoPreview.FILE_ITEM, alFileItemsDisplay.get(position));
                         intentVideoPreviewPopup.putExtras(b);
                         intentVideoPreviewPopup.putExtra(Activity_VideoPreview.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileItemsDisplay.get(position).videoTimeInMilliseconds);
-                        startActivityForResult(intentVideoPreviewPopup, GET_TAGS_FOR_IMPORT_ITEM);
+
+                        garlGetTagsForImportItem.launch(intentVideoPreviewPopup);
+
+
+
                     }
                 });
             } else {
