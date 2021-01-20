@@ -9,6 +9,10 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -25,6 +29,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -104,6 +110,11 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         return inflater.inflate(R.layout.fragment_import_1_storage_location, container, false);
     }
 
+
+
+
+
+
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         if(getView() == null){
@@ -120,7 +131,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                 intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 //Start the activity:
-                startActivityForResult(intent_GetImportFromFolder, REQUEST_CODE_GET_IMPORT_FOLDER);
+                garlGetImportFolder.launch(intent_GetImportFromFolder);
+
             }
         });
 
@@ -133,105 +145,97 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
     }
 
+    ActivityResultLauncher<Intent> garlGetImportFolder = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    // look for permissions before executing operations.
+                    if(getActivity() == null){
+                        return;
+                    }
 
-    @Override
-    //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void onActivityResult(int requestCode, int resultCode,
-                                 Intent resultData) {
+                    //Check to make sure that we have read/write permission in the selected folder.
+                    //If we don't have permission, request it.
+                    if ((ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) ||
+                            (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                                    != PackageManager.PERMISSION_GRANTED)) {
 
-        //https://developer.android.com/training/data-storage/shared/documents-files
+                        // Permission is not granted
+                        // Should we show an explanation?
+                        if ((ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
+                                (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+                                        Manifest.permission.READ_EXTERNAL_STORAGE))) {
+                            // Show an explanation to the user *asynchronously* -- don't block
+                            // this thread waiting for the user's response! After the user
+                            // sees the explanation, try again to request the permission.
+                            Toast.makeText(getActivity(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
+                        } else {
+                            // No explanation needed; request the permission
+                            ActivityCompat.requestPermissions(getActivity(),
+                                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                            Manifest.permission.READ_EXTERNAL_STORAGE},
+                                    MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
 
-        super.onActivityResult(requestCode, resultCode, resultData);
+                            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                            // app-defined int constant. The callback method gets the
+                            // result of the request.
+                        }
+                        //} else {
+                        // Permission has already been granted
+                    }
 
 
-        //If this is an EXPORT operation, and the data is not NULL,
-        // look for permissions before executing operations.
-        if(getActivity() == null){
-            return;
-        }
-        if ((requestCode == REQUEST_CODE_GET_IMPORT_FOLDER && resultCode == Activity.RESULT_OK)
-                && (resultData != null)){
-            //Check to make sure that we have read/write permission in the selected folder.
-            //If we don't have permission, request it.
-            if ((ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) ||
-                    (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                            != PackageManager.PERMISSION_GRANTED)) {
+                    //The above code checked for permission, and if not granted, requested it.
+                    //  Check one more time to see if the permission was granted:
 
-                // Permission is not granted
-                // Should we show an explanation?
-                if ((ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
-                        (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                                Manifest.permission.READ_EXTERNAL_STORAGE))) {
-                    // Show an explanation to the user *asynchronously* -- don't block
-                    // this thread waiting for the user's response! After the user
-                    // sees the explanation, try again to request the permission.
-                    Toast.makeText(getActivity(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
-                } else {
-                    // No explanation needed; request the permission
-                    ActivityCompat.requestPermissions(getActivity(),
-                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                    Manifest.permission.READ_EXTERNAL_STORAGE},
-                            MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
+                    if ((ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            == PackageManager.PERMISSION_GRANTED) &&
+                            (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                                    == PackageManager.PERMISSION_GRANTED)) {
+                        //If we now have permission...
+                        //The result data contains a URI for the document or directory that
+                        //the user selected.
 
-                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                    // app-defined int constant. The callback method gets the
-                    // result of the request.
+                        //Put the import Uri into the intent (this could represent a folder OR a file:
+
+                        Activity_Import.guriImportTreeURI = result.getData().getData();
+
+                        assert Activity_Import.guriImportTreeURI != null;
+                        DocumentFile df1 = DocumentFile.fromTreeUri(getActivity(), Activity_Import.guriImportTreeURI);
+                        if(df1 == null){
+                            return;
+                        }
+                        String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
+
+                        //Display the source name:
+                        if(getView() == null){
+                            return;
+                        }
+                        TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
+                        textView_Selected_Import_Folder.setText(sTreeUriSourceName);
+                        TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
+                        textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
+                        textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
+                        gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
+                        gLinearLayout_Progress.setVisibility(View.VISIBLE);
+
+                        //Make some more space to show the progress bar:
+                        Button button_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+                        ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) button_FolderSelectComplete.getLayoutParams();
+                        lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
+                        button_FolderSelectComplete.setLayoutParams(lp);
+
+                        Service_Import.startActionGetDirectoryContents(getContext(), Activity_Import.guriImportTreeURI, viewModelImportActivity.iImportMediaCategory);
+
+
+                    }
+
+
                 }
-                //} else {
-                // Permission has already been granted
-            }
-
-
-            //The above code checked for permission, and if not granted, requested it.
-            //  Check one more time to see if the permission was granted:
-
-            if ((ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) &&
-                    (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_GRANTED)) {
-                //If we now have permission...
-                //The result data contains a URI for the document or directory that
-                //the user selected.
-
-                //Put the import Uri into the intent (this could represent a folder OR a file:
-
-                Activity_Import.guriImportTreeURI = resultData.getData();
-
-                assert Activity_Import.guriImportTreeURI != null;
-                DocumentFile df1 = DocumentFile.fromTreeUri(getActivity(), Activity_Import.guriImportTreeURI);
-                if(df1 == null){
-                    return;
-                }
-                String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
-
-                //Display the source name:
-                if(getView() == null){
-                    return;
-                }
-                TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
-                textView_Selected_Import_Folder.setText(sTreeUriSourceName);
-                TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
-                textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
-                textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
-                gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
-                gLinearLayout_Progress.setVisibility(View.VISIBLE);
-
-                //Make some more space to show the progress bar:
-                Button button_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
-                ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) button_FolderSelectComplete.getLayoutParams();
-                lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
-                button_FolderSelectComplete.setLayoutParams(lp);
-
-                Service_Import.startActionGetDirectoryContents(getContext(), Activity_Import.guriImportTreeURI, viewModelImportActivity.iImportMediaCategory);
-
-
-            }
-
-        }
-
-    }
+            });
 
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
         public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
