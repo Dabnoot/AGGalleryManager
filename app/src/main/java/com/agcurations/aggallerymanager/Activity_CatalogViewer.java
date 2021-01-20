@@ -150,7 +150,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         // Initialise menu item search bar with id and take its object
         //https://www.geeksforgeeks.org/android-searchview-with-example/
         MenuItem searchViewItem = menu.findItem(R.id.search_bar);
-        SearchView searchView = (SearchView) searchViewItem.getActionView();
+        final SearchView searchView = (SearchView) searchViewItem.getActionView();
 
 
         if(!globalClass.ObfuscationOn) {
@@ -158,6 +158,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             if(globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory]){
                 searchView.setQuery(globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory], false);
                 searchView.setIconified(false);
+                searchView.clearFocus();
             }
         }
 
@@ -173,6 +174,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory] = sQuery;
                         populate_RecyclerViewCatalogItems();
                         globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory] = true;
+                        searchView.clearFocus();
                         return false;
                     }
                     @Override
