@@ -45,7 +45,7 @@ public class Activity_ImportComics_obsolete extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_import_comics);
+        setContentView(R.layout.activity_import_comics_obsolete);
 
         globalClass = (GlobalClass) getApplicationContext();
 

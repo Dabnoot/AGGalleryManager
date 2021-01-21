@@ -60,8 +60,7 @@
         android:text="Preview"
         android:textSize="16sp"
         android:layout_marginEnd="20dp"
-        android:backgroundTint="@color/colorBlackboardRed"
-        android:visibility="invisible" />
+        android:backgroundTint="@color/colorBlackboardRed" />
 
     <Button
         android:id="@+id/button_Delete"

@@ -84,7 +84,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
         //Instantiate the ViewModel sharing data between fragments:
-        viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
+        viewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE);

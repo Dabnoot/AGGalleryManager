@@ -23,16 +23,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
-public class Activity_VideoPreview extends AppCompatActivity {
-    public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
-    public static final String FILE_ITEM = "FILE_ITEM";
-
-    public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
-    public static final String TAG_SELECTION_TAG_IDS = "TAG_SELECTION_TAG_IDS";
-
-    public static final String VIDEO_FILE_DURATION_MILLISECONDS_LONG = "VIDEO_FILE_DURATION_MILLISECONDS_LONG";
-
-    //private String gsUriVideoFile;
+public class Activity_ImportVideoPreview extends AppCompatActivity {
 
     private ItemClass_File gFileItem;
 
@@ -51,7 +42,7 @@ public class Activity_VideoPreview extends AppCompatActivity {
         }
 
         //Source: https://www.youtube.com/watch?v=fn5OlqQuOCk
-        setContentView(R.layout.activity_video_preview);
+        setContentView(R.layout.activity_import_video_preview);
 
         if (savedInstanceState != null) {
             giCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
@@ -89,9 +80,10 @@ public class Activity_VideoPreview extends AppCompatActivity {
                 Intent data = new Intent();
                 Bundle b = new Bundle();
                 //Put back the file URI string so that the file can be located:
-                b.putSerializable(FILE_ITEM, gFileItem);
-                b.putIntegerArrayList(TAG_SELECTION_TAG_IDS, aliTagIDs);
-                data.putExtra(TAG_SELECTION_RESULT_BUNDLE, b);
+                ItemClass_File[] icFileItems = new ItemClass_File[]{gFileItem};
+                b.putSerializable(Activity_Import.PREVIEW_FILE_ITEMS, icFileItems);
+                b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
+                data.putExtra(Activity_Import.TAG_SELECTION_RESULT_BUNDLE, b);
                 setResult(RESULT_OK, data);
 
             }
@@ -101,9 +93,11 @@ public class Activity_VideoPreview extends AppCompatActivity {
         Bundle b = getIntent().getExtras();
         if(b != null) {
 
-            gFileItem = (ItemClass_File) b.getSerializable(FILE_ITEM);
+            ItemClass_File[] icFileItems;
+            icFileItems = (ItemClass_File[]) b.getSerializable(Activity_Import.PREVIEW_FILE_ITEMS);
+            gFileItem = icFileItems[0]; //Video preview will only have 1 file item.
 
-            HashMap<String , ItemClass_Tag> hashMapTemp = (HashMap<String , ItemClass_Tag>) b.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
+            HashMap<String , ItemClass_Tag> hashMapTemp = (HashMap<String , ItemClass_Tag>) b.getSerializable(Activity_Import.IMPORT_SESSION_TAGS_IN_USE);
             TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
             if(hashMapTemp != null){
                 tmImportSessionTagsInUse = new TreeMap<>(hashMapTemp);
@@ -142,9 +136,9 @@ public class Activity_VideoPreview extends AppCompatActivity {
                         sb.append(", ");
                         sb.append(globalClass.getTagTextFromID(gFileItem.prospectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
                     }
-                    TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
-                    if (tv != null) {
-                        tv.setText(sb.toString());
+                    TextView textView_VideoPopupSelectedTags = findViewById(R.id.textView_VideoPopupSelectedTags);
+                    if (textView_VideoPopupSelectedTags != null) {
+                        textView_VideoPopupSelectedTags.setText(sb.toString());
                     }
                 }
             }

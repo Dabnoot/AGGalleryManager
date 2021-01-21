@@ -110,11 +110,6 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         return inflater.inflate(R.layout.fragment_import_1_storage_location, container, false);
     }
 
-
-
-
-
-
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         if(getView() == null){
@@ -143,6 +138,30 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
         gTextView_FileAnalysisProgressBarText.setText("0/0");
         gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+    }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if(viewModelImportActivity.bImportCategoryChange){
+            //Reset all the stuff so that it looks like time to select a folder:
+            viewModelImportActivity.bImportCategoryChange = false;
+            gProgressBar_FileAnalysisProgress.setProgress(0);
+            gTextView_FileAnalysisProgressBarText.setText("0/0");
+            TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
+            textView_Selected_Import_Folder.setText("");
+            TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
+            textView_Label_Selected_Folder.setVisibility(View.INVISIBLE);
+            textView_Selected_Import_Folder.setVisibility(View.INVISIBLE);
+            gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
+            gLinearLayout_Progress.setVisibility(View.INVISIBLE);
+            gbutton_FolderSelectComplete.setEnabled(false);
+        }
+
+
+
     }
 
     ActivityResultLauncher<Intent> garlGetImportFolder = registerForActivityResult(
@@ -201,6 +220,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
                         //Put the import Uri into the intent (this could represent a folder OR a file:
 
+                        if(result.getData() == null) {
+                            return;
+                        }
                         Activity_Import.guriImportTreeURI = result.getData().getData();
 
                         assert Activity_Import.guriImportTreeURI != null;
@@ -278,6 +300,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     if(iAmountComplete == 100){
                         if(gbutton_FolderSelectComplete != null) {
                             gbutton_FolderSelectComplete.setEnabled(true);
+                            viewModelImportActivity.bUpdateImportSelectList = true;
                         }
                     }
                 }

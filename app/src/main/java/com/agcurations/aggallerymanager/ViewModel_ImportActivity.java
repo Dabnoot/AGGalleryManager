@@ -17,4 +17,9 @@ public class ViewModel_ImportActivity extends ViewModel {
     public int iImportMethod;  //Move or copy.
     public ArrayList<ItemClass_File> alfiConfirmedFileImports;
 
+    public boolean bUpdateImportSelectList = true; //Useful when the user goes back and selects a
+    // different folder from which to import.
+
+    public boolean bImportCategoryChange = true; //Useful to demand user re-select import folder
+    // if they went back and changed the import type.
 }

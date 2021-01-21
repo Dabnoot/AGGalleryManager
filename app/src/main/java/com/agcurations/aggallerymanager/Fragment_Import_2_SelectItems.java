@@ -54,7 +54,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //Instantiate the ViewModel sharing data between fragments:
-        viewModelImportActivity = new ViewModelProvider(this).get(ViewModel_ImportActivity.class);
+        viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
     }
 
     @Override
@@ -65,14 +65,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
     }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-/*        if(ImportActivity.ViewPager2_Import.getCurrentItem() != ImportActivity.FRAGMENT_IMPORT_2_INDEX_SELECT_ITEMS){
-            //There will be a problem
-            return;
-        }*/
 
-    }
+
 
     Parcelable ListViewState;
     @Override
@@ -85,9 +79,12 @@ public class Fragment_Import_2_SelectItems extends Fragment {
             }
             ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
             listView_FolderContents.onRestoreInstanceState(ListViewState);
-        } else {
+        }
+
+        if(ListViewState == null || viewModelImportActivity.bUpdateImportSelectList){
             initComponents();
         }
+
     }
 
     @Override
@@ -103,7 +100,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     }
 
     public void initComponents(){
-
+        viewModelImportActivity.bUpdateImportSelectList = false;
         if(getView() == null){
             return;
         }

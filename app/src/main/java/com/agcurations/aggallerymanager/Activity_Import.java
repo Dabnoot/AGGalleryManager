@@ -5,7 +5,6 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.documentfile.provider.DocumentFile;
@@ -45,6 +44,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
 
@@ -78,7 +78,10 @@ public class Activity_Import extends AppCompatActivity {
     //FragmentImport_2_SelectItems
     public static int SelectItemsListViewWidth = 1000;  //Expands the listView items to the width of the listview.
     public static FileListCustomAdapter fileListCustomAdapter; //For the file selector.
-
+    public static final String PREVIEW_FILE_ITEMS = "PREVIEW_FILE_ITEMS";
+    public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
+    public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
+    public static final String TAG_SELECTION_TAG_IDS = "TAG_SELECTION_TAG_IDS";
 
     //FragmentImport_3_SelectTags
     public static ViewModel_Fragment_SelectTags viewModelTags; //Used for applying tags globally to an entire import selection.
@@ -178,14 +181,14 @@ public class Activity_Import extends AppCompatActivity {
                 public void onActivityResult(ActivityResult result) {
                     if(result.getResultCode() == RESULT_OK){
                         Intent data = result.getData();
-                        Bundle b = data.getBundleExtra(Activity_VideoPreview.TAG_SELECTION_RESULT_BUNDLE);
+                        Bundle b = data.getBundleExtra(TAG_SELECTION_RESULT_BUNDLE);
                         if(b == null) return;
-                        ItemClass_File fileItem = (ItemClass_File) b.getSerializable(Activity_VideoPreview.FILE_ITEM);
-                        if(fileItem == null) return;
+                        ItemClass_File[] fileItems = (ItemClass_File[]) b.getSerializable(PREVIEW_FILE_ITEMS);
+                        if(fileItems == null) return;
                         ArrayList<Integer> aliTagIDs;
-                        aliTagIDs = b.getIntegerArrayList(Activity_VideoPreview.TAG_SELECTION_TAG_IDS);
+                        aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
                         //Apply the change to the fileListCustomAdapter:
-                        fileListCustomAdapter.applyTagsToItem(fileItem.uri, aliTagIDs);
+                        fileListCustomAdapter.applyTagsToItem(fileItems[0].uri, aliTagIDs);
                     }
                 }
             });
@@ -209,26 +212,41 @@ public class Activity_Import extends AppCompatActivity {
             //  to go back to those skipped fragments, hence the use of a Stack, and pop().
             int iCurrentFragment = ViewPager2_Import.getCurrentItem();
             int iPrevFragment = stackFragmentOrder.pop();
+            if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == 0)){
+                finish();
+                return;
+            }
             if(iCurrentFragment == iPrevFragment){
                 //To handle interesting behavior about how the stack is built.
                 iPrevFragment = stackFragmentOrder.pop();
             }
             ViewPager2_Import.setCurrentItem(iPrevFragment, false);
-        }
 
+            if(iPrevFragment == FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY){
+                //There is no item to push '0' onto the fragment order stack:
+                stackFragmentOrder.push(FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY);
+            }
+        }
     }
+
 
     public void buttonNextClick_MediaCategorySelected(View v){
         RadioButton radioButton_ImportVideos = findViewById(R.id.radioButton_ImportVideos);
         RadioButton radioButton_ImportImages = findViewById(R.id.radioButton_ImportImages);
         //RadioButton rbComics = findViewById(R.id.radioButton_ImportComics);
 
+        int iNewImportMediaCatagory;
         if (radioButton_ImportVideos.isChecked()){
-            viewModelImportActivity.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
+            iNewImportMediaCatagory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         } else if (radioButton_ImportImages.isChecked()){
-            viewModelImportActivity.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
+            iNewImportMediaCatagory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         } else {
-            viewModelImportActivity.iImportMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+            iNewImportMediaCatagory = GlobalClass.MEDIA_CATEGORY_COMICS;
+        }
+
+        if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
+            viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).
+            viewModelImportActivity.iImportMediaCategory = iNewImportMediaCatagory;
         }
 
         //Go to the import folder selection fragment:
@@ -524,46 +542,87 @@ public class Activity_Import extends AppCompatActivity {
 
             //If the file item is video mimeType, set the preview button visibility to visible:
             Button button_VideoPreview = row.findViewById(R.id.button_VideoPreview);
-            if(alFileItemsDisplay.get(position).mimeType.startsWith("video")  ||
+            boolean bItemIsVideo = alFileItemsDisplay.get(position).mimeType.startsWith("video")  ||
                     (alFileItemsDisplay.get(position).mimeType.equals("application/octet-stream") &&
-                            alFileItemsDisplay.get(position).extension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
-                button_VideoPreview.setVisibility(Button.VISIBLE);
-                button_VideoPreview.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        //Start the video preview popup activity:
-                        Intent intentVideoPreviewPopup = new Intent(Activity_Import.this, Activity_VideoPreview.class);
-                        Bundle b = new Bundle();
+                            alFileItemsDisplay.get(position).extension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
 
-                        //Form a list of tags in use by the selected items. There may be a tag that has just been applied
-                        //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
-                        //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
-                        TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
-                        for(ItemClass_File fm: alFileItems){ //Loop through file items in this listView.
-                            if(fm.isChecked){               //If the user has selected this fileItem...
-                                for(Integer iTagID: fm.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
-                                    String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
-                                    tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
-                                }
+            //button_VideoPreview.setVisibility(Button.VISIBLE);
+            button_VideoPreview.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View view) {
+                    //Start the preview popup activity:
+                    Intent intentPreviewPopup;
+                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                        intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportVideoPreview.class);
+                    } else {
+                        intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportImageComicPreview.class);
+                    }
+
+                    Bundle b = new Bundle();
+
+                    //Form a list of tags in use by the selected items. There may be a tag that has just been applied
+                    //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
+                    //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
+                    TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
+                    for(ItemClass_File fm: alFileItems){ //Loop through file items in this listView.
+                        if(fm.isChecked){               //If the user has selected this fileItem...
+                            for(Integer iTagID: fm.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
+                                String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
+                                tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
                             }
                         }
-                        //Add the treeMap to the bundle to send to the preview:
-                        b.putSerializable(Activity_VideoPreview.IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
-
-                        ItemClass_File fileItem = alFileItemsDisplay.get(position);
-                        b.putSerializable(Activity_VideoPreview.FILE_ITEM, alFileItemsDisplay.get(position));
-                        intentVideoPreviewPopup.putExtras(b);
-                        intentVideoPreviewPopup.putExtra(Activity_VideoPreview.VIDEO_FILE_DURATION_MILLISECONDS_LONG, alFileItemsDisplay.get(position).videoTimeInMilliseconds);
-
-                        garlGetTagsForImportItem.launch(intentVideoPreviewPopup);
-
-
-
                     }
-                });
-            } else {
-                button_VideoPreview.setVisibility(Button.INVISIBLE);
-            }
+                    //Add the treeMap to the bundle to send to the preview:
+                    b.putSerializable(IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
+
+                    ItemClass_File[] fileItems;
+                    if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                        fileItems = new ItemClass_File[]{alFileItemsDisplay.get(position)};
+                    } else {
+                        //If this is a comic, put together all of the page fileItems for the preview.
+                        ItemClass_File[] icfComicFiles = new ItemClass_File[]{};
+
+                        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                            //final public ArrayList<ItemClass_File> alFileItems;
+                            //private ArrayList<ItemClass_File> alFileItemsDisplay;
+
+                            //Sort the files for this comic by putting them into a TreeMap:
+                            TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
+                            String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).name);
+                            String sComicIDCandidate;
+                            for (ItemClass_File icf : alFileItems) {
+                                sComicIDCandidate = Service_Import.GetNHComicID(icf.name);
+                                if (sComicIDCandidate.equals(sComicID)) {
+                                    tmFiles.put(icf.name, icf);
+                                }
+                            }
+
+                            ItemClass_File[] icf = new ItemClass_File[tmFiles.size()];
+                            int i = 0;
+                            for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
+                                icf[i] = entry.getValue();
+                                i++;
+                            }
+
+                            icfComicFiles = icf;
+
+                        }
+
+                        fileItems = icfComicFiles;
+                    }
+
+
+                    b.putSerializable(PREVIEW_FILE_ITEMS, fileItems);
+                    intentPreviewPopup.putExtras(b);
+
+
+                    garlGetTagsForImportItem.launch(intentPreviewPopup);
+
+
+
+                }
+            });
+
 
             return row;
         }
