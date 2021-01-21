@@ -17,10 +17,10 @@ public class ItemClass_File implements Serializable {
     final public String uri;
     final public String mimeType;
     public long videoTimeInMilliseconds;
-    public ArrayList<Integer> prospectiveTags; //"prospective" as in "about to be applied".
     public String destinationFolder; //Used for moving/copying.
 
-
+    public ArrayList<Integer> prospectiveTags; //"prospective" as in "about to be applied".
+    public boolean bPreviewTagUpdate = false; //Flag used to reduce excess processing
 
     public String videoTimeText;
 

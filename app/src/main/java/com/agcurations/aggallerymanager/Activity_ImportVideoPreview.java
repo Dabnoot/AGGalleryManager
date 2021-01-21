@@ -75,6 +75,8 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 for(ItemClass_Tag ti : tagItems){
                     aliTagIDs.add(ti.TagID);
                 }
+                gFileItem.prospectiveTags = aliTagIDs;
+                gFileItem.bPreviewTagUpdate = true;
 
                 //Prepare a result to send back to the calling activity:
                 Intent data = new Intent();
@@ -82,7 +84,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 //Put back the file URI string so that the file can be located:
                 ItemClass_File[] icFileItems = new ItemClass_File[]{gFileItem};
                 b.putSerializable(Activity_Import.PREVIEW_FILE_ITEMS, icFileItems);
-                b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
+                //b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
                 data.putExtra(Activity_Import.TAG_SELECTION_RESULT_BUNDLE, b);
                 setResult(RESULT_OK, data);
 

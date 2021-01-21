@@ -287,6 +287,11 @@ public class Fragment_SelectTags extends Fragment {
         initListViewData();
     }
 
+    public void resetTagListViewData(ArrayList<Integer> aliPreselectedTags){
+        galiPreselectedTags = aliPreselectedTags;
+        initListViewData();
+    }
+
     private void initListViewData(){
         ListView listView_ImportTagSelection;
         if(getView() != null) {

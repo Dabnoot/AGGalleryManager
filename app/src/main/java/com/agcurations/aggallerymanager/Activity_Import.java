@@ -79,9 +79,10 @@ public class Activity_Import extends AppCompatActivity {
     public static int SelectItemsListViewWidth = 1000;  //Expands the listView items to the width of the listview.
     public static FileListCustomAdapter fileListCustomAdapter; //For the file selector.
     public static final String PREVIEW_FILE_ITEMS = "PREVIEW_FILE_ITEMS";
+    public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
     public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
-    public static final String TAG_SELECTION_TAG_IDS = "TAG_SELECTION_TAG_IDS";
+    public static final String MEDIA_CATEGORY = "MEDIA_CATEGORY";
 
     //FragmentImport_3_SelectTags
     public static ViewModel_Fragment_SelectTags viewModelTags; //Used for applying tags globally to an entire import selection.
@@ -174,7 +175,7 @@ public class Activity_Import extends AppCompatActivity {
         }
     }
 
-    ActivityResultLauncher<Intent> garlGetTagsForImportItem = registerForActivityResult(
+    ActivityResultLauncher<Intent> garlGetTagsForImportItems = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
@@ -185,10 +186,11 @@ public class Activity_Import extends AppCompatActivity {
                         if(b == null) return;
                         ItemClass_File[] fileItems = (ItemClass_File[]) b.getSerializable(PREVIEW_FILE_ITEMS);
                         if(fileItems == null) return;
-                        ArrayList<Integer> aliTagIDs;
-                        aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
+                        //ArrayList<Integer> aliTagIDs;
+                        //aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
                         //Apply the change to the fileListCustomAdapter:
-                        fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
+                        //fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
+                        fileListCustomAdapter.updateFileItemTags(fileItems);
                     }
                 }
             });
@@ -559,6 +561,10 @@ public class Activity_Import extends AppCompatActivity {
                     }
 
                     Bundle b = new Bundle();
+                    b.putInt(MEDIA_CATEGORY,
+                            viewModelImportActivity.iImportMediaCategory); //viewModel not intended
+                    // to be used between Activities. Therefore, pass media category via bundle in
+                    // intent.
 
                     //Form a list of tags in use by the selected items. There may be a tag that has just been applied
                     //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
@@ -576,9 +582,26 @@ public class Activity_Import extends AppCompatActivity {
                     b.putSerializable(IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
 
                     ItemClass_File[] fileItems;
-                    if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+
+                        //Process only one video at a time for preview and tag input.
                         fileItems = new ItemClass_File[]{alFileItemsDisplay.get(position)};
-                    } else {
+
+                    } else if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+
+                        //Send all of the image file items that are shown to the preview, and tell position.
+                        //  That way the user can swipe to the next image and apply tags to that one as well.
+                        ItemClass_File[] icf = new ItemClass_File[alFileItemsDisplay.size()];
+                        int i = 0;
+                        for(ItemClass_File icfSource: alFileItemsDisplay){
+                            icf[i] = icfSource;
+                            i++;
+                        }
+                        fileItems = icf;
+
+                        b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
+
+                    } else { //If comic...
                         //If this is a comic, put together all of the page fileItems for the preview.
                         ItemClass_File[] icfComicFiles = new ItemClass_File[]{};
 
@@ -616,7 +639,7 @@ public class Activity_Import extends AppCompatActivity {
                     intentPreviewPopup.putExtras(b);
 
 
-                    garlGetTagsForImportItem.launch(intentPreviewPopup);
+                    garlGetTagsForImportItems.launch(intentPreviewPopup);
 
 
 
@@ -627,7 +650,7 @@ public class Activity_Import extends AppCompatActivity {
             return row;
         }
 
-        public void updateFileItemTags(String sFileUri, ArrayList<Integer> aliTagIDs){
+        /*public void updateFileItemTags(String sFileUri, ArrayList<Integer> aliTagIDs){
             boolean bFoundAndUpdated = false;
             //Find the item to apply tags:
             for(ItemClass_File fm: alFileItems){
@@ -638,6 +661,32 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 }
             }
+            if (bFoundAndUpdated) {
+                notifyDataSetChanged();
+            }
+
+        }*/
+
+        public void updateFileItemTags(ItemClass_File[] icfIncomingFIs){
+            boolean bFoundAndUpdated = false;
+            //Find the items to apply individualized tags.
+            //This routine is not designed to apply the same tags to multiple items.
+
+
+            for(ItemClass_File icfIncoming: icfIncomingFIs) {
+                if(icfIncoming.bPreviewTagUpdate) {
+                    for (ItemClass_File icfUpdate : alFileItems) {
+                        if (icfUpdate.uri.contentEquals(icfIncoming.uri)) {
+                            icfUpdate.prospectiveTags = icfIncoming.prospectiveTags;
+                            icfUpdate.isChecked = true;
+                            bFoundAndUpdated = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+
             if (bFoundAndUpdated) {
                 notifyDataSetChanged();
             }

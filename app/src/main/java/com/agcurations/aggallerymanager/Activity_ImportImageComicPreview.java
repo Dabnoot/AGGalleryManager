@@ -30,11 +30,15 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
 
     private ItemClass_File[] gFileItems;
 
-    private int giFileItemIndex = 0;
+    private int giFileItemIndex;
     private int giMaxFileItemIndex;
     private static final String IMAGE_PREVIEW_INDEX = "image_preview_index";
 
     private ImageView gImagePreview;
+
+    private int giMediaCategory;
+
+    private Fragment_SelectTags fragment_selectTags;
 
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
@@ -80,12 +84,20 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                     aliTagIDs.add(ti.TagID);
                 }
 
+                int iFileItemTagsIndex = 0; //If the media type is Comics, tags are applied to the first
+                //  file item only.
+                if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS){
+                    iFileItemTagsIndex = giFileItemIndex;
+                }
+                gFileItems[iFileItemTagsIndex].prospectiveTags = aliTagIDs;
+                gFileItems[iFileItemTagsIndex].bPreviewTagUpdate = true;
+
                 //Prepare a result to send back to the calling activity:
                 Intent data = new Intent();
                 Bundle b = new Bundle();
                 //Put back the file URI string so that the file can be located:
                 b.putSerializable(Activity_Import.PREVIEW_FILE_ITEMS, gFileItems);
-                b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
+                //b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
                 data.putExtra(Activity_Import.TAG_SELECTION_RESULT_BUNDLE, b);
                 setResult(RESULT_OK, data);
 
@@ -98,6 +110,8 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
 
             gFileItems = (ItemClass_File[]) b.getSerializable(Activity_Import.PREVIEW_FILE_ITEMS);
             giMaxFileItemIndex = gFileItems.length - 1;
+            giFileItemIndex = b.getInt(Activity_Import.PREVIEW_FILE_ITEMS_POSITION, 0);
+            giMediaCategory = b.getInt(Activity_Import.MEDIA_CATEGORY, 1); //Default 1 because videos has its own preview activity.
 
             HashMap<String , ItemClass_Tag> hashMapTemp = (HashMap<String , ItemClass_Tag>) b.getSerializable(Activity_Import.IMPORT_SESSION_TAGS_IN_USE);
             TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
@@ -107,10 +121,10 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
 
             //Start the tag selection fragment:
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            Fragment_SelectTags fst = new Fragment_SelectTags();
+            fragment_selectTags = new Fragment_SelectTags();
             Bundle args = new Bundle();
-            args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS);
-            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItems[0].prospectiveTags);
+            args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, giMediaCategory);
+            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItems[giFileItemIndex].prospectiveTags);
             if(tmImportSessionTagsInUse != null){
                 if(tmImportSessionTagsInUse.size() > 0){
                     //During import preview of other items, the user may have selected tags that
@@ -121,29 +135,10 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                     args.putSerializable(Fragment_SelectTags.IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
                 }
             }
-            fst.setArguments(args);
-            ft.replace(R.id.child_fragment_tag_selector, fst);
+            fragment_selectTags.setArguments(args);
+            ft.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
             ft.commit();
 
-            //Init the tags list if there are tags already assigned to this item:
-            //Get the text of the tags and display:
-            if(gFileItems[0].prospectiveTags != null) {
-                if (gFileItems[0].prospectiveTags.size() > 0) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Tags: ");
-                    GlobalClass globalClass;
-                    globalClass = (GlobalClass) getApplicationContext();
-                    sb.append(globalClass.getTagTextFromID(gFileItems[0].prospectiveTags.get(0), GlobalClass.MEDIA_CATEGORY_COMICS));
-                    for (int i = 1; i < gFileItems[0].prospectiveTags.size(); i++) {
-                        sb.append(", ");
-                        sb.append(globalClass.getTagTextFromID(gFileItems[0].prospectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_COMICS));
-                    }
-                    TextView textView_ImagePopupSelectedTags = findViewById(R.id.textView_ImagePopupSelectedTags);
-                    if (textView_ImagePopupSelectedTags != null) {
-                        textView_ImagePopupSelectedTags.setText(sb.toString());
-                    }
-                }
-            }
         }
 
 
@@ -278,6 +273,46 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
         textView_FileName.setText(gFileItems[giFileItemIndex].name);
+
+        //Init the tags list if there are tags already assigned to this item:
+        //Get the text of the tags and display:
+        if(gFileItems[giFileItemIndex].prospectiveTags != null) {
+            TextView textView_ImagePopupSelectedTags = findViewById(R.id.textView_ImagePopupSelectedTags);
+            StringBuilder sbTags = new StringBuilder();
+            sbTags.append("Tags: ");
+
+            int iFileItemTagsIndex = 0; //If the media type is Comics, tags are applied to the first
+                                        //  file item only.
+            if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS){
+                iFileItemTagsIndex = giFileItemIndex;
+            }
+
+            if (gFileItems[iFileItemTagsIndex].prospectiveTags.size() > 0) {
+
+                GlobalClass globalClass;
+                globalClass = (GlobalClass) getApplicationContext();
+
+                sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].prospectiveTags.get(0), giMediaCategory));
+                for (int i = 1; i < gFileItems[iFileItemTagsIndex].prospectiveTags.size(); i++) {
+                    sbTags.append(", ");
+                    sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].prospectiveTags.get(i), giMediaCategory));
+                }
+
+            }
+            if (textView_ImagePopupSelectedTags != null) {
+                textView_ImagePopupSelectedTags.setText(sbTags.toString());
+            }
+            if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
+                fragment_selectTags.resetTagListViewData(gFileItems[iFileItemTagsIndex].prospectiveTags);
+            }
+        }
+
+
+
+
     }
+
+
+
 
 }
