@@ -7,10 +7,8 @@ import android.os.PersistableBundle;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
@@ -32,9 +30,9 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
 
     private ItemClass_File[] gFileItems;
 
-    private int giFileItemIndex = 1;
+    private int giFileItemIndex = 0;
     private int giMaxFileItemIndex;
-    private static final String COMIC_PAGE_PREVIEW_INDEX = "comic_page_preview_index";
+    private static final String IMAGE_PREVIEW_INDEX = "image_preview_index";
 
     private ImageView gImagePreview;
 
@@ -51,7 +49,7 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
         setContentView(R.layout.activity_import_image_comic_preview);
 
         if (savedInstanceState != null) {
-            giFileItemIndex = savedInstanceState.getInt(COMIC_PAGE_PREVIEW_INDEX);
+            giFileItemIndex = savedInstanceState.getInt(IMAGE_PREVIEW_INDEX);
         }
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
@@ -71,7 +69,7 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                         sb.append(tagItems.get(i).TagText);
                     }
                 }
-                TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
+                TextView tv = findViewById(R.id.textView_ImagePopupSelectedTags);
                 if(tv != null){
                     tv.setText(sb.toString());
                 }
@@ -272,7 +270,7 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
-        outState.putInt(COMIC_PAGE_PREVIEW_INDEX, giFileItemIndex);
+        outState.putInt(IMAGE_PREVIEW_INDEX, giFileItemIndex);
     }
 
     private void initializeImage(){

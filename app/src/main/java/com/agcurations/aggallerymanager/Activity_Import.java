@@ -188,7 +188,7 @@ public class Activity_Import extends AppCompatActivity {
                         ArrayList<Integer> aliTagIDs;
                         aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
                         //Apply the change to the fileListCustomAdapter:
-                        fileListCustomAdapter.applyTagsToItem(fileItems[0].uri, aliTagIDs);
+                        fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
                     }
                 }
             });
@@ -627,7 +627,7 @@ public class Activity_Import extends AppCompatActivity {
             return row;
         }
 
-        public void applyTagsToItem(String sFileUri, ArrayList<Integer> aliTagIDs){
+        public void updateFileItemTags(String sFileUri, ArrayList<Integer> aliTagIDs){
             boolean bFoundAndUpdated = false;
             //Find the item to apply tags:
             for(ItemClass_File fm: alFileItems){
