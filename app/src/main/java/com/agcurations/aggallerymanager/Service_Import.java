@@ -347,35 +347,6 @@ public class Service_Import extends IntentService {
 
 
 
-    public static String GetNHComicID(String sFileName){
-        boolean bIsValidComicPage = true;
-        int iComicIDDigitCount = 0;
-
-        int iComicID = -1;
-        if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
-            iComicIDDigitCount = 7;
-        } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
-            iComicIDDigitCount = 6;
-        } else if (sFileName.matches("^\\d{5}_(Cover|Page).+")) {
-            iComicIDDigitCount = 5;
-        } else if (sFileName.matches("^\\d{4}_(Cover|Page).+")) {
-            iComicIDDigitCount = 4;
-        } else if (sFileName.matches("^\\d{3}_(Cover|Page).+")) {
-            iComicIDDigitCount = 3;
-        } else if (sFileName.matches("^\\d{2}_(Cover|Page).+")) {
-            iComicIDDigitCount = 2;
-        } else if (sFileName.matches("^\\d_(Cover|Page).+")) {
-            iComicIDDigitCount = 1;
-        } else {
-            bIsValidComicPage = false;
-        }
-        String sComicID = "";
-        if(bIsValidComicPage) {
-            sComicID = sFileName.substring(0, iComicIDDigitCount);
-        }
-        return sComicID;
-    }
-
 
 
     private void handleAction_startActionImportDirectoryContents(
@@ -569,9 +540,38 @@ public class Service_Import extends IntentService {
 
 
 
+    //==============================================================================================
+    //===== Import Utilities =======================================================================
+    //==============================================================================================
 
+    public static String GetNHComicID(String sFileName){
+        boolean bIsValidComicPage = true;
+        int iComicIDDigitCount = 0;
 
-
+        int iComicID = -1;
+        if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
+            iComicIDDigitCount = 7;
+        } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
+            iComicIDDigitCount = 6;
+        } else if (sFileName.matches("^\\d{5}_(Cover|Page).+")) {
+            iComicIDDigitCount = 5;
+        } else if (sFileName.matches("^\\d{4}_(Cover|Page).+")) {
+            iComicIDDigitCount = 4;
+        } else if (sFileName.matches("^\\d{3}_(Cover|Page).+")) {
+            iComicIDDigitCount = 3;
+        } else if (sFileName.matches("^\\d{2}_(Cover|Page).+")) {
+            iComicIDDigitCount = 2;
+        } else if (sFileName.matches("^\\d_(Cover|Page).+")) {
+            iComicIDDigitCount = 1;
+        } else {
+            bIsValidComicPage = false;
+        }
+        String sComicID = "";
+        if(bIsValidComicPage) {
+            sComicID = sFileName.substring(0, iComicIDDigitCount);
+        }
+        return sComicID;
+    }
 
 
 }
