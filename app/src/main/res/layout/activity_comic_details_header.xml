@@ -49,7 +49,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:layout_marginStart="15dp"
-                android:text="@string/comic_id"
+                android:text="Comic Source:"
                 android:textSize="20sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Title"/>
@@ -59,7 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
-                android:text="@string/comicid_"
+                android:text="ComicSource"
                 android:textSize="20sp"
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelComicSource"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelComicSource" />
@@ -223,7 +223,6 @@
                 android:layout_marginBottom="10dp"
                 android:text="@string/pages"
                 android:textSize="20sp"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView_Categories" />
 
@@ -238,6 +237,29 @@
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelPages"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelPages" />
 
+            <TextView
+                android:id="@+id/textView_LabelComicID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:text="@string/comic_id"
+                android:textSize="20sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView_Pages" />
+
+            <TextView
+                android:id="@+id/textView_ComicID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginBottom="15dp"
+                android:text="@string/comicid_"
+                android:textSize="20sp"
+                app:layout_constraintStart_toEndOf="@+id/textView_LabelComicID"
+                app:layout_constraintTop_toTopOf="@+id/textView_LabelComicID" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

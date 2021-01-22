@@ -137,7 +137,7 @@ public class Service_Main extends IntentService {
         }
 
 
-        //reNameComicFoldersToComicID();
+        //updateCatalogRecords(GlobalClass.MEDIA_CATEGORY_COMICS);
 
 
     }
@@ -247,43 +247,18 @@ public class Service_Main extends IntentService {
 
 
 
-    private void reNameComicFoldersToComicID(){
+    private void updateCatalogRecords(int iMediaCategory){
 
         //Loop through each comic entry, attempt to rename the folder to ComicID, then update the
         //  catalog file and memory record:
-        String sOldFolderPath;
-        File fComicFolder;
-        String sNewFolderPath;
-        File fRenameTo;
-        ArrayList<String> alsFailedComicRenames = new ArrayList<>();
+
         ItemClass_CatalogItem ciComic;
-        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
-            sOldFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + tmEntry.getValue().sFolder_Name;
-            fComicFolder = new File(sOldFolderPath);
-            if(fComicFolder.exists()){
-                sNewFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + tmEntry.getValue().sItemID;
-                fRenameTo = new File(sNewFolderPath);
-                if(fComicFolder.renameTo(fRenameTo)){
-                    //Update the catalog file, but verify that the new folder exists, first:
-                    ciComic = tmEntry.getValue();
-                    ciComic.sFolder_Name = ciComic.sItemID;
-                    sNewFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + ciComic.sFolder_Name;
-                    fComicFolder = new File(sNewFolderPath);
-                    if(fComicFolder.exists()){
-                        globalClass.CatalogDataFile_UpdateRecord(ciComic);
-                    }
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
 
-                } else {
-                    alsFailedComicRenames.add(tmEntry.getValue().sItemID);
-                }
+            ciComic = tmEntry.getValue();
+            //ciComic.sSource = "https:/nhentai.net/g/" + ciComic.sItemID + "/";
+            globalClass.CatalogDataFile_UpdateRecord(ciComic);
 
-            }
-
-        }
-
-        if (alsFailedComicRenames.size() > 0) {
-            String sFailedFolders = alsFailedComicRenames.toString();
-            Log.d("Rename Folders", sFailedFolders);
         }
 
     }

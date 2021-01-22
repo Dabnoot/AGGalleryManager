@@ -27,6 +27,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,16 +54,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     public static final String EXTRA_CATALOG_ITEM = "CATALOG_ITEM";
 
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
-
-    private boolean gbComicDetailsTitleUpdateAvailable = false;
-    private boolean gbComicDetailsParodiesDataUpdateAvailable = false;
-    private boolean gbComicDetailsCharactersDataUpdateAvailable = false;
-    private boolean gbComicDetailsTagsDataUpdateAvailable = false;
-    private boolean gbComicDetailsArtistsDataUpdateAvailable = false;
-    private boolean gbComicDetailsGroupsDataUpdateAvailable = false;
-    private boolean gbComicDetailsLanguagesDataUpdateAvailable = false;
-    private boolean gbComicDetailsCategoriesDataUpdateAvailable = false;
-    private boolean gbComicDetailsPagesDataUpdateAvailable = false;
 
     private RecyclerViewComicPagesAdapter gRecyclerViewComicPagesAdapter;
 
@@ -267,7 +258,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final ImageView ivThumbnail;
             public final TextView tvThumbnailText;
 
-            public final TextView tvComicID;
+            public final TextView tvComicSource;
             public final TextView tvParodies;
             public final TextView tvCharacters;
             public final TextView tvTags;
@@ -276,8 +267,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final TextView tvLanguages;
             public final TextView tvCategories;
             public final TextView tvPages;
+            public final TextView tvComicID;
 
-            public final TextView tvLabelComicID;
+            public final TextView tvLabelComicSource;
             public final TextView tvLabelParodies;
             public final TextView tvLabelCharacters;
             public final TextView tvLabelTags;
@@ -286,14 +278,16 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final TextView tvLabelLanguages;
             public final TextView tvLabelCategories;
             public final TextView tvLabelPages;
+            public final TextView tvLabelComicID;
 
+            public final Button button_Delete;
 
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
                 tvThumbnailText = v.findViewById(R.id.textView_Title);
 
-                tvComicID = v.findViewById(R.id.textView_ComicSource);
+                tvComicSource = v.findViewById(R.id.textView_ComicSource);
                 tvParodies = v.findViewById(R.id.textView_Parodies);
                 tvCharacters = v.findViewById(R.id.textView_Characters);
                 tvTags = v.findViewById(R.id.textView_Tags);
@@ -302,8 +296,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 tvLanguages = v.findViewById(R.id.textView_Languages);
                 tvCategories = v.findViewById(R.id.textView_Categories);
                 tvPages = v.findViewById(R.id.textView_Pages);
+                tvComicID = v.findViewById(R.id.textView_ComicID);
 
-                tvLabelComicID = v.findViewById(R.id.textView_LabelComicSource);
+                tvLabelComicSource = v.findViewById(R.id.textView_LabelComicSource);
                 tvLabelParodies  = v.findViewById(R.id.textView_LabelParodies);
                 tvLabelCharacters  = v.findViewById(R.id.textView_LabelCharacters);
                 tvLabelTags = v.findViewById(R.id.textView_LabelTags);
@@ -312,17 +307,14 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 tvLabelLanguages = v.findViewById(R.id.textView_LabelLanguages);
                 tvLabelCategories = v.findViewById(R.id.textView_LabelCategories);
                 tvLabelPages = v.findViewById(R.id.textView_LabelPages);
+                tvLabelComicID = v.findViewById(R.id.textView_LabelComicID);
 
-
+                button_Delete = v.findViewById(R.id.button_Delete);
             }
         }
 
         public RecyclerViewComicPagesAdapter(TreeMap<Integer, String> data) {
             this.treeMap = data;
-        }
-
-        public int getCount() {
-            return treeMap.size();
         }
 
 
@@ -381,16 +373,13 @@ public class Activity_ComicDetails extends AppCompatActivity {
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
-
-
-
             String sThumbnailText;
 
             if (globalClass.ObfuscationOn) {
 
                 if (isHeader(position)) {
                     holder.tvThumbnailText.setVisibility(View.INVISIBLE);
-                    holder.tvComicID.setVisibility(View.INVISIBLE);
+                    holder.tvComicSource.setVisibility(View.INVISIBLE);
                     holder.tvParodies.setVisibility(View.INVISIBLE);
                     holder.tvCharacters.setVisibility(View.INVISIBLE);
                     holder.tvTags.setVisibility(View.INVISIBLE);
@@ -399,8 +388,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLanguages.setVisibility(View.INVISIBLE);
                     holder.tvCategories.setVisibility(View.INVISIBLE);
                     holder.tvPages.setVisibility(View.INVISIBLE);
+                    holder.tvComicID.setVisibility(View.INVISIBLE);
 
-                    holder.tvLabelComicID.setVisibility(View.INVISIBLE);
+                    holder.tvLabelComicSource.setVisibility(View.INVISIBLE);
                     holder.tvLabelParodies.setVisibility(View.INVISIBLE);
                     holder.tvLabelCharacters.setVisibility(View.INVISIBLE);
                     holder.tvLabelTags.setVisibility(View.INVISIBLE);
@@ -409,6 +399,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLabelLanguages.setVisibility(View.INVISIBLE);
                     holder.tvLabelCategories.setVisibility(View.INVISIBLE);
                     holder.tvLabelPages.setVisibility(View.INVISIBLE);
+                    holder.tvLabelComicID.setVisibility(View.INVISIBLE);
                 }
 
 
@@ -427,24 +418,26 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 if (isHeader(position)) {
 
                     holder.tvThumbnailText.setVisibility(View.VISIBLE);
-                    holder.tvComicID.setVisibility(View.VISIBLE);
+                    holder.tvComicSource.setVisibility(View.VISIBLE);
                     holder.tvParodies.setVisibility(View.VISIBLE);
                     holder.tvTags.setVisibility(View.VISIBLE);
                     holder.tvArtists.setVisibility(View.VISIBLE);
                     holder.tvLanguages.setVisibility(View.VISIBLE);
                     holder.tvCategories.setVisibility(View.VISIBLE);
                     holder.tvPages.setVisibility(View.VISIBLE);
+                    holder.tvComicID.setVisibility(View.VISIBLE);
 
-                    holder.tvLabelComicID.setVisibility(View.VISIBLE);
+                    holder.tvLabelComicSource.setVisibility(View.VISIBLE);
                     holder.tvLabelParodies .setVisibility(View.VISIBLE);
                     holder.tvLabelTags.setVisibility(View.VISIBLE);
                     holder.tvLabelArtists.setVisibility(View.VISIBLE);
                     holder.tvLabelLanguages.setVisibility(View.VISIBLE);
                     holder.tvLabelCategories.setVisibility(View.VISIBLE);
                     holder.tvLabelPages.setVisibility(View.VISIBLE);
+                    holder.tvLabelComicID.setVisibility(View.VISIBLE);
 
                     sThumbnailText = gciCatalogItem.sComicName;
-                    holder.tvComicID.setText(gciCatalogItem.sItemID);
+                    holder.tvComicSource.setText(gciCatalogItem.sSource);
                     holder.tvParodies.setText(gciCatalogItem.sComicParodies);
                     holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
                     StringBuilder sbTags = new StringBuilder();
@@ -464,6 +457,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvCategories.setText(gciCatalogItem.sComicCategories);
                     String sPages = "" + gciCatalogItem.iComicPages;
                     holder.tvPages.setText(sPages);
+                    holder.tvComicID.setText(gciCatalogItem.sItemID);
                 } else {
                     sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
                 }
@@ -500,6 +494,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     return true;// returning true instead of false, works for me
                 }
             });
+
+            if(holder.button_Delete != null){
+                holder.button_Delete.setVisibility(View.INVISIBLE);
+            }
+
 
         }
 
