@@ -6,12 +6,14 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -131,15 +133,11 @@ public class Service_Main extends IntentService {
 
         //Read the catalog list files into memory:
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            globalClass.gtmCatalogLists.add(readNewCatalogFileToCatalogItems(iMediaCategory));
+            globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
         }
 
-        //Re-write the files in the new format:
-        /*for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            createNewCatalogItemsFiles(iMediaCategory);
-        }*/
 
-
+        //reNameComicFoldersToComicID();
 
 
     }
@@ -153,7 +151,7 @@ public class Service_Main extends IntentService {
     }
 
 
-    private TreeMap<String, ItemClass_CatalogItem> readNewCatalogFileToCatalogItems(int iMediaCategory){
+    private TreeMap<String, ItemClass_CatalogItem> readCatalogFileToCatalogItems(int iMediaCategory){
 
         File fCatalogFolder = globalClass.gfCatalogFolders[iMediaCategory];
         File fCatalogContentsFile = globalClass.gfCatalogContentsFiles[iMediaCategory];
@@ -248,232 +246,44 @@ public class Service_Main extends IntentService {
     }
 
 
-    private void createNewCatalogItemsFiles(int iMediaCategory){
 
-        File fCatalogFolder = globalClass.gfCatalogFolders[iMediaCategory];
-        File fCatalogContentsFile = globalClass.gfCatalogContentsFiles[iMediaCategory];
+    private void reNameComicFoldersToComicID(){
 
+        //Loop through each comic entry, attempt to rename the folder to ComicID, then update the
+        //  catalog file and memory record:
+        String sOldFolderPath;
+        File fComicFolder;
+        String sNewFolderPath;
+        File fRenameTo;
+        ArrayList<String> alsFailedComicRenames = new ArrayList<>();
+        ItemClass_CatalogItem ciComic;
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+            sOldFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + tmEntry.getValue().sFolder_Name;
+            fComicFolder = new File(sOldFolderPath);
+            if(fComicFolder.exists()){
+                sNewFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + tmEntry.getValue().sItemID;
+                fRenameTo = new File(sNewFolderPath);
+                if(fComicFolder.renameTo(fRenameTo)){
+                    //Update the catalog file, but verify that the new folder exists, first:
+                    ciComic = tmEntry.getValue();
+                    ciComic.sFolder_Name = ciComic.sItemID;
+                    sNewFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + ciComic.sFolder_Name;
+                    fComicFolder = new File(sNewFolderPath);
+                    if(fComicFolder.exists()){
+                        globalClass.CatalogDataFile_UpdateRecord(ciComic);
+                    }
 
-        FileWriter fwCatalogContentsFile = null;
-        try {
-            fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
-
-            TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = globalClass.gtmCatalogLists.get(iMediaCategory);
-
-            boolean bFirstRecord = true;
-            for(Map.Entry<String, ItemClass_CatalogItem> entry: tmCatalogItems.entrySet()) {
-
-                //Convert the ItemClass_CatalogItem to String:
-                String[] sRecordLinePrep = GlobalClass.getCatalogRecordString(entry.getValue());
-
-                //Write the activity_comic_details_header line to the file:
-                if(bFirstRecord) {
-                    bFirstRecord = false;
-                    fwCatalogContentsFile.append(sRecordLinePrep[0]); //Write the header.
-                    fwCatalogContentsFile.append("\n");
+                } else {
+                    alsFailedComicRenames.add(tmEntry.getValue().sItemID);
                 }
-                fwCatalogContentsFile.append(sRecordLinePrep[2]); //Write the line prepared for file output.
-                fwCatalogContentsFile.append("\n");
 
             }
 
-        } catch (Exception e) {
-            problemNotificationConfig("Problem during Catalog Contents File write:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-
-        } finally {
-            try {
-                if (fwCatalogContentsFile != null) {
-                    fwCatalogContentsFile.flush();
-                    fwCatalogContentsFile.close();
-                }
-            } catch (IOException e) {
-                problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-
-            }
         }
 
-    }
-
-
-
-    private TreeMap<String, ItemClass_CatalogItem> readCatalogFileToCatalogItems(int iMediaCategory){
-
-        File fCatalogFolder = globalClass.gfCatalogFolders[iMediaCategory];
-        File fCatalogContentsFile = globalClass.gfCatalogContentsFiles[iMediaCategory];
-        File fLogsFolder = globalClass.gfCatalogLogsFolders[iMediaCategory];
-        String[] sRecordFields = GlobalClass.CatalogRecordFields[iMediaCategory];
-
-        boolean bFolderOk = false ;
-        if(!fCatalogFolder.exists()) {
-            if (fCatalogFolder.mkdirs()) {
-                bFolderOk = true;
-            }
-        }else{
-            bFolderOk = true;
-        }
-
-        if (!bFolderOk) {
-            problemNotificationConfig("Could not create catalog data folder " + fCatalogFolder.getPath() + ".");
-            return null;
-        } else {
-
-            if (!fCatalogContentsFile.exists()){
-                try {
-                    if(fCatalogContentsFile.createNewFile()) {
-                        FileWriter fwCatalogContentsFile = null;
-                        try {
-                            fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
-
-                            //Write the activity_comic_details_header line to the file:
-                            fwCatalogContentsFile.append(sRecordFields[0]);
-                            for(int i = 1; i < sRecordFields.length; i++) {
-                                fwCatalogContentsFile.append("\t");
-                                fwCatalogContentsFile.append(sRecordFields[i]);
-                            }
-                            fwCatalogContentsFile.append("\n");
-
-                        } catch (Exception e) {
-                            problemNotificationConfig("Problem during Catalog Contents File write:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-
-                        } finally {
-                            try {
-                                if (fwCatalogContentsFile != null) {
-                                    fwCatalogContentsFile.flush();
-                                    fwCatalogContentsFile.close();
-                                }
-                            } catch (IOException e) {
-                                problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-
-                            }
-                        }
-                    } else {
-                        problemNotificationConfig("Could not create CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
-                    }
-                }catch (IOException e){
-                    problemNotificationConfig("Problem creating CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
-
-                }
-            }
-            //if(fCatalogContentsFile.exists()){
-
-            //Process any modifications to the CatalogContentsFile:
-            //Catalog_data_file_add_field();
-
-            //}
-
-            //Look for the Logs folder. If it does not exist, create it.
-            if(!fLogsFolder.exists()) {
-                if(!fLogsFolder.mkdirs()){
-                    problemNotificationConfig("Could not create log folder at" + fLogsFolder.getAbsolutePath());
-                }
-            }
-
-            //Build the internal list of entries:
-            TreeMap<Integer, String[]> tmCatalogListings = new TreeMap<>();
-
-            //Read the list of entries and populate the catalog array:
-            BufferedReader brReader;
-            try {
-                brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-                brReader.readLine(); //The first line is the header. Skip this line.
-                String sLine = brReader.readLine();
-                String[] sFields;
-                int iRID = 0;
-                while (sLine != null) {
-                    //Split the line read from the contents file with the delimiter of TAB:
-                    sFields = sLine.split("\t",-1);
-                    //De-jumble the data:
-                    String[] sFields2 = new String[sFields.length];
-                    for(int i = 0; i < sFields.length; i++){
-                        if(i == GlobalClass.iNoJumbleFileNameIndex[iMediaCategory]){
-                            sFields2[i] = sFields[i];
-                        } else {
-                            sFields2[i] = GlobalClass.JumbleStorageText(sFields[i]);
-                        }
-                    }
-
-                    tmCatalogListings.put(iRID, sFields2);
-
-                    // read next line
-                    sLine = brReader.readLine();
-                    iRID++;
-                }
-                brReader.close();
-
-            } catch (IOException e) {
-                problemNotificationConfig("Trouble reading CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
-            }
-
-
-
-            TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = new TreeMap<>();
-            ItemClass_CatalogItem ci;
-            for(Map.Entry<Integer, String[]> entry: tmCatalogListings.entrySet()) {
-                ci = new ItemClass_CatalogItem();
-                ci.iMediaCategory = iMediaCategory;
-                if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                    ci.sItemID                        = entry.getValue()[GlobalClass.VIDEO_ID_INDEX];                             //Video ID
-                    ci.sFilename                      = entry.getValue()[GlobalClass.VIDEO_FILENAME_INDEX];
-                    ci.lSize                          = Long.parseLong(entry.getValue()[GlobalClass.VIDEO_SIZE_MB_INDEX]) * 1024 * 1024;
-                    ci.sDuration_Text                 = entry.getValue()[GlobalClass.VIDEO_DURATION_TEXT_INDEX];                  //Duration of video text
-                    ci.lDuration_Milliseconds         = Long.parseLong(entry.getValue()[GlobalClass.VIDEO_DURATION_MILLISECONDS_INDEX]);          //Duration of video in Milliseconds
-                    ci.sFolder_Name                   = entry.getValue()[GlobalClass.VIDEO_FOLDER_NAME_INDEX];                    //Name of the folder holding the video
-                    ci.sTags                          = entry.getValue()[GlobalClass.VIDEO_TAGS_INDEX];                           //Tags given to the video
-                    ci.sCast                          = entry.getValue()[GlobalClass.VIDEO_CAST_INDEX];
-                    ci.sSource                        = entry.getValue()[GlobalClass.VIDEO_SOURCE_INDEX];                         //Website, if relevant
-                    ci.dDatetime_Last_Viewed_by_User  = Double.parseDouble(entry.getValue()[GlobalClass.VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX]);   //Date of last read by user. Used for sorting if desired
-                    ci.dDatetime_Import               = Double.parseDouble(entry.getValue()[GlobalClass.VIDEO_DATETIME_IMPORT_INDEX]);               //Date of import. Used for sorting if desired
-                    String[] sResolution              = entry.getValue()[GlobalClass.VIDEO_RESOLUTION_INDEX].split("x"); //Width x Height
-                    if(sResolution.length > 1){
-                        ci.iWidth = Integer.parseInt(sResolution[0]);
-                        ci.iHeight = Integer.parseInt(sResolution[1]);
-                    }
-                } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                    ci.sItemID                        = entry.getValue()[GlobalClass.IMAGE_ID_INDEX];                             //Image ID
-                    ci.sFilename                      = entry.getValue()[GlobalClass.IMAGE_FILENAME_INDEX];
-                    ci.lSize                          = Long.parseLong(entry.getValue()[GlobalClass.IMAGE_SIZE_KB_INDEX]);
-                    ci.sFolder_Name                   = entry.getValue()[GlobalClass.IMAGE_FOLDER_NAME_INDEX];                    //Name of the folder holding the imGE
-                    ci.sTags                          = entry.getValue()[GlobalClass.IMAGE_TAGS_INDEX];                           //Tags given to the Image
-                    ci.sCast                          = entry.getValue()[GlobalClass.IMAGE_CAST_INDEX];
-                    ci.sSource                        = entry.getValue()[GlobalClass.IMAGE_SOURCE_INDEX];                         //Website, if relevant
-                    ci.dDatetime_Last_Viewed_by_User  = Double.parseDouble(entry.getValue()[GlobalClass.IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX]);   //Date of last read by user. Used for sorting if desired
-                    ci.dDatetime_Import               = Double.parseDouble(entry.getValue()[GlobalClass.IMAGE_DATETIME_IMPORT_INDEX]);                //Date of import. Used for sorting if desired
-                    String[] sResolution              = entry.getValue()[GlobalClass.IMAGE_DIMENSIONS_INDEX].split("x"); //Width x Height
-                    if(sResolution.length > 1){
-                        ci.iWidth = Integer.parseInt(sResolution[0]);
-                        ci.iHeight = Integer.parseInt(sResolution[1]);
-                    }
-                } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                    ci.sItemID                        = entry.getValue()[GlobalClass.COMIC_ID_INDEX];                    //Comic ID
-                    ci.sComicName                     = entry.getValue()[GlobalClass.COMIC_NAME_INDEX];                  //Comic Name
-                    ci.iComic_File_Count              = Integer.parseInt(entry.getValue()[GlobalClass.COMIC_FILE_COUNT_INDEX]);            //Files included with the comic
-                    ci.iComic_Max_Page_ID             = Integer.parseInt(entry.getValue()[GlobalClass.COMIC_MAX_PAGE_ID_INDEX]);           //Max page ID extracted from file names
-                    ci.sComic_Missing_Pages           = entry.getValue()[GlobalClass.COMIC_MISSING_PAGES_INDEX];         //String of comma-delimited missing page numbers
-                    ci.lSize                          = Long.parseLong(entry.getValue()[GlobalClass.COMIC_SIZE_KB_INDEX]);               //Total size of all files in the comic
-                    ci.sFolder_Name                   = entry.getValue()[GlobalClass.COMIC_FOLDER_NAME_INDEX];           //Name of the folder holding the comic pages
-                    ci.sFilename                      = entry.getValue()[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];        //Name of the file used as the thumbnail for the comic
-                    ci.sThumbnail_File                = entry.getValue()[GlobalClass.COMIC_THUMBNAIL_FILE_INDEX];        //Name of the file used as the thumbnail for the comic
-                    ci.sComicParodies                 = entry.getValue()[GlobalClass.COMIC_PARODIES_INDEX];
-                    ci.sComicCharacters               = entry.getValue()[GlobalClass.COMIC_CHARACTERS_INDEX];
-                    ci.sTags                          = entry.getValue()[GlobalClass.COMIC_TAGS_INDEX];                 //Tags given to the comic
-                    ci.sComicArtists                  = entry.getValue()[GlobalClass.COMIC_ARTISTS_INDEX];
-                    ci.sComicGroups                   = entry.getValue()[GlobalClass.COMIC_GROUPS_INDEX];
-                    ci.sComicLanguages                = entry.getValue()[GlobalClass.COMIC_LANGUAGES_INDEX];            //Language(s) found in the comic
-                    ci.sComicCategories               = entry.getValue()[GlobalClass.COMIC_CATEGORIES_INDEX];
-                    ci.iComicPages                    = Integer.parseInt(entry.getValue()[GlobalClass.COMIC_PAGES_INDEX]);                //Total number of pages as defined at the comic source
-                    ci.sSource                        = entry.getValue()[GlobalClass.COMIC_SOURCE_INDEX];                     //nHentai.net, other source, etc.
-                    ci.dDatetime_Last_Viewed_by_User  = Double.parseDouble(entry.getValue()[GlobalClass.COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX]); //Date of last read by user. Used for sorting if desired
-                    ci.dDatetime_Import               = Double.parseDouble(entry.getValue()[GlobalClass.COMIC_DATETIME_IMPORT_INDEX]);            //Date of import. Used for sorting if desired
-                    ci.bComic_Online_Data_Acquired = !entry.getValue()[GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_INDEX].equals(GlobalClass.COMIC_ONLINE_DATA_ACQUIRED_NO);
-
-                }
-                tmCatalogItems.put(ci.sItemID,ci);
-            }
-
-
-            //Return the data read from the file:
-            return tmCatalogItems;
-
+        if (alsFailedComicRenames.size() > 0) {
+            String sFailedFolders = alsFailedComicRenames.toString();
+            Log.d("Rename Folders", sFailedFolders);
         }
 
     }
