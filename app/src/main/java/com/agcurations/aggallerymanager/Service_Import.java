@@ -110,12 +110,225 @@ public class Service_Import extends IntentService {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
     }
 
+
+    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
+    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
+    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
+    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
+    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
+    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
+    public static final String RECEIVER_STRING = "RECEIVER_STRING";
+
+    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
+                                  boolean bUpdatePercentComplete, int iAmountComplete,
+                                  boolean bUpdateProgressBarText, String sProgressBarText,
+                                  String sReceiver){
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
+        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine + "\n");
+        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
+        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
+        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
+        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
+        broadcastIntent.putExtra(RECEIVER_STRING, sReceiver);
+
+        //sendBroadcast(broadcastIntent);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+    }
+
+
+
+
+    final int FOLDERS_ONLY = 0;
+    final int FILES_ONLY = 1;
+
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
         if(Activity_Import.guriImportTreeURI != null){
             Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
-            ArrayList<ItemClass_File> alFileList;
+            ArrayList<ItemClass_File> alFileList = new ArrayList<>();
             try {
-                alFileList = readFolderContent(uriImportTreeUri, ".+", iMediaCategory, FILES_ONLY);
+                String sFileExtensionRegEx = ".+";
+                int iSelectFoldersFilesOrBoth = FILES_ONLY;
+                //iMediaCategory: Specify media category. -1 ignore, 0 video, >0 images.
+
+                //Get data about the files from the UriTree:
+                ContentResolver contentResolver = getApplicationContext().getContentResolver();
+                Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriImportTreeUri, DocumentsContract.getTreeDocumentId(uriImportTreeUri));
+                List<Uri> dirNodes = new LinkedList<>();
+                dirNodes.add(childrenUri);
+                childrenUri = dirNodes.remove(0); // get the item from top
+                String sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
+                Cursor cImport = contentResolver.query(childrenUri,
+                        new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                                DocumentsContract.Document.COLUMN_MIME_TYPE,
+                                DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                                DocumentsContract.Document.COLUMN_SIZE,
+                                DocumentsContract.Document.COLUMN_SUMMARY,
+                                DocumentsContract.Document.COLUMN_FLAGS,
+                                DocumentsContract.Document.COLUMN_ICON},
+                        null,
+                        null,
+                        sSortOrder);
+
+                if(cImport != null) {
+
+                    long lProgressNumerator = 0L;
+                    long lProgressDenominator;
+                    int iProgressBarValue = 0;
+
+                    //Calculate total number of files for a progress bar:
+                    lProgressDenominator = cImport.getCount();
+                    BroadcastProgress(false, "",
+                            true, iProgressBarValue,
+                            true, "0/" + lProgressDenominator,
+                            RECEIVER_STORAGE_LOCATION);
+
+
+                    MediaMetadataRetriever mediaMetadataRetriever;
+                    mediaMetadataRetriever = new MediaMetadataRetriever();
+
+                    while (cImport.moveToNext()) {
+
+                        //Update progress bar:
+                        //Update progress right away in order to avoid instances in which a loop is skipped.
+                        lProgressNumerator++;
+                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                        BroadcastProgress(false, "",
+                                true, iProgressBarValue,
+                                true, lProgressNumerator + "/" + lProgressDenominator,
+                                RECEIVER_STORAGE_LOCATION);
+
+
+                        final String docId = cImport.getString(0);
+                        final String docName = cImport.getString(1);
+                        final String mimeType = cImport.getString(2);
+                        final long lLastModified = cImport.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
+                        final String sFileSize = cImport.getString(4);
+
+                        boolean isDirectory;
+                        isDirectory = (mimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
+                        String fileType = (isDirectory) ? "folder" : "file";
+
+                        if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (isDirectory)) {
+                            continue; //skip the rest of the for loop for this item.
+                        } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!isDirectory)) {
+                            continue; //skip the rest of the for loop for this item.
+                        }
+
+                        //Record the file extension:
+                        String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
+                        //If the file extension does not match the file extension regex, skip the remainder of the loop.
+                        if (!fileExtension.matches(sFileExtensionRegEx)) {
+                            continue;  //skip the rest of the loop if the file extension does not match.
+                        }
+
+                        if (!isDirectory) {
+                            //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
+                            if (mimeType.startsWith("video") || fileExtension.equals(".gif") ||
+                                    (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
+                                //If video...
+                                if ((iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)
+                                        || (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS)) {
+                                    continue; //If requesting images or comics, and mimeType is video or the file a gif, go to next loop.
+                                }
+                            } else {
+                                //If not video...
+                                if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                                    continue; //If requesting videos, and mimeType is not video nor is the file a gif, go to next loop.
+                                }
+                            }
+                        }
+
+                        //Get a Uri for this individual document:
+                        final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri, docId);
+
+                        //Determine the file size:
+                        long lFileSize = Long.parseLong(sFileSize); //size in Bytes
+
+                        //Get date last modified:
+                        Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                        cal.setTimeInMillis(lLastModified);
+                        Date dateLastModified = cal.getTime();
+
+
+                        //If the file is video, get the duration so that the file list can be sorted by duration if requested.
+                        long lDurationInMilliseconds = -1L;
+                        String sWidth = "";  //We are not doing math with the width and height. Therefore no need to convert to int.
+                        String sHeight = "";
+                        if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS && GlobalClass.bVideoDeepDirectoryContentFileAnalysis) {
+                            if (mimeType.startsWith("video") ||
+                                    (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
+                                try {
+                                    mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
+                                } catch (Exception e) {
+                                    //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
+                                    continue; //Skip the rest of this loop.
+                                }
+                                sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                                lDurationInMilliseconds = Long.parseLong(time);
+                            } else { //if it's not a video file, check to see if it's a gif:
+                                if (fileExtension.equals(".gif")) {
+                                    //Get the duration of the gif image:
+                                    Context activityContext = getApplicationContext();
+                                    try {
+                                        pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                                        lDurationInMilliseconds = gd.getDuration();
+                                        sWidth = "" + gd.getIntrinsicWidth();
+                                        sHeight = "" + gd.getIntrinsicHeight();
+                                    } catch (Exception e) {
+                                        problemNotificationConfig(e.getMessage() + "\n" + docName);
+                                        continue; //Skip the rest of this loop.
+                                    }
+                                }
+                            }
+                        } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                            //Get the width and height of the image:
+                            try {
+                                InputStream input = this.getContentResolver().openInputStream(docUri);
+                                if (input != null) {
+                                    BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                    onlyBoundsOptions.inJustDecodeBounds = true;
+                                    BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                    input.close();
+                                    sWidth = "" + onlyBoundsOptions.outWidth;
+                                    sHeight = "" + onlyBoundsOptions.outHeight;
+                                }
+
+                            } catch (Exception e) {
+                                continue; //Skip the rest of this loop.
+                            }
+
+                        }
+
+
+                        //Convert the file Uri to string. Uri's don't transport well as intent extras.
+                        String sUri = docUri.toString();
+
+                        //create the file model and initialize:
+                        //Don't detect the duration of video files here. It could take too much time.
+                        ItemClass_File fileItem = new ItemClass_File(fileType, docName, fileExtension, lFileSize, dateLastModified, sWidth, sHeight, false, sUri, mimeType, lDurationInMilliseconds);
+
+                        //Add the file model to the ArrayList:
+                        alFileList.add(fileItem);
+
+
+                    }
+                    cImport.close();
+                    mediaMetadataRetriever.release();
+
+                }
+
+
+
             }catch (Exception e){
                 problemNotificationConfig(e.getMessage());
                 return;
@@ -130,6 +343,39 @@ public class Service_Import extends IntentService {
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
         }
     }
+
+
+
+
+    public static String GetNHComicID(String sFileName){
+        boolean bIsValidComicPage = true;
+        int iComicIDDigitCount = 0;
+
+        int iComicID = -1;
+        if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
+            iComicIDDigitCount = 7;
+        } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
+            iComicIDDigitCount = 6;
+        } else if (sFileName.matches("^\\d{5}_(Cover|Page).+")) {
+            iComicIDDigitCount = 5;
+        } else if (sFileName.matches("^\\d{4}_(Cover|Page).+")) {
+            iComicIDDigitCount = 4;
+        } else if (sFileName.matches("^\\d{3}_(Cover|Page).+")) {
+            iComicIDDigitCount = 3;
+        } else if (sFileName.matches("^\\d{2}_(Cover|Page).+")) {
+            iComicIDDigitCount = 2;
+        } else if (sFileName.matches("^\\d_(Cover|Page).+")) {
+            iComicIDDigitCount = 1;
+        } else {
+            bIsValidComicPage = false;
+        }
+        String sComicID = "";
+        if(bIsValidComicPage) {
+            sComicID = sFileName.substring(0, iComicIDDigitCount);
+        }
+        return sComicID;
+    }
+
 
 
     private void handleAction_startActionImportDirectoryContents(
@@ -322,254 +568,10 @@ public class Service_Import extends IntentService {
     }
 
 
-    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
-    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
-    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
-    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
-    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
-    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
-    public static final String RECEIVER_STRING = "RECEIVER_STRING";
-
-    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
-                                  boolean bUpdatePercentComplete, int iAmountComplete,
-                                  boolean bUpdateProgressBarText, String sProgressBarText,
-                                  String sReceiver){
-
-        //Broadcast a message to be picked-up by the Import Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-
-        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
-        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine + "\n");
-        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
-        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
-        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
-        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
-        broadcastIntent.putExtra(RECEIVER_STRING, sReceiver);
-
-        //sendBroadcast(broadcastIntent);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
-    }
 
 
 
 
-
-    final int FOLDERS_ONLY = 0;
-    final int FILES_ONLY = 1;
-
-    //Use a Uri instead of a path to get folder contents:
-    public ArrayList<ItemClass_File> readFolderContent(Uri uriFolder, String sFileExtensionRegEx, int iMediaCategory, int iSelectFoldersFilesOrBoth) {
-        //iMediaCategory: Specify media category. -1 ignore, 0 video, >0 images.
-
-        //Get data about the files from the UriTree:
-        ContentResolver contentResolver = getApplicationContext().getContentResolver();
-        Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder, DocumentsContract.getTreeDocumentId(uriFolder));
-        List<Uri> dirNodes = new LinkedList<>();
-        dirNodes.add(childrenUri);
-        childrenUri = dirNodes.remove(0); // get the item from top
-        String sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
-        Cursor cImport = contentResolver.query(childrenUri,
-                new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                        DocumentsContract.Document.COLUMN_MIME_TYPE,
-                        DocumentsContract.Document.COLUMN_LAST_MODIFIED,
-                        DocumentsContract.Document.COLUMN_SIZE,
-                        DocumentsContract.Document.COLUMN_SUMMARY,
-                        DocumentsContract.Document.COLUMN_FLAGS,
-                        DocumentsContract.Document.COLUMN_ICON},
-                null,
-                null,
-                sSortOrder);
-        if(cImport == null){
-            return null;
-        }
-
-
-        long lProgressNumerator = 0L;
-        long lProgressDenominator;
-        int iProgressBarValue = 0;
-
-        //Calculate total number of files for a progress bar:
-        lProgressDenominator = cImport.getCount();
-        BroadcastProgress(false, "",
-                true, iProgressBarValue,
-                true, "0/" + lProgressDenominator,
-                RECEIVER_STORAGE_LOCATION);
-
-
-        ArrayList<ItemClass_File> alFileList = new ArrayList<>();
-
-        MediaMetadataRetriever mediaMetadataRetriever;
-        mediaMetadataRetriever = new MediaMetadataRetriever();
-
-        while (cImport.moveToNext()) {
-
-            //Update progress bar:
-            //Update progress right away in order to avoid instances in which a loop is skipped.
-            lProgressNumerator++;
-            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-            BroadcastProgress(false, "",
-                    true, iProgressBarValue,
-                    true, lProgressNumerator + "/" + lProgressDenominator,
-                    RECEIVER_STORAGE_LOCATION);
-
-
-            final String docId = cImport.getString(0);
-            final String docName = cImport.getString(1);
-            final String mimeType = cImport.getString(2);
-            final long lLastModified = cImport.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
-            final String sFileSize = cImport.getString(4);
-
-            boolean isDirectory;
-            isDirectory = (mimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
-            String fileType = (isDirectory) ? "folder" : "file";
-
-            if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (isDirectory)) {
-                continue; //skip the rest of the for loop for this item.
-            } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!isDirectory)) {
-                continue; //skip the rest of the for loop for this item.
-            }
-
-            //Record the file extension:
-            String fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
-            //If the file extension does not match the file extension regex, skip the remainder of the loop.
-            if (!fileExtension.matches(sFileExtensionRegEx)) {
-                continue;  //skip the rest of the loop if the file extension does not match.
-            }
-
-            if(!isDirectory) {
-                //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
-                if (mimeType.startsWith("video") || fileExtension.equals(".gif") ||
-                        (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
-                    //If video...
-                    if ((iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)
-                            || (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS)) {
-                        continue; //If requesting images or comics, and mimeType is video or the file a gif, go to next loop.
-                        }
-                } else {
-                    //If not video...
-                    if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                        continue; //If requesting videos, and mimeType is not video nor is the file a gif, go to next loop.
-                    }
-                }
-            }
-
-            //Get a Uri for this individual document:
-            final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri,docId);
-
-            //Determine the file size:
-            long lFileSize = Long.parseLong(sFileSize); //size in Bytes
-
-            //Get date last modified:
-            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
-            cal.setTimeInMillis(lLastModified);
-            Date dateLastModified = cal.getTime();
-
-
-            //If the file is video, get the duration so that the file list can be sorted by duration if requested.
-            long lDurationInMilliseconds = -1L;
-            String sWidth = "";  //We are not doing math with the width and height. Therefore no need to convert to int.
-            String sHeight = "";
-            if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS && GlobalClass.bVideoDeepDirectoryContentFileAnalysis) {
-                if (mimeType.startsWith("video") ||
-                        (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
-                    try {
-                        mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
-                    } catch (Exception e) {
-                        //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
-                        continue; //Skip the rest of this loop.
-                    }
-                    sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                    sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                    lDurationInMilliseconds = Long.parseLong(time);
-                } else { //if it's not a video file, check to see if it's a gif:
-                    if (fileExtension.equals(".gif")) {
-                        //Get the duration of the gif image:
-                        Context activityContext = getApplicationContext();
-                        try {
-                            pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
-                            lDurationInMilliseconds = gd.getDuration();
-                            sWidth = "" + gd.getIntrinsicWidth();
-                            sHeight = "" + gd.getIntrinsicHeight();
-                        } catch (Exception e) {
-                            problemNotificationConfig(e.getMessage() + "\n" + docName);
-                            continue; //Skip the rest of this loop.
-                        }
-                    }
-                }
-            } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-                //Get the width and height of the image:
-                try {
-                    InputStream input = this.getContentResolver().openInputStream(docUri);
-                    if(input != null) {
-                        BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
-                        onlyBoundsOptions.inJustDecodeBounds = true;
-                        BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
-                        input.close();
-                        sWidth = "" + onlyBoundsOptions.outWidth;
-                        sHeight = "" + onlyBoundsOptions.outHeight;
-                    }
-
-                } catch (Exception e){
-                    continue; //Skip the rest of this loop.
-                }
-
-            }
-
-
-
-            //Convert the file Uri to string. Uri's don't transport well as intent extras.
-            String sUri = docUri.toString();
-
-            //create the file model and initialize:
-            //Don't detect the duration of video files here. It could take too much time.
-            ItemClass_File fileItem = new ItemClass_File(fileType, docName, fileExtension, lFileSize, dateLastModified, sWidth, sHeight, false, sUri, mimeType, lDurationInMilliseconds);
-
-            //Add the file model to the ArrayList:
-            alFileList.add(fileItem);
-
-
-
-        }
-        cImport.close();
-        mediaMetadataRetriever.release();
-
-        return alFileList;
-    }
-
-
-    public static String GetNHComicID(String sFileName){
-        boolean bIsValidComicPage = true;
-        int iComicIDDigitCount = 0;
-
-        int iComicID = -1;
-        if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
-            iComicIDDigitCount = 7;
-        } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
-            iComicIDDigitCount = 6;
-        } else if (sFileName.matches("^\\d{5}_(Cover|Page).+")) {
-            iComicIDDigitCount = 5;
-        } else if (sFileName.matches("^\\d{4}_(Cover|Page).+")) {
-            iComicIDDigitCount = 4;
-        } else if (sFileName.matches("^\\d{3}_(Cover|Page).+")) {
-            iComicIDDigitCount = 3;
-        } else if (sFileName.matches("^\\d{2}_(Cover|Page).+")) {
-            iComicIDDigitCount = 2;
-        } else if (sFileName.matches("^\\d_(Cover|Page).+")) {
-            iComicIDDigitCount = 1;
-        } else {
-            bIsValidComicPage = false;
-        }
-        String sComicID = "";
-        if(bIsValidComicPage) {
-            sComicID = sFileName.substring(0, iComicIDDigitCount);
-        }
-        return sComicID;
-    }
 
 
 }

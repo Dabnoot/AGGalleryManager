@@ -14,7 +14,7 @@ public class ItemClass_File implements Serializable {
     final public String width;
     final public String height;
     public Boolean isChecked;
-    final public String uri;
+    final public String uri;       //includes file source.
     final public String mimeType;
     public long videoTimeInMilliseconds;
     public String destinationFolder; //Used for moving/copying.
