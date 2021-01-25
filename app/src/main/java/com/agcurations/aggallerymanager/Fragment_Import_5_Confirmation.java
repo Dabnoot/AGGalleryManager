@@ -125,6 +125,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         //Display the file count:
         TextView textView_FileCount = getView().findViewById(R.id.textView_FileCount);
         String s = Integer.toString(confirmationFileListCustomAdapter.getCount());
+        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
+            s = s + " (Duplicate cover pages will be excluded from import)";
+        }
         textView_FileCount.setText(s);
 
 

@@ -615,6 +615,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
             });
 
+            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                holder.btnDelete.setVisibility(View.INVISIBLE);
+            } else {
+                holder.btnDelete.setVisibility(View.VISIBLE);
+            }
 
             if(holder.btnDelete != null) {
                 final String sItemNameToDelete = sItemName;

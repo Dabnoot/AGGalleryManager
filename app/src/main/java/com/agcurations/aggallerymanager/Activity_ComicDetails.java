@@ -610,14 +610,24 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 gciCatalogItem.bComic_Online_Data_Acquired = true;
                 gmiSaveDetails.setEnabled(true);
 
+                //Update the title bar:
+                if(!globalClass.ObfuscationOn) {
+                    //(only if not obfuscated)
+                    RemoveObfuscation();
+                }
+
                 //Update the RecyclerView:
                 gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
+
                 if(gbAutoAcquireData){
                     Toast.makeText(getApplicationContext(), "Online data acquired. Auto saving...", Toast.LENGTH_LONG).show();
                     SaveDetails(gciCatalogItem);
                 } else {
                     Toast.makeText(getApplicationContext(), "Online data acquired. Don't forget to save.", Toast.LENGTH_LONG).show();
                 }
+
+
+
             } else {
                 sErrorMessage = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_ERROR_MESSAGE);
                 Toast.makeText(getApplicationContext(), "Error getting data online.\n" + sErrorMessage, Toast.LENGTH_LONG).show();
