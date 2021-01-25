@@ -217,7 +217,10 @@ public class Service_ComicDetails extends IntentService {
             }
         } catch(Exception e){
             String sMsg = e.getMessage();
-            sReturnData[COMIC_DETAILS_ERROR_MSG_INDEX] =  sMsg;
+            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
+            broadcastIntent.putExtra(COMIC_DETAILS_ERROR_MESSAGE, sMsg);
+            sendBroadcast(broadcastIntent);
+            return;
         }
 
         ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
@@ -274,6 +277,8 @@ public class Service_ComicDetails extends IntentService {
 
         broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
         broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
+
+
 
 
 
