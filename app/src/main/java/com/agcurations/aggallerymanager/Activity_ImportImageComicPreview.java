@@ -84,14 +84,18 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                     aliTagIDs.add(ti.TagID);
                 }
 
-                int iFileItemTagsIndex = 0; //If the media type is Comics, tags are applied to the first
-                //  file item only.
-                if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS){
-                    iFileItemTagsIndex = giFileItemIndex;
-                }
-                gFileItems[iFileItemTagsIndex].prospectiveTags = aliTagIDs;
-                gFileItems[iFileItemTagsIndex].bPreviewTagUpdate = true;
+                //If the media type is Comics, tags are applied to each
+                //  file item.
+                if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                    for(ItemClass_File icf: gFileItems){
+                        icf.prospectiveTags = aliTagIDs;
+                        icf.bPreviewTagUpdate = true;
+                    }
 
+                } else {
+                    gFileItems[giFileItemIndex].prospectiveTags = aliTagIDs;
+                    gFileItems[giFileItemIndex].bPreviewTagUpdate = true;
+                }
                 //Prepare a result to send back to the calling activity:
                 Intent data = new Intent();
                 Bundle b = new Bundle();

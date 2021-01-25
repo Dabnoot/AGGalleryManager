@@ -120,11 +120,17 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         gtextView_ImportLog.setText("");
 
         //Initiate the file import via ImportActivityDataService:
-        Service_Import.startActionImportFiles(getContext(),
-                viewModelImportActivity.alfiConfirmedFileImports,
-                viewModelImportActivity.iImportMethod,
-                viewModelImportActivity.iImportMediaCategory);
-
+        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+            Service_Import.startActionImportComics(getContext(),
+                    viewModelImportActivity.alfiConfirmedFileImports,
+                    viewModelImportActivity.iImportMethod,
+                    viewModelImportActivity.iComicImportSource);
+        } else {
+            Service_Import.startActionImportFiles(getContext(),
+                    viewModelImportActivity.alfiConfirmedFileImports,
+                    viewModelImportActivity.iImportMethod,
+                    viewModelImportActivity.iImportMediaCategory);
+        }
 
     }
 

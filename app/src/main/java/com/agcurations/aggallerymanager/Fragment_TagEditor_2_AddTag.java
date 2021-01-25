@@ -158,7 +158,12 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         String sTagName = etNewTagName.getText().toString();
 
-        if(globalClass.TagDataFile_CreateNewRecord(sTagName, viewModelTagEditor.iTagEditorMediaCategory)){
+        if(sTagName.equals("")){
+            Toast.makeText(getActivity(), "Tag text cannot be blank.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if(globalClass.TagDataFile_CreateNewRecord(sTagName, viewModelTagEditor.iTagEditorMediaCategory) > -1){
             RefreshTagListView();
             Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();
         } else {

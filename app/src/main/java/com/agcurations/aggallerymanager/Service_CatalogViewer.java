@@ -228,7 +228,14 @@ public class Service_CatalogViewer extends IntentService {
                     String[] saRecordTags = sRecordTags.split(",");
                     for (String s : saRecordTags) {
                         //if list of restricted tags contains this particular record tag, mark as restricted item:
-                        Integer iTagID = Integer.parseInt(s);
+                        Integer iTagID = -1;
+                        String sErrorMessage;
+                        try {
+                            iTagID = Integer.parseInt(s);
+                        } catch (Exception e){
+                            sErrorMessage = e.getMessage();
+                            continue;
+                        }
                         ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
                         if (ict != null) {
                             if (ict.isRestricted) {

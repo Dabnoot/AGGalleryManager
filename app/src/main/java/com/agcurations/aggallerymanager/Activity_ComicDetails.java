@@ -607,7 +607,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
 
                 gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(Service_ComicDetails.COMIC_CATALOG_ITEM);
-
+                gciCatalogItem.bComic_Online_Data_Acquired = true;
                 gmiSaveDetails.setEnabled(true);
 
                 //Update the RecyclerView:

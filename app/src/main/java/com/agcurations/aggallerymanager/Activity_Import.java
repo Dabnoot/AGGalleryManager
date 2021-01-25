@@ -345,7 +345,7 @@ public class Activity_Import extends AppCompatActivity {
                     (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER)) {
                 //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
                 alFileItemsDisplay = new ArrayList<>(); //initialize.
-                applyFilter("^\\d{5,6}_Cover.+");
+                applyFilter(GlobalClass.gsNHComicCoverPageFilter);
             } else {
                 alFileItemsDisplay = new ArrayList<>(alfi);
             }
@@ -442,6 +442,10 @@ public class Activity_Import extends AppCompatActivity {
 
             cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).isChecked);
 
+            //Expand the width of the listItem to the width of the ListView.
+            //  This makes it so that the listItem responds to the click even when
+            //  the click is off of the text.
+            row.setMinimumWidth(SelectItemsListViewWidth);
 
             //Set the onClickListener for the row to toggle the checkbox:
             row.setOnClickListener(new View.OnClickListener(){
@@ -452,22 +456,11 @@ public class Activity_Import extends AppCompatActivity {
                     boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
                     checkBox_StorageItemSelect.setChecked(bNewCheckedState);
                     alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
+                    toggleItemChecked(position, bNewCheckedState);
 
-                    //Find the item that is checked/unchecked in alFileList and apply the property.
-                    //  The user will have clicked an item in alFileListDisplay, not alFileList.
-                    //  alFileListDisplay may be a subset of alFileList.
-                    for(ItemClass_File fm: alFileItems){
-                        if(fm.name.contentEquals(alFileItemsDisplay.get(position).name)){
-                            fm.isChecked = bNewCheckedState;
-                            break;
-                        }
-                    }
                 }
             });
-            //Expand the width of the listItem to the width of the ListView.
-            //  This makes it so that the listItem responds to the click even when
-            //  the click is off of the text.
-            row.setMinimumWidth(SelectItemsListViewWidth);
+
 
             //Set the onClickListener for the checkbox to toggle the checkbox:
             CheckBox checkBox_StorageItemSelect = row.findViewById(R.id.checkBox_StorageItemSelect);
@@ -477,18 +470,8 @@ public class Activity_Import extends AppCompatActivity {
                 public void onClick(View view) {
                     CheckBox checkBox_StorageItemSelect = (CheckBox) view;
                     boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
-
-                    //Find the item that is checked/unchecked in alFileList and apply the property.
-                    //  The user will have clicked an item in alFileListDisplay, not alFileList.
-                    //  alFileListDisplay may be a subset of alFileList.
                     alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
-
-                    for(ItemClass_File fm: alFileItems){
-                        if(fm.name.contentEquals(alFileItemsDisplay.get(position).name)){
-                            fm.isChecked = bNewCheckedState;
-                            break;
-                        }
-                    }
+                    toggleItemChecked(position, bNewCheckedState);
 
                 }
             });
@@ -543,13 +526,13 @@ public class Activity_Import extends AppCompatActivity {
             });
 
             //If the file item is video mimeType, set the preview button visibility to visible:
-            Button button_VideoPreview = row.findViewById(R.id.button_VideoPreview);
+            Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
             boolean bItemIsVideo = alFileItemsDisplay.get(position).mimeType.startsWith("video")  ||
                     (alFileItemsDisplay.get(position).mimeType.equals("application/octet-stream") &&
                             alFileItemsDisplay.get(position).extension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
 
-            //button_VideoPreview.setVisibility(Button.VISIBLE);
-            button_VideoPreview.setOnClickListener(new View.OnClickListener(){
+            //button_MediaPreview.setVisibility(Button.VISIBLE);
+            button_MediaPreview.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
                     //Start the preview popup activity:
@@ -650,22 +633,45 @@ public class Activity_Import extends AppCompatActivity {
             return row;
         }
 
-        /*public void updateFileItemTags(String sFileUri, ArrayList<Integer> aliTagIDs){
-            boolean bFoundAndUpdated = false;
-            //Find the item to apply tags:
-            for(ItemClass_File fm: alFileItems){
-                if(fm.uri.contentEquals(sFileUri)){
-                    fm.prospectiveTags = aliTagIDs;
-                    fm.isChecked = true;
-                    bFoundAndUpdated = true;
-                    break;
+
+        private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
+
+
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                //If this is a comic, need to select all of the files that are part of that comic.
+                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                    //If the user is importing comic pages downloaded by the NHComicDownloader, find
+                    // all files with the comic ID and apply the checked state:
+                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).name);
+                    String sNHComicFilter = sNHComicID + ".+";
+                    for (ItemClass_File fm : alFileItems) {
+                        if (fm.name.matches(sNHComicFilter)) {
+                            fm.isChecked = bNewCheckedState;
+                        }
+                    }
+                }
+            } else {
+                //Find the item that is checked/unchecked in alFileList and apply the property.
+                //  The user will have clicked an item in alFileListDisplay, not alFileList.
+                //  alFileListDisplay may be a subset of alFileList.
+                for(ItemClass_File fm: alFileItems){
+                    if(fm.name.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).name)){
+                        fm.isChecked = bNewCheckedState;
+                        break; //Break, as only one item should match.
+                    }
                 }
             }
-            if (bFoundAndUpdated) {
-                notifyDataSetChanged();
-            }
 
-        }*/
+
+
+
+
+
+
+        }
+
+
+
 
         public void updateFileItemTags(ItemClass_File[] icfIncomingFIs){
             boolean bFoundAndUpdated = false;
@@ -724,10 +730,8 @@ public class Activity_Import extends AppCompatActivity {
                     }
                 }
             }
-
-
-
         }
+
 
         public void applySearch(String sSearch){
             alFileItemsDisplay.clear();

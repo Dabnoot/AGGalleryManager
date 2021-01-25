@@ -53,7 +53,7 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/button_VideoPreview"
+        android:id="@+id/button_MediaPreview"
         android:layout_width="wrap_content"
         android:layout_height="67dp"
         android:layout_marginStart="20dp"

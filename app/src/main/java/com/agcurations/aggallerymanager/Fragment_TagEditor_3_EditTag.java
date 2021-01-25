@@ -170,6 +170,12 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         }
         EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
         String sNewTagName = editText_TagText.getText().toString();
+
+        if(sNewTagName.equals("")){
+            Toast.makeText(getActivity(), "Tag text cannot be blank.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if(globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).containsKey(sNewTagName)){
             Toast.makeText(getActivity(), "Cannot rename - tag already exists.", Toast.LENGTH_SHORT).show();
             return;

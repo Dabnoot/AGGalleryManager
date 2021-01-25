@@ -137,10 +137,9 @@ public class Service_Main extends IntentService {
         }
 
 
-        //updateCatalogRecords(GlobalClass.MEDIA_CATEGORY_COMICS);
-
-
     }
+
+
 
     private void obtainFolderStructureItem(File file){
         if(!file.exists()){

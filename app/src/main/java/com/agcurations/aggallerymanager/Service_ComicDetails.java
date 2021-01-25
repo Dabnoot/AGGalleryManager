@@ -10,6 +10,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import androidx.annotation.Nullable;
 
@@ -48,20 +51,13 @@ public class Service_ComicDetails extends IntentService {
         assert intent != null;
         ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
 
-        ci =  getOnlineComicDetails(ci);
 
-        //Broadcast a message to be picked-up by the Import Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_ComicDetails.ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        if(ci.sSource.startsWith("http")){
+            getNHOnlineComicDetails(ci);
+        }
 
-        //Apply booleans to the intent to tell the receiver success, data available,
-        //  and set the data where appropriate:
 
-        broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
-        broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
 
-        sendBroadcast(broadcastIntent);
     }
 
 
@@ -81,7 +77,12 @@ public class Service_ComicDetails extends IntentService {
     public static int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
     public static final int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
 
-    public ItemClass_CatalogItem getOnlineComicDetails(ItemClass_CatalogItem ci){
+    public void getNHOnlineComicDetails(ItemClass_CatalogItem ci){
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Activity_ComicDetails.ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         int j = gsDataBlockIDs.length + 1;
         String[] sReturnData = new String[j];
@@ -95,9 +96,12 @@ public class Service_ComicDetails extends IntentService {
 
         String sComicTitle = "";
 
+
+
         try {
             //Get the data from the WebPage:
-            URL url = new URL(globalClass.snHentai_Comic_Address_Prefix + ci.sItemID);
+
+            URL url = new URL(ci.sSource);
             URLConnection conn = url.openConnection();
             conn.setDoInput(true);
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -219,14 +223,61 @@ public class Service_ComicDetails extends IntentService {
         ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
         ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
         ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
-        ci.sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX];
+
+        //Form the tag integer array:
+        String[] sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX].split(", ");
+        ArrayList<Integer> aliTags = new ArrayList<>();
+        for(String sTag: sTags){
+            aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
+        }
+        //Look for any tags that could not be found:
+        int i = 0;
+        for(Integer iTag: aliTags){
+            if(iTag == -1){
+                //Create the tag:
+                if(!sTags[i].equals("")) {
+                    iTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                    if(iTag != -1){
+                        aliTags.add(i, iTag);
+                    }
+                }
+            }
+            i++;
+        }
+        //Combine the found tags with any tags already assigned to the comic:
+        ArrayList<Integer> aliPreAssignedTagIDs = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
+        //Combine, no duplicates:
+        TreeMap<Integer, Integer> tmCombinedTags = new TreeMap<>();
+        for(Integer iTag: aliTags){
+            if(iTag != -1) { //Don't put any unresolved tags.
+                tmCombinedTags.put(iTag, iTag);
+            }
+        }
+        for(Integer iTag: aliPreAssignedTagIDs){
+            tmCombinedTags.put(iTag, iTag);
+        }
+        ArrayList<Integer> aliCombinedTags = new ArrayList<>();
+        for(Map.Entry<Integer, Integer> tmEntry: tmCombinedTags.entrySet()){
+            aliCombinedTags.add(tmEntry.getKey());
+        }
+        String sTagIDsConcat = GlobalClass.formDelimitedString(aliCombinedTags, ",");
+        ci.sTags = sTagIDsConcat;
+
         ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
         ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
         ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
         ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
         ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
 
-        return ci;
+        //Apply booleans to the intent to tell the receiver success, data available,
+        //  and set the data where appropriate:
+
+        broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
+        broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
+
+
+
+        sendBroadcast(broadcastIntent);
 
     }
 

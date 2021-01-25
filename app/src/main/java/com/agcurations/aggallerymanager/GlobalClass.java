@@ -70,6 +70,9 @@ public class GlobalClass extends Application {
     public boolean gbCatalogViewerTagsRestrictionsOn;
     //End catalog viewer variables.
 
+    public static final String gsNHComicCoverPageFilter = "^\\d{1,7}_Cover.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
+    public static final String gsNHComicPageFilter = "^\\d{1,7}_Page.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
+
     public static final String[][] CatalogRecordFields = new String[][]{
             {"VIDEO_ID",
                     "VIDEO_FILENAME",
@@ -1035,9 +1038,16 @@ public class GlobalClass extends Application {
                         sFields[j] = JumbleStorageText(sFields[j]);
                     }
 
-                    ItemClass_Tag ict = new ItemClass_Tag(Integer.parseInt(sFields[TAG_ID_INDEX]), sFields[TAG_NAME_INDEX]);
-
-                    tmTags.put(sFields[TAG_NAME_INDEX], ict);
+                    ItemClass_Tag ict;
+                    String sTagName;
+                    if(sFields.length < 2){
+                        //The tag is blank.
+                        sTagName = "";
+                    } else {
+                        sTagName = sFields[TAG_NAME_INDEX];
+                    }
+                    ict = new ItemClass_Tag(Integer.parseInt(sFields[TAG_ID_INDEX]), sTagName);
+                    tmTags.put(sTagName, ict);
                     sLine = brReader.readLine();
                 }
 
@@ -1087,20 +1097,24 @@ public class GlobalClass extends Application {
         return tmTags;
     }
 
-    public boolean TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
+    public int TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+        int iNextRecordId = -1;
 
         try {
-            int iNextRecordId = 0;
             int iThisId;
-            for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                iThisId = entry.getValue().TagID;
-                if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-                if (entry.getValue().TagText.toLowerCase().equals(sTagName.toLowerCase())){
-                    //If the tag already exists, abort adding a new tag.
-                    return false;
+            if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+                for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                    iThisId = entry.getValue().TagID;
+                    if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
+                    if (entry.getValue().TagText.toLowerCase().equals(sTagName.toLowerCase())) {
+                        //If the tag already exists, abort adding a new tag.
+                        return -1;
+                    }
                 }
+            } else {
+                iNextRecordId = 0;
             }
             //New record ID identified.
 
@@ -1118,7 +1132,7 @@ public class GlobalClass extends Application {
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        return true;
+        return iNextRecordId;
 
     }
 
@@ -1370,13 +1384,14 @@ public class GlobalClass extends Application {
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
         int iKey = -1;
         for(Map.Entry<String, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            if(entry.getValue().TagText.equals(sTagText)){
+            if(entry.getValue().TagText.equalsIgnoreCase(sTagText)){
                 iKey = entry.getValue().TagID;
                 break;
             }
         }
         return iKey;
     }
+
 
     public static String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
         //Used by preferences for storing integer string representing restricted tags.
