@@ -245,7 +245,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
             String sLine3 = sbTags.toString();
             sLine3 = sLine3 + "\n";
-            sLine3 = sLine3 + "Destination path: " + alFileItems.get(position).destinationFolder;
+            if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                sLine3 = sLine3 + "Destination path: " + alFileItems.get(position).destinationFolder;
+            }
             tvLine3.setText(sLine3);
 
             //set the image type if folder or file

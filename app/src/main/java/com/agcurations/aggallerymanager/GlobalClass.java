@@ -342,25 +342,6 @@ public class GlobalClass extends Application {
         return gdtfDateFormatter.format(LocalDateTime.now());
     }
 
-/*    public static String ConvertDoubleTimeStampToString(String sTimeStamp){
-        double dTimeStamp = Double.parseDouble(sTimeStamp);
-        int iYear = (int) (dTimeStamp / 10000);
-        int iMonth = (int) ((dTimeStamp - iYear * 10000) / 100 );
-        int iDay = (int) ((dTimeStamp - iYear * 10000 - iMonth * 100));
-        double dDatePortion = iYear * 10000 - iMonth * 100 - iDay;
-        int iHour = (int) ((dTimeStamp - dDatePortion) * 100);
-        int iMinute = (int) ((((dTimeStamp - dDatePortion) * 100) - iHour) * 100);
-        int iSecond = (int) ((((((dTimeStamp - dDatePortion) * 100) - iHour) * 100) - iMinute) * 100);
-
-        return iYear + "-" +
-                String.format("%02d", iMonth) + "-" +
-                String.format("%02d", iDay) + " " +
-                String.format("%02d", iHour) + ":" +
-                String.format("%02d", iMinute) + ":" +
-                String.format("%02d", iSecond);
-    }*/
-
-
     public static String JumbleStorageText(String sSourceText){
         if(sSourceText.equals("")){
             return "";
@@ -554,7 +535,6 @@ public class GlobalClass extends Application {
         return ConvertStringToCatalogItem(sRecord2);
     }
 
-
     public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci){
 
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
@@ -629,31 +609,14 @@ public class GlobalClass extends Application {
         }
     }
 
-    public boolean ComicCatalog_DeleteComic(String sComicID) {
+    public boolean ComicCatalog_DeleteComic(ItemClass_CatalogItem ci) {
 
         //Delete the comic record from the CatalogContentsFile:
 
         try {
 
-            //Attempt to delete the selected comic folder first.
-            //If that fails, abort the operation.
-            String sComicFolderName = gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).get(sComicID).sFolder_Name;
-
-            /*//Don't transfer the line over.
-            //Get a path to the comic's folder for deletion in the next step:
-            for (Map.Entry<String, ItemClass_CatalogItem>
-                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
-                String[] sFields = CatalogEntry.getValue();
-                if( sFields[COMIC_ID_INDEX].contains(sComicID)){
-                    sComicFolderName = sFields[COMIC_FOLDER_NAME_INDEX];
-                    break;
-                }
-            }*/
-
-
-
             String  sComicFolderPath = gfCatalogFolders[MEDIA_CATEGORY_COMICS].getPath() + File.separator
-                    + sComicFolderName;
+                    + ci.sFolder_Name;
 
             File fComicFolderToBeDeleted = new File(sComicFolderPath);
             if(fComicFolderToBeDeleted.exists() && fComicFolderToBeDeleted.isDirectory()){
@@ -664,7 +627,7 @@ public class GlobalClass extends Application {
                         for (String sChildFile : sChildFiles) {
                             File fChildFile = new File(fComicFolderToBeDeleted, sChildFile);
                             if(!fChildFile.delete()){
-                                Toast.makeText(this, "Could not delete file of comic ID " + sComicID + ":\n" +
+                                Toast.makeText(this, "Could not delete file of comic ID " + ci.sItemID + ":\n" +
                                                 sChildFile,
                                                 Toast.LENGTH_LONG).show();
                             }
@@ -672,22 +635,19 @@ public class GlobalClass extends Application {
                     }
 
                     if(!fComicFolderToBeDeleted.delete()){
-                        Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
+                        Toast.makeText(this, "Could not delete folder of comic ID " + ci.sItemID + ".",
                                 Toast.LENGTH_LONG).show();
                         return false;
                     }
                 } catch (Exception e){
-                    Toast.makeText(this, "Could not delete folder of comic ID " + sComicID + ".",
+                    Toast.makeText(this, "Could not delete folder of comic ID " + ci.sItemID + ".",
                             Toast.LENGTH_LONG).show();
                     return false;
                 }
             } else {
-                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + sComicID + ".",
+                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + ci.sItemID + ".",
                         Toast.LENGTH_LONG).show();
-                return false;
             }
-
-
 
             //Now attempt to delete the comic record from the CatalogContentsFile:
             StringBuilder sbBuffer = new StringBuilder();
@@ -698,15 +658,19 @@ public class GlobalClass extends Application {
 
             String[] sFields;
             String sLine = brReader.readLine();
+
+            ItemClass_CatalogItem ciFromFile;
+
             while (sLine != null) {
-                sFields = sLine.split("\t",-1);
-                if (!(JumbleStorageText(sFields[COMIC_ID_INDEX]).equals(sComicID))) {
+
+                ciFromFile = ConvertStringToCatalogItem(sLine);
+
+                //Check to see if this record is the one that we want to update:
+                if (!ciFromFile.sItemID.equals(ci.sItemID)) {
                     //If the line is not the comic we are trying to delete, transfer it over:
                     sbBuffer.append(sLine);
                     sbBuffer.append("\n");
-
                 }
-
 
                 // read next line
                 sLine = brReader.readLine();
@@ -719,23 +683,10 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
 
-
             //Now update memory to no longer include the comic:
-            /*int iKey = -1;
-            for (Map.Entry<Integer, String[]>
-                    CatalogEntry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
-                String sEntryComicID = CatalogEntry.getValue()[COMIC_ID_INDEX];
-                if( sEntryComicID.contains(sComicID)){
-                    iKey = CatalogEntry.getKey();
-                    break;
-                }
-            }
-            if(iKey >= 0){
-                gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(iKey);
-            }*/
-            gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(sComicID);
-
-
+            gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(ci.sItemID);
+            Toast.makeText(this, "Comic ID " + ci.sItemID + " removed from catalog.",
+                    Toast.LENGTH_LONG).show();
             return true;
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -1459,12 +1410,14 @@ public class GlobalClass extends Application {
         } else {
             switch (sStorageSizePreference){
                 case STORAGE_SIZE_GIGABYTES:
-                    lStorageSize /= 1024;
+                    lStorageSize = lStorageSize / (long)Math.pow(1024, 3);
                     sSizeSuffix = " GB";
+                    break;
 
                 case STORAGE_SIZE_MEGABYTES:
-                    lStorageSize /= 1024;
+                    lStorageSize = lStorageSize / (long)Math.pow(1024, 2);
                     sSizeSuffix = " MB";
+                    break;
 
                 case STORAGE_SIZE_KILOBYTES:
                     lStorageSize /= 1024;

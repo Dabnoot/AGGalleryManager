@@ -179,7 +179,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     public void DeleteComic(){
         gtmComicPages = new TreeMap<>();
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
-        if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem.sItemID)) {
+        if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem)) {
             //If comic deletion successful, close the activity. Otherwise remain open so that
             //  the user can view the toast message.
             finish();

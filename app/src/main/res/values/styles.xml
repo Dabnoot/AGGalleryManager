@@ -40,8 +40,7 @@
         <item name="actionTextColorAlpha">@color/colorGrey1</item>
         <item name="helperTextTextColor">@color/colorGrey1</item>
 
-
-        <item name="colorSurface">@color/colorLightOrange</item>  <!-- Background of menu-->
+        <item name="colorSurface">@color/colorNavigationBarPurple</item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
     </style>
 

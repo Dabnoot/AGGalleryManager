@@ -220,7 +220,7 @@ public class Activity_Import extends AppCompatActivity {
             }
             if(iCurrentFragment == iPrevFragment){
                 //To handle interesting behavior about how the stack is built.
-                iPrevFragment = stackFragmentOrder.pop();
+                iPrevFragment = stackFragmentOrder.peek();
             }
             ViewPager2_Import.setCurrentItem(iPrevFragment, false);
 

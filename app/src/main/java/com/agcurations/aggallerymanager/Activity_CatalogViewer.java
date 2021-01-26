@@ -474,6 +474,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder {
             // each data item is just a string in this case
             public final ImageView ivThumbnail;
+            public final ImageView imageView_Attention;
             public final Button btnDelete;
             public final TextView tvThumbnailText;
             public final TextView tvDetails;
@@ -481,6 +482,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             public ViewHolder(View v) {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                imageView_Attention = v.findViewById(R.id.imageView_Attention);
                 btnDelete = v.findViewById(R.id.button_Delete);
                 tvThumbnailText = v.findViewById(R.id.textView_Title);
                 tvDetails = v.findViewById(R.id.textView_Details);
@@ -533,7 +535,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             String sItemName = "";
 
-            if(globalClass.ObfuscationOn) {
+            if (globalClass.ObfuscationOn) {
 
                 //Get the obfuscation image index:
                 int i = (position % globalClass.getObfuscationImageCount());
@@ -544,7 +546,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 holder.ivThumbnail.setImageBitmap(bmObfuscator);
                 holder.tvThumbnailText.setText(globalClass.getObfuscationImageText(i));
 
-                if(holder.btnDelete != null){
+                if (holder.btnDelete != null) {
                     //Don't allow delete during obfuscation.
                     holder.btnDelete.setVisibility(View.INVISIBLE);
                 }
@@ -556,8 +558,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         + ci.sFilename;
 
 
-
-
                 File fThumbnail = new File(sThumbnailFilePath);
 
                 if (fThumbnail.exists()) {
@@ -565,7 +565,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
 
                 String sThumbnailText = "";
-                switch(globalClass.giSelectedCatalogMediaCategory){
+                switch (globalClass.giSelectedCatalogMediaCategory) {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         String sTemp = ci.sFilename;
                         sItemName = GlobalClass.JumbleFileName(sTemp);
@@ -584,7 +584,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
                 holder.tvThumbnailText.setText(sThumbnailText);
 
-                if(holder.btnDelete != null){
+                if (holder.btnDelete != null) {
                     holder.btnDelete.setVisibility(View.VISIBLE);
                 }
             }
@@ -593,17 +593,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if(gbDebugTouch) Toast.makeText(getApplicationContext(),"Click Item Number " + position, Toast.LENGTH_LONG).show();
+                    if (gbDebugTouch)
+                        Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
 
-                    if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
 
-                    } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                    } else if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                         //Temporarily set the image catalog to use the video player activity to display images until the
                         // SeriesImageViewer activity is genericized (was previously comic page viewer):
                         StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
 
-                    } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    } else if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         StartComicViewerActivity(ci_final);
 
                     }
@@ -613,11 +614,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             holder.ivThumbnail.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View view) {
-                    if(gbDebugTouch) Toast.makeText(getApplicationContext(), "Long press detected", Toast.LENGTH_SHORT).show();
+                    if (gbDebugTouch)
+                        Toast.makeText(getApplicationContext(), "Long press detected", Toast.LENGTH_SHORT).show();
                     Obfuscate();
                     return true;// returning true instead of false, works for me
                 }
             });
+
+            if (ci.sComic_Missing_Pages.equals("")){
+                holder.imageView_Attention.setVisibility(View.INVISIBLE);
+            } else {
+                holder.imageView_Attention.setVisibility(View.VISIBLE);
+            }
 
             if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
                 holder.btnDelete.setVisibility(View.INVISIBLE);

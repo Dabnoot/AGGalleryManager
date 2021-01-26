@@ -11,6 +11,15 @@
         android:layout_alignParentTop="true"
         android:contentDescription="Thumbnail image"/>
 
+    <ImageView
+        android:id="@+id/imageView_Attention"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:contentDescription="Attention. This comic has an issue."
+        android:src="@drawable/attention_32px"
+        android:visibility="invisible"/>
+
     <Button
         android:id="@+id/button_Delete"
         android:layout_width="50dp"
