@@ -15,6 +15,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -557,9 +560,22 @@ public class GlobalClass extends Application {
     public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci){
 
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
+
+
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
 
+
+
         try {
+
+            // Get a file channel for the file. This is to prevent this routine from being called too
+            //  quickly and having two routines writing the file.
+            FileChannel channel = new RandomAccessFile(fCatalogContentsFile, "rw").getChannel();
+            // Use the file channel to create a lock on the file.
+            // This method blocks until it can retrieve the lock.
+            FileLock lock = channel.lock();
+
+
             //Add the details to the TreeMap:
             tmCatalogRecords.put(ci.sItemID, ci);
 
@@ -571,6 +587,14 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.write("\n");
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
+
+            // Release the lock - if it is not null!
+            if( lock != null ) {
+                lock.release();
+            }
+            // Close the file
+            channel.close();
+
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();

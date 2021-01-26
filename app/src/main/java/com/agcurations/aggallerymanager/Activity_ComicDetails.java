@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class Activity_ComicDetails extends AppCompatActivity {
@@ -88,15 +89,25 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
-        gtmComicPages = new TreeMap<>();
+
+        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
         if(fComicFolder.exists()){
             File[] fComicPages = fComicFolder.listFiles();
             if(fComicPages != null) {
                 for (int i = 0; i < fComicPages.length; i++) {
-                    gtmComicPages.put(i, fComicPages[i].getAbsolutePath());
+                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPages[i].getName()), fComicPages[i].getAbsolutePath());
                 }
             }
         }
+
+        gtmComicPages = new TreeMap<>();
+        int i = 0;
+        for(Map.Entry<String, String> tmFiles: tmSortByFileName.entrySet()){
+            gtmComicPages.put(i, tmFiles.getValue());
+            i++;
+        }
+
+
 
         populate_RecyclerViewComicPages();
 
