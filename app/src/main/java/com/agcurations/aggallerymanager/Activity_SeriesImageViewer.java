@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -16,6 +17,7 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PersistableBundle;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -28,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -94,16 +97,19 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
 
 
     //Global constants
-    public static final String EXTRA_CATALOG_ITEM = "COMIC_FIELDS_STRING";
+    public static final String EXTRA_CATALOG_ITEM = "CATALOG_ITEM";
     public static final String EXTRA_COMIC_PAGE_START = "COMIC_PAGE_START";
+
+    public static final String SAVED_STATE_ITEM_INDEX = "SAVED_STATE_ITEM_INDEX";
 
     //Global variables
 
     //Comic global variables
     private GlobalClass globalClass;
     private TreeMap<Integer, String> tmImagePaths;
+    private TreeMap<Integer, String> tmImageFileNamesReadable;
     private String gsActivityTitleString = "";
-    private int giCurrentImageIndex;
+    private int giCurrentCatalogItemIndex;
     private int giMaxFileCount;
 
     //Graphics global variables
@@ -165,7 +171,11 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
         //Get the intent used to start this activity:
         Intent intentCaller = getIntent();
         //Get data from the intent:
-        giCurrentImageIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START,0);
+        if (savedInstanceState != null) {
+            giCurrentCatalogItemIndex = savedInstanceState.getInt(SAVED_STATE_ITEM_INDEX);
+        } else {
+            giCurrentCatalogItemIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START, 0);
+        }
         ItemClass_CatalogItem gciCatalogItem;
         gciCatalogItem = (ItemClass_CatalogItem) intentCaller.getSerializableExtra(EXTRA_CATALOG_ITEM);
 
@@ -181,15 +191,28 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
-        tmImagePaths = new TreeMap<>();
+        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
         if(fComicFolder.exists()){
+            tmImagePaths = new TreeMap<>();
+            tmImageFileNamesReadable = new TreeMap<>();
             File[] fComicPages = fComicFolder.listFiles();
+            String sReadableFileName;
             if(fComicPages != null) {
-                for (int i = 0; i < fComicPages.length; i++) {
-                    tmImagePaths.put(i, fComicPages[i].getAbsolutePath());
+                for (File fComicPage : fComicPages) {
+                    sReadableFileName = GlobalClass.JumbleFileName(fComicPage.getName());
+                    tmSortByFileName.put(sReadableFileName, fComicPage.getAbsolutePath());
                 }
             }
+            int i = 0;
+            for(Map.Entry<String, String> tmFiles: tmSortByFileName.entrySet()){
+                tmImagePaths.put(i, tmFiles.getValue());
+                tmImageFileNamesReadable.put(i, tmFiles.getKey()); //For toast messages when changing the page.
+                i++;
+            }
         }
+
+
+
 
         //Get the display size:
         WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
@@ -205,7 +228,7 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
         mContentView.post(new Runnable(){
             public void run(){
                 //https://stackoverflow.com/questions/12829653/content-view-width-and-height/21426049
-                LoadComicPage(giCurrentImageIndex);
+                LoadComicPage(giCurrentCatalogItemIndex);
             }
         });
 
@@ -219,22 +242,32 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
 
         mContentView.setOnTouchListener(new OnSwipeTouchListener(this) {
             public void onSwipeTop() {
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped top", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Swiped top", Toast.LENGTH_SHORT);
+                }
             }
 
             public void onSwipeBottom() {
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped bottom", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Swiped bottom", Toast.LENGTH_SHORT);
+                }
             }
 
             public void onSwipeRight() {
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped right", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Swiped right", Toast.LENGTH_SHORT);
+                }
                 if(gfScaleFactor <= gfJumpOutAxisScale) {
-                    if(giCurrentImageIndex == 0){
+                    if(giCurrentCatalogItemIndex == 0){
                         if(iSwipeToExitCounter == 0) {
-                            Toast.makeText(getApplicationContext(), "Start of comic", Toast.LENGTH_SHORT).show();
+                            makeToast("Start of comic", Toast.LENGTH_SHORT);
                         } else if (iSwipeToExitCounter == 1){
-                            Toast.makeText(getApplicationContext(), "Swipe left again to exit", Toast.LENGTH_SHORT).show();  //right/left - it feels like a "right-swipe" in the comic reference frame.
+                            //right/left - it feels like a "right-swipe" in the comic reference frame.
+                            makeToast("Swipe left again to exit", Toast.LENGTH_SHORT);
                         } else if (iSwipeToExitCounter == 2){
+                            if(toastLastToastMessage != null){
+                                toastLastToastMessage.cancel();
+                            }
                             finish();
                         }
                         iSwipeToExitCounter++;
@@ -246,16 +279,22 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
             }
 
             public void onSwipeLeft() {
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Swiped left", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Swiped left", Toast.LENGTH_SHORT);
+                }
 
                 if(gfScaleFactor <= gfJumpOutAxisScale){
 
-                    if(giCurrentImageIndex == (giMaxFileCount - 1)){
+                    if(giCurrentCatalogItemIndex == (giMaxFileCount - 1)){
                         if(iSwipeToExitCounter == 0) {
-                            Toast.makeText(getApplicationContext(), "End of comic", Toast.LENGTH_SHORT).show();
+                            makeToast("End of comic", Toast.LENGTH_SHORT);
                         } else if (iSwipeToExitCounter == 1){
-                            Toast.makeText(getApplicationContext(), "Swipe right again to exit", Toast.LENGTH_SHORT).show();  //right/left - it feels like a "right-swipe" in the comic reference frame.
+                            //right/left - it feels like a "right-swipe" in the comic reference frame.
+                            makeToast("Swipe right again to exit", Toast.LENGTH_SHORT);
                         } else if (iSwipeToExitCounter == 2){
+                            if(toastLastToastMessage != null){
+                                toastLastToastMessage.cancel();
+                            }
                             finish();
                         }
                         iSwipeToExitCounter++;
@@ -271,6 +310,12 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
         givImageViewer = findViewById(R.id.imageView_ComicPage);
         givImageViewer.setScaleType(ImageView.ScaleType.MATRIX);
 
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        outState.putInt(SAVED_STATE_ITEM_INDEX, giCurrentCatalogItemIndex);
     }
 
     @Override
@@ -382,7 +427,7 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
             if(globalClass.ObfuscationOn) {
 
                 //Get the obfuscation image index:
-                int i = (giCurrentImageIndex % globalClass.getObfuscationImageCount());
+                int i = (giCurrentCatalogItemIndex % globalClass.getObfuscationImageCount());
                 //Get the obfuscation image resource ID:
                 int iObfuscatorResourceID = globalClass.getObfuscationImage(i);
                 myBitmap = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
@@ -392,6 +437,7 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
             } else {
                 myBitmap = BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
                 setTitle(gsActivityTitleString);
+                makeToast(tmImageFileNamesReadable.get(iPageIndex), Toast.LENGTH_SHORT);
             }
 
             givImageViewer.setImageBitmap(myBitmap);
@@ -437,16 +483,16 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
     }
 
     private void gotoNextComicPage(){
-        if(giCurrentImageIndex < tmImagePaths.size() - 1){
-            giCurrentImageIndex++;
-            LoadComicPage(giCurrentImageIndex);
+        if(giCurrentCatalogItemIndex < tmImagePaths.size() - 1){
+            giCurrentCatalogItemIndex++;
+            LoadComicPage(giCurrentCatalogItemIndex);
         }
     }
 
     private void gotoPreviousComicPage(){
-        if(giCurrentImageIndex > 0){
-            giCurrentImageIndex--;
-            LoadComicPage(giCurrentImageIndex);
+        if(giCurrentCatalogItemIndex > 0){
+            giCurrentCatalogItemIndex--;
+            LoadComicPage(giCurrentCatalogItemIndex);
         }
     }
 
@@ -883,19 +929,25 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
                 if (mVisible && AUTO_HIDE) {
                     delayedHide(AUTO_HIDE_DELAY_MILLIS);
                 }
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Single Tap Detected", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Single Tap Detected", Toast.LENGTH_SHORT);
+                }
                 return true;
             }
 
             @Override
             public void onLongPress(MotionEvent e) {
                 Obfuscate();
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Long Press Detected", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Long Press Detected", Toast.LENGTH_SHORT);
+                }
             }
 
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                if(gbDebugSwiping) Toast.makeText(getApplicationContext(), "Double Tap Detected", Toast.LENGTH_SHORT).show();
+                if(gbDebugSwiping){
+                    makeToast("Double Tap Detected", Toast.LENGTH_SHORT);
+                }
                 return true;
             }
 
@@ -945,7 +997,7 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
     public void FlipObfuscation() {
         globalClass.ObfuscationOn = !globalClass.ObfuscationOn;
         //LoadComicPage will automatically load the obfuscated/non-obfuscated image as required:
-        LoadComicPage(giCurrentImageIndex);
+        LoadComicPage(giCurrentCatalogItemIndex);
     }
 
     public void Obfuscate() {
@@ -953,7 +1005,7 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
         // by either a long-press or the toggle option on the menu.
         if(!globalClass.ObfuscationOn) {
             globalClass.ObfuscationOn = true;
-            LoadComicPage(giCurrentImageIndex);
+            LoadComicPage(giCurrentCatalogItemIndex);
         }
     }
 
@@ -966,7 +1018,6 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         //Display a message showing the name of the item selected.
-        //Toast.makeText(this, "Selected Item: " +item.getTitle(), Toast.LENGTH_SHORT).show();
         if (item.getItemId() == R.id.menu_FlipView) {
             FlipObfuscation();
             return true;
@@ -974,6 +1025,14 @@ public class Activity_SeriesImageViewer extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    Toast toastLastToastMessage;
+    private void makeToast(String sMessage, int iLength){
+        if(toastLastToastMessage != null){
+            toastLastToastMessage.cancel();
+        }
+        toastLastToastMessage = Toast.makeText(getApplicationContext(), sMessage, iLength);
+        toastLastToastMessage.show();
+    }
 
 
 }

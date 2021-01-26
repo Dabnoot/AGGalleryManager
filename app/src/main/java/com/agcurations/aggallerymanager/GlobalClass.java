@@ -328,12 +328,14 @@ public class GlobalClass extends Application {
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternFileSafe);
         return gdtfDateFormatter.format(LocalDateTime.now());
     }
+
     public static Double GetTimeStampFloat(){
         //Get an easily-comparable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort);
         String sTimeStamp = gdtfDateFormatter.format(LocalDateTime.now());
         return Double.parseDouble(sTimeStamp);
     }
+
     public String GetTimeStampReadReady(){
         //Get an easily readable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternReadReady);
@@ -371,15 +373,19 @@ public class GlobalClass extends Application {
 
         return sFinalText;
     }
+
     public static String JumbleStorageText(int i) {
         return JumbleStorageText(Integer.toString(i));
     }
+
     public static String JumbleStorageText(double d) {
         return JumbleStorageText(Double.toString(d));
     }
+
     public static String JumbleStorageText(long l) {
         return JumbleStorageText(Long.toString(l));
     }
+
     public static String JumbleStorageText(boolean b) {
         return JumbleStorageText(Boolean.toString(b));
     }
@@ -395,14 +401,6 @@ public class GlobalClass extends Application {
         sFileNameBody.append(sFileName.substring(0,sFileName.lastIndexOf(".")));
         return sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
     }
-
-
-
-    static final int[] iNoJumbleFileNameIndex =
-            {VIDEO_FILENAME_INDEX, IMAGE_FILENAME_INDEX, -1};
-    //Filenames that may contain descriptive information are jumbled at import, and
-    //  the catalog file should maintain that jumbled name, since the file is ascii.
-
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
@@ -561,20 +559,9 @@ public class GlobalClass extends Application {
 
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
 
-
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
 
-
-
         try {
-
-            // Get a file channel for the file. This is to prevent this routine from being called too
-            //  quickly and having two routines writing the file.
-            FileChannel channel = new RandomAccessFile(fCatalogContentsFile, "rw").getChannel();
-            // Use the file channel to create a lock on the file.
-            // This method blocks until it can retrieve the lock.
-            FileLock lock = channel.lock();
-
 
             //Add the details to the TreeMap:
             tmCatalogRecords.put(ci.sItemID, ci);
@@ -588,20 +575,11 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
 
-            // Release the lock - if it is not null!
-            if( lock != null ) {
-                lock.release();
-            }
-            // Close the file
-            channel.close();
-
-
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
     }
-
 
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
 
@@ -609,6 +587,7 @@ public class GlobalClass extends Application {
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
 
         try {
+
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
             brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
@@ -644,6 +623,7 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
+
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -1127,6 +1107,7 @@ public class GlobalClass extends Application {
         int iNextRecordId = -1;
 
         try {
+
             int iThisId;
             if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
                 for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
@@ -1171,6 +1152,7 @@ public class GlobalClass extends Application {
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
 
         try {
+
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
             brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
@@ -1264,13 +1246,13 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
+
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
     }
-
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     public String getTagRecordString(ItemClass_Tag ict){
@@ -1339,7 +1321,6 @@ public class GlobalClass extends Application {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
-
 
     public TreeMap<String, ItemClass_Tag> GetCatalogTagsInUse(Integer iMediaCategory){
 
@@ -1417,6 +1398,11 @@ public class GlobalClass extends Application {
     }
 
 
+
+    //=====================================================================================
+    //===== Other Subroutines Section ===================================================
+    //=====================================================================================
+
     public static String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
         //Used by preferences for storing integer string representing restricted tags.
         //Used to save tag IDs to catalog file.
@@ -1448,25 +1434,45 @@ public class GlobalClass extends Application {
         return ali;
     }
 
-    //=====================================================================================
-    //===== Other Subroutines Section ===================================================
-    //=====================================================================================
-
-    public static String CleanStorageSize(Long lStorageSize){
+    public static final String STORAGE_SIZE_NO_PREFERENCE = "";
+    public static final String STORAGE_SIZE_BYTES = "B";       //Must match sSizeSuffix chars by the manner of which CleanStorageSize is used.
+    public static final String STORAGE_SIZE_KILOBYTES = "KB";  //Must match sSizeSuffix chars by the manner of which CleanStorageSize is used.
+    public static final String STORAGE_SIZE_MEGABYTES = "MB";  //Must match sSizeSuffix chars by the manner of which CleanStorageSize is used.
+    public static final String STORAGE_SIZE_GIGABYTES = "GB";  //Must match sSizeSuffix chars by the manner of which CleanStorageSize is used.
+    public static String CleanStorageSize(Long lStorageSize, String sStorageSizePreference){
         //Returns a string of size to 2 significant figures plus units of B, KB, MB, or GB.
 
         String sSizeSuffix = " B";
-        if(lStorageSize > 1000) {
-            lStorageSize /= 1024;
-            sSizeSuffix = " KB";
-        }
-        if(lStorageSize > 1000) {
-            lStorageSize /= 1024;
-            sSizeSuffix = " MB";
-        }
-        if(lStorageSize > 1000) {
-            lStorageSize /= 1024;
-            sSizeSuffix = " GB";
+        if( sStorageSizePreference.equals(STORAGE_SIZE_NO_PREFERENCE)) {
+            if (lStorageSize > 1000) {
+                lStorageSize /= 1024;
+                sSizeSuffix = " KB";
+            }
+            if (lStorageSize > 1000) {
+                lStorageSize /= 1024;
+                sSizeSuffix = " MB";
+            }
+            if (lStorageSize > 1000) {
+                lStorageSize /= 1024;
+                sSizeSuffix = " GB";
+            }
+        } else {
+            switch (sStorageSizePreference){
+                case STORAGE_SIZE_GIGABYTES:
+                    lStorageSize /= 1024;
+                    sSizeSuffix = " GB";
+
+                case STORAGE_SIZE_MEGABYTES:
+                    lStorageSize /= 1024;
+                    sSizeSuffix = " MB";
+
+                case STORAGE_SIZE_KILOBYTES:
+                    lStorageSize /= 1024;
+                    sSizeSuffix = " KB";
+
+                case STORAGE_SIZE_BYTES:
+                    break;
+            }
         }
 
         DecimalFormat decimalFormat = new DecimalFormat();
@@ -1486,6 +1492,7 @@ public class GlobalClass extends Application {
                         TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(lMilliseconds)));
         return sDurationText;
     }
+
 
 
     //=====================================================================================

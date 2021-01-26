@@ -37,17 +37,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class Activity_ComicDetails extends AppCompatActivity {
-    //Global constants
-
-
     //Global Variables:
-
     private GlobalClass globalClass;
 
     private ItemClass_CatalogItem gciCatalogItem;
     private TreeMap<Integer, String> gtmComicPages;
-
-
 
     private MenuItem gmiGetOnlineData;
     private MenuItem gmiSaveDetails;
@@ -57,7 +51,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
 
     private RecyclerViewComicPagesAdapter gRecyclerViewComicPagesAdapter;
-
 
     private final boolean gbDebugTouch = false;
     private boolean gbAutoAcquireData = false;
@@ -89,13 +82,12 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         //Load the full path to each comic page into tmComicPages:
         File fComicFolder = new File(sComicFolderPath);
-
         TreeMap<String, String> tmSortByFileName = new TreeMap<>();
         if(fComicFolder.exists()){
             File[] fComicPages = fComicFolder.listFiles();
             if(fComicPages != null) {
-                for (int i = 0; i < fComicPages.length; i++) {
-                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPages[i].getName()), fComicPages[i].getAbsolutePath());
+                for (File fComicPage : fComicPages) {
+                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath());
                 }
             }
         }
@@ -452,16 +444,18 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvParodies.setText(gciCatalogItem.sComicParodies);
                     holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
                     StringBuilder sbTags = new StringBuilder();
-                    String[] sTagIDs = gciCatalogItem.sTags.split(",");
-                    for(String sTagID : sTagIDs){
-                        sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), GlobalClass.MEDIA_CATEGORY_COMICS));
-                        sbTags.append(", ");
+                    if(!gciCatalogItem.sTags.equals("")) {
+                        String[] sTagIDs = gciCatalogItem.sTags.split(",");
+                        for (String sTagID : sTagIDs) {
+                            sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), GlobalClass.MEDIA_CATEGORY_COMICS));
+                            sbTags.append(", ");
+                        }
+                        String sTagTextAggregate = sbTags.toString();
+                        if (sTagTextAggregate.contains(",")) {
+                            sTagTextAggregate = sTagTextAggregate.substring(0, sTagTextAggregate.lastIndexOf(", "));
+                        }
+                        holder.tvTags.setText(sTagTextAggregate);
                     }
-                    String sTagTextAggregate = sbTags.toString();
-                    if(sTagTextAggregate.contains(",")){
-                        sTagTextAggregate = sTagTextAggregate.substring(0,sTagTextAggregate.lastIndexOf(", "));
-                    }
-                    holder.tvTags.setText(sTagTextAggregate);
                     holder.tvArtists.setText(gciCatalogItem.sComicArtists);
                     holder.tvGroups.setText(gciCatalogItem.sComicGroups);
                     holder.tvLanguages.setText(gciCatalogItem.sComicLanguages);

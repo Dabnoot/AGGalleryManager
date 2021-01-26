@@ -232,7 +232,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             String sLine2 = "";//For item details, including video duration, file size, comic page count, comic page file set size.
             /*DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             sLine2 = sLine2 + dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);*/
-            String sRequiredStorageSize = "Size: " + GlobalClass.CleanStorageSize(alFileItemsDisplay.get(position).sizeBytes);
+            String sRequiredStorageSize = "Size: " + GlobalClass.CleanStorageSize(alFileItemsDisplay.get(position).sizeBytes, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
             if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 //If type is video or gif, get the duration:
@@ -286,7 +286,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     int iComicFileCount = getFilterMatchCount(sNHComicID + ".+");
                     sComicPageCount = "File count: " + iComicFileCount + ".";
                     long lCombinedSize = getFilterMatchCombinedSize(sNHComicID + ".+");
-                    sRequiredStorageSize = "Comic size: " + GlobalClass.CleanStorageSize(lCombinedSize) + ".";
+                    sRequiredStorageSize = "Comic size: " + GlobalClass.CleanStorageSize(lCombinedSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE) + ".";
                 }
 
                 sLine2 = sRequiredStorageSize + "\t" + sComicPageCount;

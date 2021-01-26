@@ -51,9 +51,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     Spinner gspSpinnerSort;
 
+    Toast toastLastToastMessage;
 
     private Menu ActivityMenu;
-
 
     private CatalogViewerServiceResponseReceiver catalogViewerServiceResponseReceiver;
 
@@ -394,7 +394,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap, getApplicationContext());
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
                     gRecyclerViewCatalogAdapter.notifyDataSetChanged();
-                    Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT).show();
+                    if(toastLastToastMessage != null){
+                        toastLastToastMessage.cancel();
+                    }
+                    toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT);
+                    toastLastToastMessage.show();
                 }
 
 
@@ -692,6 +696,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
         globalClass.gtmCatalogViewerDisplayTreeMap = treeMap;
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, iVideoID);
+        if(toastLastToastMessage != null){
+            toastLastToastMessage.cancel(); //Hide any toast message that might be shown.
+        }
         startActivity(intentVideoPlayer);
     }
 
@@ -706,6 +713,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         Intent intentComicViewer = new Intent(this, Activity_ComicDetails.class);
 
         intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM, ci);
+
+        if(toastLastToastMessage != null){
+            toastLastToastMessage.cancel(); //Hide any toast message that might be shown.
+        }
 
         startActivity(intentComicViewer);
     }

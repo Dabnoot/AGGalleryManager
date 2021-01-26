@@ -133,8 +133,15 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
         //Display the required space:
         TextView textView_RequiredStorageSpace = getView().findViewById(R.id.textView_RequiredStorageSpace);
-        s = GlobalClass.CleanStorageSize(lRequiredStorageSpaceBytes);
+        s = GlobalClass.CleanStorageSize(lRequiredStorageSpaceBytes, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
         textView_RequiredStorageSpace.setText(s);
+
+        //Get the units from 'required space' to match with 'available space':
+        String sData[] = s.split(" ");
+        String sStorageUnit = GlobalClass.STORAGE_SIZE_NO_PREFERENCE;
+        if(sData.length == 2) {
+            sStorageUnit = sData[1];
+        }
 
         //Display the available space:
         long lAvailableStorageSpaceBytes;
@@ -142,8 +149,10 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         lAvailableStorageSpaceBytes = globalClass.AvailableStorageSpace(getActivity().getApplicationContext(), 1);
         TextView textView_AvailableStorageSpace = getView().findViewById(R.id.textView_AvailableStorageSpace);
-        s = GlobalClass.CleanStorageSize(lAvailableStorageSpaceBytes);
+        s = GlobalClass.CleanStorageSize(lAvailableStorageSpaceBytes, sStorageUnit);
         textView_AvailableStorageSpace.setText(s);
+
+
 
 
     }
@@ -208,7 +217,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                     sLine2 = sLine2 + "\tDuration: " + alFileItems.get(position).videoTimeText;
                 }
 
-                sLine2 = sLine2 + "\tFile size: " + GlobalClass.CleanStorageSize(alFileItems.get(position).sizeBytes);
+                sLine2 = sLine2 + "\tFile size: " + GlobalClass.CleanStorageSize(
+                        alFileItems.get(position).sizeBytes,
+                        GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
             }catch (Exception e){
                 Context activityContext = getContext();
