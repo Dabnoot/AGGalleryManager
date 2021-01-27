@@ -621,7 +621,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
             });
 
-            if (ci.sComic_Missing_Pages.equals("")){
+
+            if (ci.sComic_Missing_Pages.equals("")) {
                 holder.imageView_Attention.setVisibility(View.INVISIBLE);
             } else {
                 holder.imageView_Attention.setVisibility(View.VISIBLE);
