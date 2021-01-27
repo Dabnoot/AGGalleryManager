@@ -2,15 +2,24 @@ package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.util.Log;
+import android.util.TimingLogger;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.TagNode;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.Format;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -25,6 +34,7 @@ public class Service_ComicDetails extends IntentService {
 
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_DETAILS_ERROR_MESSAGE = "COMIC_DETAILS_ERROR_MESSAGE";
+    public static final String COMIC_MISSING_PAGES_ACQUIRED = "COMIC_MISSING_PAGES_ACQUIRED";
 
     //Global Variables
     private GlobalClass globalClass;
@@ -96,7 +106,7 @@ public class Service_ComicDetails extends IntentService {
 
         String sComicTitle = "";
 
-
+        boolean bMissingComicPagesAcquired = false;
 
         try {
             //Get the data from the WebPage:
@@ -215,6 +225,128 @@ public class Service_ComicDetails extends IntentService {
                     sReturnData[i + 1] = sbData.toString();
                 }
             }
+
+
+            //Get any missing comic pages:
+            if(!ci.sComic_Missing_Pages.equals("")) {
+                //If the catalog item is missing pages, attempt to recover those pages:
+                sxPathExpression = globalClass.snHentai_Comic_Page_Thumbs_xPE;
+                //sxPathExpression = "//div[@class='thumb-container']//img[@class='lazyload']//@data-src";
+                //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+                Object[] objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
+                //Check to see if we found anything:
+                String sImageAddressTemplate = "";
+                String sGalleryID = "";
+                ArrayList<String> alsThumbnailImageNames = new ArrayList<>();
+                TreeMap<Integer, String> tmFileIndexImageExtention = new TreeMap<>();
+                if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
+                    //Get the gallery ID. This is not the same as the NH comic ID.
+                    // Example: "https://t.nhentai.net/galleries/645538/1t.png"
+                    sImageAddressTemplate = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("data-src");
+                    if (sImageAddressTemplate.length() > 0) {
+                        sGalleryID = sImageAddressTemplate.substring(0, sImageAddressTemplate.lastIndexOf("/"));
+                        sGalleryID = sGalleryID.substring(sGalleryID.lastIndexOf("/") + 1);
+                    }
+                    //Get the thumbnail image names, which will reveal the file extension of the full images:
+                    for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
+                        String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
+                        String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
+                        sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
+                        String[] sSplit = sImageFilename.split("\\.");
+                        if (sSplit.length == 2) {
+                            try {
+                                Integer iPageNumber = Integer.parseInt(sSplit[0]);
+                                tmFileIndexImageExtention.put(iPageNumber, sSplit[1]);
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    }
+
+                }
+                ArrayList<Integer> aliMissingPages = GlobalClass.getIntegerArrayFromString(ci.sComic_Missing_Pages, ",");
+                ArrayList<String[]> alsImageNameData = new ArrayList<>();
+                String sNHComicID = ci.sSource;
+                sNHComicID = sNHComicID.substring(0, sNHComicID.lastIndexOf("/"));
+                sNHComicID = sNHComicID.substring(sNHComicID.lastIndexOf("/") + 1);
+                if (sGalleryID.length() > 0) {
+                    for(Integer iMissingPage: aliMissingPages) {
+                        if(tmFileIndexImageExtention.containsKey(iMissingPage)) {
+                            String sNHImageDownloadAddress = "https://i.nhentai.net/galleries/" + sGalleryID + "/" + iMissingPage + "." + tmFileIndexImageExtention.get(iMissingPage);
+                            String sPageStringForFilename = String.format(Locale.getDefault(),"%03d", iMissingPage);
+                            String sNewFilename = sNHComicID + "_Page_" + sPageStringForFilename + "." + tmFileIndexImageExtention.get(iMissingPage);
+                            String[] sTemp = {sNHImageDownloadAddress, sNewFilename};
+                            alsImageNameData.add(sTemp);
+                        }
+                    }
+                }
+                if(alsImageNameData.size() > 0){
+                    //If there are image addresses to attempt to download...
+                    try {
+                        for(String[] sImageNameData: alsImageNameData) {
+                            url = new URL(sImageNameData[0]);
+                            URLConnection connection = url.openConnection();
+                            connection.connect();
+
+                            // this will be useful so that you can show a tipical 0-100%
+                            // progress bar
+                            int lenghtOfFile = connection.getContentLength();
+
+                            // download the file
+                            InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+                            String sNewFilename = sImageNameData[1];
+
+                            String sNewFullPathFilename = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] +
+                                    File.separator + ci.sFolder_Name + File.separator + GlobalClass.JumbleFileName(sNewFilename);
+                            File fNewFile = new File(sNewFullPathFilename);
+                            if(!fNewFile.exists()) {
+                                // Output stream
+                                String sTest = fNewFile.getPath();
+                                OutputStream output = new FileOutputStream(fNewFile.getPath());
+
+                                byte[] data = new byte[1024];
+
+                                long total = 0;
+                                int count;
+                                while ((count = input.read(data)) != -1) {
+                                    total += count;
+                                    // publishing the progress....
+                                    // After this onProgressUpdate will be called
+                                    //publishProgress("" + (int) ((total * 100) / lenghtOfFile));
+
+                                    // writing data to file
+                                    output.write(data, 0, count);
+                                }
+
+                                // flushing output
+                                output.flush();
+
+                                // closing streams
+                                output.close();
+                                input.close();
+
+                            }
+                        }
+                        //Success downloading files.
+                        bMissingComicPagesAcquired = true;
+                        //Recalculate missing comic pages, file count, and max page ID for this comic:
+                        ci = globalClass.analyzeComicReportMissingPages(ci);
+
+                    } catch (Exception e) {
+                        Log.e("Error: ", e.getMessage());
+                    }
+
+
+                }
+
+
+            }
+
+
+
+
+
+
         } catch(Exception e){
             String sMsg = e.getMessage();
             broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
@@ -275,10 +407,10 @@ public class Service_ComicDetails extends IntentService {
         //Apply booleans to the intent to tell the receiver success, data available,
         //  and set the data where appropriate:
 
+
         broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
         broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
-
-
+        broadcastIntent.putExtra(COMIC_MISSING_PAGES_ACQUIRED, bMissingComicPagesAcquired);
 
 
 

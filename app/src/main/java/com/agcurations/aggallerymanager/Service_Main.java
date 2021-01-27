@@ -147,58 +147,13 @@ public class Service_Main extends IntentService {
     private void analyzeComicsReportMissingPages(){
 
         for(Map.Entry<String, ItemClass_CatalogItem> ciEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
-            String sFolderName = ciEntry.getValue().sFolder_Name;
-            //Log.d("Comics", sFolderName);
-            String sFolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + sFolderName;
-            File fFolder = new File(sFolderPath);
-
-            String sMessage;
-
-            if(fFolder.exists()) {
-
-                File[] fComicPages = fFolder.listFiles();
-
-                if(fComicPages.length > 0) {
-                    TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
-
-                    for (File fComicPage : fComicPages) {
-                        String sFileName = GlobalClass.JumbleFileName(fComicPage.getName());
-                        tmSortedFileNames.put(sFileName, sFileName);
-                    }
-                    ArrayList<Integer> aliComicPageNumbers = new ArrayList<>();
-                    for (Map.Entry<String, String> tmEntry : tmSortedFileNames.entrySet()) {
-                        String sFileName = tmEntry.getKey();
-                        String sPageID = sFileName.substring(sFileName.lastIndexOf("_") + 1, sFileName.lastIndexOf("."));
-                        aliComicPageNumbers.add(Integer.parseInt(sPageID));
-                    }
-                    ArrayList<Integer> aliMissingPages = new ArrayList<>();
-                    int iExpectedPageID = 0;
-                    for (Integer iPageID : aliComicPageNumbers) {
-                        iExpectedPageID++;
-                        while (iPageID > iExpectedPageID) {
-                            aliMissingPages.add(iExpectedPageID);
-                            iExpectedPageID++;
-                        }
-                    }
-
-                    if(aliMissingPages.size() > 0) {
-                        String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ", ");
-                        ciEntry.getValue().sComic_Missing_Pages = sMissingPages;
-                        sMessage = "Comic source \"" + ciEntry.getValue().sSource + "\" missing page numbers: " + sMissingPages + ".";
-                        Log.d("Comics", sMessage);
-                    }
-                } else {
-                    sMessage = "Comic source \"" + ciEntry.getValue().sSource + "\" folder exists, but is missing files.";
-                    Log.d("Comics", sMessage);
-                }
-            } else {
-                sMessage = "Comic source \"" + ciEntry.getValue().sSource + "\" missing comic folder.";
-                Log.d("Comics", sMessage);
-            }
-
+           ciEntry.setValue(globalClass.analyzeComicReportMissingPages(ciEntry.getValue()));
         }
 
     }
+
+
+
 
 
 

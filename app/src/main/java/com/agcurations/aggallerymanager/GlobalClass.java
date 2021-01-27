@@ -7,6 +7,7 @@ import android.app.Application;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
@@ -961,6 +962,64 @@ public class GlobalClass extends Application {
         }
     }
 
+    public ItemClass_CatalogItem analyzeComicReportMissingPages(ItemClass_CatalogItem ci){
+
+        String sFolderName = ci.sFolder_Name;
+        //Log.d("Comics", sFolderName);
+        String sFolderPath = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + sFolderName;
+        File fFolder = new File(sFolderPath);
+
+        String sMessage;
+
+        if(fFolder.exists()) {
+
+            File[] fComicPages = fFolder.listFiles();
+
+            if(fComicPages.length > 0) {
+                TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
+
+                for (File fComicPage : fComicPages) {
+                    String sFileName = GlobalClass.JumbleFileName(fComicPage.getName());
+                    tmSortedFileNames.put(sFileName, sFileName);
+                }
+                ArrayList<Integer> aliComicPageNumbers = new ArrayList<>();
+                for (Map.Entry<String, String> tmEntry : tmSortedFileNames.entrySet()) {
+                    String sFileName = tmEntry.getKey();
+                    String sPageID = sFileName.substring(sFileName.lastIndexOf("_") + 1, sFileName.lastIndexOf("."));
+                    aliComicPageNumbers.add(Integer.parseInt(sPageID));
+                }
+                ArrayList<Integer> aliMissingPages = new ArrayList<>();
+                int iExpectedPageID = 0;
+                for (Integer iPageID : aliComicPageNumbers) {
+                    iExpectedPageID++;
+                    while (iPageID > iExpectedPageID) {
+                        aliMissingPages.add(iExpectedPageID);
+                        iExpectedPageID++;
+                    }
+                }
+                ci.iComic_Max_Page_ID = iExpectedPageID;
+                ci.iComic_File_Count = aliComicPageNumbers.size();
+
+                if(aliMissingPages.size() > 0) {
+                    String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ",");
+                    ci.sComic_Missing_Pages = sMissingPages;
+                    sMessage = "Comic source \"" + ci.sSource + "\" missing page numbers: " + sMissingPages + ".";
+                    Log.d("Comics", sMessage);
+                } else {
+                    ci.sComic_Missing_Pages = "";
+                }
+            } else {
+                sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
+                Log.d("Comics", sMessage);
+            }
+        } else {
+            sMessage = "Comic source \"" + ci.sSource + "\" missing comic folder.";
+            Log.d("Comics", sMessage);
+        }
+        return ci;
+    }
+
+
     //=====================================================================================
     //===== Tag Subroutines Section ===================================================
     //=====================================================================================
@@ -1554,6 +1613,8 @@ public class GlobalClass extends Application {
     public final String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
     //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public final String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public final String snHentai_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
+
 
     //=====================================================================================
     //===== Import Options ================================================================

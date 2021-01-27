@@ -75,6 +75,21 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         if( gciCatalogItem == null) return;
 
+
+        loadComicPageData();
+
+
+        IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        gComicDetailsResponseReceiver = new Activity_ComicDetails.ComicDetailsResponseReceiver();
+        registerReceiver(gComicDetailsResponseReceiver, filter);
+
+        //See additional initialization in onCreateOptionsMenu().
+    }
+
+    private void loadComicPageData(){
+        //This was put in place to handle the scenario of missing file download completion.
+
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
@@ -109,12 +124,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
             RemoveObfuscation();
         }
 
-        IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
-        filter.addCategory(Intent.CATEGORY_DEFAULT);
-        gComicDetailsResponseReceiver = new Activity_ComicDetails.ComicDetailsResponseReceiver();
-        registerReceiver(gComicDetailsResponseReceiver, filter);
-
-        //See additional initialization in onCreateOptionsMenu().
     }
 
     @Override
@@ -619,6 +628,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 if(!globalClass.ObfuscationOn) {
                     //(only if not obfuscated)
                     RemoveObfuscation();
+                }
+
+                boolean bMissingComicPagesAcquired =  intent.getBooleanExtra(Service_ComicDetails.COMIC_MISSING_PAGES_ACQUIRED, false);
+                if(bMissingComicPagesAcquired){
+                    loadComicPageData();
                 }
 
                 //Update the RecyclerView:
