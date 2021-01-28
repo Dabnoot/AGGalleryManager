@@ -88,14 +88,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
 
-        if(globalClass.connectivityManager == null){
-            globalClass.registerNetworkCallback();
-            //This lets us check globalClass.isNetworkConnected to see if we are connected to the
-            //network;
-        }
-
-
-
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);

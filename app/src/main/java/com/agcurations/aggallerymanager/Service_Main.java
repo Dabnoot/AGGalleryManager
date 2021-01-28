@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
-import android.content.ClipData;
 import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -13,12 +12,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import javax.xml.parsers.FactoryConfigurationError;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
@@ -136,8 +132,14 @@ public class Service_Main extends IntentService {
             globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
         }
 
+        if(globalClass.connectivityManager == null){
+            globalClass.registerNetworkCallback();
+            //This lets us check globalClass.isNetworkConnected to see if we are connected to the
+            //network;
+        }
 
-        analyzeComicsReportMissingPages();
+
+        //analyzeComicsReportMissingPages();
 
 
 
@@ -145,11 +147,25 @@ public class Service_Main extends IntentService {
 
 
     private void analyzeComicsReportMissingPages(){
-
+        int icount = 0;
         for(Map.Entry<String, ItemClass_CatalogItem> ciEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
            ciEntry.setValue(globalClass.analyzeComicReportMissingPages(ciEntry.getValue()));
-        }
 
+           if(!ciEntry.getValue().sComic_Missing_Pages.equals("")){
+               //if(icount < 2) {
+                   //If there are missing pages, go get them:
+/*                   if(globalClass.isNetworkConnected) {
+                       Intent intentGetComicDetails;
+                       intentGetComicDetails = new Intent(this, Service_ComicDetails.class);
+                       intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_CATALOG_ITEM, ciEntry.getValue());
+                       startService(intentGetComicDetails);
+                   }*/
+               //}
+               icount++;
+           }
+
+        }
+        Log.d("Comics", icount + " with missing pages.");
     }
 
 

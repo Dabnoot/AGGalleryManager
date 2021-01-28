@@ -3,7 +3,6 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.util.Log;
-import android.util.TimingLogger;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.TagNode;
@@ -17,7 +16,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.Format;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
@@ -85,7 +83,7 @@ public class Service_ComicDetails extends IntentService {
     public static int COMIC_DETAILS_LANGUAGES_DATA_INDEX = 6;
     public static int COMIC_DETAILS_CATEGORIES_DATA_INDEX = 7;
     public static int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
-    public static final int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
+    //public static final int COMIC_DETAILS_ERROR_MSG_INDEX = 9;
 
     public void getNHOnlineComicDetails(ItemClass_CatalogItem ci){
 
@@ -235,9 +233,8 @@ public class Service_ComicDetails extends IntentService {
                 //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
                 Object[] objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
                 //Check to see if we found anything:
-                String sImageAddressTemplate = "";
+                String sImageAddressTemplate;
                 String sGalleryID = "";
-                ArrayList<String> alsThumbnailImageNames = new ArrayList<>();
                 TreeMap<Integer, String> tmFileIndexImageExtention = new TreeMap<>();
                 if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
                     //Get the gallery ID. This is not the same as the NH comic ID.
@@ -289,7 +286,7 @@ public class Service_ComicDetails extends IntentService {
 
                             // this will be useful so that you can show a tipical 0-100%
                             // progress bar
-                            int lenghtOfFile = connection.getContentLength();
+                            //int lenghtOfFile = connection.getContentLength();
 
                             // download the file
                             InputStream input = new BufferedInputStream(url.openStream(), 8192);
@@ -301,15 +298,14 @@ public class Service_ComicDetails extends IntentService {
                             File fNewFile = new File(sNewFullPathFilename);
                             if(!fNewFile.exists()) {
                                 // Output stream
-                                String sTest = fNewFile.getPath();
                                 OutputStream output = new FileOutputStream(fNewFile.getPath());
 
                                 byte[] data = new byte[1024];
 
-                                long total = 0;
+                                //long total = 0;
                                 int count;
                                 while ((count = input.read(data)) != -1) {
-                                    total += count;
+                                    //total += count;
                                     // publishing the progress....
                                     // After this onProgressUpdate will be called
                                     //publishProgress("" + (int) ((total * 100) / lenghtOfFile));
@@ -395,8 +391,7 @@ public class Service_ComicDetails extends IntentService {
         for(Map.Entry<Integer, Integer> tmEntry: tmCombinedTags.entrySet()){
             aliCombinedTags.add(tmEntry.getKey());
         }
-        String sTagIDsConcat = GlobalClass.formDelimitedString(aliCombinedTags, ",");
-        ci.sTags = sTagIDsConcat;
+        ci.sTags = GlobalClass.formDelimitedString(aliCombinedTags, ",");
 
         ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
         ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
@@ -412,7 +407,7 @@ public class Service_ComicDetails extends IntentService {
         broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
         broadcastIntent.putExtra(COMIC_MISSING_PAGES_ACQUIRED, bMissingComicPagesAcquired);
 
-
+        //Log.d("Comics", "Finished downloading from " + ci.sSource);
 
         sendBroadcast(broadcastIntent);
 
