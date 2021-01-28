@@ -363,17 +363,16 @@ public class Service_ComicDetails extends IntentService {
         }
         //Look for any tags that could not be found:
         int i = 0;
-        for(Integer iTag: aliTags){
-            if(iTag == -1){
+        for(i = 0; i < aliTags.size(); i++){
+            if(aliTags.get(i) == -1){
                 //Create the tag:
                 if(!sTags[i].equals("")) {
-                    iTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                    int iTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
                     if(iTag != -1){
                         aliTags.add(i, iTag);
                     }
                 }
             }
-            i++;
         }
         //Combine the found tags with any tags already assigned to the comic:
         ArrayList<Integer> aliPreAssignedTagIDs = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");

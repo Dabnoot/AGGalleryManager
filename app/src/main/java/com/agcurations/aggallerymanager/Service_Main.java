@@ -139,7 +139,7 @@ public class Service_Main extends IntentService {
         }
 
 
-        //analyzeComicsReportMissingPages();
+        analyzeComicsReportMissingPages();
 
 
 
@@ -154,12 +154,12 @@ public class Service_Main extends IntentService {
            if(!ciEntry.getValue().sComic_Missing_Pages.equals("")){
                //if(icount < 2) {
                    //If there are missing pages, go get them:
-/*                   if(globalClass.isNetworkConnected) {
+                   if(globalClass.isNetworkConnected) {
                        Intent intentGetComicDetails;
                        intentGetComicDetails = new Intent(this, Service_ComicDetails.class);
                        intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_CATALOG_ITEM, ciEntry.getValue());
                        startService(intentGetComicDetails);
-                   }*/
+                   }
                //}
                icount++;
            }
