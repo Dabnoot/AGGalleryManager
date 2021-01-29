@@ -198,9 +198,9 @@ public class Service_ComicDetails extends IntentService {
                         break;
                     }
                 }
-                if (iterator > 0){
+                if (iterator > 0) {
                     sData = sDataBreakout[iterator];
-                    if(!sDataBreakout[iterator-1].contains("Pages:")) { //Don't clean-out numbers if we are expecting numbers.
+                    if (!sDataBreakout[iterator - 1].contains("Pages:")) { //Don't clean-out numbers if we are expecting numbers.
                         //Get rid of "tag count" data. This is data unique to nHentai that
                         //  shows the number of times that the tag has been applied.
                         sData = sData.replaceAll("\\d{4}K", "\t");
@@ -216,7 +216,7 @@ public class Service_ComicDetails extends IntentService {
                     String[] sItems = sData.split("\t");
                     StringBuilder sbData = new StringBuilder();
                     sbData.append(sItems[0]);
-                    for(int m = 1; m < sItems.length; m++){
+                    for (int m = 1; m < sItems.length; m++) {
                         sbData.append(", ");
                         sbData.append(sItems[m]);
                     }
@@ -335,13 +335,7 @@ public class Service_ComicDetails extends IntentService {
 
                 }
 
-
             }
-
-
-
-
-
 
         } catch(Exception e){
             String sMsg = e.getMessage();
@@ -362,7 +356,7 @@ public class Service_ComicDetails extends IntentService {
             aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
         }
         //Look for any tags that could not be found:
-        for(int i = 0; i < aliTags.size(); i++){
+        for(int i = 0; i < aliTags.size() - 1; i++){
             if(aliTags.get(i) == -1){
                 //Create the tag:
                 if(!sTags[i].equals("")) {
