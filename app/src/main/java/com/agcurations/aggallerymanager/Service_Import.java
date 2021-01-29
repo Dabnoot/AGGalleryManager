@@ -658,6 +658,7 @@ public class Service_Import extends IntentService {
             for(ItemClass_File fileItem: alFileList) {
                 if(fileItem.name.matches(GlobalClass.gsNHComicCoverPageFilter)){
                     String sComicID = GetNHComicID(fileItem.name);
+                    lProgressDenominator = lProgressDenominator - fileItem.sizeBytes; //We don't copy over the cover page.
                     String sRecordID = iNextRecordId + "";
                     iNextRecordId++;
                     String sComicName = GetNHComicNameFromCoverFile(fileItem.name);
@@ -851,9 +852,9 @@ public class Service_Import extends IntentService {
                     DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
                     if (!dfSource.delete()) {
-                        sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                        sLogLine = "Could not delete cover page duplicate file (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                     } else {
-                        sLogLine = "Success deleting source file after copy.\n";
+                        sLogLine = "Success deleting cover page duplicate file.\n";
                     }
                     BroadcastProgress(true, sLogLine,
                             true, iProgressBarValue,

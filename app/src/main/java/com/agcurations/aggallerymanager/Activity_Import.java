@@ -327,6 +327,14 @@ public class Activity_Import extends AppCompatActivity {
         finish();
     }
 
+    public void buttonClick_ImportRestart(View v) {
+        stackFragmentOrder.empty();
+        stackFragmentOrder.push(0);
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY, false);
+        viewModelImportActivity.bImportCategoryChange = true; //This forces re-select of import dir.
+    }
+    
+    
     //================================================
     //  Adapters
     //================================================
@@ -481,7 +489,7 @@ public class Activity_Import extends AppCompatActivity {
             button_Delete.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
                     builder.setTitle("Delete Item");
                     builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).name);
                     //builder.setIcon(R.drawable.ic_launcher);
@@ -502,11 +510,11 @@ public class Activity_Import extends AppCompatActivity {
                                 Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
                             }
                             //Find the item in the alFileItems list and delete it:
-                            ItemClass_File fmSelected = alFileItemsDisplay.get(position);
-                            ItemClass_File fmSource;
+                            ItemClass_File fiSelected = alFileItemsDisplay.get(position);
+                            ItemClass_File fiSource;
                             for(int i = 0; i < alFileItems.size(); i++){
-                                fmSource = alFileItems.get(i);
-                                if(fmSelected.name.equals(fmSource.name)){
+                                fiSource = alFileItems.get(i);
+                                if(fiSelected.name.equals(fiSource.name)){
                                     alFileItems.remove(i);
                                     break;
                                 }
@@ -553,9 +561,9 @@ public class Activity_Import extends AppCompatActivity {
                     //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
                     //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
                     TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
-                    for(ItemClass_File fm: alFileItems){ //Loop through file items in this listView.
-                        if(fm.isChecked){               //If the user has selected this fileItem...
-                            for(Integer iTagID: fm.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
+                    for(ItemClass_File fi: alFileItems){ //Loop through file items in this listView.
+                        if(fi.isChecked){               //If the user has selected this fileItem...
+                            for(Integer iTagID: fi.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
                                 String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
                                 tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
                             }
@@ -644,9 +652,9 @@ public class Activity_Import extends AppCompatActivity {
                     // all files with the comic ID and apply the checked state:
                     String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).name);
                     String sNHComicFilter = sNHComicID + ".+";
-                    for (ItemClass_File fm : alFileItems) {
-                        if (fm.name.matches(sNHComicFilter)) {
-                            fm.isChecked = bNewCheckedState;
+                    for (ItemClass_File fi : alFileItems) {
+                        if (fi.name.matches(sNHComicFilter)) {
+                            fi.isChecked = bNewCheckedState;
                         }
                     }
                 }
@@ -654,19 +662,37 @@ public class Activity_Import extends AppCompatActivity {
                 //Find the item that is checked/unchecked in alFileList and apply the property.
                 //  The user will have clicked an item in alFileListDisplay, not alFileList.
                 //  alFileListDisplay may be a subset of alFileList.
-                for(ItemClass_File fm: alFileItems){
-                    if(fm.name.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).name)){
-                        fm.isChecked = bNewCheckedState;
+                for(ItemClass_File fi: alFileItems){
+                    if(fi.name.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).name)){
+                        fi.isChecked = bNewCheckedState;
                         break; //Break, as only one item should match.
                     }
                 }
             }
 
+            if(!bNewCheckedState){
+                recalcButtonNext();
+            } else {
+                Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+                if(button_ItemSelectComplete != null){
+                    button_ItemSelectComplete.setEnabled(true);
+                }
+            }
 
-
-
-
-
+            
+        }
+        
+        public void recalcButtonNext(){
+            boolean bEnableNextButton = false;
+            for(ItemClass_File fi: alFileItems){
+                if(fi.isChecked){
+                    bEnableNextButton = true;
+                }
+            }
+            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+            if(button_ItemSelectComplete != null){
+                button_ItemSelectComplete.setEnabled(bEnableNextButton);
+            }
 
         }
 
@@ -720,12 +746,12 @@ public class Activity_Import extends AppCompatActivity {
 
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
-            for(ItemClass_File fmDisplayed: alFileItemsDisplay){
-                fmDisplayed.isChecked = bSelectAllSelected;
+            for(ItemClass_File fiDisplayed: alFileItemsDisplay){
+                fiDisplayed.isChecked = bSelectAllSelected;
                 //Translate the selected item state to alFileList:
-                for(ItemClass_File fm: alFileItems){
-                    if(fm.name.contentEquals(fmDisplayed.name)){
-                        fm.isChecked = bSelectAllSelected;
+                for(ItemClass_File fi: alFileItems){
+                    if(fi.name.contentEquals(fiDisplayed.name)){
+                        fi.isChecked = bSelectAllSelected;
                         break;
                     }
                 }
@@ -735,18 +761,18 @@ public class Activity_Import extends AppCompatActivity {
 
         public void applySearch(String sSearch){
             alFileItemsDisplay.clear();
-            for(ItemClass_File fm : alFileItems){
-                if(fm.name.contains(sSearch)){
-                    alFileItemsDisplay.add(fm);
+            for(ItemClass_File fi : alFileItems){
+                if(fi.name.contains(sSearch)){
+                    alFileItemsDisplay.add(fi);
                 }
             }
         }
 
         public void applyFilter(String sFilter){
             alFileItemsDisplay.clear();
-            for(ItemClass_File fm : alFileItems){
-                if(fm.name.matches(sFilter)){
-                    alFileItemsDisplay.add(fm);
+            for(ItemClass_File fi : alFileItems){
+                if(fi.name.matches(sFilter)){
+                    alFileItemsDisplay.add(fi);
                 }
             }
         }
@@ -760,9 +786,9 @@ public class Activity_Import extends AppCompatActivity {
 
         //Sort by file name ascending:
         private class FileNameAscComparator implements Comparator<ItemClass_File> {
-            public int compare(ItemClass_File fm1, ItemClass_File fm2) {
-                String FileName1 = fm1.name.toUpperCase();
-                String FileName2 = fm2.name.toUpperCase();
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                String FileName1 = fi1.name.toUpperCase();
+                String FileName2 = fi2.name.toUpperCase();
 
                 //ascending order
                 return FileName1.compareTo(FileName2);
@@ -771,9 +797,9 @@ public class Activity_Import extends AppCompatActivity {
 
         //Sort by file name descending:
         private class FileNameDescComparator implements Comparator<ItemClass_File> {
-            public int compare(ItemClass_File fm1, ItemClass_File fm2) {
-                String FileName1 = fm1.name.toUpperCase();
-                String FileName2 = fm2.name.toUpperCase();
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                String FileName1 = fi1.name.toUpperCase();
+                String FileName2 = fi2.name.toUpperCase();
 
                 //descending order
                 return FileName2.compareTo(FileName1);
@@ -783,9 +809,9 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file modified date ascending:
         private class FileModifiedDateAscComparator implements Comparator<ItemClass_File> {
 
-            public int compare(ItemClass_File fm1, ItemClass_File fm2) {
-                Date FileDate1 = fm1.dateLastModified;
-                Date FileDate2 = fm2.dateLastModified;
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                Date FileDate1 = fi1.dateLastModified;
+                Date FileDate2 = fi2.dateLastModified;
 
                 //ascending order
                 return FileDate1.compareTo(FileDate2);
@@ -795,9 +821,9 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file modified date descending:
         private class FileModifiedDateDescComparator implements Comparator<ItemClass_File> {
 
-            public int compare(ItemClass_File fm1, ItemClass_File fm2) {
-                Date FileDate1 = fm1.dateLastModified;
-                Date FileDate2 = fm2.dateLastModified;
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                Date FileDate1 = fi1.dateLastModified;
+                Date FileDate2 = fi2.dateLastModified;
 
                 //descending order
                 return FileDate2.compareTo(FileDate1);
@@ -807,9 +833,9 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file modified date ascending:
         private class FileDurationAscComparator implements Comparator<ItemClass_File> {
 
-            public int compare(ItemClass_File fm1, ItemClass_File fm2) {
-                Long FileDuration1 = fm1.videoTimeInMilliseconds;
-                Long FileDuration2 = fm2.videoTimeInMilliseconds;
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                Long FileDuration1 = fi1.videoTimeInMilliseconds;
+                Long FileDuration2 = fi2.videoTimeInMilliseconds;
 
                 //ascending order
                 return FileDuration1.compareTo(FileDuration2);
@@ -819,9 +845,9 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file modified date descending:
         private class FileDurationDescComparator implements Comparator<ItemClass_File> {
 
-            public int compare(ItemClass_File fm1, ItemClass_File fm2) {
-                Long FileDuration1 = fm1.videoTimeInMilliseconds;
-                Long FileDuration2 = fm2.videoTimeInMilliseconds;
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                Long FileDuration1 = fi1.videoTimeInMilliseconds;
+                Long FileDuration2 = fi1.videoTimeInMilliseconds;
 
                 //descending order
                 return FileDuration2.compareTo(FileDuration1);

@@ -51,19 +51,43 @@
         android:gravity="bottom"
         android:scrollbars="vertical"
         android:layout_below="@+id/linearLayout_Progress"
-        android:layout_above="@+id/button_ImportFinish"/>
+        android:layout_above="@+id/linearLayout_ButtonBar"/>
 
-    <Button
-        android:id="@+id/button_ImportFinish"
-        android:layout_width="149dp"
-        android:layout_height="67dp"
-        android:layout_marginBottom="10dp"
-        android:onClick="buttonNextClick_ImportFinish"
-        android:text="Finish"
-        android:textSize="24sp"
-        android:enabled="false"
-        app:backgroundTint="@color/colorBlackboardRed"
+
+    <LinearLayout
+        android:id="@+id/linearLayout_ButtonBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true">
+
+        <Button
+            android:id="@+id/button_ImportRestart"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:layout_marginBottom="10dp"
+            android:onClick="buttonClick_ImportRestart"
+            android:text="Import"
+            android:textSize="24sp"
+            android:enabled="false"
+            app:backgroundTint="@color/colorBlackboardRed"
+            />
+
+        <Button
+            android:id="@+id/button_ImportFinish"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginLeft="20dp"
+            android:onClick="buttonNextClick_ImportFinish"
+            android:text="Finish"
+            android:textSize="24sp"
+            android:enabled="false"
+            app:backgroundTint="@color/colorBlackboardRed"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"/>
+
+    </LinearLayout>
+
 
 </RelativeLayout>

@@ -168,7 +168,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     public void DeleteComicPrompt(){
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
         builder.setTitle("Delete Comic");
         builder.setMessage("Are you sure you want to delete this comic?");
         //builder.setIcon(R.drawable.ic_launcher);

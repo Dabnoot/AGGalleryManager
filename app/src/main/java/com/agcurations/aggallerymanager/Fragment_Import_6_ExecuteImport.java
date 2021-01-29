@@ -182,6 +182,10 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                                 if (button_ImportFinish != null) {
                                     button_ImportFinish.setEnabled(true);
                                 }
+                                Button button_ImportRestart = getView().findViewById(R.id.button_ImportRestart);
+                                if (button_ImportRestart != null) {
+                                    button_ImportRestart.setEnabled(true);
+                                }
                             }
                         }
                     }

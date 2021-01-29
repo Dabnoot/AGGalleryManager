@@ -27,7 +27,8 @@
             app:backgroundTint="@color/colorBlackboardRed"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            app:layout_constraintStart_toStartOf="parent"
+            android:enabled="false"/>
 
         <LinearLayout
             android:id="@+id/linearLayout_ListViewControlBar"
