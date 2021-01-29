@@ -139,10 +139,6 @@ public class Service_Main extends IntentService {
         }
 
 
-        analyzeComicsReportMissingPages();
-
-
-
     }
 
 
@@ -151,28 +147,18 @@ public class Service_Main extends IntentService {
         for(Map.Entry<String, ItemClass_CatalogItem> ciEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
            ciEntry.setValue(globalClass.analyzeComicReportMissingPages(ciEntry.getValue()));
 
-           if(!ciEntry.getValue().sComic_Missing_Pages.equals("")){
-               //if(icount < 2) {
-                   //If there are missing pages, go get them:
+           if(!ciEntry.getValue().sComic_Missing_Pages.equals("") || ciEntry.getValue().iComic_File_Count == 0){
                    if(globalClass.isNetworkConnected) {
                        Intent intentGetComicDetails;
                        intentGetComicDetails = new Intent(this, Service_ComicDetails.class);
                        intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_CATALOG_ITEM, ciEntry.getValue());
                        startService(intentGetComicDetails);
                    }
-               //}
                icount++;
            }
-
         }
         Log.d("Comics", icount + " with missing pages.");
     }
-
-
-
-
-
-
 
 
 
