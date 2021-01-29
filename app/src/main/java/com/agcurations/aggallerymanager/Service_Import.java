@@ -8,12 +8,16 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.DocumentsContract;
+import android.provider.DocumentsProvider;
+import android.provider.MediaStore;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -24,7 +28,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.documentfile.provider.DocumentFile;
+import androidx.loader.content.CursorLoader;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import static android.provider.DocumentsContract.getDocumentId;
 
 public class Service_Import extends IntentService {
 
@@ -411,7 +418,9 @@ public class Service_Import extends IntentService {
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
 
-            fileItem.destinationFolder = GlobalClass.gsUnsortedFolderName;
+            if(fileItem.destinationFolder.equals("")) {
+                fileItem.destinationFolder = GlobalClass.gsUnsortedFolderName;
+            }
 
             File fDestination = new File(
                     globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
@@ -448,6 +457,9 @@ public class Service_Import extends IntentService {
 
                 uriSourceFile = Uri.parse(fileItem.uri);
                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                if (dfSource == null) continue;
+                if (dfSource.getName() == null) continue;
+
                 try {
                     //Write next behavior to the screen log:
                     sLogLine = "Attempting ";
@@ -462,33 +474,94 @@ public class Service_Import extends IntentService {
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             RECEIVER_EXECUTE_IMPORT);
 
-                    if (dfSource == null) continue;
-                    inputStream = contentResolver.openInputStream(dfSource.getUri());
-
                     //Reverse the text on the file so that the file does not get picked off by a search tool:
-                    if (dfSource.getName() == null) continue;
                     String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
+                    File fDestinationFolder = new File(fDestination.getPath());
 
-                    outputStream = new FileOutputStream(fDestination.getPath() + File.separator + sFileName);
-                    int iLoopCount = 0;
-                    byte[] buffer = new byte[100000];
-                    if (inputStream == null) continue;
-                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                        outputStream.write(buffer, 0, buffer.length);
-                        lProgressNumerator += lLoopBytesRead;
-                        iLoopCount++;
-                        if (iLoopCount % 10 == 0) {
-                            //Send update every 10 loops:
-                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                            BroadcastProgress(false, "",
-                                    true, iProgressBarValue,
-                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                    boolean bCopyViaStream = false;
+                    /*String sDestinationFolder = "content://com.android.externalstorage.documents/tree/0000-0000%3AAndroid%2Fdata%2Fcom.agcurations.aggallerymanager%2Ffiles%2FVideos%2F7";
+                    Uri uriDestinationFolder = Uri.parse(sDestinationFolder);
+                    URI uri1 = URI.create(sDestinationFolder);
+
+
+
+                    //First, attempt to transfer the document using DocumentsContract:
+                    Uri uriTransferredDocument = null;
+                    DocumentFile dfParentFile = dfSource.getParentFile();
+
+                    //if(dfParentFile != null) {
+                        if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                            //Attempt to move the document using DocumentsContract.moveDocument:
+                            uriTransferredDocument = DocumentsContract.moveDocument(
+                                    getContentResolver(),
+                                    dfSource.getUri(),
+                                    dfSource.getUri(),
+                                    uriDestinationFolder);
+                        } else if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_COPY) {
+                            //Attempt to move the document using DocumentsContract.moveDocument:
+                            uriTransferredDocument = DocumentsContract.copyDocument(
+                                    getContentResolver(),
+                                    dfSource.getUri(),
+                                    uriDestinationFolder);
+                        }
+                    //}
+                    if(uriTransferredDocument == null){
+                        bCopyViaStream = true; //If the document move failed... copy via stream.
+                    } else {
+                        //If DocumentsContract transfer succeeded, rename the file to the Jumbled filename:
+                        DocumentFile dfMovedFile = DocumentFile.fromSingleUri(getApplicationContext(), uriTransferredDocument);
+                        if(!dfMovedFile.renameTo(sFileName)) {
+                            BroadcastProgress(true, "Problem renaming transferred file.",
+                                    false, iProgressBarValue,
+                                    false, "",
                                     RECEIVER_EXECUTE_IMPORT);
                         }
+                        lProgressNumerator += fileItem.sizeBytes;
+                    }*/
+                    bCopyViaStream = true;
+
+                    //If DocumentsContract transferred failed, try to copy via stream:
+                    if(bCopyViaStream) {
+                        inputStream = contentResolver.openInputStream(dfSource.getUri());
+
+                        outputStream = new FileOutputStream(fDestinationFolder.getPath() + File.separator + sFileName);
+                        int iLoopCount = 0;
+                        byte[] buffer = new byte[100000];
+                        if (inputStream == null) continue;
+                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                            outputStream.write(buffer, 0, buffer.length);
+                            lProgressNumerator += lLoopBytesRead;
+                            iLoopCount++;
+                            if (iLoopCount % 10 == 0) {
+                                //Send update every 10 loops:
+                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                BroadcastProgress(false, "",
+                                        true, iProgressBarValue,
+                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                        RECEIVER_EXECUTE_IMPORT);
+                            }
+                        }
+                        outputStream.flush();
+                        outputStream.close();
                     }
-                    outputStream.flush();
-                    outputStream.close();
-                    sLogLine = "Copy success.";
+
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                        if(bCopyViaStream) {
+                            sLogLine = "Copy success.";
+                            if (!dfSource.delete()) {
+                                sLogLine = sLogLine + "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                            } else {
+                                sLogLine = sLogLine + "\nSuccess deleting source file after copy.\n";
+                            }
+                        } else {
+                            sLogLine = "Move success.";
+                        }
+                    } else {
+                        sLogLine = "Copy success.";
+                    }
+
+
+                    //Update the progress bar for the file copy:
                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
@@ -505,9 +578,7 @@ public class Service_Import extends IntentService {
                     ciNew.iMediaCategory = iMediaCategory;
                     ciNew.sItemID = String.valueOf(iNextRecordId);
                     ciNew.sFilename = sFileName;
-
                     ciNew.lSize = fileItem.sizeBytes;
-
                     ciNew.lDuration_Milliseconds = fileItem.videoTimeInMilliseconds;
                     ciNew.sDuration_Text = fileItem.videoTimeText;
                     ciNew.iWidth = Integer.parseInt(fileItem.width);
@@ -521,24 +592,8 @@ public class Service_Import extends IntentService {
                     //  and memory:
                     globalClass.CatalogDataFile_CreateNewRecord(ciNew);
 
+
                     iNextRecordId += 1; //Identify the next record ID to assign.
-
-                    boolean bUpdateLogOneMoreTime = false;
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        bUpdateLogOneMoreTime = true;
-                        if (!dfSource.delete()) {
-                            sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).";
-                        } else {
-                            sLogLine = "Success deleting source file after copy.";
-                        }
-                    }
-
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-
-                    BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
-                            true, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
 
 
                 } catch (Exception e) {
