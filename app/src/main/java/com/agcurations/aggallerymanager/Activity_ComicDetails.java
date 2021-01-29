@@ -134,6 +134,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         if(globalClass.bAutoDownloadOn) {
             if (!gciCatalogItem.bComic_Online_Data_Acquired) {
+
+                //Refresh any missing catalog pages:
+                gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
+
                 //If there is no tag data, automatically go out and try to get it.
                 gbAutoAcquireData = true;
                 SyncOnlineData();
@@ -634,6 +638,14 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 if(bMissingComicPagesAcquired){
                     loadComicPageData();
                 }
+
+
+                if(gtmComicPages.containsKey(0)) {
+                    String sFilePath = gtmComicPages.get(0);
+                    gciCatalogItem.sFilename = sFilePath.substring(sFilePath.lastIndexOf("/") + 1);
+                    gciCatalogItem.sThumbnail_File = gciCatalogItem.sFilename;
+                }
+
 
                 //Update the RecyclerView:
                 gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
