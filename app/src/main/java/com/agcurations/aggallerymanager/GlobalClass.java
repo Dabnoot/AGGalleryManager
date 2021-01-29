@@ -975,43 +975,53 @@ public class GlobalClass extends Application {
 
             File[] fComicPages = fFolder.listFiles();
 
-            if(fComicPages.length > 0) {
-                TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
-
-                for (File fComicPage : fComicPages) {
-                    String sFileName = GlobalClass.JumbleFileName(fComicPage.getName());
-                    tmSortedFileNames.put(sFileName, sFileName);
-                }
-                ArrayList<Integer> aliComicPageNumbers = new ArrayList<>();
-                for (Map.Entry<String, String> tmEntry : tmSortedFileNames.entrySet()) {
-                    String sFileName = tmEntry.getKey();
-                    String sPageID = sFileName.substring(sFileName.lastIndexOf("_") + 1, sFileName.lastIndexOf("."));
-                    aliComicPageNumbers.add(Integer.parseInt(sPageID));
-                }
-                ArrayList<Integer> aliMissingPages = new ArrayList<>();
-                int iExpectedPageID = 0;
-                for (Integer iPageID : aliComicPageNumbers) {
-                    iExpectedPageID++;
-                    while (iPageID > iExpectedPageID) {
-                        aliMissingPages.add(iExpectedPageID);
-                        iExpectedPageID++;
-                    }
-                }
-                ci.iComic_Max_Page_ID = iExpectedPageID;
-                ci.iComic_File_Count = aliComicPageNumbers.size();
-
-                if(aliMissingPages.size() > 0) {
-                    String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ",");
-                    ci.sComic_Missing_Pages = sMissingPages;
-                    sMessage = "Comic source \"" + ci.sSource + "\" missing page numbers: " + sMissingPages + ".";
-                    Log.d("Comics", sMessage);
-                } else {
-                    ci.sComic_Missing_Pages = "";
-                }
-            } else {
+            if(fComicPages.length == 0) {
                 sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
                 Log.d("Comics", sMessage);
             }
+
+            TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
+
+            for (File fComicPage : fComicPages) {
+                String sFileName = GlobalClass.JumbleFileName(fComicPage.getName());
+                tmSortedFileNames.put(sFileName, sFileName);
+            }
+            ArrayList<Integer> aliComicPageNumbers = new ArrayList<>();
+            for (Map.Entry<String, String> tmEntry : tmSortedFileNames.entrySet()) {
+                String sFileName = tmEntry.getKey();
+                String sPageID = sFileName.substring(sFileName.lastIndexOf("_") + 1, sFileName.lastIndexOf("."));
+                aliComicPageNumbers.add(Integer.parseInt(sPageID));
+            }
+            ArrayList<Integer> aliMissingPages = new ArrayList<>();
+            int iExpectedPageID = 0;
+            for (Integer iPageID : aliComicPageNumbers) {
+                iExpectedPageID++;
+                while (iPageID > iExpectedPageID) {
+                    aliMissingPages.add(iExpectedPageID);
+                    iExpectedPageID++;
+                }
+            }
+            int iMaxPageID = iExpectedPageID;
+            if(iExpectedPageID < ci.iComicPages){
+                iExpectedPageID++;
+                for(int i = iExpectedPageID; i <= ci.iComicPages; i++){
+                    aliMissingPages.add(i);
+                    iMaxPageID = i;
+                }
+
+            }
+            ci.iComic_Max_Page_ID = iMaxPageID;
+            ci.iComic_File_Count = aliComicPageNumbers.size();
+
+            if(aliMissingPages.size() > 0) {
+                String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ",");
+                ci.sComic_Missing_Pages = sMissingPages;
+                sMessage = "Comic source \"" + ci.sSource + "\" missing page numbers: " + sMissingPages + ".";
+                Log.d("Comics", sMessage);
+            } else {
+                ci.sComic_Missing_Pages = "";
+            }
+
         } else {
             sMessage = "Comic source \"" + ci.sSource + "\" missing comic folder.";
             Log.d("Comics", sMessage);
