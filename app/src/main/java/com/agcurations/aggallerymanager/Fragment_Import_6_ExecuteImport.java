@@ -19,19 +19,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_6_ExecuteImport#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class Fragment_Import_6_ExecuteImport extends Fragment {
 
     private ViewModel_ImportActivity viewModelImportActivity;
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
     ProgressBar gProgressBar_ImportProgress;
     TextView gTextView_ImportProgressBarText;
@@ -41,22 +32,8 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentImport_6_ExecuteImport.
-     */
-    // TODO: Rename and change types and number of parameters
     public static Fragment_Import_6_ExecuteImport newInstance(String param1, String param2) {
-        Fragment_Import_6_ExecuteImport fragment = new Fragment_Import_6_ExecuteImport();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+        return new Fragment_Import_6_ExecuteImport();
     }
 
 
@@ -65,27 +42,26 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (getActivity() != null) {
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        }
+
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
         if(getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
-        if (getActivity() != null) {
-            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-        }
     }
 
     @Override
     public void onDestroy() {
-        //requireActivity().unregisterReceiver(importDataServiceResponseReceiver);
         if(getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
         }
         super.onDestroy();
-
     }
 
     @Override
@@ -98,6 +74,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().setTitle("Import");
         initComponents();
     }
 
@@ -119,17 +96,26 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         //Init log:
         gtextView_ImportLog.setText("");
 
-        //Initiate the file import via ImportActivityDataService:
-        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-            Service_Import.startActionImportComics(getContext(),
-                    viewModelImportActivity.alfiConfirmedFileImports,
-                    viewModelImportActivity.iImportMethod,
-                    viewModelImportActivity.iComicImportSource);
-        } else {
-            Service_Import.startActionImportFiles(getContext(),
-                    viewModelImportActivity.alfiConfirmedFileImports,
-                    viewModelImportActivity.iImportMethod,
-                    viewModelImportActivity.iImportMediaCategory);
+        if(!viewModelImportActivity.bImportInitiated) {
+            viewModelImportActivity.bImportInitiated = true; //This prevents import from starting again
+                                                             // if the activity/fragment is restarted due to an orientation change, etc.
+            //Initiate the file import via ImportActivityDataService:
+            if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                    Service_Import.startActionImportNHComicsFiles(getContext(),
+                            viewModelImportActivity.alfiConfirmedFileImports,
+                            viewModelImportActivity.iImportMethod,
+                            viewModelImportActivity.iComicImportSource);
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+                    Service_Import.startActionImportComicWebFiles(getContext(),
+                            viewModelImportActivity.ci);
+                }
+            } else {
+                Service_Import.startActionImportFiles(getContext(),
+                        viewModelImportActivity.alfiConfirmedFileImports,
+                        viewModelImportActivity.iImportMethod,
+                        viewModelImportActivity.iImportMediaCategory);
+            }
         }
 
     }
@@ -187,6 +173,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                                     button_ImportRestart.setEnabled(true);
                                 }
                             }
+                            viewModelImportActivity.bImportInitiated = false;
                         }
                     }
                 }

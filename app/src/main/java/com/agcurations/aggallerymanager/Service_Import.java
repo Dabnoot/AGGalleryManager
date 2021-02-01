@@ -8,16 +8,23 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.DocumentsContract;
-import android.provider.DocumentsProvider;
-import android.provider.MediaStore;
+import android.util.Log;
 
+import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -28,16 +35,15 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.documentfile.provider.DocumentFile;
-import androidx.loader.content.CursorLoader;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import static android.provider.DocumentsContract.getDocumentId;
 
 public class Service_Import extends IntentService {
 
     private static final String ACTION_GET_DIRECTORY_CONTENTS = "com.agcurations.aggallerymanager.action.GET_DIRECTORY_CONTENTS";
     private static final String ACTION_IMPORT_FILES = "com.agcurations.aggallerymanager.action.IMPORT_FILES";
     private static final String ACTION_IMPORT_COMICS = "com.agcurations.aggallerymanager.action.IMPORT_COMICS";
+    private static final String ACTION_GET_COMIC_DETAILS_ONLINE = "com.agcurations.aggallerymanager.action.GET_COMIC_DETAILS_ONLINE";
+    private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
@@ -52,6 +58,11 @@ public class Service_Import extends IntentService {
 
     public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is or is not a response to dir call.
     public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
+
+    public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
+    public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
+    public static final String COMIC_DETAILS_ERROR_MESSAGE = "COMIC_DETAILS_ERROR_MESSAGE";
+    public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
 
     public static final String RECEIVER_STORAGE_LOCATION = "com.agcurations.aggallerymanager.extra.RECEIVER_STORAGE_LOCATION";
     public static final String RECEIVER_EXECUTE_IMPORT = "com.agcurations.aggallerymanager.extra.RECEIVER_EXECUTE_IMPORT";
@@ -85,10 +96,10 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionImportComics(Context context,
-                                              ArrayList<ItemClass_File> alImportFileList,
-                                              int iMoveOrCopy,
-                                              int iComicImportSource) {
+    public static void startActionImportNHComicsFiles(Context context,
+                                                      ArrayList<ItemClass_File> alImportFileList,
+                                                      int iMoveOrCopy,
+                                                      int iComicImportSource) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMICS);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
@@ -96,6 +107,24 @@ public class Service_Import extends IntentService {
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
         context.startService(intent);
     }
+
+    public static void startActionImportNHComicsDetails(Context context,
+                                                       String sAddress){
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_GET_COMIC_DETAILS_ONLINE);
+        intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sAddress);
+        context.startService(intent);
+    }
+
+    public static void startActionImportComicWebFiles(Context context,
+                                                        ItemClass_CatalogItem ci){
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_IMPORT_COMIC_WEB_FILES);
+        intent.putExtra(COMIC_CATALOG_ITEM, ci);
+        context.startService(intent);
+    }
+
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -127,6 +156,19 @@ public class Service_Import extends IntentService {
                         alFileList,
                         iMoveOrCopy,
                         iComicImportSource);
+
+            } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
+                final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
+                handleAction_startActionGetComicDetailsOnline(sAddress);
+
+            } else if (ACTION_IMPORT_COMIC_WEB_FILES.equals(action)) {
+                final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
+                try {
+                    handleAction_startActionImportComicWebFiles(ci);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    problemNotificationConfig(e.getMessage());
+                }
 
             }
         }
@@ -377,11 +419,6 @@ public class Service_Import extends IntentService {
         }
     }
 
-
-
-
-
-
     private void handleAction_startActionImportFiles(
             ArrayList<ItemClass_File> alFileList,
             int iMoveOrCopy,
@@ -616,8 +653,6 @@ public class Service_Import extends IntentService {
                 RECEIVER_EXECUTE_IMPORT);
 
     }
-
-
 
     private void handleAction_startActionImportComics(
             ArrayList<ItemClass_File> alFileList,
@@ -877,9 +912,461 @@ public class Service_Import extends IntentService {
 
     }
 
+    private void handleAction_startActionGetComicDetailsOnline(String sAddress){
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Fragment_Import_5a_WebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
+        ItemClass_CatalogItem ci = new ItemClass_CatalogItem();
+        ci.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+        ci.sSource = sAddress;
+
+        //We don't grab the title from one of the html data blocks on nHentai.net.
+        final String[] gsDataBlockIDs = new String[]{
+                "Parodies:",
+                "Characters:",
+                "Tags:",
+                "Artists:",
+                "Groups:",
+                "Languages:",
+                "Categories:",
+                "Pages:",
+                "Uploaded:"}; //We ignore the upload date data, but still include it.
+
+        int j = gsDataBlockIDs.length + 1;
+        String[] sReturnData = new String[j];
+        //First array element is for comic title.
+        //Elements 1-8 are data block results.
+        //Last array element is for error message.
+        for(int i = 0; i < j; i++){
+            sReturnData[i] = "";
+        }
+
+        String sComicTitle = "";
+
+        boolean bMissingComicPagesAcquired = false;
+
+        final int COMIC_DETAILS_TITLE_INDEX = 0;
+        final int COMIC_DETAILS_PARODIES_DATA_INDEX = 1;
+        final int COMIC_DETAILS_CHARACTERS_DATA_INDEX = 2;
+        final int COMIC_DETAILS_TAGS_DATA_INDEX = 3;
+        final int COMIC_DETAILS_ARTISTS_DATA_INDEX = 4;
+        final int COMIC_DETAILS_GROUPS_DATA_INDEX = 5;
+        final int COMIC_DETAILS_LANGUAGES_DATA_INDEX = 6;
+        final int COMIC_DETAILS_CATEGORIES_DATA_INDEX = 7;
+        final int COMIC_DETAILS_PAGES_DATA_INDEX = 8;
+
+        try {
+            //Get the data from the WebPage:
+
+            URL url = new URL(ci.sSource);
+            URLConnection conn = url.openConnection();
+            conn.setDoInput(true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuilder a = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                a.append(inputLine);
+            }
+            in.close();
+
+            String sHTML = a.toString();
+            sHTML = sHTML.replaceAll("tag-container field-name ", "tag-container field-name");
+
+            //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
+            //  does not work well to parse this html. Modern html interpreters accommodate
+            //  certain "liberties" in the code. That parse routine is meant for tight XML.
+            //  HtmlCleaner does a good job processing the html in a manner similar to modern
+            //  browsers.
+            //Clean up the HTML:
+            HtmlCleaner pageParser = new HtmlCleaner();
+            CleanerProperties props = pageParser.getProperties();
+            props.setAllowHtmlInsideAttributes(true);
+            props.setAllowMultiWordAttributes(true);
+            props.setRecognizeUnicodeChars(true);
+            props.setOmitComments(true);
+            TagNode node = pageParser.clean(sHTML);
+
+
+            //Attempt to get the comic title from the WebPage html:
+            String sxPathExpression;
+            sxPathExpression = globalClass.snHentai_Comic_Title_xPathExpression;
+            //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+            Object[] objsTagNodeTitle = node.evaluateXPath(sxPathExpression);
+            //Check to see if we found anything:
+            if (objsTagNodeTitle != null && objsTagNodeTitle.length > 0) {
+                //If we found something, assign it to a string:
+                sComicTitle = ((TagNode) objsTagNodeTitle[0]).getText().toString();
+            }
+
+            sReturnData[COMIC_DETAILS_TITLE_INDEX] = sComicTitle;
+
+            //Attempt to determine the inclusion of "parodies", "characters", "tags", etc
+            //  in the info blocks:
+            sxPathExpression = globalClass.snHentai_Comic_Data_Blocks_xPE;
+            //Use an xPathExpression (similar to RegEx) to look for the data in the html/xml:
+            //TCFN = 'tag-container field-name' html class used by nHentai web pages.
+            Object[] objsTagNodesTCFNs = node.evaluateXPath(sxPathExpression);
+            String sData = "";
+            //Check to see if we found anything:
+            if (objsTagNodesTCFNs != null && objsTagNodesTCFNs.length > 0) {
+                //If we found something, assign it to a string:
+                sData = ((TagNode) objsTagNodesTCFNs[0]).getText().toString();
+            }
+
+            //Replace spacing with tabs and reduce the tab count.
+            sData = sData.replaceAll(" {2}","\t");
+            sData = sData.replaceAll("\t\t","\t");
+            sData = sData.replaceAll("\t\t","\t");
+            sData = sData.replaceAll("\t\t","\t");
+            sData = sData.replaceAll("^\t",""); //Get rid of any leading tab character.
+
+            String[] sDataBreakout = sData.split("\t");
+
+
+            //Process each named data block. Data blocks are parodies, characters, tags, etc.
+            for(int i = 0; i < gsDataBlockIDs.length - 1; i++) {
+                //gsDataBlockIDs.length - 1 ====> We are ignoring the last data block, "Uploaded:", the upload date.
+                int iterator = -1; //Determine where in the sequence of objects the current data block will appear.
+                for (int k = 0; k < sDataBreakout.length - 1; k++) {
+                    //Find the DataBreakout index (k) that contains the DataBlock identifier (not the data):
+                    if (sDataBreakout[k].contains(gsDataBlockIDs[i])) {
+
+                        if (sDataBreakout[k + 1].contains(gsDataBlockIDs[i + 1])) {
+                            //If we are here, then it means that there was no data between the current
+                            //  data block and the next data block. Skip gathering the data for this
+                            //  data block.
+                            continue;
+                        } else {
+                            iterator = k + 1;
+                        }
+
+                        break;
+                    }
+                }
+                if (iterator > 0) {
+                    sData = sDataBreakout[iterator];
+                    if (!sDataBreakout[iterator - 1].contains("Pages:")) { //Don't clean-out numbers if we are expecting numbers.
+                        //Get rid of "tag count" data. This is data unique to nHentai that
+                        //  shows the number of times that the tag has been applied.
+                        sData = sData.replaceAll("\\d{4}K", "\t");
+                        sData = sData.replaceAll("\\d{3}K", "\t");
+                        sData = sData.replaceAll("\\d{2}K", "\t");
+                        sData = sData.replaceAll("\\dK", "\t");
+                        sData = sData.replaceAll("\\d{4}", "\t");
+                        sData = sData.replaceAll("\\d{3}", "\t");
+                        sData = sData.replaceAll("\\d{2}", "\t");
+                        sData = sData.replaceAll("\\d", "\t");
+                    }
+                    //Reformat the data:
+                    String[] sItems = sData.split("\t");
+                    StringBuilder sbData = new StringBuilder();
+                    sbData.append(sItems[0]);
+                    for (int m = 1; m < sItems.length; m++) {
+                        sbData.append(", ");
+                        sbData.append(sItems[m]);
+                    }
+                    sReturnData[i + 1] = sbData.toString();
+                }
+            }
+
+            //Get the first thumbnail image for import preview:
+            sxPathExpression = globalClass.snHentai_Comic_Cover_Thumb_xPE;
+            //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+            Object[] objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
+            //Check to see if we found anything:
+            String sThumbnailImageAddress;
+            if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
+                sThumbnailImageAddress = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("data-src");
+                if (sThumbnailImageAddress.length() > 0) {
+                    ci.sComicThumbnailURL = sThumbnailImageAddress;
+                }
+            }
+
+            //Decypher the rest of the comic page image URLs to be used in a later step of the import:
+
+            sxPathExpression = globalClass.snHentai_Comic_Page_Thumbs_xPE;
+            objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
+            //Check to see if we found anything:
+            String sImageAddressTemplate;
+            String sGalleryID = "";
+            TreeMap<Integer, String> tmFileIndexImageExtention = new TreeMap<>();
+            if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
+                //Get the gallery ID. This is not the same as the NH comic ID.
+                // Example: "https://t.nhentai.net/galleries/645538/1t.png"
+                sImageAddressTemplate = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("data-src");
+                if (sImageAddressTemplate.length() > 0) {
+                    sGalleryID = sImageAddressTemplate.substring(0, sImageAddressTemplate.lastIndexOf("/"));
+                    sGalleryID = sGalleryID.substring(sGalleryID.lastIndexOf("/") + 1);
+                }
+                //Get the thumbnail image names, which will reveal the file extension of the full images:
+                for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
+                    String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
+                    String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
+                    sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
+                    String[] sSplit = sImageFilename.split("\\.");
+                    if (sSplit.length == 2) {
+                        try {
+                            Integer iPageNumber = Integer.parseInt(sSplit[0]);
+                            tmFileIndexImageExtention.put(iPageNumber, sSplit[1]);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+
+            }
+            ArrayList<String[]> alsImageNameData = new ArrayList<>();
+            String sNHComicID = ci.sSource;
+            sNHComicID = sNHComicID.substring(0, sNHComicID.lastIndexOf("/"));
+            sNHComicID = sNHComicID.substring(sNHComicID.lastIndexOf("/") + 1);
+            if (sGalleryID.length() > 0) {
+                for(Map.Entry<Integer, String> tmEntryPageNumImageExt: tmFileIndexImageExtention.entrySet()) {
+                    //Build the suspected URL for the image:
+                    String sNHImageDownloadAddress = "https://i.nhentai.net/galleries/" +
+                            sGalleryID + "/" +
+                            tmEntryPageNumImageExt.getKey() + "." +
+                            tmEntryPageNumImageExt.getValue();
+                    //Build a filename to save the file to in the catalog:
+                    String sPageStringForFilename = String.format(Locale.getDefault(),"%03d", tmEntryPageNumImageExt.getKey());
+                    String sNewFilename = sNHComicID + "_Page_" + sPageStringForFilename + "." + tmEntryPageNumImageExt.getValue();
+                    String[] sTemp = {sNHImageDownloadAddress, sNewFilename};
+                    alsImageNameData.add(sTemp);
+
+                    //Get the size of the image and add it to the total size of the comic:
+                    if(ci.lSize > -1) { //-1 if we do this once and find out that the data is not in the header.
+                        URL urlPage = new URL(sNHImageDownloadAddress);
+                        URLConnection connection = url.openConnection();
+                        //connection.connect();
+                        connection.setRequestProperty("Accept-Encoding", "identity");
+                        ci.lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                    }
+                }
+            }
+            if(alsImageNameData.size() > 0){
+                //If there are image addresses to attempt to download...
+                ci.alsComicPageURLsAndDestFileNames = alsImageNameData;
+            }
 
 
 
+
+        } catch(Exception e){
+            String sMsg = e.getMessage();
+            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
+            broadcastIntent.putExtra(COMIC_DETAILS_ERROR_MESSAGE, sMsg);
+            sendBroadcast(broadcastIntent);
+            return;
+        }
+
+
+        ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
+        ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
+        ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
+        ci.sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX]; //NOTE: THESE ARE TEXTUAL TAGS, NOT TAG IDS.
+        ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
+        ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
+        ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
+        ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
+        ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+
+
+        //Apply booleans to the intent to tell the receiver success, data available,
+        //  and set the data where appropriate:
+        broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
+        broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
+
+        //Log.d("Comics", "Finished downloading from " + ci.sSource);
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+    }
+
+    private void handleAction_startActionImportComicWebFiles(ItemClass_CatalogItem ci) throws IOException {
+
+        long lProgressNumerator = 0L;
+        long lProgressDenominator = ci.iComicPages;
+        int iProgressBarValue = 0;
+
+        ContentResolver contentResolver = getApplicationContext().getContentResolver();
+
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
+        //Determine the next Comic Catalog ID:
+        //Find the next record ID:
+        int iNextRecordId = 0;
+        int iThisId;
+        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+            iThisId = Integer.parseInt(entry.getValue().sItemID);
+            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
+        }
+
+
+        //Create the comic folder.
+        ci.sItemID = String.valueOf(iNextRecordId);
+        ci.sFolder_Name = ci.sItemID;
+
+        File fDestination = new File(
+                globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
+                        ci.sFolder_Name);
+
+
+        if (!fDestination.exists()) {
+            if (!fDestination.mkdir()) {
+                //Unable to create directory
+                BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                        false, iProgressBarValue,
+                        true, "Operation halted.",
+                        RECEIVER_EXECUTE_IMPORT);
+                return;
+            } else {
+                BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                        false, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
+            }
+        } else {
+            BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                    true, iProgressBarValue,
+                    false, "",
+                    RECEIVER_EXECUTE_IMPORT);
+        }
+
+        if(ci.alsComicPageURLsAndDestFileNames.size() > 0){
+            //If there are image addresses to attempt to download...
+            InputStream input = null;
+            OutputStream output = null;
+            try {
+
+                //Download the files:
+                for(String[] sData: ci.alsComicPageURLsAndDestFileNames) {
+
+                    String sNewFilename = sData[1];
+                    String sJumbledNewFileName = GlobalClass.JumbleFileName(sNewFilename);
+                    String sNewFullPathFilename = fDestination.getPath() +
+                            File.separator +
+                            sJumbledNewFileName;
+
+                    if(ci.sFilename.equals("")){
+                        ci.sFilename = sJumbledNewFileName;
+                        ci.sThumbnail_File = sJumbledNewFileName;
+                    }
+
+                    File fNewFile = new File(sNewFullPathFilename);
+
+                    if(!fNewFile.exists()) {
+                        // Output stream
+                        output = new FileOutputStream(fNewFile.getPath());
+
+                        byte[] data = new byte[1024];
+
+                        BroadcastProgress(true, "Downloading: " + sData[0] + "...",
+                                false, iProgressBarValue,
+                                true, "Downloading files...",
+                                RECEIVER_EXECUTE_IMPORT);
+
+                        URL url = new URL(sData[0]);
+                        URLConnection connection = url.openConnection();
+                        connection.connect();
+
+                        // download the file
+                        input = new BufferedInputStream(url.openStream(), 8192);
+
+                        int count;
+                        while ((count = input.read(data)) != -1) {
+
+                            // writing data to file
+                            output.write(data, 0, count);
+                        }
+
+                        // flushing output
+                        output.flush();
+
+                        // closing streams
+                        output.close();
+                        input.close();
+
+                        lProgressNumerator++;
+
+                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                        BroadcastProgress(true, " Complete.\n",
+                                true, iProgressBarValue,
+                                false, "",
+                                RECEIVER_EXECUTE_IMPORT);
+                    }
+
+
+
+                }
+                //Success downloading files.
+
+                //Convert textual tags to numeric tags:
+                //Form the tag integer array:
+                String[] sTags = ci.sTags.split(", ");
+                ArrayList<Integer> aliTags = new ArrayList<>();
+                for(String sTag: sTags){
+                    aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
+                }
+                //Look for any tags that could not be found:
+                for(int i = 0; i < aliTags.size() - 1; i++){
+                    if(aliTags.get(i) == -1){
+                        //Create the tag:
+                        if(!sTags[i].equals("")) {
+                            int iTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                            if(iTag != -1){
+                                aliTags.add(i, iTag); //Replace the -1 with the new TagID.
+                            }
+                        }
+                    }
+                }
+                ci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
+
+
+
+                //Create a timestamp to be used to create the data record:
+                Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+                ci.dDatetime_Last_Viewed_by_User = dTimeStamp;
+                ci.dDatetime_Import = dTimeStamp;
+
+                //The below call should add the record to both the catalog contents file
+                //  and memory:
+                globalClass.CatalogDataFile_CreateNewRecord(ci);
+
+
+
+
+                BroadcastProgress(true, "Operation complete.",
+                        true, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
+
+            } catch (Exception e) {
+                Log.e("Error: ", e.getMessage());
+                BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
+                        false, iProgressBarValue,
+                        true, "Operation halted.",
+                        RECEIVER_EXECUTE_IMPORT);
+            } finally {
+                if(output != null) {
+                    output.close();
+                }
+                if(input != null) {
+                    input.close();
+                }
+            }
+
+        }
+
+        //Modify viewer settings to show the newly-imported files:
+        globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
+
+    }
 
 
 

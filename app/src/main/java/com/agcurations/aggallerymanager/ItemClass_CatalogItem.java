@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class ItemClass_CatalogItem implements Serializable {
     public static final int MEDIA_CATEGORY_VIDEOS = 0;
@@ -37,4 +38,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iComic_File_Count = 0;                     //Files included with the comic. Can be used for integrity check.
     public boolean bComic_Online_Data_Acquired = false;   //Typically used to gather tag data from an online comic source, if automatic.
     public String sSource = "";                     //Website, if relevant. Originally intended for comics.
+
+    public String sComicThumbnailURL = ""; //Used specifically for NH Comic import preview.
+    public ArrayList<String[]> alsComicPageURLsAndDestFileNames; //Used specifically for NH Comic import.
 }

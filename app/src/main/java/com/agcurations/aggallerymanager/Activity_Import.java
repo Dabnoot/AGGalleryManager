@@ -58,16 +58,15 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY = 0;
     public static final int FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE = 1;
     public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 2;
-    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 3;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 4;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 5;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 6;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 7;
+    public static final int FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS = 3;
+    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 4;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 5;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 6;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 7;
+    public static final int FRAGMENT_IMPORT_5A_WEB_CONFIRMATION = 8;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 9;
 
-    public static final int FRAGMENT_COUNT = 8;
-
-    //Constants for individualized tag application via adapter:
-    public static final int GET_TAGS_FOR_IMPORT_ITEM = 1050;
+    public static final int FRAGMENT_COUNT = 10;
 
     //=================================================
     //User selection global variables:
@@ -117,8 +116,6 @@ public class Activity_Import extends AppCompatActivity {
 
         //Stop the user from swiping left and right on the ViewPager (control with Next button):
         ViewPager2_Import.setUserInputEnabled(false);
-
-        //myViewPager2.setPageTransformer(new MarginPageTransformer(1500)); todo
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
@@ -279,7 +276,9 @@ public class Activity_Import extends AppCompatActivity {
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
-        } //else { //Allow user to import web address of a comic to import.
+        } else { //Allow user to import web address of a comic to import.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS, false);
+        }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
@@ -293,6 +292,30 @@ public class Activity_Import extends AppCompatActivity {
             }
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
+    public void buttonNextClick_WebAddress(View v){
+        //Done with entering the WebAddress
+        if(!viewModelImportActivity.sWebAddress.equals("")) {
+
+            if(!viewModelImportActivity.sWebAddress.equals(viewModelImportActivity.sLPWebAddress)) {
+                viewModelImportActivity.bWebAddressChanged = true;
+                viewModelImportActivity.bOnlineDataGathered = false;
+                viewModelImportActivity.sLPWebAddress = viewModelImportActivity.sWebAddress;
+            }
+
+            //Go to the import folder selection fragment:
+            if (viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+            } else {
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+                    ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_WEB_CONFIRMATION, false);
+                }
+            }
+            stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+        } else {
+            Toast.makeText(getApplicationContext(), "Please provide a web address." , Toast.LENGTH_SHORT).show();
+        }
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
@@ -936,6 +959,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_0a_ComicSource();
                 case FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
                     return new Fragment_Import_1_StorageLocation();
+                case FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS:
+                    return new Fragment_Import_1a_WebAddress();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
@@ -944,6 +969,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_4_CopyOrMoveFiles();
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                     return new Fragment_Import_5_Confirmation();
+                case FRAGMENT_IMPORT_5A_WEB_CONFIRMATION:
+                    return new Fragment_Import_5a_WebConfirmation();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
                 default:
