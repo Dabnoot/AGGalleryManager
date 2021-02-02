@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -138,9 +139,79 @@ public class Service_Main extends IntentService {
             //network;
         }
 
-
     }
 
+    private void fixComicCoverPageAssignments(){
+        ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+            String sComicFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] +
+                    File.separator + tmEntry.getValue().sFolder_Name;
+            File fComicFolder = new File(sComicFolder);
+            String sCoverFilePath = sComicFolder + File.separator + tmEntry.getValue().sFilename;
+            File fCoverFile = new File(sCoverFilePath);
+            if(!fCoverFile.exists()){
+                File[] fComicFiles = fComicFolder.listFiles();
+                if(fComicFiles != null) {
+                    for (File fComicFile : fComicFiles) {
+                        if(fComicFile.getName().contains("100_egaP")){
+                            tmEntry.getValue().sFilename = fComicFile.getName();
+                            tmEntry.getValue().sThumbnail_File = fComicFile.getName();
+                            alsCatalogItemsToUpdate.add(tmEntry.getValue());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate){
+            globalClass.CatalogDataFile_UpdateRecord(ci);
+        }
+    }
+
+
+    private void fixComicPageIDs(){
+        ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+            String sComicFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] +
+                    File.separator + tmEntry.getValue().sFolder_Name;
+            File fComicFolder = new File(sComicFolder);
+            File[] fComicFiles = fComicFolder.listFiles();
+            boolean bThumbnailFilenameReset = false;
+            if(fComicFiles != null) {
+                for (File fComicFile : fComicFiles) {
+                    String sFileName = GlobalClass.JumbleFileName(fComicFile.getName());
+                    if(sFileName.startsWith(tmEntry.getValue().sItemID)){
+                        break;
+                    }
+                    //If the filename does not have the comicID (but rather has the NHComicID),
+                    //  rename the file to have the comicID, and reset the thumbnail file.
+                    String sNewFileName = sFileName.substring(sFileName.indexOf("_"));
+                    sNewFileName = tmEntry.getValue().sItemID + sNewFileName;
+                    sNewFileName = GlobalClass.JumbleFileName(sNewFileName);
+                    if(!bThumbnailFilenameReset && sNewFileName.contains("100_egaP")){
+                        bThumbnailFilenameReset = true;
+                        tmEntry.getValue().sFilename = sNewFileName;
+                        tmEntry.getValue().sThumbnail_File = sNewFileName;
+                        alsCatalogItemsToUpdate.add(tmEntry.getValue());
+                    }
+                    File fDestinationFileName = new File(sComicFolder +
+                            File.separator +
+                            sNewFileName);
+                    if(!fComicFile.renameTo(fDestinationFileName)){
+                        Log.d("Comics","Trouble renaming file: " + fComicFile.getPath());
+                    }
+
+                }
+            }
+
+        }
+
+        for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate) {
+            globalClass.CatalogDataFile_UpdateRecord(ci);
+        }
+
+    }
 
     private void analyzeComicsReportMissingPages(){
         int icount = 0;

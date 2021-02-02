@@ -152,7 +152,7 @@ public class Service_Import extends IntentService {
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 final int iComicImportSource = intent.getIntExtra(EXTRA_COMIC_IMPORT_SOURCE, -1);
                 if(alFileList==null) return;
-                handleAction_startActionImportComics(
+                handleAction_startActionImportNHComics(
                         alFileList,
                         iMoveOrCopy,
                         iComicImportSource);
@@ -463,183 +463,180 @@ public class Service_Import extends IntentService {
                     globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
                             fileItem.destinationFolder);
 
-            BroadcastProgress(true, "Verifying destination folder " + fDestination.getPath(),
-                    true, iProgressBarValue,
-                    true, "Verifying destination folder...",
-                    RECEIVER_EXECUTE_IMPORT);
-
-
             if (!fDestination.exists()) {
                 if (!fDestination.mkdir()) {
                     //Unable to create directory
-                    BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath(),
+                    BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             true, "Operation halted.",
                             RECEIVER_EXECUTE_IMPORT);
-                    continue; //Skip to the end of the loop.
-                }
-            }
-
-            if (fDestination.exists()) {
-                BroadcastProgress(true, "Destination folder verified.",
-                        false, iProgressBarValue,
-                        false, "",
-                        RECEIVER_EXECUTE_IMPORT);
-
-
-                Uri uriSourceFile;
-                String sLogLine;
-                InputStream inputStream;
-                OutputStream outputStream;
-
-                uriSourceFile = Uri.parse(fileItem.uri);
-                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-                if (dfSource == null) continue;
-                if (dfSource.getName() == null) continue;
-
-                try {
-                    //Write next behavior to the screen log:
-                    sLogLine = "Attempting ";
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        sLogLine = sLogLine + "move ";
-                    } else {
-                        sLogLine = sLogLine + "copy ";
-                    }
-                    sLogLine = sLogLine + "of file " + fileItem.name + " to destination...";
-                    BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
-
-                    //Reverse the text on the file so that the file does not get picked off by a search tool:
-                    String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
-                    File fDestinationFolder = new File(fDestination.getPath());
-
-                    boolean bCopyViaStream = false;
-                    /*String sDestinationFolder = "content://com.android.externalstorage.documents/tree/0000-0000%3AAndroid%2Fdata%2Fcom.agcurations.aggallerymanager%2Ffiles%2FVideos%2F7";
-                    Uri uriDestinationFolder = Uri.parse(sDestinationFolder);
-                    URI uri1 = URI.create(sDestinationFolder);
-
-
-
-                    //First, attempt to transfer the document using DocumentsContract:
-                    Uri uriTransferredDocument = null;
-                    DocumentFile dfParentFile = dfSource.getParentFile();
-
-                    //if(dfParentFile != null) {
-                        if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                            //Attempt to move the document using DocumentsContract.moveDocument:
-                            uriTransferredDocument = DocumentsContract.moveDocument(
-                                    getContentResolver(),
-                                    dfSource.getUri(),
-                                    dfSource.getUri(),
-                                    uriDestinationFolder);
-                        } else if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_COPY) {
-                            //Attempt to move the document using DocumentsContract.moveDocument:
-                            uriTransferredDocument = DocumentsContract.copyDocument(
-                                    getContentResolver(),
-                                    dfSource.getUri(),
-                                    uriDestinationFolder);
-                        }
-                    //}
-                    if(uriTransferredDocument == null){
-                        bCopyViaStream = true; //If the document move failed... copy via stream.
-                    } else {
-                        //If DocumentsContract transfer succeeded, rename the file to the Jumbled filename:
-                        DocumentFile dfMovedFile = DocumentFile.fromSingleUri(getApplicationContext(), uriTransferredDocument);
-                        if(!dfMovedFile.renameTo(sFileName)) {
-                            BroadcastProgress(true, "Problem renaming transferred file.",
-                                    false, iProgressBarValue,
-                                    false, "",
-                                    RECEIVER_EXECUTE_IMPORT);
-                        }
-                        lProgressNumerator += fileItem.sizeBytes;
-                    }*/
-                    bCopyViaStream = true;
-
-                    //If DocumentsContract transferred failed, try to copy via stream:
-                    if(bCopyViaStream) {
-                        inputStream = contentResolver.openInputStream(dfSource.getUri());
-
-                        outputStream = new FileOutputStream(fDestinationFolder.getPath() + File.separator + sFileName);
-                        int iLoopCount = 0;
-                        byte[] buffer = new byte[100000];
-                        if (inputStream == null) continue;
-                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                            outputStream.write(buffer, 0, buffer.length);
-                            lProgressNumerator += lLoopBytesRead;
-                            iLoopCount++;
-                            if (iLoopCount % 10 == 0) {
-                                //Send update every 10 loops:
-                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                                BroadcastProgress(false, "",
-                                        true, iProgressBarValue,
-                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                        RECEIVER_EXECUTE_IMPORT);
-                            }
-                        }
-                        outputStream.flush();
-                        outputStream.close();
-                    }
-
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        if(bCopyViaStream) {
-                            sLogLine = "Copy success.";
-                            if (!dfSource.delete()) {
-                                sLogLine = sLogLine + "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                            } else {
-                                sLogLine = sLogLine + "\nSuccess deleting source file after copy.\n";
-                            }
-                        } else {
-                            sLogLine = "Move success.";
-                        }
-                    } else {
-                        sLogLine = "Copy success.";
-                    }
-
-
-                    //Update the progress bar for the file copy:
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
-
-                    //This file has now been copied.
-                    //Next add the data to the catalog file and memory:
-
-                    //Create a timestamp to be used to create the data record:
-                    Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-
-                    ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
-                    ciNew.iMediaCategory = iMediaCategory;
-                    ciNew.sItemID = String.valueOf(iNextRecordId);
-                    ciNew.sFilename = sFileName;
-                    ciNew.lSize = fileItem.sizeBytes;
-                    ciNew.lDuration_Milliseconds = fileItem.videoTimeInMilliseconds;
-                    ciNew.sDuration_Text = fileItem.videoTimeText;
-                    ciNew.iWidth = Integer.parseInt(fileItem.width);
-                    ciNew.iHeight = Integer.parseInt(fileItem.height);
-                    ciNew.sFolder_Name = fileItem.destinationFolder;
-                    ciNew.sTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags, ",");
-                    ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
-                    ciNew.dDatetime_Import = dTimeStamp;
-
-                    //The below call should add the record to both the catalog contents file
-                    //  and memory:
-                    globalClass.CatalogDataFile_CreateNewRecord(ciNew);
-
-
-                    iNextRecordId += 1; //Identify the next record ID to assign.
-
-
-                } catch (Exception e) {
-                    BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
+                    return;
+                } else {
+                    BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             false, "",
                             RECEIVER_EXECUTE_IMPORT);
                 }
+            } else {
+                BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                        true, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
             }
+
+            Uri uriSourceFile;
+            String sLogLine;
+            InputStream inputStream;
+            OutputStream outputStream;
+
+            uriSourceFile = Uri.parse(fileItem.uri);
+            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+            if (dfSource == null) continue;
+            if (dfSource.getName() == null) continue;
+
+            try {
+                //Write next behavior to the screen log:
+                sLogLine = "Attempting ";
+                if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                    sLogLine = sLogLine + "move ";
+                } else {
+                    sLogLine = sLogLine + "copy ";
+                }
+                sLogLine = sLogLine + "of file " + fileItem.name + " to destination...";
+                BroadcastProgress(true, sLogLine,
+                        false, iProgressBarValue,
+                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                        RECEIVER_EXECUTE_IMPORT);
+
+                //Reverse the text on the file so that the file does not get picked off by a search tool:
+                String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
+                File fDestinationFolder = new File(fDestination.getPath());
+
+                boolean bCopyViaStream = false;
+                /*String sDestinationFolder = "content://com.android.externalstorage.documents/tree/0000-0000%3AAndroid%2Fdata%2Fcom.agcurations.aggallerymanager%2Ffiles%2FVideos%2F7";
+                Uri uriDestinationFolder = Uri.parse(sDestinationFolder);
+                URI uri1 = URI.create(sDestinationFolder);
+
+
+
+                //First, attempt to transfer the document using DocumentsContract:
+                Uri uriTransferredDocument = null;
+                DocumentFile dfParentFile = dfSource.getParentFile();
+
+                //if(dfParentFile != null) {
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                        //Attempt to move the document using DocumentsContract.moveDocument:
+                        uriTransferredDocument = DocumentsContract.moveDocument(
+                                getContentResolver(),
+                                dfSource.getUri(),
+                                dfSource.getUri(),
+                                uriDestinationFolder);
+                    } else if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_COPY) {
+                        //Attempt to move the document using DocumentsContract.moveDocument:
+                        uriTransferredDocument = DocumentsContract.copyDocument(
+                                getContentResolver(),
+                                dfSource.getUri(),
+                                uriDestinationFolder);
+                    }
+                //}
+                if(uriTransferredDocument == null){
+                    bCopyViaStream = true; //If the document move failed... copy via stream.
+                } else {
+                    //If DocumentsContract transfer succeeded, rename the file to the Jumbled filename:
+                    DocumentFile dfMovedFile = DocumentFile.fromSingleUri(getApplicationContext(), uriTransferredDocument);
+                    if(!dfMovedFile.renameTo(sFileName)) {
+                        BroadcastProgress(true, "Problem renaming transferred file.",
+                                false, iProgressBarValue,
+                                false, "",
+                                RECEIVER_EXECUTE_IMPORT);
+                    }
+                    lProgressNumerator += fileItem.sizeBytes;
+                }*/
+                bCopyViaStream = true;
+
+                //If DocumentsContract transferred failed, try to copy via stream:
+                if(bCopyViaStream) {
+                    inputStream = contentResolver.openInputStream(dfSource.getUri());
+
+                    outputStream = new FileOutputStream(fDestinationFolder.getPath() + File.separator + sFileName);
+                    int iLoopCount = 0;
+                    byte[] buffer = new byte[100000];
+                    if (inputStream == null) continue;
+                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                        outputStream.write(buffer, 0, buffer.length);
+                        lProgressNumerator += lLoopBytesRead;
+                        iLoopCount++;
+                        if (iLoopCount % 10 == 0) {
+                            //Send update every 10 loops:
+                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                            BroadcastProgress(false, "",
+                                    true, iProgressBarValue,
+                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                    RECEIVER_EXECUTE_IMPORT);
+                        }
+                    }
+                    outputStream.flush();
+                    outputStream.close();
+                }
+
+                if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                    if(bCopyViaStream) {
+                        sLogLine = "Copy success.";
+                        if (!dfSource.delete()) {
+                            sLogLine = sLogLine + "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                        } else {
+                            sLogLine = sLogLine + "\nSuccess deleting source file after copy.\n";
+                        }
+                    } else {
+                        sLogLine = "Move success.";
+                    }
+                } else {
+                    sLogLine = "Copy success.";
+                }
+
+
+                //Update the progress bar for the file copy:
+                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                BroadcastProgress(true, sLogLine,
+                        false, iProgressBarValue,
+                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                        RECEIVER_EXECUTE_IMPORT);
+
+                //This file has now been copied.
+                //Next add the data to the catalog file and memory:
+
+                //Create a timestamp to be used to create the data record:
+                Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+
+                ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+                ciNew.iMediaCategory = iMediaCategory;
+                ciNew.sItemID = String.valueOf(iNextRecordId);
+                ciNew.sFilename = sFileName;
+                ciNew.lSize = fileItem.sizeBytes;
+                ciNew.lDuration_Milliseconds = fileItem.videoTimeInMilliseconds;
+                ciNew.sDuration_Text = fileItem.videoTimeText;
+                ciNew.iWidth = Integer.parseInt(fileItem.width);
+                ciNew.iHeight = Integer.parseInt(fileItem.height);
+                ciNew.sFolder_Name = fileItem.destinationFolder;
+                ciNew.sTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags, ",");
+                ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
+                ciNew.dDatetime_Import = dTimeStamp;
+
+                //The below call should add the record to both the catalog contents file
+                //  and memory:
+                globalClass.CatalogDataFile_CreateNewRecord(ciNew);
+
+
+                iNextRecordId += 1; //Identify the next record ID to assign.
+
+
+            } catch (Exception e) {
+                BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
+                        false, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
+            }
+
 
         }
 
@@ -654,7 +651,7 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionImportComics(
+    private void handleAction_startActionImportNHComics(
             ArrayList<ItemClass_File> alFileList,
             int iMoveOrCopy,
             int iComicImportSource) {
@@ -688,28 +685,25 @@ public class Service_Import extends IntentService {
         //New record ID identified.
 
         TreeMap<String, String[]> tmNHComicIDs = new TreeMap<>(); //Map NH_Comic_Downloader ComicID to a record ID/folder and also grab the comic title.
-        if(iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
-            //If NH_Comic_Downloaded, loop and find all of the comic IDs:
-            for(ItemClass_File fileItem: alFileList) {
-                if(fileItem.name.matches(GlobalClass.gsNHComicCoverPageFilter)){
-                    String sComicID = GetNHComicID(fileItem.name);
-                    lProgressDenominator = lProgressDenominator - fileItem.sizeBytes; //We don't copy over the cover page.
-                    String sRecordID = iNextRecordId + "";
-                    iNextRecordId++;
-                    String sComicName = GetNHComicNameFromCoverFile(fileItem.name);
-                    String sComicTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags, ",");
-                    if(tmNHComicIDs.containsKey(sComicID)){
-                        //If this is merely a duplicate comic selected during the import, not if it already exists in the catalog.
-                        //If it already exists in the catalog, it is on the user to resolve.
-                        problemNotificationConfig("Skipping Comic ID " + sComicID + ". Duplicate comic.");
-                    } else {
-                        tmNHComicIDs.put(sComicID, new String[]{sRecordID, sComicName, sComicTags});
-                    }
+
+        //If NH_Comic_Downloaded, loop and find all of the comic IDs:
+        for(ItemClass_File fileItem: alFileList) {
+            if(fileItem.name.matches(GlobalClass.gsNHComicCoverPageFilter)){
+                String sComicID = GetNHComicID(fileItem.name);
+                lProgressDenominator = lProgressDenominator - fileItem.sizeBytes; //We don't copy over the cover page.
+                String sRecordID = iNextRecordId + "";
+                iNextRecordId++;
+                String sComicName = GetNHComicNameFromCoverFile(fileItem.name);
+                String sComicTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags, ",");
+                if(tmNHComicIDs.containsKey(sComicID)){
+                    //If this is merely a duplicate comic selected during the import, not if it already exists in the catalog.
+                    //If it already exists in the catalog, it is on the user to resolve.
+                    problemNotificationConfig("Skipping Comic ID " + sComicID + ". Duplicate comic.");
+                } else {
+                    tmNHComicIDs.put(sComicID, new String[]{sRecordID, sComicName, sComicTags});
                 }
             }
         }
-
-
 
         for(Map.Entry<String, String[]> tmEntryNHComic: tmNHComicIDs.entrySet()) {
             //Loop and import files:
@@ -720,11 +714,6 @@ public class Service_Import extends IntentService {
                     globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
                             sDestinationFolder);
 
-            BroadcastProgress(true, "Verifying destination folder " + fDestination.getPath() + "\n",
-                    true, iProgressBarValue,
-                    true, "Verifying destination folder...",
-                    RECEIVER_EXECUTE_IMPORT);
-
             if (!fDestination.exists()) {
                 if (!fDestination.mkdir()) {
                     //Unable to create directory
@@ -732,16 +721,18 @@ public class Service_Import extends IntentService {
                             false, iProgressBarValue,
                             true, "Operation halted.",
                             RECEIVER_EXECUTE_IMPORT);
-                    continue; //Skip to the end of the loop.
+                    return;
+                } else {
+                    BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                            false, iProgressBarValue,
+                            false, "",
+                            RECEIVER_EXECUTE_IMPORT);
                 }
-            }
-            if (fDestination.exists()) { //May be unnecessay, but want to be sure.
-                BroadcastProgress(true, "Destination folder verified.\n",
-                        false, iProgressBarValue,
+            } else {
+                BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                        true, iProgressBarValue,
                         false, "",
                         RECEIVER_EXECUTE_IMPORT);
-            } else {
-                continue;
             }
 
             //Prepare the data record:
@@ -773,7 +764,10 @@ public class Service_Import extends IntentService {
                     //Make sure that it is not a duplicate page.
                     if (!isPageDuplicate(fileItem.name)) {
                         ciNewComic.iComic_File_Count++;
-                        String sNewFilename = GlobalClass.JumbleFileName(fileItem.name);
+                        String sNewFilename = fileItem.name;
+                        sNewFilename = sNewFilename.substring(sNewFilename.indexOf("_")); //Get rid of the NH comic ID.
+                        sNewFilename = ciNewComic.sItemID + sNewFilename; //Add on the sequenced comic record ID.
+                        sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
                         if (fileItem.name.contains("_Page_001")) {
                             //Set the Thumbnail file to the first page (which is a duplicate of the
                             // cover page but of a different name):
@@ -899,7 +893,15 @@ public class Service_Import extends IntentService {
             }
 
 
+
+
+
+
         } //End NHComics (plural) Import Loop.
+
+
+
+
 
         //Modify viewer settings to show the newly-imported files:
         globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
@@ -1132,8 +1134,8 @@ public class Service_Import extends IntentService {
                             tmEntryPageNumImageExt.getKey() + "." +
                             tmEntryPageNumImageExt.getValue();
                     //Build a filename to save the file to in the catalog:
-                    String sPageStringForFilename = String.format(Locale.getDefault(),"%03d", tmEntryPageNumImageExt.getKey());
-                    String sNewFilename = sNHComicID + "_Page_" + sPageStringForFilename + "." + tmEntryPageNumImageExt.getValue();
+                    String sPageStringForFilename = String.format(Locale.getDefault(),"%04d", tmEntryPageNumImageExt.getKey());
+                    String sNewFilename = "Page_" + sPageStringForFilename + "." + tmEntryPageNumImageExt.getValue();
                     String[] sTemp = {sNHImageDownloadAddress, sNewFilename};
                     alsImageNameData.add(sTemp);
 
@@ -1246,7 +1248,7 @@ public class Service_Import extends IntentService {
                 //Download the files:
                 for(String[] sData: ci.alsComicPageURLsAndDestFileNames) {
 
-                    String sNewFilename = sData[1];
+                    String sNewFilename = ci.sItemID + "_" +sData[1];
                     String sJumbledNewFileName = GlobalClass.JumbleFileName(sNewFilename);
                     String sNewFullPathFilename = fDestination.getPath() +
                             File.separator +
