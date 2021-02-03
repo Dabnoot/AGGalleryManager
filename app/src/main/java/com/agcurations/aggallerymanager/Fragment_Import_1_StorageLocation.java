@@ -250,7 +250,16 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
                         button_FolderSelectComplete.setLayoutParams(lp);
 
-                        Service_Import.startActionGetDirectoryContents(getContext(), Activity_Import.guriImportTreeURI, viewModelImportActivity.iImportMediaCategory);
+                        int iFilesOrFolders = Service_Import.FILES_ONLY;
+                        if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
+                                viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                            iFilesOrFolders = Service_Import.FOLDERS_ONLY;
+                        }
+
+                        Service_Import.startActionGetDirectoryContents(getContext(),
+                                Activity_Import.guriImportTreeURI,
+                                viewModelImportActivity.iImportMediaCategory,
+                                iFilesOrFolders);
 
 
                     }

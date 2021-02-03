@@ -153,7 +153,7 @@ public class Service_Main extends IntentService {
                 File[] fComicFiles = fComicFolder.listFiles();
                 if(fComicFiles != null) {
                     for (File fComicFile : fComicFiles) {
-                        if(fComicFile.getName().contains("100_egaP")){
+                        if(fComicFile.getName().contains("100_egaP") || fComicFile.getName().contains("1000_egaP")){
                             tmEntry.getValue().sFilename = fComicFile.getName();
                             tmEntry.getValue().sThumbnail_File = fComicFile.getName();
                             alsCatalogItemsToUpdate.add(tmEntry.getValue());
@@ -189,7 +189,7 @@ public class Service_Main extends IntentService {
                     String sNewFileName = sFileName.substring(sFileName.indexOf("_"));
                     sNewFileName = tmEntry.getValue().sItemID + sNewFileName;
                     sNewFileName = GlobalClass.JumbleFileName(sNewFileName);
-                    if(!bThumbnailFilenameReset && sNewFileName.contains("100_egaP")){
+                    if(fComicFile.getName().contains("100_egaP") || fComicFile.getName().contains("1000_egaP")){
                         bThumbnailFilenameReset = true;
                         tmEntry.getValue().sFilename = sNewFileName;
                         tmEntry.getValue().sThumbnail_File = sNewFileName;

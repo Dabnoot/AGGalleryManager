@@ -47,6 +47,7 @@ public class Service_Import extends IntentService {
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
+    private static final String EXTRA_FILES_OR_FOLDERS = "com.agcurations.aggallerymanager.extra.EXTRA_FILES_OR_FOLDERS";
 
     private static final String EXTRA_COMIC_IMPORT_SOURCE = "com.agcurations.aggallerymanager.extra.COMIC_IMPORT_SOURCE";
 
@@ -71,16 +72,14 @@ public class Service_Import extends IntentService {
         super("ImportActivityDataService");
     }
 
-    /**
-     * Starts this service to perform actions with the given parameters. If
-     * the service is already performing a task this action will be queued.
-     */
-    public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory) {
+
+    public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_GET_DIRECTORY_CONTENTS);
         String sImportTreeUri = uriImportTreeUri.toString();
         intent.putExtra(EXTRA_IMPORT_TREE_URI, sImportTreeUri);
         intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
+        intent.putExtra(EXTRA_FILES_OR_FOLDERS, iFilesOrFolders);
         context.startService(intent);
     }
 
@@ -124,8 +123,6 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-
-
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -135,7 +132,8 @@ public class Service_Import extends IntentService {
                 final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
                 Uri uriImportTreeUri = Uri.parse(sImportTreeUri);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
-                handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory);
+                final int iFilesOrFolders = intent.getIntExtra(EXTRA_FILES_OR_FOLDERS, FILES_ONLY);
+                handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory, iFilesOrFolders);
 
             } else if (ACTION_IMPORT_FILES.equals(action)) {
                 final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
@@ -154,8 +152,8 @@ public class Service_Import extends IntentService {
                 if(alFileList==null) return;
                 handleAction_startActionImportNHComics(
                         alFileList,
-                        iMoveOrCopy,
-                        iComicImportSource);
+                        iMoveOrCopy
+                );
 
             } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
                 final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
@@ -175,61 +173,23 @@ public class Service_Import extends IntentService {
     }
 
 
-    void problemNotificationConfig(String sMessage){
-        Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
-        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        broadcastIntent_Problem.putExtra(RECEIVER_STRING, Service_Import.RECEIVER_STORAGE_LOCATION);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
-    }
 
-
-    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
-    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
-    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
-    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
-    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
-    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
-    public static final String RECEIVER_STRING = "RECEIVER_STRING";
-
-    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
-                                  boolean bUpdatePercentComplete, int iAmountComplete,
-                                  boolean bUpdateProgressBarText, String sProgressBarText,
-                                  String sReceiver){
-
-        //Broadcast a message to be picked-up by the Import Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-
-        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
-        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine);
-        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
-        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
-        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
-        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
-        broadcastIntent.putExtra(RECEIVER_STRING, sReceiver);
-
-        //sendBroadcast(broadcastIntent);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
-    }
+    //==============================================================================================
+    //===== Service Content ========================================================================
+    //==============================================================================================
 
 
 
+    public static final int FOLDERS_ONLY = 0;
+    public static final int FILES_ONLY = 1;
 
-    final int FOLDERS_ONLY = 0;
-    final int FILES_ONLY = 1;
-
-    private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory) {
+    private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders) {
         if(Activity_Import.guriImportTreeURI != null){
             Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
             ArrayList<ItemClass_File> alFileList = new ArrayList<>();
             try {
                 String sFileExtensionRegEx = ".+";
-                int iSelectFoldersFilesOrBoth = FILES_ONLY;
+                int iSelectFilesOrFolders = iFilesOrFolders;
                 //iMediaCategory: Specify media category. -1 ignore, 0 video, >0 images.
 
                 //Get data about the files from the UriTree:
@@ -291,9 +251,9 @@ public class Service_Import extends IntentService {
                         isDirectory = (mimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
                         String fileType = (isDirectory) ? "folder" : "file";
 
-                        if ((iSelectFoldersFilesOrBoth == FILES_ONLY) && (isDirectory)) {
+                        if ((iSelectFilesOrFolders == FILES_ONLY) && (isDirectory)) {
                             continue; //skip the rest of the for loop for this item.
-                        } else if ((iSelectFoldersFilesOrBoth == FOLDERS_ONLY) && (!isDirectory)) {
+                        } else if ((iSelectFilesOrFolders == FOLDERS_ONLY) && (!isDirectory)) {
                             continue; //skip the rest of the for loop for this item.
                         }
 
@@ -419,10 +379,7 @@ public class Service_Import extends IntentService {
         }
     }
 
-    private void handleAction_startActionImportFiles(
-            ArrayList<ItemClass_File> alFileList,
-            int iMoveOrCopy,
-            int iMediaCategory) {
+    private void handleAction_startActionImportFiles(ArrayList<ItemClass_File> alFileList, int iMoveOrCopy, int iMediaCategory) {
 
 
         long lProgressNumerator = 0L;
@@ -651,10 +608,10 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionImportNHComics(
-            ArrayList<ItemClass_File> alFileList,
-            int iMoveOrCopy,
-            int iComicImportSource) {
+
+    //====== Comic Routines ========================================================================
+
+    private void handleAction_startActionImportNHComics(ArrayList<ItemClass_File> alFileList, int iMoveOrCopy) {
 
 
         long lProgressNumerator = 0L;
@@ -1434,6 +1391,49 @@ public class Service_Import extends IntentService {
         return false;
     }
 
+    //==============================================================================================
+    //===== Service Communication Utilities ========================================================
+    //==============================================================================================
 
 
+    void problemNotificationConfig(String sMessage){
+        Intent broadcastIntent_Problem = new Intent();
+        broadcastIntent_Problem.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
+        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+        broadcastIntent_Problem.putExtra(RECEIVER_STRING, Service_Import.RECEIVER_STORAGE_LOCATION);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
+    }
+
+    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
+    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
+    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
+    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
+    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
+    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
+    public static final String RECEIVER_STRING = "RECEIVER_STRING";
+
+    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
+                                  boolean bUpdatePercentComplete, int iAmountComplete,
+                                  boolean bUpdateProgressBarText, String sProgressBarText,
+                                  String sReceiver){
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
+        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine);
+        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
+        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
+        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
+        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
+        broadcastIntent.putExtra(RECEIVER_STRING, sReceiver);
+
+        //sendBroadcast(broadcastIntent);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+    }
 }
