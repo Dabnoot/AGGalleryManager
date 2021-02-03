@@ -75,7 +75,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 for(ItemClass_Tag ti : tagItems){
                     aliTagIDs.add(ti.TagID);
                 }
-                gFileItem.prospectiveTags = aliTagIDs;
+                gFileItem.aliProspectiveTags = aliTagIDs;
                 gFileItem.bPreviewTagUpdate = true;
 
                 //Prepare a result to send back to the calling activity:
@@ -110,7 +110,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
             Fragment_SelectTags fst = new Fragment_SelectTags();
             Bundle args = new Bundle();
             args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS);
-            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItem.prospectiveTags);
+            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItem.aliProspectiveTags);
             if(tmImportSessionTagsInUse != null){
                 if(tmImportSessionTagsInUse.size() > 0){
                     //During import preview of other items, the user may have selected tags that
@@ -127,16 +127,16 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
 
             //Init the tags list if there are tags already assigned to this item:
             //Get the text of the tags and display:
-            if(gFileItem.prospectiveTags != null) {
-                if (gFileItem.prospectiveTags.size() > 0) {
+            if(gFileItem.aliProspectiveTags != null) {
+                if (gFileItem.aliProspectiveTags.size() > 0) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Tags: ");
                     GlobalClass globalClass;
                     globalClass = (GlobalClass) getApplicationContext();
-                    sb.append(globalClass.getTagTextFromID(gFileItem.prospectiveTags.get(0), GlobalClass.MEDIA_CATEGORY_VIDEOS));
-                    for (int i = 1; i < gFileItem.prospectiveTags.size(); i++) {
+                    sb.append(globalClass.getTagTextFromID(gFileItem.aliProspectiveTags.get(0), GlobalClass.MEDIA_CATEGORY_VIDEOS));
+                    for (int i = 1; i < gFileItem.aliProspectiveTags.size(); i++) {
                         sb.append(", ");
-                        sb.append(globalClass.getTagTextFromID(gFileItem.prospectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
+                        sb.append(globalClass.getTagTextFromID(gFileItem.aliProspectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
                     }
                     TextView textView_VideoPopupSelectedTags = findViewById(R.id.textView_VideoPopupSelectedTags);
                     if (textView_VideoPopupSelectedTags != null) {
@@ -148,7 +148,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
 
 
             //Build the preview:
-            long lVideoDuration = gFileItem.videoTimeInMilliseconds;
+            long lVideoDuration = gFileItem.lVideoTimeInMilliseconds;
 
             if(lVideoDuration < 0L){
                 //If there is no video length, exit this activity.
@@ -181,7 +181,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 });
             }
             gVideoView_VideoPlayer.setMediaController(gMediaController);
-            Uri uriVideoFile = Uri.parse(gFileItem.uri);
+            Uri uriVideoFile = Uri.parse(gFileItem.sUri);
             gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
             if (giCurrentPosition > 0) {
                 gVideoView_VideoPlayer.seekTo(giCurrentPosition);

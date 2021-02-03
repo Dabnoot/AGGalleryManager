@@ -88,12 +88,12 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                 //  file item.
                 if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
                     for(ItemClass_File icf: gFileItems){
-                        icf.prospectiveTags = aliTagIDs;
+                        icf.aliProspectiveTags = aliTagIDs;
                         icf.bPreviewTagUpdate = true;
                     }
 
                 } else {
-                    gFileItems[giFileItemIndex].prospectiveTags = aliTagIDs;
+                    gFileItems[giFileItemIndex].aliProspectiveTags = aliTagIDs;
                     gFileItems[giFileItemIndex].bPreviewTagUpdate = true;
                 }
                 //Prepare a result to send back to the calling activity:
@@ -128,7 +128,7 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
             fragment_selectTags = new Fragment_SelectTags();
             Bundle args = new Bundle();
             args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, giMediaCategory);
-            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItems[giFileItemIndex].prospectiveTags);
+            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItems[giFileItemIndex].aliProspectiveTags);
             if(tmImportSessionTagsInUse != null){
                 if(tmImportSessionTagsInUse.size() > 0){
                     //During import preview of other items, the user may have selected tags that
@@ -273,14 +273,14 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
     }
 
     private void initializeImage(){
-        Glide.with(getApplicationContext()).load(gFileItems[giFileItemIndex].uri).into(gImagePreview);
+        Glide.with(getApplicationContext()).load(gFileItems[giFileItemIndex].sUri).into(gImagePreview);
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
-        textView_FileName.setText(gFileItems[giFileItemIndex].name);
+        textView_FileName.setText(gFileItems[giFileItemIndex].sName);
 
         //Init the tags list if there are tags already assigned to this item:
         //Get the text of the tags and display:
-        if(gFileItems[giFileItemIndex].prospectiveTags != null) {
+        if(gFileItems[giFileItemIndex].aliProspectiveTags != null) {
             TextView textView_ImagePopupSelectedTags = findViewById(R.id.textView_ImagePopupSelectedTags);
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
@@ -291,15 +291,15 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                 iFileItemTagsIndex = giFileItemIndex;
             }
 
-            if (gFileItems[iFileItemTagsIndex].prospectiveTags.size() > 0) {
+            if (gFileItems[iFileItemTagsIndex].aliProspectiveTags.size() > 0) {
 
                 GlobalClass globalClass;
                 globalClass = (GlobalClass) getApplicationContext();
 
-                sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].prospectiveTags.get(0), giMediaCategory));
-                for (int i = 1; i < gFileItems[iFileItemTagsIndex].prospectiveTags.size(); i++) {
+                sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].aliProspectiveTags.get(0), giMediaCategory));
+                for (int i = 1; i < gFileItems[iFileItemTagsIndex].aliProspectiveTags.size(); i++) {
                     sbTags.append(", ");
-                    sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].prospectiveTags.get(i), giMediaCategory));
+                    sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].aliProspectiveTags.get(i), giMediaCategory));
                 }
 
             }
@@ -307,7 +307,7 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
                 textView_ImagePopupSelectedTags.setText(sbTags.toString());
             }
             if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
-                fragment_selectTags.resetTagListViewData(gFileItems[iFileItemTagsIndex].prospectiveTags);
+                fragment_selectTags.resetTagListViewData(gFileItems[iFileItemTagsIndex].aliProspectiveTags);
             }
         }
 

@@ -6,49 +6,27 @@ import java.util.Date;
 
 public class ItemClass_File implements Serializable {
 
-    final public String type; //folder or file
-    final public String name;
-    final public String extension;
-    final public long sizeBytes;
-    final public Date dateLastModified;
-    final public String width;
-    final public String height;
-    public Boolean isChecked;
-    final public String uri;       //includes file source.
-    final public String mimeType;
-    public long videoTimeInMilliseconds;
-    public String destinationFolder; //Used for moving/copying.
-
-    public ArrayList<Integer> prospectiveTags; //"prospective" as in "about to be applied".
+    public final String sType; //folder or file
+    public final String sName;
+    public String sExtension = "";
+    public long lSizeBytes = 0;
+    public Date dateLastModified = null;
+    public String sWidth = "";
+    public String sHeight = "";
+    public Boolean bIsChecked = false;
+    public String sUri = "";       //includes file source.
+    public String sMimeType = "";
+    public long lVideoTimeInMilliseconds = 0;
+    public String sDestinationFolder = ""; //Used for moving/copying.
+    public ArrayList<Integer> aliProspectiveTags; //"prospective" as in "about to be applied".
     public boolean bPreviewTagUpdate = false; //Flag used to reduce excess processing
-
-    public String videoTimeText;
+    public String sVideoTimeText;
 
     public ItemClass_File(String _type,
-                          String _name,
-                          String _extension,
-                          long _sizeBytes,
-                          Date _dateLastModified,
-                          String _width,
-                          String _height,
-                          Boolean _isChecked,
-                          String _uri,
-                          String _mime,
-                          long _videoTimeInMilliseconds)
+                          String _name)
     {
-        this.uri = _uri;
-        this.type = _type;
-        this.name = _name;
-        this.extension = _extension;
-        this.sizeBytes = _sizeBytes;
-        this.dateLastModified = _dateLastModified;
-        this.width = _width;
-        this.height = _height;
-        this.isChecked = _isChecked;
-        this.mimeType = _mime;
-        this.videoTimeInMilliseconds = _videoTimeInMilliseconds;
-        this.videoTimeText = "";
-        this.prospectiveTags = new ArrayList<>();
-        this.destinationFolder = "";
+        this.sType = _type;
+        this.sName = _name;
     }
+
 }

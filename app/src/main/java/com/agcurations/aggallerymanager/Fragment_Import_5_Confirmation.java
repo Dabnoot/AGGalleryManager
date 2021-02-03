@@ -100,16 +100,16 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         // Construct the data source
         long lRequiredStorageSpaceBytes = 0L;
         for(ItemClass_File fileItem: viewModelImportActivity.alfiConfirmedFileImports){
-            lRequiredStorageSpaceBytes += fileItem.sizeBytes;
+            lRequiredStorageSpaceBytes += fileItem.lSizeBytes;
 
             //Set the destination folder on each file item:
             String sPrimaryTag;
-            if(fileItem.prospectiveTags.size() > 0){
-                sPrimaryTag = fileItem.prospectiveTags.get(0).toString();
+            if(fileItem.aliProspectiveTags.size() > 0){
+                sPrimaryTag = fileItem.aliProspectiveTags.get(0).toString();
             } else {
                 sPrimaryTag = GlobalClass.gsUnsortedFolderName;
             }
-            fileItem.destinationFolder = sPrimaryTag;
+            fileItem.sDestinationFolder = sPrimaryTag;
         }
 
         //Populate the ListView with selected file names from an earlier step:
@@ -182,7 +182,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
 
-            tvLine1.setText(alFileItems.get(position).name);
+            tvLine1.setText(alFileItems.get(position).sName);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             String sLine2 = dfDateFormat.format(alFileItems.get(position).dateLastModified);
 
@@ -191,39 +191,39 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             long durationInMilliseconds = -1L;
             //If mimeType is video or gif, get the duration:
             try {
-                if(alFileItems.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
-                    if (alFileItems.get(position).mimeType.startsWith("video")) {
-                        Uri docUri = Uri.parse(alFileItems.get(position).uri);
+                if(alFileItems.get(position).lVideoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                    if (alFileItems.get(position).sMimeType.startsWith("video")) {
+                        Uri docUri = Uri.parse(alFileItems.get(position).sUri);
                         Activity_Import.mediaMetadataRetriever.setDataSource(getContext(), docUri);
                         String time = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileItems.get(position).extension.contentEquals(".gif")) {
+                        if (alFileItems.get(position).sExtension.contentEquals(".gif")) {
                             //Get the duration of the gif image:
-                            Uri docUri = Uri.parse(alFileItems.get(position).uri);
+                            Uri docUri = Uri.parse(alFileItems.get(position).sUri);
                             Context activityContext = getContext();
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             durationInMilliseconds = gd.getDuration();
                         }
                     }
                     if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                        alFileItems.get(position).videoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
-                        alFileItems.get(position).videoTimeInMilliseconds = durationInMilliseconds;
+                        alFileItems.get(position).sVideoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
+                        alFileItems.get(position).lVideoTimeInMilliseconds = durationInMilliseconds;
                     }
                 }
 
-                if(alFileItems.get(position).videoTimeText.length() > 0){
+                if(alFileItems.get(position).sVideoTimeText.length() > 0){
                     //If the video time text has been defined, recall and display the time:
-                    sLine2 = sLine2 + "\tDuration: " + alFileItems.get(position).videoTimeText;
+                    sLine2 = sLine2 + "\tDuration: " + alFileItems.get(position).sVideoTimeText;
                 }
 
                 sLine2 = sLine2 + "\tFile size: " + GlobalClass.CleanStorageSize(
-                        alFileItems.get(position).sizeBytes,
+                        alFileItems.get(position).lSizeBytes,
                         GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
             }catch (Exception e){
                 Context activityContext = getContext();
-                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItems.get(position).name, Toast.LENGTH_LONG).show();
+                Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItems.get(position).sName, Toast.LENGTH_LONG).show();
             }
 
             tvLine2.setText(sLine2);
@@ -231,7 +231,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
-            ArrayList<Integer> aliTagIDs = alFileItems.get(position).prospectiveTags;
+            ArrayList<Integer> aliTagIDs = alFileItems.get(position).aliProspectiveTags;
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
@@ -246,18 +246,18 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             String sLine3 = sbTags.toString();
             sLine3 = sLine3 + "\n";
             if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-                sLine3 = sLine3 + "Destination path: " + alFileItems.get(position).destinationFolder;
+                sLine3 = sLine3 + "Destination path: " + alFileItems.get(position).sDestinationFolder;
             }
             tvLine3.setText(sLine3);
 
             //set the image type if folder or file
-            if(alFileItems.get(position).type.equals("folder")) {
+            if(alFileItems.get(position).sType.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
                 //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
 
                 //Get the Uri of the file and create/display a thumbnail:
-                String sUri = alFileItems.get(position).uri;
+                String sUri = alFileItems.get(position).sUri;
                 Uri uri = Uri.parse(sUri);
                 Glide.with(getContext()).
                         load(uri).

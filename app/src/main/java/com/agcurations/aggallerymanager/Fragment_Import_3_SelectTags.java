@@ -23,10 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -112,7 +109,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         final ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
         ArrayList<ItemClass_File> alfi = new ArrayList<>();
         for(ItemClass_File fi: Activity_Import.fileListCustomAdapter.alFileItems){
-            if(fi.isChecked){
+            if(fi.bIsChecked){
                 alfi.add(fi);
             }
         }
@@ -218,12 +215,12 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             String sLine1 = "";  //For Name
             if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) ||
                     (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)){
-                sLine1 = alFileItemsDisplay.get(position).name;
+                sLine1 = alFileItemsDisplay.get(position).sName;
             } else {
                 //If import type is comic...
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
                     //Get the title of the comic from the file name:
-                    sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).name);
+                    sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).sName);
                 }
             }
             tvLine1.setText(sLine1);
@@ -232,7 +229,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             String sLine2 = "";//For item details, including video duration, file size, comic page count, comic page file set size.
             /*DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             sLine2 = sLine2 + dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);*/
-            String sRequiredStorageSize = "Size: " + GlobalClass.CleanStorageSize(alFileItemsDisplay.get(position).sizeBytes, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
+            String sRequiredStorageSize = "Size: " + GlobalClass.CleanStorageSize(alFileItemsDisplay.get(position).lSizeBytes, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
             if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 //If type is video or gif, get the duration:
@@ -240,37 +237,37 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 long durationInMilliseconds = -1L;
                 //If mimeType is video or gif, get the duration:
                 try {
-                    if (alFileItemsDisplay.get(position).videoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
-                        if (alFileItemsDisplay.get(position).mimeType.startsWith("video") ||
-                                (alFileItemsDisplay.get(position).mimeType.equals("application/octet-stream") &&
-                                        alFileItemsDisplay.get(position).extension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid){
-                            Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
+                    if (alFileItemsDisplay.get(position).lVideoTimeInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                        if (alFileItemsDisplay.get(position).sMimeType.startsWith("video") ||
+                                (alFileItemsDisplay.get(position).sMimeType.equals("application/octet-stream") &&
+                                        alFileItemsDisplay.get(position).sExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid){
+                            Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                             Activity_Import.mediaMetadataRetriever.setDataSource(getContext(), docUri);
                             String time = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                             durationInMilliseconds = Long.parseLong(time);
                         } else { //if it's not a video file, check to see if it's a gif:
-                            if (alFileItemsDisplay.get(position).extension.contentEquals(".gif")) {
+                            if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
                                 //Get the duration of the gif image:
-                                Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
+                                Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                                 Context activityContext = getContext();
                                 pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                                 durationInMilliseconds = gd.getDuration();
                             }
                         }
                         if (durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                            alFileItemsDisplay.get(position).videoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
-                            alFileItemsDisplay.get(position).videoTimeInMilliseconds = durationInMilliseconds;
+                            alFileItemsDisplay.get(position).sVideoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
+                            alFileItemsDisplay.get(position).lVideoTimeInMilliseconds = durationInMilliseconds;
                         }
                     }
 
-                    if (alFileItemsDisplay.get(position).videoTimeText.length() > 0) {
+                    if (alFileItemsDisplay.get(position).sVideoTimeText.length() > 0) {
                         //If the video time text has been defined, recall and display the time:
-                        sDuration = "Duration: " + alFileItemsDisplay.get(position).videoTimeText;
+                        sDuration = "Duration: " + alFileItemsDisplay.get(position).sVideoTimeText;
                     }
 
                 } catch (Exception e) {
                     Context activityContext = getContext();
-                    Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).name, Toast.LENGTH_LONG).show();
+                    Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sName, Toast.LENGTH_LONG).show();
                 }
                 sLine2 = sDuration + "\t" + sRequiredStorageSize;
 
@@ -282,7 +279,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 //Get the file count for the comic:
                 String sComicPageCount = "";
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).name);
+                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sName);
                     int iComicFileCount = getFilterMatchCount(sNHComicID + ".+");
                     sComicPageCount = "File count: " + iComicFileCount + ".";
                     long lCombinedSize = getFilterMatchCombinedSize(sNHComicID + ".+");
@@ -300,7 +297,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
-            ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).prospectiveTags;
+            ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
@@ -314,13 +311,13 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             tvLine3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).type.equals("folder")) {
+            if(alFileItemsDisplay.get(position).sType.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
                 //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
 
                 //Get the Uri of the file and create/display a thumbnail:
-                String sUri = alFileItemsDisplay.get(position).uri;
+                String sUri = alFileItemsDisplay.get(position).sUri;
                 Uri uri = Uri.parse(sUri);
                 Glide.with(getContext()).
                         load(uri).
@@ -350,8 +347,8 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public void applyTagToItems(Integer iTagID){
             //Apply tag to items if the item does not already have the tag:
             for(ItemClass_File fm: alFileItemsDisplay){
-                if(!fm.prospectiveTags.contains(iTagID)){
-                    fm.prospectiveTags.add(iTagID);
+                if(!fm.aliProspectiveTags.contains(iTagID)){
+                    fm.aliProspectiveTags.add(iTagID);
                 }
             }
         }
@@ -359,14 +356,14 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public void removeTagFromItems(Integer iTagID){
             //Remove tag from items if the item has the tag:
             for(ItemClass_File fm: alFileItemsDisplay){
-                fm.prospectiveTags.remove(iTagID);
+                fm.aliProspectiveTags.remove(iTagID);
             }
         }
 
         public void applyFilter(String sFilter){
             alFileItemsDisplay.clear();
             for(ItemClass_File fm : alFileItems){
-                if(fm.name.matches(sFilter)){
+                if(fm.sName.matches(sFilter)){
                     alFileItemsDisplay.add(fm);
                 }
             }
@@ -375,7 +372,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public int getFilterMatchCount(String sFilter){
             int iPageCount = 0;
             for(ItemClass_File fm : alFileItems){
-                if(fm.name.matches(sFilter)){
+                if(fm.sName.matches(sFilter)){
                     iPageCount++;
                 }
             }
@@ -385,8 +382,8 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public long getFilterMatchCombinedSize(String sFilter){
             long lCombinedSize = 0;
             for(ItemClass_File fm : alFileItems){
-                if(fm.name.matches(sFilter)){
-                    lCombinedSize += fm.sizeBytes;
+                if(fm.sName.matches(sFilter)){
+                    lCombinedSize += fm.lSizeBytes;
                 }
             }
             return lCombinedSize;

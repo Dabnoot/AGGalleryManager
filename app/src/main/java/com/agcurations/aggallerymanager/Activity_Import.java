@@ -399,45 +399,45 @@ public class Activity_Import extends AppCompatActivity {
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
 
-            tvLine1.setText(alFileItemsDisplay.get(position).name);
+            tvLine1.setText(alFileItemsDisplay.get(position).sName);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             String sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
 
 
             //If type is video or gif, get the duration:
-            long durationInMilliseconds = alFileItemsDisplay.get(position).videoTimeInMilliseconds;
+            long durationInMilliseconds = alFileItemsDisplay.get(position).lVideoTimeInMilliseconds;
             //If mimeType is video or gif, get the duration:
             try {
                 if(durationInMilliseconds == -1L) { //If the time has not already been determined for the video file...
-                    if (alFileItemsDisplay.get(position).mimeType.startsWith("video")) {
-                        Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
+                    if (alFileItemsDisplay.get(position).sMimeType.startsWith("video")) {
+                        Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                         mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                         String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                         durationInMilliseconds = Long.parseLong(time);
                     } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileItemsDisplay.get(position).extension.contentEquals(".gif")) {
+                        if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
                             //Get the duration of the gif image:
-                            Uri docUri = Uri.parse(alFileItemsDisplay.get(position).uri);
+                            Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                             Context activityContext = getApplicationContext();
                             pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
                             durationInMilliseconds = gd.getDuration();
                         }
                     }
                     if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                        alFileItemsDisplay.get(position).videoTimeInMilliseconds = durationInMilliseconds;
+                        alFileItemsDisplay.get(position).lVideoTimeInMilliseconds = durationInMilliseconds;
                     }
                 }
                 if(durationInMilliseconds > -1L){
-                    alFileItemsDisplay.get(position).videoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
+                    alFileItemsDisplay.get(position).sVideoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
                 }
 
-                if(alFileItemsDisplay.get(position).videoTimeText.length() > 0){
+                if(alFileItemsDisplay.get(position).sVideoTimeText.length() > 0){
                     //If the video time text has been defined, recall and display the time:
-                    sLine2 = sLine2 + "\tDuration: " + alFileItemsDisplay.get(position).videoTimeText;
+                    sLine2 = sLine2 + "\tDuration: " + alFileItemsDisplay.get(position).sVideoTimeText;
                 }
 
             }catch (Exception e){
-                Toast.makeText(getApplicationContext(), e.getMessage() + "; File: " + alFileItemsDisplay.get(position).name, Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sName, Toast.LENGTH_LONG).show();
             }
 
             tvLine2.setText(sLine2);
@@ -445,7 +445,7 @@ public class Activity_Import extends AppCompatActivity {
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
-            ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).prospectiveTags;
+            ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
 
             if(aliTagIDs != null){
                 if(aliTagIDs.size() > 0) {
@@ -459,11 +459,11 @@ public class Activity_Import extends AppCompatActivity {
             tvLine3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).type.equals("folder")) {
+            if(alFileItemsDisplay.get(position).sType.equals("folder")) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
                 //Get the Uri of the file and create/display a thumbnail:
-                String sUri = alFileItemsDisplay.get(position).uri;
+                String sUri = alFileItemsDisplay.get(position).sUri;
                 Uri uri = Uri.parse(sUri);
                 Glide.with(getContext()).
                         load(uri).
@@ -471,7 +471,7 @@ public class Activity_Import extends AppCompatActivity {
             }
 
 
-            cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).isChecked);
+            cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).bIsChecked);
 
             //Expand the width of the listItem to the width of the ListView.
             //  This makes it so that the listItem responds to the click even when
@@ -486,7 +486,7 @@ public class Activity_Import extends AppCompatActivity {
                     CheckBox checkBox_StorageItemSelect = view.findViewById(R.id.checkBox_StorageItemSelect);
                     boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
                     checkBox_StorageItemSelect.setChecked(bNewCheckedState);
-                    alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
+                    alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
                     toggleItemChecked(position, bNewCheckedState);
 
                 }
@@ -501,7 +501,7 @@ public class Activity_Import extends AppCompatActivity {
                 public void onClick(View view) {
                     CheckBox checkBox_StorageItemSelect = (CheckBox) view;
                     boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
-                    alFileItemsDisplay.get(position).isChecked = bNewCheckedState;
+                    alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
                     toggleItemChecked(position, bNewCheckedState);
 
                 }
@@ -514,13 +514,13 @@ public class Activity_Import extends AppCompatActivity {
                 public void onClick(View view) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
                     builder.setTitle("Delete Item");
-                    builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).name);
+                    builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).sName);
                     //builder.setIcon(R.drawable.ic_launcher);
                     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.dismiss();
                             Uri uriSourceFile;
-                            uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).uri);
+                            uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
                             DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
                             if(dfSource != null) {
@@ -537,7 +537,7 @@ public class Activity_Import extends AppCompatActivity {
                             ItemClass_File fiSource;
                             for(int i = 0; i < alFileItems.size(); i++){
                                 fiSource = alFileItems.get(i);
-                                if(fiSelected.name.equals(fiSource.name)){
+                                if(fiSelected.sName.equals(fiSource.sName)){
                                     alFileItems.remove(i);
                                     break;
                                 }
@@ -558,9 +558,9 @@ public class Activity_Import extends AppCompatActivity {
 
             //If the file item is video mimeType, set the preview button visibility to visible:
             Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
-            boolean bItemIsVideo = alFileItemsDisplay.get(position).mimeType.startsWith("video")  ||
-                    (alFileItemsDisplay.get(position).mimeType.equals("application/octet-stream") &&
-                            alFileItemsDisplay.get(position).extension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
+            boolean bItemIsVideo = alFileItemsDisplay.get(position).sMimeType.startsWith("video")  ||
+                    (alFileItemsDisplay.get(position).sMimeType.equals("application/octet-stream") &&
+                            alFileItemsDisplay.get(position).sExtension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
 
             //button_MediaPreview.setVisibility(Button.VISIBLE);
             button_MediaPreview.setOnClickListener(new View.OnClickListener(){
@@ -585,8 +585,8 @@ public class Activity_Import extends AppCompatActivity {
                     //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
                     TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
                     for(ItemClass_File fi: alFileItems){ //Loop through file items in this listView.
-                        if(fi.isChecked){               //If the user has selected this fileItem...
-                            for(Integer iTagID: fi.prospectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
+                        if(fi.bIsChecked){               //If the user has selected this fileItem...
+                            for(Integer iTagID: fi.aliProspectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
                                 String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
                                 tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
                             }
@@ -625,12 +625,12 @@ public class Activity_Import extends AppCompatActivity {
 
                             //Sort the files for this comic by putting them into a TreeMap:
                             TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
-                            String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).name);
+                            String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sName);
                             String sComicIDCandidate;
                             for (ItemClass_File icf : alFileItems) {
-                                sComicIDCandidate = Service_Import.GetNHComicID(icf.name);
+                                sComicIDCandidate = Service_Import.GetNHComicID(icf.sName);
                                 if (sComicIDCandidate.equals(sComicID)) {
-                                    tmFiles.put(icf.name, icf);
+                                    tmFiles.put(icf.sName, icf);
                                 }
                             }
 
@@ -673,11 +673,11 @@ public class Activity_Import extends AppCompatActivity {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
                     //If the user is importing comic pages downloaded by the NHComicDownloader, find
                     // all files with the comic ID and apply the checked state:
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).name);
+                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).sName);
                     String sNHComicFilter = sNHComicID + ".+";
                     for (ItemClass_File fi : alFileItems) {
-                        if (fi.name.matches(sNHComicFilter)) {
-                            fi.isChecked = bNewCheckedState;
+                        if (fi.sName.matches(sNHComicFilter)) {
+                            fi.bIsChecked = bNewCheckedState;
                         }
                     }
                 }
@@ -686,8 +686,8 @@ public class Activity_Import extends AppCompatActivity {
                 //  The user will have clicked an item in alFileListDisplay, not alFileList.
                 //  alFileListDisplay may be a subset of alFileList.
                 for(ItemClass_File fi: alFileItems){
-                    if(fi.name.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).name)){
-                        fi.isChecked = bNewCheckedState;
+                    if(fi.sName.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).sName)){
+                        fi.bIsChecked = bNewCheckedState;
                         break; //Break, as only one item should match.
                     }
                 }
@@ -708,7 +708,7 @@ public class Activity_Import extends AppCompatActivity {
         public void recalcButtonNext(){
             boolean bEnableNextButton = false;
             for(ItemClass_File fi: alFileItems){
-                if(fi.isChecked){
+                if(fi.bIsChecked){
                     bEnableNextButton = true;
                 }
             }
@@ -731,9 +731,9 @@ public class Activity_Import extends AppCompatActivity {
             for(ItemClass_File icfIncoming: icfIncomingFIs) {
                 if(icfIncoming.bPreviewTagUpdate) {
                     for (ItemClass_File icfUpdate : alFileItems) {
-                        if (icfUpdate.uri.contentEquals(icfIncoming.uri)) {
-                            icfUpdate.prospectiveTags = icfIncoming.prospectiveTags;
-                            icfUpdate.isChecked = true;
+                        if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
+                            icfUpdate.aliProspectiveTags = icfIncoming.aliProspectiveTags;
+                            icfUpdate.bIsChecked = true;
                             bFoundAndUpdated = true;
                             break;
                         }
@@ -770,11 +770,11 @@ public class Activity_Import extends AppCompatActivity {
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
             for(ItemClass_File fiDisplayed: alFileItemsDisplay){
-                fiDisplayed.isChecked = bSelectAllSelected;
+                fiDisplayed.bIsChecked = bSelectAllSelected;
                 //Translate the selected item state to alFileList:
                 for(ItemClass_File fi: alFileItems){
-                    if(fi.name.contentEquals(fiDisplayed.name)){
-                        fi.isChecked = bSelectAllSelected;
+                    if(fi.sName.contentEquals(fiDisplayed.sName)){
+                        fi.bIsChecked = bSelectAllSelected;
                         break;
                     }
                 }
@@ -785,7 +785,7 @@ public class Activity_Import extends AppCompatActivity {
         public void applySearch(String sSearch){
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
-                if(fi.name.contains(sSearch)){
+                if(fi.sName.contains(sSearch)){
                     alFileItemsDisplay.add(fi);
                 }
             }
@@ -794,7 +794,7 @@ public class Activity_Import extends AppCompatActivity {
         public void applyFilter(String sFilter){
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
-                if(fi.name.matches(sFilter)){
+                if(fi.sName.matches(sFilter)){
                     alFileItemsDisplay.add(fi);
                 }
             }
@@ -810,8 +810,8 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file name ascending:
         private class FileNameAscComparator implements Comparator<ItemClass_File> {
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
-                String FileName1 = fi1.name.toUpperCase();
-                String FileName2 = fi2.name.toUpperCase();
+                String FileName1 = fi1.sName.toUpperCase();
+                String FileName2 = fi2.sName.toUpperCase();
 
                 //ascending order
                 return FileName1.compareTo(FileName2);
@@ -821,8 +821,8 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file name descending:
         private class FileNameDescComparator implements Comparator<ItemClass_File> {
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
-                String FileName1 = fi1.name.toUpperCase();
-                String FileName2 = fi2.name.toUpperCase();
+                String FileName1 = fi1.sName.toUpperCase();
+                String FileName2 = fi2.sName.toUpperCase();
 
                 //descending order
                 return FileName2.compareTo(FileName1);
@@ -857,8 +857,8 @@ public class Activity_Import extends AppCompatActivity {
         private class FileDurationAscComparator implements Comparator<ItemClass_File> {
 
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
-                Long FileDuration1 = fi1.videoTimeInMilliseconds;
-                Long FileDuration2 = fi2.videoTimeInMilliseconds;
+                Long FileDuration1 = fi1.lVideoTimeInMilliseconds;
+                Long FileDuration2 = fi2.lVideoTimeInMilliseconds;
 
                 //ascending order
                 return FileDuration1.compareTo(FileDuration2);
@@ -869,8 +869,8 @@ public class Activity_Import extends AppCompatActivity {
         private class FileDurationDescComparator implements Comparator<ItemClass_File> {
 
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
-                Long FileDuration1 = fi1.videoTimeInMilliseconds;
-                Long FileDuration2 = fi1.videoTimeInMilliseconds;
+                Long FileDuration1 = fi1.lVideoTimeInMilliseconds;
+                Long FileDuration2 = fi1.lVideoTimeInMilliseconds;
 
                 //descending order
                 return FileDuration2.compareTo(FileDuration1);

@@ -350,7 +350,17 @@ public class Service_Import extends IntentService {
 
                         //create the file model and initialize:
                         //Don't detect the duration of video files here. It could take too much time.
-                        ItemClass_File fileItem = new ItemClass_File(fileType, docName, fileExtension, lFileSize, dateLastModified, sWidth, sHeight, false, sUri, mimeType, lDurationInMilliseconds);
+                        ItemClass_File fileItem = new ItemClass_File(fileType, docName);
+                        fileItem.sExtension = fileExtension;
+                        fileItem.lSizeBytes = lFileSize;
+                        fileItem.dateLastModified = dateLastModified;
+                        fileItem.sWidth = sWidth;
+                        fileItem.sHeight = sHeight;
+                        fileItem.sUri = sUri;
+                        fileItem.sMimeType = mimeType;
+                        fileItem.lVideoTimeInMilliseconds = lDurationInMilliseconds;
+
+
 
                         //Add the file model to the ArrayList:
                         alFileList.add(fileItem);
@@ -396,7 +406,7 @@ public class Service_Import extends IntentService {
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
-            lTotalImportSize = lTotalImportSize + fi.sizeBytes;
+            lTotalImportSize = lTotalImportSize + fi.lSizeBytes;
         }
         lProgressDenominator = lTotalImportSize;
 
@@ -412,13 +422,13 @@ public class Service_Import extends IntentService {
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
 
-            if(fileItem.destinationFolder.equals("")) {
-                fileItem.destinationFolder = GlobalClass.gsUnsortedFolderName;
+            if(fileItem.sDestinationFolder.equals("")) {
+                fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }
 
             File fDestination = new File(
                     globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                            fileItem.destinationFolder);
+                            fileItem.sDestinationFolder);
 
             if (!fDestination.exists()) {
                 if (!fDestination.mkdir()) {
@@ -446,7 +456,7 @@ public class Service_Import extends IntentService {
             InputStream inputStream;
             OutputStream outputStream;
 
-            uriSourceFile = Uri.parse(fileItem.uri);
+            uriSourceFile = Uri.parse(fileItem.sUri);
             DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
             if (dfSource == null) continue;
             if (dfSource.getName() == null) continue;
@@ -459,7 +469,7 @@ public class Service_Import extends IntentService {
                 } else {
                     sLogLine = sLogLine + "copy ";
                 }
-                sLogLine = sLogLine + "of file " + fileItem.name + " to destination...";
+                sLogLine = sLogLine + "of file " + fileItem.sName + " to destination...";
                 BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -569,13 +579,13 @@ public class Service_Import extends IntentService {
                 ciNew.iMediaCategory = iMediaCategory;
                 ciNew.sItemID = String.valueOf(iNextRecordId);
                 ciNew.sFilename = sFileName;
-                ciNew.lSize = fileItem.sizeBytes;
-                ciNew.lDuration_Milliseconds = fileItem.videoTimeInMilliseconds;
-                ciNew.sDuration_Text = fileItem.videoTimeText;
-                ciNew.iWidth = Integer.parseInt(fileItem.width);
-                ciNew.iHeight = Integer.parseInt(fileItem.height);
-                ciNew.sFolder_Name = fileItem.destinationFolder;
-                ciNew.sTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags, ",");
+                ciNew.lSize = fileItem.lSizeBytes;
+                ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
+                ciNew.sDuration_Text = fileItem.sVideoTimeText;
+                ciNew.iWidth = Integer.parseInt(fileItem.sWidth);
+                ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
+                ciNew.sFolder_Name = fileItem.sDestinationFolder;
+                ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;
 
@@ -628,7 +638,7 @@ public class Service_Import extends IntentService {
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
-            lTotalImportSize = lTotalImportSize + fi.sizeBytes;
+            lTotalImportSize = lTotalImportSize + fi.lSizeBytes;
         }
         lProgressDenominator = lTotalImportSize;
 
@@ -645,13 +655,13 @@ public class Service_Import extends IntentService {
 
         //If NH_Comic_Downloaded, loop and find all of the comic IDs:
         for(ItemClass_File fileItem: alFileList) {
-            if(fileItem.name.matches(GlobalClass.gsNHComicCoverPageFilter)){
-                String sComicID = GetNHComicID(fileItem.name);
-                lProgressDenominator = lProgressDenominator - fileItem.sizeBytes; //We don't copy over the cover page.
+            if(fileItem.sName.matches(GlobalClass.gsNHComicCoverPageFilter)){
+                String sComicID = GetNHComicID(fileItem.sName);
+                lProgressDenominator = lProgressDenominator - fileItem.lSizeBytes; //We don't copy over the cover page.
                 String sRecordID = iNextRecordId + "";
                 iNextRecordId++;
-                String sComicName = GetNHComicNameFromCoverFile(fileItem.name);
-                String sComicTags = GlobalClass.formDelimitedString(fileItem.prospectiveTags, ",");
+                String sComicName = GetNHComicNameFromCoverFile(fileItem.sName);
+                String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 if(tmNHComicIDs.containsKey(sComicID)){
                     //If this is merely a duplicate comic selected during the import, not if it already exists in the catalog.
                     //If it already exists in the catalog, it is on the user to resolve.
@@ -709,36 +719,36 @@ public class Service_Import extends IntentService {
 
             for (ItemClass_File fileItem : alFileList) {
 
-                if(fileItem.name.matches("^" + tmEntryNHComic.getKey() + "_Cover.+")) {
+                if(fileItem.sName.matches("^" + tmEntryNHComic.getKey() + "_Cover.+")) {
                     //Preserve the cover page file item so that it can be deleted at the after the
                     // other files are imported. No particular reason for saving this until the end.
                     icfCoverPageFile = fileItem;
 
                 }
 
-                if(fileItem.name.matches("^" + tmEntryNHComic.getKey() + "_Page.+")) {
+                if(fileItem.sName.matches("^" + tmEntryNHComic.getKey() + "_Page.+")) {
 
                     //Make sure that it is not a duplicate page.
-                    if (!isPageDuplicate(fileItem.name)) {
+                    if (!isPageDuplicate(fileItem.sName)) {
                         ciNewComic.iComic_File_Count++;
-                        String sNewFilename = fileItem.name;
+                        String sNewFilename = fileItem.sName;
                         sNewFilename = sNewFilename.substring(sNewFilename.indexOf("_")); //Get rid of the NH comic ID.
                         sNewFilename = ciNewComic.sItemID + sNewFilename; //Add on the sequenced comic record ID.
                         sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
-                        if (fileItem.name.contains("_Page_001")) {
+                        if (fileItem.sName.contains("_Page_001")) {
                             //Set the Thumbnail file to the first page (which is a duplicate of the
                             // cover page but of a different name):
                             ciNewComic.sFilename = sNewFilename;
                             ciNewComic.sThumbnail_File = sNewFilename;
                         }
-                        ciNewComic.lSize += fileItem.sizeBytes;
+                        ciNewComic.lSize += fileItem.lSizeBytes;
 
                         Uri uriSourceFile;
                         String sLogLine;
                         InputStream inputStream;
                         OutputStream outputStream;
 
-                        uriSourceFile = Uri.parse(fileItem.uri);
+                        uriSourceFile = Uri.parse(fileItem.sUri);
                         DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
                         try {
                             //Write next behavior to the screen log:
@@ -748,7 +758,7 @@ public class Service_Import extends IntentService {
                             } else {
                                 sLogLine = sLogLine + "copy ";
                             }
-                            sLogLine = sLogLine + "of file " + fileItem.name + " to destination...";
+                            sLogLine = sLogLine + "of file " + fileItem.sName + " to destination...";
                             BroadcastProgress(true, sLogLine,
                                     false, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -816,7 +826,7 @@ public class Service_Import extends IntentService {
 
                     } else {
                         //NHComic page is a duplicate.
-                        problemNotificationConfig("File " + fileItem.name + " appears to be a duplicate. Skipping import of this file.\n");
+                        problemNotificationConfig("File " + fileItem.sName + " appears to be a duplicate. Skipping import of this file.\n");
                     }
 
                 } //End if match with Page regex containing ComicID.
@@ -834,7 +844,7 @@ public class Service_Import extends IntentService {
                     Uri uriSourceFile;
                     String sLogLine;
 
-                    uriSourceFile = Uri.parse(icfCoverPageFile.uri);
+                    uriSourceFile = Uri.parse(icfCoverPageFile.sUri);
                     DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
                     if (!dfSource.delete()) {
