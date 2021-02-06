@@ -212,7 +212,7 @@ public class Service_CatalogViewer extends IntentService {
 
                 //Append all of the field data and search the resulting
                 //  string for a filter match:
-                sKey_RecordText = GlobalClass.getCatalogRecordString(entry.getValue())[1];
+                sKey_RecordText = globalClass.getCatalogRecordString(entry.getValue())[1];
                 sKey_RecordText = sKey_RecordText.toLowerCase();
 
                 if (!sKey_RecordText.contains(sFilterText_LowerCase)) {

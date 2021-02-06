@@ -388,7 +388,7 @@ public class GlobalClass extends Application {
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
 
-    public static String[] getCatalogRecordString(ItemClass_CatalogItem ci){
+    public String[] getCatalogRecordString(ItemClass_CatalogItem ci){
         // Return value:
         // [0] - Header
         // [1] - Human-readable for searching text
@@ -434,7 +434,11 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + JumbleFileName(ci.sThumbnail_File); //Name of the file used as the thumbnail for a video or comic
         sReadableData = sReadableData + "\t" + ci.dDatetime_Import;                //Date of import. Used for sorting if desired
         sReadableData = sReadableData + "\t" + ci.dDatetime_Last_Viewed_by_User;   //Date of last read by user. Used for sorting if desired
-        sReadableData = sReadableData + "\t" + ci.sTags;                           //Tags given to the video, image, or comic
+
+        String sTags = getTagTextsFromIDs(getIntegerArrayFromString(ci.sTags, ","), ci.iMediaCategory).toString();
+        sReadableData = sReadableData + "\t" + sTags;                              //Tags given to the video, image, or comic
+
+
         sReadableData = sReadableData + "\t" + ci.iHeight;                         //Video or image dimension/resolution
         sReadableData = sReadableData + "\t" + ci.iWidth;                          //Video or image dimension/resolution
         sReadableData = sReadableData + "\t" + ci.lDuration_Milliseconds;          //Duration of video in milliseconds
@@ -1276,7 +1280,7 @@ public class GlobalClass extends Application {
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     public String getTagRecordString(ItemClass_Tag ict){
-
+        //For writing tags to a tags file.
         String sTagRecord =
                 JumbleStorageText(ict.TagID.toString()) + "\t" +
                 JumbleStorageText(ict.TagText);
@@ -1638,6 +1642,12 @@ public class GlobalClass extends Application {
         //  selects which files to import, and may wish to sort by video duration. If the user
         //  does this without this option turned on, the sort will be inaccurate.
         //  This deep analysis takes longer.
+
+    public final static int iComicFolderImportMaxPageSkip = 2;
+        //The program attempts to recognize page numbers in filenames during comic import via folder.
+        //  The program has to recognize the page numbering pattern. This factor allows some leniency
+        //  if the user is missing pages from their comic folder - perhaps a first page, or a middle
+        //  page. There is no way to determine if end pages are missing.
 
 
 }
