@@ -1390,6 +1390,7 @@ public class GlobalClass extends Application {
     public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){
         String sTagText = "[Tag ID " + iTagID + " not found]";
 
+        //todo: instead of looping through items, use TreeMap.getValue or TreeMap.getKey if it exists.
         for(Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             Integer iRefTag = entry.getValue().TagID;
             if(iRefTag.equals(iTagID)){
