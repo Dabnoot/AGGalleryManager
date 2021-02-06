@@ -271,7 +271,7 @@ public class Service_Main extends IntentService {
 
                             //Write the activity_comic_details_header line to the file:
                             ItemClass_CatalogItem ciFirst = new ItemClass_CatalogItem();
-                            String[] sTemp = GlobalClass.getCatalogRecordString(ciFirst);
+                            String[] sTemp = globalClass.getCatalogRecordString(ciFirst);
                             fwCatalogContentsFile.append(sTemp[0]); //Write the header.
                             fwCatalogContentsFile.append("\n");
 

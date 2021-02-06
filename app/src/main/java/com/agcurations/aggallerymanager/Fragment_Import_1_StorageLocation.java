@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,8 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
@@ -119,6 +122,12 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         button_SelectFolder.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+                if(textView_FileAnalysisDebugLog != null){
+                    textView_FileAnalysisDebugLog.setText("");
+                }
+
                 // Allow the user to choose a directory using the system's file picker.
                 Intent intent_GetImportFromFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 
@@ -138,6 +147,13 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
         gTextView_FileAnalysisProgressBarText.setText("0/0");
         gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+
+
+        TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+        if(textView_FileAnalysisDebugLog != null){
+            textView_FileAnalysisDebugLog.setMovementMethod(new ScrollingMovementMethod());
+        }
+
     }
 
 
@@ -158,6 +174,13 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
             gLinearLayout_Progress.setVisibility(View.INVISIBLE);
             gbutton_FolderSelectComplete.setEnabled(false);
+
+            TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+            if(textView_FileAnalysisDebugLog != null){
+                textView_FileAnalysisDebugLog.setText("");
+                textView_FileAnalysisDebugLog.setVisibility(View.INVISIBLE);
+            }
+
         }
 
 
@@ -259,7 +282,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         Service_Import.startActionGetDirectoryContents(getContext(),
                                 Activity_Import.guriImportTreeURI,
                                 viewModelImportActivity.iImportMediaCategory,
-                                iFilesOrFolders);
+                                iFilesOrFolders,
+                                viewModelImportActivity.iComicImportSource);
 
 
                     }
@@ -289,7 +313,13 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
-                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+                if(textView_FileAnalysisDebugLog != null){
+                    textView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
+                    textView_FileAnalysisDebugLog.append(sMessage + "\n");
+                } else {
+                    Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                }
             } else {
 
                 //Check to see if this is a response to request to get directory contents:

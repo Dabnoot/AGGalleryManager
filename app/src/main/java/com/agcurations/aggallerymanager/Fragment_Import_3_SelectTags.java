@@ -184,11 +184,16 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             super(context, resource);
             alFileItems = new ArrayList<>(alfi);
 
-            if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
-                    (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER)) {
-                //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
-                alFileItemsDisplay = new ArrayList<>(); //initialize.
-                applyFilter("^\\d{5,6}_Cover.+");
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                    //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
+                    alFileItemsDisplay = new ArrayList<>(); //initialize.
+                    applyFilter("^\\d{5,6}_Cover.+");
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                    //If importing comics and importing folders as the source, filter on the cover pages:
+                    alFileItemsDisplay = new ArrayList<>(); //initialize.
+                    applyFilterByType(ItemClass_File.TYPE_FOLDER);
+                }
             } else {
                 alFileItemsDisplay = new ArrayList<>(alfi);
             }
@@ -206,24 +211,24 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 row = inflater.inflate(R.layout.listview_fileitem, parent, false);
             }
 
-            ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
-            TextView tvLine1 =  row.findViewById(R.id.textView_Line1);  //For Name
-            TextView tvLine2 = row.findViewById(R.id.textView_Line2);  //For item details
-            TextView tvLine3 = row.findViewById(R.id.textView_Line3);  //For Tags
+            ImageView imageView_StorageItemIcon =  row.findViewById(R.id.imageView_StorageItemIcon);
+            TextView textView_Line1 =  row.findViewById(R.id.textView_Line1);  //For Name
+            TextView textView_Line2 = row.findViewById(R.id.textView_Line2);  //For item details
+            TextView textView_Line3 = row.findViewById(R.id.textView_Line3);  //For Tags
 
 
             String sLine1 = "";  //For Name
             if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) ||
                     (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)){
-                sLine1 = alFileItemsDisplay.get(position).sName;
+                sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
             } else {
                 //If import type is comic...
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
                     //Get the title of the comic from the file name:
-                    sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).sName);
+                    sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).sFileOrFolderName);
                 }
             }
-            tvLine1.setText(sLine1);
+            textView_Line1.setText(sLine1);
 
 
             String sLine2 = "";//For item details, including video duration, file size, comic page count, comic page file set size.
@@ -267,7 +272,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
 
                 } catch (Exception e) {
                     Context activityContext = getContext();
-                    Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sName, Toast.LENGTH_LONG).show();
+                    Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sFileOrFolderName, Toast.LENGTH_LONG).show();
                 }
                 sLine2 = sDuration + "\t" + sRequiredStorageSize;
 
@@ -279,17 +284,24 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 //Get the file count for the comic:
                 String sComicPageCount = "";
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sName);
+                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
                     int iComicFileCount = getFilterMatchCount(sNHComicID + ".+");
                     sComicPageCount = "File count: " + iComicFileCount + ".";
                     long lCombinedSize = getFilterMatchCombinedSize(sNHComicID + ".+");
+                    sRequiredStorageSize = "Comic size: " + GlobalClass.CleanStorageSize(lCombinedSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE) + ".";
+
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                    String sUriParent = alFileItemsDisplay.get(position).sUri;
+                    int iComicFileCount = getParentUriChildCount(sUriParent);
+                    sComicPageCount = "File count: " + iComicFileCount + ".";
+                    long lCombinedSize = getParentUriChildCombinedSize(sUriParent);
                     sRequiredStorageSize = "Comic size: " + GlobalClass.CleanStorageSize(lCombinedSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE) + ".";
                 }
 
                 sLine2 = sRequiredStorageSize + "\t" + sComicPageCount;
             }
 
-            tvLine2.setText(sLine2);
+            textView_Line2.setText(sLine2);
 
 
 
@@ -308,20 +320,31 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     }
                 }
             }
-            tvLine3.setText(sbTags.toString());
+            textView_Line3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).sType.equals("folder")) {
-                ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
+            if(alFileItemsDisplay.get(position).iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER){
+                if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
+                    (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER)){
+                    //Get the Uri of the file and create/display a thumbnail:
+                    String sUri = alFileItemsDisplay.get(position).sUriThumbnailFile;
+                    Uri uri = Uri.parse(sUri);
+                    Glide.with(getContext()).
+                            load(uri).
+                            into(imageView_StorageItemIcon);
+                } else {
+                    //If this is a folder item and we are not importing comics by the folder, display a simple folder icon.
+                    //  If we are here, I think there is an mistake in logic somewhere.
+                    imageView_StorageItemIcon.setImageResource(R.drawable.baseline_folder_white_18dp);
+                }
             } else {
-                //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
 
                 //Get the Uri of the file and create/display a thumbnail:
                 String sUri = alFileItemsDisplay.get(position).sUri;
                 Uri uri = Uri.parse(sUri);
                 Glide.with(getContext()).
                         load(uri).
-                        into(ivFileType);
+                        into(imageView_StorageItemIcon);
             }
             
             
@@ -363,8 +386,17 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public void applyFilter(String sFilter){
             alFileItemsDisplay.clear();
             for(ItemClass_File fm : alFileItems){
-                if(fm.sName.matches(sFilter)){
+                if(fm.sFileOrFolderName.matches(sFilter)){
                     alFileItemsDisplay.add(fm);
+                }
+            }
+        }
+
+        public void applyFilterByType(int iTypeFileOrFolder){
+            alFileItemsDisplay.clear();
+            for(ItemClass_File fi : alFileItems){
+                if(fi.iTypeFileOrFolder ==iTypeFileOrFolder){
+                    alFileItemsDisplay.add(fi);
                 }
             }
         }
@@ -372,7 +404,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public int getFilterMatchCount(String sFilter){
             int iPageCount = 0;
             for(ItemClass_File fm : alFileItems){
-                if(fm.sName.matches(sFilter)){
+                if(fm.sFileOrFolderName.matches(sFilter)){
                     iPageCount++;
                 }
             }
@@ -382,7 +414,27 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public long getFilterMatchCombinedSize(String sFilter){
             long lCombinedSize = 0;
             for(ItemClass_File fm : alFileItems){
-                if(fm.sName.matches(sFilter)){
+                if(fm.sFileOrFolderName.matches(sFilter)){
+                    lCombinedSize += fm.lSizeBytes;
+                }
+            }
+            return lCombinedSize;
+        }
+
+        public int getParentUriChildCount(String sUriParent){
+            int iChildCount = 0;
+            for(ItemClass_File fm : alFileItems){
+                if(fm.sUriParent.matches(sUriParent)){
+                    iChildCount++;
+                }
+            }
+            return iChildCount;
+        }
+
+        public long getParentUriChildCombinedSize(String sUriParent){
+            long lCombinedSize = 0;
+            for(ItemClass_File fm : alFileItems){
+                if(fm.sUriParent.matches(sUriParent)){
                     lCombinedSize += fm.lSizeBytes;
                 }
             }

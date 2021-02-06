@@ -1,4 +1,4 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="6dip">
@@ -9,22 +9,30 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@null"
-        android:buttonTint="@color/colorGrey1"/>
+        android:buttonTint="@color/colorGrey1"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_alignBottom="@id/linearLayout_TextHolder"/>
 
     <ImageView
         android:id="@+id/imageView_StorageItemIcon"
         android:layout_width="100dp"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:contentDescription="Thumbnail icon"
-        android:src="@drawable/baseline_file_white_18dp" />
+        android:src="@drawable/baseline_file_white_18dp"
+        android:layout_toEndOf="@id/checkBox_StorageItemSelect"
+        android:layout_centerVertical="true"/>
 
     <LinearLayout
+        android:id="@+id/linearLayout_TextHolder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:orientation="vertical"
         android:layout_gravity="center"
-        android:layout_weight="1">
+        android:layout_toEndOf="@id/imageView_StorageItemIcon"
+        android:layout_toStartOf="@id/button_MediaPreview"
+        android:layout_centerVertical="true">
 
         <TextView
             android:id="@+id/textView_Line1"
@@ -60,13 +68,17 @@
         android:text="Preview"
         android:textSize="16sp"
         android:layout_marginEnd="20dp"
-        android:backgroundTint="@color/colorBlackboardRed" />
+        android:backgroundTint="@color/colorBlackboardRed"
+        android:layout_toStartOf="@id/button_Delete"
+        android:layout_centerVertical="true"/>
 
     <Button
         android:id="@+id/button_Delete"
         android:layout_width="70dp"
         android:layout_height="67dp"
         android:layout_marginEnd="30dp"
-        android:drawableLeft="@drawable/baseline_delete_white_18dp"/>
+        android:drawableLeft="@drawable/baseline_delete_white_18dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"/>
 
-</LinearLayout>
+</RelativeLayout>

@@ -151,22 +151,23 @@ public class Activity_Import extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            boolean bError;
-
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
-            if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
-                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-            } else {
+            boolean bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
+            if(sReceiver == Service_Import.RECEIVER_ACTIVITY_IMPORT) {
+                if (bError) {
+                    String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                    Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                } else {
 
-                //Check to see if this is a response to request to get directory contents:
-                boolean bGetDirContentsResponse = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
-                if(bGetDirContentsResponse) {
-                    ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
-                    fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
+                    //Check to see if this is a response to request to get directory contents:
+                    boolean bGetDirContentsResponse = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
+                    if (bGetDirContentsResponse) {
+                        ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
+                        fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
+                    }
+
                 }
-
             }
 
         }
@@ -256,7 +257,7 @@ public class Activity_Import extends AppCompatActivity {
                                         // as it will slide past the COMIC_SOURCE fragment, which
                                         // should not be shown for this selection.
         } else {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE); //Prompt user to select comic source.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE, false); //Prompt user to select comic source.
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
@@ -265,17 +266,25 @@ public class Activity_Import extends AppCompatActivity {
         RadioButton radioButton_ComicSourceNHDownloader = findViewById(R.id.radioButton_ComicSourceNHDownloader);
         RadioButton radioButton_ComicSourceFolder = findViewById(R.id.radioButton_ComicSourceFolder);
 
+        int iNewComicSource;
+
         if (radioButton_ComicSourceNHDownloader.isChecked()){
-            viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER;
+            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER;
         } else if (radioButton_ComicSourceFolder.isChecked()){
-            viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
+            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
         } else {
-            viewModelImportActivity.iComicImportSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
         }
+
+        if(iNewComicSource != viewModelImportActivity.iComicImportSource){
+            viewModelImportActivity.bImportCategoryChange = true;
+            viewModelImportActivity.iComicImportSource = iNewComicSource;
+        }
+
 
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
         } else { //Allow user to import web address of a comic to import.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS, false);
         }
@@ -285,10 +294,10 @@ public class Activity_Import extends AppCompatActivity {
     public void buttonNextClick_StorageLocation(View v){
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
         } else {
             if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
-                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
             }
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
@@ -306,7 +315,7 @@ public class Activity_Import extends AppCompatActivity {
 
             //Go to the import folder selection fragment:
             if (viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS);
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
             } else {
                 if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
                     ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_WEB_CONFIRMATION, false);
@@ -319,12 +328,12 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS);
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD);
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
@@ -337,12 +346,12 @@ public class Activity_Import extends AppCompatActivity {
             viewModelImportActivity.iImportMethod = ViewModel_ImportActivity.IMPORT_METHOD_COPY;
         }
 
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION);
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_ImportConfirm(View v){
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT);
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
@@ -372,11 +381,17 @@ public class Activity_Import extends AppCompatActivity {
             super(context, textViewResourceId, alfi);
             alFileItems = new ArrayList<>(alfi);
 
-            if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
-                    (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER)) {
-                //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
-                alFileItemsDisplay = new ArrayList<>(); //initialize.
-                applyFilter(GlobalClass.gsNHComicCoverPageFilter);
+            if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                    //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
+                    alFileItemsDisplay = new ArrayList<>(); //initialize.
+                    applyFilter(GlobalClass.gsNHComicCoverPageFilter);
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                    //If importing comics and importing folder files as the source, filter on the folder items:
+                    alFileItemsDisplay = new ArrayList<>(); //initialize.
+                    applyFilterByType(ItemClass_File.TYPE_FOLDER);
+                }
+
             } else {
                 alFileItemsDisplay = new ArrayList<>(alfi);
             }
@@ -399,45 +414,49 @@ public class Activity_Import extends AppCompatActivity {
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
 
-            tvLine1.setText(alFileItemsDisplay.get(position).sName);
+            tvLine1.setText(alFileItemsDisplay.get(position).sFileOrFolderName);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             String sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
 
 
             //If type is video or gif, get the duration:
-            long durationInMilliseconds = alFileItemsDisplay.get(position).lVideoTimeInMilliseconds;
-            //If mimeType is video or gif, get the duration:
-            try {
-                if(durationInMilliseconds == -1L) { //If the time has not already been determined for the video file...
-                    if (alFileItemsDisplay.get(position).sMimeType.startsWith("video")) {
-                        Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                        mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
-                        String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                        durationInMilliseconds = Long.parseLong(time);
-                    } else { //if it's not a video file, check to see if it's a gif:
-                        if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
-                            //Get the duration of the gif image:
+            boolean bIsVideoOrGif = (alFileItemsDisplay.get(position).sMimeType.startsWith("video")) ||
+                    (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) ||
+                    (alFileItemsDisplay.get(position).sMimeType.equals("application/octet-stream") && alFileItemsDisplay.get(position).sExtension.equals(".mp4"));
+            if(bIsVideoOrGif) {
+                long durationInMilliseconds = alFileItemsDisplay.get(position).lVideoTimeInMilliseconds;
+                try {
+                    if (durationInMilliseconds == -1L) { //If the time has not already been determined for the video file...
+                        if (alFileItemsDisplay.get(position).sMimeType.startsWith("video")) {
                             Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                            Context activityContext = getApplicationContext();
-                            pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
-                            durationInMilliseconds = gd.getDuration();
+                            mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
+                            String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                            durationInMilliseconds = Long.parseLong(time);
+                        } else { //if it's not a video file, check to see if it's a gif:
+                            if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
+                                //Get the duration of the gif image:
+                                Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
+                                Context activityContext = getApplicationContext();
+                                pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                                durationInMilliseconds = gd.getDuration();
+                            }
+                        }
+                        if (durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
+                            alFileItemsDisplay.get(position).lVideoTimeInMilliseconds = durationInMilliseconds;
                         }
                     }
-                    if(durationInMilliseconds != -1L) { //If time is now defined, get the text form of the time:
-                        alFileItemsDisplay.get(position).lVideoTimeInMilliseconds = durationInMilliseconds;
+                    if (durationInMilliseconds > -1L) {
+                        alFileItemsDisplay.get(position).sVideoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
                     }
-                }
-                if(durationInMilliseconds > -1L){
-                    alFileItemsDisplay.get(position).sVideoTimeText = GlobalClass.getDurationTextFromMilliseconds(durationInMilliseconds);
-                }
 
-                if(alFileItemsDisplay.get(position).sVideoTimeText.length() > 0){
-                    //If the video time text has been defined, recall and display the time:
-                    sLine2 = sLine2 + "\tDuration: " + alFileItemsDisplay.get(position).sVideoTimeText;
-                }
+                    if (alFileItemsDisplay.get(position).sVideoTimeText.length() > 0) {
+                        //If the video time text has been defined, recall and display the time:
+                        sLine2 = sLine2 + "\tDuration: " + alFileItemsDisplay.get(position).sVideoTimeText;
+                    }
 
-            }catch (Exception e){
-                Toast.makeText(getApplicationContext(), e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sName, Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(), e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sFileOrFolderName, Toast.LENGTH_LONG).show();
+                }
             }
 
             tvLine2.setText(sLine2);
@@ -459,8 +478,13 @@ public class Activity_Import extends AppCompatActivity {
             tvLine3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).sType.equals("folder")) {
-                ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
+            if(alFileItemsDisplay.get(position).iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER) {
+                //Get the Uri of the file and create/display a thumbnail:
+                String sUri = alFileItemsDisplay.get(position).sUriThumbnailFile;
+                Uri uri = Uri.parse(sUri);
+                Glide.with(getContext()).
+                        load(uri).
+                        into(ivFileType);
             } else {
                 //Get the Uri of the file and create/display a thumbnail:
                 String sUri = alFileItemsDisplay.get(position).sUri;
@@ -514,36 +538,118 @@ public class Activity_Import extends AppCompatActivity {
                 public void onClick(View view) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
                     builder.setTitle("Delete Item");
-                    builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).sName);
+                    builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).sFileOrFolderName);
                     //builder.setIcon(R.drawable.ic_launcher);
                     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.dismiss();
-                            Uri uriSourceFile;
-                            uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                            if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                                Uri uriSourceFile;
+                                uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
+                                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
-                            if(dfSource != null) {
-                                String sMessage;
-                                if (!dfSource.delete()) {
-                                    sMessage = "Could not delete file.";
-                                } else {
-                                    sMessage = "File deleted.";
+                                if (dfSource != null) {
+                                    String sMessage;
+                                    if (!dfSource.delete()) {
+                                        sMessage = "Could not delete file.";
+                                    } else {
+                                        sMessage = "File deleted.";
+                                    }
+                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
                                 }
-                                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
-                            }
-                            //Find the item in the alFileItems list and delete it:
-                            ItemClass_File fiSelected = alFileItemsDisplay.get(position);
-                            ItemClass_File fiSource;
-                            for(int i = 0; i < alFileItems.size(); i++){
-                                fiSource = alFileItems.get(i);
-                                if(fiSelected.sName.equals(fiSource.sName)){
-                                    alFileItems.remove(i);
-                                    break;
+                                //Find the item in the alFileItems list and delete it:
+                                ItemClass_File fiSelected = alFileItemsDisplay.get(position);
+                                ItemClass_File fiSource;
+                                for (int i = 0; i < alFileItems.size(); i++) {
+                                    fiSource = alFileItems.get(i);
+                                    if (fiSelected.sFileOrFolderName.equals(fiSource.sFileOrFolderName)) {
+                                        alFileItems.remove(i);
+                                        break;
+                                    }
+                                }
+                                alFileItemsDisplay.remove(position);
+                                notifyDataSetChanged();
+                            } else {
+                                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+
+                                    String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
+                                    int iFailedDeletions = 0;
+                                    int iTotalDeletions = 0;
+
+                                    ItemClass_File fiSource;
+                                    for (int i = 0; i < alFileItems.size(); i++) {
+                                        fiSource = alFileItems.get(i);
+                                        if(fiSource.sFileOrFolderName.startsWith(sComicID)){
+                                            Uri uriSourceFile = Uri.parse(fiSource.sUri);
+                                            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                                            if (dfSource != null) {
+                                                if (dfSource.delete()) {
+                                                    iTotalDeletions++;
+                                                } else {
+                                                    iFailedDeletions++;
+                                                }
+                                            }
+                                            alFileItems.remove(i);
+                                        }
+                                    }
+                                    String sMessage;
+                                    if(iFailedDeletions == 0) {
+                                        sMessage = "Comic deleted: " + alFileItemsDisplay.get(position).sFileOrFolderName;
+                                    } else {
+                                        sMessage = "Failed to delete " + iFailedDeletions + "/" + iTotalDeletions + " files belonging to the comic.";
+                                    }
+                                    alFileItemsDisplay.remove(position);
+                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                    notifyDataSetChanged();
+
+                                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+
+                                    String sComicParentUri = alFileItemsDisplay.get(position).sUri;
+                                    int iFailedDeletions = 0;
+                                    int iTotalDeletions = 0;
+
+                                    //Delete comic pages:
+                                    ItemClass_File fiSource;
+                                    for (int i = 0; i < alFileItems.size(); i++) {
+                                        fiSource = alFileItems.get(i);
+                                        if(fiSource.sUriParent.equals(sComicParentUri)){
+                                            Uri uriSourceFile = Uri.parse(fiSource.sUri);
+                                            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+
+                                            if (dfSource != null) {
+                                                if(dfSource.delete()) {
+                                                    iTotalDeletions++;
+                                                } else {
+                                                    iFailedDeletions++;
+                                                }
+                                            }
+                                            alFileItems.remove(i);
+                                        }
+                                    }
+                                    //Delete the comic folder:
+                                    Uri uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
+                                    DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+
+                                    if (dfSource != null) {
+                                        if(dfSource.delete()) {
+                                            iTotalDeletions++;
+                                        } else {
+                                            iFailedDeletions++;
+                                        }
+                                    }
+                                    String sMessage;
+                                    if(iFailedDeletions == 0) {
+                                        sMessage = "Comic deleted: " + alFileItemsDisplay.get(position).sFileOrFolderName;
+                                    } else {
+                                        sMessage = "Failed to delete " + iFailedDeletions + "/" + iTotalDeletions + " files belonging to the comic.";
+                                    }
+
+                                    alFileItemsDisplay.remove(position);
+                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                    notifyDataSetChanged();
+
                                 }
                             }
-                            alFileItemsDisplay.remove(position);
-                            notifyDataSetChanged();
                         }
                     });
                     builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -619,21 +725,43 @@ public class Activity_Import extends AppCompatActivity {
                         //If this is a comic, put together all of the page fileItems for the preview.
                         ItemClass_File[] icfComicFiles = new ItemClass_File[]{};
 
-                        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                        if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
                             //final public ArrayList<ItemClass_File> alFileItems;
                             //private ArrayList<ItemClass_File> alFileItemsDisplay;
 
                             //Sort the files for this comic by putting them into a TreeMap:
                             TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
-                            String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sName);
+                            String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
                             String sComicIDCandidate;
                             for (ItemClass_File icf : alFileItems) {
-                                sComicIDCandidate = Service_Import.GetNHComicID(icf.sName);
+                                sComicIDCandidate = Service_Import.GetNHComicID(icf.sFileOrFolderName);
                                 if (sComicIDCandidate.equals(sComicID)) {
-                                    tmFiles.put(icf.sName, icf);
+                                    tmFiles.put(icf.sFileOrFolderName, icf);
                                 }
                             }
 
+                            ItemClass_File[] icf = new ItemClass_File[tmFiles.size()];
+                            int i = 0;
+                            for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
+                                icf[i] = entry.getValue();
+                                i++;
+                            }
+
+                            icfComicFiles = icf;
+
+                        } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                            //final public ArrayList<ItemClass_File> alFileItems;
+                            //private ArrayList<ItemClass_File> alFileItemsDisplay;
+
+                            //Sort the files for this comic by putting them into a TreeMap:
+                            TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
+                            String sParentComic = alFileItemsDisplay.get(position).sUri;
+                            for (ItemClass_File icf : alFileItems) {
+                                if (icf.sUriParent.equals(sParentComic)) {
+                                    tmFiles.put(icf.sFileOrFolderName, icf);
+                                }
+                            }
+                            //Put the files into a standard array:
                             ItemClass_File[] icf = new ItemClass_File[tmFiles.size()];
                             int i = 0;
                             for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
@@ -673,10 +801,19 @@ public class Activity_Import extends AppCompatActivity {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
                     //If the user is importing comic pages downloaded by the NHComicDownloader, find
                     // all files with the comic ID and apply the checked state:
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).sName);
+                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName);
                     String sNHComicFilter = sNHComicID + ".+";
                     for (ItemClass_File fi : alFileItems) {
-                        if (fi.sName.matches(sNHComicFilter)) {
+                        if (fi.sFileOrFolderName.matches(sNHComicFilter)) {
+                            fi.bIsChecked = bNewCheckedState;
+                        }
+                    }
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                    //If the user is importing comic pages by folder, find
+                    // all files with the comic parent Uri assigned and apply the checked state:
+                    String sUriParent = alFileItemsDisplay.get(iFileItemsDisplayPosition).sUri;
+                    for (ItemClass_File fi : alFileItems) {
+                        if (fi.sUriParent.matches(sUriParent)) {
                             fi.bIsChecked = bNewCheckedState;
                         }
                     }
@@ -686,7 +823,7 @@ public class Activity_Import extends AppCompatActivity {
                 //  The user will have clicked an item in alFileListDisplay, not alFileList.
                 //  alFileListDisplay may be a subset of alFileList.
                 for(ItemClass_File fi: alFileItems){
-                    if(fi.sName.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).sName)){
+                    if(fi.sFileOrFolderName.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName)){
                         fi.bIsChecked = bNewCheckedState;
                         break; //Break, as only one item should match.
                     }
@@ -710,6 +847,7 @@ public class Activity_Import extends AppCompatActivity {
             for(ItemClass_File fi: alFileItems){
                 if(fi.bIsChecked){
                     bEnableNextButton = true;
+                    break;
                 }
             }
             Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
@@ -741,6 +879,22 @@ public class Activity_Import extends AppCompatActivity {
                 }
             }
 
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                    //If we are importing comics from folders, update the comic parent item with the selected tags.
+                    if(icfIncomingFIs.length > 0) {
+                        String sParentComic = icfIncomingFIs[0].sUriParent;
+                        for (ItemClass_File icfUpdate : alFileItems) {
+                            if (icfUpdate.sUri.equals(sParentComic)) {
+                                icfUpdate.aliProspectiveTags = icfIncomingFIs[0].aliProspectiveTags;
+                                icfUpdate.bIsChecked = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            recalcButtonNext();
 
             if (bFoundAndUpdated) {
                 notifyDataSetChanged();
@@ -773,7 +927,7 @@ public class Activity_Import extends AppCompatActivity {
                 fiDisplayed.bIsChecked = bSelectAllSelected;
                 //Translate the selected item state to alFileList:
                 for(ItemClass_File fi: alFileItems){
-                    if(fi.sName.contentEquals(fiDisplayed.sName)){
+                    if(fi.sFileOrFolderName.contentEquals(fiDisplayed.sFileOrFolderName)){
                         fi.bIsChecked = bSelectAllSelected;
                         break;
                     }
@@ -785,7 +939,7 @@ public class Activity_Import extends AppCompatActivity {
         public void applySearch(String sSearch){
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
-                if(fi.sName.contains(sSearch)){
+                if(fi.sFileOrFolderName.contains(sSearch)){
                     alFileItemsDisplay.add(fi);
                 }
             }
@@ -794,7 +948,16 @@ public class Activity_Import extends AppCompatActivity {
         public void applyFilter(String sFilter){
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
-                if(fi.sName.matches(sFilter)){
+                if(fi.sFileOrFolderName.matches(sFilter)){
+                    alFileItemsDisplay.add(fi);
+                }
+            }
+        }
+
+        public void applyFilterByType(int iTypeFileOrFolder){
+            alFileItemsDisplay.clear();
+            for(ItemClass_File fi : alFileItems){
+                if(fi.iTypeFileOrFolder ==iTypeFileOrFolder){
                     alFileItemsDisplay.add(fi);
                 }
             }
@@ -810,8 +973,8 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file name ascending:
         private class FileNameAscComparator implements Comparator<ItemClass_File> {
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
-                String FileName1 = fi1.sName.toUpperCase();
-                String FileName2 = fi2.sName.toUpperCase();
+                String FileName1 = fi1.sFileOrFolderName.toUpperCase();
+                String FileName2 = fi2.sFileOrFolderName.toUpperCase();
 
                 //ascending order
                 return FileName1.compareTo(FileName2);
@@ -821,8 +984,8 @@ public class Activity_Import extends AppCompatActivity {
         //Sort by file name descending:
         private class FileNameDescComparator implements Comparator<ItemClass_File> {
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
-                String FileName1 = fi1.sName.toUpperCase();
-                String FileName2 = fi2.sName.toUpperCase();
+                String FileName1 = fi1.sFileOrFolderName.toUpperCase();
+                String FileName2 = fi2.sFileOrFolderName.toUpperCase();
 
                 //descending order
                 return FileName2.compareTo(FileName1);

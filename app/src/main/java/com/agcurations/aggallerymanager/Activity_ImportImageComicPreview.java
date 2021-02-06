@@ -276,7 +276,7 @@ public class Activity_ImportImageComicPreview extends AppCompatActivity {
         Glide.with(getApplicationContext()).load(gFileItems[giFileItemIndex].sUri).into(gImagePreview);
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
-        textView_FileName.setText(gFileItems[giFileItemIndex].sName);
+        textView_FileName.setText(gFileItems[giFileItemIndex].sFileOrFolderName);
 
         //Init the tags list if there are tags already assigned to this item:
         //Get the text of the tags and display:

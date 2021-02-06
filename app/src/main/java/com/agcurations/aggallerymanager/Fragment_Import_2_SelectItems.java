@@ -31,22 +31,13 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
     public static ViewModel_ImportActivity viewModelImportActivity; //Used to transfer data between fragments.
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
     public Fragment_Import_2_SelectItems() {
         // Required empty public constructor
     }
 
-
     public static Fragment_Import_2_SelectItems newInstance(String param1, String param2) {
         Fragment_Import_2_SelectItems fragment = new Fragment_Import_2_SelectItems();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
         return fragment;
     }
 
@@ -64,8 +55,6 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         return inflater.inflate(R.layout.fragment_import_2_select_items, container, false);
 
     }
-
-
 
 
     Parcelable ListViewState;
@@ -221,6 +210,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         });
         /*lEndTime = System.nanoTime();
         Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));*/
+
+        Activity_Import.fileListCustomAdapter.recalcButtonNext();
+
     }
 
 
