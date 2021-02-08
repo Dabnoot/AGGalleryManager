@@ -5,14 +5,12 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
-import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -139,9 +137,27 @@ public class Service_Main extends IntentService {
             //network;
         }
 
+
+
     }
 
-    private void fixComicCoverPageAssignments(){
+/*    private void fixComicPageCount(){
+        ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+            if(tmEntry.getValue().iComicPages == 0) {
+                tmEntry.getValue().iComicPages = tmEntry.getValue().iComic_File_Count;
+                tmEntry.getValue().iComic_Max_Page_ID = tmEntry.getValue().iComic_File_Count;
+                alsCatalogItemsToUpdate.add(tmEntry.getValue());
+            }
+        }
+
+        for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate) {
+            globalClass.CatalogDataFile_UpdateRecord(ci);
+        }
+    }*/
+
+
+    /*private void fixComicCoverPageAssignments(){
         ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
             String sComicFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] +
@@ -167,10 +183,10 @@ public class Service_Main extends IntentService {
         for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate){
             globalClass.CatalogDataFile_UpdateRecord(ci);
         }
-    }
+    }*/
 
 
-    private void fixComicPageIDs(){
+    /*private void fixComicPageIDs(){
         ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
             String sComicFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] +
@@ -211,9 +227,9 @@ public class Service_Main extends IntentService {
             globalClass.CatalogDataFile_UpdateRecord(ci);
         }
 
-    }
+    }*/
 
-    private void analyzeComicsReportMissingPages(){
+    /*private void analyzeComicsReportMissingPages(){
         int icount = 0;
         for(Map.Entry<String, ItemClass_CatalogItem> ciEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
            ciEntry.setValue(globalClass.analyzeComicReportMissingPages(ciEntry.getValue()));
@@ -229,7 +245,7 @@ public class Service_Main extends IntentService {
            }
         }
         Log.d("Comics", icount + " with missing pages.");
-    }
+    }*/
 
 
 
@@ -329,6 +345,10 @@ public class Service_Main extends IntentService {
                 problemNotificationConfig("Trouble reading CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
             }
 
+
+
+
+
             //Return the data read from the file:
             return tmCatalogItems;
 
@@ -338,7 +358,7 @@ public class Service_Main extends IntentService {
 
 
 
-    private void updateCatalogRecords(int iMediaCategory){
+    /*private void updateCatalogRecords(int iMediaCategory){
 
         //Loop through each comic entry, attempt to rename the folder to ComicID, then update the
         //  catalog file and memory record:
@@ -352,7 +372,7 @@ public class Service_Main extends IntentService {
 
         }
 
-    }
+    }*/
 
 
     /*public void Comic_Catalog_data_file_add_field() {

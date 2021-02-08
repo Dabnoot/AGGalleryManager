@@ -97,7 +97,7 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
 
         if(viewModelImportActivity.bWebAddressChanged) {
             if (globalClass.isNetworkConnected) {
-                Service_Import.startActionImportNHComicsDetails(getActivity(), viewModelImportActivity.sWebAddress);
+                Service_Import.startActionAcquireNHComicsDetails(getActivity(), viewModelImportActivity.sWebAddress);
                 viewModelImportActivity.bWebAddressChanged = false;
             } else {
                 Toast.makeText(getActivity(), "No network connected.", Toast.LENGTH_LONG).show();

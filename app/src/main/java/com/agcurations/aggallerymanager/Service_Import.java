@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
-import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
@@ -42,9 +41,10 @@ public class Service_Import extends IntentService {
 
     private static final String ACTION_GET_DIRECTORY_CONTENTS = "com.agcurations.aggallerymanager.action.GET_DIRECTORY_CONTENTS";
     private static final String ACTION_IMPORT_FILES = "com.agcurations.aggallerymanager.action.IMPORT_FILES";
-    private static final String ACTION_IMPORT_COMICS = "com.agcurations.aggallerymanager.action.IMPORT_COMICS";
+    private static final String ACTION_IMPORT_NHCOMICS = "com.agcurations.aggallerymanager.action.IMPORT_COMICS";
     private static final String ACTION_GET_COMIC_DETAILS_ONLINE = "com.agcurations.aggallerymanager.action.GET_COMIC_DETAILS_ONLINE";
     private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
+    private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
@@ -103,15 +103,28 @@ public class Service_Import extends IntentService {
                                                       int iMoveOrCopy,
                                                       int iComicImportSource) {
         Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_IMPORT_COMICS);
+        intent.setAction(ACTION_IMPORT_NHCOMICS);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
         context.startService(intent);
     }
 
-    public static void startActionImportNHComicsDetails(Context context,
-                                                       String sAddress){
+    public static void startActionImportComicFolders(Context context,
+                                                      ArrayList<ItemClass_File> alImportFileList,
+                                                      int iMoveOrCopy,
+                                                      int iComicImportSource) {
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_IMPORT_COMIC_FOLDERS);
+        intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
+        intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
+        intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
+        context.startService(intent);
+    }
+
+
+    public static void startActionAcquireNHComicsDetails(Context context,
+                                                         String sAddress){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_GET_COMIC_DETAILS_ONLINE);
         intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sAddress);
@@ -140,6 +153,7 @@ public class Service_Import extends IntentService {
                 handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory, iFilesOrFolders, iComicImportSource);
 
             } else if (ACTION_IMPORT_FILES.equals(action)) {
+                @SuppressWarnings("unchecked")
                 final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, -1);
@@ -149,12 +163,22 @@ public class Service_Import extends IntentService {
                         iMoveOrCopy,
                         iMediaCategory);
 
-            } else if (ACTION_IMPORT_COMICS.equals(action)) {
+            } else if (ACTION_IMPORT_NHCOMICS.equals(action)) {
+                @SuppressWarnings("unchecked")
                 final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
-                final int iComicImportSource = intent.getIntExtra(EXTRA_COMIC_IMPORT_SOURCE, -1);
                 if(alFileList==null) return;
                 handleAction_startActionImportNHComics(
+                        alFileList,
+                        iMoveOrCopy
+                );
+
+            } else if (ACTION_IMPORT_COMIC_FOLDERS.equals(action)) {
+                @SuppressWarnings("unchecked")
+                final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
+                final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+                if(alFileList==null) return;
+                handleAction_startActionImportComicFolders(
                         alFileList,
                         iMoveOrCopy
                 );
@@ -165,6 +189,7 @@ public class Service_Import extends IntentService {
 
             } else if (ACTION_IMPORT_COMIC_WEB_FILES.equals(action)) {
                 final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
+                if(ci == null) return;
                 try {
                     handleAction_startActionImportComicWebFiles(ci);
                 } catch (IOException e) {
@@ -187,6 +212,7 @@ public class Service_Import extends IntentService {
     public static final int FOLDERS_ONLY = 0;
     public static final int FILES_ONLY = 1;
 
+    //todo: Separate comic folder analysis from GetDirectoryContents.
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource) {
         if(Activity_Import.guriImportTreeURI != null){
             Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
@@ -231,7 +257,6 @@ public class Service_Import extends IntentService {
                         cImport.moveToPosition(-1);
                         while (cImport.moveToNext()) {
                             String sSubFolderDocID = cImport.getString(0);
-                            String sSubFolderName = cImport.getString(1); //For debugging.
                             String sSubFolderMimeType = cImport.getString(2);
 
                             boolean bSubFolderItemIsDirectory;
@@ -267,8 +292,6 @@ public class Service_Import extends IntentService {
                     MediaMetadataRetriever mediaMetadataRetriever;
                     mediaMetadataRetriever = new MediaMetadataRetriever();
 
-                    int iTemp = cImport.getCount();
-
                     cImport.moveToPosition(-1);
                     while (cImport.moveToNext()) {
 
@@ -299,8 +322,8 @@ public class Service_Import extends IntentService {
                         }
 
 
-                        long lFileSize = 0;
-                        String fileExtension = "";
+                        long lFileSize;
+                        String fileExtension;
                         //If the file is video, get the duration so that the file list can be sorted by duration if requested.
                         long lDurationInMilliseconds = -1L;
                         String sWidth = "";  //We are not doing math with the width and height. Therefore no need to convert to int.
@@ -487,8 +510,7 @@ public class Service_Import extends IntentService {
                                         long lComicPageLastModified = cComicPages.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
 
                                         cal.setTimeInMillis(lComicPageLastModified);
-                                        Date dateComicPageLastModified = cal.getTime();
-                                        icf_ComicPage.dateLastModified = dateComicPageLastModified;
+                                        icf_ComicPage.dateLastModified = cal.getTime();
 
                                         //Record the file extension:
                                         fileExtension = sComicPageFilename.contains(".") ? sComicPageFilename.substring(sComicPageFilename.lastIndexOf(".")) : "";
@@ -533,7 +555,6 @@ public class Service_Import extends IntentService {
                                             } else {
                                                 if(bDigitBlockOn){
                                                     iDigitBlock[1] = i;
-                                                    String sTest = sComicPageFilename.substring(iDigitBlock[0], iDigitBlock[1]);
                                                     aliNumberBlocksSingleFile.add(iDigitBlock);
                                                     iDigitBlock = new Integer[]{0,0};
                                                 }
@@ -553,8 +574,7 @@ public class Service_Import extends IntentService {
 
                                     //Create a file item to track this comic folder:
                                     ItemClass_File icf_ComicFolderItem = new ItemClass_File(ItemClass_File.TYPE_FOLDER, docName);
-                                    String sUri = docUri.toString();
-                                    icf_ComicFolderItem.sUri = sUri;
+                                    icf_ComicFolderItem.sUri = docUri.toString();
 
                                     icf_ComicFolderItem.dateLastModified = dateLastModified;
 
@@ -575,7 +595,7 @@ public class Service_Import extends IntentService {
                                                 problemNotificationConfig(
                                                         "Problem identifying page number for comic in folder \"" +
                                                                 docName + "\", file \"" + file.sFileOrFolderName +
-                                                                "\". Import will default to the less reliable alphabetized page sequencing for this comic.", RECEIVER_STORAGE_LOCATION);
+                                                                "\". Note that the system uses alphabetization to sort comic pages.", RECEIVER_STORAGE_LOCATION);
                                             }
                                         }
                                     }
@@ -589,7 +609,6 @@ public class Service_Import extends IntentService {
                                     } else {
                                         //Attempt to identify the number block representing the page ID for the set of image files in the folder:
                                         TreeMap<Integer, String> tmComicFilesPageNumCheck;
-                                        int iAcceptedNumberBlock = -1;
                                         for(int iNumberBlock = 0; iNumberBlock < iNumBlocks; iNumberBlock++) {
                                             tmComicFilesPageNumCheck = new TreeMap<>(); //Reset the file ordering.
 
@@ -759,7 +778,14 @@ public class Service_Import extends IntentService {
 
             uriSourceFile = Uri.parse(fileItem.sUri);
             DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-            if (dfSource == null) continue;
+            if (dfSource == null) {
+                BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
+                        false, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
+                lProgressNumerator += fileItem.lSizeBytes;
+                continue;
+            }
             if (dfSource.getName() == null) continue;
 
             try {
@@ -780,16 +806,18 @@ public class Service_Import extends IntentService {
                 String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
                 File fDestinationFolder = new File(fDestination.getPath());
 
-                boolean bCopyViaStream = false;
+                //boolean bCopyViaStream;
                 /*String sDestinationFolder = "content://com.android.externalstorage.documents/tree/0000-0000%3AAndroid%2Fdata%2Fcom.agcurations.aggallerymanager%2Ffiles%2FVideos%2F7";
                 Uri uriDestinationFolder = Uri.parse(sDestinationFolder);
                 URI uri1 = URI.create(sDestinationFolder);
 
-
-
                 //First, attempt to transfer the document using DocumentsContract:
                 Uri uriTransferredDocument = null;
                 DocumentFile dfParentFile = dfSource.getParentFile();
+
+
+                //Attempt to copy via move when on the same device was unsuccessful because I was unable
+                //  to get a DocumentFile for the destination.
 
                 //if(dfParentFile != null) {
                     if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
@@ -820,10 +848,10 @@ public class Service_Import extends IntentService {
                     }
                     lProgressNumerator += fileItem.sizeBytes;
                 }*/
-                bCopyViaStream = true;
+                //bCopyViaStream = true;
 
                 //If DocumentsContract transferred failed, try to copy via stream:
-                if(bCopyViaStream) {
+                //if(bCopyViaStream) {
                     inputStream = contentResolver.openInputStream(dfSource.getUri());
 
                     outputStream = new FileOutputStream(fDestinationFolder.getPath() + File.separator + sFileName);
@@ -845,19 +873,19 @@ public class Service_Import extends IntentService {
                     }
                     outputStream.flush();
                     outputStream.close();
-                }
+                //}
 
                 if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                    if(bCopyViaStream) {
-                        sLogLine = "Copy success.";
+                    //if(bCopyViaStream) {
+                        //sLogLine = "Copy success.";
                         if (!dfSource.delete()) {
                             sLogLine = sLogLine + "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                         } else {
                             sLogLine = sLogLine + "\nSuccess deleting source file after copy.\n";
                         }
-                    } else {
-                        sLogLine = "Move success.";
-                    }
+                    //} else {
+                    //    sLogLine = "Move success.";
+                    //}
                 } else {
                     sLogLine = "Copy success.";
                 }
@@ -1065,7 +1093,14 @@ public class Service_Import extends IntentService {
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                                     RECEIVER_EXECUTE_IMPORT);
 
-                            if (dfSource == null) continue;
+                            if (dfSource == null) {
+                                BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
+                                        false, iProgressBarValue,
+                                        false, "",
+                                        RECEIVER_EXECUTE_IMPORT);
+                                lProgressNumerator += fileItem.lSizeBytes;
+                                continue;
+                            }
                             inputStream = contentResolver.openInputStream(dfSource.getUri());
 
                             //Reverse the text on the file so that the file does not get picked off by a search tool:
@@ -1147,11 +1182,14 @@ public class Service_Import extends IntentService {
 
                     uriSourceFile = Uri.parse(icfCoverPageFile.sUri);
                     DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-
-                    if (!dfSource.delete()) {
-                        sLogLine = "Could not delete cover page duplicate file (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                    if(dfSource != null) {
+                        if (!dfSource.delete()) {
+                            sLogLine = "Could not delete cover page duplicate file (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                        } else {
+                            sLogLine = "Success deleting cover page duplicate file.\n";
+                        }
                     } else {
-                        sLogLine = "Success deleting cover page duplicate file.\n";
+                        sLogLine = "Could not delete cover page duplicate file (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                     }
                     BroadcastProgress(true, sLogLine,
                             true, iProgressBarValue,
@@ -1159,6 +1197,259 @@ public class Service_Import extends IntentService {
                             RECEIVER_EXECUTE_IMPORT);
                 }
             }
+
+
+
+
+
+
+        } //End NHComics (plural) Import Loop.
+
+
+
+
+
+        //Modify viewer settings to show the newly-imported files:
+        globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
+
+        BroadcastProgress(true, "Operation complete.\n",
+                true, iProgressBarValue,
+                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                RECEIVER_EXECUTE_IMPORT);
+
+    }
+
+    private void handleAction_startActionImportComicFolders(ArrayList<ItemClass_File> alFileList, int iMoveOrCopy) {
+
+
+        long lProgressNumerator = 0L;
+        long lProgressDenominator;
+        int iProgressBarValue = 0;
+        long lTotalImportSize = 0L;
+        long lLoopBytesRead;
+
+
+        ContentResolver contentResolver = getApplicationContext().getContentResolver();
+
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
+        //Calculate total size of all files to import:
+        for(ItemClass_File fi: alFileList){
+            lTotalImportSize = lTotalImportSize + fi.lSizeBytes;
+        }
+        lProgressDenominator = lTotalImportSize;
+
+        //Find the next record ID:
+        int iNextRecordId = 0;
+        int iThisId;
+        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+            iThisId = Integer.parseInt(entry.getValue().sItemID);
+            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
+        }
+        //New record ID identified.
+
+        TreeMap<String, String[]> tmComics = new TreeMap<>(); //Map Comic to a record ID/folder and also grab the comic title.
+
+        //If comic folder import, loop and find all of the comic parent Uris:
+        int INDEX_RECORD_ID = 0;
+        int INDEX_COMIC_NAME = 1;
+        int INDEX_COMIC_TAGS = 2;
+        for(ItemClass_File fileItem: alFileList) {
+            if(fileItem.iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER){
+                String sUriParent = fileItem.sUri;
+                String sRecordID = iNextRecordId + "";
+                iNextRecordId++;
+                String sComicName = fileItem.sFileOrFolderName;
+                String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
+                tmComics.put(sUriParent, new String[]{sRecordID, sComicName, sComicTags});
+            }
+        }
+
+        for(Map.Entry<String, String[]> tmEntryComic: tmComics.entrySet()) {
+            //Create a folder and import files for this comic:
+
+            String sDestinationFolder = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual destination comic folder name is the comic ID.
+
+            File fDestination = new File(
+                    globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
+                            sDestinationFolder);
+
+            if (!fDestination.exists()) {
+                if (!fDestination.mkdir()) {
+                    //Unable to create directory
+                    BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                            false, iProgressBarValue,
+                            true, "Operation halted.",
+                            RECEIVER_EXECUTE_IMPORT);
+                    return;
+                } else {
+                    BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                            false, iProgressBarValue,
+                            false, "",
+                            RECEIVER_EXECUTE_IMPORT);
+                }
+            } else {
+                BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                        true, iProgressBarValue,
+                        false, "",
+                        RECEIVER_EXECUTE_IMPORT);
+            }
+
+            //Prepare the data record:
+            ItemClass_CatalogItem ciNewComic = new ItemClass_CatalogItem();
+            ciNewComic.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+            ciNewComic.sItemID = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
+            ciNewComic.sComicName = tmEntryComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
+            ciNewComic.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
+            ciNewComic.sFolder_Name = sDestinationFolder;
+            //Create a timestamp to be used to create the data record:
+            Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+            ciNewComic.dDatetime_Last_Viewed_by_User = dTimeStamp;
+            ciNewComic.dDatetime_Import = dTimeStamp;
+            ciNewComic.sSource = "Folder Import";
+
+            //Find comic files belonging to this comic and put them in a tree map for sorting.
+            TreeMap<String, ItemClass_File> tmComicFiles = new TreeMap<>();
+            for (ItemClass_File fileItem : alFileList) {
+                if (fileItem.sUriParent.matches(tmEntryComic.getKey())) {
+                    tmComicFiles.put(fileItem.sFileOrFolderName, fileItem);
+                }
+            }
+
+
+            for (Map.Entry<String, ItemClass_File> entryComicFile : tmComicFiles.entrySet()) {
+                ItemClass_File fileItem = entryComicFile.getValue();
+
+                ciNewComic.iComic_File_Count++;
+                ciNewComic.iComicPages++;
+                ciNewComic.iComic_Max_Page_ID++;
+
+                String sNewFilename = fileItem.sFileOrFolderName;
+                sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
+                if (ciNewComic.sFilename.equals("")) {
+                    //Set the Thumbnail file to the first page:
+                    ciNewComic.sFilename = sNewFilename;
+                    ciNewComic.sThumbnail_File = sNewFilename;
+                }
+                ciNewComic.lSize += fileItem.lSizeBytes;
+
+                Uri uriSourceFile;
+                String sLogLine;
+                InputStream inputStream;
+                OutputStream outputStream;
+
+                uriSourceFile = Uri.parse(fileItem.sUri);
+                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                try {
+                    //Write next behavior to the screen log:
+                    sLogLine = "Attempting ";
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                        sLogLine = sLogLine + "move ";
+                    } else {
+                        sLogLine = sLogLine + "copy ";
+                    }
+                    sLogLine = sLogLine + "of file " + fileItem.sFileOrFolderName + " to destination...";
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                            RECEIVER_EXECUTE_IMPORT);
+
+                    if (dfSource == null) {
+                        BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
+                                false, iProgressBarValue,
+                                false, "",
+                                RECEIVER_EXECUTE_IMPORT);
+                        lProgressNumerator += fileItem.lSizeBytes;
+                        continue;
+                    }
+                    inputStream = contentResolver.openInputStream(dfSource.getUri());
+
+                    //Reverse the text on the file so that the file does not get picked off by a search tool:
+                    if (dfSource.getName() == null) continue;
+
+                    outputStream = new FileOutputStream(fDestination.getPath() + File.separator + sNewFilename);
+                    int iLoopCount = 0;
+                    byte[] buffer = new byte[100000];
+                    if (inputStream == null) continue;
+                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                        outputStream.write(buffer, 0, buffer.length);
+                        lProgressNumerator += lLoopBytesRead;
+                        iLoopCount++;
+                        if (iLoopCount % 10 == 0) {
+                            //Send update every 10 loops:
+                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                            BroadcastProgress(false, "",
+                                    true, iProgressBarValue,
+                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                    RECEIVER_EXECUTE_IMPORT);
+                        }
+                    }
+                    outputStream.flush();
+                    outputStream.close();
+                    sLogLine = "Copy success.\n";
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                            RECEIVER_EXECUTE_IMPORT);
+
+                    //This file has now been copied.
+
+                    //Delete the source file if 'Move' specified:
+                    boolean bUpdateLogOneMoreTime = false;
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                        bUpdateLogOneMoreTime = true;
+                        if (!dfSource.delete()) {
+                            sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                        } else {
+                            sLogLine = "Success deleting source file after copy.\n";
+                        }
+                    }
+
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+
+                    BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
+                            true, iProgressBarValue,
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                            RECEIVER_EXECUTE_IMPORT);
+
+
+                } catch (Exception e) {
+                    BroadcastProgress(true, "Problem with copy/move operation.\n\n" + e.getMessage(),
+                            false, iProgressBarValue,
+                            false, "",
+                            RECEIVER_EXECUTE_IMPORT);
+                }
+
+
+            } //End comic page import Loop.
+
+            //Next add the data to the catalog file and memory:
+            //The below call should add the record to both the catalog contents file
+            //  and memory:
+            globalClass.CatalogDataFile_CreateNewRecord(ciNewComic);
+
+            //Delete the comic folder from source directory if required:
+            if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                Uri uriComicSourceFolder; //This is not the folder that the user selected, but rather
+                    //a comic folder within that folder.
+                String sLogLine;
+                uriComicSourceFolder = Uri.parse(tmEntryComic.getKey());
+                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriComicSourceFolder);
+                sLogLine = "Could not delete folder for comic '" + tmEntryComic.getValue()[INDEX_COMIC_NAME] + "'.\n";
+                if(dfSource != null) {
+                    if (dfSource.delete()) {
+                        sLogLine = "Success deleting folder for comic '" + tmEntryComic.getValue()[INDEX_COMIC_NAME] + "'.\n";
+                    }
+                }
+                BroadcastProgress(true, sLogLine,
+                        true, iProgressBarValue,
+                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                        RECEIVER_EXECUTE_IMPORT);
+            }
+
 
 
 
@@ -1218,8 +1509,6 @@ public class Service_Import extends IntentService {
         }
 
         String sComicTitle = "";
-
-        boolean bMissingComicPagesAcquired = false;
 
         final int COMIC_DETAILS_TITLE_INDEX = 0;
         final int COMIC_DETAILS_PARODIES_DATA_INDEX = 1;
@@ -1391,9 +1680,6 @@ public class Service_Import extends IntentService {
 
             }
             ArrayList<String[]> alsImageNameData = new ArrayList<>();
-            String sNHComicID = ci.sSource;
-            sNHComicID = sNHComicID.substring(0, sNHComicID.lastIndexOf("/"));
-            sNHComicID = sNHComicID.substring(sNHComicID.lastIndexOf("/") + 1);
             if (sGalleryID.length() > 0) {
                 for(Map.Entry<Integer, String> tmEntryPageNumImageExt: tmFileIndexImageExtention.entrySet()) {
                     //Build the suspected URL for the image:
@@ -1410,7 +1696,7 @@ public class Service_Import extends IntentService {
                     //Get the size of the image and add it to the total size of the comic:
                     if(ci.lSize > -1) { //-1 if we do this once and find out that the data is not in the header.
                         URL urlPage = new URL(sNHImageDownloadAddress);
-                        URLConnection connection = url.openConnection();
+                        URLConnection connection = urlPage.openConnection();
                         //connection.connect();
                         connection.setRequestProperty("Accept-Encoding", "identity");
                         ci.lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
@@ -1461,8 +1747,6 @@ public class Service_Import extends IntentService {
         long lProgressNumerator = 0L;
         long lProgressDenominator = ci.iComicPages;
         int iProgressBarValue = 0;
-
-        ContentResolver contentResolver = getApplicationContext().getContentResolver();
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
@@ -1616,7 +1900,9 @@ public class Service_Import extends IntentService {
                         RECEIVER_EXECUTE_IMPORT);
 
             } catch (Exception e) {
-                Log.e("Error: ", e.getMessage());
+                if(e.getMessage() != null) {
+                    Log.e("Error: ", e.getMessage());
+                }
                 BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
                         false, iProgressBarValue,
                         true, "Operation halted.",
@@ -1648,7 +1934,6 @@ public class Service_Import extends IntentService {
         boolean bIsValidComicPage = true;
         int iComicIDDigitCount = 0;
 
-        int iComicID = -1;
         if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
             iComicIDDigitCount = 7;
         } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){

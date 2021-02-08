@@ -59,7 +59,7 @@
                 android:layout_marginStart="20dp"
                 android:text=""
                 android:textSize="20sp"
-                android:layout_toRightOf="@+id/textView_Label_RequiredStorageSpace"
+                android:layout_toEndOf="@+id/textView_Label_RequiredStorageSpace"
                 android:layout_alignTop="@+id/textView_Label_RequiredStorageSpace"/>
 
             <TextView
@@ -68,9 +68,9 @@
                 android:layout_height="wrap_content"
                 android:text="Available Storage Space:"
                 android:textSize="20sp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="10dp"
-                android:layout_below="@+id/textView_Label_RequiredStorageSpace"/>
+                android:layout_marginStart="40dp"
+                android:layout_toEndOf="@+id/textView_RequiredStorageSpace"
+                android:layout_alignTop="@+id/textView_Label_RequiredStorageSpace"/>
 
             <TextView
                 android:id="@+id/textView_AvailableStorageSpace"
@@ -79,18 +79,8 @@
                 android:layout_marginStart="20dp"
                 android:text=""
                 android:textSize="20sp"
-                android:layout_toRightOf="@+id/textView_Label_AvailableStorageSpace"
+                android:layout_toEndOf="@+id/textView_Label_AvailableStorageSpace"
                 android:layout_alignTop="@+id/textView_Label_AvailableStorageSpace"/>
-
-            <TextView
-                android:id="@+id/textView_Label_ImportFileList"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Files to Import:"
-                android:textSize="20sp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="10dp"
-                android:layout_below="@+id/textView_AvailableStorageSpace"/>
 
         </RelativeLayout>
 
@@ -110,7 +100,7 @@
             android:id="@+id/button_ImportConfirmation"
             android:layout_width="149dp"
             android:layout_height="67dp"
-            android:text="Next"
+            android:text="IMPORT"
             android:textSize="24sp"
             app:backgroundTint="@color/colorBlackboardRed"
             android:layout_marginTop="10dp"

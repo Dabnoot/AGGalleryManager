@@ -78,7 +78,7 @@
         android:id="@+id/button_ImportConfirmation"
         android:layout_width="149dp"
         android:layout_height="67dp"
-        android:text="Next"
+        android:text="IMPORT"
         android:textSize="24sp"
         app:backgroundTint="@color/colorBlackboardRed"
         android:layout_marginTop="10dp"

@@ -132,16 +132,19 @@ public class Activity_ComicDetails extends AppCompatActivity {
         gmiGetOnlineData = menu.findItem(R.id.menu_GetOnlineData);
         gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
 
-        if(globalClass.bAutoDownloadOn) {
+        if(globalClass.bAutoDownloadOn && gciCatalogItem.sSource.contains("nhentai")) {
             if (!gciCatalogItem.bComic_Online_Data_Acquired) {
 
                 //Refresh any missing catalog pages:
                 gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
 
+
                 //If there is no tag data, automatically go out and try to get it.
                 gbAutoAcquireData = true;
                 SyncOnlineData();
             }
+        } else {
+            gmiGetOnlineData.setEnabled(false); //Don't allow get online data for non-NH comics.
         }
 
         return true;

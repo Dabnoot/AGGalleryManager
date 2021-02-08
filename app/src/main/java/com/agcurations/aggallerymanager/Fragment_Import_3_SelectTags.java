@@ -226,6 +226,9 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
                     //Get the title of the comic from the file name:
                     sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).sFileOrFolderName);
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                    //Get the title of the comic from the file name:
+                    sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
                 }
             }
             textView_Line1.setText(sLine1);
