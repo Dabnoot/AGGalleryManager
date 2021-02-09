@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
@@ -331,6 +332,28 @@ public class Service_Import extends IntentService {
 
                         //Get a Uri for this individual document:
                         final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri, docId);
+
+                        /*GlobalClass globalClass = (GlobalClass) getApplicationContext();
+                        File fStorageDir = Environment.getExternalStorageDirectory();
+
+                        problemNotificationConfig(
+                                docUri.toString(), RECEIVER_STORAGE_LOCATION);
+
+                        File fTestDir = null;
+                        if(docUri.toString().startsWith("content://com.android.externalstorage.documents/tree/0000-0000")) {
+                            fTestDir = new File("/storage/0000-0000/FireMimi/1558833241126.webm");
+                            if (fTestDir.exists()) {
+                                Log.d("Test", "Dir exists.");
+                            } else {
+                                Log.d("Test", "Dir doest not exist.");
+                            }
+                            return;
+                        }
+                        if(fTestDir == null){
+                            return;
+                        }*/
+
+
 
                         //Get date last modified:
                         Calendar cal = Calendar.getInstance(Locale.ENGLISH);
