@@ -1287,6 +1287,23 @@ public class GlobalClass extends Application {
         return sTagRecord;
     }
 
+    public String getTagTextsFromTagIDsString(String sTagIDs, int iMediaCategory){
+        String sTagTexts = "";
+        if(!sTagIDs.equals("")) {
+            String[] sTagIDArray = sTagIDs.split(",");
+            StringBuilder sbTags = new StringBuilder();
+            for (String sTagID : sTagIDArray) {
+                sbTags.append(getTagTextFromID(Integer.parseInt(sTagID), iMediaCategory));
+                sbTags.append(", ");
+            }
+            sTagTexts = sbTags.toString();
+            if (sTagTexts.contains(",")) {
+                sTagTexts = sTagTexts.substring(0, sTagTexts.lastIndexOf(", "));
+            }
+        }
+        return sTagTexts;
+    }
+
     public void TagsFile_UpdateAllRecords_JumbleTagID(int iMediaCategory) {
         //This routine used to update all tag records such that the tag ID is jumbled.
 

@@ -40,9 +40,10 @@
 
     </RelativeLayout>
 
+    <!--android:id="@+id/fragment_tag_selector"-->
     <FrameLayout
-        android:id="@+id/fragment_tag_selector"
-        android:layout_width="240dp"
+        android:id="@+id/fragment_Item_Details"
+        android:layout_width="600dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/design_default_color_error">

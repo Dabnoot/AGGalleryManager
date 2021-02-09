@@ -48,8 +48,6 @@ public class Fragment_SelectTags extends Fragment {
 
     ListViewTagsAdapter gListViewTagsAdapter;
 
-    public final static int RESULT_CODE_TAGS_MODIFIED = 202;
-
     private TreeMap<String, ItemClass_Tag> tmCatalogTagsInUse; //Gather tags in use only once.
     // This is require for when the user switches between tabs. We will transfer selected tags here
     //  in addition to globally-used tags so that the user's choices are not wiped out when switching tabs.
@@ -197,11 +195,10 @@ public class Fragment_SelectTags extends Fragment {
         });
 
 
-        //During the import preview process, use a list of tags in use by the selected items.
-        //  There may be a tag that has just been applied that is not currently used by any
-        //  tags in the catalog. Such a tag would not get picked up by the IN-USE function
-        //  in globalClass, and get listed in the IN-USE section of the tag selector.
+        //Get tags that are in-use, for popuplating tab 0 later:
         tmCatalogTagsInUse = globalClass.GetCatalogTagsInUse(mViewModel.iMediaCategory);
+
+        //If there are no tags in use, select tab 1 (the second tab, zero-based):
         if(tmCatalogTagsInUse.size() == 0){
             TabLayout.Tab tab = tabLayout_TagListings.getTabAt(1);
             if(tab != null) {
@@ -262,20 +259,6 @@ public class Fragment_SelectTags extends Fragment {
 
                 adConfirmationDialog.show();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             }
         });
 
@@ -288,6 +271,8 @@ public class Fragment_SelectTags extends Fragment {
     }
 
     public void resetTagListViewData(ArrayList<Integer> aliPreselectedTags){
+        //This is called by the host activity when the user goes to the next image or video.
+        //  The user specifies the new tags and we "check mark" the tags that apply.
         galiPreselectedTags = aliPreselectedTags;
         initListViewData();
     }

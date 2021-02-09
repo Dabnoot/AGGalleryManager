@@ -375,7 +375,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //Determine if this is a gif file, which the VideoView will not play:
                 bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
-                //Populate the tags fragment:
+                /*//Populate the tags fragment:
                 ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
                 //Start the tag selection fragment:
                 FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -385,7 +385,16 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTags);
                 fst.setArguments(args);
                 ft.replace(R.id.fragment_tag_selector, fst);
-                ft.commit();
+                ft.commit();*/
+
+                //Populate the item details fragment:
+                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+                Fragment_ItemDetails fragment_itemDetails = new Fragment_ItemDetails();
+                Bundle args = new Bundle();
+                args.putSerializable(Fragment_ItemDetails.CATALOG_ITEM, ci);
+                fragment_itemDetails.setArguments(args);
+                fragmentTransaction.replace(R.id.fragment_Item_Details, fragment_itemDetails);
+                fragmentTransaction.commit();
 
 
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:

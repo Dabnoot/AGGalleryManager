@@ -459,19 +459,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvComicSource.setText(gciCatalogItem.sSource);
                     holder.tvParodies.setText(gciCatalogItem.sComicParodies);
                     holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
-                    StringBuilder sbTags = new StringBuilder();
-                    if(!gciCatalogItem.sTags.equals("")) {
-                        String[] sTagIDs = gciCatalogItem.sTags.split(",");
-                        for (String sTagID : sTagIDs) {
-                            sbTags.append(globalClass.getTagTextFromID(Integer.parseInt(sTagID), GlobalClass.MEDIA_CATEGORY_COMICS));
-                            sbTags.append(", ");
-                        }
-                        String sTagTextAggregate = sbTags.toString();
-                        if (sTagTextAggregate.contains(",")) {
-                            sTagTextAggregate = sTagTextAggregate.substring(0, sTagTextAggregate.lastIndexOf(", "));
-                        }
-                        holder.tvTags.setText(sTagTextAggregate);
-                    }
+
+                    String sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
+                    holder.tvTags.setText(sTagText);
+
                     holder.tvArtists.setText(gciCatalogItem.sComicArtists);
                     holder.tvGroups.setText(gciCatalogItem.sComicGroups);
                     holder.tvLanguages.setText(gciCatalogItem.sComicLanguages);

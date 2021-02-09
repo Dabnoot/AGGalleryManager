@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 public class ViewModel_Fragment_SelectTags extends ViewModel {
-    // TODO: Implement the ViewModel
+
     public final ArrayList<ItemClass_Tag> alTagsAll = new ArrayList<>();  //All possible tags
     public final MutableLiveData<ArrayList<ItemClass_Tag>> altiTagsSelected =
             new MutableLiveData<>(); //Tags selected by the user, or already applied to a selected item.
