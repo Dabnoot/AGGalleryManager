@@ -20,7 +20,6 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -130,7 +129,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             @Override
             public boolean onDown(MotionEvent e) {
 
-                if (AUTO_HIDE) {
+                if (gbAutoHide) {
                     //Delay hide while the user is interacting with controls
                     delayedHide();
                 }
@@ -141,7 +140,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
-                if (mVisible && AUTO_HIDE) {
+                if (mVisible && gbAutoHide) {
                     delayedHide();
                 }
                 return super.onSingleTapConfirmed(e);
@@ -253,7 +252,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
                 toggle();
-                if (mVisible && AUTO_HIDE) {
+                if (mVisible && gbAutoHide) {
                     delayedHide();
                 }
                 return super.onSingleTapConfirmed(e);
@@ -322,6 +321,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 return gdImageView.onTouchEvent(event);
             }
         });
+
+        if(globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS){
+            gbAutoHide = true;
+        }
 
         initializePlayer();
     }
@@ -543,7 +546,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
      */
-    private static final boolean AUTO_HIDE = false;  //Turn off AUTO-HIDE. When the user is dragging the
+    private static boolean gbAutoHide = false;  //Turn off auto-hide for videos. When the user is dragging the
     //   seek bar, the background navigation bar remains, but the MediaController relocates. This causes
     //   uncomfortable user interaction.
 
