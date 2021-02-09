@@ -45,7 +45,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     //Global Variables:
     private GlobalClass globalClass;
-    private RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> gRecyclerViewCatalogAdapter;
+    private RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
 
@@ -248,7 +248,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
         }
 
-        populate_RecyclerViewCatalogItems();
+        //populate_RecyclerViewCatalogItems();
+        //no need to call pop() here because the initialization of position of gspSpinnerSort calls it.
 
         if(globalClass.ObfuscationOn) {
             //Obfuscate data:
