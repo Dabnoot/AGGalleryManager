@@ -375,18 +375,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //Determine if this is a gif file, which the VideoView will not play:
                 bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
-                /*//Populate the tags fragment:
-                ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
-                //Start the tag selection fragment:
-                FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                Fragment_SelectTags fst = new Fragment_SelectTags();
-                Bundle args = new Bundle();
-                args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, iMediaCategory);
-                args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTags);
-                fst.setArguments(args);
-                ft.replace(R.id.fragment_tag_selector, fst);
-                ft.commit();*/
-
                 //Populate the item details fragment:
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
                 Fragment_ItemDetails fragment_itemDetails = new Fragment_ItemDetails();
@@ -395,7 +383,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 fragment_itemDetails.setArguments(args);
                 fragmentTransaction.replace(R.id.fragment_Item_Details, fragment_itemDetails);
                 fragmentTransaction.commit();
-
 
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampFloat();
@@ -556,7 +543,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
      */
-    private static final boolean AUTO_HIDE = true;
+    private static final boolean AUTO_HIDE = false;  //Turn off AUTO-HIDE. When the user is dragging the
+    //   seek bar, the background navigation bar remains, but the MediaController relocates. This causes
+    //   uncomfortable user interaction.
 
     /*
      * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after

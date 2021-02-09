@@ -23,6 +23,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public String sResolution = "";                       //Resolution for sorting at user request
     public long lSize = 0;                                //Size of video, image, or size of all files in the comic, in Bytes
     public String sThumbnail_File = "";                   //Name of the file used as the thumbnail for a video (no longer for comic)
+    public int iRating = 3;                               //Rating (grade) of the item, 1-5.
 
     //Comic-related variables:
     public String sComicArtists = "";     //Common comic tag category

@@ -137,8 +137,6 @@ public class Service_Main extends IntentService {
             //network;
         }
 
-
-
     }
 
 /*    private void fixComicPageCount(){

@@ -426,6 +426,8 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "Comic_Online_Data_Acquired";     //Typically used to gather tag data from an online comic source, if automatic.
         sHeader = sHeader + "\t" + "Comic_Source";
 
+        sHeader = sHeader + "\t" + "Rating";                         //Rating (grade) of the item, set by the user
+
         String sReadableData = ""; //To be used for textual searches
         sReadableData = sReadableData + ci.iMediaCategory;                         //Video, image, or comic.
         sReadableData = sReadableData + "\t" + ci.sItemID;                         //Video, image, comic id
@@ -460,7 +462,8 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.sComic_Missing_Pages;            //Missing page numbers
         sReadableData = sReadableData + "\t" + ci.iComic_File_Count;               //Files included with the comic. Can be used for egrity check.
         sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;     //Typically used to gather tag data from an online comic source, if automatic.
-        sReadableData = sReadableData + "\t" + ci.sSource;                   //Website, if relevant. ended for comics.
+        sReadableData = sReadableData + "\t" + ci.sSource;                         //Website, if relevant. ended for comics.
+        sReadableData = sReadableData + "\t" + ci.iRating;                         //Rating (grade).
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + ci.iMediaCategory;                                            //Video, image, or comic.
@@ -492,15 +495,16 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComic_Missing_Pages);            //Missing page numbers
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_File_Count);               //Files included with the comic. Can be used for egrity check.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                   //Website, if relevant. ended for comics.
-        
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.iRating);                         //Rating (grade).
+
         return new String[]{sHeader,sReadableData,sRecord};
     }
     
     public static ItemClass_CatalogItem ConvertStringToCatalogItem(String[] sRecord){
         //Designed for interpretting a line as read from a catalog file.
         ItemClass_CatalogItem ci =  new ItemClass_CatalogItem();
-        ci.iMediaCategory = Integer.parseInt(sRecord[0]);                                            //Video, image, or comic.
+        ci.iMediaCategory = Integer.parseInt(sRecord[0]);                   //Video, image, or comic.
         ci.sItemID = JumbleStorageText(sRecord[1]);                         //Video, image, comic id
         ci.sFilename = sRecord[2];                                          //Video or image filename
         ci.sFolder_Name = JumbleStorageText(sRecord[3]);                    //Name of the folder holding the video, image, or comic pages
@@ -508,29 +512,30 @@ public class GlobalClass extends Application {
         ci.dDatetime_Import = Double.parseDouble(JumbleStorageText(sRecord[5]));                //Date of import. Used for sorting if desired
         ci.dDatetime_Last_Viewed_by_User = Double.parseDouble(JumbleStorageText(sRecord[6]));   //Date of last read by user. Used for sorting if desired
         ci.sTags = JumbleStorageText(sRecord[7]);                           //Tags given to the video, image, or comic
-        ci.iHeight = Integer.parseInt(JumbleStorageText(sRecord[8]));                         //Video or image dimension/resolution
-        ci.iWidth = Integer.parseInt(JumbleStorageText(sRecord[9]));                          //Video or image dimension/resolution
-        ci.lDuration_Milliseconds = Long.parseLong(JumbleStorageText(sRecord[10]));          //Duration of video in milliseconds
-        ci.sDuration_Text = JumbleStorageText(sRecord[11]);                  //Duration of video text in 00:00:00 format
-        ci.sResolution = JumbleStorageText(sRecord[12]);                     //Resolution for sorting at user request
-        ci.lSize = Long.parseLong(JumbleStorageText(sRecord[13]));                           //Size of video, image, or size of all files in the comic, in Bytes
-        ci.sCast = JumbleStorageText(sRecord[14]);                           //For videos and images
+        ci.iHeight = Integer.parseInt(JumbleStorageText(sRecord[8]));               //Video or image dimension/resolution
+        ci.iWidth = Integer.parseInt(JumbleStorageText(sRecord[9]));                //Video or image dimension/resolution
+        ci.lDuration_Milliseconds = Long.parseLong(JumbleStorageText(sRecord[10])); //Duration of video in milliseconds
+        ci.sDuration_Text = JumbleStorageText(sRecord[11]);                 //Duration of video text in 00:00:00 format
+        ci.sResolution = JumbleStorageText(sRecord[12]);                    //Resolution for sorting at user request
+        ci.lSize = Long.parseLong(JumbleStorageText(sRecord[13]));          //Size of video, image, or size of all files in the comic, in Bytes
+        ci.sCast = JumbleStorageText(sRecord[14]);                          //For videos and images
 
         //Comic-related variables:
-        ci.sComicArtists = JumbleStorageText(sRecord[15]);                   //Common comic tag category
-        ci.sComicCategories = JumbleStorageText(sRecord[16]);                //Common comic tag category
-        ci.sComicCharacters = JumbleStorageText(sRecord[17]);                //Common comic tag category
-        ci.sComicGroups = JumbleStorageText(sRecord[18]);                    //Common comic tag category
-        ci.sComicLanguages = JumbleStorageText(sRecord[19]);                 //Language(s = sRecord[0] found in the comic
-        ci.sComicParodies = JumbleStorageText(sRecord[20]);                  //Common comic tag category
-        ci.sComicName = JumbleStorageText(sRecord[21]);                      //Comic name
-        ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[22]));                     //Total number of pages as defined at the comic source
-        ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[23]));              //Max comic page id extracted from file names
-        ci.sComic_Missing_Pages = JumbleStorageText(sRecord[24]);            //Missing page numbers
-        ci.iComic_File_Count = Integer.parseInt(JumbleStorageText(sRecord[25]));               //Files included with the comic. Can be used for egrity check.
-        ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[26]));     //Typically used to gather tag data from an online comic source, if automatic.
-        if(sRecord.length == 28) { //String.split will not give the last item if it is an empty string.
-            ci.sSource = JumbleStorageText(sRecord[27]);                   //Website, if relevant. ended for comics.
+        ci.sComicArtists = JumbleStorageText(sRecord[15]);                  //Common comic tag category
+        ci.sComicCategories = JumbleStorageText(sRecord[16]);               //Common comic tag category
+        ci.sComicCharacters = JumbleStorageText(sRecord[17]);               //Common comic tag category
+        ci.sComicGroups = JumbleStorageText(sRecord[18]);                   //Common comic tag category
+        ci.sComicLanguages = JumbleStorageText(sRecord[19]);                //Language(s = sRecord[0] found in the comic
+        ci.sComicParodies = JumbleStorageText(sRecord[20]);                 //Common comic tag category
+        ci.sComicName = JumbleStorageText(sRecord[21]);                     //Comic name
+        ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[22]));  //Total number of pages as defined at the comic source
+        ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[23]));   //Max comic page id extracted from file names
+        ci.sComic_Missing_Pages = JumbleStorageText(sRecord[24]);           //Missing page numbers
+        ci.iComic_File_Count = Integer.parseInt(JumbleStorageText(sRecord[25]));    //Files included with the comic. Can be used for egrity check.
+        ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[26]));  //Typically used to gather tag data from an online comic source, if automatic.
+        ci.sSource = JumbleStorageText(sRecord[27]);                        //Website, if relevant. ended for comics.
+        if(sRecord.length == 29) { //String.split will not give the last item if it is an empty string.
+            ci.iRating = Integer.parseInt(JumbleStorageText(sRecord[28]));  //Rating (grade), supplied by user.
         }
         return ci;
     }
@@ -696,6 +701,36 @@ public class GlobalClass extends Application {
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
+        }
+    }
+
+    public void CatalogDataFile_AddNewField(){
+        //Update getCatalogRecordString before calling this routine.
+        //Update ConvertStringToCatalogItem after calling this routine.
+        for(int i = 0; i < 3; i++){
+            StringBuilder sbBuffer = new StringBuilder();
+            boolean bHeaderRequired = true;
+            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(i).entrySet()){
+                String[] sData = getCatalogRecordString(tmEntry.getValue());
+                if(bHeaderRequired) {
+                    sbBuffer.append(sData[0]); //Append the header.
+                    sbBuffer.append("\n");
+                    bHeaderRequired = false;
+                }
+                sbBuffer.append(sData[2]); //Append the data.
+                sbBuffer.append("\n");
+            }
+
+            try {
+                //Write the catalog file:
+                FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[i], false);
+                fwNewCatalogContentsFile.write(sbBuffer.toString());
+                fwNewCatalogContentsFile.flush();
+                fwNewCatalogContentsFile.close();
+
+            } catch (Exception e) {
+                Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 
