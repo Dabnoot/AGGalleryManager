@@ -64,7 +64,7 @@ public class Activity_TagEditor extends AppCompatActivity {
             if(iMediaCategory != -1){
                 viewModelTagEditor.iTagEditorMediaCategory = iMediaCategory;
                 //Go to the import folder selection fragment:
-                ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION);
+                ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION, false);
             }
         }
 
@@ -101,7 +101,7 @@ public class Activity_TagEditor extends AppCompatActivity {
         }
 
         //Go to the import folder selection fragment:
-        ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION);
+        ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION, false);
     }
 
     public void buttonNextClick_TagActionSelected(View v){
