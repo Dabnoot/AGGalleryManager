@@ -16,9 +16,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -426,7 +423,7 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "Comic_Online_Data_Acquired";     //Typically used to gather tag data from an online comic source, if automatic.
         sHeader = sHeader + "\t" + "Comic_Source";
 
-        sHeader = sHeader + "\t" + "Rating";                         //Rating (grade) of the item, set by the user
+        sHeader = sHeader + "\t" + "Grade";                          //Grade of the item, set by the user
 
         String sReadableData = ""; //To be used for textual searches
         sReadableData = sReadableData + ci.iMediaCategory;                         //Video, image, or comic.
@@ -463,7 +460,7 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.iComic_File_Count;               //Files included with the comic. Can be used for egrity check.
         sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;     //Typically used to gather tag data from an online comic source, if automatic.
         sReadableData = sReadableData + "\t" + ci.sSource;                         //Website, if relevant. ended for comics.
-        sReadableData = sReadableData + "\t" + ci.iRating;                         //Rating (grade).
+        sReadableData = sReadableData + "\t" + ci.iGrade;                          //Grade.
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + ci.iMediaCategory;                                            //Video, image, or comic.
@@ -496,7 +493,7 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_File_Count);               //Files included with the comic. Can be used for egrity check.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iRating);                         //Rating (grade).
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
 
         return new String[]{sHeader,sReadableData,sRecord};
     }
@@ -535,7 +532,7 @@ public class GlobalClass extends Application {
         ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[26]));  //Typically used to gather tag data from an online comic source, if automatic.
         ci.sSource = JumbleStorageText(sRecord[27]);                        //Website, if relevant. ended for comics.
         if(sRecord.length == 29) { //String.split will not give the last item if it is an empty string.
-            ci.iRating = Integer.parseInt(JumbleStorageText(sRecord[28]));  //Rating (grade), supplied by user.
+            ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[28]));   //Grade, supplied by user.
         }
         return ci;
     }

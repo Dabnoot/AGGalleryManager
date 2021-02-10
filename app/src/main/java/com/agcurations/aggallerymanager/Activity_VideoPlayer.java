@@ -20,13 +20,16 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.ViewModelProvider;
 
 public class Activity_VideoPlayer extends AppCompatActivity {
 
@@ -330,8 +333,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     }
 
 
-
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -352,7 +353,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(PLAYBACK_TIME, giCurrentPosition);
     }
@@ -382,7 +383,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
                 Fragment_ItemDetails fragment_itemDetails = new Fragment_ItemDetails();
                 Bundle args = new Bundle();
-                args.putSerializable(Fragment_ItemDetails.CATALOG_ITEM, ci);
+                args.putSerializable(Fragment_ItemDetails.CATALOG_ITEM, ci); //NOTE!!!!! ci passed here gets marshalled as a reference, not a copy.
+                                //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
                 fragment_itemDetails.setArguments(args);
                 fragmentTransaction.replace(R.id.fragment_Item_Details, fragment_itemDetails);
                 fragmentTransaction.commit();
@@ -423,114 +425,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }
 
     }
-
-    /*private ViewGroup.LayoutParams getLayoutParamsBarsVisible(Uri uriMedia){
-        //Get the aspect ratio:
-        int iVideoWidth;
-        int iVideoHeight;
-        if(!bFileIsGif) {
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(this, uriMedia);
-            iVideoWidth = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-            iVideoHeight = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-            retriever.close();
-            retriever.release();
-        } else {
-            iVideoWidth = gImageView_GifViewer.getWidth();
-            iVideoHeight = gImageView_GifViewer.getHeight();
-        }
-        //Set gVideoView size:
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-
-        int iStatBarHeight = getStatusBarHeight();
-        //int iNavBarHeight = getNavigationBarHeight();
-        int iActionBarHeight = getActionBarHeight();
-        int y = dm.heightPixels;
-        y -= iStatBarHeight;
-        //y -= iNavBarHeight;
-        //y -= iActionBarHeight;
-        //int x = dm.widthPixels;
-        int x = (int) ((float) iVideoWidth / iVideoHeight * y);
-
-        RelativeLayout.LayoutParams videoviewlp = new RelativeLayout.LayoutParams(x, y);
-        videoviewlp.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
-        videoviewlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE);
-        videoviewlp.setMargins(0,iStatBarHeight,0,0);
-
-        return  videoviewlp;
-    }
-
-    private ViewGroup.LayoutParams getLayoutParamsBarsInVisible(Uri uriMedia){
-        //Get the aspect ratio:
-        int iVideoWidth;
-        int iVideoHeight;
-        if(!bFileIsGif) {
-            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-            retriever.setDataSource(this, uriMedia);
-            iVideoWidth = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
-            iVideoHeight = Integer.parseInt(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
-            retriever.close();
-            retriever.release();
-        } else {
-            iVideoWidth = gImageView_GifViewer.getWidth();
-            iVideoHeight = gImageView_GifViewer.getHeight();
-        }
-
-        //Set gVideoView size:
-        DisplayMetrics dm = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(dm);
-
-        //int iStatBarHeight = getStatusBarHeight();
-        //int iNavBarHeight = getNavigationBarHeight();
-        //int iActionBarHeight = getActionBarHeight();
-        int y = dm.heightPixels;
-        //y -= iStatBarHeight;
-        //y -= iNavBarHeight;
-        //y -= iActionBarHeight;
-        //int x = dm.widthPixels;
-        int x = (int) ((float) iVideoWidth / iVideoHeight * y);
-
-        RelativeLayout.LayoutParams videoviewlp = new RelativeLayout.LayoutParams(x, y);
-        videoviewlp.addRule(RelativeLayout.CENTER_HORIZONTAL, RelativeLayout.TRUE);
-        videoviewlp.addRule(RelativeLayout.CENTER_VERTICAL, RelativeLayout.TRUE);
-        videoviewlp.setMargins(0,0,0,0);
-
-        return  videoviewlp;
-    }
-
-
-    public int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    public int getNavigationBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
-    public int getActionBarHeight() {
-        int result = 0;
-        // Calculate ActionBar height
-        TypedValue tv = new TypedValue();
-        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true))
-        {
-            result = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
-        }
-        return result;
-    }
-*/
-
-
 
     public void HideObfuscationImageButton(View v){
         v.setVisibility(View.INVISIBLE);

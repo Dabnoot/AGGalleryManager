@@ -8,14 +8,17 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.bumptech.glide.Glide;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -34,6 +37,11 @@ public class Fragment_ItemDetails extends Fragment {
     private ItemClass_CatalogItem gciCatalogItem;
 
     GlobalClass globalClass;
+
+    int[] giGradeImageViews;
+
+    String gsNewTagIDs;
+    int giNewGrade;
 
     public Fragment_ItemDetails() {
         // Required empty public constructor
@@ -64,33 +72,38 @@ public class Fragment_ItemDetails extends Fragment {
         Bundle args = getArguments();
 
         if(args != null) {
-            gciCatalogItem = (ItemClass_CatalogItem) args.getSerializable(CATALOG_ITEM);
+            gciCatalogItem = (ItemClass_CatalogItem) args.getSerializable(CATALOG_ITEM); //NOTE!!!! This is passed to this fragment by reference.
+                                    //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
+            gsNewTagIDs = gciCatalogItem.sTags;
+            giNewGrade = gciCatalogItem.iGrade;
         } else {
             gciCatalogItem = new ItemClass_CatalogItem(); //todo: This fragment serves no purpose if the catalog item is not received.
         }
 
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
-        //Show the rating:
-        ImageView imageView_Grade1 = getView().findViewById(R.id.imageView_Grade1);
-        ImageView imageView_Grade2 = getView().findViewById(R.id.imageView_Grade2);
-        ImageView imageView_Grade3 = getView().findViewById(R.id.imageView_Grade3);
-        ImageView imageView_Grade4 = getView().findViewById(R.id.imageView_Grade4);
-        ImageView imageView_Grade5 = getView().findViewById(R.id.imageView_Grade5);
-        if(imageView_Grade1 != null &&
-                imageView_Grade2 != null &&
-                imageView_Grade3 != null &&
-                imageView_Grade4 != null &&
-                imageView_Grade5 != null){
-
-            ImageView[] GradeArray = {imageView_Grade1, imageView_Grade2, imageView_Grade3, imageView_Grade4, imageView_Grade5};
-            Drawable drawable_SolidStar = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_grade_white_18dp, null);
-            for(int i = 0; i < gciCatalogItem.iRating && i < 5; i++){
-                //Glide.with(getContext()).load(R.drawable.baseline_grade_white_18dp).into(GradeArray[i]);
-                GradeArray[i].setImageDrawable(drawable_SolidStar);
+        //Set on-click listener for grade:
+        giGradeImageViews = new int[]{
+                R.id.imageView_Grade1,
+                R.id.imageView_Grade2,
+                R.id.imageView_Grade3,
+                R.id.imageView_Grade4,
+                R.id.imageView_Grade5};
+        ImageView[] imageView_GradeArray = new ImageView[5];
+        boolean bGradeIVsOK = true;
+        for(int i = 0; i < giGradeImageViews.length; i++){
+            imageView_GradeArray[i] = getView().findViewById(giGradeImageViews[i]);
+            if(imageView_GradeArray[i] == null){
+                bGradeIVsOK = false;
+            }
+        }
+        if (bGradeIVsOK){
+            for(int i = 0; i < giGradeImageViews.length; i++) {
+                imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
             }
         }
 
+        displayGrade();
 
         TextView textView_FileName = getView().findViewById(R.id.textView_FileName);
         if(textView_FileName != null){
@@ -106,6 +119,8 @@ public class Fragment_ItemDetails extends Fragment {
         }
 
 
+
+
         //Populate the tags fragment:
         ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
         //Start the tag selection fragment:
@@ -118,6 +133,120 @@ public class Fragment_ItemDetails extends Fragment {
         fragmentTransaction.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
         fragmentTransaction.commit();
 
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        ViewModel_Fragment_SelectTags mViewModel = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+        ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+        for(int i = 0; i < aliTags.size(); i++){
+            alTagItems.add(i, new ItemClass_Tag(aliTags.get(i), globalClass.getTagTextFromID(aliTags.get(i), gciCatalogItem.iMediaCategory)));
+        }
+        mViewModel.setSelectedTags(alTagItems);
+
+        //React to changes in the selected tag data in the ViewModel:
+        final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                //Get the text of the tags and display:
+                StringBuilder sb = new StringBuilder();
+                sb.append("Tags: ");
+                if(tagItems.size() > 0) {
+                    sb.append(tagItems.get(0).TagText);
+                    for (int i = 1; i < tagItems.size(); i++) {
+                        sb.append(", ");
+                        sb.append(tagItems.get(i).TagText);
+                    }
+                }
+                TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+                if(textView_Tags != null){
+                    textView_Tags.setText(sb.toString());
+                }
+
+                //Get the tag IDs:
+                ArrayList<Integer> aliTagIDs = new ArrayList<>();
+                for(ItemClass_Tag ti : tagItems){
+                    aliTagIDs.add(ti.TagID);
+                }
+
+                gsNewTagIDs = GlobalClass.formDelimitedString(aliTagIDs,",");
+
+                //Enable the Save button:
+                enableSave();
+            }
+        };
+
+        mViewModel.altiTagsSelected.observe(getViewLifecycleOwner(), selectedTagsObserver);
+
+        //Configure the SAVE button listener:
+        final Button button_Save = getView().findViewById(R.id.button_Save);
+        if(button_Save != null){
+            button_Save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    gciCatalogItem.sTags = gsNewTagIDs;
+                    gciCatalogItem.iGrade = giNewGrade;
+                        //Because the item assigned to gciCatalogItem was passed-in by reference,
+                        //  this changes the CatalogItem set in the calling activity, too.
+                    globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                        //Write the modifications to file, and update official memory.
+                    button_Save.setEnabled(false);
+                    Toast.makeText(getContext(), "Data saved.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
 
     }
+
+
+
+    private void displayGrade(){
+        //Show the rating:
+        ImageView[] imageView_GradeArray = new ImageView[5];
+        boolean bGradeIVsOK = true;
+        for(int i = 0; i < giGradeImageViews.length; i++){
+            imageView_GradeArray[i] = getView().findViewById(giGradeImageViews[i]);
+            if(imageView_GradeArray[i] == null){
+                bGradeIVsOK = false;
+            }
+        }
+        if (bGradeIVsOK){
+            Drawable drawable_SolidStar = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_grade_white_18dp, null);
+            Drawable drawable_EmptyStar = ResourcesCompat.getDrawable(getResources(), R.drawable.outline_grade_white_18dp, null);
+            for(int i = 0; i < giNewGrade; i++) {
+                imageView_GradeArray[i].setImageDrawable(drawable_SolidStar);
+            }
+            for(int i = giNewGrade; i < giGradeImageViews.length; i++) {
+                imageView_GradeArray[i].setImageDrawable(drawable_EmptyStar);
+            }
+        }
+
+
+
+
+    }
+
+    private void enableSave(){
+        Button button_Save = getView().findViewById(R.id.button_Save);
+        if(button_Save != null){
+            button_Save.setEnabled(true);
+        }
+    }
+
+    private class gradeOnClickListener implements View.OnClickListener{
+
+        int iGrade;
+
+        public gradeOnClickListener(int iGrade){
+            this.iGrade = iGrade;
+        }
+
+        @Override
+        public void onClick(View view) {
+            giNewGrade = iGrade;
+            displayGrade();
+            enableSave();
+        }
+    }
+
+
 }
