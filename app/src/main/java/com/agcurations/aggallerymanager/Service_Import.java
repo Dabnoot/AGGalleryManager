@@ -813,13 +813,12 @@ public class Service_Import extends IntentService {
 
             try {
                 //Write next behavior to the screen log:
-                sLogLine = "Attempting ";
                 if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                    sLogLine = sLogLine + "move ";
+                    sLogLine = "Moving ";
                 } else {
-                    sLogLine = sLogLine + "copy ";
+                    sLogLine = "Copying ";
                 }
-                sLogLine = sLogLine + "of file " + fileItem.sFileOrFolderName + " to destination...";
+                sLogLine = sLogLine + " file " + fileItem.sFileOrFolderName + " to destination...";
                 BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -898,19 +897,11 @@ public class Service_Import extends IntentService {
                     outputStream.close();
                 //}
 
+                sLogLine = "Success.\n";
                 if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                    //if(bCopyViaStream) {
-                        //sLogLine = "Copy success.";
-                        if (!dfSource.delete()) {
-                            sLogLine = sLogLine + "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                        } else {
-                            sLogLine = sLogLine + "\nSuccess deleting source file after copy.\n";
-                        }
-                    //} else {
-                    //    sLogLine = "Move success.";
-                    //}
-                } else {
-                    sLogLine = "Copy success.";
+                    if (!dfSource.delete()) {
+                        sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                    }
                 }
 
 
