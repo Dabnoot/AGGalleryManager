@@ -365,7 +365,10 @@ public class Activity_Import extends AppCompatActivity {
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY, false);
         viewModelImportActivity.bImportCategoryChange = true; //This forces re-select of import dir.
     }
-    
+
+    public void buttonClick_Cancel(View v){
+        finish();
+    }
     
     //================================================
     //  Adapters

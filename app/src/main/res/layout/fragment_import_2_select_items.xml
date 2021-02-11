@@ -15,21 +15,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-
-        <Button
-            android:id="@+id/button_ItemSelectComplete"
-            android:layout_width="149dp"
-            android:layout_height="67dp"
-            android:layout_marginBottom="20dp"
-            android:onClick="buttonNextClick_ItemSelectComplete"
-            android:text="Next"
-            android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:enabled="false"/>
-
         <LinearLayout
             android:id="@+id/linearLayout_ListViewControlBar"
             android:layout_width="match_parent"
@@ -118,7 +103,7 @@
             android:textSize="24sp"
             android:scrollbarSize="20dp"
             app:layout_constrainedHeight="true"
-            app:layout_constraintBottom_toTopOf="@+id/button_ItemSelectComplete"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout_ButtonBar"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/linearLayout_ListViewControlBar" />
@@ -132,6 +117,36 @@
             android:textSize="24sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout_ButtonBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <Button
+                android:id="@+id/button_Cancel"
+                android:layout_width="149dp"
+                android:layout_height="67dp"
+                android:layout_marginEnd="20dp"
+                android:onClick="buttonClick_Cancel"
+                android:text="Cancel"
+                android:textSize="24sp"
+                app:backgroundTint="@color/colorBlackboardRed" />
+
+            <Button
+                android:id="@+id/button_ItemSelectComplete"
+                android:layout_width="149dp"
+                android:layout_height="67dp"
+                android:onClick="buttonNextClick_ItemSelectComplete"
+                android:text="Next"
+                android:textSize="24sp"
+                app:backgroundTint="@color/colorBlackboardRed"
+                android:enabled="false"/>
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

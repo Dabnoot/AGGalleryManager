@@ -237,6 +237,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(gRecyclerView.getLayoutManager() != null) {
             recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
         }
+
         super.onPause();
     }
 

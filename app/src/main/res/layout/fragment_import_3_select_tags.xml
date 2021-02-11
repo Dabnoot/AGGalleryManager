@@ -22,9 +22,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="20dp"
             android:layout_alignParentTop="true"
-            android:layout_above="@+id/button_NextStep">
+            android:layout_above="@+id/linearLayout_ButtonBar">
 
             <TextView
                 android:id="@+id/textView_Label_Title"
@@ -43,7 +43,7 @@
                 android:layout_below="@+id/textView_Label_Title"
                 android:layout_gravity="start"
                 android:textAlignment="textStart"
-                android:text="Here you may apply tags to all selected items at once. When finished, select next to continue."
+                android:text="Here you may apply tags to all selected items at once. Select next to continue."
                 android:textSize="20sp" />
 
             <TextView
@@ -82,17 +82,34 @@
 
         </RelativeLayout>
 
-        <Button
-            android:id="@+id/button_NextStep"
-            android:layout_width="149dp"
-            android:layout_height="67dp"
-            android:text="Next"
-            android:textSize="24sp"
-            android:onClick="buttonNextClick_TagSelectComplete"
+        <LinearLayout
+            android:id="@+id/linearLayout_ButtonBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
-            app:backgroundTint="@color/colorBlackboardRed"
             android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"/>
+            android:layout_centerHorizontal="true">
+
+            <Button
+                android:id="@+id/button_Cancel"
+                android:layout_width="149dp"
+                android:layout_height="67dp"
+                android:layout_marginEnd="20dp"
+                android:onClick="buttonClick_Cancel"
+                android:text="Cancel"
+                android:textSize="24sp"
+                app:backgroundTint="@color/colorBlackboardRed" />
+
+            <Button
+                android:id="@+id/button_NextStep"
+                android:layout_width="149dp"
+                android:layout_height="67dp"
+                android:text="Next"
+                android:textSize="24sp"
+                android:onClick="buttonNextClick_TagSelectComplete"
+                app:backgroundTint="@color/colorBlackboardRed"/>
+
+        </LinearLayout>
 
     </RelativeLayout>
 

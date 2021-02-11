@@ -250,10 +250,10 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         gLinearLayout_Progress.setVisibility(View.VISIBLE);
 
                         //Make some more space to show the progress bar:
-                        Button button_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
-                        ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) button_FolderSelectComplete.getLayoutParams();
+                        LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
+                        ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
                         lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
-                        button_FolderSelectComplete.setLayoutParams(lp);
+                        linearLayout_ButtonBar.setLayoutParams(lp);
 
                         int iFilesOrFolders = Service_Import.FILES_ONLY;
                         if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&

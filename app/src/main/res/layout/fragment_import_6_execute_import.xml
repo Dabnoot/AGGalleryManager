@@ -79,14 +79,12 @@
             android:layout_width="149dp"
             android:layout_height="67dp"
             android:layout_marginBottom="10dp"
-            android:layout_marginLeft="20dp"
+            android:layout_marginStart="20dp"
             android:onClick="buttonNextClick_ImportFinish"
             android:text="Finish"
             android:textSize="24sp"
             android:enabled="false"
-            app:backgroundTint="@color/colorBlackboardRed"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"/>
+            app:backgroundTint="@color/colorBlackboardRed" />
 
     </LinearLayout>
 

@@ -74,16 +74,33 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <Button
-        android:id="@+id/button_ImportConfirmation"
-        android:layout_width="149dp"
-        android:layout_height="67dp"
-        android:text="IMPORT"
-        android:textSize="24sp"
-        app:backgroundTint="@color/colorBlackboardRed"
+    <LinearLayout
+        android:id="@+id/linearLayout_ButtonBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:layout_gravity="center"
-        android:onClick="buttonNextClick_ImportConfirm"/>
+        android:layout_gravity="center">
+
+        <Button
+            android:id="@+id/button_Cancel"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:layout_marginEnd="20dp"
+            android:onClick="buttonClick_Cancel"
+            android:text="Cancel"
+            android:textSize="24sp"
+            app:backgroundTint="@color/colorBlackboardRed" />
+
+        <Button
+            android:id="@+id/button_ImportConfirmation"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:text="IMPORT"
+            android:textSize="24sp"
+            app:backgroundTint="@color/colorBlackboardRed"
+            android:onClick="buttonNextClick_ImportConfirm"/>
+
+    </LinearLayout>
 
 </LinearLayout>
