@@ -931,6 +931,7 @@ public class Service_Import extends IntentService {
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;
+                ciNew.iGrade = fileItem.iGrade;
 
                 //The below call should add the record to both the catalog contents file
                 //  and memory:
@@ -996,6 +997,10 @@ public class Service_Import extends IntentService {
 
         TreeMap<String, String[]> tmNHComicIDs = new TreeMap<>(); //Map NH_Comic_Downloader ComicID to a record ID/folder and also grab the comic title.
 
+        int INDEX_RECORD_ID = 0;
+        int INDEX_COMIC_NAME = 1;
+        int INDEX_COMIC_TAGS = 2;
+        int INDEX_COMIC_GRADE = 3;
         //If NH_Comic_Downloaded, loop and find all of the comic IDs:
         for(ItemClass_File fileItem: alFileList) {
             if(fileItem.sFileOrFolderName.matches(GlobalClass.gsNHComicCoverPageFilter)){
@@ -1005,12 +1010,13 @@ public class Service_Import extends IntentService {
                 iNextRecordId++;
                 String sComicName = GetNHComicNameFromCoverFile(fileItem.sFileOrFolderName);
                 String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
+                int iGrade = fileItem.iGrade;
                 if(tmNHComicIDs.containsKey(sComicID)){
                     //If this is merely a duplicate comic selected during the import, not if it already exists in the catalog.
                     //If it already exists in the catalog, it is on the user to resolve.
                     problemNotificationConfig("Skipping Comic ID " + sComicID + ". Duplicate comic.", RECEIVER_EXECUTE_IMPORT);
                 } else {
-                    tmNHComicIDs.put(sComicID, new String[]{sRecordID, sComicName, sComicTags});
+                    tmNHComicIDs.put(sComicID, new String[]{sRecordID, sComicName, sComicTags, String.valueOf(iGrade)});
                 }
             }
         }
@@ -1018,7 +1024,7 @@ public class Service_Import extends IntentService {
         for(Map.Entry<String, String[]> tmEntryNHComic: tmNHComicIDs.entrySet()) {
             //Loop and import files:
 
-            String sDestinationFolder = tmEntryNHComic.getValue()[0]; //The individual comic folder is the comic ID.
+            String sDestinationFolder = tmEntryNHComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
 
             File fDestination = new File(
                     globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
@@ -1048,9 +1054,10 @@ public class Service_Import extends IntentService {
             //Prepare the data record:
             ItemClass_CatalogItem ciNewComic = new ItemClass_CatalogItem();
             ciNewComic.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
-            ciNewComic.sItemID = tmEntryNHComic.getValue()[0]; //The individual comic folder is the comic ID.
-            ciNewComic.sComicName = tmEntryNHComic.getValue()[1]; //Get the name.
-            ciNewComic.sTags = tmEntryNHComic.getValue()[2]; //Get the tags.
+            ciNewComic.sItemID = tmEntryNHComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
+            ciNewComic.sComicName = tmEntryNHComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
+            ciNewComic.sTags = tmEntryNHComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
+            ciNewComic.iGrade = Integer.parseInt(tmEntryNHComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade. Either default or selected by user.
             ciNewComic.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
             Double dTimeStamp = GlobalClass.GetTimeStampFloat();
@@ -1270,6 +1277,7 @@ public class Service_Import extends IntentService {
         int INDEX_RECORD_ID = 0;
         int INDEX_COMIC_NAME = 1;
         int INDEX_COMIC_TAGS = 2;
+        int INDEX_COMIC_GRADE = 3;
         for(ItemClass_File fileItem: alFileList) {
             if(fileItem.iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER){
                 String sUriParent = fileItem.sUri;
@@ -1277,7 +1285,8 @@ public class Service_Import extends IntentService {
                 iNextRecordId++;
                 String sComicName = fileItem.sFileOrFolderName;
                 String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
-                tmComics.put(sUriParent, new String[]{sRecordID, sComicName, sComicTags});
+                int iGrade = fileItem.iGrade;
+                tmComics.put(sUriParent, new String[]{sRecordID, sComicName, sComicTags, String.valueOf(iGrade)});
             }
         }
 
@@ -1317,6 +1326,7 @@ public class Service_Import extends IntentService {
             ciNewComic.sItemID = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
             ciNewComic.sComicName = tmEntryComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
             ciNewComic.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
+            ciNewComic.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNewComic.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
             Double dTimeStamp = GlobalClass.GetTimeStampFloat();

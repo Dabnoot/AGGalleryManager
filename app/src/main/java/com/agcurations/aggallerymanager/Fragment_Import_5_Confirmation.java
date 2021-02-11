@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -239,7 +240,10 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             String sLine3 = sbTags.toString();
             sLine3 = sLine3 + "\n";
             if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-                sLine3 = sLine3 + "Destination path: " + alFileItemsDisplay.get(position).sDestinationFolder;
+                sLine3 = sLine3 + "Destination path: " +
+                        globalClass.gfCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
+                        File.separator +
+                        alFileItemsDisplay.get(position).sDestinationFolder;
             }
             tvLine3.setText(sLine3);
 

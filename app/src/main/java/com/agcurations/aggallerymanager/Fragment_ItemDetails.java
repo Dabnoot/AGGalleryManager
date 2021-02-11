@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -29,11 +28,8 @@ import java.util.ArrayList;
  */
 public class Fragment_ItemDetails extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     public final static String CATALOG_ITEM = "CATALOG_ITEM";
 
-    // TODO: Rename and change types of parameters
     private ItemClass_CatalogItem gciCatalogItem;
 
     GlobalClass globalClass;
@@ -41,7 +37,11 @@ public class Fragment_ItemDetails extends Fragment {
     int[] giGradeImageViews;
 
     String gsNewTagIDs;
+    String gsPreviousTagIDs;
     int giNewGrade;
+    int giPreviousGrade;
+
+    ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
     public Fragment_ItemDetails() {
         // Required empty public constructor
@@ -75,7 +75,9 @@ public class Fragment_ItemDetails extends Fragment {
             gciCatalogItem = (ItemClass_CatalogItem) args.getSerializable(CATALOG_ITEM); //NOTE!!!! This is passed to this fragment by reference.
                                     //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
             gsNewTagIDs = gciCatalogItem.sTags;
+            gsPreviousTagIDs = gsNewTagIDs;
             giNewGrade = gciCatalogItem.iGrade;
+            giPreviousGrade = giNewGrade;
         } else {
             gciCatalogItem = new ItemClass_CatalogItem(); //todo: This fragment serves no purpose if the catalog item is not received.
         }
@@ -118,11 +120,21 @@ public class Fragment_ItemDetails extends Fragment {
             textView_Tags.setText(sTagText);
         }
 
+        //Get tags for the item:
+        ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
 
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
 
+        gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
+
+        ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+        for(int i = 0; i < aliTags.size(); i++){
+            alTagItems.add(i, new ItemClass_Tag(aliTags.get(i), globalClass.getTagTextFromID(aliTags.get(i), gciCatalogItem.iMediaCategory)));
+        }
+        gViewModel_fragment_selectTags.altiTagsSelected.setValue(alTagItems);
 
         //Populate the tags fragment:
-        ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
         //Start the tag selection fragment:
         FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
         Fragment_SelectTags fragment_selectTags = new Fragment_SelectTags();
@@ -133,13 +145,7 @@ public class Fragment_ItemDetails extends Fragment {
         fragmentTransaction.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
         fragmentTransaction.commit();
 
-        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
-        ViewModel_Fragment_SelectTags mViewModel = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
-        ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
-        for(int i = 0; i < aliTags.size(); i++){
-            alTagItems.add(i, new ItemClass_Tag(aliTags.get(i), globalClass.getTagTextFromID(aliTags.get(i), gciCatalogItem.iMediaCategory)));
-        }
-        mViewModel.setSelectedTags(alTagItems);
+
 
         //React to changes in the selected tag data in the ViewModel:
         final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
@@ -168,13 +174,14 @@ public class Fragment_ItemDetails extends Fragment {
                 }
 
                 gsNewTagIDs = GlobalClass.formDelimitedString(aliTagIDs,",");
-
-                //Enable the Save button:
-                enableSave();
+                if(!gsNewTagIDs.equals(gsPreviousTagIDs)) {
+                    //Enable the Save button:
+                    enableSave();
+                }
             }
         };
 
-        mViewModel.altiTagsSelected.observe(getViewLifecycleOwner(), selectedTagsObserver);
+        gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), selectedTagsObserver);
 
         //Configure the SAVE button listener:
         final Button button_Save = getView().findViewById(R.id.button_Save);
@@ -184,6 +191,8 @@ public class Fragment_ItemDetails extends Fragment {
                 public void onClick(View view) {
                     gciCatalogItem.sTags = gsNewTagIDs;
                     gciCatalogItem.iGrade = giNewGrade;
+                    gsPreviousTagIDs = gsNewTagIDs;
+                    giPreviousGrade = giNewGrade;
                         //Because the item assigned to gciCatalogItem was passed-in by reference,
                         //  this changes the CatalogItem set in the calling activity, too.
                     globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
@@ -196,7 +205,6 @@ public class Fragment_ItemDetails extends Fragment {
 
 
     }
-
 
 
     private void displayGrade(){
@@ -219,9 +227,6 @@ public class Fragment_ItemDetails extends Fragment {
                 imageView_GradeArray[i].setImageDrawable(drawable_EmptyStar);
             }
         }
-
-
-
 
     }
 

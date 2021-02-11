@@ -18,7 +18,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:layout_alignParentTop="true"
-            android:layout_above="@id/textView_VideoPopupSelectedTags"
+            android:layout_above="@+id/relativeLayout_Ranking"
             android:background="@color/colorBlack">
 
             <VideoView
@@ -39,12 +39,71 @@
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"/>
 
+        <RelativeLayout
+            android:id="@+id/relativeLayout_Ranking"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_above="@+id/textView_VideoPopupSelectedTags">
+
+            <TextView
+                android:id="@+id/textView_LabelRating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rating: "
+                android:layout_marginEnd="15dp"
+                android:textSize="26dp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_alignBottom="@id/textView_LabelRating"
+                android:layout_toEndOf="@id/textView_LabelRating">
+
+                <ImageView
+                    android:id="@+id/imageView_Grade1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/outline_grade_white_18dp"/>
+
+                <ImageView
+                    android:id="@+id/imageView_Grade2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/outline_grade_white_18dp"/>
+
+                <ImageView
+                    android:id="@+id/imageView_Grade3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/outline_grade_white_18dp"/>
+
+                <ImageView
+                    android:id="@+id/imageView_Grade4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/outline_grade_white_18dp"/>
+
+                <ImageView
+                    android:id="@+id/imageView_Grade5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/outline_grade_white_18dp"/>
+
+            </LinearLayout>
+        </RelativeLayout>
+
         <TextView
             android:id="@+id/textView_VideoPopupSelectedTags"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tags:"
-            android:layout_margin="20dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="20dp"
             android:textSize="16sp"
             android:layout_alignParentBottom="true"/>
 

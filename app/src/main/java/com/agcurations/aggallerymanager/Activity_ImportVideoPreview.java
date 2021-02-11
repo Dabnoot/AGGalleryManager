@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.VideoView;
@@ -19,6 +21,7 @@ import java.util.TreeMap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -32,6 +35,8 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
 
     private int giCurrentPosition = 1;
     private static final String PLAYBACK_TIME = "play_time";
+
+    int[] giGradeImageViews;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -145,16 +150,12 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 }
             }
 
-
-
-            //Build the preview:
             long lVideoDuration = gFileItem.lVideoTimeInMilliseconds;
 
             if(lVideoDuration < 0L){
                 //If there is no video length, exit this activity.
                 finish();
             }
-
 
             gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayerPreview);
 
@@ -193,6 +194,29 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
             gVideoView_VideoPlayer.start();
         }
 
+        //Set on-click listener for grade:
+        giGradeImageViews = new int[]{
+                R.id.imageView_Grade1,
+                R.id.imageView_Grade2,
+                R.id.imageView_Grade3,
+                R.id.imageView_Grade4,
+                R.id.imageView_Grade5};
+        ImageView[] imageView_GradeArray = new ImageView[5];
+        boolean bGradeIVsOK = true;
+        for(int i = 0; i < giGradeImageViews.length; i++){
+            imageView_GradeArray[i] = findViewById(giGradeImageViews[i]);
+            if(imageView_GradeArray[i] == null){
+                bGradeIVsOK = false;
+            }
+        }
+        if (bGradeIVsOK){
+            for(int i = 0; i < giGradeImageViews.length; i++) {
+                imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
+            }
+        }
+
+        displayGrade();
+
     }
 
     @Override
@@ -218,6 +242,44 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
     public void onSaveInstanceState(@NonNull Bundle outState, @NonNull PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
         outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
+    }
+
+    private void displayGrade(){
+        //Show the rating:
+        ImageView[] imageView_GradeArray = new ImageView[5];
+        boolean bGradeIVsOK = true;
+        for(int i = 0; i < giGradeImageViews.length; i++){
+            imageView_GradeArray[i] = findViewById(giGradeImageViews[i]);
+            if(imageView_GradeArray[i] == null){
+                bGradeIVsOK = false;
+            }
+        }
+        if (bGradeIVsOK){
+            Drawable drawable_SolidStar = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_grade_white_18dp, null);
+            Drawable drawable_EmptyStar = ResourcesCompat.getDrawable(getResources(), R.drawable.outline_grade_white_18dp, null);
+            for(int i = 0; i < gFileItem.iGrade; i++) {
+                imageView_GradeArray[i].setImageDrawable(drawable_SolidStar);
+            }
+            for(int i = gFileItem.iGrade; i < giGradeImageViews.length; i++) {
+                imageView_GradeArray[i].setImageDrawable(drawable_EmptyStar);
+            }
+        }
+
+    }
+
+    private class gradeOnClickListener implements View.OnClickListener{
+
+        int iGrade;
+
+        public gradeOnClickListener(int iGrade){
+            this.iGrade = iGrade;
+        }
+
+        @Override
+        public void onClick(View view) {
+            gFileItem.iGrade = iGrade;
+            displayGrade();
+        }
     }
 
 }

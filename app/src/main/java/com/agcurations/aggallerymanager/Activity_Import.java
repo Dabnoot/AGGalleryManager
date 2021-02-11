@@ -188,7 +188,7 @@ public class Activity_Import extends AppCompatActivity {
                         //aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
                         //Apply the change to the fileListCustomAdapter:
                         //fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
-                        fileListCustomAdapter.updateFileItemTags(fileItems);
+                        fileListCustomAdapter.updateFileItemDetails(fileItems);
                     }
                 }
             });
@@ -860,7 +860,7 @@ public class Activity_Import extends AppCompatActivity {
 
 
 
-        public void updateFileItemTags(ItemClass_File[] icfIncomingFIs){
+        public void updateFileItemDetails(ItemClass_File[] icfIncomingFIs){
             boolean bFoundAndUpdated = false;
             //Find the items to apply individualized tags.
             //This routine is not designed to apply the same tags to multiple items.
@@ -871,6 +871,7 @@ public class Activity_Import extends AppCompatActivity {
                     for (ItemClass_File icfUpdate : alFileItems) {
                         if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
                             icfUpdate.aliProspectiveTags = icfIncoming.aliProspectiveTags;
+                            icfUpdate.iGrade = icfIncoming.iGrade;
                             icfUpdate.bIsChecked = true;
                             bFoundAndUpdated = true;
                             break;
@@ -887,6 +888,7 @@ public class Activity_Import extends AppCompatActivity {
                         for (ItemClass_File icfUpdate : alFileItems) {
                             if (icfUpdate.sUri.equals(sParentComic)) {
                                 icfUpdate.aliProspectiveTags = icfIncomingFIs[0].aliProspectiveTags;
+                                icfUpdate.iGrade = icfIncomingFIs[0].iGrade;
                                 icfUpdate.bIsChecked = true;
                             }
                         }

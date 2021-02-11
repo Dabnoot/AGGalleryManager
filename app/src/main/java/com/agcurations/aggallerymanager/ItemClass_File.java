@@ -34,6 +34,7 @@ public class ItemClass_File implements Serializable {
     public String sUriParent = "";       //Folder source for grouping comic pages during import.
     public String sUriThumbnailFile = ""; //For use by the comic folder ItemClass_File.
 
+    public int iGrade = 3;  //Grade, to be specified by user.
 
     public ItemClass_File(int _iTypeFileOrFolder,
                           String _FileOrFolderName)
