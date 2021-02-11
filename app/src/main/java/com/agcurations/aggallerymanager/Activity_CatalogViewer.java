@@ -639,7 +639,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         }
                         String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogCustomStyle);
+                        AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogViewer.this, R.style.AlertDialogCustomStyle);
                         builder.setTitle("Delete Item");
                         builder.setMessage(sConfirmationMessage);
                         //builder.setIcon(R.drawable.ic_launcher);
