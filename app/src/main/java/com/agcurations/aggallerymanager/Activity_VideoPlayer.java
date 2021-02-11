@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -27,6 +28,7 @@ import java.util.TreeMap;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
@@ -430,6 +432,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         v.setVisibility(View.INVISIBLE);
     }
 
+
+    public void closeDrawer(){
+        gDrawerLayout.closeDrawer(GravityCompat.START);
+    }
 
     //==============================================================================================
     //==============================================================================================

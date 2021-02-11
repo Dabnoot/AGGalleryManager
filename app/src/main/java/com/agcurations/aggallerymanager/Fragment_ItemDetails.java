@@ -6,6 +6,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -199,6 +201,10 @@ public class Fragment_ItemDetails extends Fragment {
                         //Write the modifications to file, and update official memory.
                     button_Save.setEnabled(false);
                     Toast.makeText(getContext(), "Data saved.", Toast.LENGTH_SHORT).show();
+
+                    ((Activity_VideoPlayer) getActivity()).closeDrawer();
+
+
                 }
             });
         }
