@@ -36,4 +36,9 @@ public class Fragment_Import_0_MediaCategory extends Fragment {
         return inflater.inflate(R.layout.fragment_import_0_media_category, container, false);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().setTitle("Import");
+    }
 }

@@ -58,7 +58,7 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
 
-        getActivity().setTitle("Confirm Import");
+
 
     }
 
@@ -81,6 +81,7 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().setTitle("Confirm Import");
         initComponents();
     }
 

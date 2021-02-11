@@ -68,6 +68,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().setTitle("Import");
         initComponents();
     }
 

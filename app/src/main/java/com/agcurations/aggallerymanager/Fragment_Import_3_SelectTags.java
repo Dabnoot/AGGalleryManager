@@ -54,6 +54,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         }
         globalClass = (GlobalClass) getActivity().getApplicationContext();
         viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
     }
 
     @Override
@@ -66,6 +67,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().setTitle("Import");
         initComponents();
     }
 

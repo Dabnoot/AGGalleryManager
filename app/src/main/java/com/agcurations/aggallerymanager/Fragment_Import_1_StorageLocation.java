@@ -77,6 +77,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         if(getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
         }
+
     }
 
     @Override
@@ -142,6 +143,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().setTitle("Import");
 
         if(viewModelImportActivity.bImportCategoryChange){
             //Reset all the stuff so that it looks like time to select a folder:
@@ -164,8 +166,6 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             }
 
         }
-
-
 
     }
 

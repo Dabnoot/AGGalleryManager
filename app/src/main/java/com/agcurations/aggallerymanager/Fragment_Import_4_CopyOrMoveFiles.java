@@ -41,6 +41,11 @@ public class Fragment_Import_4_CopyOrMoveFiles extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+    }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().setTitle("Import");
     }
 }

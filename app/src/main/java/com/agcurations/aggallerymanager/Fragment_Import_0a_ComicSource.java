@@ -27,6 +27,7 @@ public class Fragment_Import_0a_ComicSource extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
     }
 
     @Override
@@ -36,4 +37,9 @@ public class Fragment_Import_0a_ComicSource extends Fragment {
         return inflater.inflate(R.layout.fragment_import_0a_comic_source, container, false);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        getActivity().setTitle("Import");
+    }
 }

@@ -49,6 +49,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         super.onCreate(savedInstanceState);
         //Instantiate the ViewModel sharing data between fragments:
         viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
     }
 
     @Override
@@ -64,6 +65,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        getActivity().setTitle("Import - Select Items");
 
         if(ListViewState != null) {
             if(getView() == null){

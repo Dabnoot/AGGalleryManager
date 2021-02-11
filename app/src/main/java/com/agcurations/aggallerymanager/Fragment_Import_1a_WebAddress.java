@@ -87,9 +87,7 @@ public class Fragment_Import_1a_WebAddress extends Fragment {
                 }
             });
 
-
         }
-
 
     }
 
