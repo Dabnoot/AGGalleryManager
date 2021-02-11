@@ -35,35 +35,15 @@ public class Fragment_Import_3_SelectTags extends Fragment {
     GlobalClass globalClass;
     private ViewModel_ImportActivity viewModelImportActivity;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
     public Fragment_Import_3_SelectTags() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment FragmentImport_3_VideoApplyTags.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static Fragment_Import_3_SelectTags newInstance(String param1, String param2) {
-        Fragment_Import_3_SelectTags fragment = new Fragment_Import_3_SelectTags();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public static Fragment_Import_3_SelectTags newInstance() {
+        return new Fragment_Import_3_SelectTags();
     }
 
     private SelectedFileListCustomAdapter selectedFileListCustomAdapter;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,6 +71,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
 
     @Override
     public void onPause() {
+
         viewModelImportActivity.alfiConfirmedFileImports = selectedFileListCustomAdapter.alFileItems;
         super.onPause();
     }
@@ -107,14 +88,11 @@ public class Fragment_Import_3_SelectTags extends Fragment {
 
         //Populate the listView:
         final ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
-        ArrayList<ItemClass_File> alfi = new ArrayList<>();
-        for(ItemClass_File fi: Activity_Import.fileListCustomAdapter.alFileItems){
-            if(fi.bIsChecked){
-                alfi.add(fi);
-            }
-        }
-        selectedFileListCustomAdapter = 
-                new SelectedFileListCustomAdapter(getActivity(), R.id.listView_FilesToImport, alfi);
+
+        selectedFileListCustomAdapter = new SelectedFileListCustomAdapter(
+                        getActivity(),
+                        R.id.listView_FilesToImport,
+                        viewModelImportActivity.alfiConfirmedFileImports);
         if(listView_FilesToImport != null) {
             listView_FilesToImport.setAdapter(selectedFileListCustomAdapter);
         }

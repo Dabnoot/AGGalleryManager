@@ -22,6 +22,10 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link Fragment_Import_2_SelectItems#newInstance} factory method to
@@ -36,9 +40,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_2_SelectItems newInstance(String param1, String param2) {
-        Fragment_Import_2_SelectItems fragment = new Fragment_Import_2_SelectItems();
-        return fragment;
+    public static Fragment_Import_2_SelectItems newInstance() {
+        return new Fragment_Import_2_SelectItems();
     }
 
     @Override
@@ -83,6 +86,23 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         }
         ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
         ListViewState = listView_FolderContents.onSaveInstanceState();
+
+        //Get all of the selected items and assign them to the viewModel:
+        //  Sort the items before assigning them to the viewModel:
+        TreeMap<String, ItemClass_File> tmFileItemsSort = new TreeMap<>();
+        for(ItemClass_File fi: Activity_Import.fileListCustomAdapter.alFileItems){
+            if(fi.bIsChecked){
+                tmFileItemsSort.put(fi.sFileOrFolderName, fi);
+            }
+        }
+        ArrayList<ItemClass_File> alfi = new ArrayList<>();
+        for(Map.Entry<String, ItemClass_File> tmEntry: tmFileItemsSort.entrySet()){
+            if(tmEntry.getValue().bIsChecked){
+                alfi.add(tmEntry.getValue());
+            }
+        }
+        viewModelImportActivity.alfiConfirmedFileImports = alfi;
+
         super.onPause();
 
 

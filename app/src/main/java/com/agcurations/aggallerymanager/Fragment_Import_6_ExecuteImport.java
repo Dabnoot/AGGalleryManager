@@ -32,7 +32,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_6_ExecuteImport newInstance(String param1, String param2) {
+    public static Fragment_Import_6_ExecuteImport newInstance() {
         return new Fragment_Import_6_ExecuteImport();
     }
 

@@ -923,15 +923,38 @@ public class Activity_Import extends AppCompatActivity {
 
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
-            for(ItemClass_File fiDisplayed: alFileItemsDisplay){
-                fiDisplayed.bIsChecked = bSelectAllSelected;
-                //Translate the selected item state to alFileList:
-                for(ItemClass_File fi: alFileItems){
-                    if(fi.sFileOrFolderName.contentEquals(fiDisplayed.sFileOrFolderName)){
-                        fi.bIsChecked = bSelectAllSelected;
-                        break;
+
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                //If we are working with comics, then the items on display are only the cover pages.
+                //  We need to apply "Select All" to all items including the items which are not displayed.
+                for(ItemClass_File fiDisplayed: alFileItems){
+                    fiDisplayed.bIsChecked = bSelectAllSelected;
+                    //Translate the selected item state to alFileList:
+                    for(ItemClass_File fi: alFileItems){
+                        if(fi.sFileOrFolderName.contentEquals(fiDisplayed.sFileOrFolderName)){
+                            fi.bIsChecked = bSelectAllSelected;
+                            break;
+                        }
                     }
                 }
+            } else {
+                for(ItemClass_File fiDisplayed: alFileItemsDisplay){
+                    fiDisplayed.bIsChecked = bSelectAllSelected;
+                    //Translate the selected item state to alFileList:
+                    for(ItemClass_File fi: alFileItems){
+                        if(fi.sFileOrFolderName.contentEquals(fiDisplayed.sFileOrFolderName)){
+                            fi.bIsChecked = bSelectAllSelected;
+                            break;
+                        }
+                    }
+                }
+            }
+
+
+
+            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+            if(button_ItemSelectComplete != null){
+                button_ItemSelectComplete.setEnabled(bSelectAllSelected);
             }
         }
 

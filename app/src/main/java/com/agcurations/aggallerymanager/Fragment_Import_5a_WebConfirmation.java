@@ -36,7 +36,7 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_5a_WebConfirmation newInstance(String param1, String param2) {
+    public static Fragment_Import_5a_WebConfirmation newInstance() {
         return new Fragment_Import_5a_WebConfirmation();
     }
 

@@ -50,6 +50,7 @@
         android:layout_marginBottom="10dp"
         android:gravity="bottom"
         android:scrollbars="vertical"
+        android:scrollbarSize="20dp"
         android:layout_below="@+id/linearLayout_Progress"
         android:layout_above="@+id/linearLayout_ButtonBar"/>
 
