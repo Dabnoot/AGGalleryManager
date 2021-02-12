@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioButton;
 
+import java.util.Stack;
+
 
 public class Activity_TagEditor extends AppCompatActivity {
 
@@ -34,6 +36,9 @@ public class Activity_TagEditor extends AppCompatActivity {
                                  // Main activity, it must be in an area applicable to a particular media type.
 
 //    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
+
+    static Stack<Integer> stackFragmentOrder;
+    private static int giStartingFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +61,9 @@ public class Activity_TagEditor extends AppCompatActivity {
         //Instantiate the ViewModel sharing data between fragments:
         viewModelTagEditor = new ViewModelProvider(this).get(ViewModel_TagEditor.class);
 
+        stackFragmentOrder = new Stack<>();
+        giStartingFragment = FRAGMENT_TAG_EDITOR_0_ID_MEDIA_CATEGORY;
+
         //Check to see if this activity has been started by an activity desiring mods to a
         //  particular media category set of tags:
         Intent iStartingIntent = getIntent();
@@ -65,8 +73,11 @@ public class Activity_TagEditor extends AppCompatActivity {
                 viewModelTagEditor.iTagEditorMediaCategory = iMediaCategory;
                 //Go to the import folder selection fragment:
                 ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION, false);
+                giStartingFragment = FRAGMENT_TAG_EDITOR_1_ID_ACTION;
             }
         }
+
+        stackFragmentOrder.push(giStartingFragment);
 
 
     }
@@ -79,11 +90,34 @@ public class Activity_TagEditor extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if (ViewPager2_TagEditor.getCurrentItem() != 0) {
-            ViewPager2_TagEditor.setCurrentItem(ViewPager2_TagEditor.getCurrentItem() - 1,false);
-        }else{
+        if(stackFragmentOrder.empty()){
             finish();
+        } else {
+            //Go back through the fragments in the order by which we progressed.
+            //  Some user selections will cause a fragment to be skipped, and we don't want
+            //  to go back to those skipped fragments, hence the use of a Stack, and pop().
+            int iCurrentFragment = ViewPager2_TagEditor.getCurrentItem();
+            int iPrevFragment = stackFragmentOrder.pop();
+            if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)){
+                finish();
+                return;
+            }
+            if(iCurrentFragment == iPrevFragment){
+                //To handle interesting behavior about how the stack is built.
+                iPrevFragment = stackFragmentOrder.peek();
+            }
+            ViewPager2_TagEditor.setCurrentItem(iPrevFragment, false);
+
+            if(iPrevFragment == giStartingFragment){
+                //Go home:
+                stackFragmentOrder.push(giStartingFragment);
+            }
         }
+
+
+
+
+
 
     }
 
@@ -102,6 +136,7 @@ public class Activity_TagEditor extends AppCompatActivity {
 
         //Go to the import folder selection fragment:
         ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_1_ID_ACTION, false);
+        stackFragmentOrder.push(ViewPager2_TagEditor.getCurrentItem());
     }
 
     public void buttonNextClick_TagActionSelected(View v){
@@ -116,6 +151,12 @@ public class Activity_TagEditor extends AppCompatActivity {
         } else {
             ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG, false);
         }
+
+        stackFragmentOrder.push(ViewPager2_TagEditor.getCurrentItem());
+    }
+
+    public void buttonClick_Cancel(View v){
+        finish();
     }
 
 
