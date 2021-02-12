@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -29,6 +30,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     private GlobalClass globalClass;
     private ViewModel_TagEditor viewModelTagEditor;
 
+    private ArrayList<ItemClass_Tag> galNewTags;
+
     public Fragment_TagEditor_2_AddTag() {
         // Required empty public constructor
     }
@@ -47,6 +50,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         }
         //Instantiate the ViewModel sharing data between fragments:
         viewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
+
+        galNewTags = new ArrayList<>();
     }
 
     @Override
@@ -88,7 +93,17 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(getActivity() != null) {
-                        getActivity().setResult(Activity.RESULT_OK);
+
+                        //Send any new tags back to the calling activity so that
+                        // the calling activity is aware of the new tags created by the user.
+                        // The calling activity may want to automatically select these
+                        // new tags.
+                        Intent data = new Intent();
+                        Bundle b = new Bundle();
+                        b.putSerializable(Activity_TagEditor.NEW_TAGS, galNewTags);
+                        data.putExtra(Activity_TagEditor.TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE, b);
+                        getActivity().setResult(Activity.RESULT_OK, data);
+
                         getActivity().finish();
                     }
                 }
@@ -140,8 +155,10 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             return;
         }
 
-        if(globalClass.TagDataFile_CreateNewRecord(sTagName, viewModelTagEditor.iTagEditorMediaCategory) > -1){
+        ItemClass_Tag ictNewTagItem = globalClass.TagDataFile_CreateNewRecord(sTagName, viewModelTagEditor.iTagEditorMediaCategory);
+        if(ictNewTagItem != null){
             RefreshTagListView();
+            galNewTags.add(ictNewTagItem);
             Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getActivity(), sTagName + " already exists in tag list.", Toast.LENGTH_SHORT).show();

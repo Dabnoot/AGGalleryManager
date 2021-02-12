@@ -1,9 +1,14 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -55,6 +60,9 @@ public class Fragment_SelectTags extends Fragment {
     TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
 
     private boolean gbCatalogTagsRestrictionsOn;
+
+    ArrayList<ItemClass_Tag> galNewTags; //Used in conjunction with the TagEditor.
+    // If the user creates new tags from this fragment, select those tags in the list upon return.
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -248,7 +256,7 @@ public class Fragment_SelectTags extends Fragment {
                         if(sPinEntered.equals(globalClass.gsPin)){
                             Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
                             intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
-                            startActivity(intentTagEditor);
+                            garlGetResultFromTagEditor.launch(intentTagEditor);
                         } else {
                             Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
                         }
@@ -306,6 +314,15 @@ public class Fragment_SelectTags extends Fragment {
                     tmTagPool.put(entry.getKey(), entry.getValue()); //TreeMap will not allow duplicate keys, so no issue here.
                 }
             }
+            if(galNewTags != null) {
+                //Add any newly-created tags to the list. Tags that were added by the user JUST NOW
+                // by clicking the TagEditor button:
+                for (ItemClass_Tag ictNewTag : galNewTags) {
+                    tmTagPool.put(ictNewTag.TagText, ictNewTag); //TreeMap will not allow duplicate keys, so no issue here.
+                }
+            }
+
+
         }
 
         //Go through the tags treeMap and put the ListView together:
@@ -324,6 +341,21 @@ public class Fragment_SelectTags extends Fragment {
                         bIsChecked = true;
                         iPreSelectedTagIterator++;
                         iSelectionOrder = iPreSelectedTagIterator;
+                        break;
+                    }
+                }
+            }
+
+            if (galNewTags != null) { //If the user used the TagEditor JUST NOW to add new tags,
+                                        //  pre-select them:
+                iPreSelectedTagsCount += galNewTags.size();
+                int iReferenceTagID = tmEntryTagReferenceItem.getValue().TagID;
+                for (ItemClass_Tag iNewTagItem : galNewTags) {
+                    if (iReferenceTagID == iNewTagItem.TagID) {
+                       bIsChecked = true;
+                        iPreSelectedTagIterator++;
+                        iSelectionOrder = iPreSelectedTagIterator;
+                        break;
                     }
                 }
             }
@@ -339,6 +371,7 @@ public class Fragment_SelectTags extends Fragment {
                 //Don't add the tag if TagRestrictions are on and this is a restricted tag.
                 mViewModel.alTagsAll.add(tiNew);
             }
+
         }
 
         // Create the adapter for the ListView, and set the ListView adapter:
@@ -349,6 +382,26 @@ public class Fragment_SelectTags extends Fragment {
         listView_ImportTagSelection.setAdapter(gListViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
+
+    ActivityResultLauncher<Intent> garlGetResultFromTagEditor = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if(result.getResultCode() == Activity.RESULT_OK){
+                        Intent data = result.getData();
+                        Bundle b = data.getBundleExtra(Activity_TagEditor.TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE);
+                        if(b == null) return;
+                        ArrayList<ItemClass_Tag> temp = (ArrayList<ItemClass_Tag>) b.getSerializable(Activity_TagEditor.NEW_TAGS);
+                        if(galNewTags == null){
+                            galNewTags = new ArrayList<>();
+                        }
+                        if(temp != null) {
+                            galNewTags.addAll(temp);
+                        }
+                    }
+                }
+            });
 
 
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {

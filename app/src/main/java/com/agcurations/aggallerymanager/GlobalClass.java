@@ -1157,11 +1157,11 @@ public class GlobalClass extends Application {
         return tmTags;
     }
 
-    public int TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
+    public ItemClass_Tag TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
         int iNextRecordId = -1;
-
+        ItemClass_Tag ictNewTag = null;
         try {
 
             int iThisId;
@@ -1171,7 +1171,7 @@ public class GlobalClass extends Application {
                     if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
                     if (entry.getValue().TagText.toLowerCase().equals(sTagName.toLowerCase())) {
                         //If the tag already exists, abort adding a new tag.
-                        return -1;
+                        return null;
                     }
                 }
             } else {
@@ -1179,7 +1179,7 @@ public class GlobalClass extends Application {
             }
             //New record ID identified.
 
-            ItemClass_Tag ictNewTag = new ItemClass_Tag(iNextRecordId, sTagName);
+            ictNewTag = new ItemClass_Tag(iNextRecordId, sTagName);
             gtmCatalogTagReferenceLists.get(iMediaCategory).put(sTagName, ictNewTag);
 
             //Add the new record to the catalog file:
@@ -1193,7 +1193,7 @@ public class GlobalClass extends Application {
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        return iNextRecordId;
+        return ictNewTag;
 
     }
 

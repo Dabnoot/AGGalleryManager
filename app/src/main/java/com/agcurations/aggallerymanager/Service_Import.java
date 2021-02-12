@@ -1895,9 +1895,9 @@ public class Service_Import extends IntentService {
                     if(aliTags.get(i) == -1){
                         //Create the tag:
                         if(!sTags[i].equals("")) {
-                            int iTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
-                            if(iTag != -1){
-                                aliTags.add(i, iTag); //Replace the -1 with the new TagID.
+                            ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                            if(ictNewTag != null){
+                                aliTags.add(i, ictNewTag.TagID); //Replace the -1 with the new TagID.
                             }
                         }
                     }
