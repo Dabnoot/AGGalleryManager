@@ -392,12 +392,21 @@ public class Fragment_SelectTags extends Fragment {
                         Intent data = result.getData();
                         Bundle b = data.getBundleExtra(Activity_TagEditor.TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE);
                         if(b == null) return;
-                        ArrayList<ItemClass_Tag> temp = (ArrayList<ItemClass_Tag>) b.getSerializable(Activity_TagEditor.NEW_TAGS);
+                        ArrayList<ItemClass_Tag> altiNewTags = (ArrayList<ItemClass_Tag>) b.getSerializable(Activity_TagEditor.NEW_TAGS);
                         if(galNewTags == null){
                             galNewTags = new ArrayList<>();
                         }
-                        if(temp != null) {
-                            galNewTags.addAll(temp);
+                        if(altiNewTags != null) {
+                            //Add the tags to galNewTags so that the fragment knows which tags to highlight:
+                            galNewTags.addAll(altiNewTags);
+
+
+                            //Also add the the tags to the ViewModel selected tags array so that whatever is watching
+                            // that variable will properly update.
+                            ArrayList<ItemClass_Tag> altiExistingSelectedTags = mViewModel.altiTagsSelected.getValue();
+                            altiExistingSelectedTags.addAll(altiNewTags);
+                            mViewModel.setSelectedTags(altiExistingSelectedTags);
+
                         }
                     }
                 }
