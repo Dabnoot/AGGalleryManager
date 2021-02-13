@@ -2,21 +2,9 @@ package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.ParcelFileDescriptor;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 public class Service_ExportComics extends IntentService {
-    public static final String ZIP_TOTAL_FILE_COUNT = "ZIP_TOTAL_FILE_COUNT";
+    /*public static final String ZIP_TOTAL_FILE_COUNT = "ZIP_TOTAL_FILE_COUNT";
     public static final String ZIP_LIST = "ZIP_LIST";
     public static final String ZIP_FILE = "ZIP_FILE";
 
@@ -30,14 +18,14 @@ public class Service_ExportComics extends IntentService {
     int giProgressBarValue;
 
     private GlobalClass globalClass;
-
+    */
     public Service_ExportComics() {
         super("ExportComicsService");
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        globalClass = (GlobalClass) getApplicationContext();
+        /*globalClass = (GlobalClass) getApplicationContext();
 
         //Get the list of files and folders to be zipped:
         if(intent == null) return;
@@ -104,11 +92,11 @@ public class Service_ExportComics extends IntentService {
         }
 
         BroadcastProgress(true, "Export complete.",
-                true, 100);
+                true, 100);*/
 
     }
 
-    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
+    /*public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
                                   boolean bUpdatePercentComplete, int iAmountComplete){
 
         //Broadcast a message to be picked-up by the Import Activity:
@@ -211,7 +199,7 @@ public class Service_ExportComics extends IntentService {
             e.printStackTrace();
         }
 
-    }
+    }*/
 
 }
 

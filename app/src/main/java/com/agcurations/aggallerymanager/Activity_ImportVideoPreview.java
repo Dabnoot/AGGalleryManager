@@ -64,10 +64,10 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 StringBuilder sb = new StringBuilder();
                 sb.append("Tags: ");
                 if(tagItems.size() > 0) {
-                    sb.append(tagItems.get(0).TagText);
+                    sb.append(tagItems.get(0).sTagText);
                     for (int i = 1; i < tagItems.size(); i++) {
                         sb.append(", ");
-                        sb.append(tagItems.get(i).TagText);
+                        sb.append(tagItems.get(i).sTagText);
                     }
                 }
                 TextView tv = findViewById(R.id.textView_VideoPopupSelectedTags);
@@ -78,7 +78,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
                 //Get the tag IDs to pass back to the calling activity:
                 ArrayList<Integer> aliTagIDs = new ArrayList<>();
                 for(ItemClass_Tag ti : tagItems){
-                    aliTagIDs.add(ti.TagID);
+                    aliTagIDs.add(ti.iTagID);
                 }
                 gFileItem.aliProspectiveTags = aliTagIDs;
                 gFileItem.bPreviewTagUpdate = true;

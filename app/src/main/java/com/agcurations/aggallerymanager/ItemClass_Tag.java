@@ -4,19 +4,20 @@ import java.io.Serializable;
 
 public class ItemClass_Tag implements Serializable {
 
-    public final Integer TagID;
+    public final Integer iTagID;
     @SuppressWarnings("CanBeFinal")
-    public String TagText;
-    public Boolean isRestricted = false;
+    public String sTagText;
+    public String sTagDescription = "";
+    public Boolean bIsRestricted = false;
 
     //Create a variable to be used to preserve the order in which items are selected.
     //  This is needed because the first tag may be used for special purposes.
     public int iSelectionOrder;
     //Used for Tag ListViews in selecting tags:
-    public Boolean isChecked = false;
+    public Boolean bIsChecked = false;
 
-    public ItemClass_Tag(int _TagID, String _TagText) {
-        this.TagID = _TagID;
-        this.TagText = _TagText;
+    public ItemClass_Tag(int _iTagID, String _sTagText) {
+        this.iTagID = _iTagID;
+        this.sTagText = _sTagText;
     }
 }

@@ -118,10 +118,10 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 //Get the text of the tags and display:
                 StringBuilder sb = new StringBuilder();
                 if(tagItems.size() > 0) {
-                    sb.append(tagItems.get(0).TagText);
+                    sb.append(tagItems.get(0).sTagText);
                     for (int i = 1; i < tagItems.size(); i++) {
                         sb.append(", ");
-                        sb.append(tagItems.get(i).TagText);
+                        sb.append(tagItems.get(i).sTagText);
                     }
                 }
                 //Display the tags:
@@ -136,12 +136,12 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 boolean bUpdateAdapter = false;
                 ItemClass_Tag tiAdded = Activity_Import.viewModelTags.tiTagItemAdded.getValue();
                 if(tiAdded != null){
-                    selectedFileListCustomAdapter.applyTagToItems(tiAdded.TagID);
+                    selectedFileListCustomAdapter.applyTagToItems(tiAdded.iTagID);
                     bUpdateAdapter = true;
                 }
                 ItemClass_Tag tiRemoved = Activity_Import.viewModelTags.tiTagItemRemoved.getValue();
                 if(tiRemoved != null){
-                    selectedFileListCustomAdapter.removeTagFromItems(tiRemoved.TagID);
+                    selectedFileListCustomAdapter.removeTagFromItems(tiRemoved.iTagID);
                     bUpdateAdapter = true;
                 }
                 if(bUpdateAdapter){

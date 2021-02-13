@@ -318,7 +318,7 @@ public class Fragment_SelectTags extends Fragment {
                 //Add any newly-created tags to the list. Tags that were added by the user JUST NOW
                 // by clicking the TagEditor button:
                 for (ItemClass_Tag ictNewTag : galNewTags) {
-                    tmTagPool.put(ictNewTag.TagText, ictNewTag); //TreeMap will not allow duplicate keys, so no issue here.
+                    tmTagPool.put(ictNewTag.sTagText, ictNewTag); //TreeMap will not allow duplicate keys, so no issue here.
                 }
             }
 
@@ -335,7 +335,7 @@ public class Fragment_SelectTags extends Fragment {
             //Log.d("Tag identification", tmEntryTagReferenceItem.getKey());
             if (galiPreselectedTags != null) {
                 iPreSelectedTagsCount = galiPreselectedTags.size();
-                int iReferenceTagID = tmEntryTagReferenceItem.getValue().TagID;
+                int iReferenceTagID = tmEntryTagReferenceItem.getValue().iTagID;
                 for (int iPreSelectedTagID : galiPreselectedTags) {
                     if (iReferenceTagID == iPreSelectedTagID) {
                         bIsChecked = true;
@@ -349,9 +349,9 @@ public class Fragment_SelectTags extends Fragment {
             if (galNewTags != null) { //If the user used the TagEditor JUST NOW to add new tags,
                                         //  pre-select them:
                 iPreSelectedTagsCount += galNewTags.size();
-                int iReferenceTagID = tmEntryTagReferenceItem.getValue().TagID;
+                int iReferenceTagID = tmEntryTagReferenceItem.getValue().iTagID;
                 for (ItemClass_Tag iNewTagItem : galNewTags) {
-                    if (iReferenceTagID == iNewTagItem.TagID) {
+                    if (iReferenceTagID == iNewTagItem.iTagID) {
                        bIsChecked = true;
                         iPreSelectedTagIterator++;
                         iSelectionOrder = iPreSelectedTagIterator;
@@ -361,13 +361,13 @@ public class Fragment_SelectTags extends Fragment {
             }
 
             ItemClass_Tag tiNew = new ItemClass_Tag(
-                    tmEntryTagReferenceItem.getValue().TagID,
-                    tmEntryTagReferenceItem.getValue().TagText);
-            tiNew.isChecked = bIsChecked;
+                    tmEntryTagReferenceItem.getValue().iTagID,
+                    tmEntryTagReferenceItem.getValue().sTagText);
+            tiNew.bIsChecked = bIsChecked;
             tiNew.iSelectionOrder = iSelectionOrder;
-            tiNew.isRestricted = tmEntryTagReferenceItem.getValue().isRestricted;
+            tiNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
 
-            if(!(gbCatalogTagsRestrictionsOn && tiNew.isRestricted)) {
+            if(!(gbCatalogTagsRestrictionsOn && tiNew.bIsRestricted)) {
                 //Don't add the tag if TagRestrictions are on and this is a restricted tag.
                 mViewModel.alTagsAll.add(tiNew);
             }
@@ -435,13 +435,13 @@ public class Fragment_SelectTags extends Fragment {
             // Lookup view for data population
             final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
             // Populate the data into the template view using the data object
-            String s = tagItem.TagText;
+            String s = tagItem.sTagText;
             checkedTextView_TagText.setText(s);
 
 
             //Set the selection state (needed as views are recycled).
             if(getActivity() != null) {
-                if (tagItem.isChecked) {
+                if (tagItem.bIsChecked) {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
                 } else {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
@@ -453,8 +453,8 @@ public class Fragment_SelectTags extends Fragment {
                 @Override
                 public void onClick(View v) {
                     //Handle changing the checked state:
-                    tagItem.isChecked = !tagItem.isChecked;
-                    if(tagItem.isChecked){
+                    tagItem.bIsChecked = !tagItem.bIsChecked;
+                    if(tagItem.bIsChecked){
                         iOrderIterator++;
                         tagItem.iSelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
                         checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
@@ -462,12 +462,12 @@ public class Fragment_SelectTags extends Fragment {
                         if(galiPreselectedTags == null){
                             galiPreselectedTags = new ArrayList<>();
                         }
-                        galiPreselectedTags.add(tagItem.TagID);
+                        galiPreselectedTags.add(tagItem.iTagID);
                         //The user may be in the ALL tags section, selecting a tag that is not in the IN USE tags section.
                         //  If this is the case, and the user switches over to the IN USE section, the program will not have a "preselected tag"
                         //  that matches the IN USE list. Add this tag to the IN USE section. If it is already there, it will automatically fail to add without error
                         //  by the nature of the TreeMap class:
-                        tmCatalogTagsInUse.put(tagItem.TagText, new ItemClass_Tag(tagItem.TagID, tagItem.TagText));
+                        tmCatalogTagsInUse.put(tagItem.sTagText, new ItemClass_Tag(tagItem.iTagID, tagItem.sTagText));
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.iSelectionOrder = 0; //Remove the index showing the order in which this item was selected.
@@ -479,7 +479,7 @@ public class Fragment_SelectTags extends Fragment {
                             galiPreselectedTags = new ArrayList<>();
                         }
                         for(int i = 0; i < galiPreselectedTags.size(); i++) {
-                            if(galiPreselectedTags.get(i).equals(tagItem.TagID)){
+                            if(galiPreselectedTags.get(i).equals(tagItem.iTagID)){
                                 galiPreselectedTags.remove(i);
                                 break;
                             }
@@ -496,7 +496,7 @@ public class Fragment_SelectTags extends Fragment {
                         if(getItem(i) != null){
                             ItemClass_Tag tagItem1 = getItem(i);
                             assert tagItem1 != null;
-                            if(tagItem1.isChecked) {
+                            if(tagItem1.bIsChecked) {
                                 tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
                             }
                         }

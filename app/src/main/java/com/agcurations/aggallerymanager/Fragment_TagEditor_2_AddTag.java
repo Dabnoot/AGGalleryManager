@@ -125,7 +125,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         ArrayList<String> alsTags = new ArrayList<>();
         for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
-            alsTags.add(entry.getValue().TagText);
+            alsTags.add(entry.getValue().sTagText);
         }
 
         String[] sTemp = new String[alsTags.size()];

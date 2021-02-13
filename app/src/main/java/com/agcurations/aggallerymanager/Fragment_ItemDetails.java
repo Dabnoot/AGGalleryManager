@@ -6,8 +6,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -158,10 +156,10 @@ public class Fragment_ItemDetails extends Fragment {
                 StringBuilder sb = new StringBuilder();
                 sb.append("Tags: ");
                 if(tagItems.size() > 0) {
-                    sb.append(tagItems.get(0).TagText);
+                    sb.append(tagItems.get(0).sTagText);
                     for (int i = 1; i < tagItems.size(); i++) {
                         sb.append(", ");
-                        sb.append(tagItems.get(i).TagText);
+                        sb.append(tagItems.get(i).sTagText);
                     }
                 }
                 TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
@@ -172,7 +170,7 @@ public class Fragment_ItemDetails extends Fragment {
                 //Get the tag IDs:
                 ArrayList<Integer> aliTagIDs = new ArrayList<>();
                 for(ItemClass_Tag ti : tagItems){
-                    aliTagIDs.add(ti.TagID);
+                    aliTagIDs.add(ti.iTagID);
                 }
 
                 gsNewTagIDs = GlobalClass.formDelimitedString(aliTagIDs,",");

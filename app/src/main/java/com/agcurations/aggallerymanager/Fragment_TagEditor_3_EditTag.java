@@ -108,7 +108,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
 
         ArrayList<String> alsTags = new ArrayList<>();
         for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
-            String sItemText = entry.getValue().TagText + " (ID:" + entry.getValue().TagID + ")";
+            String sItemText = entry.getValue().sTagText + " (ID:" + entry.getValue().iTagID + ")";
             alsTags.add(sItemText);
         }
 

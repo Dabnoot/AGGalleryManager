@@ -110,9 +110,9 @@ public class Service_Main extends IntentService {
                 for (String sRestrictedTag : ssCatalogTagsRestricted) {
                     Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
                     for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                        if (entry.getValue().TagID.equals(iRestrictedTag)) {
+                        if (entry.getValue().iTagID.equals(iRestrictedTag)) {
                             //If the restricted tag has been found, mark it as restricted:
-                            entry.getValue().isRestricted = true;
+                            entry.getValue().bIsRestricted = true;
                         }
                     }
                 }
@@ -284,9 +284,7 @@ public class Service_Main extends IntentService {
                             fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
 
                             //Write the activity_comic_details_header line to the file:
-                            ItemClass_CatalogItem ciFirst = new ItemClass_CatalogItem();
-                            String[] sTemp = globalClass.getCatalogRecordString(ciFirst);
-                            fwCatalogContentsFile.append(sTemp[0]); //Write the header.
+                            fwCatalogContentsFile.append(globalClass.getCatalogHeader()); //Write the header.
                             fwCatalogContentsFile.append("\n");
 
                         } catch (Exception e) {

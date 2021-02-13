@@ -1,37 +1,12 @@
 package com.agcurations.aggallerymanager;
 
-import android.Manifest;
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
-import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.File;
-import java.sql.Timestamp;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+
 
 public class Activity_ExportComics extends AppCompatActivity {
 
-    //Global Constants:
+    /*//Global Constants:
     public static final int  MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE = 1002;
     public static final int REQUEST_CODE_GET_EXPORT_SAVE_AS_FILE = 1003;
     private static final String LOG_TAG = "ExportComicsActivity";
@@ -44,12 +19,12 @@ public class Activity_ExportComics extends AppCompatActivity {
     TextView gtvExportPercent;
     int giComicFileCount;
 
-    ArrayList<String> galZipList;
+    ArrayList<String> galZipList;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_export_comics);
+        /*setContentView(R.layout.activity_export_comics);
 
         //Get view references now for updates rather than over and over again for the
         //  broadcast receiver:
@@ -106,12 +81,12 @@ public class Activity_ExportComics extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(ExportResponseReceiver.EXPORT_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         exportResponseReceiver = new ExportResponseReceiver();
-        registerReceiver(exportResponseReceiver, filter);
+        registerReceiver(exportResponseReceiver, filter);*/
 
     }
 
 
-    public void selectOutputFile(View v){
+    /*public void selectOutputFile(View v){
         //https://developer.android.com/training/data-storage/shared/documents-files
         //https://developer.android.com/training/data-storage/shared/documents-files#create-file
         // Allow the user to choose a location to save the export using the system's file picker.
@@ -253,6 +228,6 @@ public class Activity_ExportComics extends AppCompatActivity {
     protected void onDestroy() {
         unregisterReceiver(exportResponseReceiver);
         super.onDestroy();
-    }
+    }*/
 
 }

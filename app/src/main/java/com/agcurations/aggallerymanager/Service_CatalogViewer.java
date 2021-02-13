@@ -212,7 +212,7 @@ public class Service_CatalogViewer extends IntentService {
 
                 //Append all of the field data and search the resulting
                 //  string for a filter match:
-                sKey_RecordText = globalClass.getCatalogRecordString(entry.getValue())[1];
+                sKey_RecordText = globalClass.getCatalogRecordSearchString(entry.getValue());
                 sKey_RecordText = sKey_RecordText.toLowerCase();
 
                 if (!sKey_RecordText.contains(sFilterText_LowerCase)) {
@@ -238,7 +238,7 @@ public class Service_CatalogViewer extends IntentService {
                         }
                         ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
                         if (ict != null) {
-                            if (ict.isRestricted) {
+                            if (ict.bIsRestricted) {
                                 bIsRestricted = true;
                                 break;
                             }

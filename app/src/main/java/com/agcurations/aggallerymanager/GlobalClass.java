@@ -29,6 +29,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
+
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
     //https://androidexample.com/Global_Variable_Or_Application_Context_Variable_-_Android_Example/index.php?view=article_discription&aid=114&aaid=136
@@ -40,7 +42,6 @@ public class GlobalClass extends Application {
     public String gsPin = "";
 
     public File gfAppFolder;
-    //public File gfAppConfigFile;
 
     public static final int MEDIA_CATEGORY_VIDEOS = 0;
     public static final int MEDIA_CATEGORY_IMAGES = 1;
@@ -51,13 +52,10 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogFolders = new File[3];
     public final File[] gfCatalogLogsFolders = new File[3];
     public final File[] gfCatalogContentsFiles = new File[3];
-    public final int giCatalogFileVersion = 5;
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
-    public final int giTagFileVersion = 1;
     public final List<TreeMap<String, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
-    public final boolean[] gbJustImported = {false, false, false};
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
@@ -72,152 +70,7 @@ public class GlobalClass extends Application {
     //End catalog viewer variables.
 
     public static final String gsNHComicCoverPageFilter = "^\\d{1,7}_Cover.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
-    public static final String gsNHComicPageFilter = "^\\d{1,7}_Page.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
-
-    public static final String[][] CatalogRecordFields = new String[][]{
-            {"VIDEO_ID",
-                    "VIDEO_FILENAME",
-                    "SIZE_MB",
-                    "DURATION_MILLISECONDS",
-                    "DURATION_TEXT",
-                    "RESOLUTION",
-                    "FOLDER_NAME",
-                    "TAGS",
-                    "CAST",
-                    "SOURCE",
-                    "DATETIME_LAST_VIEWED_BY_USER",
-                    "DATETIME_IMPORT"},
-            {"IMAGE_ID",
-                    "IMAGE_FILENAME",
-                    "SIZE_KB",
-                    "DIMENSIONS",
-                    "FOLDER_NAME",
-                    "TAGS",
-                    "CAST",
-                    "SOURCE",
-                    "DATETIME_LAST_VIEWED_BY_USER",
-                    "DATETIME_IMPORT"},
-            {"COMIC_ID",
-                    "COMIC_NAME",
-                    "FILE_COUNT",
-                    "MAX_PAGE_ID",
-                    "MISSING_PAGES",
-                    "COMIC_SIZE_KB",
-                    "FOLDER_NAME",
-                    "THUMBNAIL_FILE",
-                    "PARODIES",
-                    "CHARACTERS",
-                    "TAGS",
-                    "ARTISTS",
-                    "GROUPS",
-                    "LANGUAGES",
-                    "CATEGORIES",
-                    "PAGES",
-                    "SOURCE",
-                    "DATETIME_LAST_READ_BY_USER",
-                    "DATETIME_IMPORT",
-                    "ONLINE_DATA_ACQUIRED"}};
-
-
-
-//=====================================================================================
-    //===== Videos Variables Section ======================================================
-    //=====================================================================================
-
-    public static final int VIDEO_ID_INDEX = 0;                             //Video ID
-    public static final int VIDEO_FILENAME_INDEX = 1;
-    public static final int VIDEO_SIZE_MB_INDEX = 2;
-    public static final int VIDEO_DURATION_MILLISECONDS_INDEX = 3;          //Duration of video in Milliseconds
-    public static final int VIDEO_DURATION_TEXT_INDEX = 4;                  //Duration of video text
-    public static final int VIDEO_RESOLUTION_INDEX = 5;                     //Width x Height
-    public static final int VIDEO_FOLDER_NAME_INDEX = 6;                    //Name of the folder holding the video
-    public static final int VIDEO_TAGS_INDEX = 7;                           //Tags given to the video
-    public static final int VIDEO_CAST_INDEX = 8;
-    public static final int VIDEO_SOURCE_INDEX = 9;                         //Website, if relevant
-    public static final int VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX = 10;   //Date of last read by user. Used for sorting if desired
-    public static final int VIDEO_DATETIME_IMPORT_INDEX = 11;               //Date of import. Used for sorting if desired
-
-
-
-    //=====================================================================================
-    //===== Images Variables Section ======================================================
-    //=====================================================================================
-
-    public static final int IMAGE_ID_INDEX = 0;                             //Image ID
-    public static final int IMAGE_FILENAME_INDEX = 1;
-    public static final int IMAGE_SIZE_KB_INDEX = 2;
-    public static final int IMAGE_DIMENSIONS_INDEX = 3;
-    public static final int IMAGE_FOLDER_NAME_INDEX = 4;                    //Name of the folder holding the imGE
-    public static final int IMAGE_TAGS_INDEX = 5;                           //Tags given to the Image
-    public static final int IMAGE_CAST_INDEX = 6;
-    public static final int IMAGE_SOURCE_INDEX = 7;                         //Website, if relevant
-    public static final int IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX = 8;   //Date of last read by user. Used for sorting if desired
-    public static final int IMAGE_DATETIME_IMPORT_INDEX = 9;                //Date of import. Used for sorting if desired
-
-    //=====================================================================================
-    //===== Comics Variables Section ======================================================
-    //=====================================================================================
-
-    public static final int COMIC_ID_INDEX = 0;                    //Comic ID
-    public static final int COMIC_NAME_INDEX = 1;                  //Comic Name
-    public static final int COMIC_FILE_COUNT_INDEX = 2;            //Files included with the comic
-    public static final int COMIC_MAX_PAGE_ID_INDEX = 3;           //Max page ID extracted from file names
-    public static final int COMIC_MISSING_PAGES_INDEX = 4;         //String of comma-delimited missing page numbers
-    public static final int COMIC_SIZE_KB_INDEX = 5;               //Total size of all files in the comic
-    public static final int COMIC_FOLDER_NAME_INDEX = 6;           //Name of the folder holding the comic pages
-    public static final int COMIC_THUMBNAIL_FILE_INDEX = 7;        //Name of the file used as the thumbnail for the comic
-    public static final int COMIC_PARODIES_INDEX = 8;
-    public static final int COMIC_CHARACTERS_INDEX = 9;
-    public static final int COMIC_TAGS_INDEX = 10;                 //Tags given to the comic
-    public static final int COMIC_ARTISTS_INDEX = 11;
-    public static final int COMIC_GROUPS_INDEX = 12;
-    public static final int COMIC_LANGUAGES_INDEX = 13;            //Language(s) found in the comic
-    public static final int COMIC_CATEGORIES_INDEX = 14;
-    public static final int COMIC_PAGES_INDEX = 15;                //Total number of pages as defined at the comic source
-    public static final int COMIC_SOURCE_INDEX = 16;                     //nHentai.net, other source, etc.
-    public static final int COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX = 17; //Date of last read by user. Used for sorting if desired
-    public static final int COMIC_DATETIME_IMPORT_INDEX = 18;            //Date of import. Used for sorting if desired
-    public static final int COMIC_ONLINE_DATA_ACQUIRED_INDEX = 19;
-
-    public static final String COMIC_ONLINE_DATA_ACQUIRED_NO = "No";
-    public static final String COMIC_ONLINE_DATA_ACQUIRED_YES = "Yes";
-
-
-    //Lookup tables
-    public static final int[] giDataRecordIDIndexes = {
-            VIDEO_ID_INDEX,
-            IMAGE_ID_INDEX,
-            COMIC_ID_INDEX};
-
-    public static final int[] giDataRecordFileNameIndexes = {
-            VIDEO_FILENAME_INDEX,
-            IMAGE_FILENAME_INDEX,
-            -1};// -1, there is no descriptive comic file name.
-
-    public static final int[] giDataRecordDateTimeImportIndexes = {
-            VIDEO_DATETIME_IMPORT_INDEX,
-            IMAGE_DATETIME_IMPORT_INDEX,
-            COMIC_DATETIME_IMPORT_INDEX};
-
-    public static final int[] giDataRecordDateTimeViewedIndexes = {
-            VIDEO_DATETIME_LAST_VIEWED_BY_USER_INDEX,
-            IMAGE_DATETIME_LAST_VIEWED_BY_USER_INDEX,
-            COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX};
-
-    public static final int[] giDataRecordTagsIndexes = {
-            VIDEO_TAGS_INDEX,
-            IMAGE_TAGS_INDEX,
-            COMIC_TAGS_INDEX};
-
-    public static final int[] giDataRecordFolderIndexes = {
-            VIDEO_FOLDER_NAME_INDEX,
-            IMAGE_FOLDER_NAME_INDEX,
-            COMIC_FOLDER_NAME_INDEX}; //The record index to find the item's folder.
-
-    public static final int[] giDataRecordRecyclerViewImageIndexes = {
-            VIDEO_FILENAME_INDEX,
-            IMAGE_FILENAME_INDEX,
-            COMIC_THUMBNAIL_FILE_INDEX};
+    //public static final String gsNHComicPageFilter = "^\\d{1,7}_Page.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
 
     public static final String[]  gsRestrictedTagsPreferenceNames = new String[]{
             "multi_select_list_videos_restricted_tags",
@@ -228,28 +81,6 @@ public class GlobalClass extends Application {
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
-    //todo: get rid of these variables as they are handled as arrayList items above:
-    public File gfComicsFolder;
-    public File gfComicLogsFolder;
-    public File gfComicCatalogContentsFile;
-    public final TreeMap<Integer, String[]> gtmCatalogComicList = new TreeMap<>();
-    public boolean gbComicJustImported = false;
-
-
-
-    //Each tags file has the same fields:
-    public static final int TAG_ID_INDEX = 0;                    //Tag ID
-    public static final int TAG_NAME_INDEX = 1;                  //Tag Name
-    public static final int TAG_DESCRIPTION_INDEX = 3;           //Tag Description
-    public final String[] TagRecordFields = new String[]{
-            "TAG_ID",
-            "TAG_NAME",
-            "DESCRIPTION"};
-
-
-    public void SendToast(Context context, String sMessage){
-        Toast.makeText(context, sMessage, Toast.LENGTH_SHORT).show();
-    }
 
     //=====================================================================================
     //===== Network Monitoring ============================================================
@@ -263,11 +94,11 @@ public class GlobalClass extends Application {
 
             connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback(){
                                                                    @Override
-                                                                   public void onAvailable(Network network) {
+                                                                   public void onAvailable(@NonNull Network network) {
                                                                        isNetworkConnected = true; // Global Static Variable
                                                                    }
                                                                    @Override
-                                                                   public void onLost(Network network) {
+                                                                   public void onLost(@NonNull Network network) {
                                                                        isNetworkConnected = false; // Global Static Variable
                                                                    }
                                                                }
@@ -316,16 +147,8 @@ public class GlobalClass extends Application {
         return freeBytesExternal;
     }
 
-    static final String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
     static final String gsDatePatternNumSort = "yyyyMMdd.HHmmss";
-    static final String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
     static DateTimeFormatter gdtfDateFormatter;
-
-    public String GetTimeStampFileSafe(){
-        //For putting a timestamp on a file name. Observant of illegal characters.
-        gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternFileSafe);
-        return gdtfDateFormatter.format(LocalDateTime.now());
-    }
 
     public static Double GetTimeStampFloat(){
         //Get an easily-comparable time stamp.
@@ -334,11 +157,13 @@ public class GlobalClass extends Application {
         return Double.parseDouble(sTimeStamp);
     }
 
+    /*static final String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
+    static final String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
     public String GetTimeStampReadReady(){
         //Get an easily readable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternReadReady);
         return gdtfDateFormatter.format(LocalDateTime.now());
-    }
+    }*/
 
     public static String JumbleStorageText(String sSourceText){
         if(sSourceText.equals("")){
@@ -384,13 +209,8 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
-
-    public String[] getCatalogRecordString(ItemClass_CatalogItem ci){
-        // Return value:
-        // [0] - Header
-        // [1] - Human-readable for searching text
-        // [2] - Meant to write to a file
-
+    public final int giCatalogFileVersion = 5;
+    public String getCatalogHeader(){
         String sHeader = "";
         sHeader = sHeader + "MediaCategory";                         //Video, image, or comic.
         sHeader = sHeader + "\t" + "ItemID";                         //Video, image, comic id
@@ -425,6 +245,13 @@ public class GlobalClass extends Application {
 
         sHeader = sHeader + "\t" + "Grade";                          //Grade of the item, set by the user
 
+        sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
+
+        return sHeader;
+    }
+
+    public String getCatalogRecordSearchString(ItemClass_CatalogItem ci){
+
         String sReadableData = ""; //To be used for textual searches
         sReadableData = sReadableData + ci.iMediaCategory;                         //Video, image, or comic.
         sReadableData = sReadableData + "\t" + ci.sItemID;                         //Video, image, comic id
@@ -436,7 +263,6 @@ public class GlobalClass extends Application {
 
         String sTags = getTagTextsFromIDs(getIntegerArrayFromString(ci.sTags, ","), ci.iMediaCategory).toString();
         sReadableData = sReadableData + "\t" + sTags;                              //Tags given to the video, image, or comic
-
 
         sReadableData = sReadableData + "\t" + ci.iHeight;                         //Video or image dimension/resolution
         sReadableData = sReadableData + "\t" + ci.iWidth;                          //Video or image dimension/resolution
@@ -461,6 +287,11 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;     //Typically used to gather tag data from an online comic source, if automatic.
         sReadableData = sReadableData + "\t" + ci.sSource;                         //Website, if relevant. ended for comics.
         sReadableData = sReadableData + "\t" + ci.iGrade;                          //Grade.
+
+        return sReadableData;
+    }
+
+    public String getCatalogRecordString(ItemClass_CatalogItem ci){
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + ci.iMediaCategory;                                            //Video, image, or comic.
@@ -495,7 +326,7 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
 
-        return new String[]{sHeader,sReadableData,sRecord};
+        return sRecord;
     }
     
     public static ItemClass_CatalogItem ConvertStringToCatalogItem(String[] sRecord){
@@ -553,7 +384,7 @@ public class GlobalClass extends Application {
             //Add the details to the TreeMap:
             tmCatalogRecords.put(ci.sItemID, ci);
 
-            String sLine = getCatalogRecordString(ci)[2];
+            String sLine = getCatalogRecordString(ci);
             
             //Write the data to the file:
             FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
@@ -581,7 +412,6 @@ public class GlobalClass extends Application {
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
-            String[] sFields;
             String sLine = brReader.readLine();
             ItemClass_CatalogItem ciFromFile;
             while (sLine != null) {
@@ -589,7 +419,7 @@ public class GlobalClass extends Application {
 
                 //Check to see if this record is the one that we want to update:
                 if (ciFromFile.sItemID.equals(ci.sItemID)) {
-                    sLine = getCatalogRecordString(ci)[2];
+                    sLine = getCatalogRecordString(ci);
 
                     //Now update the record in the treeMap:
                     tmCatalogRecords.put(ci.sItemID,ci);
@@ -663,7 +493,6 @@ public class GlobalClass extends Application {
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
-            String[] sFields;
             String sLine = brReader.readLine();
 
             ItemClass_CatalogItem ciFromFile;
@@ -706,15 +535,16 @@ public class GlobalClass extends Application {
         //Update ConvertStringToCatalogItem after calling this routine.
         for(int i = 0; i < 3; i++){
             StringBuilder sbBuffer = new StringBuilder();
-            boolean bHeaderRequired = true;
+            boolean bHeaderWritten = false;
             for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(i).entrySet()){
-                String[] sData = getCatalogRecordString(tmEntry.getValue());
-                if(bHeaderRequired) {
-                    sbBuffer.append(sData[0]); //Append the header.
+
+                if(!bHeaderWritten) {
+                    sbBuffer.append(getCatalogHeader()); //Append the header.
                     sbBuffer.append("\n");
-                    bHeaderRequired = false;
+                    bHeaderWritten = true;
                 }
-                sbBuffer.append(sData[2]); //Append the data.
+
+                sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
                 sbBuffer.append("\n");
             }
 
@@ -731,272 +561,6 @@ public class GlobalClass extends Application {
         }
     }
 
-    public boolean CatalogDataFile_UpdateAllRecords(File fCatalogContentsFile, int[] iFieldIDs, String[] sFieldUpdateData) {
-        //This routine used to update a single field across all records in a catalog file.
-        //  Used primarily during development of the software.
-        //  CatalogDataFile_UpdateAllRecords = Update field(s) to a common value.
-        try {
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
-            sbBuffer.append("\n");
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                int j = 0; //To track requested field updates.
-                sFields = sLine.split("\t",-1);
-
-                StringBuilder sb = new StringBuilder();
-                if (iFieldIDs[j] == 0) {
-                    //If the caller wishes to update field 0...
-                    sb.append(sFieldUpdateData[j]);
-                    j++;
-                } else {
-                    sb.append(sFields[0]);
-                }
-                for (int i = 1; i < sFields.length; i++) {
-                    sb.append("\t");
-                    if(j < iFieldIDs.length) {
-                        if (iFieldIDs[j] == i) {
-                            //If the caller wishes to update field i...
-                            sb.append(sFieldUpdateData[j]);
-                            j++;
-                        } else {
-                            sb.append(sFields[i]);
-                        }
-                    } else {
-                        sb.append(sFields[i]);
-                    }
-                }
-                sLine = sb.toString();
-
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-            return true;
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
-
-    public void CatalogDataFile_UpdateAllRecords_SwitchTagTextToIDs(int iMediaCategory) {
-        //This routine used to update all record's tags field to integer IDs for the tags.
-        //  Used during development of the software.
-
-        try {
-
-            int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
-
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[iMediaCategory].getAbsolutePath()));
-            String sHeader = brReader.readLine();
-            //Determine the file version, and don't update it if it is up-to-date:
-            String[] sHeaderFields = sHeader.split("\t");
-            String sVersionField = sHeaderFields[sHeaderFields.length - 1];
-            String[] sVersionFields = sVersionField.split("\\.");
-            if(Integer.parseInt(sVersionFields[1]) >= giCatalogFileVersion){
-                return;
-            }
-            //Re-form the header line with the new file version:
-            StringBuilder sbNewHeaderLine = new StringBuilder();
-            for(int i = 0; i < sHeaderFields.length - 1; i++){
-                sbNewHeaderLine.append(sHeaderFields[i]);
-                sbNewHeaderLine.append("\t");
-            }
-            sbNewHeaderLine.append("FILEVERSION.");
-            sbNewHeaderLine.append(giCatalogFileVersion); //Append the current file version number.
-            sbBuffer.append(sbNewHeaderLine);
-            sbBuffer.append("\n"); //Append newline character.
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                sFields = sLine.split("\t",-1);
-
-                StringBuilder sb = new StringBuilder();
-                sb.append(sFields[0]); //Append the first field, which would not be the tags field.
-                for (int i = 1; i < sFields.length; i++) {
-                    sb.append("\t");
-
-                    if (i == iTagsField[iMediaCategory]) {
-                        //This is the tags field. Convert the tag text to integers.
-                        String[] sTagsText = sFields[i].split(",");
-                        StringBuilder sbTagsInt = new StringBuilder();
-                        for(String sTag: sTagsText){
-                            Integer iTagID = getTagIDFromText(JumbleStorageText(sTag.trim()), iMediaCategory);
-                            if(iTagID < 0){ //Tag Text not found.
-                                iTagID = 9999;
-                            }
-                            sbTagsInt.append(iTagID.toString());
-                            sbTagsInt.append(",");
-                        }
-                        String sTagsInt = sbTagsInt.toString();
-                        //Remove trailing comma:
-                        if(sTagsInt.contains(",")) {
-                            sTagsInt = sTagsInt.substring(0, sTagsInt.lastIndexOf(","));
-                        }
-                        sb.append(JumbleStorageText(sTagsInt));
-                    } else {
-                        sb.append(sFields[i]);
-                    }
-
-
-                }
-                sLine = sb.toString();
-
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[iMediaCategory], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public static boolean CatalogDataFile_UpdateAllRecords_TimeStamps(File fCatalogContentsFile) {
-        //This routine used to update a single field across all record in a catalog file.
-        //  Used primarily during development of the software.
-
-        try {
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
-            sbBuffer.append("\n");
-            //finished header processing.
-
-            //Apply an import timestamp:
-            double dTimeStamp = GetTimeStampFloat();
-            String sDateTime;
-
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                dTimeStamp += 0.000100; //Increment the timestamp by one minute.
-                sDateTime = Double.toString(dTimeStamp);
-                sFields = sLine.split("\t",-1);
-
-                StringBuilder sb = new StringBuilder();
-                sb.append(sFields[0]);
-
-                for (int i = 1; i < sFields.length; i++) {
-                    sb.append("\t");
-                    if (i == COMIC_DATETIME_LAST_VIEWED_BY_USER_INDEX) {
-                        //If this is the field to update...
-                        sb.append( JumbleStorageText(sDateTime));
-                    } else {
-                        sb.append(sFields[i]);
-                    }
-
-                }
-                sLine = sb.toString();
-
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public void CatalogDataFile_UpdateAllRecords_UnJumbleVideoFileName() {
-        //This routine used to update all video records such that the file name matches the
-        //  storage file name.
-
-        try {
-
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[MEDIA_CATEGORY_VIDEOS].getAbsolutePath()));
-            String sHeader = brReader.readLine();
-            //Determine the file version, and don't update it if it is up-to-date:
-            String[] sHeaderFields = sHeader.split("\t");
-            String sVersionField = sHeaderFields[sHeaderFields.length - 1];
-            String[] sVersionFields = sVersionField.split("\\.");
-            if(Integer.parseInt(sVersionFields[1]) >= giCatalogFileVersion){
-                return;
-            }
-            //Re-form the header line with the new file version:
-            StringBuilder sbNewHeaderLine = new StringBuilder();
-            for(int i = 0; i < sHeaderFields.length - 1; i++){
-                sbNewHeaderLine.append(sHeaderFields[i]);
-                sbNewHeaderLine.append("\t");
-            }
-            sbNewHeaderLine.append("FILEVERSION.");
-            sbNewHeaderLine.append(giCatalogFileVersion); //Append the current file version number.
-            sbBuffer.append(sbNewHeaderLine);
-            sbBuffer.append("\n"); //Append newline character.
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                sFields = sLine.split("\t",-1);
-
-                StringBuilder sb = new StringBuilder();
-                sb.append(sFields[0]); //Append the first field, which would not be the tags field.
-                for (int i = 1; i < sFields.length; i++) {
-                    sb.append("\t");
-
-                    if (i == VIDEO_FILENAME_INDEX) {
-                        //This is the filename field. Reverse the jumble:
-                        sb.append(JumbleStorageText(sFields[i]));
-                    } else {
-                        sb.append(sFields[i]);
-                    }
-
-                }
-                sLine = sb.toString();
-
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[MEDIA_CATEGORY_VIDEOS], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
 
     public ItemClass_CatalogItem analyzeComicReportMissingPages(ItemClass_CatalogItem ci){
 
@@ -1069,16 +633,37 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Tag Subroutines Section ===================================================
     //=====================================================================================
+    public static final int giTagFileVersion = 1;
+    public static String getTagFileHeader(){
+        return "TagID" +
+                "\t" + "TagText" +
+                "\t" + "TagDescription" +
+                "\t" + "Version:" + giTagFileVersion;
+    }
+
+    public static ItemClass_Tag ConvertFileLineToTagItem(String[] sRecord){
+        //Designed for interpretting a line as read from a tags file.
+        ItemClass_Tag ict;
+        if(sRecord.length >= 2) {
+            ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
+        } else {
+            ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), "");
+        }
+        if(sRecord.length >2) {
+            ict.sTagDescription = JumbleStorageText(sRecord[2]);
+        }
+        return ict;
+    }
+
+    public static ItemClass_Tag ConvertFileLineToTagItem(String sRecord){
+        String[] sRecord2 =  sRecord.split("\t");
+        return ConvertFileLineToTagItem(sRecord2);
+    }
 
     public TreeMap<String, ItemClass_Tag> InitTagData(int iMediaCategory){
         TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>();
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
-
-        //Get tag reference lists:
-        int[] iTagStringArrayResources = {R.array.default_video_tags, R.array.default_video_tags, R.array.default_comic_tags};
-        String[] sDefaultTags = getResources().getStringArray(iTagStringArrayResources[iMediaCategory]);
-
 
         if(fTagsFile.exists()) {
             //Get Tags from file:
@@ -1090,24 +675,10 @@ public class GlobalClass extends Application {
                 String sLine = brReader.readLine();
 
                 while(sLine != null) {
-                    String[] sFields;
-                    sFields = sLine.split("\t");
 
-                    //Reverse the text of each field:
-                    for(int j = 0; j < sFields.length; j++) {
-                        sFields[j] = JumbleStorageText(sFields[j]);
-                    }
+                    ItemClass_Tag ict = ConvertFileLineToTagItem(sLine);
+                    tmTags.put(ict.sTagText, ict);
 
-                    ItemClass_Tag ict;
-                    String sTagName;
-                    if(sFields.length < 2){
-                        //The tag is blank.
-                        sTagName = "";
-                    } else {
-                        sTagName = sFields[TAG_NAME_INDEX];
-                    }
-                    ict = new ItemClass_Tag(Integer.parseInt(sFields[TAG_ID_INDEX]), sTagName);
-                    tmTags.put(sTagName, ict);
                     sLine = brReader.readLine();
                 }
 
@@ -1116,28 +687,15 @@ public class GlobalClass extends Application {
             } catch (IOException e) {
                 Toast.makeText(this, "Trouble reading tags file at\n" + fTagsFile.getAbsolutePath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             }
-        } else { //If the tags file does not exist, create it and populate it with default values:
+        } else { //If the tags file does not exist, create it:
             try {
                 if(fTagsFile.createNewFile()) {
                     try {
                         FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
-                        int i = 0;
-                        //Write the header record:
-                        fwTagsFile.write(TagRecordFields[0]);
-                        for(int j = 1; j < TagRecordFields.length; j++){
-                            fwTagsFile.write("\t" + TagRecordFields[j]);
-                        }
-                        fwTagsFile.write("\n");
 
-                        //Write data records:
-                        for (String sEntry : sDefaultTags) {
-                            if(!sEntry.equals("")) {
-                                fwTagsFile.write(JumbleStorageText(Integer.toString(i)) + "\t" + JumbleStorageText(sEntry) + "\n");
-                                ItemClass_Tag ict = new ItemClass_Tag(i, sEntry);
-                                tmTags.put(sEntry, ict);
-                                i++;
-                            }
-                        }
+                        //Write the header record:
+                        fwTagsFile.write(getTagFileHeader());
+                        fwTagsFile.write("\n");
 
                         //Close the tags file:
                         fwTagsFile.flush();
@@ -1167,9 +725,9 @@ public class GlobalClass extends Application {
             int iThisId;
             if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
                 for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                    iThisId = entry.getValue().TagID;
+                    iThisId = entry.getValue().iTagID;
                     if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-                    if (entry.getValue().TagText.toLowerCase().equals(sTagName.toLowerCase())) {
+                    if (entry.getValue().sTagText.toLowerCase().equals(sTagName.toLowerCase())) {
                         //If the tag already exists, abort adding a new tag.
                         return null;
                     }
@@ -1197,13 +755,9 @@ public class GlobalClass extends Application {
 
     }
 
-    public boolean TagDataFile_UpdateRecord(
-            String sTagID,
-            String sData,
-            int iMediaCategory) {
+    public boolean TagDataFile_UpdateRecord(String sTagID, String sData, int iMediaCategory) {
 
-        int[] iFieldIDs = {TAG_NAME_INDEX};
-        String[] sFieldUpdateData = new String[]{sData};
+        ItemClass_Tag ictIncoming = new ItemClass_Tag(Integer.parseInt(sTagID), sData);
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
 
@@ -1218,74 +772,16 @@ public class GlobalClass extends Application {
             String[] sFields;
             String sLine = brReader.readLine();
             while (sLine != null) {
-                int j = 0; //To track requested field updates.
 
-                sFields = sLine.split("\t",-1);
-                //De-jumble the data read from the file:
-                String[] sFields2 = new String[sFields.length];
-                for(int i = 0; i < sFields.length; i++){
-                    sFields2[i] = JumbleStorageText(sFields[i]);
-                }
-                sFields = sFields2;
+                ItemClass_Tag ictFromFile = ConvertFileLineToTagItem(sLine);
 
                 //Check to see if this record is the one that we want to update:
-                if (sFields[giDataRecordIDIndexes[iMediaCategory]].equals(sTagID)) {
-                    StringBuilder sb = new StringBuilder();
+                if (ictFromFile.iTagID.equals(ictIncoming.iTagID)) {
 
-                    if (iFieldIDs[j] == 0) {
-                        //If the caller wishes to update field 0...
-                        sb.append(sFieldUpdateData[j]);
-                        j++;
-                    } else {
-                        sb.append(sFields[0]);
-                    }
-
-                    for (int i = 1; i < sFields.length; i++) {
-                        sb.append("\t");
-                        if(j < iFieldIDs.length) {
-                            if (iFieldIDs[j] == i) {
-                                //If the caller wishes to update field i...
-                                sb.append(sFieldUpdateData[j]);
-                                j++;
-                            } else {
-                                sb.append(sFields[i]);
-                            }
-                        } else {
-                            sb.append(sFields[i]);
-                        }
-                    }
-
-                    sLine = sb.toString();
+                    sLine = getTagRecordString(ictIncoming);
 
                     //Now update the record in the treeMap:
-                    sFields = sLine.split("\t",-1);
-                    int iKey = -1;
-
-
-                    String sKey = "";
-                    for (Map.Entry<String, ItemClass_Tag>
-                            TagEntry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                        if( TagEntry.getValue().TagID.equals(Integer.parseInt(sTagID))){
-                            sKey = TagEntry.getKey();
-                            break;
-                        }
-                    }
-
-                    //Delete the pre-Existing tag item from the reference list because it hold the previous tag name as the
-                    //  key value:
-                    gtmCatalogTagReferenceLists.get(iMediaCategory).remove(sKey);
-                    ItemClass_Tag ictNew = new ItemClass_Tag(Integer.parseInt(sTagID), sData);
-                    gtmCatalogTagReferenceLists.get(iMediaCategory).put(sData, ictNew);
-
-                    //Jumble the fields in preparation for writing to file:
-                    sFields2 = sLine.split("\t",-1);
-                    StringBuilder sbJumble = new StringBuilder();
-                    sbJumble.append(JumbleStorageText(sFields2[0]));
-                    for(int i = 1; i < sFields.length; i++){
-                        sbJumble.append("\t");
-                        sbJumble.append(JumbleStorageText(sFields2[i]));
-                    }
-                    sLine = sbJumble.toString();
+                    gtmCatalogTagReferenceLists.get(iMediaCategory).put(ictIncoming.sTagText, ictIncoming);
 
                 }
                 //Write the current record to the buffer:
@@ -1314,8 +810,9 @@ public class GlobalClass extends Application {
     public String getTagRecordString(ItemClass_Tag ict){
         //For writing tags to a tags file.
         String sTagRecord =
-                JumbleStorageText(ict.TagID.toString()) + "\t" +
-                JumbleStorageText(ict.TagText);
+                JumbleStorageText(ict.iTagID.toString()) + "\t" +
+                JumbleStorageText(ict.sTagText) + "\t" +
+                JumbleStorageText(ict.sTagDescription);
         return sTagRecord;
     }
 
@@ -1336,69 +833,7 @@ public class GlobalClass extends Application {
         return sTagTexts;
     }
 
-    public void TagsFile_UpdateAllRecords_JumbleTagID(int iMediaCategory) {
-        //This routine used to update all tag records such that the tag ID is jumbled.
-
-        try {
-
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfCatalogTagsFiles[iMediaCategory].getAbsolutePath()));
-            String sHeader = brReader.readLine();
-            //Determine the file version, and don't update it if it is up-to-date:
-            String[] sHeaderFields = sHeader.split("\t");
-            /*String sVersionField = sHeaderFields[sHeaderFields.length - 1];
-            String[] sVersionFields = sVersionField.split("\\.");
-            if(Integer.parseInt(sVersionFields[1]) >= giCatalogFileVersion){
-                return;
-            }*/
-            //Re-form the header line with the new file version:
-            String sNewHeaderLine;
-            StringBuilder sbNewHeaderLine = new StringBuilder();
-            for(int i = 0; i < sHeaderFields.length - 1; i++){
-                sbNewHeaderLine.append(sHeaderFields[i]);
-                sbNewHeaderLine.append("\t");
-            }
-            sbNewHeaderLine.append("FILEVERSION.");
-            sbNewHeaderLine.append(giTagFileVersion); //Append the current file version number.
-            sbBuffer.append(sbNewHeaderLine);
-            sbBuffer.append("\n"); //Append newline character.
-
-            String[] sFields;
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-                sFields = sLine.split("\t",-1);
-
-                StringBuilder sb = new StringBuilder();
-                sb.append(JumbleStorageText(sFields[0]));
-                for (int i = 1; i < sFields.length; i++) {
-                    sb.append("\t");
-                    sb.append(sFields[i]);
-                }
-                sLine = sb.toString();
-
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogTagsFiles[iMediaCategory], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating Tags.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
     public TreeMap<String, ItemClass_Tag> GetCatalogTagsInUse(Integer iMediaCategory){
-
-        int[] iTagsField = {VIDEO_TAGS_INDEX, IMAGE_TAGS_INDEX, COMIC_TAGS_INDEX};
-
 
         SortedSet<String> ssTemp = new TreeSet<>();//todo: refactor.
         for(Map.Entry<String, ItemClass_CatalogItem>
@@ -1425,9 +860,9 @@ public class GlobalClass extends Application {
             for (Integer iTagID : aliTagsInUse) {
                 String sTagText = getTagTextFromID(iTagID, iMediaCategory);
                 ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
-                ItemClass_Tag ictTemp = gtmCatalogTagReferenceLists.get(iMediaCategory).get(ict.TagText);
+                ItemClass_Tag ictTemp = gtmCatalogTagReferenceLists.get(iMediaCategory).get(ict.sTagText);
                 if (ictTemp != null) {
-                    ict.isRestricted = ictTemp.isRestricted;
+                    ict.bIsRestricted = ictTemp.bIsRestricted;
                 }
                 tmTagsInUse.put(sTagText, ict);
             }
@@ -1441,9 +876,9 @@ public class GlobalClass extends Application {
 
         //todo: instead of looping through items, use TreeMap.getValue or TreeMap.getKey if it exists.
         for(Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            Integer iRefTag = entry.getValue().TagID;
+            Integer iRefTag = entry.getValue().iTagID;
             if(iRefTag.equals(iTagID)){
-                sTagText = entry.getValue().TagText;
+                sTagText = entry.getValue().sTagText;
                 break;
             }
         }
@@ -1463,8 +898,8 @@ public class GlobalClass extends Application {
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
         int iKey = -1;
         for(Map.Entry<String, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
-            if(entry.getValue().TagText.equalsIgnoreCase(sTagText)){
-                iKey = entry.getValue().TagID;
+            if(entry.getValue().sTagText.equalsIgnoreCase(sTagText)){
+                iKey = entry.getValue().iTagID;
                 break;
             }
         }
@@ -1672,7 +1107,7 @@ public class GlobalClass extends Application {
 
     //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
     //public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
-    public final String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
+    //public final String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
     //public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
     public final String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
     //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";

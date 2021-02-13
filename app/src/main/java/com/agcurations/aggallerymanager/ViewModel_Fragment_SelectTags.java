@@ -34,7 +34,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
                 for(ItemClass_Tag tiOld : altiTagsSelected.getValue()){
                     bTagFound = false;
                     for (ItemClass_Tag tiIncoming : altiNew) {
-                        if(tiIncoming.TagID.equals(tiOld.TagID)){
+                        if(tiIncoming.iTagID.equals(tiOld.iTagID)){
                             bTagFound = true;
                             break;
                         }
@@ -53,7 +53,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
                 for (ItemClass_Tag tiIncoming : altiNew) {
                     bTagFound = false;
                     for(ItemClass_Tag tiOld : altiTagsSelected.getValue()){
-                        if(tiIncoming.TagID.equals(tiOld.TagID)){
+                        if(tiIncoming.iTagID.equals(tiOld.iTagID)){
                             bTagFound = true;
                             break;
                         }

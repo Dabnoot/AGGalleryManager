@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
@@ -1897,7 +1896,7 @@ public class Service_Import extends IntentService {
                         if(!sTags[i].equals("")) {
                             ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
                             if(ictNewTag != null){
-                                aliTags.add(i, ictNewTag.TagID); //Replace the -1 with the new TagID.
+                                aliTags.add(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
                             }
                         }
                     }

@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.widget.EditText;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -187,8 +186,8 @@ public class Activity_AppSettings extends AppCompatActivity implements
                     //Get a list of comic tags to populate the multiSelect dropdown list:
                     for (Map.Entry<String, ItemClass_Tag>
                             entry : globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()) {
-                        alTagIDs.add(entry.getValue().TagID.toString());
-                        alTagTexts.add(entry.getValue().TagText);
+                        alTagIDs.add(entry.getValue().iTagID.toString());
+                        alTagTexts.add(entry.getValue().sTagText);
                     }
 
                     csTagIDs = alTagIDs.toArray(new CharSequence[0]);
@@ -200,8 +199,8 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
                     StringBuilder sbRestrictedTagTextInit = new StringBuilder();
                     for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()) {
-                        if (entry.getValue().isRestricted) {
-                            sbRestrictedTagTextInit.append(entry.getValue().TagText);
+                        if (entry.getValue().bIsRestricted) {
+                            sbRestrictedTagTextInit.append(entry.getValue().sTagText);
                             sbRestrictedTagTextInit.append(", ");
                         }
                     }
@@ -236,7 +235,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
                         //First turn off all restricted tags, and then turn back on based on newValue:
                         for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                            entry.getValue().isRestricted = false;
+                            entry.getValue().bIsRestricted = false;
                         }
 
                         StringBuilder sb = new StringBuilder();
@@ -273,9 +272,9 @@ public class Activity_AppSettings extends AppCompatActivity implements
                                 //Update the globalClass restricted tag listings:
                                 for (Integer iRestrictedTag : aliTagIDs) {
                                     for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                                        if (entry.getValue().TagID.equals(iRestrictedTag)) {
+                                        if (entry.getValue().iTagID.equals(iRestrictedTag)) {
                                             //If the restricted tag has been found, mark it as restricted:
-                                            entry.getValue().isRestricted = true;
+                                            entry.getValue().bIsRestricted = true;
                                         }
                                     }
                                 }

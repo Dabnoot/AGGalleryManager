@@ -362,7 +362,7 @@ public class Service_ComicDetails extends IntentService {
                 if(!sTags[i].equals("")) {
                     ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
                     if(ictNewTag != null){
-                        aliTags.add(i, ictNewTag.TagID);
+                        aliTags.add(i, ictNewTag.iTagID);
                     }
                 }
             }

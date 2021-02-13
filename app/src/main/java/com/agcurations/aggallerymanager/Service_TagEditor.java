@@ -78,7 +78,7 @@ public class Service_TagEditor extends IntentService {
             String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
 
-            if(aliTags.contains(ict_TagToDelete.TagID)){
+            if(aliTags.contains(ict_TagToDelete.iTagID)){
                 //If this item contains the tag:
 
                 String sNewTagFolderDestination;
@@ -88,7 +88,7 @@ public class Service_TagEditor extends IntentService {
                 //If their first tag is deleted, move the file to the new first tag folder.
                 if((iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
                         iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) &&
-                        aliTags.get(0).equals(ict_TagToDelete.TagID)) {
+                        aliTags.get(0).equals(ict_TagToDelete.iTagID)) {
 
                     sNewTagFolderDestination = GlobalClass.gsUnsortedFolderName;
 
@@ -153,11 +153,11 @@ public class Service_TagEditor extends IntentService {
                 //Form the new Tag string:
                 ArrayList<Integer> aliNewTags = new ArrayList<>();
                 for (Integer iTagID : aliTags) {
-                    if (!iTagID.equals(ict_TagToDelete.TagID)) {
+                    if (!iTagID.equals(ict_TagToDelete.iTagID)) {
                         aliNewTags.add(iTagID);
                     }
                 }
-                String sNewTags = GlobalClass.formDelimitedString(aliNewTags, ",");
+                tmEntryCatalogRecord.getValue().sTags = GlobalClass.formDelimitedString(aliNewTags, ",");
                 //Update the record and the catalog file:
                 globalClass.CatalogDataFile_UpdateRecord(tmEntryCatalogRecord.getValue());
 
@@ -171,7 +171,7 @@ public class Service_TagEditor extends IntentService {
         if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
                 iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
             String sTagFolderPath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                    ict_TagToDelete.TagID;
+                    ict_TagToDelete.iTagID;
             File fTagFolderPath = new File(sTagFolderPath);
             if(fTagFolderPath.exists()){
                 File[] fFileList = fTagFolderPath.listFiles();
@@ -206,17 +206,12 @@ public class Service_TagEditor extends IntentService {
             sbBuffer.append(brReader.readLine());  //Read the header.
             sbBuffer.append("\n");
 
-            String[] sFields;
             String sLine = brReader.readLine();
             while (sLine != null) {
 
-                sFields = sLine.split("\t",-1);
-                //De-jumble the data read from the file:
+                ItemClass_Tag ict = GlobalClass.ConvertFileLineToTagItem(sLine);
 
-                String sTagID = GlobalClass.JumbleStorageText(sFields[GlobalClass.TAG_ID_INDEX]);
-                Integer iTagID = Integer.parseInt(sTagID);
-
-                if(!ict_TagToDelete.TagID.equals(iTagID)){
+                if(!ict_TagToDelete.iTagID.equals(ict.iTagID)){
                     //If this is not the tag to be deleted:
                     sbBuffer.append(sLine);
                     sbBuffer.append("\n");
@@ -239,8 +234,8 @@ public class Service_TagEditor extends IntentService {
         }
 
         //Remove the tag from memory:
-        globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).remove(ict_TagToDelete.TagText);
-        if(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).containsKey(ict_TagToDelete.TagText)){
+        globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).remove(ict_TagToDelete.sTagText);
+        if(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).containsKey(ict_TagToDelete.sTagText)){
             String sMessage = "Unable to find tag in memory.";
             problemNotificationConfig(sMessage);
             return;
@@ -257,7 +252,7 @@ public class Service_TagEditor extends IntentService {
         if(ssCatalogTagsRestricted != null) {
             for (String sRestrictedTag : ssCatalogTagsRestricted) {
                 Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
-                if(ict_TagToDelete.TagID.equals(iRestrictedTag)){
+                if(ict_TagToDelete.iTagID.equals(iRestrictedTag)){
                     //This tag to be deleted is one of the restricted tags. Remove this tag from the list of restricted tags:
                     bUpdatePreference = true;
                 } else {

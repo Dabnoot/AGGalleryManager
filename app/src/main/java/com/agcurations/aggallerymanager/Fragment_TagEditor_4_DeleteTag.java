@@ -158,8 +158,8 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             return;
         }
 
-        String sConfirmationMessage = "Confirm tag geletion: ";
-        sConfirmationMessage = sConfirmationMessage + Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)).TagText;
+        String sConfirmationMessage = "Confirm tag deletion: ";
+        sConfirmationMessage = sConfirmationMessage + Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)).sTagText;
 
         if (getActivity() == null) {
             return;
@@ -242,13 +242,13 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             // Lookup view for data population
             final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
             // Populate the data into the template view using the data object
-            String s = tagItem.TagText;
+            String s = tagItem.sTagText;
             checkedTextView_TagText.setText(s);
 
 
             //Set the selection state (needed as views are recycled).
             if(getActivity() != null) {
-                if (tagItem.isChecked) {
+                if (tagItem.bIsChecked) {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackgroundHighlight2));
                 } else {
                     checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentImportBackground));
@@ -264,7 +264,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                         //If a tag item is already selected, make the adjustments:
                         ItemClass_Tag tagItemPrevSelected = getItem(iTagItemSelected);
                         if(tagItemPrevSelected != null && (iTagItemSelected != position)){
-                            tagItemPrevSelected.isChecked = false;
+                            tagItemPrevSelected.bIsChecked = false;
                         }
                         iTagItemSelected = -1;
                     }
@@ -272,8 +272,8 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                     ItemClass_Tag tagItem_Clicked = getItem(position);
 
                     if(tagItem_Clicked != null) {
-                        tagItem_Clicked.isChecked = !tagItem_Clicked.isChecked;
-                        if (tagItem_Clicked.isChecked) {
+                        tagItem_Clicked.bIsChecked = !tagItem_Clicked.bIsChecked;
+                        if (tagItem_Clicked.bIsChecked) {
                             iTagItemSelected = position;
                         }
                     }
