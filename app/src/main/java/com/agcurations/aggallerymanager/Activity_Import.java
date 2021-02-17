@@ -467,6 +467,22 @@ public class Activity_Import extends AppCompatActivity {
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
+            ArrayList<Integer> aliPreConfirmedTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
+
+            //Confirm tag exists before displaying (user can delete tags using preview->tagEditor)
+            boolean bTagsChanged = false;
+            ArrayList<Integer> aliConfirmedTagIDs = new ArrayList<>();
+            for(int iTagID: aliPreConfirmedTagIDs){
+                if(!globalClass.TagIDExists(iTagID, viewModelImportActivity.iImportMediaCategory)){
+                    bTagsChanged = true;
+                } else {
+                    aliConfirmedTagIDs.add(iTagID);
+                }
+            }
+            if(bTagsChanged){
+                alFileItemsDisplay.get(position).aliProspectiveTags = aliConfirmedTagIDs;
+            }
+
             ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
 
             if(aliTagIDs != null){

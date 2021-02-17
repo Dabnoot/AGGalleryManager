@@ -72,82 +72,97 @@ public class Service_TagEditor extends IntentService {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
+        String sTagFolderPath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                ict_TagToDelete.iTagID;
 
         //Loop through all catalog items and look for items that contain the tag to delete:
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
             String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
 
-            if(aliTags.contains(ict_TagToDelete.iTagID)){
-                //If this item contains the tag:
+            if((tmEntryCatalogRecord.getValue().sFolder_Name.equals(String.valueOf(ict_TagToDelete.iTagID)))
+                || (aliTags.contains(ict_TagToDelete.iTagID))){
+                //If this catalog item is in the folder of the tag to be deleted or if this catalog
+                // item contains the tag...
 
                 String sNewTagFolderDestination;
-
 
                 //Videos and images are sorted into folders based on their first tag.
                 //If their first tag is deleted, move the file to the new first tag folder.
                 if((iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
-                        iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) &&
-                        aliTags.get(0).equals(ict_TagToDelete.iTagID)) {
+                        iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)){
 
-                    sNewTagFolderDestination = GlobalClass.gsUnsortedFolderName;
+                    if(tmEntryCatalogRecord.getValue().sFolder_Name.equals(String.valueOf(ict_TagToDelete.iTagID))) {
+                        //If this catalog item is currently stored in the tag folder, move the file
+                        // to it's next tag folder.
 
+                        String sSourcePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                                tmEntryCatalogRecord.getValue().sFolder_Name + File.separator +
+                                tmEntryCatalogRecord.getValue().sFilename;
 
-                    String sSourcePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                            tmEntryCatalogRecord.getValue().sFolder_Name + File.separator +
-                            tmEntryCatalogRecord.getValue().sFilename;
+                        //Get a default folder for the move (to be used if there are no other tags
+                        //  assigned to this item):
+                        sNewTagFolderDestination = GlobalClass.gsUnsortedFolderName;
 
-                    if (aliTags.size() > 1) {
-                        sNewTagFolderDestination = aliTags.get(1).toString();
-                    }
-
-                    String sDestinationPath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                            sNewTagFolderDestination + File.separator +
-                            tmEntryCatalogRecord.getValue().sFilename;
-                    String sDestinationFolder = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                            sNewTagFolderDestination;
-
-                    File fInternalCatalogItem = new File(sSourcePath);
-                    if (fInternalCatalogItem.exists()) {
-
-                        File fDestinationFolder = new File(sDestinationFolder);
-                        boolean bFolderOk = false;
-                        if (!fDestinationFolder.exists()) {
-                            if (fDestinationFolder.mkdirs()) {
-                                bFolderOk = true;
+                        //Get the tag ID of the first tag assigned to this item that is not the
+                        //  tag to be deleted (if such a tag exists for this item). We will use this
+                        //  as the item's new destination folder:
+                        for(int i = 0; i < aliTags.size(); i++) {
+                            if(!aliTags.get(i).equals(ict_TagToDelete.iTagID)) {
+                                sNewTagFolderDestination = aliTags.get(i).toString();
+                                break;
                             }
-                        } else {
-                            bFolderOk = true;
                         }
 
-                        if (bFolderOk) {
-                            //Move the file:
-                            try {
-                                Path temp = Files.move(fInternalCatalogItem.toPath(), Paths.get(sDestinationPath));
-                                if (temp == null) {
-                                    String sMessage = "Could not move file " + fInternalCatalogItem.toPath() + ".";
+                        String sDestinationPath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                                sNewTagFolderDestination + File.separator +
+                                tmEntryCatalogRecord.getValue().sFilename;
+                        String sDestinationFolder = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                                sNewTagFolderDestination;
+
+                        File fInternalCatalogItem = new File(sSourcePath);
+                        if (fInternalCatalogItem.exists()) {
+
+                            File fDestinationFolder = new File(sDestinationFolder);
+                            boolean bFolderOk = false;
+                            if (!fDestinationFolder.exists()) {
+                                if (fDestinationFolder.mkdirs()) {
+                                    bFolderOk = true;
+                                }
+                            } else {
+                                bFolderOk = true;
+                            }
+
+                            if (bFolderOk) {
+                                //Move the file:
+                                try {
+                                    Path temp = Files.move(fInternalCatalogItem.toPath(), Paths.get(sDestinationPath));
+                                    if (temp == null) {
+                                        String sMessage = "Could not move file " + fInternalCatalogItem.toPath() + ".";
+                                        problemNotificationConfig(sMessage);
+                                        return;
+                                    } else {
+                                        tmEntryCatalogRecord.getValue().sFolder_Name = sNewTagFolderDestination;
+                                    }
+                                } catch (Exception e) {
+                                    String sMessage = "Could not move file " + fInternalCatalogItem.toPath() + ".\n" + e.getMessage();
                                     problemNotificationConfig(sMessage);
                                     return;
                                 }
-                            } catch (Exception e) {
-                                String sMessage = "Could not move file " + fInternalCatalogItem.toPath() + ".\n" + e.getMessage();
+
+                            } else {
+                                String sMessage = "Could not create catalog data folder " + fDestinationFolder.getPath() + ".";
                                 problemNotificationConfig(sMessage);
                                 return;
                             }
-
                         } else {
-                            String sMessage = "Could not create catalog data folder " + fDestinationFolder.getPath() + ".";
+                            String sMessage = "File source not found: " + sDestinationPath;
                             problemNotificationConfig(sMessage);
                             return;
                         }
-                    } else {
-                        String sMessage = "File source not found: " + sDestinationPath;
-                        problemNotificationConfig(sMessage);
-                        return;
                     }
 
-
-                } //File move (if video or image and tag to delete is first tag.
+                } //End move if catalog item is 'video or image' and tag to delete is first tag.
 
                 //Delete the tag from the record and move on.
                 //Form the new Tag string:
@@ -170,8 +185,7 @@ public class Service_TagEditor extends IntentService {
         //(if the folder exists, as tag may have only been a secondary tag for items).
         if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
                 iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-            String sTagFolderPath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                    ict_TagToDelete.iTagID;
+
             File fTagFolderPath = new File(sTagFolderPath);
             if(fTagFolderPath.exists()){
                 File[] fFileList = fTagFolderPath.listFiles();
@@ -203,7 +217,7 @@ public class Service_TagEditor extends IntentService {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
             brReader = new BufferedReader(new FileReader(fCatalogTagsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());  //Read the header.
+            sbBuffer.append(brReader.readLine());  //Read the header. //todo: replace with getHeader().
             sbBuffer.append("\n");
 
             String sLine = brReader.readLine();

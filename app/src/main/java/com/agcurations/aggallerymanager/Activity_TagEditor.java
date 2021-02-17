@@ -36,7 +36,10 @@ public class Activity_TagEditor extends AppCompatActivity {
                                  // Main activity, it must be in an area applicable to a particular media type.
 
     public static final String NEW_TAGS = "NEW_TAGS";  //Send back any new tags to the calling activity.
-    public static final String TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE = "TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE";
+    public static final String EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT = "BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT";
+    public static final String EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS = "BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS";
+    public static final String EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE = "BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE";
+
 
 //    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
 

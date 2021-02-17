@@ -62,7 +62,8 @@
                     android:layout_height="67dp"
                     android:text="Delete tag"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed" />
+                    app:backgroundTint="@color/colorBlackboardRed"
+                    android:enabled="false"/>
 
                 <Button
                     android:id="@+id/button_Finish"

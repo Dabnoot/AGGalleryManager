@@ -390,24 +390,42 @@ public class Fragment_SelectTags extends Fragment {
                 public void onActivityResult(ActivityResult result) {
                     if(result.getResultCode() == Activity.RESULT_OK){
                         Intent data = result.getData();
-                        Bundle b = data.getBundleExtra(Activity_TagEditor.TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE);
-                        if(b == null) return;
-                        ArrayList<ItemClass_Tag> altiNewTags = (ArrayList<ItemClass_Tag>) b.getSerializable(Activity_TagEditor.NEW_TAGS);
-                        if(galNewTags == null){
-                            galNewTags = new ArrayList<>();
+                        if(data == null) return;
+                        Bundle b = data.getBundleExtra(Activity_TagEditor.EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT);
+                        if(b != null) {
+                            ArrayList<ItemClass_Tag> altiNewTags = (ArrayList<ItemClass_Tag>) b.getSerializable(Activity_TagEditor.NEW_TAGS);
+                            if (galNewTags == null) {
+                                galNewTags = new ArrayList<>();
+                            }
+                            if (altiNewTags != null) {
+                                //Add the tags to galNewTags so that the fragment knows which tags to highlight:
+                                galNewTags.addAll(altiNewTags);
+
+
+                                //Also add the the tags to the ViewModel selected tags array so that whatever is watching
+                                // that variable will properly update.
+                                ArrayList<ItemClass_Tag> altiExistingSelectedTags = mViewModel.altiTagsSelected.getValue();
+                                if(altiExistingSelectedTags == null){
+                                    altiExistingSelectedTags = new ArrayList<>();
+                                }
+                                altiExistingSelectedTags.addAll(altiNewTags);
+                                mViewModel.setSelectedTags(altiExistingSelectedTags);
+
+                            }
                         }
-                        if(altiNewTags != null) {
-                            //Add the tags to galNewTags so that the fragment knows which tags to highlight:
-                            galNewTags.addAll(altiNewTags);
 
-
-                            //Also add the the tags to the ViewModel selected tags array so that whatever is watching
-                            // that variable will properly update.
-                            ArrayList<ItemClass_Tag> altiExistingSelectedTags = mViewModel.altiTagsSelected.getValue();
-                            altiExistingSelectedTags.addAll(altiNewTags);
-                            mViewModel.setSelectedTags(altiExistingSelectedTags);
-
+                        //Reload catalog item. Tags may have been deleted or renamed. The file
+                        //  may also have been moved if its tag folder was deleted.
+                        boolean bReloadTags = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS, false);
+                        if(bReloadTags){
+                            mViewModel.bTagEditorRequestsReloadTags.setValue(true);
                         }
+
+                        boolean bReloadFile = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE, false);
+                        if(bReloadFile){
+                            mViewModel.bTagEditorRequestsReloadFile.setValue(true);
+                        }
+
                     }
                 }
             });

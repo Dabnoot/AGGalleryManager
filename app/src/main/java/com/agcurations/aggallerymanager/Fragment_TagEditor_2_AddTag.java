@@ -101,7 +101,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                         Intent data = new Intent();
                         Bundle b = new Bundle();
                         b.putSerializable(Activity_TagEditor.NEW_TAGS, galNewTags);
-                        data.putExtra(Activity_TagEditor.TAG_EDITOR_NEW_TAGS_RESULT_BUNDLE, b);
+                        data.putExtra(Activity_TagEditor.EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT, b);
                         getActivity().setResult(Activity.RESULT_OK, data);
 
                         getActivity().finish();

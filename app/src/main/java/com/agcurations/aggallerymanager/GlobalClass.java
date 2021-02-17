@@ -888,6 +888,20 @@ public class GlobalClass extends Application {
         return sTagText;
     }
 
+    public boolean TagIDExists(Integer iTagID, int iMediaCategory){
+
+        for(Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+            Integer iRefTag = entry.getValue().iTagID;
+            if(iRefTag.equals(iTagID)){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+
     public ArrayList<String> getTagTextsFromIDs(ArrayList<Integer> ali, int iMediaCategory){
         ArrayList<String> als = new ArrayList<>();
         for(Integer i : ali){

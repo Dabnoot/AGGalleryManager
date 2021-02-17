@@ -18,6 +18,14 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
             new MutableLiveData<>(); //Used to notify that a tag has been added by the user.
                                     // Needed when bulk assigning during import. As some items
                                     //   may have been individually assigned multiple tags.
+
+    public final MutableLiveData<Boolean> bTagEditorRequestsReloadTags =
+            new MutableLiveData<>();  //To enable notification of a viewer that it should reload tags.
+    public final MutableLiveData<Boolean> bTagEditorRequestsReloadFile =
+            new MutableLiveData<>();  //To enable notification of a viewer that it should reload
+                                        // file. A Tag directory was deleted, and some files may'
+                                        // have been moved.
+
     public int iMediaCategory = -1;
     public int iTabLayoutListingSelection = 0;
 

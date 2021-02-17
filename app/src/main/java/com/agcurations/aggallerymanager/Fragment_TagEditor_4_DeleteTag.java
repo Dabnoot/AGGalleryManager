@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -41,6 +42,9 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     ListViewTagsAdapter gListViewTagsAdapter;
 
     TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
+
+    boolean bTagDeleted = false;
+    Button button_DeleteTag = null;
 
     public Fragment_TagEditor_4_DeleteTag() {
         // Required empty public constructor
@@ -79,6 +83,14 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
+
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         initComponents();
@@ -111,6 +123,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             button_DeleteTag.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     button_DeleteTag_Click(v);
+                    bTagDeleted = true;
                 }
             });
         }
@@ -120,7 +133,15 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(getActivity() != null) {
-                        getActivity().setResult(Activity.RESULT_OK);
+
+                        //Send back data to the caller that a tag has been deleted.
+                        //  If the user reached this stage while viewing a catalog item, the cat
+                        //  item may need to have its file reloaded.
+                        Intent data = new Intent();
+                        data.putExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE, bTagDeleted);
+
+                        getActivity().setResult(Activity.RESULT_OK, data);
+
                         getActivity().finish();
                     }
                 }
@@ -275,6 +296,13 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                         tagItem_Clicked.bIsChecked = !tagItem_Clicked.bIsChecked;
                         if (tagItem_Clicked.bIsChecked) {
                             iTagItemSelected = position;
+                            if(button_DeleteTag != null){
+                                button_DeleteTag.setEnabled(true);
+                            }
+                        } else {
+                            if(button_DeleteTag != null){
+                                button_DeleteTag.setEnabled(false);
+                            }
                         }
                     }
 

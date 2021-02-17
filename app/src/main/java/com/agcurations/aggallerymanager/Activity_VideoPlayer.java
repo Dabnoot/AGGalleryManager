@@ -31,6 +31,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 public class Activity_VideoPlayer extends AppCompatActivity {
@@ -330,6 +331,22 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         if(globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS){
             gbAutoHide = true;
         }
+
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment.
+        //  We need to observe and track any request from the TagEditor to reload the file.
+        //  This would occur if the user deletes the tag folder holding the file, in which case
+        //  the file would be moved.
+        ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
+        //React to if the TagEditor is called and TagEditor requests that we reload the file:
+        final Observer<Boolean> observerReloadFile = new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean bReloadTags) {
+                initializePlayer();
+                gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+                gVideoView_VideoPlayer.start();
+            }
+        };
+        viewModel_fragment_selectTags.bTagEditorRequestsReloadFile.observe(this, observerReloadFile);
 
         initializePlayer();
     }

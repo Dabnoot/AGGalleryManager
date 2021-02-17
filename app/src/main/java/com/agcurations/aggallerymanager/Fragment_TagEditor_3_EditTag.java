@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -87,8 +88,16 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(getActivity() != null) {
-                        getActivity().setResult(Activity.RESULT_OK);
+
+                        //Send back data to the caller that a tag may have been renamed.
+                        //  If the user reached this stage while viewing a catalog item, the cat
+                        //  item may need to have tags reloaded.
+                        Intent data = new Intent();
+                        data.putExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS, true);
+                        getActivity().setResult(Activity.RESULT_OK, data);
+
                         getActivity().finish();
+
                     }
                 }
             });
@@ -134,6 +143,10 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
                 String sTagID = sFields[1].substring(0, sFields[1].length()-1);
                 textView_TagID.setText(sTagID);
                 editText_TagText.setText(sTagName);
+                Button button_Apply = getView().findViewById(R.id.button_Apply);
+                if(button_Apply != null){
+                    button_Apply.setEnabled(true);
+                }
             }
         });
     }

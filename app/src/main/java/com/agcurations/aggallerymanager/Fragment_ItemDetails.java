@@ -148,7 +148,7 @@ public class Fragment_ItemDetails extends Fragment {
 
 
         //React to changes in the selected tag data in the ViewModel:
-        final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
+        final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = new Observer<ArrayList<ItemClass_Tag>>() {
             @Override
             public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
 
@@ -181,7 +181,32 @@ public class Fragment_ItemDetails extends Fragment {
             }
         };
 
-        gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), selectedTagsObserver);
+        gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
+
+        //React to if the TagEditor is called and TagEditor requests that we reload tags:
+        final Observer<Boolean> observerReloadTags = new Observer<Boolean>() {
+            @Override
+            public void onChanged(Boolean bReloadTags) {
+                //Populate the tags fragment:
+                //Get tags for the item:
+                ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
+                ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+                for(int i = 0; i < aliTags.size(); i++){
+                    alTagItems.add(i, new ItemClass_Tag(aliTags.get(i), globalClass.getTagTextFromID(aliTags.get(i), gciCatalogItem.iMediaCategory)));
+                }
+                gViewModel_fragment_selectTags.altiTagsSelected.setValue(alTagItems);
+                FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+                Fragment_SelectTags fragment_selectTags = new Fragment_SelectTags();
+                Bundle fragment_selectTags_args = new Bundle();
+                fragment_selectTags_args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, gciCatalogItem.iMediaCategory);
+                fragment_selectTags_args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTags);
+                fragment_selectTags.setArguments(fragment_selectTags_args);
+                fragmentTransaction.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
+                fragmentTransaction.commit();
+            }
+        };
+        gViewModel_fragment_selectTags.bTagEditorRequestsReloadTags.observe(getViewLifecycleOwner(), observerReloadTags);
+
 
         //Configure the SAVE button listener:
         final Button button_Save = getView().findViewById(R.id.button_Save);
