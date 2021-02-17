@@ -766,7 +766,7 @@ public class GlobalClass extends Application {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
             brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());
+            sbBuffer.append(brReader.readLine());  //todo: Append header.
             sbBuffer.append("\n");
 
             String[] sFields;
@@ -781,6 +781,7 @@ public class GlobalClass extends Application {
                     sLine = getTagRecordString(ictIncoming);
 
                     //Now update the record in the treeMap:
+                    gtmCatalogTagReferenceLists.get(iMediaCategory).remove(ictFromFile.sTagText);
                     gtmCatalogTagReferenceLists.get(iMediaCategory).put(ictIncoming.sTagText, ictIncoming);
 
                 }
