@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.agcurations.aggallerymanager">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:name=".GlobalClass"
         android:allowBackup="true"
@@ -44,17 +48,13 @@
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".Activity_SeriesImageViewer"
+            android:name=".Activity_ComicViewer"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer"
             android:parentActivityName=".Activity_ComicDetails"
             android:theme="@style/FullscreenTheme" />
         <activity
             android:name=".Activity_ExportComics"
-            android:parentActivityName=".Activity_CatalogViewer"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".Activity_ImportComics_obsolete"
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_ImportVideoPreview" />
@@ -77,14 +77,7 @@
         <service
             android:name=".Service_ExportComics"
             android:exported="false" />
-        <service
-            android:name=".Service_ImportComics_obsolete"
-            android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

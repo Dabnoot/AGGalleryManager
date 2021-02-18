@@ -38,7 +38,7 @@ import java.util.TreeMap;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class Activity_SeriesImageViewer extends AppCompatActivity {
+public class Activity_ComicViewer extends AppCompatActivity {
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.

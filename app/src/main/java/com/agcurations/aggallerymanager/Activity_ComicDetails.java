@@ -523,10 +523,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
     //=====================================================================================
 
     public void StartComicViewerActivity(int iComicPage){
-        Intent intentComicViewer = new Intent(this, Activity_SeriesImageViewer.class);
+        Intent intentComicViewer = new Intent(this, Activity_ComicViewer.class);
 
-        intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_CATALOG_ITEM, gciCatalogItem);
-        intentComicViewer.putExtra(Activity_SeriesImageViewer.EXTRA_COMIC_PAGE_START, iComicPage);
+        intentComicViewer.putExtra(Activity_ComicViewer.EXTRA_CATALOG_ITEM, gciCatalogItem);
+        intentComicViewer.putExtra(Activity_ComicViewer.EXTRA_COMIC_PAGE_START, iComicPage);
 
         startActivity(intentComicViewer);
     }
