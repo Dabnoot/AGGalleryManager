@@ -58,8 +58,7 @@
             android:name=".Activity_ExportComics"
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
-        <activity android:name=".Activity_ImportVideoPreview" />
-        <activity android:name=".Activity_ImportImageComicPreview" />
+        <activity android:name=".Activity_ImportFilePreview" />
         <service
             android:name=".Service_CatalogViewer"
             android:exported="false" />

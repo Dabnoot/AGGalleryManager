@@ -693,11 +693,8 @@ public class Activity_Import extends AppCompatActivity {
                 public void onClick(View view) {
                     //Start the preview popup activity:
                     Intent intentPreviewPopup;
-                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                        intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportVideoPreview.class);
-                    } else {
-                        intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportImageComicPreview.class);
-                    }
+                    intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
+
 
                     Bundle b = new Bundle();
                     b.putInt(MEDIA_CATEGORY,
@@ -721,15 +718,11 @@ public class Activity_Import extends AppCompatActivity {
                     b.putSerializable(IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
 
                     ItemClass_File[] fileItems;
-                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
+                            viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
 
-                        //Process only one video at a time for preview and tag input.
-                        fileItems = new ItemClass_File[]{alFileItemsDisplay.get(position)};
-
-                    } else if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-
-                        //Send all of the image file items that are shown to the preview, and tell position.
-                        //  That way the user can swipe to the next image and apply tags to that one as well.
+                        //Send all of the video and image file items that are shown to the preview, and tell position.
+                        //  That way the user can swipe to the next video or image and apply tags to that one as well.
                         ItemClass_File[] icf = new ItemClass_File[alFileItemsDisplay.size()];
                         int i = 0;
                         for(ItemClass_File icfSource: alFileItemsDisplay){
