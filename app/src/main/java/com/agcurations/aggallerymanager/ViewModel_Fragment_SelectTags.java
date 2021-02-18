@@ -21,7 +21,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
 
     public final MutableLiveData<Boolean> bTagEditorRequestsReloadTags =
             new MutableLiveData<>();  //To enable notification of a viewer that it should reload tags.
-    public final MutableLiveData<Boolean> bTagEditorRequestsReloadFile =
+    public final MutableLiveData<Boolean> bTagDeleted =
             new MutableLiveData<>();  //To enable notification of a viewer that it should reload
                                         // file. A Tag directory was deleted, and some files may'
                                         // have been moved.

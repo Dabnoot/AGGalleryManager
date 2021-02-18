@@ -93,18 +93,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(getActivity() != null) {
-
-                        //Send any new tags back to the calling activity so that
-                        // the calling activity is aware of the new tags created by the user.
-                        // The calling activity may want to automatically select these
-                        // new tags.
-                        Intent data = new Intent();
-                        Bundle b = new Bundle();
-                        b.putSerializable(Activity_TagEditor.NEW_TAGS, galNewTags);
-                        data.putExtra(Activity_TagEditor.EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT, b);
-                        getActivity().setResult(Activity.RESULT_OK, data);
-
-                        getActivity().finish();
+                        ((Activity_TagEditor) getActivity()).callForFinish();
                     }
                 }
             });
@@ -159,6 +148,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         if(ictNewTagItem != null){
             RefreshTagListView();
             galNewTags.add(ictNewTagItem);
+            viewModelTagEditor.alNewTags = galNewTags; //To allow new tags to be sent back to a possible calling activity.
+            viewModelTagEditor.bTagAdded = true;
             Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getActivity(), sTagName + " already exists in tag list.", Toast.LENGTH_SHORT).show();

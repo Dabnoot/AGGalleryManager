@@ -88,16 +88,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(getActivity() != null) {
-
-                        //Send back data to the caller that a tag may have been renamed.
-                        //  If the user reached this stage while viewing a catalog item, the cat
-                        //  item may need to have tags reloaded.
-                        Intent data = new Intent();
-                        data.putExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS, true);
-                        getActivity().setResult(Activity.RESULT_OK, data);
-
-                        getActivity().finish();
-
+                        ((Activity_TagEditor) getActivity()).callForFinish();
                     }
                 }
             });
@@ -176,6 +167,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         if(globalClass.TagDataFile_UpdateRecord(sTagID, sNewTagName, viewModelTagEditor.iTagEditorMediaCategory)){
             RefreshTagListView();
             Toast.makeText(getActivity(), "Tag ID " + sTagID + " modified successfully.", Toast.LENGTH_SHORT).show();
+            viewModelTagEditor.bTagRenamed = true;
         } else {
             Toast.makeText(getActivity(), "Could not alter tag.", Toast.LENGTH_SHORT).show();
         }

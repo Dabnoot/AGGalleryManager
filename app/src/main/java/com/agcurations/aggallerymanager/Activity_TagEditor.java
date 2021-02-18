@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -37,8 +38,8 @@ public class Activity_TagEditor extends AppCompatActivity {
 
     public static final String NEW_TAGS = "NEW_TAGS";  //Send back any new tags to the calling activity.
     public static final String EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT = "BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT";
-    public static final String EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS = "BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS";
-    public static final String EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE = "BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE";
+    public static final String EXTRA_BOOL_TAG_RENAMED = "EXTRA_BOOL_TAG_RENAMED";
+    public static final String EXTRA_BOOL_TAG_DELETED = "EXTRA_BOOL_TAG_DELETED";
 
 
 //    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
@@ -87,6 +88,38 @@ public class Activity_TagEditor extends AppCompatActivity {
 
 
     }
+
+    public void callForFinish(){
+
+        Intent data = new Intent();
+
+        if(viewModelTagEditor.bTagAdded) {
+            //Send any new tags back to the calling activity so that
+            // the calling activity is aware of the new tags created by the user.
+            // The calling activity may want to automatically select these
+            // new tags.
+            Bundle b = new Bundle();
+            b.putSerializable(Activity_TagEditor.NEW_TAGS, viewModelTagEditor.alNewTags);
+            data.putExtra(Activity_TagEditor.EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT, b);
+        }
+        if(viewModelTagEditor.bTagRenamed) {
+            //Send back data to the caller that a tag has been renamed.
+            //  If the user reached this stage while viewing a catalog item, the cat
+            //  item may need to have tags reloaded.
+            data.putExtra(Activity_TagEditor.EXTRA_BOOL_TAG_RENAMED, true);
+        }
+        if(viewModelTagEditor.bTagDeleted) {
+            //Send back data to the caller that a tag has been deleted.
+            //  If the user reached this stage while viewing a catalog item, the cat
+            //  item may need to have its file reloaded.
+            data.putExtra(Activity_TagEditor.EXTRA_BOOL_TAG_DELETED, true);
+        }
+        setResult(Activity.RESULT_OK, data);
+
+        finish();
+    }
+
+
 
     //======================================================
     //======  FRAGMENT NAVIGATION ROUTINES  ================

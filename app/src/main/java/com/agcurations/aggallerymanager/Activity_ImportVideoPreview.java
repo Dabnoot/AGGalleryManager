@@ -54,7 +54,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
         }
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
-        ViewModel_Fragment_SelectTags mViewModel = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
+        ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
         //React to changes in the selected tag data in the ViewModel:
         final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
             @Override
@@ -95,7 +95,10 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
 
             }
         };
-        mViewModel.altiTagsSelected.observe(this, selectedTagsObserver);
+        viewModel_fragment_selectTags.altiTagsSelected.observe(this, selectedTagsObserver);
+
+
+
 
         Bundle b = getIntent().getExtras();
         if(b != null) {

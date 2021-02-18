@@ -39,7 +39,7 @@ public class Fragment_SelectTags extends Fragment {
 
     GlobalClass globalClass;
 
-    private ViewModel_Fragment_SelectTags mViewModel;
+    private ViewModel_Fragment_SelectTags viewModel_fragment_selectTags;
 
     public static Fragment_SelectTags newInstance() {
         return new Fragment_SelectTags();
@@ -76,7 +76,7 @@ public class Fragment_SelectTags extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         if(getActivity() == null) return;
-        mViewModel = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+        viewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
 
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
@@ -85,10 +85,10 @@ public class Fragment_SelectTags extends Fragment {
 
 
         if(args == null) {
-            mViewModel.iMediaCategory = 0;
+            viewModel_fragment_selectTags.iMediaCategory = 0;
             galiPreselectedTags = new ArrayList<>();
         } else {
-            mViewModel.iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
+            viewModel_fragment_selectTags.iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
             galiPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
 
             tmImportSessionTagsInUse = (TreeMap<String, ItemClass_Tag>) args.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
@@ -187,7 +187,7 @@ public class Fragment_SelectTags extends Fragment {
         tabLayout_TagListings.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                mViewModel.iTabLayoutListingSelection = tab.getPosition();
+                viewModel_fragment_selectTags.iTabLayoutListingSelection = tab.getPosition();
                 initListViewData();
             }
 
@@ -204,7 +204,7 @@ public class Fragment_SelectTags extends Fragment {
 
 
         //Get tags that are in-use, for popuplating tab 0 later:
-        tmCatalogTagsInUse = globalClass.GetCatalogTagsInUse(mViewModel.iMediaCategory);
+        tmCatalogTagsInUse = globalClass.GetCatalogTagsInUse(viewModel_fragment_selectTags.iMediaCategory);
 
         //If there are no tags in use, select tab 1 (the second tab, zero-based):
         if(tmCatalogTagsInUse.size() == 0){
@@ -255,7 +255,7 @@ public class Fragment_SelectTags extends Fragment {
 
                         if(sPinEntered.equals(globalClass.gsPin)){
                             Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                            intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, mViewModel.iMediaCategory);
+                            intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
                             garlGetResultFromTagEditor.launch(intentTagEditor);
                         } else {
                             Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
@@ -298,11 +298,11 @@ public class Fragment_SelectTags extends Fragment {
         int iPreSelectedTagIterator = 0;
         int iSelectionOrder;
 
-        mViewModel.alTagsAll.clear();
+        viewModel_fragment_selectTags.alTagsAll.clear();
 
-        TreeMap<String, ItemClass_Tag> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(mViewModel.iMediaCategory);
+        TreeMap<String, ItemClass_Tag> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
 
-        if(mViewModel.iTabLayoutListingSelection == 0) {
+        if(viewModel_fragment_selectTags.iTabLayoutListingSelection == 0) {
             //Show only tags which are in-use.
             tmTagPool = tmCatalogTagsInUse;
             //If this fragment is running as part of the Import and Preview activities,
@@ -369,7 +369,7 @@ public class Fragment_SelectTags extends Fragment {
 
             if(!(gbCatalogTagsRestrictionsOn && tiNew.bIsRestricted)) {
                 //Don't add the tag if TagRestrictions are on and this is a restricted tag.
-                mViewModel.alTagsAll.add(tiNew);
+                viewModel_fragment_selectTags.alTagsAll.add(tiNew);
             }
 
         }
@@ -378,7 +378,7 @@ public class Fragment_SelectTags extends Fragment {
         if(getActivity() == null){
             return;
         }
-        gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), mViewModel.alTagsAll, iPreSelectedTagsCount);
+        gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), viewModel_fragment_selectTags.alTagsAll, iPreSelectedTagsCount);
         listView_ImportTagSelection.setAdapter(gListViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
@@ -388,11 +388,13 @@ public class Fragment_SelectTags extends Fragment {
             new ActivityResultCallback<ActivityResult>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
+                    //Get result from TagEditor Activity:
                     if(result.getResultCode() == Activity.RESULT_OK){
                         Intent data = result.getData();
                         if(data == null) return;
                         Bundle b = data.getBundleExtra(Activity_TagEditor.EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT);
                         if(b != null) {
+                            //If new tags have been added...
                             ArrayList<ItemClass_Tag> altiNewTags = (ArrayList<ItemClass_Tag>) b.getSerializable(Activity_TagEditor.NEW_TAGS);
                             if (galNewTags == null) {
                                 galNewTags = new ArrayList<>();
@@ -404,31 +406,62 @@ public class Fragment_SelectTags extends Fragment {
 
                                 //Also add the the tags to the ViewModel selected tags array so that whatever is watching
                                 // that variable will properly update.
-                                ArrayList<ItemClass_Tag> altiExistingSelectedTags = mViewModel.altiTagsSelected.getValue();
+                                ArrayList<ItemClass_Tag> altiExistingSelectedTags = viewModel_fragment_selectTags.altiTagsSelected.getValue();
                                 if(altiExistingSelectedTags == null){
                                     altiExistingSelectedTags = new ArrayList<>();
                                 }
                                 altiExistingSelectedTags.addAll(altiNewTags);
-                                mViewModel.setSelectedTags(altiExistingSelectedTags);
+                                viewModel_fragment_selectTags.setSelectedTags(altiExistingSelectedTags);
 
                             }
                         }
 
                         //Reload catalog item. Tags may have been deleted or renamed. The file
                         //  may also have been moved if its tag folder was deleted.
-                        boolean bReloadTags = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_TAGS, false);
-                        if(bReloadTags){
-                            mViewModel.bTagEditorRequestsReloadTags.setValue(true);
-                        }
+                        boolean bReloadTags = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_TAG_RENAMED, false);
+                        boolean bTagDeleted = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_TAG_DELETED, false);
+                        viewModel_fragment_selectTags.bTagDeleted.setValue(bTagDeleted);
+                        if(bReloadTags || bTagDeleted){
+                            //Update selected tags held in the ViewModel for the event that the user renamed some of the
+                            //  tags that the user had already selected:
+                            ArrayList<ItemClass_Tag> altiExistingSelectedTags = viewModel_fragment_selectTags.altiTagsSelected.getValue();
+                            if(altiExistingSelectedTags != null) {
+                                ArrayList<ItemClass_Tag> altiUpdatedExistingSelectedTags = new ArrayList<>();
+                                for (ItemClass_Tag ict : altiExistingSelectedTags) {
+                                    if(globalClass.TagIDExists(ict.iTagID, viewModel_fragment_selectTags.iMediaCategory)) {
+                                        ict.sTagText = globalClass.getTagTextFromID(ict.iTagID, viewModel_fragment_selectTags.iMediaCategory);
+                                        altiUpdatedExistingSelectedTags.add(ict);
+                                    }
+                                }
+                                viewModel_fragment_selectTags.setSelectedTags(altiUpdatedExistingSelectedTags);
+                            }
 
-                        boolean bReloadFile = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE, false);
-                        if(bReloadFile){
-                            mViewModel.bTagEditorRequestsReloadFile.setValue(true);
-                        }
+                            //Update tags gathered from tags in use by other catalog items:
+                            TreeMap<String, ItemClass_Tag> tmNewCatalogTagsInUse = new TreeMap<>();
+                            for (Map.Entry<String, ItemClass_Tag> entry : tmCatalogTagsInUse.entrySet()) {
+                                if(globalClass.TagIDExists(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory)){
+                                    entry.getValue().sTagText = globalClass.getTagTextFromID(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory);
+                                    tmNewCatalogTagsInUse.put(entry.getKey(), entry.getValue());
+                                }
+                            }
+                            tmCatalogTagsInUse = tmNewCatalogTagsInUse;
 
+                            //Update tags copied into the in-use column which are part of the import session
+                            //  but not necessarily in use by catalog items:
+                            TreeMap<String, ItemClass_Tag> tmNewImportSessionTagsInUse = new TreeMap<>();
+                            if(tmImportSessionTagsInUse != null) {
+                                for (Map.Entry<String, ItemClass_Tag> entry : tmImportSessionTagsInUse.entrySet()) {
+                                    if(globalClass.TagIDExists(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory)){
+                                        entry.getValue().sTagText = globalClass.getTagTextFromID(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory);
+                                        tmNewImportSessionTagsInUse.put(entry.getKey(), entry.getValue());
+                                    }
+                                }
+                            }
+                            tmImportSessionTagsInUse = tmNewImportSessionTagsInUse;
+                        }
                     }
                 }
-            });
+            });  //End get result from TagEditor.
 
 
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
@@ -528,7 +561,7 @@ public class Fragment_SelectTags extends Fragment {
                         alTagItems.add(entry.getValue());
                     }
 
-                    mViewModel.setSelectedTags(alTagItems);
+                    viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
                 }
             });

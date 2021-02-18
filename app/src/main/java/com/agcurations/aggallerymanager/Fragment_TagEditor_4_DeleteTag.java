@@ -43,7 +43,6 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
     TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
 
-    boolean bTagDeleted = false;
     Button button_DeleteTag = null;
 
     public Fragment_TagEditor_4_DeleteTag() {
@@ -123,7 +122,6 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             button_DeleteTag.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     button_DeleteTag_Click(v);
-                    bTagDeleted = true;
                 }
             });
         }
@@ -133,16 +131,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if(getActivity() != null) {
-
-                        //Send back data to the caller that a tag has been deleted.
-                        //  If the user reached this stage while viewing a catalog item, the cat
-                        //  item may need to have its file reloaded.
-                        Intent data = new Intent();
-                        data.putExtra(Activity_TagEditor.EXTRA_BOOL_REQUEST_RELOAD_OPEN_CATALOG_ITEM_FILE, bTagDeleted);
-
-                        getActivity().setResult(Activity.RESULT_OK, data);
-
-                        getActivity().finish();
+                        ((Activity_TagEditor) getActivity()).callForFinish();
                     }
                 }
             });
@@ -209,6 +198,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         Service_TagEditor.startActionDeleteTag(getActivity(),
                 gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected),
                 viewModelTagEditor.iTagEditorMediaCategory);
+        viewModelTagEditor.bTagDeleted = true;
     }
 
 

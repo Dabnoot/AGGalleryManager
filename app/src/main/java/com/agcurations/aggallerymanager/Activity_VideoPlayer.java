@@ -8,7 +8,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,7 +20,6 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -340,13 +338,15 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //React to if the TagEditor is called and TagEditor requests that we reload the file:
         final Observer<Boolean> observerReloadFile = new Observer<Boolean>() {
             @Override
-            public void onChanged(Boolean bReloadTags) {
-                initializePlayer();
-                gVideoView_VideoPlayer.seekTo(giCurrentPosition);
-                gVideoView_VideoPlayer.start();
+            public void onChanged(Boolean bReloadFile) {
+                if(bReloadFile) {
+                    initializePlayer();
+                    gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+                    gVideoView_VideoPlayer.start();
+                }
             }
         };
-        viewModel_fragment_selectTags.bTagEditorRequestsReloadFile.observe(this, observerReloadFile);
+        viewModel_fragment_selectTags.bTagDeleted.observe(this, observerReloadFile);
 
         initializePlayer();
     }

@@ -183,7 +183,7 @@ public class Fragment_ItemDetails extends Fragment {
 
         gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
 
-        //React to if the TagEditor is called and TagEditor requests that we reload tags:
+        /*//React to if the TagEditor is called and TagEditor requests that we reload tags:
         final Observer<Boolean> observerReloadTags = new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean bReloadTags) {
@@ -205,7 +205,7 @@ public class Fragment_ItemDetails extends Fragment {
                 fragmentTransaction.commit();
             }
         };
-        gViewModel_fragment_selectTags.bTagEditorRequestsReloadTags.observe(getViewLifecycleOwner(), observerReloadTags);
+        gViewModel_fragment_selectTags.bTagEditorRequestsReloadTags.observe(getViewLifecycleOwner(), observerReloadTags);*/
 
 
         //Configure the SAVE button listener:
