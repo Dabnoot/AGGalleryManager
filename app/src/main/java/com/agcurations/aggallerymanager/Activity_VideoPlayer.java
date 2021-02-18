@@ -338,8 +338,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //React to if the TagEditor is called and TagEditor requests that we reload the file:
         final Observer<Boolean> observerReloadFile = new Observer<Boolean>() {
             @Override
-            public void onChanged(Boolean bReloadFile) {
-                if(bReloadFile) {
+            public void onChanged(Boolean bTagDeleted) {
+                if(bTagDeleted) {
                     initializePlayer();
                     gVideoView_VideoPlayer.seekTo(giCurrentPosition);
                     gVideoView_VideoPlayer.start();

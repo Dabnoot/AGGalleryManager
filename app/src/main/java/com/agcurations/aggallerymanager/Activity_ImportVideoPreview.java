@@ -33,7 +33,10 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
     VideoView gVideoView_VideoPlayer;
     MediaController gMediaController;
 
-    private int giCurrentPosition = 1;
+    private int giCurrentVideoPosition = 1;
+    private final int VIDEO_PLAYBACK_STATE_PAUSED = 0;
+    private final int VIDEO_PLAYBACK_STATE_PLAYING = 1;
+    private int giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
     private static final String PLAYBACK_TIME = "play_time";
 
     int[] giGradeImageViews;
@@ -50,7 +53,7 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
         setContentView(R.layout.activity_import_video_preview);
 
         if (savedInstanceState != null) {
-            giCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+            giCurrentVideoPosition = savedInstanceState.getInt(PLAYBACK_TIME);
         }
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
@@ -187,8 +190,8 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
             gVideoView_VideoPlayer.setMediaController(gMediaController);
             Uri uriVideoFile = Uri.parse(gFileItem.sUri);
             gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
-            if (giCurrentPosition > 0) {
-                gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+            if (giCurrentVideoPosition > 0) {
+                gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
             } else {
                 // Skipping to 1 shows the first frame of the video.
                 gVideoView_VideoPlayer.seekTo(1);
@@ -225,13 +228,21 @@ public class Activity_ImportVideoPreview extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        gVideoView_VideoPlayer.seekTo(giCurrentPosition);
-        gVideoView_VideoPlayer.start();
+        gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+        if(giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING){
+            gVideoView_VideoPlayer.start();
+        }
     }
 
     @Override
     protected void onPause() {
-        giCurrentPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        giCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        if(gVideoView_VideoPlayer.isPlaying()){
+            giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+        } else {
+            giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+        }
+        gVideoView_VideoPlayer.pause();
         super.onPause();
     }
 
