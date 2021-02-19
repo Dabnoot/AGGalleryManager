@@ -368,6 +368,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             gVideoView_VideoPlayer.seekTo(1);
             giCurrentVideoPosition = 1;
             gVideoView_VideoPlayer.start();
+
             giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
         } else {
             Glide.with(getApplicationContext()).load(gFileItems[giFileItemIndex].sUri).into(gImagePreview);
@@ -394,6 +395,15 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 GlobalClass globalClass;
                 globalClass = (GlobalClass) getApplicationContext();
 
+                ArrayList<Integer> aliConfirmedProspectiveTags = new ArrayList<>(); //Confirm all tags exist as user may have deleted a tag.
+                for(Integer iTagID: gFileItems[iFileItemTagsIndex].aliProspectiveTags){
+                    if(globalClass.TagIDExists(iTagID, giMediaCategory)){
+                        aliConfirmedProspectiveTags.add(iTagID);
+                    }
+                }
+                gFileItems[iFileItemTagsIndex].aliProspectiveTags = aliConfirmedProspectiveTags;
+
+                //Update the Tag text listing on the preview display:
                 sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].aliProspectiveTags.get(0), giMediaCategory));
                 for (int i = 1; i < gFileItems[iFileItemTagsIndex].aliProspectiveTags.size(); i++) {
                     sbTags.append(", ");
@@ -404,6 +414,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             if (textView_SelectedTags != null) {
                 textView_SelectedTags.setText(sbTags.toString());
             }
+
             if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
                 fragment_selectTags.resetTagListViewData(gFileItems[iFileItemTagsIndex].aliProspectiveTags);
             }

@@ -418,10 +418,10 @@ public class Fragment_SelectTags extends Fragment {
 
                         //Reload catalog item. Tags may have been deleted or renamed. The file
                         //  may also have been moved if its tag folder was deleted.
-                        boolean bReloadTags = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_TAG_RENAMED, false);
+                        boolean bTagRenamed = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_TAG_RENAMED, false);
                         boolean bTagDeleted = data.getBooleanExtra(Activity_TagEditor.EXTRA_BOOL_TAG_DELETED, false);
                         viewModel_fragment_selectTags.bTagDeleted.setValue(bTagDeleted);
-                        if(bReloadTags || bTagDeleted){
+                        if(bTagRenamed || bTagDeleted){
                             //Update selected tags held in the ViewModel for the event that the user renamed some of the
                             //  tags that the user had already selected:
                             ArrayList<ItemClass_Tag> altiExistingSelectedTags = viewModel_fragment_selectTags.altiTagsSelected.getValue();
@@ -433,7 +433,7 @@ public class Fragment_SelectTags extends Fragment {
                                         altiUpdatedExistingSelectedTags.add(ict);
                                     }
                                 }
-                                viewModel_fragment_selectTags.setSelectedTags(altiUpdatedExistingSelectedTags);
+                                viewModel_fragment_selectTags.altiTagsSelected.setValue(altiUpdatedExistingSelectedTags);
                             }
 
                             //Update tags gathered from tags in use by other catalog items:
