@@ -39,7 +39,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private TreeMap<Integer, ItemClass_CatalogItem> treeMapRecyclerViewVideos;
     private Integer giKey;
 
-    private int giCurrentPosition = 1;
+    private int giCurrentVideoPosition = 1;
+    private final int VIDEO_PLAYBACK_STATE_PAUSED = 0;
+    private final int VIDEO_PLAYBACK_STATE_PLAYING = 1;
+    private int giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
     private static final String PLAYBACK_TIME = "play_time";
 
     private DrawerLayout gDrawerLayout;
@@ -85,7 +88,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }
 
         if (savedInstanceState != null) {
-            giCurrentPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+            giCurrentVideoPosition = savedInstanceState.getInt(PLAYBACK_TIME);
         }
 
         gMediaController = new MediaController(this);
@@ -336,17 +339,22 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //  the file would be moved.
         ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
         //React to if the TagEditor is called and TagEditor requests that we reload the file:
-        final Observer<Boolean> observerReloadFile = new Observer<Boolean>() {
+        final Observer<Boolean> observerTagDeleted = new Observer<Boolean>() {
             @Override
             public void onChanged(Boolean bTagDeleted) {
                 if(bTagDeleted) {
+                    //If a tag is deleted, the video file may have been moved.
+                    //  On import, items are copied into folders matching the first tag selected by the user.
+                    //  If that 'primary tag' needs to be deleted at the users request, then the file gets moved
+                    //  to its next tag folder. If the user merely reassigns a first tag, thus reordering or removing all
+                    //  assigned tags, the file does not get moved. Only on tag delete would a file be moved.
                     initializePlayer();
-                    gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+                    gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
                     gVideoView_VideoPlayer.start();
                 }
             }
         };
-        viewModel_fragment_selectTags.bTagDeleted.observe(this, observerReloadFile);
+        viewModel_fragment_selectTags.bTagDeleted.observe(this, observerTagDeleted);
 
         initializePlayer();
     }
@@ -355,26 +363,43 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        gVideoView_VideoPlayer.seekTo(giCurrentPosition);
-        gVideoView_VideoPlayer.start();
+        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+            if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                gVideoView_VideoPlayer.start();
+            }
+        }
     }
 
     @Override
     protected void onPause() {
-        giCurrentPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        giCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            giCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+            if (gVideoView_VideoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gVideoView_VideoPlayer.pause();
+        }
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        gVideoView_VideoPlayer.stopPlayback();
+        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            gVideoView_VideoPlayer.stopPlayback();
+        }
         super.onStop();
     }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(PLAYBACK_TIME, giCurrentPosition);
+        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
+        }
     }
 
     //==============================================================================================
@@ -436,10 +461,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
             gVideoView_VideoPlayer.setVideoURI(gMediaUri);
 
-            if(gVideoView_VideoPlayer.getDuration() > giCurrentPosition){
-                giCurrentPosition = 1;
+            if(gVideoView_VideoPlayer.getDuration() > giCurrentVideoPosition){
+                giCurrentVideoPosition = 1;
             }
-            gVideoView_VideoPlayer.seekTo(giCurrentPosition);
+            gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
             gVideoView_VideoPlayer.start();
         }
 
