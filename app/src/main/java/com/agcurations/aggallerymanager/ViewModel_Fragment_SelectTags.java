@@ -8,12 +8,15 @@ import androidx.lifecycle.ViewModel;
 public class ViewModel_Fragment_SelectTags extends ViewModel {
 
     public final ArrayList<ItemClass_Tag> alTagsAll = new ArrayList<>();  //All possible tags
+
     public final MutableLiveData<ArrayList<ItemClass_Tag>> altiTagsSelected =
             new MutableLiveData<>(); //Tags selected by the user, or already applied to a selected item.
+
     public final MutableLiveData<ItemClass_Tag> tiTagItemRemoved =
             new MutableLiveData<>(); //Used to notify that a tag has been removed by the user.
                                     // Needed when bulk assigning during import. As some items
                                     //   may have been individually assigned multiple tags
+
     public final MutableLiveData<ItemClass_Tag> tiTagItemAdded =
             new MutableLiveData<>(); //Used to notify that a tag has been added by the user.
                                     // Needed when bulk assigning during import. As some items
@@ -21,6 +24,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
 
     public final MutableLiveData<Boolean> bTagEditorRequestsReloadTags =
             new MutableLiveData<>();  //To enable notification of a viewer that it should reload tags.
+
     public final MutableLiveData<Boolean> bTagDeleted =
             new MutableLiveData<>();  //To enable notification of a viewer that it should reload
                                         // file. A Tag directory was deleted, and some files may'

@@ -22,6 +22,7 @@ public class Service_CatalogViewer extends IntentService {
     // Action names that describe tasks that this
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_DELETE_CATALOG_ITEM = "com.agcurations.aggallerymanager.action.delete_catalog_item";
+    private static final String ACTION_UPDATE_CATALOG_ITEM = "com.agcurations.aggallerymanager.action.update_catalog_item";
     private static final String ACTION_SORT_AND_FILTER_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.action.sort_and_filter_catalog_display";
 
     private static final String EXTRA_CATALOG_ITEM = "com.agcurations.aggallerymanager.extra.catalog_item";
@@ -34,6 +35,13 @@ public class Service_CatalogViewer extends IntentService {
         Intent intent = new Intent(context, Service_CatalogViewer.class);
         intent.setAction(ACTION_DELETE_CATALOG_ITEM);
         intent.putExtra(EXTRA_CATALOG_ITEM, ciToDelete);
+        context.startService(intent);
+    }
+
+    public static void startActionUpdateCatalogItem(Context context, ItemClass_CatalogItem ciToUpdate) {
+        Intent intent = new Intent(context, Service_CatalogViewer.class);
+        intent.setAction(ACTION_UPDATE_CATALOG_ITEM);
+        intent.putExtra(EXTRA_CATALOG_ITEM, ciToUpdate);
         context.startService(intent);
     }
 
@@ -50,6 +58,9 @@ public class Service_CatalogViewer extends IntentService {
             if (ACTION_DELETE_CATALOG_ITEM.equals(action)) {
                 final ItemClass_CatalogItem ciToDelete = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
                 handleActionDeleteCatalogItem(ciToDelete);
+            } else if (ACTION_UPDATE_CATALOG_ITEM.equals(action)) {
+                final ItemClass_CatalogItem ciToUpdate = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
+                handleActionUpdateCatalogItem(ciToUpdate);
             } else if (ACTION_SORT_AND_FILTER_CATALOG_DISPLAY.equals(action)) {
                 handleActionSortAndFilterCatalogDisplay();
             }
@@ -169,6 +180,12 @@ public class Service_CatalogViewer extends IntentService {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);
 
 
+    }
+
+    private void handleActionUpdateCatalogItem(ItemClass_CatalogItem ciToUpdate) {
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+        globalClass.CatalogDataFile_UpdateRecord(ciToUpdate);
     }
 
     public static final String EXTRA_BOOL_REFRESH_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.extra.refresh_catalog_display";

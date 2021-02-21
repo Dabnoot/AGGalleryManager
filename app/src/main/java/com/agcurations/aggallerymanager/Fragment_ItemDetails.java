@@ -43,6 +43,8 @@ public class Fragment_ItemDetails extends Fragment {
 
     ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
+    private Fragment_SelectTags gFragment_selectTags;
+
     public Fragment_ItemDetails() {
         // Required empty public constructor
     }
@@ -137,12 +139,12 @@ public class Fragment_ItemDetails extends Fragment {
         //Populate the tags fragment:
         //Start the tag selection fragment:
         FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
-        Fragment_SelectTags fragment_selectTags = new Fragment_SelectTags();
+        gFragment_selectTags = new Fragment_SelectTags();
         Bundle fragment_selectTags_args = new Bundle();
         fragment_selectTags_args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, gciCatalogItem.iMediaCategory);
         fragment_selectTags_args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTags);
-        fragment_selectTags.setArguments(fragment_selectTags_args);
-        fragmentTransaction.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
+        gFragment_selectTags.setArguments(fragment_selectTags_args);
+        fragmentTransaction.replace(R.id.child_fragment_tag_selector, gFragment_selectTags);
         fragmentTransaction.commit();
 
 
@@ -230,6 +232,50 @@ public class Fragment_ItemDetails extends Fragment {
 
                 }
             });
+        }
+
+
+    }
+
+    public void initData(ItemClass_CatalogItem ci){
+
+        gciCatalogItem = ci;
+        gsNewTagIDs = gciCatalogItem.sTags;
+        gsPreviousTagIDs = gsNewTagIDs;
+        giNewGrade = gciCatalogItem.iGrade;
+        giPreviousGrade = giNewGrade;
+        displayGrade();
+
+        TextView textView_FileName = getView().findViewById(R.id.textView_FileName);
+        if(textView_FileName != null){
+            String sFilename = "File name: " + GlobalClass.JumbleFileName(gciCatalogItem.sFilename);
+            textView_FileName.setText(sFilename);
+        }
+
+        TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+        if(textView_Tags != null){
+            String sTagText = "Tags: ";
+            sTagText += sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
+            textView_Tags.setText(sTagText);
+        }
+
+        //Get tags for the item:
+        ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
+
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+
+        gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
+
+        ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+        for(int i = 0; i < aliTags.size(); i++){
+            alTagItems.add(i, new ItemClass_Tag(aliTags.get(i), globalClass.getTagTextFromID(aliTags.get(i), gciCatalogItem.iMediaCategory)));
+        }
+        gViewModel_fragment_selectTags.altiTagsSelected.setValue(alTagItems);
+
+        //Re-populate the tags fragment:
+        if(gFragment_selectTags != null) {
+            gFragment_selectTags.resetTagListViewData(aliTags);
         }
 
 

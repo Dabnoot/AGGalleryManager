@@ -50,6 +50,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private ImageView gImageView_GifViewer;
     private MediaController gMediaController;
 
+    private Fragment_ItemDetails gFragment_itemDetails;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -424,19 +426,27 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
                 //Populate the item details fragment:
-                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                Fragment_ItemDetails fragment_itemDetails = new Fragment_ItemDetails();
-                Bundle args = new Bundle();
-                args.putSerializable(Fragment_ItemDetails.CATALOG_ITEM, ci); //NOTE!!!!! ci passed here gets marshalled as a reference, not a copy.
-                                //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
-                fragment_itemDetails.setArguments(args);
-                fragmentTransaction.replace(R.id.fragment_Item_Details, fragment_itemDetails);
-                fragmentTransaction.commit();
+                if(gFragment_itemDetails == null) {
+                    FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+                    gFragment_itemDetails = new Fragment_ItemDetails();
+
+                    Bundle args = new Bundle();
+                    args.putSerializable(Fragment_ItemDetails.CATALOG_ITEM, ci); //NOTE!!!!! ci passed here gets marshalled as a reference, not a copy.
+                    //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
+                    gFragment_itemDetails.setArguments(args);
+                    fragmentTransaction.replace(R.id.fragment_Item_Details, gFragment_itemDetails);
+                    fragmentTransaction.commit();
+                } else {
+                    gFragment_itemDetails.initData(ci);
+
+                }
 
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampFloat();
 
-                globalClass.CatalogDataFile_UpdateRecord(ci);
+                //globalClass.CatalogDataFile_UpdateRecord(ci);
+                Service_CatalogViewer.startActionUpdateCatalogItem(this, ci);
+
 
                 return Uri.parse(sFilePath);
             }
@@ -453,9 +463,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
                 }
             }
-            gImageView_GifViewer.setVisibility(View.VISIBLE);
-            gVideoView_VideoPlayer.setZOrderOnTop(false);
-            gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+            if(!gImageView_GifViewer.isShown()) {
+                gImageView_GifViewer.setVisibility(View.VISIBLE);
+                gVideoView_VideoPlayer.setZOrderOnTop(false);
+                gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+            }
         } else {
             gImageView_GifViewer.setVisibility(View.INVISIBLE);
             gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
