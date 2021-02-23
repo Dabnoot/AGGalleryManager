@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="@id/imageView_Video"
         app:layout_constraintBottom_toBottomOf="@id/imageView_Video"
-        app:srcCompat="@drawable/plus_64"
+        app:srcCompat="@drawable/plus_red_blkbrd_64"
         android:onClick="startImportVideos"/>
 
 
@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="@id/imageView_Images"
         app:layout_constraintBottom_toBottomOf="@id/imageView_Images"
-        app:srcCompat="@drawable/plus_64"
+        app:srcCompat="@drawable/plus_red_blkbrd_64"
         android:onClick="startImportImages"/>
 
     <ImageView
@@ -85,7 +85,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="@id/imageView_Comics"
         app:layout_constraintBottom_toBottomOf="@id/imageView_Comics"
-        app:srcCompat="@drawable/plus_64"
+        app:srcCompat="@drawable/plus_red_blkbrd_64"
         android:onClick="startImportComics"/>
 
     <TextView
