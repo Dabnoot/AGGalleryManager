@@ -83,6 +83,10 @@ public class Activity_Import extends AppCompatActivity {
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
     public static final String MEDIA_CATEGORY = "MEDIA_CATEGORY";
 
+    public static final String EXTRA_INT_MEDIA_CATEGORY = "EXTRA_INT_MEDIA_CATEGORY";
+    //If the import routine is being started from somewhere other than
+    //generic menu item, it must be in an area applicable to a particular media type.
+
     //FragmentImport_3_SelectTags
     public static ViewModel_Fragment_SelectTags viewModelTags; //Used for applying tags globally to an entire import selection.
     public static ViewModel_ImportActivity viewModelImportActivity; //Used to transfer data between fragments.
@@ -95,6 +99,7 @@ public class Activity_Import extends AppCompatActivity {
     static MediaMetadataRetriever mediaMetadataRetriever;
 
     static Stack<Integer> stackFragmentOrder;
+    private static int giStartingFragment;
 
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
@@ -133,7 +138,27 @@ public class Activity_Import extends AppCompatActivity {
         viewModelImportActivity = new ViewModelProvider(this).get(ViewModel_ImportActivity.class);
 
         stackFragmentOrder = new Stack<>();
-        stackFragmentOrder.push(FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY);
+
+        giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
+
+        //Check to see if this activity has been started by an activity desiring mods to a
+        //  particular media category set of tags:
+        Intent iStartingIntent = getIntent();
+        if(iStartingIntent != null){
+            int iMediaCategory = iStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
+            if(iMediaCategory != -1){
+                viewModelImportActivity.iImportMediaCategory = iMediaCategory;
+
+                if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    giStartingFragment = FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE;
+                } else {
+                    giStartingFragment = FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION;
+                }
+                gotoMediaCategorySelectedFragment(iMediaCategory);
+            }
+        }
+
+        stackFragmentOrder.push(giStartingFragment);
     }
 
     @Override
@@ -212,7 +237,7 @@ public class Activity_Import extends AppCompatActivity {
             //  to go back to those skipped fragments, hence the use of a Stack, and pop().
             int iCurrentFragment = ViewPager2_Import.getCurrentItem();
             int iPrevFragment = stackFragmentOrder.pop();
-            if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == 0)){
+            if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)){
                 finish();
                 return;
             }
@@ -222,13 +247,12 @@ public class Activity_Import extends AppCompatActivity {
             }
             ViewPager2_Import.setCurrentItem(iPrevFragment, false);
 
-            if(iPrevFragment == FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY){
+            if(iPrevFragment == giStartingFragment){
                 //There is no item to push '0' onto the fragment order stack:
-                stackFragmentOrder.push(FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY);
+                stackFragmentOrder.push(giStartingFragment);
             }
         }
     }
-
 
     public void buttonNextClick_MediaCategorySelected(View v){
         RadioButton radioButton_ImportVideos = findViewById(R.id.radioButton_ImportVideos);
@@ -243,6 +267,12 @@ public class Activity_Import extends AppCompatActivity {
         } else {
             iNewImportMediaCatagory = GlobalClass.MEDIA_CATEGORY_COMICS;
         }
+
+        gotoMediaCategorySelectedFragment(iNewImportMediaCatagory);
+
+    }
+
+    public void gotoMediaCategorySelectedFragment(int iNewImportMediaCatagory){
 
         if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
             viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).

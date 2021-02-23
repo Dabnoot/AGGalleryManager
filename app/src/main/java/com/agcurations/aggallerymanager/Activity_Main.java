@@ -189,83 +189,78 @@ public class Activity_Main extends AppCompatActivity {
         Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
 
 
+        if(item.getItemId() == R.id.menu_FlipView) {
+            FlipObfuscation();
+            return true;
+        } else if(item.getItemId() == R.id.menu_import) {
+            Intent intentImportGuided = new Intent(this, Activity_Import.class);
+            startActivity(intentImportGuided);
+            return true;
+        } else  if(item.getItemId() == R.id.menu_Settings) {
+            //Ask for pin code in order to allow access to Settings:
 
+            button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    adConfirmationDialog.dismiss();
+                }
+            });
 
-        switch (item.getItemId()) {
+            //Code action for the OK button:
+            button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                    String sPinEntered = editText_DialogInput.getText().toString();
 
-            case R.id.menu_FlipView:
-                FlipObfuscation();
-                return true;
-
-            case R.id.menu_import:
-                Intent intentImportGuided = new Intent(this, Activity_Import.class);
-                startActivity(intentImportGuided);
-                return true;
-
-            case R.id.menu_Settings:
-                //Ask for pin code in order to allow access to Settings:
-
-                button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        adConfirmationDialog.dismiss();
+                    if (sPinEntered.equals(globalClass.gsPin)) {
+                        Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
+                        startActivity(intentSettings);
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
                     }
-                });
 
-                //Code action for the OK button:
-                button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                        String sPinEntered = editText_DialogInput.getText().toString();
+                    adConfirmationDialog.dismiss();
+                }
+            });
 
-                        if(sPinEntered.equals(globalClass.gsPin)){
-                            Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
-                            startActivity(intentSettings);
-                        } else {
-                            Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                        }
+            adConfirmationDialog.show();
 
-                        adConfirmationDialog.dismiss();
+            return true;
+        } else if(item.getItemId() == R.id.menu_TagEditor) {
+
+            //Ask for pin code in order to allow access to the Tag Editor:
+
+            button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                    String sPinEntered = editText_DialogInput.getText().toString();
+
+                    if (sPinEntered.equals(globalClass.gsPin)) {
+                        Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
+                        startActivity(intentTagEditor);
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
                     }
-                });
 
-                adConfirmationDialog.show();
+                    adConfirmationDialog.dismiss();
+                }
+            });
 
-                return true;
+            adConfirmationDialog.show();
 
-            case R.id.menu_TagEditor:
-                //Ask for pin code in order to allow access to the Tag Editor:
+            return true;
+        } else if(item.getItemId() == R.id.menu_About) {
 
-                button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                        String sPinEntered = editText_DialogInput.getText().toString();
-
-                        if(sPinEntered.equals(globalClass.gsPin)){
-                            Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
-                            startActivity(intentTagEditor);
-                        } else {
-                            Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                        }
-
-                        adConfirmationDialog.dismiss();
-                    }
-                });
-
-                adConfirmationDialog.show();
-
-                return true;
-
-            case R.id.menu_About:
-                Intent intentAbout = new Intent(this, Activity_ScrollingAbout.class);
-                startActivity(intentAbout);
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
+            Intent intentAbout = new Intent(this, Activity_ScrollingAbout.class);
+            startActivity(intentAbout);
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
+
+
     }
 
 
@@ -306,7 +301,7 @@ public class Activity_Main extends AppCompatActivity {
         }
 
         ImageView ivVideos = findViewById(R.id.imageView_Video);
-        ImageView ivPictures = findViewById(R.id.imageView_Pictures);
+        ImageView ivPictures = findViewById(R.id.imageView_Images);
         ImageView ivComics = findViewById(R.id.imageView_Comics);
 
         ivVideos.setImageResource(R.drawable.ob_productivity_tools);
@@ -326,7 +321,7 @@ public class Activity_Main extends AppCompatActivity {
     public void RemoveObfuscation() {
         //Remove obfuscation:
         ImageView ivVideos = findViewById(R.id.imageView_Video);
-        ImageView ivPictures = findViewById(R.id.imageView_Pictures);
+        ImageView ivPictures = findViewById(R.id.imageView_Images);
         ImageView ivComics = findViewById(R.id.imageView_Comics);
 
         ivVideos.setImageResource(R.drawable.nob_videos);
@@ -367,7 +362,26 @@ public class Activity_Main extends AppCompatActivity {
         //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_COMICS);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentCatalogActivity);
-
     }
+
+    public void startImportVideos(View v){
+        Intent intentImportGuided = new Intent(this, Activity_Import.class);
+        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        startActivity(intentImportGuided);
+    }
+
+    public void startImportImages(View v){
+        Intent intentImportGuided = new Intent(this, Activity_Import.class);
+        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES);
+        startActivity(intentImportGuided);
+    }
+
+    public void startImportComics(View v){
+        Intent intentImportGuided = new Intent(this, Activity_Import.class);
+        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS);
+        startActivity(intentImportGuided);
+    }
+
+
 
 }

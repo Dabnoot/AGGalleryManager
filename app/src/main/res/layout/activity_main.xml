@@ -13,7 +13,7 @@
         android:layout_width="200dp"
         android:layout_height="200dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/imageView_Pictures"
+        app:layout_constraintEnd_toStartOf="@+id/imageView_Images"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.4"
@@ -22,7 +22,17 @@
         android:onClick="startVideoCatalogActivity"/>
 
     <ImageView
-        android:id="@+id/imageView_Pictures"
+        android:id="@+id/imageView_ImportVideo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@id/imageView_Video"
+        app:layout_constraintBottom_toBottomOf="@id/imageView_Video"
+        app:srcCompat="@drawable/plus_64"
+        android:onClick="startImportVideos"/>
+
+
+    <ImageView
+        android:id="@+id/imageView_Images"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:onClick="startPicturesCatalogActivity"
@@ -35,13 +45,22 @@
         android:contentDescription="@string/data_management" />
 
     <ImageView
+        android:id="@+id/imageView_ImportImages"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@id/imageView_Images"
+        app:layout_constraintBottom_toBottomOf="@id/imageView_Images"
+        app:srcCompat="@drawable/plus_64"
+        android:onClick="startImportImages"/>
+
+    <ImageView
         android:id="@+id/imageView_Comics"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:onClick="startComicsCatalogActivity"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageView_Pictures"
+        app:layout_constraintStart_toEndOf="@+id/imageView_Images"
         app:layout_constraintTop_toTopOf="@+id/imageView_Video"
         app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/ob_quality_analysis"
@@ -55,10 +74,19 @@
         android:textSize="28sp"
         style="@style/BusyBackgroundOverlayText"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/imageView_Pictures"
+        app:layout_constraintEnd_toStartOf="@+id/imageView_Images"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/imageView_Video"
         app:layout_constraintVertical_bias="0.2"/>
+
+    <ImageView
+        android:id="@+id/imageView_ImportComics"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="@id/imageView_Comics"
+        app:layout_constraintBottom_toBottomOf="@id/imageView_Comics"
+        app:srcCompat="@drawable/plus_64"
+        android:onClick="startImportComics"/>
 
     <TextView
         android:id="@+id/textView_Pictures"
@@ -83,7 +111,7 @@
         style="@style/BusyBackgroundOverlayText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageView_Pictures"
+        app:layout_constraintStart_toEndOf="@+id/imageView_Images"
         app:layout_constraintTop_toTopOf="@+id/textView_Videos"
         app:layout_constraintVertical_bias="0.0"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
