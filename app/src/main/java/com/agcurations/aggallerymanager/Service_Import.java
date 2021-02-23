@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ public class Service_Import extends IntentService {
     public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
+    public static final String COMIC_DETAILS_LOG_MESSAGE = "COMIC_DETAILS_LOG_MESSAGE";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_DETAILS_ERROR_MESSAGE = "COMIC_DETAILS_ERROR_MESSAGE";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
@@ -1545,7 +1547,7 @@ public class Service_Import extends IntentService {
 
         try {
             //Get the data from the WebPage:
-
+            BroadcastProgress_ComicDetails("Getting data from " + ci.sSource + "\n");
             URL url = new URL(ci.sSource);
             URLConnection conn = url.openConnection();
             conn.setDoInput(true);
@@ -1556,6 +1558,7 @@ public class Service_Import extends IntentService {
                 a.append(inputLine);
             }
             in.close();
+            BroadcastProgress_ComicDetails("\nData acquired. Begin data processing...\n");
 
             String sHTML = a.toString();
             sHTML = sHTML.replaceAll("tag-container field-name ", "tag-container field-name");
@@ -1566,6 +1569,7 @@ public class Service_Import extends IntentService {
             //  HtmlCleaner does a good job processing the html in a manner similar to modern
             //  browsers.
             //Clean up the HTML:
+            BroadcastProgress_ComicDetails("Cleaning up html.\n");
             HtmlCleaner pageParser = new HtmlCleaner();
             CleanerProperties props = pageParser.getProperties();
             props.setAllowHtmlInsideAttributes(true);
@@ -1576,6 +1580,7 @@ public class Service_Import extends IntentService {
 
 
             //Attempt to get the comic title from the WebPage html:
+            BroadcastProgress_ComicDetails("Looking for comic title.\n");
             String sxPathExpression;
             sxPathExpression = globalClass.snHentai_Comic_Title_xPathExpression;
             //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
@@ -1590,6 +1595,7 @@ public class Service_Import extends IntentService {
 
             //Attempt to determine the inclusion of "parodies", "characters", "tags", etc
             //  in the info blocks:
+            BroadcastProgress_ComicDetails("Looking for comic data info blocks (parodies, characters, tags, etc).\n");
             sxPathExpression = globalClass.snHentai_Comic_Data_Blocks_xPE;
             //Use an xPathExpression (similar to RegEx) to look for the data in the html/xml:
             //TCFN = 'tag-container field-name' html class used by nHentai web pages.
@@ -1657,7 +1663,18 @@ public class Service_Import extends IntentService {
                 }
             }
 
+            ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
+            ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
+            ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
+            ci.sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX]; //NOTE: THESE ARE TEXTUAL TAGS, NOT TAG IDS.
+            ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
+            ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
+            ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
+            ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
+            ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+
             //Get the first thumbnail image for import preview:
+            BroadcastProgress_ComicDetails("Looking for cover page thumbnail.\n");
             sxPathExpression = globalClass.snHentai_Comic_Cover_Thumb_xPE;
             //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
             Object[] objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
@@ -1671,7 +1688,7 @@ public class Service_Import extends IntentService {
             }
 
             //Decypher the rest of the comic page image URLs to be used in a later step of the import:
-
+            BroadcastProgress_ComicDetails("Looking for listing of comic pages.\n");
             sxPathExpression = globalClass.snHentai_Comic_Page_Thumbs_xPE;
             objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
             //Check to see if we found anything:
@@ -1689,6 +1706,7 @@ public class Service_Import extends IntentService {
                 //Get the thumbnail image names, which will reveal the file extension of the full images:
                 for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
                     String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
+                    BroadcastProgress_ComicDetails(sImageAddress + "\n"); //Broadcast progress
                     String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
                     sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
                     String[] sSplit = sImageFilename.split("\\.");
@@ -1703,6 +1721,10 @@ public class Service_Import extends IntentService {
 
             }
             ArrayList<String[]> alsImageNameData = new ArrayList<>();
+            int iFileSizeLoopCount = 0;
+            boolean bGetOnlineSize = true;
+            long lProjectedComicSize;
+
             if (sGalleryID.length() > 0) {
                 for(Map.Entry<Integer, String> tmEntryPageNumImageExt: tmFileIndexImageExtention.entrySet()) {
                     //Build the suspected URL for the image:
@@ -1717,12 +1739,25 @@ public class Service_Import extends IntentService {
                     alsImageNameData.add(sTemp);
 
                     //Get the size of the image and add it to the total size of the comic:
-                    if(ci.lSize > -1) { //-1 if we do this once and find out that the data is not in the header.
+                    if(bGetOnlineSize) {
                         URL urlPage = new URL(sNHImageDownloadAddress);
-                        URLConnection connection = urlPage.openConnection();
-                        //connection.connect();
+                        BroadcastProgress_ComicDetails("Getting file size data for " + sNHImageDownloadAddress + "\n"); //Broadcast progress
+                        //URLConnection connection = urlPage.openConnection();
+                        HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
                         connection.setRequestProperty("Accept-Encoding", "identity");
                         ci.lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                        if(ci.lSize == -1){
+                            bGetOnlineSize = false;
+                        }
+                        iFileSizeLoopCount++;
+                        if(iFileSizeLoopCount == 5){  //Use a sample set of images to project the size of the comic.
+                            lProjectedComicSize = ci.lSize / iFileSizeLoopCount;
+                            lProjectedComicSize *= ci.iComicPages;
+                            ci.lSize = lProjectedComicSize;
+                            BroadcastProgress_ComicDetails("Projecting size of comic to " + ci.iComicPages + " pages... " + ci.lSize + " bytes." + "\n");
+                            bGetOnlineSize = false;
+                        }
+                        connection.disconnect();
                     }
                 }
             }
@@ -1730,28 +1765,20 @@ public class Service_Import extends IntentService {
                 //If there are image addresses to attempt to download...
                 ci.alsComicPageURLsAndDestFileNames = alsImageNameData;
             }
-
+            BroadcastProgress_ComicDetails("Finished analyzing web data.\n");
 
 
 
         } catch(Exception e){
             String sMsg = e.getMessage();
-            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, false);
-            broadcastIntent.putExtra(COMIC_DETAILS_ERROR_MESSAGE, sMsg);
+            broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, true);
+            broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sMsg);
             sendBroadcast(broadcastIntent);
             return;
         }
 
 
-        ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
-        ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
-        ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
-        ci.sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX]; //NOTE: THESE ARE TEXTUAL TAGS, NOT TAG IDS.
-        ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
-        ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
-        ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
-        ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
-        ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+
 
 
         //Apply booleans to the intent to tell the receiver success, data available,
@@ -2055,4 +2082,15 @@ public class Service_Import extends IntentService {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
     }
+
+    public void BroadcastProgress_ComicDetails(String sLogLine){
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Fragment_Import_5a_WebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent.putExtra(COMIC_DETAILS_LOG_MESSAGE, sLogLine);
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+    }
+
 }

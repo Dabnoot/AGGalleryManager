@@ -58,8 +58,6 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
 
-
-
     }
 
     @Override
@@ -116,15 +114,39 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-
             boolean bError;
+            TextView textView_Title;
+            textView_Title = getView().findViewById(R.id.textView_Title);
+            TextView textView_WebImportDetails;
+            textView_WebImportDetails = getView().findViewById(R.id.textView_WebImportDetails);
+            TextView textView_WebImportDetailsLog;
+            textView_WebImportDetailsLog = getView().findViewById(R.id.textView_WebImportDetailsLog);
+
 
             //Get boolean indicating that an error may have occurred:
             bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
-                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                textView_Title.setVisibility(View.INVISIBLE);
+                textView_WebImportDetails.setVisibility((View.INVISIBLE));
+                textView_WebImportDetailsLog.setVisibility(View.VISIBLE);
+                textView_WebImportDetailsLog.append(sMessage);
+
             } else {
+
+                String sLogMessage;
+                sLogMessage = intent.getStringExtra(Service_Import.COMIC_DETAILS_LOG_MESSAGE);
+                if(sLogMessage != null){
+                    textView_Title.setVisibility(View.INVISIBLE);
+                    textView_WebImportDetails.setVisibility((View.INVISIBLE));
+                    textView_WebImportDetailsLog.setVisibility(View.VISIBLE);
+                    textView_WebImportDetailsLog.append(sLogMessage);
+                    return;
+                }
+                textView_WebImportDetailsLog.setText("");
+                textView_WebImportDetailsLog.setVisibility(View.INVISIBLE);
+                textView_Title.setVisibility(View.VISIBLE);
+                textView_WebImportDetails.setVisibility((View.VISIBLE));
 
                 boolean bComicDetailsDataServiceSuccess;
                 bComicDetailsDataServiceSuccess = intent.getBooleanExtra(Service_Import.COMIC_DETAILS_SUCCESS,
@@ -139,12 +161,7 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
                     Toast.makeText(getActivity(), "Online data acquired.", Toast.LENGTH_SHORT).show();
 
                     ImageView imageView_Thumbnail;
-                    TextView textView_Title;
-                    TextView textView_WebImportDetails;
-
                     imageView_Thumbnail = getView().findViewById(R.id.imageView_Thumbnail);
-                    textView_Title = getView().findViewById(R.id.textView_Title);
-                    textView_WebImportDetails = getView().findViewById(R.id.textView_WebImportDetails);
 
                     if(textView_Title != null) {
                         textView_Title.setText(gciCatalogItem.sComicName);
@@ -200,14 +217,12 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
                     //Preserve this CatalogItem data for other import operations:
                     viewModelImportActivity.ci = gciCatalogItem;
 
-                } else {
-                    sErrorMessage = intent.getStringExtra(Service_Import.COMIC_DETAILS_ERROR_MESSAGE);
-                    Toast.makeText(getActivity(), "Error getting data online.\n" + sErrorMessage, Toast.LENGTH_LONG).show();
-                }
+                } //End successful comic data retrieval behavior.
 
-            }
+            } //End if/else error message/no error message.
 
-        }
+        } //End onReceive.
+
     }
 
 
