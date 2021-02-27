@@ -89,20 +89,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
         outState.putCharSequence(TITLE_TAG, getTitle());
     }
 
-    /*@Override
-    public boolean onSupportNavigateUp() {
-        if (getSupportFragmentManager().popBackStackImmediate()) {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-            //Get Comics' restricted tags:
-            String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
-            galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");
-
-            return true;
-        }
-        return super.onSupportNavigateUp();
-    }*/
-
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
         // Instantiate the new Fragment
@@ -111,7 +97,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 getClassLoader(),
                 pref.getFragment());
         fragment.setArguments(args);
-        fragment.setTargetFragment(caller, 0);
+        //fragment.setTargetFragment(caller, 0);
         // Replace the existing Fragment with the new Fragment
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.settings, fragment)
