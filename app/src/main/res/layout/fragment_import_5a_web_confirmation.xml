@@ -113,6 +113,7 @@
             android:text="IMPORT"
             android:textSize="24sp"
             app:backgroundTint="@color/colorBlackboardRed"
+            android:enabled="false"
             android:onClick="buttonNextClick_ImportConfirm"/>
 
     </LinearLayout>

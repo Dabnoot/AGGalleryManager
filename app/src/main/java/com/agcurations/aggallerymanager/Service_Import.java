@@ -1904,8 +1904,6 @@ public class Service_Import extends IntentService {
                                 RECEIVER_EXECUTE_IMPORT);
                     }
 
-
-
                 }
                 //Success downloading files.
 
@@ -1917,13 +1915,13 @@ public class Service_Import extends IntentService {
                     aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
                 }
                 //Look for any tags that could not be found:
-                for(int i = 0; i < aliTags.size() - 1; i++){
+                for(int i = 0; i < aliTags.size(); i++){
                     if(aliTags.get(i) == -1){
                         //Create the tag:
                         if(!sTags[i].equals("")) {
                             ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
                             if(ictNewTag != null){
-                                aliTags.add(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
+                                aliTags.set(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
                             }
                         }
                     }

@@ -14,6 +14,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -216,6 +217,11 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
 
                     //Preserve this CatalogItem data for other import operations:
                     viewModelImportActivity.ci = gciCatalogItem;
+
+                    Button button_ImportConfirmation = getView().findViewById(R.id.button_ImportConfirmation);
+                    if(button_ImportConfirmation != null){
+                        button_ImportConfirmation.setEnabled(true);
+                    }
 
                 } //End successful comic data retrieval behavior.
 
