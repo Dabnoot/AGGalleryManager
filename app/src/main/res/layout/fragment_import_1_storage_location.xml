@@ -141,6 +141,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:scrollbars="vertical"
         android:scrollbarSize="20dp"
+        android:gravity="bottom"
         android:visibility="invisible"/>
 
 

@@ -640,15 +640,24 @@ public class Service_Import extends IntentService {
                                             for (ItemClass_File icfComicPage : alicf_ComicFiles) {
                                                 //Attempt to get the integer value from this filename using the current number block:
                                                 String sPageID  = icfComicPage.sFileOrFolderName.substring(icfComicPage.aliNumberBlocks.get(iNumberBlock)[0], icfComicPage.aliNumberBlocks.get(iNumberBlock)[1]);
-                                                Integer iPageID = Integer.parseInt(sPageID);
-                                                //Check to see if this page number already exists in the TreeMap:
-                                                if(tmComicFilesPageNumCheck.containsKey(iPageID)){
-                                                    //If the page number already exists in the TreeMap, this cannot be the \
-                                                    //  page number. Exit the loop and attempt to test the next number block;
-                                                    bPossibleNumberBlockCandidate = false;
-                                                    break;
+                                                if(sPageID.length() > 4){
+                                                    sPageID = sPageID.substring(sPageID.length() - 4);  //Filename might be merely a datetime stamp.
                                                 }
-                                                tmComicFilesPageNumCheck.put(iPageID, icfComicPage.sUri);
+                                                if(sPageID.length() <= 4) {
+                                                    //This app is not designed to work with pages greater than 9999.
+                                                    //  The comic page viewer will not properly sort the 10,000th page
+                                                    //  alphabetically. Just assume there are no comics out there with more than 9999 pages.
+
+                                                    Integer iPageID = Integer.parseInt(sPageID);
+                                                    //Check to see if this page number already exists in the TreeMap:
+                                                    if (tmComicFilesPageNumCheck.containsKey(iPageID)) {
+                                                        //If the page number already exists in the TreeMap, this cannot be the \
+                                                        //  page number. Exit the loop and attempt to test the next number block;
+                                                        bPossibleNumberBlockCandidate = false;
+                                                        break;
+                                                    }
+                                                    tmComicFilesPageNumCheck.put(iPageID, icfComicPage.sUri);
+                                                }
                                             }
                                             if(bPossibleNumberBlockCandidate){
                                                 //If all of the found possible page IDs for this comic are unique,
@@ -658,12 +667,6 @@ public class Service_Import extends IntentService {
                                                 //  on the current number block in the filename.
                                                 for(Map.Entry<Integer, String> tmPageEntry: tmComicFilesPageNumCheck.entrySet()){
                                                     int iThisPageID = tmPageEntry.getKey();
-                                                    if(iThisPageID > 9999){
-                                                        //This app is not designed to work with pages greater than 9999.
-                                                        //  The comic page viewer will not properly sort the 10,000th page
-                                                        //  alphabetically. Just assume there are no comics out there with more than 9999 pages.
-                                                        break; //Go investigate the next number block.
-                                                    }
                                                     if(iThisPageID > (iOrder + GlobalClass.iComicFolderImportMaxPageSkip)){
                                                         //If the current pageID is is greater than the max skip page value (default,
                                                         // or possibly set by user in a later version of this program, go examine the next ID block.
@@ -690,10 +693,20 @@ public class Service_Import extends IntentService {
 
                                             }
 
-
-
-
                                         } //End loop looking for number block identifying the page ID in the set of comic pages.
+
+                                        if(icf_ComicFolderItem.sUriThumbnailFile.equals("")){
+                                            //If we still have not decided what the thumbnail will be,
+                                            //  Set it to the first file when sorting alphabetically:
+                                            TreeMap<String, String> tmAlphabetizedComicFiles = new TreeMap<>();
+                                            for(ItemClass_File file: alicf_ComicFiles){
+                                                tmAlphabetizedComicFiles.put(file.sFileOrFolderName,file.sUri);
+                                            }
+                                            Map.Entry<String, String> meFirst = tmAlphabetizedComicFiles.firstEntry();
+                                            icf_ComicFolderItem.sUriThumbnailFile = meFirst.getValue();
+
+                                        }
+
 
                                     } //End if all comic pages in this comic have the same quantity of number blocks in the file name.
 
