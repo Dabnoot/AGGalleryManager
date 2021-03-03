@@ -568,8 +568,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
                         sItemName = GlobalClass.JumbleFileName(ci.sFilename);
-                        sThumbnailText = sItemName + ", " +
-                                ci.sTags;
+                        sThumbnailText = sItemName;
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
                         sItemName = ci.sComicName;
