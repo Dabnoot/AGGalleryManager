@@ -26,7 +26,7 @@
         <activity android:name=".Activity_Import" />
         <activity
             android:name=".Activity_PinCodePopup"
-            android:theme="@style/AppTheme.PinCodePopup" /> <!-- android:theme="@style/AppTheme.Launcher">  To set startup screen -->
+            android:theme="@style/AppTheme.PinCodePopup" />
         <activity android:name=".Activity_Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

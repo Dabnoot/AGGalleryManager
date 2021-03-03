@@ -5,22 +5,16 @@
 
         <item name="colorAccent">@color/colorAccent</item>
 
-        <item name="colorPrimaryDark">@color/colorStatusBarPurple
-        </item>    <!-- Status bar color -->
-        <item name="colorPrimary">@color/colorActionBarPurple
-        </item>        <!-- Action bar color -->
-        <item name="actionBarStyle">@style/ActionBarTheme
-        </item>            <!-- Sets the popup menu color -->
+        <item name="colorPrimaryDark">@color/colorStatusBarPurple</item>    <!-- Status bar color -->
+        <item name="colorPrimary">@color/colorActionBarPurple</item>        <!-- Action bar color -->
+
         <item name="android:windowBackground">@color/colorBackgroundPurple</item>
         <item name="android:navigationBarColor">@color/colorNavigationBarPurple</item>
         <item name="android:textColor">@color/colorGrey1</item>
-        <item name="android:textColorPrimary">@color/colorGrey1
-        </item>         <!-- sets AlertDialog summaryText color -->
+        <item name="android:textColorPrimary">@color/colorGrey1</item>         <!-- sets AlertDialog summaryText color -->
         <item name="android:textColorSecondary">@color/colorGrey1</item>
-        <!--<item name="colorBackgroundFloating">@color/colorLightOrange
-        </item>    &lt;!&ndash; Sets AlertDialog color &ndash;&gt;-->
-        <item name="textColorAlertDialogListItem">@color/colorGrey1
-        </item>     <!-- Sets AlertDialog text color -->
+        <!--<item name="colorBackgroundFloating">@color/colorLightOrange</item>    &lt;!&ndash; Sets AlertDialog color &ndash;&gt;-->
+        <item name="textColorAlertDialogListItem">@color/colorGrey1</item>     <!-- Sets AlertDialog text color -->
         <item name="android:editTextColor">@color/colorGrey1</item>
 
         <item name="subtitleTextColor">@color/colorGrey1</item>
@@ -42,6 +36,7 @@
 
         <item name="colorSurface">@color/colorNavigationBarPurple</item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
+        <item name="actionBarStyle">@style/ActionBarTheme</item>            <!-- Sets the popup menu color -->
     </style>
 
 
@@ -76,10 +71,6 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.Launcher.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
-    <style name="AppTheme.Launcher.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
     <style name="FullscreenTheme" parent="AppTheme.Launcher">
         <item name="android:actionBarStyle">@style/FullscreenActionBarStyle</item>
         <item name="android:windowActionBarOverlay">true</item>
@@ -92,12 +83,6 @@
         <item name="android:background">@color/black_overlay</item>
     </style>
 
-    <style name="ComicDetailsTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="android:background">@color/black_overlay</item>
-
-    </style>
-
-
     <style name="BusyBackgroundOverlayText"> <!-- This is for putting a shadow behind text. -->
         <item name="android:paddingLeft">8dp</item>
         <item name="android:paddingBottom">8dp</item>
@@ -108,25 +93,12 @@
         <item name="android:shadowRadius">3</item>
     </style>
 
-    <style name="AppTheme.VideoPreviewPopup">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowCloseOnTouchOutside">true</item>
-        <item name="android:background">@color/colorBlack</item>
-    </style>
 
     <style name="AppTheme.PinCodePopup">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:background">@color/colorBlack</item>
     </style>
 
-    <style name="Widget.AppTheme.Launcher.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
-        <item name="android:background">@color/black_overlay</item>
-    </style>
-
-    <style name="Widget.AppTheme.Launcher.ButtonBar.Fullscreen" parent="">
-        <item name="android:background">@color/black_overlay</item>
-        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
-    </style>
 
     <style name="AlertDialogCustomStyle" parent="@style/Theme.AppCompat.DayNight.Dialog">
         <item name="android:textColor">@color/colorGrey3</item>
@@ -147,13 +119,6 @@
         <item name="backgroundTint">@color/colorBlackboardRed</item>
     </style>
 
-    <style name="Widget.AppTheme.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
-        <item name="android:background">@color/black_overlay</item>
-    </style>
 
-    <style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
-        <item name="android:background">@color/black_overlay</item>
-        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
-    </style>
 
 </resources>
