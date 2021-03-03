@@ -418,6 +418,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
                 fragment_selectTags.resetTagListViewData(gFileItems[iFileItemTagsIndex].aliProspectiveTags);
             }
+
+            displayGrade(); //Update the displayed grade
         }
     }
 
