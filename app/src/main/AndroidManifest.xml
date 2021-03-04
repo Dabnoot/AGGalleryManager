@@ -39,11 +39,6 @@
             android:label="@string/title_activity_a_g_gallery_settings"
             android:parentActivityName=".Activity_Main" />
         <activity
-            android:name=".Activity_ScrollingAbout"
-            android:label="@string/title_activity_scrolling_about"
-            android:parentActivityName=".Activity_Main"
-            android:theme="@style/AppTheme.Launcher.NoActionBar" />
-        <activity
             android:name=".Activity_ComicDetails"
             android:label="@string/title_activity_comic_details"
             android:parentActivityName=".Activity_CatalogViewer"

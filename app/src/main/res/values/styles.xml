@@ -60,11 +60,11 @@
         <item name="android:windowBackground">@drawable/startup_screen</item>
     </style>
 
-    <style name="AppTheme.Launcher.NoActionBar">
+    <!--<style name="AppTheme.Launcher.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@color/colorBlueGrey3</item>
-    </style>
+    </style>-->
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>

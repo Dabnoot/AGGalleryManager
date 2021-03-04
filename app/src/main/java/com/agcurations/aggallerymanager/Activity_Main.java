@@ -253,8 +253,7 @@ public class Activity_Main extends AppCompatActivity {
             return true;
         } else if(item.getItemId() == R.id.menu_About) {
 
-            Intent intentAbout = new Intent(this, Activity_ScrollingAbout.class);
-            startActivity(intentAbout);
+
             return true;
         } else {
             return super.onOptionsItemSelected(item);
