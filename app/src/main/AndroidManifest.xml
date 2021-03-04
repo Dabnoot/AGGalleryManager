@@ -52,8 +52,7 @@
             android:name=".Activity_ComicViewer"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer"
-            android:parentActivityName=".Activity_ComicDetails"
-            android:theme="@style/FullscreenTheme" />
+            android:parentActivityName=".Activity_ComicDetails" />
         <activity
             android:name=".Activity_ExportComics"
             android:parentActivityName=".Activity_CatalogViewer"
