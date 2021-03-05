@@ -88,10 +88,7 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionImportFiles(Context context,
-                                              ArrayList<ItemClass_File> alImportFileList,
-                                              int iMoveOrCopy,
-                                              int iMediaCategory) {
+    public static void startActionImportFiles(Context context, ArrayList<ItemClass_File> alImportFileList, int iMoveOrCopy, int iMediaCategory) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_FILES);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
@@ -100,10 +97,7 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionImportNHComicsFiles(Context context,
-                                                      ArrayList<ItemClass_File> alImportFileList,
-                                                      int iMoveOrCopy,
-                                                      int iComicImportSource) {
+    public static void startActionImportNHComicsFiles(Context context, ArrayList<ItemClass_File> alImportFileList, int iMoveOrCopy, int iComicImportSource) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_NHCOMICS);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
@@ -112,10 +106,7 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionImportComicFolders(Context context,
-                                                      ArrayList<ItemClass_File> alImportFileList,
-                                                      int iMoveOrCopy,
-                                                      int iComicImportSource) {
+    public static void startActionImportComicFolders(Context context, ArrayList<ItemClass_File> alImportFileList, int iMoveOrCopy, int iComicImportSource) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMIC_FOLDERS);
         intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
@@ -124,17 +115,14 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-
-    public static void startActionAcquireNHComicsDetails(Context context,
-                                                         String sAddress){
+    public static void startActionAcquireNHComicsDetails(Context context, String sAddress){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_GET_COMIC_DETAILS_ONLINE);
         intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sAddress);
         context.startService(intent);
     }
 
-    public static void startActionImportComicWebFiles(Context context,
-                                                        ItemClass_CatalogItem ci){
+    public static void startActionImportComicWebFiles(Context context, ItemClass_CatalogItem ci){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMIC_WEB_FILES);
         intent.putExtra(COMIC_CATALOG_ITEM, ci);

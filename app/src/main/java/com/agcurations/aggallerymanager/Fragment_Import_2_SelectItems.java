@@ -92,9 +92,11 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         //Get all of the selected items and assign them to the viewModel:
         //  Sort the items before assigning them to the viewModel:
         TreeMap<String, ItemClass_File> tmFileItemsSort = new TreeMap<>();
+        int i = 0;
         for(ItemClass_File fi: Activity_Import.fileListCustomAdapter.alFileItems){
             if(fi.bIsChecked){
-                tmFileItemsSort.put(fi.sFileOrFolderName, fi);
+                tmFileItemsSort.put(fi.sUri, fi); //Sort by Uri rather than file name because comic folders might contain the same file names.
+                i++;
             }
         }
         ArrayList<ItemClass_File> alfi = new ArrayList<>();
