@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
@@ -829,8 +830,80 @@ public class Service_Import extends IntentService {
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
                 File fDestinationFolder = new File(fDestination.getPath());
+                File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sFileName);
+                //Check to see if the file already exists in the destination, and if so, create a new filename:
+                int i = 0;
+                String sTempFileName = sFileName;
+                while(fDestinationFile.exists()){
+                    i++;
+                    sTempFileName = sFileName + "(" + i + ")";
+                    fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sFileName);
+                }
+                sFileName = sTempFileName;
 
-                //boolean bCopyViaStream;
+                boolean bCopyViaStream = true;
+
+                /*File fIdentifiedLocalSource = null;
+                if(iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                    //Attempt to determine if the file being imported is local, and if it is,
+                    //  attempt to move the file using File.move rather than stream copy followed
+                    //  by delete.
+                    String sSourcePath = dfSource.getUri().toString();
+                    while(sSourcePath.contains("%")){
+                        int iStart = sSourcePath.indexOf("%");
+                        if(sSourcePath.length() < (iStart + 3)){
+                            bCopyViaStream = true;
+                            break;
+                        }
+                        String sHex = sSourcePath.substring(iStart, iStart + 3);
+                        char cChar = ((char) Integer.parseInt(sHex.substring(1,3), 16));
+                        sSourcePath = sSourcePath.replace(sHex, Character.toString(cChar));
+                    }
+                    String sSourceIntermediatePath = "";
+                    if(sSourcePath.contains(":")) {
+                        if((sSourcePath.lastIndexOf(":") + 1) < sSourcePath.length()) {
+                            sSourceIntermediatePath = sSourcePath.substring(sSourcePath.lastIndexOf(":") + 1);
+                        }
+                    } else {
+                        bCopyViaStream = true;
+                    }
+                    if(sSourceIntermediatePath.length() > 0) {
+                        String sAF = globalClass.gfAppFolder.getAbsolutePath();
+                        String[] sPathFolders = sAF.split("/");
+
+                        if (sPathFolders.length >= 2) {
+                            //Build the alternative path:
+                            //Expecting /storage/0000-0000/...
+                            String sAlternativeSourceBase = File.separator +sPathFolders[1] + File.separator + sPathFolders[2] + File.separator;
+                            sSourcePath = sAlternativeSourceBase + sSourceIntermediatePath;
+                        } else {
+                            bCopyViaStream = true;
+                        }
+                    }
+                    if(!bCopyViaStream){
+                        //Check to see if the file exists in the local location:
+                        fIdentifiedLocalSource = new File(sSourcePath);
+                        if(!fIdentifiedLocalSource.exists()){
+                            bCopyViaStream = true;
+                        }
+                    }
+                    if(!bCopyViaStream) {
+                        //Attempt to move the file:
+                        //"rename" the source file object to the destination file object.
+                        File fs = new File("/storage/emulated/0/SimCity4/New Folder/Bond/20121114230840.jpg");
+                        File fd = new File("/storage/emulated/0/Android/data/com.agcurations.aggallerymanager/files/Images/29/04803241112102.gpj");
+                        if(fs.renameTo(fd)){
+                        //if(fIdentifiedLocalSource.renameTo(fDestinationFile)) {
+                            lProgressNumerator += fIdentifiedLocalSource.length();
+                        } else {
+                            bCopyViaStream = true;
+                        }
+
+                    }
+
+                } else {
+                    bCopyViaStream = true;
+                }*/
                 /*String sDestinationFolder = "content://com.android.externalstorage.documents/tree/0000-0000%3AAndroid%2Fdata%2Fcom.agcurations.aggallerymanager%2Ffiles%2FVideos%2F7";
                 Uri uriDestinationFolder = Uri.parse(sDestinationFolder);
                 URI uri1 = URI.create(sDestinationFolder);
@@ -874,11 +947,11 @@ public class Service_Import extends IntentService {
                 }*/
                 //bCopyViaStream = true;
 
-                //If DocumentsContract transferred failed, try to copy via stream:
-                //if(bCopyViaStream) {
+                //If we need to copy via stream:
+                if(bCopyViaStream) {
                     inputStream = contentResolver.openInputStream(dfSource.getUri());
 
-                    outputStream = new FileOutputStream(fDestinationFolder.getPath() + File.separator + sFileName);
+                    outputStream = new FileOutputStream(fDestinationFile.getPath());
                     int iLoopCount = 0;
                     byte[] buffer = new byte[100000];
                     if (inputStream == null) continue;
@@ -897,17 +970,17 @@ public class Service_Import extends IntentService {
                     }
                     outputStream.flush();
                     outputStream.close();
-                //}
 
-                sLogLine = "Success.\n";
-                if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                    if (!dfSource.delete()) {
-                        sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                    sLogLine = "Success.\n";
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                        if (!dfSource.delete()) {
+                            sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                        }
                     }
                 }
 
 
-                //Update the progress bar for the file copy:
+                //Update the progress bar for the file move/copy:
                 iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                 BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
