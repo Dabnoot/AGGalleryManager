@@ -28,6 +28,8 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     TextView gTextView_ImportProgressBarText;
     TextView gtextView_ImportLog;
 
+    GlobalClass globalClass;
+
     public Fragment_Import_6_ExecuteImport() {
         // Required empty public constructor
     }
@@ -41,6 +43,8 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        globalClass = (GlobalClass) getActivity().getApplicationContext();
 
         if (getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
@@ -78,6 +82,8 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         initComponents();
     }
 
+
+
     public void initComponents(){
 
         //Init progress:
@@ -85,19 +91,21 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             return;
         }
         gProgressBar_ImportProgress = getView().findViewById(R.id.progressBar_ImportProgress);
-        gProgressBar_ImportProgress.setProgress(0);
         gProgressBar_ImportProgress.setMax(100);
         gTextView_ImportProgressBarText = getView().findViewById(R.id.textView_ImportProgressBarText);
-        gTextView_ImportProgressBarText.setText("0/0");
 
         //Set the log textView to be able to scroll vertically:
         gtextView_ImportLog = getView().findViewById(R.id.textView_ImportLog);
         gtextView_ImportLog.setMovementMethod(new ScrollingMovementMethod());
-        //Init log:
-        gtextView_ImportLog.setText("");
 
-        if(!viewModelImportActivity.bImportInitiated) {
-            viewModelImportActivity.bImportInitiated = true; //This prevents import from starting again
+
+        if(globalClass.gbImportExecutionStarted && !globalClass.gbImportExecutionRunning) {
+            gProgressBar_ImportProgress.setProgress(0);
+            gTextView_ImportProgressBarText.setText("0/0");
+            gtextView_ImportLog.setText("");
+            globalClass.gsbImportExecutionLog = new StringBuilder();
+            globalClass.gbImportExecutionStarted = false;
+            globalClass.gbImportExecutionRunning = true;//This prevents import from starting again
                                                              // if the activity/fragment is restarted due to an orientation change, etc.
             //Initiate the file import via ImportActivityDataService:
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
@@ -120,6 +128,28 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                         viewModelImportActivity.alfiConfirmedFileImports,
                         viewModelImportActivity.iImportMethod,
                         viewModelImportActivity.iImportMediaCategory);
+            }
+        } else {
+            //If an import has been started...
+            //Refresh the text and progress:
+            gProgressBar_ImportProgress.setProgress(globalClass.giImportExecutionProgressBarPercent);
+            gTextView_ImportProgressBarText.setText(globalClass.gsImportExecutionProgressBarText);
+            gtextView_ImportLog.setText(globalClass.gsbImportExecutionLog.toString());
+
+
+            if(globalClass.gbImportExecutionFinished){
+                //If the user has returned to this fragment and the import is finished,
+                //  enable the buttons:
+                if(getView() != null) {
+                    Button button_ImportFinish = getView().findViewById(R.id.button_ImportFinish);
+                    if (button_ImportFinish != null) {
+                        button_ImportFinish.setEnabled(true);
+                    }
+                    Button button_ImportRestart = getView().findViewById(R.id.button_ImportRestart);
+                    if (button_ImportRestart != null) {
+                        button_ImportRestart.setEnabled(true);
+                    }
+                }
             }
         }
 
@@ -178,7 +208,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                                     button_ImportRestart.setEnabled(true);
                                 }
                             }
-                            viewModelImportActivity.bImportInitiated = false;
+
                         }
                     }
                 }

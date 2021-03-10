@@ -139,26 +139,38 @@ public class Activity_Import extends AppCompatActivity {
 
         stackFragmentOrder = new Stack<>();
 
-        giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
 
-        //Check to see if this activity has been started by an activity desiring mods to a
-        //  particular media category set of tags:
-        Intent iStartingIntent = getIntent();
-        if(iStartingIntent != null){
-            int iMediaCategory = iStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
-            if(iMediaCategory != -1){
-                viewModelImportActivity.iImportMediaCategory = iMediaCategory;
+        if(globalClass.gbImportExecutionRunning && !globalClass.gbImportExecutionFinished){
+            //If an import operation has been started and is not finished, go to the execute
+            //  fragment which will show the user the log.
+            giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT;
+            ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+            stackFragmentOrder.push(giStartingFragment);
 
-                if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                    giStartingFragment = FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE;
+        } else {
+
+            giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
+            //Check to see if this activity has been started by an activity desiring mods to a
+            //  particular media category set of tags:
+            Intent iStartingIntent = getIntent();
+            if(iStartingIntent != null){
+                int iMediaCategory = iStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
+                if(iMediaCategory != -1){
+                    viewModelImportActivity.iImportMediaCategory = iMediaCategory;
+
+                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                        giStartingFragment = FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE;
+                    } else {
+                        giStartingFragment = FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION;
+                    }
+                    gotoMediaCategorySelectedFragment(iMediaCategory);
                 } else {
-                    giStartingFragment = FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION;
+                    stackFragmentOrder.push(giStartingFragment);
                 }
-                gotoMediaCategorySelectedFragment(iMediaCategory);
             }
+
         }
 
-        stackFragmentOrder.push(giStartingFragment);
     }
 
     @Override
@@ -179,7 +191,7 @@ public class Activity_Import extends AppCompatActivity {
             //Get boolean indicating that an error may have occurred:
             boolean bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
             String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
-            if(sReceiver == Service_Import.RECEIVER_ACTIVITY_IMPORT) {
+            if(sReceiver.equals(Service_Import.RECEIVER_ACTIVITY_IMPORT)) {
                 if (bError) {
                     String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
                     Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
@@ -230,7 +242,7 @@ public class Activity_Import extends AppCompatActivity {
     public void onBackPressed() {
 
         if(stackFragmentOrder.empty()){
-            finish();
+            gotoFinish();
         } else {
             //Go back through the fragments in the order by which we progressed.
             //  Some user selections will cause a fragment to be skipped, and we don't want
@@ -238,7 +250,7 @@ public class Activity_Import extends AppCompatActivity {
             int iCurrentFragment = ViewPager2_Import.getCurrentItem();
             int iPrevFragment = stackFragmentOrder.pop();
             if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)){
-                finish();
+                gotoFinish();
                 return;
             }
             if(iCurrentFragment == iPrevFragment){
@@ -276,16 +288,13 @@ public class Activity_Import extends AppCompatActivity {
 
         if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
             viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).
+            globalClass.gbImportExecutionStarted = false;
             viewModelImportActivity.iImportMediaCategory = iNewImportMediaCatagory;
         }
 
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-            ViewPager2_Import.setCurrentItem(
-                    FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION,
-                    false); //smoothScroll false => don't show slide over animation,
-                                        // as it will slide past the COMIC_SOURCE fragment, which
-                                        // should not be shown for this selection.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
         } else {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE, false); //Prompt user to select comic source.
         }
@@ -381,12 +390,15 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ImportConfirm(View v){
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT, false);
+        globalClass.gbImportExecutionStarted = true;
+        giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
+        ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+        stackFragmentOrder.clear();
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_ImportFinish(View v){
-        finish();
+        gotoFinish();
     }
 
     public void buttonClick_ImportRestart(View v) {
@@ -397,6 +409,11 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonClick_Cancel(View v){
+        gotoFinish();
+    }
+
+    public void gotoFinish(){
+        //Code any pre-finish operations here.
         finish();
     }
     

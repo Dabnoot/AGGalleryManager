@@ -21,8 +21,6 @@ public class ViewModel_ImportActivity extends ViewModel {
     public boolean bWebAddressChanged = false;  //Used to tell Fragment_Import_5a_WebConfirmation to gather the data.
     public boolean bOnlineDataGathered = false;  //Used to tell Fragment_Import_5a_WebConfirmation to not re-gather the data
 
-    public boolean bImportInitiated = false;
-
     public boolean bUpdateImportSelectList = true; //Useful when the user goes back and selects a
     // different folder from which to import.
 
@@ -31,4 +29,5 @@ public class ViewModel_ImportActivity extends ViewModel {
 
     public ItemClass_CatalogItem ci; //Used for import of comic web item, as the comic details
                                      // are gathered before the import takes place.
+
 }

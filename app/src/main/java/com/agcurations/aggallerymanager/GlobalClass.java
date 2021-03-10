@@ -81,6 +81,12 @@ public class GlobalClass extends Application {
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
+    public boolean gbImportExecutionStarted = false;
+    public boolean gbImportExecutionRunning = false;
+    public boolean gbImportExecutionFinished = false;
+    public StringBuilder gsbImportExecutionLog = new StringBuilder();
+    public int giImportExecutionProgressBarPercent = 0;
+    public String gsImportExecutionProgressBarText = "";
 
     //=====================================================================================
     //===== Network Monitoring ============================================================

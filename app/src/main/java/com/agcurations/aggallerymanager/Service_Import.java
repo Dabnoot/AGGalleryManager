@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
@@ -66,7 +65,6 @@ public class Service_Import extends IntentService {
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
     public static final String COMIC_DETAILS_LOG_MESSAGE = "COMIC_DETAILS_LOG_MESSAGE";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
-    public static final String COMIC_DETAILS_ERROR_MESSAGE = "COMIC_DETAILS_ERROR_MESSAGE";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
 
     public static final String RECEIVER_STORAGE_LOCATION = "com.agcurations.aggallerymanager.extra.RECEIVER_STORAGE_LOCATION";
@@ -135,6 +133,8 @@ public class Service_Import extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
 
+            GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
             if (ACTION_GET_DIRECTORY_CONTENTS.equals(action)) {
                 final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
                 Uri uriImportTreeUri = Uri.parse(sImportTreeUri);
@@ -153,7 +153,8 @@ public class Service_Import extends IntentService {
                         alFileList,
                         iMoveOrCopy,
                         iMediaCategory);
-
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_IMPORT_NHCOMICS.equals(action)) {
                 @SuppressWarnings("unchecked")
                 final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
@@ -163,7 +164,8 @@ public class Service_Import extends IntentService {
                         alFileList,
                         iMoveOrCopy
                 );
-
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_IMPORT_COMIC_FOLDERS.equals(action)) {
                 @SuppressWarnings("unchecked")
                 final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
@@ -173,7 +175,8 @@ public class Service_Import extends IntentService {
                         alFileList,
                         iMoveOrCopy
                 );
-
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
                 final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
                 handleAction_startActionGetComicDetailsOnline(sAddress);
@@ -187,6 +190,8 @@ public class Service_Import extends IntentService {
                     e.printStackTrace();
                     problemNotificationConfig(e.getMessage(), RECEIVER_EXECUTE_IMPORT);  //todo: make sure that this is properly handled in Execute_Import.
                 }
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
 
             }
         }
@@ -836,10 +841,16 @@ public class Service_Import extends IntentService {
                 String sTempFileName = sFileName;
                 while(fDestinationFile.exists()){
                     i++;
-                    sTempFileName = sFileName + "(" + i + ")";
-                    fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sFileName);
-                }
-                sFileName = sTempFileName;
+                    sTempFileName = GlobalClass.JumbleFileName(sFileName);
+                    int j = sTempFileName.lastIndexOf(".");
+                    if(j > 0) {
+                        sTempFileName = sTempFileName.substring(0, j) + "(" + i + ")" + sTempFileName.substring(j);
+                    } else {
+                        sTempFileName = sTempFileName + "(" + i + ")";
+                    }
+                    sTempFileName = GlobalClass.JumbleFileName(sTempFileName);
+                    fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sTempFileName);
+                }                sFileName = sTempFileName;
 
                 boolean bCopyViaStream = true;
 
@@ -2136,6 +2147,16 @@ public class Service_Import extends IntentService {
                                   boolean bUpdatePercentComplete, int iAmountComplete,
                                   boolean bUpdateProgressBarText, String sProgressBarText,
                                   String sReceiver){
+
+        //Preserve the log for the event of a screen rotation, or activity looses focus:
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        globalClass.gsbImportExecutionLog.append(sLogLine);
+        if(bUpdatePercentComplete) {
+            globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
+        }
+        if(bUpdateProgressBarText){
+            globalClass.gsImportExecutionProgressBarText = sProgressBarText;
+        }
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();

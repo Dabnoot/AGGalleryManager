@@ -68,7 +68,7 @@
             android:layout_height="67dp"
             android:layout_marginBottom="10dp"
             android:onClick="buttonClick_ImportRestart"
-            android:text="Import"
+            android:text="Back"
             android:textSize="24sp"
             android:enabled="false"
             app:backgroundTint="@color/colorBlackboardRed"
