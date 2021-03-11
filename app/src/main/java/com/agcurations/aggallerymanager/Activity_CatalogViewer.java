@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -20,6 +21,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,6 +33,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,6 +56,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     Toast toastLastToastMessage;
 
+    ProgressBar gProgressBar_CatalogSortProgress;
+    TextView gTextView_CatalogSortProgressBarText;
+
     private Menu ActivityMenu;
 
     private CatalogViewerServiceResponseReceiver catalogViewerServiceResponseReceiver;
@@ -63,7 +69,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         setTheme(R.style.MainTheme);
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_catalog);
+        setContentView(R.layout.activity_catalog_viewer);
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -94,6 +100,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         catalogViewerServiceResponseReceiver = new CatalogViewerServiceResponseReceiver();
         //registerReceiver(importDataServiceResponseReceiver, filter);
         LocalBroadcastManager.getInstance(this).registerReceiver(catalogViewerServiceResponseReceiver,filter);
+
+        gProgressBar_CatalogSortProgress = findViewById(R.id.progressBar_CatalogSortProgress);
+        gTextView_CatalogSortProgressBarText = findViewById(R.id.textView_CatalogSortProgressBarText);
 
 
         //See additional initialization in onCreateOptionsMenu().
@@ -382,8 +391,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
 
                 //Check to see if this is a response to request to SortAndFilterCatalogDisplay:
-                boolean bIsSortAndFilterCatalogDisplayResponse = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
-                if(bIsSortAndFilterCatalogDisplayResponse) {
+                boolean bRefreshCatalogDisplay = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
+                if(bRefreshCatalogDisplay) {
                     //Apply the new TreeMap to the RecyclerView:
                     gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap, getApplicationContext());
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
@@ -391,16 +400,42 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     if(toastLastToastMessage != null){
                         toastLastToastMessage.cancel();
                     }
+                    if(gProgressBar_CatalogSortProgress != null && gTextView_CatalogSortProgressBarText != null){
+                        gProgressBar_CatalogSortProgress.setVisibility(View.INVISIBLE);
+                        gTextView_CatalogSortProgressBarText.setVisibility(View.INVISIBLE);
+                    }
                     toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT);
                     toastLastToastMessage.show();
                 }
 
+                //Check to see if this is a response to update log or progress bar:
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
 
+                //Get booleans from the intent telling us what to update:
+                bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
 
-            }
+                if(bUpdatePercentComplete){
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    if(gProgressBar_CatalogSortProgress != null) {
+                        gProgressBar_CatalogSortProgress.setProgress(iAmountComplete);
+                    }
+                }
+                if(bUpdateProgressBarText){
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    if(gTextView_CatalogSortProgressBarText != null) {
+                        gTextView_CatalogSortProgressBarText.setText(sProgressBarText);
+                    }
+                }
 
-        }
-    }
+            } //End if not an error message.
+
+        } //End onReceive.
+
+    } //End CatalogViewerServiceResponseReceiver.
 
     private void SetRestrictedIconToLock(){
         MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
@@ -423,8 +458,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
         globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] = false;
     }
-
-
 
     //=====================================================================================
     //===== RecyclerView Code =================================================================
@@ -676,6 +709,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     public void populate_RecyclerViewCatalogItems(){
 
         popCalls++; //This line just to allow catch of the debugger here. Call after is optimized away.
+        if(gProgressBar_CatalogSortProgress != null && gTextView_CatalogSortProgressBarText != null){
+            gProgressBar_CatalogSortProgress.setVisibility(View.VISIBLE);
+            gTextView_CatalogSortProgressBarText.setVisibility(View.VISIBLE);
+        }
         Service_CatalogViewer.startActionSortAndFilterCatalogDisplay(this);
 
     }

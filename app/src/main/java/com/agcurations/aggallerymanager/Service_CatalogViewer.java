@@ -125,7 +125,6 @@ public class Service_CatalogViewer extends IntentService {
                 sbBuffer.append(brReader.readLine());
                 sbBuffer.append("\n");
 
-                String[] sFields;
                 String sLine = brReader.readLine();
                 bSuccess = false;
                 ItemClass_CatalogItem ciFromFile;
@@ -204,6 +203,10 @@ public class Service_CatalogViewer extends IntentService {
         treeMapPreSort = new TreeMap<>();
 
         //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
+        int iProgressNumerator = 1;
+        int iProgressDenominator = globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).size() + 1;
+        int iProgressBarValue;
+
         String sKey;
         for (Map.Entry<String, ItemClass_CatalogItem>
                 entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
@@ -222,8 +225,7 @@ public class Service_CatalogViewer extends IntentService {
             //  filter is to be applied, check for a match. If no match, don't add the record to
             //  the TreeMap destined for the RecyclerView:
             boolean bIsFilterMatch = true;
-            if(!globalClass.gsCatalogViewerFilterText.equals("")) {
-                StringBuilder sbRecordText;
+            if(!globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].equals("")) {
                 String sFilterText_LowerCase = globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
                 String sKey_RecordText;
 
@@ -245,12 +247,12 @@ public class Service_CatalogViewer extends IntentService {
                     String[] saRecordTags = sRecordTags.split(",");
                     for (String s : saRecordTags) {
                         //if list of restricted tags contains this particular record tag, mark as restricted item:
-                        Integer iTagID = -1;
-                        String sErrorMessage;
+                        int iTagID;
+                        //String sErrorMessage;
                         try {
                             iTagID = Integer.parseInt(s);
                         } catch (Exception e){
-                            sErrorMessage = e.getMessage();
+                            //sErrorMessage = e.getMessage();
                             continue;
                         }
                         ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
@@ -268,6 +270,12 @@ public class Service_CatalogViewer extends IntentService {
                 treeMapPreSort.put(sKey, entry.getValue());
             }
 
+            iProgressNumerator++;
+            if(iProgressNumerator % 1 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(true, iProgressBarValue,
+                        true, iProgressNumerator + "/" + iProgressDenominator);
+            }
         }
 
         //TreeMap presort will auto-sort itself.
@@ -283,10 +291,20 @@ public class Service_CatalogViewer extends IntentService {
             iIterator = -1;
         }
 
+        /* //No need to refresh the progress here - it is pretty quick.
+        iProgressNumerator = 0;
+        iProgressDenominator = treeMapPreSort.size();*/
         for (Map.Entry<String, ItemClass_CatalogItem>
                 entry : treeMapPreSort.entrySet()) {
             tmNewOrderCatalogList.put(iRID, entry.getValue());
             iRID += iIterator;
+            /* //No need to show progress here - it is pretty quick.
+            iProgressNumerator++;
+            if(iProgressNumerator % 2 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(true, iProgressBarValue,
+                        true, iProgressNumerator + "/" + iProgressDenominator);
+            }*/
         }
 
         globalClass.gtmCatalogViewerDisplayTreeMap = tmNewOrderCatalogList;
@@ -307,11 +325,34 @@ public class Service_CatalogViewer extends IntentService {
 
     void problemNotificationConfig(String sMessage){
         Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_Problem.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
         broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
+    }
+
+    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
+    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
+    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
+    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
+
+    public void BroadcastProgress(boolean bUpdatePercentComplete, int iAmountComplete,
+                                  boolean bUpdateProgressBarText, String sProgressBarText){
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
+        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
+        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
+        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
+
+        //sendBroadcast(broadcastIntent);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
     }
 
 

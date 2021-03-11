@@ -180,7 +180,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
-                //Check to see if this is a response to request to get directory contents:
+                //Check to see if this is a response to update log or progress bar:
                 boolean 	bUpdateLog;
                 boolean 	bUpdatePercentComplete;
                 boolean 	bUpdateProgressBarText;
