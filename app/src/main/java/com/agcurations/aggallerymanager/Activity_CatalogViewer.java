@@ -393,6 +393,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 //Check to see if this is a response to request to SortAndFilterCatalogDisplay:
                 boolean bRefreshCatalogDisplay = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
                 if(bRefreshCatalogDisplay) {
+                    //Catalog sort is complete.
+
+                    if(gProgressBar_CatalogSortProgress != null) {
+                        gProgressBar_CatalogSortProgress.setProgress(100);
+                    }
+                    if(gTextView_CatalogSortProgressBarText != null) {
+                        String s = "100%";
+                        gTextView_CatalogSortProgressBarText.setText(s);
+                    }
+
                     //Apply the new TreeMap to the RecyclerView:
                     gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap, getApplicationContext());
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
@@ -404,6 +414,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         gProgressBar_CatalogSortProgress.setVisibility(View.INVISIBLE);
                         gTextView_CatalogSortProgressBarText.setVisibility(View.INVISIBLE);
                     }
+
                     toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT);
                     toastLastToastMessage.show();
                 }

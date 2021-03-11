@@ -274,7 +274,7 @@ public class Service_CatalogViewer extends IntentService {
             if(iProgressNumerator % 1 == 0) {
                 iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
                 BroadcastProgress(true, iProgressBarValue,
-                        true, iProgressNumerator + "/" + iProgressDenominator);
+                        true, iProgressBarValue + "%");
             }
         }
 
