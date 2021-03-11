@@ -147,6 +147,13 @@ public class Activity_Import extends AppCompatActivity {
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.push(giStartingFragment);
 
+        } else if(globalClass.gbImportComicWebAnalysisRunning && !globalClass.gbImportComicWebAnalysisFinished){
+            //If a comic web analysis operation has been started and is not finished, go to the appropriate
+            // fragment.
+            giStartingFragment = FRAGMENT_IMPORT_5A_WEB_CONFIRMATION;
+            ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+            stackFragmentOrder.push(giStartingFragment);
+
         } else {
 
             giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
@@ -346,21 +353,13 @@ public class Activity_Import extends AppCompatActivity {
         //Done with entering the WebAddress
         if(!viewModelImportActivity.sWebAddress.equals("")) {
 
-            if(!viewModelImportActivity.sWebAddress.equals(viewModelImportActivity.sLPWebAddress)) {
-                viewModelImportActivity.bWebAddressChanged = true;
-                viewModelImportActivity.bOnlineDataGathered = false;
-                viewModelImportActivity.sLPWebAddress = viewModelImportActivity.sWebAddress;
-            }
-
-            //Go to the import folder selection fragment:
-            if (viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
-            } else {
-                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
-                    ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_WEB_CONFIRMATION, false);
-                }
-            }
+            globalClass.gbImportComicWebAnalysisStarted = true;
+            globalClass.gbImportComicWebAnalysisFinished = false;
+            giStartingFragment = FRAGMENT_IMPORT_5A_WEB_CONFIRMATION; //Don't allow user to go back.
+            ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+            stackFragmentOrder.clear();
             stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+
         } else {
             Toast.makeText(getApplicationContext(), "Please provide a web address." , Toast.LENGTH_SHORT).show();
         }
@@ -391,6 +390,7 @@ public class Activity_Import extends AppCompatActivity {
 
     public void buttonNextClick_ImportConfirm(View v){
         globalClass.gbImportExecutionStarted = true;
+        globalClass.gbImportExecutionFinished = false;
         giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
         ViewPager2_Import.setCurrentItem(giStartingFragment, false);
         stackFragmentOrder.clear();

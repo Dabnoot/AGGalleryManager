@@ -121,7 +121,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                             viewModelImportActivity.iComicImportSource);
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
                     Service_Import.startActionImportComicWebFiles(getContext(),
-                            viewModelImportActivity.ci);
+                            globalClass.gci_ImportComicWebItem);
                 }
             } else {
                 Service_Import.startActionImportFiles(getContext(),

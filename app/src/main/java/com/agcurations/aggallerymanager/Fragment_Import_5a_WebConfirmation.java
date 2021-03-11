@@ -29,7 +29,7 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
 
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
 
-    ItemClass_CatalogItem gciCatalogItem;
+    //ItemClass_CatalogItem gciCatalogItem;
 
     GlobalClass globalClass;
 
@@ -94,16 +94,19 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
         TextView textView_WebImportDetails = getView().findViewById(R.id.textView_WebImportDetails);
         textView_WebImportDetails.setMovementMethod(new ScrollingMovementMethod());
 
-
-        if(viewModelImportActivity.bWebAddressChanged) {
+        if(globalClass.gbImportComicWebAnalysisStarted && !globalClass.gbImportComicWebAnalysisRunning) {
             if (globalClass.isNetworkConnected) {
+                textView_WebImportDetails.setText("");
+                globalClass.gsbImportComicWebAnalysisLog = new StringBuilder();
+                globalClass.gbImportComicWebAnalysisStarted = false;
+                globalClass.gbImportComicWebAnalysisRunning = true;//This prevents import from starting again
+                // if the activity/fragment is restarted due to an orientation change, etc.
                 Service_Import.startActionAcquireNHComicsDetails(getActivity(), viewModelImportActivity.sWebAddress);
-                viewModelImportActivity.bWebAddressChanged = false;
             } else {
                 Toast.makeText(getActivity(), "No network connected.", Toast.LENGTH_LONG).show();
             }
         }
-
+        updateViews();
     }
 
 
@@ -134,100 +137,97 @@ public class Fragment_Import_5a_WebConfirmation extends Fragment {
                 textView_WebImportDetailsLog.append(sMessage);
 
             } else {
-
-                String sLogMessage;
-                sLogMessage = intent.getStringExtra(Service_Import.COMIC_DETAILS_LOG_MESSAGE);
-                if(sLogMessage != null){
-                    textView_Title.setVisibility(View.INVISIBLE);
-                    textView_WebImportDetails.setVisibility((View.INVISIBLE));
-                    textView_WebImportDetailsLog.setVisibility(View.VISIBLE);
-                    textView_WebImportDetailsLog.append(sLogMessage);
-                    return;
-                }
-                textView_WebImportDetailsLog.setText("");
-                textView_WebImportDetailsLog.setVisibility(View.INVISIBLE);
-                textView_Title.setVisibility(View.VISIBLE);
-                textView_WebImportDetails.setVisibility((View.VISIBLE));
-
-                boolean bComicDetailsDataServiceSuccess;
-                bComicDetailsDataServiceSuccess = intent.getBooleanExtra(Service_Import.COMIC_DETAILS_SUCCESS,
-                        false);
-
-                String sErrorMessage;
-                if(bComicDetailsDataServiceSuccess) {
-
-                    gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(Service_Import.COMIC_CATALOG_ITEM);
-                    gciCatalogItem.bComic_Online_Data_Acquired = true;
-
-                    Toast.makeText(getActivity(), "Online data acquired.", Toast.LENGTH_SHORT).show();
-
-                    ImageView imageView_Thumbnail;
-                    imageView_Thumbnail = getView().findViewById(R.id.imageView_Thumbnail);
-
-                    if(textView_Title != null) {
-                        textView_Title.setText(gciCatalogItem.sComicName);
-                    }
-                    String sComicDetails = "";
-                    if(!gciCatalogItem.sSource.equals("")) sComicDetails = sComicDetails + "Source: " + gciCatalogItem.sSource + "\n\n";
-                    String sPages = "" + gciCatalogItem.iComicPages;
-                    sComicDetails = sComicDetails + sPages + " pages." + "\n\n";
-
-                    //Display the required & available space:
-                    long lSize = gciCatalogItem.lSize;
-                    String sRequiredSpaceSuffix = "";
-                    if(lSize == -1){ //-1 if the online connection header for each file did not contain size data.
-                        lSize = 800 * 1024 * gciCatalogItem.iComicPages; //Average page uses 800 KB.
-                        sRequiredSpaceSuffix = " (estimated)";
-                    }
-                    String sRS = GlobalClass.CleanStorageSize(lSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
-                    String sRequiredSpace = "Required space: " +
-                            sRS +
-                            sRequiredSpaceSuffix +
-                            ".";
-                    //Get the units from 'required space' to match with 'available space':
-                    String sData[] = sRS.split(" ");
-                    String sStorageUnit = GlobalClass.STORAGE_SIZE_NO_PREFERENCE;
-                    if(sData.length == 2) {
-                        sStorageUnit = sData[1];
-                    }
-                    //Display the available space:
-                    long lAvailableStorageSpaceBytes;
-                    lAvailableStorageSpaceBytes = globalClass.AvailableStorageSpace(getActivity().getApplicationContext(), 1);
-                    String sAvailableStorageSpace = GlobalClass.CleanStorageSize(lAvailableStorageSpaceBytes, sStorageUnit);
-                    sComicDetails = sComicDetails + sRequiredSpace + " Available space: " + sAvailableStorageSpace + ".\n\n";
-
-                    if(!gciCatalogItem.sComicParodies.equals("")) sComicDetails = sComicDetails + "Parodies: " + gciCatalogItem.sComicParodies + "\n\n";
-                    if(!gciCatalogItem.sComicCharacters.equals("")) sComicDetails = sComicDetails + "Characters: " + gciCatalogItem.sComicCharacters + "\n\n";
-                    if(!gciCatalogItem.sTags.equals("")) sComicDetails = sComicDetails + "Tags: " + gciCatalogItem.sTags + "\n\n";
-                    if(!gciCatalogItem.sComicArtists.equals("")) sComicDetails = sComicDetails + "Artists: " + gciCatalogItem.sComicArtists + "\n\n";
-                    if(!gciCatalogItem.sComicGroups.equals("")) sComicDetails = sComicDetails + "Groups: " + gciCatalogItem.sComicGroups + "\n\n";
-                    if(!gciCatalogItem.sComicLanguages.equals("")) sComicDetails = sComicDetails + "Languages: " + gciCatalogItem.sComicLanguages + "\n\n";
-                    if(!gciCatalogItem.sComicCategories.equals("")) sComicDetails = sComicDetails + "Categories: " + gciCatalogItem.sComicCategories;
-                    if(textView_WebImportDetails != null){
-                        textView_WebImportDetails.setText(sComicDetails);
-                    }
-
-                    //Load the thumbnail:
-                    RequestOptions options = new RequestOptions()
-                            .centerCrop()
-                            .placeholder(R.drawable.baseline_image_white_18dp)
-                            .error(R.drawable.attention_32px);
-
-                    Glide.with(getActivity()).load(gciCatalogItem.sComicThumbnailURL).apply(options).into(imageView_Thumbnail);
-
-                    //Preserve this CatalogItem data for other import operations:
-                    viewModelImportActivity.ci = gciCatalogItem;
-
-                    Button button_ImportConfirmation = getView().findViewById(R.id.button_ImportConfirmation);
-                    if(button_ImportConfirmation != null){
-                        button_ImportConfirmation.setEnabled(true);
-                    }
-
-                } //End successful comic data retrieval behavior.
+                updateViews();
 
             } //End if/else error message/no error message.
 
         } //End onReceive.
+
+    }
+
+    private void updateViews(){
+        TextView textView_Title;
+        textView_Title = getView().findViewById(R.id.textView_Title);
+        TextView textView_WebImportDetails;
+        textView_WebImportDetails = getView().findViewById(R.id.textView_WebImportDetails);
+        TextView textView_WebImportDetailsLog; //For use while the web analysis is occurring.
+        textView_WebImportDetailsLog = getView().findViewById(R.id.textView_WebImportDetailsLog);
+        ImageView imageView_Thumbnail;
+        imageView_Thumbnail = getView().findViewById(R.id.imageView_Thumbnail);
+
+
+        if(globalClass.gbImportComicWebAnalysisFinished){
+            textView_WebImportDetailsLog.setText("");
+            textView_WebImportDetailsLog.setVisibility(View.INVISIBLE);
+            textView_Title.setVisibility(View.VISIBLE);
+            textView_WebImportDetails.setVisibility((View.VISIBLE));
+
+            if(textView_Title != null) {
+                textView_Title.setText(globalClass.gci_ImportComicWebItem.sComicName);
+            }
+            String sComicDetails = "";
+            if(!globalClass.gci_ImportComicWebItem.sSource.equals("")) sComicDetails = sComicDetails + "Source: " + globalClass.gci_ImportComicWebItem.sSource + "\n\n";
+            String sPages = "" + globalClass.gci_ImportComicWebItem.iComicPages;
+            sComicDetails = sComicDetails + sPages + " pages." + "\n\n";
+
+            //Display the required & available space:
+            long lSize = globalClass.gci_ImportComicWebItem.lSize;
+            String sRequiredSpaceSuffix = "";
+            if(lSize == -1){ //-1 if the online connection header for each file did not contain size data.
+                lSize = 800 * 1024 * globalClass.gci_ImportComicWebItem.iComicPages; //Average page uses 800 KB.
+                sRequiredSpaceSuffix = " (estimated)";
+            }
+            String sRS = GlobalClass.CleanStorageSize(lSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
+            String sRequiredSpace = "Required space: " +
+                    sRS +
+                    sRequiredSpaceSuffix +
+                    ".";
+            //Get the units from 'required space' to match with 'available space':
+            String[] sData = sRS.split(" ");
+            String sStorageUnit = GlobalClass.STORAGE_SIZE_NO_PREFERENCE;
+            if(sData.length == 2) {
+                sStorageUnit = sData[1];
+            }
+            //Display the available space:
+            long lAvailableStorageSpaceBytes;
+            lAvailableStorageSpaceBytes = globalClass.AvailableStorageSpace(getActivity().getApplicationContext(), 1);
+            String sAvailableStorageSpace = GlobalClass.CleanStorageSize(lAvailableStorageSpaceBytes, sStorageUnit);
+            sComicDetails = sComicDetails + sRequiredSpace + " Available space: " + sAvailableStorageSpace + ".\n\n";
+
+            if(!globalClass.gci_ImportComicWebItem.sComicParodies.equals("")) sComicDetails = sComicDetails + "Parodies: " + globalClass.gci_ImportComicWebItem.sComicParodies + "\n\n";
+            if(!globalClass.gci_ImportComicWebItem.sComicCharacters.equals("")) sComicDetails = sComicDetails + "Characters: " + globalClass.gci_ImportComicWebItem.sComicCharacters + "\n\n";
+            if(!globalClass.gci_ImportComicWebItem.sTags.equals("")) sComicDetails = sComicDetails + "Tags: " + globalClass.gci_ImportComicWebItem.sTags + "\n\n";
+            if(!globalClass.gci_ImportComicWebItem.sComicArtists.equals("")) sComicDetails = sComicDetails + "Artists: " + globalClass.gci_ImportComicWebItem.sComicArtists + "\n\n";
+            if(!globalClass.gci_ImportComicWebItem.sComicGroups.equals("")) sComicDetails = sComicDetails + "Groups: " + globalClass.gci_ImportComicWebItem.sComicGroups + "\n\n";
+            if(!globalClass.gci_ImportComicWebItem.sComicLanguages.equals("")) sComicDetails = sComicDetails + "Languages: " + globalClass.gci_ImportComicWebItem.sComicLanguages + "\n\n";
+            if(!globalClass.gci_ImportComicWebItem.sComicCategories.equals("")) sComicDetails = sComicDetails + "Categories: " + globalClass.gci_ImportComicWebItem.sComicCategories;
+            if(textView_WebImportDetails != null){
+                textView_WebImportDetails.setText(sComicDetails);
+            }
+
+            //Load the thumbnail:
+            RequestOptions options = new RequestOptions()
+                    .centerCrop()
+                    .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                    .error(R.drawable.attention_32px_wpagepad);
+
+            Glide.with(getActivity()).load(globalClass.gci_ImportComicWebItem.sComicThumbnailURL).apply(options).into(imageView_Thumbnail);
+            imageView_Thumbnail.setVisibility(View.VISIBLE);
+
+            if(getView() != null) {
+                Button button_ImportConfirmation = getView().findViewById(R.id.button_ImportConfirmation);
+                if(button_ImportConfirmation != null){
+                    button_ImportConfirmation.setEnabled(true);
+                }
+            }
+        } else {
+            //If web analysis is not finished...
+            imageView_Thumbnail.setImageDrawable(null);
+            textView_Title.setVisibility(View.INVISIBLE);
+            textView_WebImportDetails.setVisibility((View.INVISIBLE));
+            textView_WebImportDetailsLog.setVisibility(View.VISIBLE);
+            textView_WebImportDetailsLog.setText(globalClass.gsbImportComicWebAnalysisLog.toString());
+        }
 
     }
 

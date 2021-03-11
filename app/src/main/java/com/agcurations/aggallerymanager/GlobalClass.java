@@ -81,12 +81,23 @@ public class GlobalClass extends Application {
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
+    //Variables to control starting of import execution:
+    // These variables prevent the system/user from starting another import until an existing
+    // import operation is finished.
     public boolean gbImportExecutionStarted = false;
     public boolean gbImportExecutionRunning = false;
     public boolean gbImportExecutionFinished = false;
     public StringBuilder gsbImportExecutionLog = new StringBuilder();
     public int giImportExecutionProgressBarPercent = 0;
     public String gsImportExecutionProgressBarText = "";
+    //Variables to control starting of comic web address analysis:
+    // These variables prevent the system/user from starting another analysis until an existing
+    // operation is finished.
+    public boolean gbImportComicWebAnalysisStarted = false;
+    public boolean gbImportComicWebAnalysisRunning = false;
+    public boolean gbImportComicWebAnalysisFinished = false;
+    public StringBuilder gsbImportComicWebAnalysisLog = new StringBuilder();
+    public ItemClass_CatalogItem gci_ImportComicWebItem;  //To capture a potential import.
 
     //=====================================================================================
     //===== Network Monitoring ============================================================

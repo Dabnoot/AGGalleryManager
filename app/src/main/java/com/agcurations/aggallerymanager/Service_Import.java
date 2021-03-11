@@ -180,7 +180,8 @@ public class Service_Import extends IntentService {
             } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
                 final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
                 handleAction_startActionGetComicDetailsOnline(sAddress);
-
+                globalClass.gbImportComicWebAnalysisRunning = false;
+                globalClass.gbImportComicWebAnalysisFinished = true;
             } else if (ACTION_IMPORT_COMIC_WEB_FILES.equals(action)) {
                 final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
                 if(ci == null) return;
@@ -1756,7 +1757,9 @@ public class Service_Import extends IntentService {
             ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
             ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
             ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
-            ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+            if(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX] != "") {
+                ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+            }
 
             //Get the first thumbnail image for import preview:
             BroadcastProgress_ComicDetails("Looking for cover page thumbnail.\n");
@@ -1856,24 +1859,31 @@ public class Service_Import extends IntentService {
 
         } catch(Exception e){
             String sMsg = e.getMessage();
+            BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMsg + "\n");
             broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, true);
             broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sMsg);
             sendBroadcast(broadcastIntent);
+
             return;
         }
 
 
+        ci.bComic_Online_Data_Acquired = true;
+
+        if(ci.iComicPages > 0) {
+            //Put potential catalog item in globalclass to handle reset of activity if user leaves
+            //  activity or rotates the screen:
+            globalClass.gci_ImportComicWebItem = ci;
+
+            //Broadcast a message to be picked up by the Import fragment to refresh the views:
+            broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+        } else {
+            BroadcastProgress_ComicDetails("No comic pages found.\n");
+        }
 
 
 
-        //Apply booleans to the intent to tell the receiver success, data available,
-        //  and set the data where appropriate:
-        broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
-        broadcastIntent.putExtra(COMIC_CATALOG_ITEM, ci);
-
-        //Log.d("Comics", "Finished downloading from " + ci.sSource);
-
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
     }
 
@@ -2177,6 +2187,9 @@ public class Service_Import extends IntentService {
     }
 
     public void BroadcastProgress_ComicDetails(String sLogLine){
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
+
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(Fragment_Import_5a_WebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
