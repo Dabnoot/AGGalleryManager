@@ -81,6 +81,18 @@ public class GlobalClass extends Application {
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
+
+    //Variables to control starting of import folder content analysis:
+    // These variables prevent the system/user from starting another folder analysis until an
+    // existing folder analysis operation is finished.
+    //public boolean gbImportFolderAnalysisStarted = false; This item not needed for this fragment.
+    public boolean gbImportFolderAnalysisRunning = false;
+    public boolean gbImportFolderAnalysisStop = false;
+    public boolean gbImportFolderAnalysisFinished = false;
+    public StringBuilder gsbImportFolderAnalysisLog = new StringBuilder();
+    public int giImportFolderAnalysisProgressBarPercent = 0;
+    public String gsImportFolderAnalysisProgressBarText = "";
+    public String gsImportFolderAnalysisSelectedFolder = "";
     //Variables to control starting of import execution:
     // These variables prevent the system/user from starting another import until an existing
     // import operation is finished.

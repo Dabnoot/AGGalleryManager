@@ -142,7 +142,13 @@ public class Service_Import extends IntentService {
                 final int iFilesOrFolders = intent.getIntExtra(EXTRA_FILES_OR_FOLDERS, FILES_ONLY);
                 final int iComicImportSource = intent.getIntExtra(EXTRA_COMIC_IMPORT_SOURCE, -1);
                 handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory, iFilesOrFolders, iComicImportSource);
-
+                globalClass.gbImportFolderAnalysisRunning = false;
+                if(globalClass.gbImportFolderAnalysisStop) {
+                    globalClass.gbImportFolderAnalysisStop = false;
+                } else {
+                    //Only set "finished" to true if it was not stopped intentionally.
+                    globalClass.gbImportFolderAnalysisFinished = true;
+                }
             } else if (ACTION_IMPORT_FILES.equals(action)) {
                 @SuppressWarnings("unchecked")
                 final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
@@ -238,6 +244,8 @@ public class Service_Import extends IntentService {
 
                 if(cImport != null) {
 
+                    GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
                     long lProgressNumerator = 0L;
                     long lProgressDenominator;
                     int iProgressBarValue = 0;
@@ -251,8 +259,9 @@ public class Service_Import extends IntentService {
                         //Go through the folders in the users' chosen directory and count the files.
                         //  Each will be processed, and add a tick to the progressbar.
 
+
                         cImport.moveToPosition(-1);
-                        while (cImport.moveToNext()) {
+                        while (cImport.moveToNext() && !globalClass.gbImportFolderAnalysisStop) {
                             String sSubFolderDocID = cImport.getString(0);
                             String sSubFolderMimeType = cImport.getString(2);
 
@@ -290,7 +299,7 @@ public class Service_Import extends IntentService {
                     mediaMetadataRetriever = new MediaMetadataRetriever();
 
                     cImport.moveToPosition(-1);
-                    while (cImport.moveToNext()) {
+                    while (cImport.moveToNext() && !globalClass.gbImportFolderAnalysisStop) {
 
                         //Update progress bar:
                         //Update progress right away in order to avoid instances in which a loop is skipped.
@@ -611,10 +620,11 @@ public class Service_Import extends IntentService {
                                             if(iNumBlocks != file.aliNumberBlocks.size()){  //Compare the count of number blocks.
                                                 bQtyNumBlocksOk = false;
                                                 //Report a problem with this file:
-                                                problemNotificationConfig(
-                                                        "Problem identifying page number for comic in folder \"" +
-                                                                docName + "\", file \"" + file.sFileOrFolderName +
-                                                                "\". Note that the system uses alphabetization to sort comic pages.", RECEIVER_STORAGE_LOCATION);
+                                                String sMessage = "Problem identifying page number for comic in folder \"" +
+                                                        docName + "\", file \"" + file.sFileOrFolderName +
+                                                        "\". Note that the system uses alphabetization to sort comic pages.\n";
+                                                globalClass.gsbImportFolderAnalysisLog.append(sMessage);
+                                                problemNotificationConfig(sMessage, RECEIVER_STORAGE_LOCATION);
                                             }
                                         }
                                     }
@@ -2163,9 +2173,11 @@ public class Service_Import extends IntentService {
         globalClass.gsbImportExecutionLog.append(sLogLine);
         if(bUpdatePercentComplete) {
             globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
+            globalClass.giImportFolderAnalysisProgressBarPercent = iAmountComplete; //Folder analysis also uses this BroadcastProgress routine.
         }
         if(bUpdateProgressBarText){
             globalClass.gsImportExecutionProgressBarText = sProgressBarText;
+            globalClass.gsImportFolderAnalysisProgressBarText = sProgressBarText;
         }
 
         //Broadcast a message to be picked-up by the Import Activity:

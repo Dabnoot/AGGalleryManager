@@ -140,7 +140,15 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder = new Stack<>();
 
 
-        if(globalClass.gbImportExecutionRunning && !globalClass.gbImportExecutionFinished){
+        if(globalClass.gbImportFolderAnalysisRunning && !globalClass.gbImportFolderAnalysisFinished){
+            //If a folder analysis operation has been started and is not finished, go to the storage
+            // location fragment which should show the analysis progress.
+            giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
+            stackFragmentOrder.push(giStartingFragment); //DO allow user to go back to media select.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
+            stackFragmentOrder.push(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION);
+
+        } else if(globalClass.gbImportExecutionRunning && !globalClass.gbImportExecutionFinished){
             //If an import operation has been started and is not finished, go to the execute
             //  fragment which will show the user the log.
             giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT;
@@ -260,6 +268,7 @@ public class Activity_Import extends AppCompatActivity {
                 gotoFinish();
                 return;
             }
+
             if(iCurrentFragment == iPrevFragment){
                 //To handle interesting behavior about how the stack is built.
                 iPrevFragment = stackFragmentOrder.peek();
@@ -267,7 +276,7 @@ public class Activity_Import extends AppCompatActivity {
             ViewPager2_Import.setCurrentItem(iPrevFragment, false);
 
             if(iPrevFragment == giStartingFragment){
-                //There is no item to push '0' onto the fragment order stack:
+                //There is no item to push '0' onto the fragment order stack. Do it here:
                 stackFragmentOrder.push(giStartingFragment);
             }
         }
@@ -296,6 +305,9 @@ public class Activity_Import extends AppCompatActivity {
         if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
             viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).
             globalClass.gbImportExecutionStarted = false;
+            if(globalClass.gbImportFolderAnalysisRunning){
+                globalClass.gbImportFolderAnalysisStop = true;
+            }
             viewModelImportActivity.iImportMediaCategory = iNewImportMediaCatagory;
         }
 
@@ -409,6 +421,9 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonClick_Cancel(View v){
+        if(globalClass.gbImportFolderAnalysisRunning){
+            globalClass.gbImportFolderAnalysisStop = true;
+        }
         gotoFinish();
     }
 
