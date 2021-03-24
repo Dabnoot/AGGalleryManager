@@ -11,5 +11,7 @@
         android:title="Tag Editor" />
     <item android:id="@+id/menu_About"
         android:title="@string/about" />
+    <item android:id="@+id/menu_Test"
+        android:title="Test" />
 
 </menu>

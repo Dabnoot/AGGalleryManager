@@ -1145,20 +1145,6 @@ public class GlobalClass extends Application {
     public final float fCPV_VerticalPanScalar = 1.5f;
     public final float fCPV_HorizontalPanScalar = 1.5f;
 
-    //=====================================================================================
-    //===== Comic Details Activity Options =====================================================
-    //=====================================================================================
-
-    //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
-    //public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
-    //public final String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
-    //public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    public final String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public final String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public final String snHentai_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
-    public final String snHentai_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
-
 
     //=====================================================================================
     //===== Import Options ================================================================
@@ -1176,7 +1162,39 @@ public class GlobalClass extends Application {
         //The program attempts to recognize page numbers in filenames during comic import via folder.
         //  The program has to recognize the page numbering pattern. This factor allows some leniency
         //  if the user is missing pages from their comic folder - perhaps a first page, or a middle
-        //  page. There is no way to determine if end pages are missing.
+        //  page. There is no way to determine if end pages are missing. This feature is rather inert
+        // and only gives a message to the user to indicate that pages might be missing.
+
+    //nHentai comic import web html search strings (may change if the website changes)
+    //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
+    //public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
+    //public final String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
+    //public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    public final String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public final String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public final String snHentai_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
+    public final String snHentai_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
+
+    //Video import web html search strings (may change if the website changes)
+    //Create an array of keys that allow program to locate video links:
+    String VIDEO_DOWNLOAD_TITLE = "VIDEO_DOWNLOAD_TITLE";
+    String VIDEO_DOWNLOAD_LINK = "VIDEO_DOWNLOAD_LINK";
+    String VIDEO_DOWNLOAD_M3U8 = "VIDEO_DOWNLOAD_M3U8";
+    String[][] sHTML_VideoKeys = new String[][]{
+            {"www.xnxx.com", VIDEO_DOWNLOAD_TITLE, "html5player.setVideoTitle('", "');"},
+            {"www.xnxx.com", VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlLow('", "');"},
+            {"www.xnxx.com", VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlHigh('", "');"},
+            {"www.xnxx.com", VIDEO_DOWNLOAD_M3U8, "html5player.setVideoHLS('", "');"}
+    };
+
+    ArrayList<ItemClass_VideoDownloadSearchKey> galVideoDownloadSearchKeys = new ArrayList<ItemClass_VideoDownloadSearchKey>() {{
+
+        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE, "html5player.setVideoTitle('","');"));
+        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlLow('","');"));
+        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlHigh('","');"));
+        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8, "html5player.setVideoHLS('","');"));
+    }};
 
 
 }

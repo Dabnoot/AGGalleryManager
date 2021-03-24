@@ -37,6 +37,7 @@
         <item name="colorSurface">@color/colorNavigationBarPurple</item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
         <item name="actionBarStyle">@style/ActionBarTheme</item>            <!-- Sets the popup menu color -->
+
     </style>
 
 

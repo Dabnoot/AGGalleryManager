@@ -46,6 +46,8 @@ public class Service_Import extends IntentService {
     private static final String ACTION_GET_COMIC_DETAILS_ONLINE = "com.agcurations.aggallerymanager.action.GET_COMIC_DETAILS_ONLINE";
     private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
     private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
+    private static final String ACTION_DOWNLOAD_TEST = "com.agcurations.aggallerymanager.action.DOWNLOAD_TEST";
+    private static final String ACTION_GET_VIDEO_TAGS_FROM_HTML = "com.agcurations.aggallerymanager.action.GET_VIDEO_TAGS_FROM_HTML";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
@@ -66,6 +68,11 @@ public class Service_Import extends IntentService {
     public static final String COMIC_DETAILS_LOG_MESSAGE = "COMIC_DETAILS_LOG_MESSAGE";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
+
+    public static final String VIDEO_WEB_DATA_TAGS = "VIDEO_WEB_DATA_TAGS";
+
+    public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
+    public static final String EXTRA_STRING_XPATH_EXPRESSION = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION";
 
     public static final String RECEIVER_STORAGE_LOCATION = "com.agcurations.aggallerymanager.extra.RECEIVER_STORAGE_LOCATION";
     public static final String RECEIVER_EXECUTE_IMPORT = "com.agcurations.aggallerymanager.extra.RECEIVER_EXECUTE_IMPORT";
@@ -126,6 +133,21 @@ public class Service_Import extends IntentService {
         intent.setAction(ACTION_IMPORT_COMIC_WEB_FILES);
         intent.putExtra(COMIC_CATALOG_ITEM, ci);
         context.startService(intent);
+    }
+
+    public static void startActionDownloadTest(Context context){
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_DOWNLOAD_TEST);
+        context.startService(intent);
+    }
+
+    public static void startActionGetVideoTags(Context context, String sHMTL, String sXPathExpression){
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_GET_VIDEO_TAGS_FROM_HTML);
+        intent.putExtra(EXTRA_STRING_HTML, sHMTL);
+        intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION, sXPathExpression);
+        context.startService(intent);
+
     }
 
     @Override
@@ -199,6 +221,22 @@ public class Service_Import extends IntentService {
                 }
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
+            } else if (ACTION_DOWNLOAD_TEST.equals(action)) {
+
+                try {
+                    handleAction_startActionDownloadTest();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else if (ACTION_GET_VIDEO_TAGS_FROM_HTML.equals(action)) {
+
+                final String sHTML = intent.getStringExtra(EXTRA_STRING_HTML);
+                final String sxPathExpression = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION);
+                try{
+                    handleAction_startActionGetTagsFromHTML(sHTML, sxPathExpression);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
             }
         }
@@ -2077,7 +2115,125 @@ public class Service_Import extends IntentService {
 
     }
 
+    private void handleAction_startActionDownloadTest(){
+        String sAddress = "https://www.xnxx.com/video-10olx73e/jay_s_pov_-_i_had_a_threesome_with_two_hot_blonde_teens";
+        sAddress = "https://hls-hw.xnxx-cdn.com/videos/hls/0e/01/24/0e0124dc524ebea496445e40d41288a9/hls.m3u8";
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        File fDestination = new File(
+                globalClass.gfAppFolder.getAbsolutePath() + File.separator + "Test.txt");
+        InputStream input = null;
+        OutputStream output = null;
 
+        long lTotalBytesDownloaded = 0;
+        try {
+
+            if(!fDestination.exists()) {
+                // Output stream
+                output = new FileOutputStream(fDestination.getPath());
+
+                byte[] data = new byte[1024];
+
+                URL url = new URL(sAddress);
+                URLConnection connection = url.openConnection();
+                connection.connect();
+
+                // download the file
+                input = new BufferedInputStream(url.openStream(), 8192);
+
+                int count;
+                int iLoopCount = 0;
+                String sTextLine;
+                while ((count = input.read(data)) != -1) {
+
+                    // writing data to file
+                    output.write(data, 0, count);
+                    lTotalBytesDownloaded += count;
+                    iLoopCount++;
+                    if(iLoopCount % 10 == 0){
+                        sTextLine = GlobalClass.CleanStorageSize(lTotalBytesDownloaded,
+                                GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
+                        sTextLine = "Download progress: " + sTextLine;
+                        //gTextView_DownloadStatus.setText(sTextLine);
+                    }
+                }
+
+                // flushing output
+                output.flush();
+
+                // closing streams
+                output.close();
+                input.close();
+
+            }
+
+            if(output != null) {
+                output.close();
+            }
+            if(input != null) {
+                input.close();
+            }
+
+        } catch (Exception e) {
+            Log.e("Error: ", e.getMessage());
+        }
+    }
+
+    private void handleAction_startActionGetTagsFromHTML(String sHTML, String sxPathExpression){
+
+        //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
+        //  does not work well to parse this html. Modern html interpreters accommodate
+        //  certain "liberties" in the code. That parse routine is meant for tight XML.
+        //  HtmlCleaner does a good job processing the html in a manner similar to modern
+        //  browsers.
+        //Clean up the HTML:
+        HtmlCleaner pageParser = new HtmlCleaner();
+        CleanerProperties props = pageParser.getProperties();
+        props.setAllowHtmlInsideAttributes(true);
+        props.setAllowMultiWordAttributes(true);
+        props.setRecognizeUnicodeChars(true);
+        props.setOmitComments(true);
+        TagNode node = pageParser.clean(sHTML);
+
+        //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
+        //String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
+
+        //Attempt to get the tags from the WebPage html:
+        ArrayList<String> alsTags = new ArrayList<>();
+        boolean bProblem = false;
+        String sProblemMessage = "";
+        try {
+            //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+            Object[] objsTags = node.evaluateXPath(sxPathExpression);
+            //Check to see if we found anything:
+            String sResult;
+            if (objsTags != null && objsTags.length > 0) {
+                //If we found something, assign it to a string:
+                for(Object oTags:  objsTags){
+                    alsTags.add(((StringBuilder) oTags).toString());
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            bProblem = true;
+            sProblemMessage = e.getMessage();
+        }
+
+
+        //Broadcast a message to be picked-up by the VideoWebDetect fragment:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        if(!bProblem) {
+            broadcastIntent.putExtra(VIDEO_WEB_DATA_TAGS, alsTags);
+        } else {
+            broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, bProblem);
+            broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sProblemMessage);
+        }
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+
+    }
 
     //==============================================================================================
     //===== Import Utilities =======================================================================

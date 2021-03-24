@@ -18,19 +18,17 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-
-public class Fragment_Import_1a_WebAddress extends Fragment {
+public class Fragment_Import_1b_WebAddress extends Fragment {
 
     ViewModel_ImportActivity viewModelImportActivity;
 
 
-    public Fragment_Import_1a_WebAddress() {
+    public Fragment_Import_1b_WebAddress() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_1a_WebAddress newInstance() {
-        return new Fragment_Import_1a_WebAddress();
+    public static Fragment_Import_1b_WebAddress newInstance() {
+        return new Fragment_Import_1b_WebAddress();
     }
 
     @Override
@@ -45,7 +43,7 @@ public class Fragment_Import_1a_WebAddress extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_1a_web_address, container, false);
+        return inflater.inflate(R.layout.fragment_import_1b_web_address, container, false);
     }
 
     @Override

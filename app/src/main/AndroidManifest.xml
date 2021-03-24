@@ -2,11 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.agcurations.aggallerymanager">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
     <application
         android:name=".GlobalClass"
         android:allowBackup="true"
@@ -16,6 +11,7 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".Activity_Import_WebPlayer"></activity>
         <activity android:name=".Activity_TagEditor" />
         <activity
             android:name=".Activity_VideoPlayer"
@@ -53,6 +49,7 @@
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_ImportFilePreview" />
+
         <service
             android:name=".Service_CatalogViewer"
             android:exported="false" />
@@ -72,6 +69,10 @@
             android:name=".Service_ExportComics"
             android:exported="false" />
     </application>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

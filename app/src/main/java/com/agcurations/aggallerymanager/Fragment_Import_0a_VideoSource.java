@@ -8,20 +8,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_0a_ComicSource#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class Fragment_Import_0a_ComicSource extends Fragment {
+
+public class Fragment_Import_0a_VideoSource extends Fragment {
 
 
-    public Fragment_Import_0a_ComicSource() {
+
+
+    public Fragment_Import_0a_VideoSource() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_0a_ComicSource newInstance() {
-        return new Fragment_Import_0a_ComicSource();
+
+
+    public static Fragment_Import_0a_VideoSource newInstance(String param1, String param2) {
+        return new Fragment_Import_0a_VideoSource();
     }
 
     @Override
@@ -34,12 +34,14 @@ public class Fragment_Import_0a_ComicSource extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_0a_comic_source, container, false);
+        return inflater.inflate(R.layout.fragment_import_0a_video_source, container, false);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().setTitle("Import");
+        if(getActivity() != null) {
+            getActivity().setTitle("Import");
+        }
     }
 }

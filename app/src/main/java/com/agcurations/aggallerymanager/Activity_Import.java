@@ -56,17 +56,19 @@ public class Activity_Import extends AppCompatActivity {
 
     //Fragment page indexes:
     public static final int FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY = 0;
-    public static final int FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE = 1;
-    public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 2;
-    public static final int FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS = 3;
-    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 4;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 5;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 6;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 7;
-    public static final int FRAGMENT_IMPORT_5A_WEB_CONFIRMATION = 8;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 9;
+    public static final int FRAGMENT_IMPORT_0A_ID_VIDEO_SOURCE = 1;
+    public static final int FRAGMENT_IMPORT_0B_ID_COMIC_SOURCE = 2;
+    public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 3;
+    public static final int FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT = 4;
+    public static final int FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS = 5;
+    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 6;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 7;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 8;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 9;
+    public static final int FRAGMENT_IMPORT_5A_WEB_CONFIRMATION = 10;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 11;
 
-    public static final int FRAGMENT_COUNT = 10;
+    public static final int FRAGMENT_COUNT = 12;
 
     //=================================================
     //User selection global variables:
@@ -166,15 +168,17 @@ public class Activity_Import extends AppCompatActivity {
 
             giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
             //Check to see if this activity has been started by an activity desiring mods to a
-            //  particular media category set of tags:
+            //  particular media category:
             Intent iStartingIntent = getIntent();
             if(iStartingIntent != null){
                 int iMediaCategory = iStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
                 if(iMediaCategory != -1){
                     viewModelImportActivity.iImportMediaCategory = iMediaCategory;
 
-                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                        giStartingFragment = FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE;
+                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                        giStartingFragment = FRAGMENT_IMPORT_0A_ID_VIDEO_SOURCE;
+                    } else if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                        giStartingFragment = FRAGMENT_IMPORT_0B_ID_COMIC_SOURCE;
                     } else {
                         giStartingFragment = FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION;
                     }
@@ -312,10 +316,12 @@ public class Activity_Import extends AppCompatActivity {
         }
 
         //Go to the import folder selection fragment:
-        if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
+        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0A_ID_VIDEO_SOURCE, false); //Prompt user to select video source.
+        } else if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0B_ID_COMIC_SOURCE, false); //Prompt user to select comic source.
         } else {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE, false); //Prompt user to select comic source.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
@@ -344,10 +350,37 @@ public class Activity_Import extends AppCompatActivity {
         if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
         } else { //Allow user to import web address of a comic to import.
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS, false);
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS, false);
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
+
+    public void buttonNextClick_VideoSourceSelected(View v){
+        RadioButton radioButton_VideoSourceFolder = findViewById(R.id.radioButton_VideoSourceFolder);
+        //RadioButton radioButton_VideoSourceWebpage = findViewById(R.id.radioButton_VideoSourceWebpage);
+
+        int iNewVideoSource;
+
+        if (radioButton_VideoSourceFolder.isChecked()){
+            iNewVideoSource = ViewModel_ImportActivity.VIDEO_SOURCE_FOLDER;
+        } else {
+            iNewVideoSource = ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE;
+        }
+
+        if(iNewVideoSource != viewModelImportActivity.iVideoImportSource){
+            viewModelImportActivity.bImportCategoryChange = true;
+            viewModelImportActivity.iVideoImportSource = iNewVideoSource;
+        }
+
+        //Go to the import folder selection fragment:
+        if(viewModelImportActivity.iVideoImportSource != ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
+        } else { //Allow user to specify web address of a video to import.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT, false);
+        }
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
 
     public void buttonNextClick_StorageLocation(View v){
         //Go to the import folder selection fragment:
@@ -1217,12 +1250,16 @@ public class Activity_Import extends AppCompatActivity {
             switch (position) {
                 //case FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY:
                 //    return new Fragment_Import_0_MediaCategory();
-                case FRAGMENT_IMPORT_0A_ID_COMIC_SOURCE:
-                    return new Fragment_Import_0a_ComicSource();
+                case FRAGMENT_IMPORT_0A_ID_VIDEO_SOURCE:
+                    return new Fragment_Import_0a_VideoSource();
+                case FRAGMENT_IMPORT_0B_ID_COMIC_SOURCE:
+                    return new Fragment_Import_0b_ComicSource();
                 case FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION:
                     return new Fragment_Import_1_StorageLocation();
-                case FRAGMENT_IMPORT_1A_ID_WEB_ADDRESS:
-                    return new Fragment_Import_1a_WebAddress();
+                case FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT:
+                    return new Fragment_Import_1a_VideoWebDetect();
+                case FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS:
+                    return new Fragment_Import_1b_WebAddress();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:

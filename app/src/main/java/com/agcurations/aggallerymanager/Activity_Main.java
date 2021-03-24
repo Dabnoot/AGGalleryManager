@@ -255,6 +255,11 @@ public class Activity_Main extends AppCompatActivity {
 
 
             return true;
+        } else if(item.getItemId() == R.id.menu_Test) {
+            Intent intentImportWebPlayer = new Intent(this, Activity_Import_WebPlayer.class);
+            startActivity(intentImportWebPlayer);
+
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
