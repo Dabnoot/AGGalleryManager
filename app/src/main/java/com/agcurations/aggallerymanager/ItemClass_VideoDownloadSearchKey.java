@@ -22,6 +22,10 @@ public class ItemClass_VideoDownloadSearchKey implements Serializable {
     public boolean bMatchFound = false;
     public String sSearchStringMatchContent = "";
 
+    public long lFileSize = 0; //Used if download link.
+    public boolean bErrorWithLink = false; //Used if download link.
+    public String sErrorMessage = ""; //Used if download link.
+
     public ItemClass_VideoDownloadSearchKey(String _sHostnameInfo,
                                             String _sDataType,
                                             String _sSearchStartString,

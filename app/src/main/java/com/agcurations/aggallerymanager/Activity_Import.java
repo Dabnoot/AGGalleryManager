@@ -910,18 +910,18 @@ public class Activity_Import extends AppCompatActivity {
                     // all files with the comic ID and apply the checked state:
                     String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName);
                     String sNHComicFilter = sNHComicID + ".+";
-                    for (ItemClass_File fi : alFileItems) {
-                        if (fi.sFileOrFolderName.matches(sNHComicFilter)) {
-                            fi.bIsChecked = bNewCheckedState;
+                    for (ItemClass_File icf : alFileItems) {
+                        if (icf.sFileOrFolderName.matches(sNHComicFilter)) {
+                            icf.bIsChecked = bNewCheckedState;
                         }
                     }
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //If the user is importing comic pages by folder, find
                     // all files with the comic parent Uri assigned and apply the checked state:
                     String sUriParent = alFileItemsDisplay.get(iFileItemsDisplayPosition).sUri;
-                    for (ItemClass_File fi : alFileItems) {
-                        if (fi.sUriParent.matches(sUriParent)) {
-                            fi.bIsChecked = bNewCheckedState;
+                    for (ItemClass_File icf : alFileItems) {
+                        if (icf.sUriParent.equals(sUriParent)) {
+                            icf.bIsChecked = bNewCheckedState;
                         }
                     }
                 }
@@ -929,9 +929,9 @@ public class Activity_Import extends AppCompatActivity {
                 //Find the item that is checked/unchecked in alFileList and apply the property.
                 //  The user will have clicked an item in alFileListDisplay, not alFileList.
                 //  alFileListDisplay may be a subset of alFileList.
-                for(ItemClass_File fi: alFileItems){
-                    if(fi.sFileOrFolderName.contentEquals(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName)){
-                        fi.bIsChecked = bNewCheckedState;
+                for(ItemClass_File icf: alFileItems){
+                    if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName)){
+                        icf.bIsChecked = bNewCheckedState;
                         break; //Break, as only one item should match.
                     }
                 }

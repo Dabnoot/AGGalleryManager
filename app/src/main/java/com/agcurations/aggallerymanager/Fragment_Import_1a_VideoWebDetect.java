@@ -207,6 +207,9 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         if(vdsk.bMatchFound){
                             vdsk.sSearchStringMatchContent = "";
                             vdsk.bMatchFound = false;
+                            vdsk.lFileSize = 0;
+                            vdsk.bErrorWithLink = false;
+                            vdsk.sErrorMessage = "";
                         }
                     }
 
@@ -237,8 +240,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                     if(gButton_Next != null){
                         if(iMatchCount > 0) {
-                            gButton_Next.setEnabled(true);
-                            SetTextStatusMessage("Data located. Select 'Next' to continue.");
+                            SetTextStatusMessage("Data located. Looking for tag data.");
                             Service_Import.startActionGetVideoTags(getContext(), sHTML, "//div[@class='metadata-row video-tags']//a/text()");
                         } else {
                             SetTextStatusMessage("No target data found within this webpage.");
@@ -313,6 +315,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     ci.sTags = sbTags.toString();  //Note that these are textual tags and not numeric identifiers.
                     viewModelImportActivity.ci = ci;
                 }
+                SetTextStatusMessage("Finished data analysis. Select 'Next' to continue.");
+                gButton_Next.setEnabled(true);
             } else {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
 

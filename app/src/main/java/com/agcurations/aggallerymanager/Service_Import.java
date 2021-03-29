@@ -26,7 +26,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -37,6 +39,9 @@ import java.util.TreeMap;
 
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK;
+import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8;
 
 public class Service_Import extends IntentService {
 
@@ -2217,6 +2222,66 @@ public class Service_Import extends IntentService {
             bProblem = true;
             sProblemMessage = e.getMessage();
         }
+
+        //Look for potential downloads' file sizes, and download any m3u8 text file if it exists:
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
+            if(vdsk.bMatchFound = true) {
+                if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_LINK)) {
+                    try {
+                        URL urlPage = new URL(vdsk.sSearchStringMatchContent);
+                        HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
+                        connection.setRequestProperty("Accept-Encoding", "identity");
+                        vdsk.lFileSize = connection.getContentLength(); //Returns -1 if content size is not in the header.
+                        connection.disconnect();
+                    }catch(Exception e){
+                        vdsk.bErrorWithLink = true;
+                        vdsk.sErrorMessage = e.getMessage();
+                    }
+                } else if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_M3U8)){
+                    try {
+                        URL url = new URL(vdsk.sSearchStringMatchContent);
+                        URLConnection connection = url.openConnection();
+                        connection.connect();
+
+                        // download the file
+                        InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+                        byte[] data = new byte[1024];
+                        StringBuilder sbM3U8Content = new StringBuilder();
+                        while ((input.read(data)) != -1) {
+
+                            sbM3U8Content.append(new String(data, StandardCharsets.UTF_8));
+                        }
+                        input.close();
+
+                        /*
+                        M3U comments begin with the '#' character, unless ended with a semicolon.
+                        My comments begin with '!'.
+                        Example M3U8 data:
+
+                        #EXTM3U               !Header. Must be first line. Required. Standard.
+                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=763904,RESOLUTION=854x480,NAME="480p"  !Optional. This example gives some data about the stream.
+                        hls-480p-fe738.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1327104,RESOLUTION=1280x720,NAME="720p"
+                        hls-720p-02c5c.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbbf
+                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2760704,RESOLUTION=1920x1080,NAME="1080p"
+                        hls-1080p-cffd4.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=423936,RESOLUTION=640x360,NAME="360p"
+                        hls-360p-f6185.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=155648,RESOLUTION=444x250,NAME="250p"
+                        hls-250p-2b29e.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                         */
+
+
+
+                    }catch(Exception e){
+                        vdsk.bErrorWithLink = true;
+                        vdsk.sErrorMessage = e.getMessage();
+                    }
+                }
+            }
+        } //End loop searching for data within the HTML
 
 
         //Broadcast a message to be picked-up by the VideoWebDetect fragment:

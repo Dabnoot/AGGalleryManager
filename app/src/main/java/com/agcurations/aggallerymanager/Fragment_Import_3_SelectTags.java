@@ -407,7 +407,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public int getParentUriChildCount(String sUriParent){
             int iChildCount = 0;
             for(ItemClass_File fm : alFileItems){
-                if(fm.sUriParent.matches(sUriParent)){
+                if(fm.sUriParent.equals(sUriParent)){
                     iChildCount++;
                 }
             }
@@ -417,7 +417,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public long getParentUriChildCombinedSize(String sUriParent){
             long lCombinedSize = 0;
             for(ItemClass_File fm : alFileItems){
-                if(fm.sUriParent.matches(sUriParent)){
+                if(fm.sUriParent.equals(sUriParent)){
                     lCombinedSize += fm.lSizeBytes;
                 }
             }
