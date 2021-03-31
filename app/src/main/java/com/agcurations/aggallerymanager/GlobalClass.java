@@ -82,6 +82,12 @@ public class GlobalClass extends Application {
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
 
+
+    //=====================================================================================
+    //===== Background Service Tracking Variables =========================================
+    //=====================================================================================
+    //These vars not in a ViewModel as a service can continue to run after an activity is destroyed.
+
     //Variables to control starting of import folder content analysis:
     // These variables prevent the system/user from starting another folder analysis until an
     // existing folder analysis operation is finished.
@@ -604,9 +610,11 @@ public class GlobalClass extends Application {
 
             File[] fComicPages = fFolder.listFiles();
 
-            if(fComicPages.length == 0) {
-                sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
-                Log.d("Comics", sMessage);
+            if(fComicPages != null) {
+                if (fComicPages.length == 0) {
+                    sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
+                    Log.d("Comics", sMessage);
+                }
             }
 
             TreeMap<String, String> tmSortedFileNames = new TreeMap<>();

@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
-import android.icu.text.AlphabeticIndex;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -18,7 +17,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +27,6 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -241,7 +238,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     if(gButton_Next != null){
                         if(iMatchCount > 0) {
                             SetTextStatusMessage("Data located. Looking for tag data.");
-                            Service_Import.startActionGetVideoTags(getContext(), sHTML, "//div[@class='metadata-row video-tags']//a/text()");
+                            Service_Import.startActionVideoAnalyzeHTML(getContext(), sHTML, "//div[@class='metadata-row video-tags']//a/text()");
                         } else {
                             SetTextStatusMessage("No target data found within this webpage.");
                             gButton_Next.setEnabled(false);

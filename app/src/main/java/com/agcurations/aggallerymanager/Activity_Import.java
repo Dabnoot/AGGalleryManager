@@ -209,22 +209,21 @@ public class Activity_Import extends AppCompatActivity {
 
             //Get boolean indicating that an error may have occurred:
             boolean bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
-            String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
-            if(sReceiver.equals(Service_Import.RECEIVER_ACTIVITY_IMPORT)) {
-                if (bError) {
-                    String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
-                    Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-                } else {
 
-                    //Check to see if this is a response to request to get directory contents:
-                    boolean bGetDirContentsResponse = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
-                    if (bGetDirContentsResponse) {
-                        ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
-                        fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
-                    }
+            if (bError) {
+                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
 
+                //Check to see if this is a response to request to get directory contents:
+                boolean bGetDirContentsResponse = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
+                if (bGetDirContentsResponse) {
+                    ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
+                    fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
                 }
+
             }
+
 
         }
     }
@@ -236,15 +235,17 @@ public class Activity_Import extends AppCompatActivity {
                 public void onActivityResult(ActivityResult result) {
                     if(result.getResultCode() == RESULT_OK){
                         Intent data = result.getData();
-                        Bundle b = data.getBundleExtra(TAG_SELECTION_RESULT_BUNDLE);
-                        if(b == null) return;
-                        ItemClass_File[] fileItems = (ItemClass_File[]) b.getSerializable(PREVIEW_FILE_ITEMS);
-                        if(fileItems == null) return;
-                        //ArrayList<Integer> aliTagIDs;
-                        //aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
-                        //Apply the change to the fileListCustomAdapter:
-                        //fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
-                        fileListCustomAdapter.updateFileItemDetails(fileItems);
+                        if(data != null) {
+                            Bundle b = data.getBundleExtra(TAG_SELECTION_RESULT_BUNDLE);
+                            if (b == null) return;
+                            ItemClass_File[] fileItems = (ItemClass_File[]) b.getSerializable(PREVIEW_FILE_ITEMS);
+                            if (fileItems == null) return;
+                            //ArrayList<Integer> aliTagIDs;
+                            //aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
+                            //Apply the change to the fileListCustomAdapter:
+                            //fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
+                            fileListCustomAdapter.updateFileItemDetails(fileItems);
+                        }
                     }
                 }
             });
@@ -381,7 +382,6 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
-
     public void buttonNextClick_StorageLocation(View v){
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
@@ -498,7 +498,8 @@ public class Activity_Import extends AppCompatActivity {
         }
 
         @Override
-        public View getView(final int position, View v, ViewGroup parent) {
+        @NonNull
+        public View getView(final int position, View v, @NonNull ViewGroup parent) {
             View row = v;
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
@@ -1165,7 +1166,7 @@ public class Activity_Import extends AppCompatActivity {
 
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
                 Long FileDuration1 = fi1.lVideoTimeInMilliseconds;
-                Long FileDuration2 = fi1.lVideoTimeInMilliseconds;
+                Long FileDuration2 = fi2.lVideoTimeInMilliseconds;
 
                 //descending order
                 return FileDuration2.compareTo(FileDuration1);
@@ -1269,7 +1270,7 @@ public class Activity_Import extends AppCompatActivity {
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                     return new Fragment_Import_5_Confirmation();
                 case FRAGMENT_IMPORT_5A_WEB_CONFIRMATION:
-                    return new Fragment_Import_5a_WebConfirmation();
+                    return new Fragment_Import_5a_WebComicConfirmation();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
                 default:

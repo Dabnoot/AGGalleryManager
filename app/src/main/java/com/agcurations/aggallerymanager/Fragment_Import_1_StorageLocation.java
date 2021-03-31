@@ -13,6 +13,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -70,7 +71,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         super.onCreate(savedInstanceState);
 
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
@@ -81,8 +82,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
         }
 
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
-
+        if(getActivity()!=null) {
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
     }
 
     @Override
@@ -102,7 +104,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         if(getView() == null){
             return;
         }
@@ -132,22 +134,27 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             }
         });
 
-        gProgressBar_FileAnalysisProgress = getView().findViewById(R.id.progressBar_FileAnalysisProgress);
-        gProgressBar_FileAnalysisProgress.setMax(100);
-        gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
-        gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+        if(getView() != null) {
+            gProgressBar_FileAnalysisProgress = getView().findViewById(R.id.progressBar_FileAnalysisProgress);
+            gProgressBar_FileAnalysisProgress.setMax(100);
+            gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
+            gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
 
-        gTextView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
-        if(gTextView_FileAnalysisDebugLog != null){
-            gTextView_FileAnalysisDebugLog.setMovementMethod(new ScrollingMovementMethod());
+            gTextView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+            if (gTextView_FileAnalysisDebugLog != null) {
+                gTextView_FileAnalysisDebugLog.setMovementMethod(new ScrollingMovementMethod());
+            }
         }
-
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
+        if(getActivity() == null || getView() == null) {
+            return;
+        }
+
         getActivity().setTitle("Import");
 
         if(viewModelImportActivity.bImportCategoryChange){
@@ -160,6 +167,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             viewModelImportActivity.bImportCategoryChange = false;
             gProgressBar_FileAnalysisProgress.setProgress(0);
             gTextView_FileAnalysisProgressBarText.setText("0/0");
+
             TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
             textView_Selected_Import_Folder.setText("");
             TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
@@ -167,6 +175,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             textView_Selected_Import_Folder.setVisibility(View.INVISIBLE);
             gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
             gLinearLayout_Progress.setVisibility(View.INVISIBLE);
+
             gbutton_FolderSelectComplete.setEnabled(false);
 
             //Make less space to cover the hidden progress bar:
@@ -327,19 +336,10 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
 
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
-        public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
+        public static final String IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
-            if(sReceiver == null) {
-                return;
-            }
-            if (!sReceiver.contentEquals(Service_Import.RECEIVER_STORAGE_LOCATION)) {
-                return;
-            }
-
 
             boolean bError;
 
@@ -347,12 +347,14 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
-                TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
-                if(textView_FileAnalysisDebugLog != null){
-                    textView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
-                    textView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
-                } else {
-                    Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                if(getView() != null) {
+                    TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+                    if (textView_FileAnalysisDebugLog != null) {
+                        textView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
+                        textView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
+                    } else {
+                        Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                    }
                 }
             } else {
 

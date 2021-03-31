@@ -44,14 +44,16 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
+        if(getActivity() != null) {
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
 
         if (getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
         }
 
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
@@ -78,7 +80,9 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().setTitle("Import");
+        if(getActivity()!=null) {
+            getActivity().setTitle("Import");
+        }
         initComponents();
     }
 
@@ -157,22 +161,12 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
 
 
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
-        public static final String IMPORT_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_IMPORT_DATA_SERVICE";
+        public static final String IMPORT_DATA_SERVICE_EXECUTE_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            String sReceiver = intent.getStringExtra(Service_Import.RECEIVER_STRING);
-            if (sReceiver == null) {
-                return;
-            }
-
-            if(!sReceiver.contentEquals(Service_Import.RECEIVER_EXECUTE_IMPORT)){
-                return;
-            }
-
             boolean bError;
-
             //Get boolean indicating that an error may have occurred:
             bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
             if(bError) {

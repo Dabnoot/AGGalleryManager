@@ -28,7 +28,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -52,7 +51,7 @@ public class Service_Import extends IntentService {
     private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
     private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
     private static final String ACTION_DOWNLOAD_TEST = "com.agcurations.aggallerymanager.action.DOWNLOAD_TEST";
-    private static final String ACTION_GET_VIDEO_TAGS_FROM_HTML = "com.agcurations.aggallerymanager.action.GET_VIDEO_TAGS_FROM_HTML";
+    private static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
@@ -77,11 +76,7 @@ public class Service_Import extends IntentService {
     public static final String VIDEO_WEB_DATA_TAGS = "VIDEO_WEB_DATA_TAGS";
 
     public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
-    public static final String EXTRA_STRING_XPATH_EXPRESSION = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION";
-
-    public static final String RECEIVER_STORAGE_LOCATION = "com.agcurations.aggallerymanager.extra.RECEIVER_STORAGE_LOCATION";
-    public static final String RECEIVER_EXECUTE_IMPORT = "com.agcurations.aggallerymanager.extra.RECEIVER_EXECUTE_IMPORT";
-    public static final String RECEIVER_ACTIVITY_IMPORT = "com.agcurations.aggallerymanager.extra.RECEIVER_ACTIVITY_IMPORT";
+    public static final String EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_TAGSLOCATOR";
 
     public Service_Import() {
         super("ImportActivityDataService");
@@ -146,11 +141,11 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionGetVideoTags(Context context, String sHMTL, String sXPathExpression){
+    public static void startActionVideoAnalyzeHTML(Context context, String sHMTL, String sXPathExpressionTagsLocator){
         Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_GET_VIDEO_TAGS_FROM_HTML);
+        intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
         intent.putExtra(EXTRA_STRING_HTML, sHMTL);
-        intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION, sXPathExpression);
+        intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR, sXPathExpressionTagsLocator);
         context.startService(intent);
 
     }
@@ -222,7 +217,7 @@ public class Service_Import extends IntentService {
                     handleAction_startActionImportComicWebFiles(ci);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    problemNotificationConfig(e.getMessage(), RECEIVER_EXECUTE_IMPORT);  //todo: make sure that this is properly handled in Execute_Import.
+                    problemNotificationConfig(e.getMessage(), Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);  //todo: make sure that this is properly handled in Execute_Import.
                 }
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
@@ -233,12 +228,12 @@ public class Service_Import extends IntentService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            } else if (ACTION_GET_VIDEO_TAGS_FROM_HTML.equals(action)) {
+            } else if (ACTION_VIDEO_ANALYZE_HTML.equals(action)) {
 
                 final String sHTML = intent.getStringExtra(EXTRA_STRING_HTML);
-                final String sxPathExpression = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION);
+                final String sxPathExpression = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR);
                 try{
-                    handleAction_startActionGetTagsFromHTML(sHTML, sxPathExpression);
+                    handleAction_startActionVideoAnalyzeHTML(sHTML, sxPathExpression);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -335,7 +330,7 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(false, "",
                             true, iProgressBarValue,
                             true, "0/" + lProgressDenominator,
-                            RECEIVER_STORAGE_LOCATION);
+                            Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
 
                     MediaMetadataRetriever mediaMetadataRetriever;
@@ -351,7 +346,7 @@ public class Service_Import extends IntentService {
                         BroadcastProgress(false, "",
                                 true, iProgressBarValue,
                                 true, lProgressNumerator + "/" + lProgressDenominator,
-                                RECEIVER_STORAGE_LOCATION);
+                                Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
 
                         final String docId = cImport.getString(0);
@@ -459,7 +454,7 @@ public class Service_Import extends IntentService {
                                             sWidth = "" + gd.getIntrinsicWidth();
                                             sHeight = "" + gd.getIntrinsicHeight();
                                         } catch (Exception e) {
-                                            problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
+                                            problemNotificationConfig(e.getMessage() + "\n" + docName, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                                             continue; //Skip the rest of this loop.
                                         }
                                     }
@@ -551,7 +546,7 @@ public class Service_Import extends IntentService {
                                         BroadcastProgress(false, "",
                                                 true, iProgressBarValue,
                                                 true, lProgressNumerator + "/" + lProgressDenominator,
-                                                RECEIVER_STORAGE_LOCATION);
+                                                Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
                                         //Analyze the file item.
 
@@ -667,7 +662,7 @@ public class Service_Import extends IntentService {
                                                         docName + "\", file \"" + file.sFileOrFolderName +
                                                         "\". Note that the system uses alphabetization to sort comic pages.\n";
                                                 globalClass.gsbImportFolderAnalysisLog.append(sMessage);
-                                                problemNotificationConfig(sMessage, RECEIVER_STORAGE_LOCATION);
+                                                problemNotificationConfig(sMessage, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                                             }
                                         }
                                     }
@@ -779,17 +774,16 @@ public class Service_Import extends IntentService {
                 } //End if "there are items in the folder that the user selected.
 
             }catch (Exception e){
-                problemNotificationConfig(e.getMessage(), RECEIVER_STORAGE_LOCATION);
+                problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                 return;
             }
 
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
             broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE, alFileList);
 
+            //Send broadcast to the Import Activity:
             broadcastIntent_GetDirectoryContentsResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
             broadcastIntent_GetDirectoryContentsResponse.addCategory(Intent.CATEGORY_DEFAULT);
-            broadcastIntent_GetDirectoryContentsResponse.putExtra(RECEIVER_STRING, RECEIVER_ACTIVITY_IMPORT);
-            //sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
         }
     }
@@ -841,19 +835,19 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             true, "Operation halted.",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     return;
                 } else {
                     BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             false, "",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             } else {
                 BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
                         true, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
 
             Uri uriSourceFile;
@@ -867,7 +861,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
                         false, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 lProgressNumerator += fileItem.lSizeBytes;
                 continue;
             }
@@ -884,7 +878,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
@@ -1005,8 +999,7 @@ public class Service_Import extends IntentService {
                     if(!dfMovedFile.renameTo(sFileName)) {
                         BroadcastProgress(true, "Problem renaming transferred file.",
                                 false, iProgressBarValue,
-                                false, "",
-                                RECEIVER_EXECUTE_IMPORT);
+                                false, "");
                     }
                     lProgressNumerator += fileItem.sizeBytes;
                 }*/
@@ -1030,7 +1023,7 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(false, "",
                                     true, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    RECEIVER_EXECUTE_IMPORT);
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                         }
                     }
                     outputStream.flush();
@@ -1050,7 +1043,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                 //This file has now been copied.
                 //Next add the data to the catalog file and memory:
@@ -1085,7 +1078,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
                         false, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
 
 
@@ -1098,7 +1091,7 @@ public class Service_Import extends IntentService {
         BroadcastProgress(true, "Operation complete.",
                 true, iProgressBarValue,
                 true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                RECEIVER_EXECUTE_IMPORT);
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
     }
 
@@ -1154,7 +1147,7 @@ public class Service_Import extends IntentService {
                 if(tmNHComicIDs.containsKey(sComicID)){
                     //If this is merely a duplicate comic selected during the import, not if it already exists in the catalog.
                     //If it already exists in the catalog, it is on the user to resolve.
-                    problemNotificationConfig("Skipping Comic ID " + sComicID + ". Duplicate comic.", RECEIVER_EXECUTE_IMPORT);
+                    problemNotificationConfig("Skipping Comic ID " + sComicID + ". Duplicate comic.", Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 } else {
                     tmNHComicIDs.put(sComicID, new String[]{sRecordID, sComicName, sComicTags, String.valueOf(iGrade)});
                 }
@@ -1176,19 +1169,19 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             true, "Operation halted.",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     return;
                 } else {
                     BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             false, "",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             } else {
                 BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
                         true, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
 
             //Prepare the data record:
@@ -1252,13 +1245,13 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(true, sLogLine,
                                     false, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    RECEIVER_EXECUTE_IMPORT);
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                             if (dfSource == null) {
                                 BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
                                         false, iProgressBarValue,
                                         false, "",
-                                        RECEIVER_EXECUTE_IMPORT);
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                 lProgressNumerator += fileItem.lSizeBytes;
                                 continue;
                             }
@@ -1281,7 +1274,7 @@ public class Service_Import extends IntentService {
                                     BroadcastProgress(false, "",
                                             true, iProgressBarValue,
                                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                            RECEIVER_EXECUTE_IMPORT);
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                 }
                             }
                             outputStream.flush();
@@ -1291,7 +1284,7 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(true, sLogLine,
                                     false, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    RECEIVER_EXECUTE_IMPORT);
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                             //This file has now been copied.
 
@@ -1311,19 +1304,19 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
                                     true, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    RECEIVER_EXECUTE_IMPORT);
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
 
                         } catch (Exception e) {
                             BroadcastProgress(true, "Problem with copy/move operation.\n\n" + e.getMessage(),
                                     false, iProgressBarValue,
                                     false, "",
-                                    RECEIVER_EXECUTE_IMPORT);
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                         }
 
                     } else {
                         //NHComic page is a duplicate.
-                        problemNotificationConfig("File " + fileItem.sFileOrFolderName + " appears to be a duplicate. Skipping import of this file.\n", RECEIVER_EXECUTE_IMPORT);
+                        problemNotificationConfig("File " + fileItem.sFileOrFolderName + " appears to be a duplicate. Skipping import of this file.\n", Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     }
 
                 } //End if match with Page regex containing ComicID.
@@ -1355,7 +1348,7 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(true, sLogLine,
                             true, iProgressBarValue,
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             }
 
@@ -1377,7 +1370,7 @@ public class Service_Import extends IntentService {
         BroadcastProgress(true, "Operation complete.\n",
                 true, iProgressBarValue,
                 true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                RECEIVER_EXECUTE_IMPORT);
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
     }
 
@@ -1445,19 +1438,19 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             true, "Operation halted.",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     return;
                 } else {
                     BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
                             false, iProgressBarValue,
                             false, "",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             } else {
                 BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
                         true, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
 
             //Prepare the data record:
@@ -1518,13 +1511,13 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                     if (dfSource == null) {
                         BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
                                 false, iProgressBarValue,
                                 false, "",
-                                RECEIVER_EXECUTE_IMPORT);
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                         lProgressNumerator += fileItem.lSizeBytes;
                         continue;
                     }
@@ -1547,7 +1540,7 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(false, "",
                                     true, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    RECEIVER_EXECUTE_IMPORT);
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                         }
                     }
                     outputStream.flush();
@@ -1557,7 +1550,7 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                     //This file has now been copied.
 
@@ -1577,14 +1570,14 @@ public class Service_Import extends IntentService {
                     BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
                             true, iProgressBarValue,
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
 
                 } catch (Exception e) {
                     BroadcastProgress(true, "Problem with copy/move operation.\n\n" + e.getMessage(),
                             false, iProgressBarValue,
                             false, "",
-                            RECEIVER_EXECUTE_IMPORT);
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
 
 
@@ -1611,21 +1604,11 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, sLogLine,
                         true, iProgressBarValue,
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
-
-
-
-
-
-
-
+            
         } //End NHComics (plural) Import Loop.
-
-
-
-
-
+        
         //Modify viewer settings to show the newly-imported files:
         globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
         globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
@@ -1633,7 +1616,7 @@ public class Service_Import extends IntentService {
         BroadcastProgress(true, "Operation complete.\n",
                 true, iProgressBarValue,
                 true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                RECEIVER_EXECUTE_IMPORT);
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
     }
 
@@ -1641,7 +1624,7 @@ public class Service_Import extends IntentService {
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Fragment_Import_5a_WebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        broadcastIntent.setAction(Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         GlobalClass globalClass;
@@ -1810,7 +1793,7 @@ public class Service_Import extends IntentService {
             ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
             ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
             ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
-            if(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX] != "") {
+            if(!sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX].equals("")) {
                 ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
             }
 
@@ -1974,19 +1957,19 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 return;
             } else {
                 BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
                         false, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
         } else {
             BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
                     true, iProgressBarValue,
                     false, "",
-                    RECEIVER_EXECUTE_IMPORT);
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         }
 
         if(ci.alsComicPageURLsAndDestFileNames.size() > 0){
@@ -2020,7 +2003,7 @@ public class Service_Import extends IntentService {
                         BroadcastProgress(true, "Downloading: " + sData[0] + "...",
                                 false, iProgressBarValue,
                                 true, "Downloading files...",
-                                RECEIVER_EXECUTE_IMPORT);
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                         URL url = new URL(sData[0]);
                         URLConnection connection = url.openConnection();
@@ -2049,7 +2032,7 @@ public class Service_Import extends IntentService {
                         BroadcastProgress(true, " Complete.\n",
                                 true, iProgressBarValue,
                                 false, "",
-                                RECEIVER_EXECUTE_IMPORT);
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     }
 
                 }
@@ -2093,7 +2076,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Operation complete.",
                         true, iProgressBarValue,
                         false, "",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
             } catch (Exception e) {
                 if(e.getMessage() != null) {
@@ -2102,7 +2085,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        RECEIVER_EXECUTE_IMPORT);
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             } finally {
                 if(output != null) {
                     output.close();
@@ -2179,11 +2162,16 @@ public class Service_Import extends IntentService {
             }
 
         } catch (Exception e) {
-            Log.e("Error: ", e.getMessage());
+            String sMsg = e.getMessage();
+            if(sMsg != null) {
+                Log.e("Download Test Error: ", sMsg);
+            } else {
+                Log.e("Download Test Error: ", "Unknown error.");
+            }
         }
     }
 
-    private void handleAction_startActionGetTagsFromHTML(String sHTML, String sxPathExpression){
+    private void handleAction_startActionVideoAnalyzeHTML(String sHTML, String sXPathExpressionTagsLocator){
 
         //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
         //  does not work well to parse this html. Modern html interpreters accommodate
@@ -2208,13 +2196,13 @@ public class Service_Import extends IntentService {
         String sProblemMessage = "";
         try {
             //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
-            Object[] objsTags = node.evaluateXPath(sxPathExpression);
+            Object[] objsTags = node.evaluateXPath(sXPathExpressionTagsLocator);
             //Check to see if we found anything:
             String sResult;
             if (objsTags != null && objsTags.length > 0) {
                 //If we found something, assign it to a string:
                 for(Object oTags:  objsTags){
-                    alsTags.add(((StringBuilder) oTags).toString());
+                    alsTags.add(oTags.toString());
                 }
             }
         } catch (Exception e){
@@ -2366,13 +2354,12 @@ public class Service_Import extends IntentService {
     //==============================================================================================
 
 
-    void problemNotificationConfig(String sMessage, String sTarget){
+    void problemNotificationConfig(String sMessage, String sIntentActionFilter){
         Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_Problem.setAction(sIntentActionFilter);
         broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
         broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        broadcastIntent_Problem.putExtra(RECEIVER_STRING, sTarget);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
     }
 
@@ -2387,23 +2374,40 @@ public class Service_Import extends IntentService {
     public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
                                   boolean bUpdatePercentComplete, int iAmountComplete,
                                   boolean bUpdateProgressBarText, String sProgressBarText,
-                                  String sReceiver){
+                                  String sIntentActionFilter){
 
         //Preserve the log for the event of a screen rotation, or activity looses focus:
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
         globalClass.gsbImportExecutionLog.append(sLogLine);
-        if(bUpdatePercentComplete) {
-            globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
-            globalClass.giImportFolderAnalysisProgressBarPercent = iAmountComplete; //Folder analysis also uses this BroadcastProgress routine.
+        
+        if(sIntentActionFilter.equals(Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE)) {
+            if (bUpdatePercentComplete) {
+                globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
+            }
+            if (bUpdateProgressBarText) {
+                globalClass.gsImportExecutionProgressBarText = sProgressBarText;
+            }
         }
-        if(bUpdateProgressBarText){
-            globalClass.gsImportExecutionProgressBarText = sProgressBarText;
-            globalClass.gsImportFolderAnalysisProgressBarText = sProgressBarText;
+
+        if(sIntentActionFilter.equals(
+                Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE)) {
+            if(bUpdatePercentComplete) {
+                globalClass.giImportFolderAnalysisProgressBarPercent = iAmountComplete;
+            }
+            if(bUpdateProgressBarText){
+                globalClass.gsImportFolderAnalysisProgressBarText = sProgressBarText;
+            }
         }
+
+        if(sIntentActionFilter.equals(
+                Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
+            globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
+        }
+
 
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.setAction(sIntentActionFilter);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
@@ -2412,7 +2416,6 @@ public class Service_Import extends IntentService {
         broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
         broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
         broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
-        broadcastIntent.putExtra(RECEIVER_STRING, sReceiver);
 
         //sendBroadcast(broadcastIntent);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
@@ -2420,16 +2423,11 @@ public class Service_Import extends IntentService {
     }
 
     public void BroadcastProgress_ComicDetails(String sLogLine){
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
 
-        //Broadcast a message to be picked-up by the Import Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Fragment_Import_5a_WebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(COMIC_DETAILS_LOG_MESSAGE, sLogLine);
-
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+        BroadcastProgress(true, sLogLine,
+        false, 0,
+        false, "",
+                Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
     }
 
 }
