@@ -48,8 +48,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //Instantiate the ViewModel sharing data between fragments:
-        viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-
+        if(getActivity() != null) {
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        }
     }
 
     @Override
@@ -65,7 +66,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().setTitle("Import - Select Items");
+        if(getActivity() != null) {
+            getActivity().setTitle("Import - Select Items");
+        }
 
         if(ListViewState != null) {
             if(getView() == null){
@@ -92,21 +95,22 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         //Get all of the selected items and assign them to the viewModel:
         //  Sort the items before assigning them to the viewModel:
         TreeMap<String, ItemClass_File> tmFileItemsSort = new TreeMap<>();
-        int i = 0;
-        for(ItemClass_File fi: Activity_Import.fileListCustomAdapter.alFileItems){
-            if(fi.bIsChecked){
-                tmFileItemsSort.put(fi.sUri, fi); //Sort by Uri rather than file name because comic folders might contain the same file names.
-                i++;
-            }
-        }
-        ArrayList<ItemClass_File> alfi = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_File> tmEntry: tmFileItemsSort.entrySet()){
-            if(tmEntry.getValue().bIsChecked){
-                alfi.add(tmEntry.getValue());
-            }
-        }
-        viewModelImportActivity.alfiConfirmedFileImports = alfi;
 
+        if(getActivity() != null) {
+            for (ItemClass_File fi : ((Activity_Import) getActivity()).fileListCustomAdapter.alFileItems) {
+                if (fi.bIsChecked) {
+                    tmFileItemsSort.put(fi.sUri, fi); //Sort by Uri rather than file name because comic folders might contain the same file names.
+
+                }
+            }
+            ArrayList<ItemClass_File> alfi = new ArrayList<>();
+            for (Map.Entry<String, ItemClass_File> tmEntry : tmFileItemsSort.entrySet()) {
+                if (tmEntry.getValue().bIsChecked) {
+                    alfi.add(tmEntry.getValue());
+                }
+            }
+            viewModelImportActivity.alfiConfirmedFileImports = alfi;
+        }
         super.onPause();
 
 
@@ -126,7 +130,10 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         final ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
         if(listView_FolderContents != null) {
             Activity_Import.SelectItemsListViewWidth = listView_FolderContents.getWidth();
-            listView_FolderContents.setAdapter(Activity_Import.fileListCustomAdapter);
+            if(getActivity()==null){
+                return;
+            }
+            listView_FolderContents.setAdapter(((Activity_Import) getActivity()).fileListCustomAdapter);
         }
 
         /*lEndTime = System.nanoTime();
@@ -138,9 +145,12 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         checkBox_SelectAllStorageItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Activity_Import.fileListCustomAdapter.toggleSelectAll();
+                if(getActivity()==null){
+                    return;
+                }
+                ((Activity_Import) getActivity()).fileListCustomAdapter.toggleSelectAll();
                 if(listView_FolderContents != null) {
-                    listView_FolderContents.setAdapter(Activity_Import.fileListCustomAdapter);
+                    listView_FolderContents.setAdapter(((Activity_Import) getActivity()).fileListCustomAdapter);
                 }
             }
         });
@@ -160,7 +170,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
                     imm.hideSoftInputFromWindow(editText_Search.getWindowToken(), 0);
                     //Apply the search:
                     String sSearch = textView.getText().toString();
-                    Activity_Import.fileListCustomAdapter.applySearch(sSearch);
+                    ((Activity_Import) getActivity()).fileListCustomAdapter.applySearch(sSearch);
                     return true;
                 }
                 return false;
@@ -189,21 +199,24 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         spinner_SortBy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                // your code here
+
+                if(getActivity()==null){
+                    return;
+                }
                 if(position == SPINNER_ITEM_FILE_NAME){
-                    if(Activity_Import.fileListCustomAdapter != null) {
-                        Activity_Import.fileListCustomAdapter.SortByFileNameAsc();
-                        Activity_Import.fileListCustomAdapter.notifyDataSetChanged();
+                    if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.SortByFileNameAsc();
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 } else if(position == SPINNER_ITEM_MODIFIED_DATE) {
-                    if(Activity_Import.fileListCustomAdapter != null) {
-                        Activity_Import.fileListCustomAdapter.SortByDateModifiedAsc();
-                        Activity_Import.fileListCustomAdapter.notifyDataSetChanged();
+                    if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.SortByDateModifiedAsc();
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 } else if(position == SPINNER_ITEM_DURATION) {
-                    if(Activity_Import.fileListCustomAdapter != null) {
-                        Activity_Import.fileListCustomAdapter.SortByDurationAsc();
-                        Activity_Import.fileListCustomAdapter.notifyDataSetChanged();
+                    if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.SortByDurationAsc();
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 }
             }
@@ -221,9 +234,12 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
             @Override
             public void onClick(View view) {
+                if(getActivity()==null){
+                    return;
+                }
                 boolean bNewSortOrderIsAscending;
-                bNewSortOrderIsAscending = Activity_Import.fileListCustomAdapter.reverseSort();
-                Activity_Import.fileListCustomAdapter.notifyDataSetChanged();
+                bNewSortOrderIsAscending = ((Activity_Import) getActivity()).fileListCustomAdapter.reverseSort();
+                ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                 if(bNewSortOrderIsAscending){
                     ((ImageView)view).setImageResource(R.drawable.baseline_sort_ascending_white_18dp);
                 } else {
@@ -235,7 +251,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         /*lEndTime = System.nanoTime();
         Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));*/
 
-        Activity_Import.fileListCustomAdapter.recalcButtonNext();
+        ((Activity_Import) getActivity()).fileListCustomAdapter.recalcButtonNext();
 
     }
 
