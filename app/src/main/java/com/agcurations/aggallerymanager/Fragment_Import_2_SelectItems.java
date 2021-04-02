@@ -1,12 +1,19 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.os.Parcelable;
+import android.text.method.ScrollingMovementMethod;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,8 +26,10 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -35,6 +44,11 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
     public static ViewModel_ImportActivity viewModelImportActivity; //Used to transfer data between fragments.
 
+    ProgressBar gProgressBar_FileDeletionProgress;
+    TextView gTextView_FileDeletionProgressBarText;
+    TextView gtextView_FileDeletionDebugLog;
+
+    ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
 
     public Fragment_Import_2_SelectItems() {
         // Required empty public constructor
@@ -47,6 +61,16 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
+        //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
+        }
+
         //Instantiate the ViewModel sharing data between fragments:
         if(getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
@@ -58,22 +82,45 @@ public class Fragment_Import_2_SelectItems extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_import_2_select_items, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        if(getView() != null) {
+            gProgressBar_FileDeletionProgress = getView().findViewById(R.id.progressBar_FileDeletionProgress);
+            gProgressBar_FileDeletionProgress.setMax(100);
+            gTextView_FileDeletionProgressBarText = getView().findViewById(R.id.textView_FileDeletionProgressBarText);
+
+            gtextView_FileDeletionDebugLog = getView().findViewById(R.id.textView_FileDeletionDebugLog);
+            if (gtextView_FileDeletionDebugLog != null) {
+                gtextView_FileDeletionDebugLog.setMovementMethod(new ScrollingMovementMethod());
+            }
+        }
 
     }
 
+    @Override
+    public void onDestroy() {
+        // unregister  like this
+        if (getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
+        }
+        super.onDestroy();
+    }
 
     Parcelable ListViewState;
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() != null) {
-            getActivity().setTitle("Import - Select Items");
+        if(getActivity() == null || getView() == null) {
+            return;
         }
 
+        getActivity().setTitle("Import - Select Items");
+
         if(ListViewState != null) {
-            if(getView() == null){
-                return;
-            }
             ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
             listView_FolderContents.onRestoreInstanceState(ListViewState);
         }
@@ -81,6 +128,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         if(ListViewState == null || viewModelImportActivity.bUpdateImportSelectList){
             initComponents();
         }
+
+
 
     }
 
@@ -255,7 +304,74 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
     }
 
+    public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
+        public static final String IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE";
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                if(getView() != null) {
+                    if (gtextView_FileDeletionDebugLog != null) {
+                        gtextView_FileDeletionDebugLog.setVisibility(View.VISIBLE);
+                        gtextView_FileDeletionDebugLog.append(sMessage);
+                    } else {
+                        Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                    }
+                }
+            } else {
+
+                //Check to see if this is a response to request to get directory contents:
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+                if(bUpdateProgressBarText){
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    if(gTextView_FileDeletionProgressBarText != null) {
+                        gTextView_FileDeletionProgressBarText.setText(sProgressBarText);
+                        gTextView_FileDeletionProgressBarText.setVisibility(View.VISIBLE);
+                    }
+                }
+
+                if(bUpdatePercentComplete){
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    if(gProgressBar_FileDeletionProgress != null) {
+                        gProgressBar_FileDeletionProgress.setProgress(iAmountComplete);
+                        gProgressBar_FileDeletionProgress.setVisibility(View.VISIBLE);
+
+                    }
+                    if(iAmountComplete == 100){
+                        if(gProgressBar_FileDeletionProgress != null) {
+
+                            gProgressBar_FileDeletionProgress.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    gProgressBar_FileDeletionProgress.setVisibility(View.INVISIBLE);
+                                    if (gTextView_FileDeletionProgressBarText != null) {
+                                        gTextView_FileDeletionProgressBarText.setVisibility(View.INVISIBLE);
+                                    }
+                                }
+                            }, 3000);
+                        }
+                    }
+                }
+
+
+            }
+
+        }
+    }
 
 
 

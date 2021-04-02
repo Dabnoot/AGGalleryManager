@@ -52,6 +52,7 @@ public class Service_Import extends IntentService {
     private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
     private static final String ACTION_DOWNLOAD_TEST = "com.agcurations.aggallerymanager.action.DOWNLOAD_TEST";
     private static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
+    private static final String ACTION_DELETE_FILES = "com.agcurations.aggallerymanager.action.DELETE_FILES";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
@@ -77,6 +78,13 @@ public class Service_Import extends IntentService {
 
     public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
     public static final String EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_TAGSLOCATOR";
+
+    public static final String EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE = "com.agcurations.aggallerymanager.extra.URI_STRING_ARRAY_FILES_TO_DELETE";
+
+    public static final String EXTRA_CALLER_ACTION_RESPONSE_FILTER = "com.agcurations.aggallerymanager.extra.EXTRA_CALLER_ACTION_RESPONSE_FILTER";
+
+    public static final String FILE_DELETION_MESSAGE = "Deleting file: ";
+    public static final String FILE_DELETION_OP_COMPLETE_MESSAGE = "File deletion operation complete.";
 
     public Service_Import() {
         super("ImportActivityDataService");
@@ -149,6 +157,17 @@ public class Service_Import extends IntentService {
         context.startService(intent);
 
     }
+
+    public static void startActionDeleteFiles(Context context, ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter){
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_DELETE_FILES);
+
+        intent.putExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE, alsUriFilesToDelete);
+        intent.putExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER, sCallerActionResponseFilter);
+
+        context.startService(intent);
+    }
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -238,6 +257,12 @@ public class Service_Import extends IntentService {
                     e.printStackTrace();
                 }
 
+            } else if (ACTION_DELETE_FILES.equals(action)){
+
+                final ArrayList<String>  alsUriFilesToDelete = intent.getStringArrayListExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE);
+                final String sCallerActionResponseFilter = intent.getStringExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER);
+
+                handleAction_startActionDeleteFiles(alsUriFilesToDelete, sCallerActionResponseFilter);
             }
         }
     }
@@ -2285,6 +2310,53 @@ public class Service_Import extends IntentService {
 
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
+
+    }
+
+    private void handleAction_startActionDeleteFiles( ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter){
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = alsUriFilesToDelete.size();
+        int iProgressBarValue = 0;
+
+        Uri uriSourceFile;
+        DocumentFile dfSource;
+        String sLogLine;
+        boolean bDisplayLogMessage;
+        String sProgressBarText;
+        for(String sUriFileToDelete: alsUriFilesToDelete) {
+            bDisplayLogMessage = false;
+            sLogLine = FILE_DELETION_MESSAGE + sUriFileToDelete + "...";
+            uriSourceFile = Uri.parse(sUriFileToDelete);
+            dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+
+            if (dfSource != null) {
+                try {
+                    if (dfSource.delete()) {
+                        sLogLine = sLogLine + "Success.";
+                    } else {
+                        sLogLine = sLogLine + "Failed.";
+                        bDisplayLogMessage = true;
+                    }
+                } catch (Exception e){
+                  sLogLine = sLogLine + e.getMessage();
+                    bDisplayLogMessage = true;
+                }
+            }
+
+            iProgressNumerator++;
+            sProgressBarText = "File " + iProgressNumerator + " of " + iProgressDenominator + " deleted.";
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            BroadcastProgress(bDisplayLogMessage, sLogLine,
+                    true, iProgressBarValue,
+                    true, sProgressBarText,
+                    sCallerActionResponseFilter);
+        }
+
+        BroadcastProgress(false, FILE_DELETION_OP_COMPLETE_MESSAGE,
+                true, 100,
+                false, "",
+                sCallerActionResponseFilter);
 
     }
 

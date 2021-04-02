@@ -31,6 +31,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -78,7 +79,7 @@ public class Activity_Import extends AppCompatActivity {
 
     //FragmentImport_2_SelectItems
     public static int SelectItemsListViewWidth = 1000;  //Expands the listView items to the width of the listview.
-    public static FileListCustomAdapter fileListCustomAdapter; //For the file selector.
+    public FileListCustomAdapter fileListCustomAdapter; //For the file selector.
     public static final String PREVIEW_FILE_ITEMS = "PREVIEW_FILE_ITEMS";
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
     public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
@@ -474,9 +475,11 @@ public class Activity_Import extends AppCompatActivity {
         final public ArrayList<ItemClass_File> alFileItems;
         private ArrayList<ItemClass_File> alFileItemsDisplay;
         private boolean bSelectAllSelected = false;
+        Context contextFromCaller;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<ItemClass_File> alfi) {
             super(context, textViewResourceId, alfi);
+            contextFromCaller = context;
             alFileItems = new ArrayList<>(alfi);
 
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
@@ -720,48 +723,30 @@ public class Activity_Import extends AppCompatActivity {
                                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
 
                                     String sComicParentUri = alFileItemsDisplay.get(position).sUri;
-                                    int iFailedDeletions = 0;
-                                    int iTotalDeletions = 0;
 
-                                    //Delete comic pages:
+                                    ArrayList<String> alsUriFilesToDelete = new ArrayList<>();
                                     ItemClass_File fiSource;
+
+                                    //Mark comic page files for deletion, and remove from alFileItems:
+                                    String sMessage;
                                     for (int i = 0; i < alFileItems.size(); i++) {
                                         fiSource = alFileItems.get(i);
                                         if(fiSource.sUriParent.equals(sComicParentUri)){
-                                            Uri uriSourceFile = Uri.parse(fiSource.sUri);
-                                            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-
-                                            if (dfSource != null) {
-                                                if(dfSource.delete()) {
-                                                    iTotalDeletions++;
-                                                } else {
-                                                    iFailedDeletions++;
-                                                }
-                                            }
+                                            alsUriFilesToDelete.add(fiSource.sUri);
                                             alFileItems.remove(i);
                                         }
                                     }
-                                    //Delete the comic folder:
-                                    Uri uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                                    DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
-                                    if (dfSource != null) {
-                                        if(dfSource.delete()) {
-                                            iTotalDeletions++;
-                                        } else {
-                                            iFailedDeletions++;
-                                        }
-                                    }
-                                    String sMessage;
-                                    if(iFailedDeletions == 0) {
-                                        sMessage = "Comic deleted: " + alFileItemsDisplay.get(position).sFileOrFolderName;
-                                    } else {
-                                        sMessage = "Failed to delete " + iFailedDeletions + "/" + iTotalDeletions + " files belonging to the comic.";
-                                    }
-
+                                    //Mark comic folder for deletion and remove from alFileItemsDisplay:
+                                    alsUriFilesToDelete.add(alFileItemsDisplay.get(position).sUri);
                                     alFileItemsDisplay.remove(position);
-                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+
+                                    //Refresh the listView:
                                     notifyDataSetChanged();
+
+                                    //Start the file delete service:
+                                    Service_Import.startActionDeleteFiles(getApplicationContext(), alsUriFilesToDelete,
+                                            Fragment_Import_2_SelectItems.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
 
                                 }
                             }
