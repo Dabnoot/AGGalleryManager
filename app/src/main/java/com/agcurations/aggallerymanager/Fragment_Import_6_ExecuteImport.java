@@ -112,15 +112,14 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             globalClass.gbImportExecutionRunning = true;//This prevents import from starting again
                                                              // if the activity/fragment is restarted due to an orientation change, etc.
             //Initiate the file import via ImportActivityDataService:
+            globalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
                     Service_Import.startActionImportNHComicsFiles(getContext(),
-                            viewModelImportActivity.alfiConfirmedFileImports,
                             viewModelImportActivity.iImportMethod,
                             viewModelImportActivity.iComicImportSource);
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     Service_Import.startActionImportComicFolders(getContext(),
-                            viewModelImportActivity.alfiConfirmedFileImports,
                             viewModelImportActivity.iImportMethod,
                             viewModelImportActivity.iComicImportSource);
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
@@ -129,7 +128,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 }
             } else {
                 Service_Import.startActionImportFiles(getContext(),
-                        viewModelImportActivity.alfiConfirmedFileImports,
                         viewModelImportActivity.iImportMethod,
                         viewModelImportActivity.iImportMediaCategory);
             }

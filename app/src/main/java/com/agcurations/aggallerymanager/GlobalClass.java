@@ -82,6 +82,8 @@ public class GlobalClass extends Application {
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
 
+    ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
+    //  This is done because the list of files can exceed the intent extra transaction size limit.
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================

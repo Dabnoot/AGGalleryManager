@@ -68,7 +68,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().setTitle("Import");
+        if( getActivity() != null) {
+            getActivity().setTitle("Import");
+        }
         initComponents();
     }
 
@@ -119,7 +121,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         textView_RequiredStorageSpace.setText(s);
 
         //Get the units from 'required space' to match with 'available space':
-        String sData[] = s.split(" ");
+        String[] sData = s.split(" ");
         String sStorageUnit = GlobalClass.STORAGE_SIZE_NO_PREFERENCE;
         if(sData.length == 2) {
             sStorageUnit = sData[1];

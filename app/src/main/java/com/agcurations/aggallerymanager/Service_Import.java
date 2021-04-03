@@ -102,28 +102,25 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionImportFiles(Context context, ArrayList<ItemClass_File> alImportFileList, int iMoveOrCopy, int iMediaCategory) {
+    public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_FILES);
-        intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
         context.startService(intent);
     }
 
-    public static void startActionImportNHComicsFiles(Context context, ArrayList<ItemClass_File> alImportFileList, int iMoveOrCopy, int iComicImportSource) {
+    public static void startActionImportNHComicsFiles(Context context, int iMoveOrCopy, int iComicImportSource) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_NHCOMICS);
-        intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
         context.startService(intent);
     }
 
-    public static void startActionImportComicFolders(Context context, ArrayList<ItemClass_File> alImportFileList, int iMoveOrCopy, int iComicImportSource) {
+    public static void startActionImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource) {
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMIC_FOLDERS);
-        intent.putExtra(EXTRA_IMPORT_FILES_FILELIST, alImportFileList);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
         context.startService(intent);
@@ -191,37 +188,19 @@ public class Service_Import extends IntentService {
                     globalClass.gbImportFolderAnalysisFinished = true;
                 }
             } else if (ACTION_IMPORT_FILES.equals(action)) {
-                @SuppressWarnings("unchecked")
-                final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, -1);
-                if(alFileList==null) return;
-                handleAction_startActionImportFiles(
-                        alFileList,
-                        iMoveOrCopy,
-                        iMediaCategory);
+                handleAction_startActionImportFiles(iMoveOrCopy, iMediaCategory);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_IMPORT_NHCOMICS.equals(action)) {
-                @SuppressWarnings("unchecked")
-                final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
-                if(alFileList==null) return;
-                handleAction_startActionImportNHComics(
-                        alFileList,
-                        iMoveOrCopy
-                );
+                handleAction_startActionImportNHComics(iMoveOrCopy);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_IMPORT_COMIC_FOLDERS.equals(action)) {
-                @SuppressWarnings("unchecked")
-                final ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(EXTRA_IMPORT_FILES_FILELIST);
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
-                if(alFileList==null) return;
-                handleAction_startActionImportComicFolders(
-                        alFileList,
-                        iMoveOrCopy
-                );
+                handleAction_startActionImportComicFolders(iMoveOrCopy);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
@@ -813,8 +792,7 @@ public class Service_Import extends IntentService {
         }
     }
 
-    private void handleAction_startActionImportFiles(ArrayList<ItemClass_File> alFileList, int iMoveOrCopy, int iMediaCategory) {
-
+    private void handleAction_startActionImportFiles(int iMoveOrCopy, int iMediaCategory) {
 
         long lProgressNumerator = 0L;
         long lProgressDenominator;
@@ -827,6 +805,8 @@ public class Service_Import extends IntentService {
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
+
+        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
@@ -1123,7 +1103,7 @@ public class Service_Import extends IntentService {
 
     //====== Comic Routines ========================================================================
 
-    private void handleAction_startActionImportNHComics(ArrayList<ItemClass_File> alFileList, int iMoveOrCopy) {
+    private void handleAction_startActionImportNHComics(int iMoveOrCopy) {
 
 
         long lProgressNumerator = 0L;
@@ -1137,6 +1117,8 @@ public class Service_Import extends IntentService {
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
+
+        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
@@ -1399,8 +1381,7 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionImportComicFolders(ArrayList<ItemClass_File> alFileList, int iMoveOrCopy) {
-
+    private void handleAction_startActionImportComicFolders(int iMoveOrCopy) {
 
         long lProgressNumerator = 0L;
         long lProgressDenominator;
@@ -1413,6 +1394,8 @@ public class Service_Import extends IntentService {
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
+
+        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
