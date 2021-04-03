@@ -136,7 +136,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
         if(getView() != null) {
             gProgressBar_FileAnalysisProgress = getView().findViewById(R.id.progressBar_FileAnalysisProgress);
-            gProgressBar_FileAnalysisProgress.setMax(100);
+            gProgressBar_FileAnalysisProgress.setMax(1000);
             gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
             gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
 
@@ -372,18 +372,18 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     if(gProgressBar_FileAnalysisProgress != null) {
                         gProgressBar_FileAnalysisProgress.setProgress(iAmountComplete);
                     }
-                    if(iAmountComplete == 100){
-                        if(gbutton_FolderSelectComplete != null) {
-                            gbutton_FolderSelectComplete.setEnabled(true);
-                            viewModelImportActivity.bUpdateImportSelectList = true;
-                        }
-                    }
                 }
                 if(bUpdateProgressBarText){
                     String sProgressBarText;
                     sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
                     if(gTextView_FileAnalysisProgressBarText != null) {
                         gTextView_FileAnalysisProgressBarText.setText(sProgressBarText);
+                    }
+                }
+                if(globalClass.gbImportFolderAnalysisFinished){
+                    if(gbutton_FolderSelectComplete != null) {
+                        gbutton_FolderSelectComplete.setEnabled(true);
+                        viewModelImportActivity.bUpdateImportSelectList = true;
                     }
                 }
 

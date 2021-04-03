@@ -183,9 +183,9 @@ public class Service_Import extends IntentService {
                 globalClass.gbImportFolderAnalysisRunning = false;
                 if(globalClass.gbImportFolderAnalysisStop) {
                     globalClass.gbImportFolderAnalysisStop = false;
-                } else {
+                //} else {
                     //Only set "finished" to true if it was not stopped intentionally.
-                    globalClass.gbImportFolderAnalysisFinished = true;
+                    //globalClass.gbImportFolderAnalysisFinished = true;   ---Set at the end of the GetDirectoryContents routine before the last broadcast.
                 }
             } else if (ACTION_IMPORT_FILES.equals(action)) {
                 final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
@@ -260,6 +260,12 @@ public class Service_Import extends IntentService {
     //todo: Separate comic folder analysis from GetDirectoryContents.
     private void handleAction_GetDirectoryContents(Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource) {
         if(Activity_Import.guriImportTreeURI != null){
+            GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+            long lProgressNumerator = 0L;
+            long lProgressDenominator = 0L;
+            int iProgressBarValue = 0;
+
             Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
             ArrayList<ItemClass_File> alFileList = new ArrayList<>();
             try {
@@ -286,11 +292,9 @@ public class Service_Import extends IntentService {
 
                 if(cImport != null) {
 
-                    GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
-                    long lProgressNumerator = 0L;
-                    long lProgressDenominator;
-                    int iProgressBarValue = 0;
+
+
 
                     //Calculate total number of files for a progress bar:
                     lProgressDenominator = cImport.getCount();
@@ -301,6 +305,7 @@ public class Service_Import extends IntentService {
                         //Go through the folders in the users' chosen directory and count the files.
                         //  Each will be processed, and add a tick to the progressbar.
 
+                        long lProgressDenominatorQuick = lProgressDenominator;
 
                         cImport.moveToPosition(-1);
                         while (cImport.moveToNext() && !globalClass.gbImportFolderAnalysisStop) {
@@ -327,9 +332,20 @@ public class Service_Import extends IntentService {
                                     lProgressDenominator += cSubfiles.getCount(); //Count the files in the folder.
                                     cSubfiles.close(); //Close the query.
                                 }
+
                             }
+
+                            lProgressNumerator++;
+                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominatorQuick) * 1000);
+                            BroadcastProgress(false, "",
+                                    true, iProgressBarValue,
+                                    true, lProgressNumerator + "/" + lProgressDenominatorQuick,
+                                    Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
+
                         }
                     }
+
+                    lProgressNumerator = 0L;
 
                     BroadcastProgress(false, "",
                             true, iProgressBarValue,
@@ -346,7 +362,7 @@ public class Service_Import extends IntentService {
                         //Update progress bar:
                         //Update progress right away in order to avoid instances in which a loop is skipped.
                         lProgressNumerator++;
-                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 1000);
                         BroadcastProgress(false, "",
                                 true, iProgressBarValue,
                                 true, lProgressNumerator + "/" + lProgressDenominator,
@@ -546,7 +562,7 @@ public class Service_Import extends IntentService {
 
                                         //Write progress here since some of the lower steps will cause the loop to skip processing:
                                         lProgressNumerator++;
-                                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 1000);
                                         BroadcastProgress(false, "",
                                                 true, iProgressBarValue,
                                                 true, lProgressNumerator + "/" + lProgressDenominator,
@@ -789,6 +805,14 @@ public class Service_Import extends IntentService {
             broadcastIntent_GetDirectoryContentsResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
             broadcastIntent_GetDirectoryContentsResponse.addCategory(Intent.CATEGORY_DEFAULT);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
+
+            //Set finished and broadcast so that the fragment knows that we are done.
+            globalClass.gbImportFolderAnalysisFinished = true;
+            BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    true, lProgressNumerator + "/" + lProgressDenominator,
+                    Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
+
         }
     }
 
