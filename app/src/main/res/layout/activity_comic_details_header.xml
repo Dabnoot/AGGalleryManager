@@ -260,6 +260,16 @@
                 app:layout_constraintStart_toEndOf="@+id/textView_LabelComicID"
                 app:layout_constraintTop_toTopOf="@+id/textView_LabelComicID" />
 
+            <ImageView
+                android:id="@+id/imageView_EditComicDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/baseline_mode_edit_white_24"
+                android:layout_margin="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:contentDescription="Edit comic details." />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
 
