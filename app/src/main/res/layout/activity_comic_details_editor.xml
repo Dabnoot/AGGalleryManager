@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:openDrawer="start">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/textView_ActivityTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comic Details Editor"
+                android:textSize="36sp"
+                android:layout_centerHorizontal="true"/>
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_ComicFields"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/textView_ActivityTitle">
+
+                <TextView
+                    android:id="@+id/textView_LabelComicTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginStart="15dp"
+                    android:text="Comic Title:"
+                    android:textSize="20sp"/>
+
+                <EditText
+                    android:id="@+id/editText_ComicTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:inputType="textMultiLine"
+                    android:text="Comic Title"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/textView_LabelComicSource"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Comic Source:"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_ComicSource" />
+
+                <EditText
+                    android:id="@+id/editText_ComicSource"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:inputType="textMultiLine"
+                    android:text="ComicSource"
+                    android:textSize="20sp"
+                    android:layout_below="@id/editText_ComicTitle"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_alignParentEnd="true" />
+
+                <TextView
+                    android:id="@+id/textView_LabelParodies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/parodies"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_Parodies"
+                    android:layout_alignEnd="@id/textView_LabelComicSource" />
+
+                <EditText
+                    android:id="@+id/editText_Parodies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:inputType="textMultiLine"
+                    android:text="@string/parodies_"
+                    android:textColor="@color/colorGrey1"
+                    android:textSize="20sp"
+                    android:layout_below="@id/editText_ComicSource"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_alignParentEnd="true"/>
+
+                <TextView
+                    android:id="@+id/textView_LabelCharacters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/characters"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_Characters"
+                    android:layout_alignEnd="@id/textView_LabelComicSource" />
+
+                <EditText
+                    android:id="@+id/editText_Characters"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/editText_Parodies"
+                    android:layout_alignParentEnd="true"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:inputType="textMultiLine"
+                    android:text="@string/characters_"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/textView_LabelTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/tags"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/textView_Tags"
+                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+
+                <TextView
+                    android:id="@+id/textView_Tags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignTop="@id/imageView_EditTags"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginEnd="15dp"
+                    android:layout_toStartOf="@id/imageView_EditTags"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:text="@string/tags_"
+                    android:textSize="20sp" />
+
+                <ImageView
+                    android:id="@+id/imageView_EditTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/baseline_mode_edit_white_24"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:layout_marginBottom="15dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_below="@id/editText_Characters"
+                    android:contentDescription="Edit tags." />
+
+                <TextView
+                    android:id="@+id/textView_LabelArtists"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/artists"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_Artists"
+                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+
+                <EditText
+                    android:id="@+id/editText_Artists"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:inputType="textMultiLine"
+                    android:text="@string/artists_"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_Tags"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_alignParentEnd="true"/>
+
+                <TextView
+                    android:id="@+id/textView_LabelGroups"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/groups"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_Groups"
+                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+
+                <EditText
+                    android:id="@+id/editText_Groups"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:inputType="textMultiLine"
+                    android:text="@string/groups_"
+                    android:textSize="20sp"
+                    android:layout_below="@id/editText_Artists"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_alignParentEnd="true"/>
+
+                <TextView
+                    android:id="@+id/textView_LabelLanguages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/languages_"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_Languages"
+                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+
+                <EditText
+                    android:id="@+id/editText_Languages"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:inputType="textMultiLine"
+                    android:text="@string/languages"
+                    android:textSize="20sp"
+                    android:layout_below="@id/editText_Groups"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_alignParentEnd="true"/>
+
+                <TextView
+                    android:id="@+id/textView_LabelCategories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="@string/categories"
+                    android:textSize="20sp"
+                    android:layout_alignBaseline="@id/editText_Categories"
+                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+
+                <EditText
+                    android:id="@+id/editText_Categories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="15dp"
+                    android:inputType="textMultiLine"
+                    android:text="@string/categories_"
+                    android:textSize="20sp"
+                    android:layout_below="@id/editText_Languages"
+                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_alignParentEnd="true"/>
+
+
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout_ButtonBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_centerHorizontal="true"
+                android:layout_below="@+id/relativeLayout_ComicFields">
+
+                <Button
+                    android:id="@+id/button_Cancel"
+                    android:layout_width="160dp"
+                    android:layout_height="67dp"
+                    android:text="Cancel"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorBlackboardRed"/>
+
+                <Button
+                    android:id="@+id/button_Save"
+                    android:layout_width="160dp"
+                    android:layout_height="67dp"
+                    android:layout_marginStart="20dp"
+                    android:text="Save"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorBlackboardRed" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </ScrollView>
+
+    <FrameLayout
+        android:id="@+id/frameLayout_TagSelector"
+        android:layout_width="200dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:clickable="true"
+        android:background="@color/design_default_color_error">
+    </FrameLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

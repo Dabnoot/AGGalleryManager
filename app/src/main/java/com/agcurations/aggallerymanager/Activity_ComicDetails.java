@@ -88,7 +88,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     }
 
     private void loadComicPageData(){
-        //This was put in place to handle the scenario of missing file download completion.
+        //This was put in place to handle the scenario of missing file download completion - when missing files are downloaded.
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
@@ -277,6 +277,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final ImageView ivThumbnail;
             public final TextView tvThumbnailText;
 
+            public final ImageView imageView_EditComicDetails;
+
             public final TextView tvComicSource;
             public final TextView tvParodies;
             public final TextView tvCharacters;
@@ -305,6 +307,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
                 tvThumbnailText = v.findViewById(R.id.textView_Title);
+
+                imageView_EditComicDetails = v.findViewById(R.id.imageView_EditComicDetails);
 
                 tvComicSource = v.findViewById(R.id.textView_ComicSource);
                 tvParodies = v.findViewById(R.id.textView_Parodies);
@@ -419,6 +423,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLabelCategories.setVisibility(View.INVISIBLE);
                     holder.tvLabelPages.setVisibility(View.INVISIBLE);
                     holder.tvLabelComicID.setVisibility(View.INVISIBLE);
+
+                    holder.imageView_EditComicDetails.setVisibility(View.INVISIBLE);
                 }
 
 
@@ -455,6 +461,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLabelPages.setVisibility(View.VISIBLE);
                     holder.tvLabelComicID.setVisibility(View.VISIBLE);
 
+                    holder.imageView_EditComicDetails.setVisibility(View.VISIBLE);
+
                     sThumbnailText = gciCatalogItem.sComicName;
                     holder.tvComicSource.setText(gciCatalogItem.sSource);
                     holder.tvParodies.setText(gciCatalogItem.sComicParodies);
@@ -470,6 +478,17 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     String sPages = "" + gciCatalogItem.iComicPages;
                     holder.tvPages.setText(sPages);
                     holder.tvComicID.setText(gciCatalogItem.sItemID);
+
+                    holder.imageView_EditComicDetails.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent intentComicDetailsEditor = new Intent(getApplicationContext(), Activity_ComicDetailsEditor.class);
+                            intentComicDetailsEditor.putExtra(Activity_ComicDetailsEditor.EXTRA_COMIC_CATALOG_ITEM, gciCatalogItem);
+                            startActivity(intentComicDetailsEditor);
+
+                        }
+                    });
+
                 } else {
                     sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
                 }
@@ -538,13 +557,16 @@ public class Activity_ComicDetails extends AppCompatActivity {
     @Override
     public void onResume(){
         super.onResume();
-        if(globalClass.ObfuscationOn) {
+
+        loadComicPageData();
+
+/*        if(globalClass.ObfuscationOn) {
             //Obfuscate data:
             Obfuscate();
         } else {
             //Remove obfuscation:
             RemoveObfuscation();
-        }
+        }*/
 
 
     }

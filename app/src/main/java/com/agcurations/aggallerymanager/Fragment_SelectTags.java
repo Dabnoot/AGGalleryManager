@@ -340,7 +340,8 @@ public class Fragment_SelectTags extends Fragment {
                     if (iReferenceTagID == iPreSelectedTagID) {
                         bIsChecked = true;
                         iPreSelectedTagIterator++;
-                        iSelectionOrder = iPreSelectedTagIterator;
+                        iSelectionOrder = galiPreselectedTags.indexOf(iPreSelectedTagID) + 1;
+                        //iSelectionOrder = iPreSelectedTagIterator;
                         break;
                     }
                 }
