@@ -258,8 +258,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
         }
 
-        //populate_RecyclerViewCatalogItems();
-        //no need to call pop() here because the initialization of position of gspSpinnerSort calls it.
+        if(globalClass.gbCatalogViewerRefresh){
+            //Typically enter here if data has been edited.
+            populate_RecyclerViewCatalogItems();
+            globalClass.gbCatalogViewerRefresh = false;
+        }
 
         if(globalClass.ObfuscationOn) {
             //Obfuscate data:
@@ -762,7 +765,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         Intent intentComicViewer = new Intent(this, Activity_ComicDetails.class);
 
-        intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM, ci);
+        //intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM, ci);
+        intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM_ID, ci.sItemID); //Pass item ID and load record from file. To accommodate comic detail edit.
 
         if(toastLastToastMessage != null){
             toastLastToastMessage.cancel(); //Hide any toast message that might be shown.

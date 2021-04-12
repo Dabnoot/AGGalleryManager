@@ -67,6 +67,7 @@ public class GlobalClass extends Application {
     public boolean[] gbCatalogViewerFiltered = {false, false, false};
     public String[] gsCatalogViewerFilterText = {"", "", ""};
     public boolean gbCatalogViewerTagsRestrictionsOn;
+    public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
     //End catalog viewer variables.
 
     public static final String gsNHComicCoverPageFilter = "^\\d{1,7}_Cover.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.

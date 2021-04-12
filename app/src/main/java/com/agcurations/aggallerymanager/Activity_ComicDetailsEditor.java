@@ -94,6 +94,10 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
 
                 //Update catalog item in memory and in storage:
                 globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+
+                //Tell Activity_CatalogViewer to refresh its view:
+                globalClass.gbCatalogViewerRefresh = true;
+
                 finish();
             }
         });

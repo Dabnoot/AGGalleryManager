@@ -40,6 +40,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     //Global Variables:
     private GlobalClass globalClass;
 
+    private String gsComicItemID = "";
     private ItemClass_CatalogItem gciCatalogItem;
     private TreeMap<Integer, String> gtmComicPages;
 
@@ -47,6 +48,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private MenuItem gmiSaveDetails;
 
     public static final String EXTRA_CATALOG_ITEM = "CATALOG_ITEM";
+    public static final String EXTRA_CATALOG_ITEM_ID = "com.agcurations.aggallerymanager.extra.CATALOG_ITEM_ID";
 
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
 
@@ -71,9 +73,13 @@ public class Activity_ComicDetails extends AppCompatActivity {
         globalClass = (GlobalClass) getApplicationContext();
 
         Intent intent = getIntent();
-        gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
+        //gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
+        //Get the item ID:
+        gsComicItemID = intent.getStringExtra(EXTRA_CATALOG_ITEM_ID);
 
-        if( gciCatalogItem == null) return;
+
+
+        if( gsComicItemID == null) return;
 
 
         loadComicPageData();
@@ -89,6 +95,17 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     private void loadComicPageData(){
         //This was put in place to handle the scenario of missing file download completion - when missing files are downloaded.
+
+        //Look-up the item and grab a copy:
+        if (!gsComicItemID.equals("")) {
+            for (Map.Entry<String, ItemClass_CatalogItem>
+                    entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
+                if(gsComicItemID.equals(entry.getKey())){
+                    gciCatalogItem = entry.getValue();
+                    break;
+                }
+            }
+        }
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;
