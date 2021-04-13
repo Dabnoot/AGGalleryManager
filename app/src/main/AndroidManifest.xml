@@ -11,8 +11,7 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activity_ComicDetailsEditor"></activity>
-        <activity android:name=".Activity_Import_WebPlayer" />
+        <activity android:name=".Activity_ComicDetailsEditor"/>
         <activity android:name=".Activity_TagEditor" />
         <activity
             android:name=".Activity_VideoPlayer"
