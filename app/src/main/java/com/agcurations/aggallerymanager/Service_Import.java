@@ -2004,6 +2004,37 @@ public class Service_Import extends IntentService {
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         }
 
+        //Create a timestamp to be used to create the data record:
+        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+        ci.dDatetime_Last_Viewed_by_User = dTimeStamp;
+        ci.dDatetime_Import = dTimeStamp;
+
+        //Convert textual tags to numeric tags:
+        //Form the tag integer array:
+        String[] sTags = ci.sTags.split(", ");
+        ArrayList<Integer> aliTags = new ArrayList<>();
+        for(String sTag: sTags){
+            aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
+        }
+        //Look for any tags that could not be found:
+        for(int i = 0; i < aliTags.size(); i++){
+            if(aliTags.get(i) == -1){
+                //Create the tag:
+                if(!sTags[i].equals("")) {
+                    ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                    if(ictNewTag != null){
+                        aliTags.set(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
+                    }
+                }
+            }
+        }
+        ci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
+
+        //The below call should add the record to both the catalog contents file
+        //  and memory. Create the record in the system before downloading the files for the event that
+        //  the download is interrupted:
+        globalClass.CatalogDataFile_CreateNewRecord(ci);
+
         if(ci.alsComicPageURLsAndDestFileNames.size() > 0){
             //If there are image addresses to attempt to download...
             InputStream input = null;
@@ -2022,6 +2053,8 @@ public class Service_Import extends IntentService {
                     if(ci.sFilename.equals("")){
                         ci.sFilename = sJumbledNewFileName;
                         ci.sThumbnail_File = sJumbledNewFileName;
+                        //Update the catalog record with the filename and thumbnail image:
+                        globalClass.CatalogDataFile_UpdateRecord(ci);
                     }
 
                     File fNewFile = new File(sNewFullPathFilename);
@@ -2069,41 +2102,6 @@ public class Service_Import extends IntentService {
 
                 }
                 //Success downloading files.
-
-                //Convert textual tags to numeric tags:
-                //Form the tag integer array:
-                String[] sTags = ci.sTags.split(", ");
-                ArrayList<Integer> aliTags = new ArrayList<>();
-                for(String sTag: sTags){
-                    aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
-                }
-                //Look for any tags that could not be found:
-                for(int i = 0; i < aliTags.size(); i++){
-                    if(aliTags.get(i) == -1){
-                        //Create the tag:
-                        if(!sTags[i].equals("")) {
-                            ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
-                            if(ictNewTag != null){
-                                aliTags.set(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
-                            }
-                        }
-                    }
-                }
-                ci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
-
-
-
-                //Create a timestamp to be used to create the data record:
-                Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-                ci.dDatetime_Last_Viewed_by_User = dTimeStamp;
-                ci.dDatetime_Import = dTimeStamp;
-
-                //The below call should add the record to both the catalog contents file
-                //  and memory:
-                globalClass.CatalogDataFile_CreateNewRecord(ci);
-
-
-
 
                 BroadcastProgress(true, "Operation complete.",
                         true, iProgressBarValue,
