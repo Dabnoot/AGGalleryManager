@@ -1,6 +1,9 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -15,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
@@ -136,6 +140,20 @@ public class Service_Main extends IntentService {
             //This lets us check globalClass.isNetworkConnected to see if we are connected to the
             //network;
         }
+
+        //Create the notification channel to be used to display notifications to the user (to notify
+        //  the user when things happen with WorkManager when the user has left the app, such as
+        //  during file downloads):
+        globalClass.notificationChannel = new NotificationChannel(
+                GlobalClass.NOTIFICATION_CHANNEL_ID,
+                GlobalClass.NOTIFICATION_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT);
+        globalClass.notificationChannel.setDescription(GlobalClass.NOTIFICATION_CHANNEL_DESCRIPTION);
+        globalClass.notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        // Register the channel with the system; you can't change the importance
+        // or other notification behaviors after this
+        globalClass.notificationManager = getSystemService(NotificationManager.class);
+        globalClass.notificationManager.createNotificationChannel(globalClass.notificationChannel);
 
     }
 

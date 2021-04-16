@@ -4,6 +4,8 @@ package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -38,6 +40,13 @@ public class GlobalClass extends Application {
     //Each section, Videos, Pictures, Comics, has its own folder, catalog file, tags file, and log folder.
 
     //Global Variables:
+
+    NotificationChannel notificationChannel;
+    NotificationManager notificationManager;
+    public static final String NOTIFICATION_CHANNEL_ID = "com.agcurations.aggallerymanager.NOTICIFATION_CHANNEL";
+    public static final String NOTIFICATION_CHANNEL_NAME = "Download progress & completion";
+    public static final String NOTIFICATION_CHANNEL_DESCRIPTION = "Notifications from AGGalleryManager, such as download progress or completion.";
+    public int iNotificationID = 0;
 
     public String gsPin = "";
 

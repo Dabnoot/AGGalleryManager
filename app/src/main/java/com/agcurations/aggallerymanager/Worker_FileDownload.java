@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.app.Notification;
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -43,7 +44,7 @@ public class Worker_FileDownload extends Worker {
                 Thread.currentThread();
                 Thread.sleep(500);
             }catch (Exception e){
-
+                Log.d("Test", "doWork: " + e.getMessage());
             }
             i++;
             notificationBuilder.setProgress(100, i, (i > 25 && i < 50));

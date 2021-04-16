@@ -1,7 +1,10 @@
+
 package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -257,6 +260,8 @@ public class Activity_Main extends AppCompatActivity {
             return true;
         } else if(item.getItemId() == R.id.menu_Test) {
 
+            //WorkManager workManager = WorkManager.getInstance(getApplicationContext());
+            //workManager.enqueue(OneTimeWorkRequest.from(Worker_FileDownload.class));
 
             return true;
         } else {
