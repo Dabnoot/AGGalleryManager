@@ -6,11 +6,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Menu;
@@ -22,6 +24,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class Activity_Main extends AppCompatActivity {
 
@@ -260,8 +264,33 @@ public class Activity_Main extends AppCompatActivity {
             return true;
         } else if(item.getItemId() == R.id.menu_Test) {
 
+            //Testing WorkManager:
             //WorkManager workManager = WorkManager.getInstance(getApplicationContext());
             //workManager.enqueue(OneTimeWorkRequest.from(Worker_FileDownload.class));
+
+            //Testing DownloadManager:
+            //Use the download manager to download the file:
+            String sFolderName = "0000";
+            String sShortPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath();
+            sShortPath = sShortPath + File.separator + sFolderName;
+            String sTestURL = "https://thumbs.dreamstime.com/z/tv-test-image-card-rainbow-multi-color-bars-geometric-signals-retro-hardware-s-minimal-pop-art-print-suitable-89603663.jpg";
+            String sTestFileName = "1000.gpj";
+            String sFullPathFileName = sShortPath + File.separator + sTestFileName;
+            File fTestFile = new File(sFullPathFileName);
+
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sTestURL));
+            request.setTitle("AG Gallery+ File Download")
+                    .setDescription("Download test file")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                    //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                    .setMimeType("application/octet-stream")
+                    .setDestinationUri(Uri.fromFile(fTestFile));
+
+            // get download service and enqueue file
+            DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            manager.enqueue(request);
+
 
             return true;
         } else {

@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.DownloadManager;
 import android.app.IntentService;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -2041,6 +2042,11 @@ public class Service_Import extends IntentService {
             OutputStream output = null;
             try {
 
+                boolean bUseDownloadManager = true; //Specify if we want to use the download manager.
+                DownloadManager downloadManager = null;
+                if(bUseDownloadManager){
+                    downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                }
                 //Download the files:
                 for(String[] sData: ci.alsComicPageURLsAndDestFileNames) {
 
@@ -2060,41 +2066,64 @@ public class Service_Import extends IntentService {
                     File fNewFile = new File(sNewFullPathFilename);
 
                     if(!fNewFile.exists()) {
-                        // Output stream
-                        output = new FileOutputStream(fNewFile.getPath());
 
-                        byte[] data = new byte[1024];
 
-                        BroadcastProgress(true, "Downloading: " + sData[0] + "...",
-                                false, iProgressBarValue,
-                                true, "Downloading files...",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        if(!bUseDownloadManager) {
+                            // Output stream
+                            output = new FileOutputStream(fNewFile.getPath());
 
-                        URL url = new URL(sData[0]);
-                        URLConnection connection = url.openConnection();
-                        connection.connect();
+                            byte[] data = new byte[1024];
 
-                        // download the file
-                        input = new BufferedInputStream(url.openStream(), 8192);
+                            BroadcastProgress(true, "Downloading: " + sData[0] + "...",
+                                    false, iProgressBarValue,
+                                    true, "Downloading files...",
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                        int count;
-                        while ((count = input.read(data)) != -1) {
+                            URL url = new URL(sData[0]);
+                            URLConnection connection = url.openConnection();
+                            connection.connect();
 
-                            // writing data to file
-                            output.write(data, 0, count);
-                        }
+                            // download the file
+                            input = new BufferedInputStream(url.openStream(), 8192);
 
-                        // flushing output
-                        output.flush();
+                            int count;
+                            while ((count = input.read(data)) != -1) {
 
-                        // closing streams
-                        output.close();
-                        input.close();
+                                // writing data to file
+                                output.write(data, 0, count);
+                            }
+
+                            // flushing output
+                            output.flush();
+
+                            // closing streams
+                            output.close();
+                            input.close();
+
+                        } else { //If bUseDownloadManager....
+
+                            BroadcastProgress(true, "Initiating download of file: " + sData[0] + "...",
+                                    false, iProgressBarValue,
+                                    true, "Submitting download requests...",
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+                            //Use the download manager to download the file:
+                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sData[0]));
+                            request.setTitle("AG Gallery+ File Download")
+                                    .setDescription(sData[0])
+                                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                    //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                                    //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                                    .setMimeType("application/octet-stream")
+                                    .setDestinationUri(Uri.fromFile(fNewFile));
+                            downloadManager.enqueue(request);
+
+                        } //End if bUseDownloadManager.
 
                         lProgressNumerator++;
 
                         iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                        BroadcastProgress(true, " Complete.\n",
+                        BroadcastProgress(true, "\n",
                                 true, iProgressBarValue,
                                 false, "",
                                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
