@@ -2048,9 +2048,11 @@ public class Service_Import extends IntentService {
                     downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
                 }
                 //Download the files:
+                int FILE_DOWNLOAD_ADDRESS = 0;
+                int FILE_NAME_AND_EXTENSION = 1;
                 for(String[] sData: ci.alsComicPageURLsAndDestFileNames) {
 
-                    String sNewFilename = ci.sItemID + "_" +sData[1];
+                    String sNewFilename = ci.sItemID + "_" +sData[FILE_NAME_AND_EXTENSION];
                     String sJumbledNewFileName = GlobalClass.JumbleFileName(sNewFilename);
                     String sNewFullPathFilename = fDestination.getPath() +
                             File.separator +
@@ -2074,12 +2076,12 @@ public class Service_Import extends IntentService {
 
                             byte[] data = new byte[1024];
 
-                            BroadcastProgress(true, "Downloading: " + sData[0] + "...",
+                            BroadcastProgress(true, "Downloading: " + sData[FILE_DOWNLOAD_ADDRESS] + "...",
                                     false, iProgressBarValue,
                                     true, "Downloading files...",
                                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                            URL url = new URL(sData[0]);
+                            URL url = new URL(sData[FILE_DOWNLOAD_ADDRESS]);
                             URLConnection connection = url.openConnection();
                             connection.connect();
 
@@ -2102,15 +2104,15 @@ public class Service_Import extends IntentService {
 
                         } else { //If bUseDownloadManager....
 
-                            BroadcastProgress(true, "Initiating download of file: " + sData[0] + "...",
+                            BroadcastProgress(true, "Initiating download of file: " + sData[FILE_DOWNLOAD_ADDRESS] + "...",
                                     false, iProgressBarValue,
                                     true, "Submitting download requests...",
                                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                             //Use the download manager to download the file:
-                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sData[0]));
+                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sData[FILE_DOWNLOAD_ADDRESS]));
                             request.setTitle("AG Gallery+ File Download")
-                                    .setDescription(sData[0])
+                                    .setDescription(sData[FILE_DOWNLOAD_ADDRESS])
                                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                     //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                                     //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
