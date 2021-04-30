@@ -37,7 +37,8 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginEnd="15dp"
                 android:text="@string/comic_title"
-                android:textSize="28sp"/>
+                android:textSize="28sp"
+                android:textIsSelectable="true"/>
 
             <TextView
                 android:id="@+id/textView_LabelComicSource"
@@ -56,6 +57,7 @@
                 android:layout_marginTop="10dp"
                 android:text="ComicSource"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Title"
                 android:layout_toEndOf="@id/textView_LabelComicSource"/>
 
@@ -77,6 +79,7 @@
                 android:text="@string/parodies_"
                 android:textColor="@color/colorGrey1"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_ComicSource"
                 android:layout_toEndOf="@id/textView_LabelParodies"/>
 
@@ -97,6 +100,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/characters_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Parodies"
                 android:layout_toEndOf="@id/textView_LabelCharacters"/>
 
@@ -118,6 +122,7 @@
                 android:layout_marginEnd="15dp"
                 android:text="@string/tags_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Characters"
                 android:layout_toEndOf="@id/textView_LabelTags"/>
 
@@ -138,6 +143,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/artists_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Tags"
                 android:layout_toEndOf="@id/textView_LabelArtists"/>
 
@@ -158,6 +164,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/groups_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Artists"
                 android:layout_toEndOf="@id/textView_LabelGroups"/>
 
@@ -178,6 +185,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/languages"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Groups"
                 android:layout_toEndOf="@id/textView_LabelLanguages"/>
 
@@ -198,6 +206,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/categories_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Languages"
                 android:layout_toEndOf="@id/textView_LabelCategories"/>
 
@@ -219,6 +228,7 @@
                 android:layout_marginTop="10dp"
                 android:text="@string/pages_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Categories"
                 android:layout_toEndOf="@id/textView_LabelPages"/>
 
@@ -241,6 +251,7 @@
                 android:layout_marginBottom="15dp"
                 android:text="@string/comicid_"
                 android:textSize="20sp"
+                android:textIsSelectable="true"
                 android:layout_below="@id/textView_Pages"
                 android:layout_toEndOf="@id/textView_LabelComicID"/>
 

@@ -122,7 +122,21 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath());
                 }
             }
+            TextView textView_ErrorMessage = findViewById(R.id.textView_ErrorMessage);
+            if(fComicPages.length == 0) {
+                textView_ErrorMessage.setVisibility(View.VISIBLE);
+                String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + File.separator + fComicFolder.getName() + "\n";
+                sMessage = sMessage + "If this is a comic from NH, try deleting this comic and then downloading the comic again." + "\n";
+                sMessage = sMessage  + "Source: " + gciCatalogItem.sSource;
+                textView_ErrorMessage.setText(sMessage);
+                textView_ErrorMessage.bringToFront();
+            } else {
+                textView_ErrorMessage.setVisibility(View.INVISIBLE);
+                textView_ErrorMessage.setText("");
+            }
         }
+
+
 
         gtmComicPages = new TreeMap<>();
         int i = 0;
@@ -212,6 +226,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
     public void DeleteComic(){
         gtmComicPages = new TreeMap<>();
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
+        globalClass.gbCatalogViewerRefresh = true;
         if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem)) {
             //If comic deletion successful, close the activity. Otherwise remain open so that
             //  the user can view the toast message.
