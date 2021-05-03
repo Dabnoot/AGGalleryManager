@@ -371,11 +371,15 @@ public class Service_ComicDetails extends IntentService {
         ArrayList<Integer> aliPreAssignedTagIDs = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
         //Combine, no duplicates:
         TreeMap<Integer, Integer> tmCombinedTags = new TreeMap<>();
-        for(Integer iTag: aliTags){
-            if(iTag != -1) { //Don't put any unresolved tags.
-                tmCombinedTags.put(iTag, iTag);
+        if(!(aliTags.size() == 1 && aliTags.get(0) == -1)) {
+            //If we found tags online...
+            for (Integer iTag : aliTags) {
+                if (iTag != -1) { //Don't put any unresolved tags.
+                    tmCombinedTags.put(iTag, iTag);
+                }
             }
         }
+
         for(Integer iTag: aliPreAssignedTagIDs){
             tmCombinedTags.put(iTag, iTag);
         }
