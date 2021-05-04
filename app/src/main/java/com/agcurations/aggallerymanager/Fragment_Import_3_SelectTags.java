@@ -306,7 +306,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             textView_Line3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER){
+            if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
                 if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
                     (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER)){
                     //Get the Uri of the file and create/display a thumbnail:
@@ -378,7 +378,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         public void applyFilterByType(int iTypeFileOrFolder){
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
-                if(fi.iTypeFileOrFolder ==iTypeFileOrFolder){
+                if(fi.iTypeFileFolderURL ==iTypeFileOrFolder){
                     alFileItemsDisplay.add(fi);
                 }
             }

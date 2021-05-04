@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.app.DownloadManager;
 import android.app.IntentService;
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
@@ -62,23 +63,27 @@ public class Service_Import extends IntentService {
     private static final String EXTRA_COMIC_IMPORT_SOURCE = "com.agcurations.aggallerymanager.extra.COMIC_IMPORT_SOURCE";
 
     private static final String EXTRA_IMPORT_FILES_FILELIST = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_FILELIST";
+
     private static final String EXTRA_IMPORT_FILES_MOVE_OR_COPY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_MOVE_OR_COPY";
 
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
 
-    public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener that this is or is not a response to dir call.
+    public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener.
     public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
+
+    public static final String EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //Used to flag in a listener.
+    public static final String EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
     public static final String COMIC_DETAILS_LOG_MESSAGE = "COMIC_DETAILS_LOG_MESSAGE";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
 
-    public static final String VIDEO_WEB_DATA_TAGS = "VIDEO_WEB_DATA_TAGS";
-
     public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
     public static final String EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_TAGSLOCATOR";
+
+
 
     public static final String EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE = "com.agcurations.aggallerymanager.extra.URI_STRING_ARRAY_FILES_TO_DELETE";
 
@@ -1445,7 +1450,7 @@ public class Service_Import extends IntentService {
         int INDEX_COMIC_TAGS = 2;
         int INDEX_COMIC_GRADE = 3;
         for(ItemClass_File fileItem: alFileList) {
-            if(fileItem.iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER){
+            if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
                 String sUriParent = fileItem.sUri;
                 String sRecordID = iNextRecordId + "";
                 iNextRecordId++;
@@ -2164,7 +2169,7 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionDownloadTest(){
+    private void handleAction_startActionDownloadTest(){ //todo: remove this.
         String sAddress = "https://www.xnxx.com/video-10olx73e/jay_s_pov_-_i_had_a_threesome_with_two_hot_blonde_teens";
         sAddress = "https://hls-hw.xnxx-cdn.com/videos/hls/0e/01/24/0e0124dc524ebea496445e40d41288a9/hls.m3u8";
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
@@ -2272,6 +2277,12 @@ public class Service_Import extends IntentService {
             sProblemMessage = e.getMessage();
         }
 
+
+
+        //Assemble a list of FileItems (ItemClass_File) listing the potential downloads.
+        //  Include filename, download address, tags, and, if available, file size, resolution, and duration:
+        ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = new ArrayList<>();
+
         //Look for potential downloads' file sizes, and download any m3u8 text file if it exists:
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
         for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
@@ -2279,14 +2290,39 @@ public class Service_Import extends IntentService {
                 if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_LINK)) {
                     try {
                         URL urlPage = new URL(vdsk.sSearchStringMatchContent);
+
+                        //Locate a file name, likely in between the last '/' and either a '?' or length of string.
+                        String sTempFilename;
+                        sTempFilename = vdsk.sSearchStringMatchContent;
+                        /*sTempFilename = "billybob/testString.mp4?garbage";
+                        sTempFilename = "billybobtestString.mp4?garbage";
+                        sTempFilename = "billybobtestString.mp4garbage";*/
+                        int iStartLocation = Math.max(sTempFilename.lastIndexOf("/") + 1, 0);
+                        int iEndLocation;
+                        int iSpecialEndCharLocation = sTempFilename.lastIndexOf("?");
+                        if(iSpecialEndCharLocation > 0){
+                            iEndLocation = iSpecialEndCharLocation;
+                        } else {
+                            iEndLocation = sTempFilename.length();
+                        }
+                        sTempFilename = sTempFilename.substring(iStartLocation, iEndLocation);
+                        ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_URL, sTempFilename);
+
                         HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
                         connection.setRequestProperty("Accept-Encoding", "identity");
                         vdsk.lFileSize = connection.getContentLength(); //Returns -1 if content size is not in the header.
+                        icf.lSizeBytes = vdsk.lFileSize;
                         connection.disconnect();
+
+                        icf.alsProspectiveTags = alsTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+
+                        alicf_VideoDownloadFileItems.add(icf);
+
                     }catch(Exception e){
                         vdsk.bErrorWithLink = true;
                         vdsk.sErrorMessage = e.getMessage();
                     }
+
                 } else if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_M3U8)){
                     try {
                         URL url = new URL(vdsk.sSearchStringMatchContent);
@@ -2333,17 +2369,30 @@ public class Service_Import extends IntentService {
         } //End loop searching for data within the HTML
 
 
+
         //Broadcast a message to be picked-up by the VideoWebDetect fragment:
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         if(!bProblem) {
-            broadcastIntent.putExtra(VIDEO_WEB_DATA_TAGS, alsTags);
+            broadcastIntent.putExtra(EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
+            broadcastIntent.putExtra(EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, alicf_VideoDownloadFileItems);
+
+            //Also send a broadcast to Activity Import to capture the download items in an array adapter:
+            {
+                Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
+                broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, true);
+                broadcastIntent_GetDirectoryContentsResponse.putExtra(EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, alicf_VideoDownloadFileItems);
+                //Send broadcast to the Import Activity:
+                broadcastIntent_GetDirectoryContentsResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+                broadcastIntent_GetDirectoryContentsResponse.addCategory(Intent.CATEGORY_DEFAULT);
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
+            }
+
         } else {
             broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, bProblem);
             broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sProblemMessage);
         }
-
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
 

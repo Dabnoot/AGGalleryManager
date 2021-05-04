@@ -43,7 +43,7 @@ public class Fragment_Import_1b_WebAddress extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_1b_web_address, container, false);
+        return inflater.inflate(R.layout.fragment_import_1b_comic_web_address, container, false);
     }
 
     @Override

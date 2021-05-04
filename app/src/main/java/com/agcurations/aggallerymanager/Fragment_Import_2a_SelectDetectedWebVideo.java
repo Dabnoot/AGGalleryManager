@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 
 public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
@@ -36,5 +37,23 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_import_2a_select_detected_web_video, container, false);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
+        //Set the contents of the ListView:
+        final ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_VideoDownloadItems);
+        if(listView_VideoDownloadItems != null) {
+            Activity_Import.SelectItemsListViewWidth = listView_VideoDownloadItems.getWidth();
+            if(getActivity()==null){
+                return;
+            }
+            listView_VideoDownloadItems.setAdapter(((Activity_Import) getActivity()).videoDownloadListCustomAdapter);
+        }
+
+
     }
 }

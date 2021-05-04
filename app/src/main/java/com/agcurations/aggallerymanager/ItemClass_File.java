@@ -6,9 +6,10 @@ import java.util.Date;
 
 public class ItemClass_File implements Serializable {
 
-    public final int iTypeFileOrFolder; //folder or file
+    public final int iTypeFileFolderURL; //folder or file
     public final static int TYPE_FOLDER = 1;
     public final static int TYPE_FILE = 2;
+    public final static int TYPE_URL = 3;
     public final String sFileOrFolderName;
     public String sExtension = "";
     public long lSizeBytes = 0;
@@ -36,14 +37,14 @@ public class ItemClass_File implements Serializable {
 
     //Items for video download:
     public String sURL = "";
-
+    public ArrayList<String> alsProspectiveTags;
 
     public int iGrade = 3;  //Grade, to be specified by user.
 
-    public ItemClass_File(int _iTypeFileOrFolder,
+    public ItemClass_File(int _iTypeFileFolderURL,
                           String _FileOrFolderName)
     {
-        this.iTypeFileOrFolder = _iTypeFileOrFolder;
+        this.iTypeFileFolderURL = _iTypeFileFolderURL;
         this.sFileOrFolderName = _FileOrFolderName;
     }
 

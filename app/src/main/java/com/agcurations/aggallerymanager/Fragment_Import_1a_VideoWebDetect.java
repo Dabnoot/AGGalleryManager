@@ -237,10 +237,10 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                     if(gButton_Next != null){
                         if(iMatchCount > 0) {
-                            SetTextStatusMessage("Data located. Looking for tag data.");
+                            SetTextStatusMessage("Data located. Looking for other data.");
                             Service_Import.startActionVideoAnalyzeHTML(getContext(), sHTML, "//div[@class='metadata-row video-tags']//a/text()");
                         } else {
-                            SetTextStatusMessage("No target data found within this webpage.");
+                            SetTextStatusMessage("No other data found within this webpage.");
                             gButton_Next.setEnabled(false);
                         }
                     }
@@ -287,6 +287,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     //======================================================================
     //========================= Receiver ===================================
 
+    @SuppressWarnings("unchecked")
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
         public static final String IMPORT_RESPONSE_VIDEO_WEB_DETECT = "com.agcurations.aggallerymanager.intent.action.IMPORT_RESPONSE_VIDEO_WEB_DETECT";
 
@@ -298,22 +299,18 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             //Get boolean indicating that an error may have occurred:
             boolean bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
             if(!bError) {
-                ArrayList<String> alsTags;
-                alsTags = intent.getStringArrayListExtra(Service_Import.VIDEO_WEB_DATA_TAGS);
-                if(alsTags != null) {
-                    ItemClass_CatalogItem ci = new ItemClass_CatalogItem();
-                    StringBuilder sbTags = new StringBuilder();
-                    for(int i = 0; i < alsTags.size(); i++){
-                        sbTags.append(alsTags.get(i));
-                        if(i < alsTags.size() - 1) {
-                            sbTags.append(", ");
-                        }
-                    }
-                    ci.sTags = sbTags.toString();  //Note that these are textual tags and not numeric identifiers.
-                    viewModelImportActivity.ci = ci;
+
+                ArrayList<ItemClass_File> alicf_DownloadFileItems;
+                alicf_DownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE);
+
+                if(alicf_DownloadFileItems != null) {
+                    SetTextStatusMessage("Finished data analysis. Select 'Next' to continue.");
+                    gButton_Next.setEnabled(true);
+                } else {
+                    SetTextStatusMessage("No data found during analysis. Try another webpage or update search algorithms.");
+                    gButton_Next.setEnabled(false);
                 }
-                SetTextStatusMessage("Finished data analysis. Select 'Next' to continue.");
-                gButton_Next.setEnabled(true);
+
             } else {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
 

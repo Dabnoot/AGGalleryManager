@@ -116,7 +116,7 @@
             android:id="@+id/button_NextStep"
             android:layout_width="149dp"
             android:layout_height="67dp"
-            android:onClick="buttonNextClick_VideoSourceSelected"
+            android:onClick="buttonNextClick_VideoWebDetect"
             android:text="Next"
             android:textSize="24sp"
             app:backgroundTint="@color/colorBlackboardRed"

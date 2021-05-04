@@ -151,7 +151,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             alFileItems = alfi;
             alFileItemsDisplay = new ArrayList<>();
             for(ItemClass_File icf: alfi){
-                if(icf.iTypeFileOrFolder != ItemClass_File.TYPE_FOLDER){
+                if(icf.iTypeFileFolderURL != ItemClass_File.TYPE_FOLDER){
                     alFileItemsDisplay.add(icf);
                 }
             }
@@ -251,7 +251,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             tvLine3.setText(sLine3);
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).iTypeFileOrFolder == ItemClass_File.TYPE_FOLDER) {
+            if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
                 //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
