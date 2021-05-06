@@ -370,8 +370,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     private void initializeFile(){
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            Uri uriVideoFile = Uri.parse(gFileItems[giFileItemIndex].sUri);
-            gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
+
+            if(gFileItems[giFileItemIndex].iTypeFileFolderURL == ItemClass_File.TYPE_FILE) {
+                Uri uriVideoFile = Uri.parse(gFileItems[giFileItemIndex].sUri);
+                gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
+            } else if (gFileItems[giFileItemIndex].iTypeFileFolderURL == ItemClass_File.TYPE_URL) {
+                gVideoView_VideoPlayer.setVideoPath(gFileItems[giFileItemIndex].sURL);
+            }
             // Skipping to 1 shows the first frame of the video.
             gVideoView_VideoPlayer.seekTo(1);
             giCurrentVideoPosition = 1;

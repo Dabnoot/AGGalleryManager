@@ -2289,14 +2289,11 @@ public class Service_Import extends IntentService {
             if(vdsk.bMatchFound = true) {
                 if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_LINK)) {
                     try {
-                        URL urlPage = new URL(vdsk.sSearchStringMatchContent);
+                        URL urlVideoLink = new URL(vdsk.sSearchStringMatchContent);
 
                         //Locate a file name, likely in between the last '/' and either a '?' or length of string.
                         String sTempFilename;
                         sTempFilename = vdsk.sSearchStringMatchContent;
-                        /*sTempFilename = "billybob/testString.mp4?garbage";
-                        sTempFilename = "billybobtestString.mp4?garbage";
-                        sTempFilename = "billybobtestString.mp4garbage";*/
                         int iStartLocation = Math.max(sTempFilename.lastIndexOf("/") + 1, 0);
                         int iEndLocation;
                         int iSpecialEndCharLocation = sTempFilename.lastIndexOf("?");
@@ -2308,7 +2305,9 @@ public class Service_Import extends IntentService {
                         sTempFilename = sTempFilename.substring(iStartLocation, iEndLocation);
                         ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_URL, sTempFilename);
 
-                        HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
+                        icf.sURL = vdsk.sSearchStringMatchContent;
+
+                        HttpURLConnection connection = (HttpURLConnection) urlVideoLink.openConnection();
                         connection.setRequestProperty("Accept-Encoding", "identity");
                         vdsk.lFileSize = connection.getContentLength(); //Returns -1 if content size is not in the header.
                         icf.lSizeBytes = vdsk.lFileSize;
