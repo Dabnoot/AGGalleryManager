@@ -977,12 +977,12 @@ public class Activity_Import extends AppCompatActivity {
 
 
             for(ItemClass_File icfIncoming: icfIncomingFIs) {
-                if(icfIncoming.bPreviewTagUpdate) {
+                if(icfIncoming.bDataUpdateFlag) {
                     for (ItemClass_File icfUpdate : alFileItems) {
                         if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
                             icfUpdate.aliProspectiveTags = icfIncoming.aliProspectiveTags;
                             icfUpdate.iGrade = icfIncoming.iGrade;
-                            icfUpdate.bIsChecked = true;
+                            icfUpdate.bIsChecked = icfIncoming.bIsChecked;
                             bFoundAndUpdated = true;
                             break;
                         }
@@ -1476,7 +1476,7 @@ public class Activity_Import extends AppCompatActivity {
 
 
             for(ItemClass_File icfIncoming: icfIncomingFIs) {
-                if(icfIncoming.bPreviewTagUpdate) {
+                if(icfIncoming.bDataUpdateFlag) {
                     for (ItemClass_File icfUpdate : alFileItems) {
                         if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
                             icfUpdate.aliProspectiveTags = icfIncoming.aliProspectiveTags;

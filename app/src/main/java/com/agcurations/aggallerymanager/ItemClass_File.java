@@ -22,7 +22,7 @@ public class ItemClass_File implements Serializable {
     public long lVideoTimeInMilliseconds = 0;
     public String sDestinationFolder = ""; //Used for moving/copying.
     public ArrayList<Integer> aliProspectiveTags = new ArrayList<>(); //"prospective" as in "about to be applied".
-    public boolean bPreviewTagUpdate = false; //Flag used to reduce excess processing
+    public boolean bDataUpdateFlag = false; //Flag used to reduce excess processing
     public String sVideoTimeText = "";
 
     //Items for comic folder import:

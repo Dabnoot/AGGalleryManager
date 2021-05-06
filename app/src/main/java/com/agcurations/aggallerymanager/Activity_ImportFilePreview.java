@@ -12,6 +12,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.TextView;
@@ -56,6 +57,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     int[] giGradeImageViews;
 
+    @SuppressWarnings("unchecked") //For HashMap<String , ItemClass_Tag> aquisistion from an intent.
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -106,14 +108,20 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
                     for(ItemClass_File icf: gFileItems){
                         icf.aliProspectiveTags = aliTagIDs;
-                        icf.bPreviewTagUpdate = true;
+                        icf.bDataUpdateFlag = true;
+                        icf.bIsChecked = true;
                     }
 
                 } else {
                     gFileItems[giFileItemIndex].aliProspectiveTags = aliTagIDs;
-                    gFileItems[giFileItemIndex].bPreviewTagUpdate = true;
+                    gFileItems[giFileItemIndex].bDataUpdateFlag = true;
+                    gFileItems[giFileItemIndex].bIsChecked = true;
                 }
-                //Prepare a result to send back to the calling activity:
+
+                CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+                checkBox_ImportItem.setChecked(true);
+
+                //Prepare a result to send back to the calling activity (this is also done on checkbox click):
                 Intent data = new Intent();
                 Bundle b = new Bundle();
                 //Put back the file URI string so that the file can be located:
@@ -374,6 +382,29 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             Glide.with(getApplicationContext()).load(gFileItems[giFileItemIndex].sUri).into(gImagePreview);
         }
 
+        CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+        checkBox_ImportItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Check/uncheck the checkbox.
+                boolean bIsChecked = ((CheckBox)view).isChecked();
+                gFileItems[giFileItemIndex].bIsChecked = bIsChecked;
+                gFileItems[giFileItemIndex].bDataUpdateFlag = true;
+
+                //Update results to send back to the calling activity (this is also done on tag change):
+                Intent data = new Intent();
+                Bundle b = new Bundle();
+                //Put back the file URI string so that the file can be located:
+                b.putSerializable(Activity_Import.PREVIEW_FILE_ITEMS, gFileItems);
+                //b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
+                data.putExtra(Activity_Import.TAG_SELECTION_RESULT_BUNDLE, b);
+                setResult(RESULT_OK, data);
+            }
+        });
+
+        checkBox_ImportItem.setChecked(gFileItems[giFileItemIndex].bIsChecked);
+
+
         TextView textView_FileName = findViewById(R.id.textView_FileName);
         textView_FileName.setText(gFileItems[giFileItemIndex].sFileOrFolderName);
 
@@ -420,6 +451,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
 
             displayGrade(); //Update the displayed grade
+
+            //Show the sequence number of this item:
+            TextView textView_ImportItemNumberOfNumber = findViewById(R.id.textView_ImportItemNumberOfNumber);
+            String sTemp = (giFileItemIndex + 1) + "/" + (giMaxFileItemIndex + 1);
+            textView_ImportItemNumberOfNumber.setText(sTemp);
         }
     }
 
