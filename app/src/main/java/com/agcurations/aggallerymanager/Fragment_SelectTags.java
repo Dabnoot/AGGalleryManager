@@ -353,7 +353,8 @@ public class Fragment_SelectTags extends Fragment {
                 int iReferenceTagID = tmEntryTagReferenceItem.getValue().iTagID;
                 for (ItemClass_Tag iNewTagItem : galNewTags) {
                     if (iReferenceTagID == iNewTagItem.iTagID) {
-                       bIsChecked = true;
+                        bIsChecked = iNewTagItem.bIsChecked;
+                        iNewTagItem.bIsChecked = false; //Only mark as selected once, as the user might not want this tag on the next item they view.
                         iPreSelectedTagIterator++;
                         iSelectionOrder = iPreSelectedTagIterator;
                         break;
@@ -401,6 +402,10 @@ public class Fragment_SelectTags extends Fragment {
                                 galNewTags = new ArrayList<>();
                             }
                             if (altiNewTags != null) {
+                                //Set the new tag(s) to "selected" so that the user does not have to go through and find the tag that they just added:
+                                for (ItemClass_Tag iNewTagItem : altiNewTags) {
+                                    iNewTagItem.bIsChecked = true;
+                                }
                                 //Add the tags to galNewTags so that the fragment knows which tags to highlight:
                                 galNewTags.addAll(altiNewTags);
 
