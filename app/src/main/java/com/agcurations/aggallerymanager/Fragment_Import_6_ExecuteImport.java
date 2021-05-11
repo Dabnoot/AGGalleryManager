@@ -124,7 +124,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                             viewModelImportActivity.iComicImportSource);
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
                     Service_Import.startActionImportComicWebFiles(getContext(),
-                            globalClass.gci_ImportComicWebItem);
+                            globalClass.gci_ImportComicWebItem, ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             } else {
                 Service_Import.startActionImportFiles(getContext(),

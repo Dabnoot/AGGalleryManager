@@ -105,7 +105,7 @@ public class Fragment_Import_5a_WebComicConfirmation extends Fragment {
                 globalClass.gbImportComicWebAnalysisStarted = false;
                 globalClass.gbImportComicWebAnalysisRunning = true;//This prevents import from starting again
                 // if the activity/fragment is restarted due to an orientation change, etc.
-                Service_Import.startActionAcquireNHComicsDetails(getActivity(), viewModelImportActivity.sWebAddress);
+                Service_Import.startActionAcquireNHComicsDetails(getActivity(), viewModelImportActivity.sWebAddress, ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
             } else {
                 Toast.makeText(getActivity(), "No network connected.", Toast.LENGTH_LONG).show();
             }
