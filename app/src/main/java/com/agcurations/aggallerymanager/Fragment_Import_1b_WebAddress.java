@@ -56,14 +56,18 @@ public class Fragment_Import_1b_WebAddress extends Fragment {
 
             ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clipData = clipboard.getPrimaryClip();
-            ClipData.Item clipData_Item = clipData.getItemAt(0);
-            if(clipData_Item != null){
-                String sClipString = clipData_Item.getText().toString();
-                if(sClipString != null){
-                    button_PasteAddress.setEnabled(true);
-                } else {
-                    button_PasteAddress.setEnabled(false);
+            if(clipData != null) {
+                ClipData.Item clipData_Item = clipData.getItemAt(0);
+                if (clipData_Item != null) {
+                    String sClipString = clipData_Item.getText().toString();
+                    if (sClipString != null) {
+                        button_PasteAddress.setEnabled(true);
+                    } else {
+                        button_PasteAddress.setEnabled(false);
+                    }
                 }
+            } else {
+                button_PasteAddress.setEnabled(false);
             }
 
 
