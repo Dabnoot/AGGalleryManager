@@ -9,12 +9,13 @@
     android:background="@color/colorBlack">
 
     <TextView
-        android:id="@+id/textView_ErrorMessage"
+        android:id="@+id/textView_ComicDetailsLog"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textSize="20sp"
         android:textIsSelectable="true"
-        android:visibility="invisible"/>
+        android:visibility="invisible"
+        android:gravity="bottom"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/RecyclerView_ComicPages"

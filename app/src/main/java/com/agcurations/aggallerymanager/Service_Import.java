@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -83,7 +84,7 @@ public class Service_Import extends IntentService {
     public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
     public static final String EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_TAGSLOCATOR";
 
-
+    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
 
     public static final String EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE = "com.agcurations.aggallerymanager.extra.URI_STRING_ARRAY_FILES_TO_DELETE";
 
@@ -132,17 +133,19 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionAcquireNHComicsDetails(Context context, String sAddress){
+    public static void startActionAcquireNHComicsDetails(Context context, String sAddress, String sIntentActionFilter){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_GET_COMIC_DETAILS_ONLINE);
         intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sAddress);
+        intent.putExtra(EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter);
         context.startService(intent);
     }
 
-    public static void startActionImportComicWebFiles(Context context, ItemClass_CatalogItem ci){
+    public static void startActionImportComicWebFiles(Context context, ItemClass_CatalogItem ci, String sIntentActionFilter){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMIC_WEB_FILES);
         intent.putExtra(COMIC_CATALOG_ITEM, ci);
+        intent.putExtra(EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter);
         context.startService(intent);
     }
 
@@ -176,6 +179,7 @@ public class Service_Import extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
+            String sIntentActionFilter = intent.getStringExtra(EXTRA_STRING_INTENT_ACTION_FILTER); //used to send broadcasts to proper receivers.
 
             GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
@@ -211,17 +215,17 @@ public class Service_Import extends IntentService {
                 globalClass.gbImportExecutionFinished = true;
             } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
                 final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
-                handleAction_startActionGetComicDetailsOnline(sAddress);
+                handleAction_startActionGetComicDetailsOnline(sAddress, sIntentActionFilter);
                 globalClass.gbImportComicWebAnalysisRunning = false;
                 globalClass.gbImportComicWebAnalysisFinished = true;
             } else if (ACTION_IMPORT_COMIC_WEB_FILES.equals(action)) {
                 final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
                 if(ci == null) return;
                 try {
-                    handleAction_startActionImportComicWebFiles(ci);
+                    handleAction_startActionImportComicWebFiles(ci, sIntentActionFilter);
                 } catch (IOException e) {
                     e.printStackTrace();
-                    problemNotificationConfig(e.getMessage(), Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);  //todo: make sure that this is properly handled in Execute_Import.
+                    problemNotificationConfig(e.getMessage(), sIntentActionFilter);  //todo: make sure that this is properly handled in Execute_Import.
                 }
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
@@ -1658,11 +1662,13 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionGetComicDetailsOnline(String sAddress){
+    private ArrayList<String[]> handleAction_startActionGetComicDetailsOnline(String sAddress, String sIntentActionFilter){
+        //Optionally returns an arraylist of the comic image URLs. This is because sometimes the DownloadManager fails
+        //  to download the file, and it has to be redone.
 
-        //Broadcast a message to be picked-up by the Import Activity:
+        //Broadcast a message to be picked-up by the caller:
         Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        broadcastIntent.setAction(sIntentActionFilter);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         GlobalClass globalClass;
@@ -1707,7 +1713,7 @@ public class Service_Import extends IntentService {
 
         try {
             //Get the data from the WebPage:
-            BroadcastProgress_ComicDetails("Getting data from " + ci.sSource + "\n");
+            BroadcastProgress_ComicDetails("Getting data from " + ci.sSource + "\n", sIntentActionFilter);
             URL url = new URL(ci.sSource);
             URLConnection conn = url.openConnection();
             conn.setDoInput(true);
@@ -1718,7 +1724,7 @@ public class Service_Import extends IntentService {
                 a.append(inputLine);
             }
             in.close();
-            BroadcastProgress_ComicDetails("\nData acquired. Begin data processing...\n");
+            BroadcastProgress_ComicDetails("\nData acquired. Begin data processing...\n", sIntentActionFilter);
 
             String sHTML = a.toString();
             sHTML = sHTML.replaceAll("tag-container field-name ", "tag-container field-name");
@@ -1729,7 +1735,7 @@ public class Service_Import extends IntentService {
             //  HtmlCleaner does a good job processing the html in a manner similar to modern
             //  browsers.
             //Clean up the HTML:
-            BroadcastProgress_ComicDetails("Cleaning up html.\n");
+            BroadcastProgress_ComicDetails("Cleaning up html.\n", sIntentActionFilter);
             HtmlCleaner pageParser = new HtmlCleaner();
             CleanerProperties props = pageParser.getProperties();
             props.setAllowHtmlInsideAttributes(true);
@@ -1740,7 +1746,7 @@ public class Service_Import extends IntentService {
 
 
             //Attempt to get the comic title from the WebPage html:
-            BroadcastProgress_ComicDetails("Looking for comic title.\n");
+            BroadcastProgress_ComicDetails("Looking for comic title.\n", sIntentActionFilter);
             String sxPathExpression;
             sxPathExpression = globalClass.snHentai_Comic_Title_xPathExpression;
             //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
@@ -1755,7 +1761,7 @@ public class Service_Import extends IntentService {
 
             //Attempt to determine the inclusion of "parodies", "characters", "tags", etc
             //  in the info blocks:
-            BroadcastProgress_ComicDetails("Looking for comic data info blocks (parodies, characters, tags, etc).\n");
+            BroadcastProgress_ComicDetails("Looking for comic data info blocks (parodies, characters, tags, etc).\n", sIntentActionFilter);
             sxPathExpression = globalClass.snHentai_Comic_Data_Blocks_xPE;
             //Use an xPathExpression (similar to RegEx) to look for the data in the html/xml:
             //TCFN = 'tag-container field-name' html class used by nHentai web pages.
@@ -1836,7 +1842,7 @@ public class Service_Import extends IntentService {
             }
 
             //Get the first thumbnail image for import preview:
-            BroadcastProgress_ComicDetails("Looking for cover page thumbnail.\n");
+            BroadcastProgress_ComicDetails("Looking for cover page thumbnail.\n", sIntentActionFilter);
             sxPathExpression = globalClass.snHentai_Comic_Cover_Thumb_xPE;
             //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
             Object[] objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
@@ -1850,7 +1856,7 @@ public class Service_Import extends IntentService {
             }
 
             //Decypher the rest of the comic page image URLs to be used in a later step of the import:
-            BroadcastProgress_ComicDetails("Looking for listing of comic pages.\n");
+            BroadcastProgress_ComicDetails("Looking for listing of comic pages.\n", sIntentActionFilter);
             sxPathExpression = globalClass.snHentai_Comic_Page_Thumbs_xPE;
             objsTagNodeThumbnails = node.evaluateXPath(sxPathExpression);
             //Check to see if we found anything:
@@ -1868,7 +1874,7 @@ public class Service_Import extends IntentService {
                 //Get the thumbnail image names, which will reveal the file extension of the full images:
                 for (Object objsTagNodeThumbnail : objsTagNodeThumbnails) {
                     String sImageAddress = ((TagNode) objsTagNodeThumbnail).getAttributeByName("data-src");
-                    BroadcastProgress_ComicDetails(sImageAddress + "\n"); //Broadcast progress
+                    BroadcastProgress_ComicDetails(sImageAddress + "\n", sIntentActionFilter); //Broadcast progress
                     String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
                     sImageFilename = sImageFilename.replace("t", ""); //Get rid of the 't', presummably for "thumbnail".
                     String[] sSplit = sImageFilename.split("\\.");
@@ -1903,7 +1909,7 @@ public class Service_Import extends IntentService {
                     //Get the size of the image and add it to the total size of the comic:
                     if(bGetOnlineSize) {
                         URL urlPage = new URL(sNHImageDownloadAddress);
-                        BroadcastProgress_ComicDetails("Getting file size data for " + sNHImageDownloadAddress + "\n"); //Broadcast progress
+                        BroadcastProgress_ComicDetails("Getting file size data for " + sNHImageDownloadAddress + "\n", sIntentActionFilter); //Broadcast progress
                         //URLConnection connection = urlPage.openConnection();
                         HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
                         connection.setRequestProperty("Accept-Encoding", "identity");
@@ -1916,7 +1922,7 @@ public class Service_Import extends IntentService {
                             lProjectedComicSize = ci.lSize / iFileSizeLoopCount;
                             lProjectedComicSize *= ci.iComicPages;
                             ci.lSize = lProjectedComicSize;
-                            BroadcastProgress_ComicDetails("Projecting size of comic to " + ci.iComicPages + " pages... " + ci.lSize + " bytes." + "\n");
+                            BroadcastProgress_ComicDetails("Projecting size of comic to " + ci.iComicPages + " pages... " + ci.lSize + " bytes." + "\n", sIntentActionFilter);
                             bGetOnlineSize = false;
                         }
                         connection.disconnect();
@@ -1927,18 +1933,18 @@ public class Service_Import extends IntentService {
                 //If there are image addresses to attempt to download...
                 ci.alsComicPageURLsAndDestFileNames = alsImageNameData;
             }
-            BroadcastProgress_ComicDetails("Finished analyzing web data.\n");
+            BroadcastProgress_ComicDetails("Finished analyzing web data.\n", sIntentActionFilter);
 
 
 
         } catch(Exception e){
             String sMsg = e.getMessage();
-            BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMsg + "\n");
+            BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMsg + "\n", sIntentActionFilter);
             broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, true);
             broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sMsg);
             sendBroadcast(broadcastIntent);
 
-            return;
+            return null;
         }
 
 
@@ -1953,15 +1959,15 @@ public class Service_Import extends IntentService {
             broadcastIntent.putExtra(COMIC_DETAILS_SUCCESS, true);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
         } else {
-            BroadcastProgress_ComicDetails("No comic pages found.\n");
+            BroadcastProgress_ComicDetails("No comic pages found.\n", sIntentActionFilter);
         }
 
-
-
-
+        return ci.alsComicPageURLsAndDestFileNames;
     }
 
-    private void handleAction_startActionImportComicWebFiles(ItemClass_CatalogItem ci) throws IOException {
+
+    private void handleAction_startActionImportComicWebFiles(ItemClass_CatalogItem ci, String sIntentActionFilter) throws IOException {
+        //sIntentActionFilter is used to send out the broadcast responses.
 
         long lProgressNumerator = 0L;
         long lProgressDenominator = ci.iComicPages;
@@ -1969,6 +1975,16 @@ public class Service_Import extends IntentService {
 
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
+
+        boolean bUpdateExistingComic = false;
+        //Create the comic folder.
+        if(!ci.sItemID.equals("")) { //There is a case in which this routine is called to re-download comic files. In that case, don't recreate the item ID.
+            bUpdateExistingComic = true;
+            //If we are updating an existing comic, get the download file list:
+            ArrayList<String[]> alsURLs;
+            alsURLs = handleAction_startActionGetComicDetailsOnline(ci.sSource, sIntentActionFilter);
+            ci.alsComicPageURLsAndDestFileNames = alsURLs;
+        }
 
         //Determine the next Comic Catalog ID:
         //Find the next record ID:
@@ -1979,10 +1995,11 @@ public class Service_Import extends IntentService {
             if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
         }
 
-
         //Create the comic folder.
-        ci.sItemID = String.valueOf(iNextRecordId);
-        ci.sFolder_Name = ci.sItemID;
+        if(!bUpdateExistingComic) {
+            ci.sItemID = String.valueOf(iNextRecordId);
+            ci.sFolder_Name = ci.sItemID;
+        }
 
         File fDestination = new File(
                 globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
@@ -1995,19 +2012,19 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        sIntentActionFilter);
                 return;
             } else {
                 BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
                         false, iProgressBarValue,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        sIntentActionFilter);
             }
         } else {
             BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
                     true, iProgressBarValue,
                     false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    sIntentActionFilter);
         }
 
         //Create a timestamp to be used to create the data record:
@@ -2015,31 +2032,33 @@ public class Service_Import extends IntentService {
         ci.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ci.dDatetime_Import = dTimeStamp;
 
-        //Convert textual tags to numeric tags:
-        //Form the tag integer array:
-        String[] sTags = ci.sTags.split(", ");
-        ArrayList<Integer> aliTags = new ArrayList<>();
-        for(String sTag: sTags){
-            aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
-        }
-        //Look for any tags that could not be found:
-        for(int i = 0; i < aliTags.size(); i++){
-            if(aliTags.get(i) == -1){
-                //Create the tag:
-                if(!sTags[i].equals("")) {
-                    ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
-                    if(ictNewTag != null){
-                        aliTags.set(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
+        if(!bUpdateExistingComic) { //If this is an update, don't update the tags and don't create a new catalog record.
+            //Convert textual tags to numeric tags:
+            //Form the tag integer array:
+            String[] sTags = ci.sTags.split(", ");
+            ArrayList<Integer> aliTags = new ArrayList<>();
+            for (String sTag : sTags) {
+                aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
+            }
+            //Look for any tags that could not be found:
+            for (int i = 0; i < aliTags.size(); i++) {
+                if (aliTags.get(i) == -1) {
+                    //Create the tag:
+                    if (!sTags[i].equals("")) {
+                        ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                        if (ictNewTag != null) {
+                            aliTags.set(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
+                        }
                     }
                 }
             }
-        }
-        ci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
+            ci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
 
-        //The below call should add the record to both the catalog contents file
-        //  and memory. Create the record in the system before downloading the files for the event that
-        //  the download is interrupted:
-        globalClass.CatalogDataFile_CreateNewRecord(ci);
+            //The below call should add the record to both the catalog contents file
+            //  and memory. Create the record in the system before downloading the files for the event that
+            //  the download is interrupted:
+            globalClass.CatalogDataFile_CreateNewRecord(ci);
+        }
 
         if(ci.alsComicPageURLsAndDestFileNames.size() > 0){
             //If there are image addresses to attempt to download...
@@ -2084,7 +2103,7 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(true, "Downloading: " + sData[FILE_DOWNLOAD_ADDRESS] + "...",
                                     false, iProgressBarValue,
                                     true, "Downloading files...",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                    sIntentActionFilter);
 
                             URL url = new URL(sData[FILE_DOWNLOAD_ADDRESS]);
                             URLConnection connection = url.openConnection();
@@ -2112,12 +2131,13 @@ public class Service_Import extends IntentService {
                             BroadcastProgress(true, "Initiating download of file: " + sData[FILE_DOWNLOAD_ADDRESS] + "...",
                                     false, iProgressBarValue,
                                     true, "Submitting download requests...",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                    sIntentActionFilter);
 
                             //Use the download manager to download the file:
+                            String sTimeStamp = GlobalClass.GetTimeStampFloat().toString();
                             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sData[FILE_DOWNLOAD_ADDRESS]));
-                            request.setTitle("AG Gallery+ File Download")
-                                    .setDescription(sData[FILE_DOWNLOAD_ADDRESS])
+                            request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
+                                    .setDescription("Comic ID " + ci.sItemID + "; " + sData[FILE_DOWNLOAD_ADDRESS])
                                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                     //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                                     //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
@@ -2133,7 +2153,7 @@ public class Service_Import extends IntentService {
                         BroadcastProgress(true, "\n",
                                 true, iProgressBarValue,
                                 false, "",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                sIntentActionFilter);
                     }
 
                 }
@@ -2142,7 +2162,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Operation complete.",
                         true, iProgressBarValue,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        sIntentActionFilter);
 
             } catch (Exception e) {
                 if(e.getMessage() != null) {
@@ -2151,7 +2171,7 @@ public class Service_Import extends IntentService {
                 BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        sIntentActionFilter);
             } finally {
                 if(output != null) {
                     output.close();
@@ -2261,7 +2281,7 @@ public class Service_Import extends IntentService {
         boolean bProblem = false;
         String sProblemMessage = "";
         try {
-            //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+            //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
             Object[] objsTags = node.evaluateXPath(sXPathExpressionTagsLocator);
             //Check to see if we found anything:
             String sResult;
@@ -2277,7 +2297,7 @@ public class Service_Import extends IntentService {
             sProblemMessage = e.getMessage();
         }
 
-
+        String sTitle = "This is the title to use for the import name";
 
         //Assemble a list of FileItems (ItemClass_File) listing the potential downloads.
         //  Include filename, download address, tags, and, if available, file size, resolution, and duration:
@@ -2340,6 +2360,11 @@ public class Service_Import extends IntentService {
                         input.close();
 
                         /*
+                        HLS: Http Live Streaming
+                        https://www.toptal.com/apple/introduction-to-http-live-streaming-hls#:~:text=What%20is%20an%20M3U8%20file,used%20to%20define%20media%20streams.
+
+                        Below is an example of an M3U8 "master" file. It points to other M3U8 files with video "chunks".
+
                         M3U comments begin with the '#' character, unless ended with a semicolon.
                         My comments begin with '!'.
                         Example M3U8 data:
@@ -2357,7 +2382,107 @@ public class Service_Import extends IntentService {
                         hls-250p-2b29e.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
                          */
 
+                        //Locate the M3U8 items:
+                        String sM3U8_MasterData = sbM3U8Content.toString();
+                        String[] sM3U8_MasterDataLines = sM3U8_MasterData.split("\n");
+                        ArrayList<ItemClass_M3U8_HLS> al_M3U8 = new ArrayList<>();
+                        boolean bReadingM3U8Item = false;
+                        ItemClass_M3U8_HLS icM3U8 = null;
+                        for(String sLine: sM3U8_MasterDataLines){
+                            if(sLine.startsWith("#EXT-X-STREAM-INF")){
+                                bReadingM3U8Item = true;
+                                icM3U8 = new ItemClass_M3U8_HLS();
+                                icM3U8.sTitle = sTitle;
+                                icM3U8.sBaseURL = vdsk.sSearchStringMatchContent.substring(0, vdsk.sSearchStringMatchContent.lastIndexOf("/"));
+                                String[] sTemp1 = sLine.split(":");
+                                if(sTemp1.length > 1) {
+                                    String[] sTemp2 = sTemp1[1].split(",");
+                                    for(String sDataItem: sTemp2){
+                                        String[] sDataSplit = sDataItem.split("=");
+                                        if(sDataSplit.length > 1) {
+                                            if (sDataSplit[0].equals("BANDWIDTH")) {
+                                                icM3U8.sBandwidth = sDataSplit[1];
+                                            }
+                                            if (sDataSplit[0].equals("RESOLUTION")) {
+                                                icM3U8.sResolution = sDataSplit[1];
+                                            }
+                                            if (sDataSplit[0].equals("NAME")) {
+                                                icM3U8.sName = sDataSplit[1];
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (bReadingM3U8Item){
+                                bReadingM3U8Item = false;
+                                if(icM3U8 != null) {
+                                    icM3U8.sFileName = sLine;
+                                    al_M3U8.add(icM3U8);
+                                }
+                            }
+                        }
 
+                        ArrayList<ArrayList<String>> alals_TSDownloads = new ArrayList<>();
+
+                        for(ItemClass_M3U8_HLS icM3U8_entry: al_M3U8){
+                            ArrayList<String> als_TSDownloads = new ArrayList<>();
+                            String sUrl = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
+                            url = new URL(sUrl);
+                            connection = url.openConnection();
+                            connection.connect();
+
+                            // download the file
+                            input = new BufferedInputStream(url.openStream(), 8192);
+
+                            data = new byte[1024];
+                            StringBuilder sbM3U8_HLS_File_Content = new StringBuilder();
+                            while ((input.read(data)) != -1) {
+                                String sLine = new String(data, StandardCharsets.UTF_8);
+                                sbM3U8_HLS_File_Content.append(sLine);
+
+                            }
+                            input.close();
+
+                            String sTest = sbM3U8_HLS_File_Content.toString();
+                            String[] sLines = sTest.split("\n");
+                            for(String sLine: sLines) {
+                                if (!sLine.startsWith("#") && sLine.startsWith("hls")) {
+                                    als_TSDownloads.add(sLine);
+                                } else if (sLine.contains("ENDLIST")){
+                                    break;
+                                }
+                            }
+                            alals_TSDownloads.add(als_TSDownloads);
+                        }
+
+                        //Test download of TS files:
+                        File fDestinationFolder = new File(
+                                globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath()
+                                        + File.separator + "Test");
+                        if(!fDestinationFolder.exists()){
+
+                            fDestinationFolder.mkdir();
+
+                            DownloadManager downloadManager = null;
+
+                            downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+
+                            String sDownloadName;
+                            for(int i = 0; i < alals_TSDownloads.get(0).size(); i++){
+                                sDownloadName = alals_TSDownloads.get(0).get(i);
+                                //Use the download manager to download the file:
+                                String sAbbrevFileName = sDownloadName.substring(0,sDownloadName.lastIndexOf("?"));
+                                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(al_M3U8.get(0).sBaseURL + "/" + sDownloadName));
+                                File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sAbbrevFileName);
+                                request.setTitle("AG Gallery+ File Download : " + sAbbrevFileName)
+                                        .setDescription(sAbbrevFileName)
+                                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                        //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                                        //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                                        .setMimeType("application/octet-stream")
+                                        .setDestinationUri(Uri.fromFile(fDestinationFile));
+                                downloadManager.enqueue(request);
+                            }
+                        }
 
                     }catch(Exception e){
                         vdsk.bErrorWithLink = true;
@@ -2578,12 +2703,13 @@ public class Service_Import extends IntentService {
 
     }
 
-    public void BroadcastProgress_ComicDetails(String sLogLine){
+    public void BroadcastProgress_ComicDetails(String sLogLine, String sIntentActionFilter){
 
         BroadcastProgress(true, sLogLine,
         false, 0,
         false, "",
-                Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+                sIntentActionFilter);
+                //Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
     }
 
 }

@@ -18,10 +18,12 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -57,6 +59,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private final boolean gbDebugTouch = false;
     private boolean gbAutoAcquireData = false;
 
+    TextView gtextView_ComicDetailsLog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +85,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         if( gsComicItemID == null) return;
 
+        gtextView_ComicDetailsLog = findViewById(R.id.textView_ComicDetailsLog);
+        gtextView_ComicDetailsLog.setMovementMethod(new ScrollingMovementMethod());
 
         loadComicPageData();
 
@@ -88,7 +94,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         gComicDetailsResponseReceiver = new Activity_ComicDetails.ComicDetailsResponseReceiver();
-        registerReceiver(gComicDetailsResponseReceiver, filter);
+        //registerReceiver(gComicDetailsResponseReceiver, filter);
+
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gComicDetailsResponseReceiver, filter);
 
         //See additional initialization in onCreateOptionsMenu().
     }
@@ -122,17 +130,17 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath());
                 }
             }
-            TextView textView_ErrorMessage = findViewById(R.id.textView_ErrorMessage);
+
             if(fComicPages.length == 0) {
-                textView_ErrorMessage.setVisibility(View.VISIBLE);
+                gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
                 String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + File.separator + fComicFolder.getName() + "\n";
                 sMessage = sMessage + "If this is a comic from NH, try deleting this comic and then downloading the comic again." + "\n";
-                sMessage = sMessage  + "Source: " + gciCatalogItem.sSource;
-                textView_ErrorMessage.setText(sMessage);
-                textView_ErrorMessage.bringToFront();
+                sMessage = sMessage  + "Source: " + gciCatalogItem.sSource + "\n";
+                gtextView_ComicDetailsLog.setText(sMessage);
+                gtextView_ComicDetailsLog.bringToFront();
             } else {
-                textView_ErrorMessage.setVisibility(View.INVISIBLE);
-                textView_ErrorMessage.setText("");
+                gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
+                gtextView_ComicDetailsLog.setText("");
             }
         }
 
@@ -154,6 +162,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
         } else {
             RemoveObfuscation();
         }
+
+
 
     }
 
@@ -644,27 +654,32 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         if(globalClass.isNetworkConnected) {
 
-            Intent intentGetComicDetails;
+            /*Intent intentGetComicDetails;
 
             intentGetComicDetails = new Intent(this, Service_ComicDetails.class);
             intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_CATALOG_ITEM, gciCatalogItem);
 
             gmiGetOnlineData.setEnabled(false);
 
+            startService(intentGetComicDetails);*/
+            globalClass.gci_ImportComicWebItem = gciCatalogItem;
+            Service_Import.startActionImportComicWebFiles(getApplicationContext(),
+                    globalClass.gci_ImportComicWebItem, ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+
             Toast.makeText(getApplicationContext(), "Getting online data...", Toast.LENGTH_LONG).show();
 
-            startService(intentGetComicDetails);
+
         } else {
             Toast.makeText(getApplicationContext(), "No network connected.", Toast.LENGTH_LONG).show();
         }
     }
 
     public class ComicDetailsResponseReceiver extends BroadcastReceiver {
-        public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_COMIC_DETAILS_SERVICE";
+        public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.COMIC_DETAILS_DATA_ACTION_RESPONSE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean bComicDetailsDataServiceSuccess;
+            /*boolean bComicDetailsDataServiceSuccess;
             bComicDetailsDataServiceSuccess = intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_SUCCESS,
                                                          false);
 
@@ -710,6 +725,37 @@ public class Activity_ComicDetails extends AppCompatActivity {
             } else {
                 sErrorMessage = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_ERROR_MESSAGE);
                 Toast.makeText(getApplicationContext(), "Error getting data online.\n" + sErrorMessage, Toast.LENGTH_LONG).show();
+            }*/
+
+            boolean bError;
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to update log:
+                boolean 	bUpdateLog;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdateLog = intent.getBooleanExtra(Service_Import.UPDATE_LOG_BOOLEAN,false);
+
+                if(bUpdateLog){
+                    String sLogLine;
+                    sLogLine = intent.getStringExtra(Service_Import.LOG_LINE_STRING);
+                    if(sLogLine != null && gtextView_ComicDetailsLog != null) {
+
+                        gtextView_ComicDetailsLog.append(sLogLine);
+
+                        if (sLogLine.contains("Operation complete.")) {
+                            gciCatalogItem = globalClass.gci_ImportComicWebItem;
+                            loadComicPageData();
+                        }
+                    }
+                }
+
+
             }
 
             gmiGetOnlineData.setEnabled(true);
@@ -732,7 +778,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(gComicDetailsResponseReceiver);
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(gComicDetailsResponseReceiver);
         super.onDestroy();
     }
 

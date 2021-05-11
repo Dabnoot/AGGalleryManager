@@ -23,6 +23,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -598,13 +599,26 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         + ci.sFolder_Name + File.separator
                         + ci.sFilename;
 
+                /*if(ci.sFilename.equals("1000_egaP_058813.gpj")){
+                    sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
+                            + ci.sFolder_Name + File.separator
+                            + "2000_egaP_058813.gpj";
+                    Log.d("Test","Test");
+                }*/
 
                 File fThumbnail = new File(sThumbnailFilePath);
 
-                if (fThumbnail.exists()) {
-                    Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
+                if(fThumbnail.exists()) {
+                    Glide.with(getApplicationContext())
+                            .load(fThumbnail)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.ivThumbnail);
+                } else {
+                    Glide.with(getApplicationContext())
+                            .load(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.ivThumbnail);
                 }
-
                 String sThumbnailText = "";
                 switch (globalClass.giSelectedCatalogMediaCategory) {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
@@ -622,6 +636,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         sThumbnailText = sItemName;
                         break;
                 }
+
                 holder.tvThumbnailText.setText(sThumbnailText);
 
                 if (holder.btnDelete != null) {

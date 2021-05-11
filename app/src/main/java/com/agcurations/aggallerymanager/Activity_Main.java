@@ -12,9 +12,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -26,6 +28,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class Activity_Main extends AppCompatActivity {
 
@@ -270,7 +274,7 @@ public class Activity_Main extends AppCompatActivity {
 
             //Testing DownloadManager:
             //Use the download manager to download the file:
-            String sFolderName = "0000";
+            /*String sFolderName = "0000";
             String sShortPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath();
             sShortPath = sShortPath + File.separator + sFolderName;
             String sTestURL = "https://thumbs.dreamstime.com/z/tv-test-image-card-rainbow-multi-color-bars-geometric-signals-retro-hardware-s-minimal-pop-art-print-suitable-89603663.jpg";
@@ -289,7 +293,51 @@ public class Activity_Main extends AppCompatActivity {
 
             // get download service and enqueue file
             DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-            manager.enqueue(request);
+            manager.enqueue(request);*/
+
+            //Try to view status of downloads in the download manager:
+            DownloadManager dm;
+            dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            DownloadManager.Query query = new DownloadManager.Query();
+
+            Cursor c = dm.query(query);
+            int iLoopCount = 0;
+            if(c.moveToFirst()) {
+                do {
+                    int columnIndex_Status = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                    String uriString = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                    String sTimeStampms = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LAST_MODIFIED_TIMESTAMP));
+
+                    String sStatus = "Status: unknown. ";
+                    switch (c.getInt((columnIndex_Status))) {
+                        case DownloadManager.STATUS_SUCCESSFUL:
+                            sStatus = "Status: successful. ";
+                            break;
+                        case DownloadManager.STATUS_FAILED:
+                            sStatus = "Status: failed. ";
+                            break;
+                        case DownloadManager.STATUS_PAUSED:
+                            sStatus = "Status: failed. ";
+                            break;
+                        case DownloadManager.STATUS_PENDING:
+                            sStatus = "Status: failed. ";
+                            break;
+                        case DownloadManager.STATUS_RUNNING:
+                            sStatus = "Status: failed. ";
+                            break;
+
+                    }
+                    String sTimeStamp = getDate(Long.decode(sTimeStampms), "yyyy/MM/dd hh:mm:ss.SSS");
+                    iLoopCount++;
+                    String sMessage = iLoopCount + ", " + sStatus + sTimeStamp + ", " + uriString;
+                    Log.d("Download Status Analysis", sMessage);
+
+                    if(iLoopCount % 100 == 0){
+                        Log.d("Download Status Analysis", "Entry count: " + iLoopCount);
+                    }
+                } while (c.moveToNext());
+            }
+
 
 
             return true;
@@ -298,6 +346,23 @@ public class Activity_Main extends AppCompatActivity {
         }
 
 
+    }
+
+    /**
+     * Return date in specified format.
+     * @param milliSeconds Date in milliseconds
+     * @param dateFormat Date format
+     * @return String representing date in specified format
+     */
+    public static String getDate(long milliSeconds, String dateFormat)
+    {
+        // Create a DateFormatter object for displaying date in specified format.
+        SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+
+        // Create a calendar object that will convert the date and time value in milliseconds to date.
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(milliSeconds);
+        return formatter.format(calendar.getTime());
     }
 
 

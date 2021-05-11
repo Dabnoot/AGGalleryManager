@@ -137,7 +137,6 @@ public class Service_ComicDetails extends IntentService {
             props.setOmitComments(true);
             TagNode node = pageParser.clean(sHTML);
 
-
             //Attempt to get the comic title from the WebPage html:
             String sxPathExpression;
             sxPathExpression = globalClass.snHentai_Comic_Title_xPathExpression;
@@ -223,6 +222,59 @@ public class Service_ComicDetails extends IntentService {
                     sReturnData[i + 1] = sbData.toString();
                 }
             }
+
+            ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
+            ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
+            ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
+
+            //Form the tag integer array:
+            String[] sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX].split(", ");
+            ArrayList<Integer> aliTags = new ArrayList<>();
+            for(String sTag: sTags){
+                aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
+            }
+            //Look for any tags that could not be found:
+            for(int i = 0; i < aliTags.size(); i++){
+                if(aliTags.get(i) == -1){
+                    //Create the tag:
+                    if(!sTags[i].equals("")) {
+                        ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
+                        if(ictNewTag != null){
+                            aliTags.set(i, ictNewTag.iTagID);
+                        }
+                    }
+                }
+            }
+            //Combine the found tags with any tags already assigned to the comic:
+            ArrayList<Integer> aliPreAssignedTagIDs = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
+            //Combine, no duplicates:
+            TreeMap<Integer, Integer> tmCombinedTags = new TreeMap<>();
+            if(!(aliTags.size() == 1 && aliTags.get(0) == -1)) {
+                //If we found tags online...
+                for (Integer iTag : aliTags) {
+                    if (iTag != -1) { //Don't put any unresolved tags.
+                        tmCombinedTags.put(iTag, iTag);
+                    }
+                }
+            }
+
+            for(Integer iTag: aliPreAssignedTagIDs){
+                tmCombinedTags.put(iTag, iTag);
+            }
+            ArrayList<Integer> aliCombinedTags = new ArrayList<>();
+            for(Map.Entry<Integer, Integer> tmEntry: tmCombinedTags.entrySet()){
+                aliCombinedTags.add(tmEntry.getKey());
+            }
+            ci.sTags = GlobalClass.formDelimitedString(aliCombinedTags, ",");
+
+            ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
+            ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
+            ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
+            ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
+            ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
+
+            //Check to see if this comic is missing any pages:
+            ci = globalClass.analyzeComicReportMissingPages(ci);
 
 
             //Get any missing comic pages:
@@ -345,55 +397,7 @@ public class Service_ComicDetails extends IntentService {
             return;
         }
 
-        ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
-        ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
-        ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
 
-        //Form the tag integer array:
-        String[] sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX].split(", ");
-        ArrayList<Integer> aliTags = new ArrayList<>();
-        for(String sTag: sTags){
-            aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
-        }
-        //Look for any tags that could not be found:
-        for(int i = 0; i < aliTags.size(); i++){
-            if(aliTags.get(i) == -1){
-                //Create the tag:
-                if(!sTags[i].equals("")) {
-                    ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
-                    if(ictNewTag != null){
-                        aliTags.set(i, ictNewTag.iTagID);
-                    }
-                }
-            }
-        }
-        //Combine the found tags with any tags already assigned to the comic:
-        ArrayList<Integer> aliPreAssignedTagIDs = GlobalClass.getIntegerArrayFromString(ci.sTags, ",");
-        //Combine, no duplicates:
-        TreeMap<Integer, Integer> tmCombinedTags = new TreeMap<>();
-        if(!(aliTags.size() == 1 && aliTags.get(0) == -1)) {
-            //If we found tags online...
-            for (Integer iTag : aliTags) {
-                if (iTag != -1) { //Don't put any unresolved tags.
-                    tmCombinedTags.put(iTag, iTag);
-                }
-            }
-        }
-
-        for(Integer iTag: aliPreAssignedTagIDs){
-            tmCombinedTags.put(iTag, iTag);
-        }
-        ArrayList<Integer> aliCombinedTags = new ArrayList<>();
-        for(Map.Entry<Integer, Integer> tmEntry: tmCombinedTags.entrySet()){
-            aliCombinedTags.add(tmEntry.getKey());
-        }
-        ci.sTags = GlobalClass.formDelimitedString(aliCombinedTags, ",");
-
-        ci.sComicArtists = sReturnData[COMIC_DETAILS_ARTISTS_DATA_INDEX];
-        ci.sComicGroups = sReturnData[COMIC_DETAILS_GROUPS_DATA_INDEX];
-        ci.sComicLanguages = sReturnData[COMIC_DETAILS_LANGUAGES_DATA_INDEX];
-        ci.sComicCategories = sReturnData[COMIC_DETAILS_CATEGORIES_DATA_INDEX];
-        ci.iComicPages = Integer.parseInt(sReturnData[COMIC_DETAILS_PAGES_DATA_INDEX]);
 
         //Apply booleans to the intent to tell the receiver success, data available,
         //  and set the data where appropriate:
