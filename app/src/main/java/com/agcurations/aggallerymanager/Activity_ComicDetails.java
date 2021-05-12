@@ -133,8 +133,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             if(fComicPages.length == 0) {
                 gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
-                String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + File.separator + fComicFolder.getName() + "\n";
-                sMessage = sMessage + "If this is a comic from NH, try deleting this comic and then downloading the comic again." + "\n";
+                String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + "\n";
+                sMessage = sMessage + "If this is a comic from NH, try 'Sync Details Online' from the menu." + "\n";
                 sMessage = sMessage  + "Source: " + gciCatalogItem.sSource + "\n";
                 gtextView_ComicDetailsLog.setText(sMessage);
                 gtextView_ComicDetailsLog.bringToFront();
