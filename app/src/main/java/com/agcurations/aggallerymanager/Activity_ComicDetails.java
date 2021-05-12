@@ -140,6 +140,18 @@ public class Activity_ComicDetails extends AppCompatActivity {
             } else {
                 gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
                 gtextView_ComicDetailsLog.setText("");
+                gciCatalogItem.iComic_File_Count = fComicPages.length; //update the comic file count. Files may have been downloaded, deleted, etc.
+
+                if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                    String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
+                    //Check to see if this comic is missing any pages:
+                    gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
+                    if(!sMissingPages.equals(gciCatalogItem.sComic_Missing_Pages)){
+                        //Update the catalog file with the new record of missing pages:
+                        globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                    }
+                    globalClass.gbCatalogViewerRefresh = true;
+                }
             }
         }
 
@@ -332,6 +344,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final TextView tvLanguages;
             public final TextView tvCategories;
             public final TextView tvPages;
+            public final TextView textView_FileCount;
+            public final TextView textView_MissingPages;
             public final TextView tvComicID;
 
             public final TextView tvLabelComicSource;
@@ -343,6 +357,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
             public final TextView tvLabelLanguages;
             public final TextView tvLabelCategories;
             public final TextView tvLabelPages;
+            public final TextView textView_LabelFileCount;
+            public final TextView textView_LabelMissingPages;
             public final TextView tvLabelComicID;
 
             public final Button button_Delete;
@@ -363,6 +379,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 tvLanguages = v.findViewById(R.id.textView_Languages);
                 tvCategories = v.findViewById(R.id.textView_Categories);
                 tvPages = v.findViewById(R.id.textView_Pages);
+                textView_FileCount = v.findViewById(R.id.textView_FileCount);
+                textView_MissingPages = v.findViewById(R.id.textView_MissingPages);
                 tvComicID = v.findViewById(R.id.textView_ComicID);
 
                 tvLabelComicSource = v.findViewById(R.id.textView_LabelComicSource);
@@ -374,6 +392,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 tvLabelLanguages = v.findViewById(R.id.textView_LabelLanguages);
                 tvLabelCategories = v.findViewById(R.id.textView_LabelCategories);
                 tvLabelPages = v.findViewById(R.id.textView_LabelPages);
+                textView_LabelFileCount = v.findViewById(R.id.textView_LabelFileCount);
+                textView_LabelMissingPages = v.findViewById(R.id.textView_LabelMissingPages);
                 tvLabelComicID = v.findViewById(R.id.textView_LabelComicID);
 
                 button_Delete = v.findViewById(R.id.button_Delete);
@@ -455,6 +475,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLanguages.setVisibility(View.INVISIBLE);
                     holder.tvCategories.setVisibility(View.INVISIBLE);
                     holder.tvPages.setVisibility(View.INVISIBLE);
+                    holder.textView_FileCount.setVisibility(View.INVISIBLE);
+                    holder.textView_MissingPages.setVisibility(View.INVISIBLE);
                     holder.tvComicID.setVisibility(View.INVISIBLE);
 
                     holder.tvLabelComicSource.setVisibility(View.INVISIBLE);
@@ -466,6 +488,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLabelLanguages.setVisibility(View.INVISIBLE);
                     holder.tvLabelCategories.setVisibility(View.INVISIBLE);
                     holder.tvLabelPages.setVisibility(View.INVISIBLE);
+                    holder.textView_LabelFileCount.setVisibility(View.INVISIBLE);
+                    holder.textView_LabelMissingPages.setVisibility(View.INVISIBLE);
                     holder.tvLabelComicID.setVisibility(View.INVISIBLE);
 
                     holder.imageView_EditComicDetails.setVisibility(View.INVISIBLE);
@@ -494,6 +518,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLanguages.setVisibility(View.VISIBLE);
                     holder.tvCategories.setVisibility(View.VISIBLE);
                     holder.tvPages.setVisibility(View.VISIBLE);
+                    holder.textView_FileCount.setVisibility(View.VISIBLE);
+                    if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                        holder.textView_MissingPages.setVisibility(View.VISIBLE);
+                    }
                     holder.tvComicID.setVisibility(View.VISIBLE);
 
                     holder.tvLabelComicSource.setVisibility(View.VISIBLE);
@@ -503,6 +531,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvLabelLanguages.setVisibility(View.VISIBLE);
                     holder.tvLabelCategories.setVisibility(View.VISIBLE);
                     holder.tvLabelPages.setVisibility(View.VISIBLE);
+                    holder.textView_LabelFileCount.setVisibility(View.VISIBLE);
+                    if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                        holder.textView_LabelMissingPages.setVisibility(View.VISIBLE);
+                    }
                     holder.tvLabelComicID.setVisibility(View.VISIBLE);
 
                     holder.imageView_EditComicDetails.setVisibility(View.VISIBLE);
@@ -521,6 +553,15 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvCategories.setText(gciCatalogItem.sComicCategories);
                     String sPages = "" + gciCatalogItem.iComicPages;
                     holder.tvPages.setText(sPages);
+                    String sFileCount = "" + gciCatalogItem.iComic_File_Count;
+                    holder.textView_FileCount.setText(sFileCount);
+                    if(!gciCatalogItem.sComic_Missing_Pages.equals("")){
+                        String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
+                        if(sMissingPages.length() > 10){
+                            sMissingPages = sMissingPages.substring(0,10) + "...";
+                        }
+                        holder.textView_MissingPages.setText(sMissingPages);
+                    }
                     holder.tvComicID.setText(gciCatalogItem.sItemID);
 
                     holder.imageView_EditComicDetails.setOnClickListener(new View.OnClickListener() {
@@ -755,6 +796,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                             loadComicPageData();
                             //Tell Activity_CatalogViewer to refresh its view (thumbnail image may have changed):
                             globalClass.gbCatalogViewerRefresh = true;
+                            gmiSaveDetails.setEnabled(true);
                             Toast.makeText(getApplicationContext(), "Files may be downloading in background. Refresh to view new files.", Toast.LENGTH_LONG).show();
                         }
                     }

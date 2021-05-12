@@ -226,11 +226,59 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
-                android:text="@string/pages_"
+                android:text="9999"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Categories"
                 android:layout_toEndOf="@id/textView_LabelPages"/>
+
+            <TextView
+                android:id="@+id/textView_LabelFileCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginBottom="10dp"
+                android:text="File count:"
+                android:textSize="20sp"
+                android:layout_alignBaseline="@id/textView_Pages"
+                android:layout_toEndOf="@id/textView_Pages"/>
+
+            <TextView
+                android:id="@+id/textView_FileCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="10dp"
+                android:text="9999"
+                android:textSize="20sp"
+                android:textIsSelectable="true"
+                android:layout_below="@id/textView_Categories"
+                android:layout_toEndOf="@id/textView_LabelFileCount"/>
+
+            <TextView
+                android:id="@+id/textView_LabelMissingPages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginBottom="10dp"
+                android:text="Missing:"
+                android:textSize="20sp"
+                android:layout_alignBaseline="@id/textView_Pages"
+                android:layout_toEndOf="@id/textView_FileCount"
+                android:visibility="invisible"/>
+
+            <TextView
+                android:id="@+id/textView_MissingPages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="10dp"
+                android:text="1,2,3,4"
+                android:textSize="20sp"
+                android:textIsSelectable="true"
+                android:layout_below="@id/textView_Categories"
+                android:layout_toEndOf="@id/textView_LabelMissingPages"
+                android:visibility="invisible"/>
 
             <TextView
                 android:id="@+id/textView_LabelComicID"
@@ -252,7 +300,7 @@
                 android:text="@string/comicid_"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
-                android:layout_below="@id/textView_Pages"
+                android:layout_below="@id/textView_MissingPages"
                 android:layout_toEndOf="@id/textView_LabelComicID"/>
 
             <ImageView
