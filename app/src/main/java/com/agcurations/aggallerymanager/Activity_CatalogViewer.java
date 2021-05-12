@@ -52,6 +52,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     private RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
+    int giRecyclerViewLastSelectedPosition = -1;
 
     Spinner gspSpinnerSort;
 
@@ -263,6 +264,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             //Typically enter here if data has been edited.
             populate_RecyclerViewCatalogItems();
             globalClass.gbCatalogViewerRefresh = false;
+
         }
 
         if(globalClass.ObfuscationOn) {
@@ -411,6 +413,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap, getApplicationContext());
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
                     gRecyclerViewCatalogAdapter.notifyDataSetChanged();
+                    if(giRecyclerViewLastSelectedPosition > -1){
+                        gRecyclerView.scrollToPosition(giRecyclerViewLastSelectedPosition); //Scroll RecyclerView back to the last item selected by the user, due to refresh.
+                        giRecyclerViewLastSelectedPosition = -1;
+                    }
                     if(toastLastToastMessage != null){
                         toastLastToastMessage.cancel();
                     }
@@ -517,6 +523,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             // each data item is just a string in this case
             public final ImageView ivThumbnail;
             public final ImageView imageView_Attention;
+            public final TextView textView_AttentionNote;
             public final Button btnDelete;
             public final TextView tvThumbnailText;
             public final TextView tvDetails;
@@ -525,6 +532,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 super(v);
                 ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
                 imageView_Attention = v.findViewById(R.id.imageView_Attention);
+                textView_AttentionNote = v.findViewById(R.id.textView_AttentionNote);
                 btnDelete = v.findViewById(R.id.button_Delete);
                 tvThumbnailText = v.findViewById(R.id.textView_Title);
                 tvDetails = v.findViewById(R.id.textView_Details);
@@ -614,10 +622,46 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                             .into(holder.ivThumbnail);
                 } else {
-                    Glide.with(getApplicationContext())
-                            .load(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.ivThumbnail);
+                    //Special behavior if this is a comic.
+                    boolean bFoundMissingComicThumbnail = false;
+                    if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                        //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
+                        String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
+                        String sComicFolderPath;
+                        sComicFolderPath = sComicFolder_AbsolutePath + File.separator
+                                + ci.sFolder_Name;
+
+                        //Load the full path to each comic page into tmComicPages (sorts files):
+                        File fComicFolder = new File(sComicFolderPath);
+                        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
+                        if(fComicFolder.exists()){
+                            File[] fComicPages = fComicFolder.listFiles();
+                            if(fComicPages != null) {
+                                for (File fComicPage : fComicPages) {
+                                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath()); //de-jumble to get proper alphabetization.
+                                }
+                            }
+                            //Assign the existing file to be the new thumbnail file:
+                            if(fComicPages.length > 0) {
+                                ci.sFilename = GlobalClass.JumbleFileName(tmSortByFileName.firstEntry().getKey()); //re-jumble to get actual file name.
+                                bFoundMissingComicThumbnail = true;
+                            }
+                        }
+
+                    }
+
+                    if(bFoundMissingComicThumbnail){
+                        Glide.with(getApplicationContext())
+                                .load(fThumbnail)
+                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .into(holder.ivThumbnail);
+                        globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
+                    } else {
+                        Glide.with(getApplicationContext())
+                                .load(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .into(holder.ivThumbnail);
+                    }
                 }
                 String sThumbnailText = "";
                 switch (globalClass.giSelectedCatalogMediaCategory) {
@@ -648,6 +692,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
                     if (gbDebugTouch)
                         Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
 
@@ -679,8 +724,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             if (ci.sComic_Missing_Pages.equals("")) {
                 holder.imageView_Attention.setVisibility(View.INVISIBLE);
+                holder.textView_AttentionNote.setVisibility(View.INVISIBLE);
             } else {
                 holder.imageView_Attention.setVisibility(View.VISIBLE);
+                holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                String sAttentionNote = "Missing pages: " + ci.sComic_Missing_Pages;
+                holder.textView_AttentionNote.setText(sAttentionNote);
             }
 
             if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
