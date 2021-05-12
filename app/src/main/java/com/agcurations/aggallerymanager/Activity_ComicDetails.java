@@ -49,7 +49,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private MenuItem gmiGetOnlineData;
     private MenuItem gmiSaveDetails;
 
-    public static final String EXTRA_CATALOG_ITEM = "CATALOG_ITEM";
     public static final String EXTRA_CATALOG_ITEM_ID = "com.agcurations.aggallerymanager.extra.CATALOG_ITEM_ID";
 
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
@@ -77,7 +76,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         globalClass = (GlobalClass) getApplicationContext();
 
         Intent intent = getIntent();
-        //gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(EXTRA_CATALOG_ITEM);
+
         //Get the item ID:
         gsComicItemID = intent.getStringExtra(EXTRA_CATALOG_ITEM_ID);
 
@@ -195,6 +194,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.menu_FlipView) {
             FlipObfuscation();
+            return true;
+        } else if (item.getItemId() == R.id.menu_Refresh) {
+            loadComicPageData();
             return true;
         } else if (item.getItemId() == R.id.menu_GetOnlineData) {
             SyncOnlineData();
@@ -751,6 +753,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
                         if (sLogLine.contains("Operation complete.")) {
                             gciCatalogItem = globalClass.gci_ImportComicWebItem;
                             loadComicPageData();
+                            //Tell Activity_CatalogViewer to refresh its view (thumbnail image may have changed):
+                            globalClass.gbCatalogViewerRefresh = true;
+                            Toast.makeText(getApplicationContext(), "Files may be downloading in background. Refresh to view new files.", Toast.LENGTH_LONG).show();
                         }
                     }
                 }

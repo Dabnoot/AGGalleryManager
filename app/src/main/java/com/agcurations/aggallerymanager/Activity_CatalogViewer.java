@@ -780,7 +780,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         Intent intentComicViewer = new Intent(this, Activity_ComicDetails.class);
 
-        //intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM, ci);
         intentComicViewer.putExtra(Activity_ComicDetails.EXTRA_CATALOG_ITEM_ID, ci.sItemID); //Pass item ID and load record from file. To accommodate comic detail edit.
 
         if(toastLastToastMessage != null){

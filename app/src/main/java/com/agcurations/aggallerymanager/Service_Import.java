@@ -2138,7 +2138,8 @@ public class Service_Import extends IntentService {
                             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sData[FILE_DOWNLOAD_ADDRESS]));
                             request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
                                     .setDescription("Comic ID " + ci.sItemID + "; " + sData[FILE_DOWNLOAD_ADDRESS])
-                                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                    //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                                     //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                                     //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                                     .setMimeType("application/octet-stream")
