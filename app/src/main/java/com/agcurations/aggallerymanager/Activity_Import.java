@@ -424,7 +424,7 @@ public class Activity_Import extends AppCompatActivity {
             stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
 
         } else {
-            Toast.makeText(getApplicationContext(), "Please provide a web address." , Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "The provided web address is currently incompatible with this version of the app." , Toast.LENGTH_SHORT).show();
         }
     }
 

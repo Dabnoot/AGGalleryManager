@@ -18,10 +18,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.util.ArrayList;
+
 public class Fragment_Import_1b_WebAddress extends Fragment {
 
     ViewModel_ImportActivity viewModelImportActivity;
-
 
     public Fragment_Import_1b_WebAddress() {
         // Required empty public constructor
@@ -108,10 +109,26 @@ public class Fragment_Import_1b_WebAddress extends Fragment {
 
                 @Override
                 public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    viewModelImportActivity.sWebAddress = String.valueOf(charSequence);
+                    boolean bAddressOK = false;
+                    String sAddressCandidate = String.valueOf(charSequence);
+                    if(sAddressCandidate.length() > 0) {
+                        //Evaluate if the address matches a pattern:
+                        String sNHRegexExpression = "https:\\/\\/nhentai.net\\/g\\/\\d{1,6}\\/?$";
+                        ArrayList<String> alsComicSiteRegexExpressions = new ArrayList<>();
+                        alsComicSiteRegexExpressions.add(sNHRegexExpression);
+
+                        for(String sRegex: alsComicSiteRegexExpressions){
+                            if(sAddressCandidate.matches(sRegex)){
+                                bAddressOK = true;
+                                break;
+                            }
+                        }
+                    }
                     Button button_NextStep = getView().findViewById(R.id.button_NextStep);
-                    if(button_NextStep != null){
-                        button_NextStep.setEnabled(viewModelImportActivity.sWebAddress.length() > 0);
+                    if(bAddressOK) {
+                        viewModelImportActivity.sWebAddress = sAddressCandidate;
+                    } else {
+                        viewModelImportActivity.sWebAddress = "";
                     }
                 }
 
