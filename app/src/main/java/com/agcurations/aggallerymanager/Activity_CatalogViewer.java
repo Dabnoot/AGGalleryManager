@@ -606,6 +606,15 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
                         + ci.sFolder_Name + File.separator
                         + ci.sFilename;
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
+                    ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+                    //If this is a comic, and the files from DownloadManager have not been moved as
+                    //  part of download post-processing, look in the [comic]\download folder for the files:
+                    sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
+                            + ci.sFolder_Name + File.separator
+                            + GlobalClass.gsDLTempFolderName + File.separator
+                            + ci.sFilename;
+                }
 
                 /*if(ci.sFilename.equals("1000_egaP_058813.gpj")){
                     sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
@@ -638,11 +647,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             File[] fComicPages = fComicFolder.listFiles();
                             if(fComicPages != null) {
                                 for (File fComicPage : fComicPages) {
-                                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath()); //de-jumble to get proper alphabetization.
+                                    if(fComicPage.isFile()) {
+                                        tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath()); //de-jumble to get proper alphabetization.
+                                    }
                                 }
                             }
                             //Assign the existing file to be the new thumbnail file:
-                            if(fComicPages.length > 0) {
+                            if(tmSortByFileName.size() > 0) {
                                 ci.sFilename = GlobalClass.JumbleFileName(tmSortByFileName.firstEntry().getKey()); //re-jumble to get actual file name.
                                 bFoundMissingComicThumbnail = true;
                             }
@@ -722,14 +733,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             });
 
 
-            if (ci.sComic_Missing_Pages.equals("")) {
-                holder.imageView_Attention.setVisibility(View.INVISIBLE);
-                holder.textView_AttentionNote.setVisibility(View.INVISIBLE);
-            } else {
-                holder.imageView_Attention.setVisibility(View.VISIBLE);
-                holder.textView_AttentionNote.setVisibility(View.VISIBLE);
-                String sAttentionNote = "Missing pages: " + ci.sComic_Missing_Pages;
-                holder.textView_AttentionNote.setText(sAttentionNote);
+            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                if (ci.sComic_Missing_Pages.equals("")) {
+                    holder.imageView_Attention.setVisibility(View.INVISIBLE);
+                    holder.textView_AttentionNote.setVisibility(View.INVISIBLE);
+                } else {
+                    holder.imageView_Attention.setVisibility(View.VISIBLE);
+                    holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    String sAttentionNote = "Missing pages: " + ci.sComic_Missing_Pages;
+                    holder.textView_AttentionNote.setText(sAttentionNote);
+                }
             }
 
             if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){

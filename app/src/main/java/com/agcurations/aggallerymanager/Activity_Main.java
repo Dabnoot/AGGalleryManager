@@ -3,12 +3,19 @@ package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -24,12 +31,19 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 public class Activity_Main extends AppCompatActivity {
 
@@ -37,6 +51,10 @@ public class Activity_Main extends AppCompatActivity {
     GlobalClass globalClass;
 
     MainActivityDataServiceResponseReceiver mainActivityDataServiceResponseReceiver;
+
+    ProgressBar progressBar_WorkerTest;
+    TextView textView_WorkerTest;
+    Observer<WorkInfo> workInfoObserver_VideoConcatenator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +82,60 @@ public class Activity_Main extends AppCompatActivity {
 
 
         //AlertDialogTest2();
+
+
+        progressBar_WorkerTest = findViewById(R.id.progressBar_WorkerTest);
+        progressBar_WorkerTest.setMax(100);
+        textView_WorkerTest = findViewById(R.id.textView_WorkerTest);
+
+        workInfoObserver_VideoConcatenator = new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(WorkInfo workInfo) {
+                if (workInfo != null) {
+                    Data progress = workInfo.getProgress();
+                    int value = progress.getInt(Worker_VideoConcatenator.PROGRESS, 0);
+                    String sFileName = progress.getString(Worker_VideoConcatenator.FILENAME);
+
+                    if(progressBar_WorkerTest != null && textView_WorkerTest != null)
+                    if (workInfo.getState() == WorkInfo.State.RUNNING) {
+                        progressBar_WorkerTest.setVisibility(View.VISIBLE);
+                        progressBar_WorkerTest.setProgress(value);
+                        if (sFileName != null) {
+                            textView_WorkerTest.setVisibility(View.VISIBLE);
+                            textView_WorkerTest.setText(sFileName);
+                        }
+                    } else if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                        progressBar_WorkerTest.setVisibility(View.INVISIBLE);
+                        progressBar_WorkerTest.setProgress(0);
+                        textView_WorkerTest.setVisibility(View.INVISIBLE);
+                        textView_WorkerTest.setText("");
+                    }
+                }
+            }
+        };
+
+        //Look to see if there are any workers out there processing data for AGGalleryManager,
+        //  and if so, attempt to listen to their progress:
+        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_VideoConcatenator.WORKER_VIDEOCONCATENATOR_TAG);
+        try {
+            int iWorkerCount = lfListWorkInfo.get().size();
+            for(int i = 0; i < iWorkerCount; i++) {
+                WorkInfo.State stateWorkState = lfListWorkInfo.get().get(i).getState();
+                UUID UUIDWorkID = lfListWorkInfo.get().get(i).getId();
+                Log.d("Workstate", stateWorkState.toString() + ", ID " + UUIDWorkID.toString());
+                if(stateWorkState == WorkInfo.State.RUNNING || stateWorkState == WorkInfo.State.ENQUEUED) {
+
+                    WorkManager wm = WorkManager.getInstance(getApplicationContext());
+                    LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
+                    ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);
+                }
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+
 
 
     }
@@ -262,6 +334,12 @@ public class Activity_Main extends AppCompatActivity {
             adConfirmationDialog.show();
 
             return true;
+        } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
+
+            //Backup the database files (CatalogContents.dat):
+            globalClass.CatalogDataFile_CreateBackups(this);
+
+            return true;
         } else if(item.getItemId() == R.id.menu_About) {
 
 
@@ -271,6 +349,7 @@ public class Activity_Main extends AppCompatActivity {
             //Testing WorkManager:
             //WorkManager workManager = WorkManager.getInstance(getApplicationContext());
             //workManager.enqueue(OneTimeWorkRequest.from(Worker_FileDownload.class));
+
 
             //Testing DownloadManager:
             //Use the download manager to download the file:
@@ -296,7 +375,8 @@ public class Activity_Main extends AppCompatActivity {
             manager.enqueue(request);*/
 
             //Try to view status of downloads in the download manager:
-            DownloadManager dm;
+            //http://android-er.blogspot.com/2011/07/check-downloadmanager-status-and-reason.html
+            /*DownloadManager dm;
             dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
             DownloadManager.Query query = new DownloadManager.Query();
 
@@ -336,17 +416,37 @@ public class Activity_Main extends AppCompatActivity {
                         Log.d("Download Status Analysis", "Entry count: " + iLoopCount);
                     }
                 } while (c.moveToNext());
-            }
+            }*/
+
+            //Testing WorkManager for video concatenation:
+            //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
+            Data dataVideoConcatenator = new Data.Builder()
+                    .putString(Worker_VideoConcatenator.KEY_ARG_VIDEO_SEGMENT_FOLDER, "Test")
+                    .putString(Worker_VideoConcatenator.KEY_ARG_VIDEO_OUTPUT_FILENAME, "TestOutputConcatenation.mpeg")
+                    .build();
+            OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoConcatenator.class)
+                    .setInputData(dataVideoConcatenator)
+                    .addTag(Worker_VideoConcatenator.WORKER_VIDEOCONCATENATOR_TAG) //To allow finding the worker later.
+                    .build();
+            UUID UUIDWorkID = otwrVideoConcatenation.getId();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoConcatenation);
+
+            //Next: configure worker to write progressbar on ActivityMain.
+
+            WorkManager wm = WorkManager.getInstance(getApplicationContext());
+            LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
+            ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);
 
 
-
-            return true;
+            return true; //End Test Options item.
         } else {
             return super.onOptionsItemSelected(item);
         }
 
 
     }
+
+
 
     /**
      * Return date in specified format.

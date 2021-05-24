@@ -39,8 +39,14 @@ public class ItemClass_CatalogItem implements Serializable {
     public boolean bComic_Online_Data_Acquired = false;   //Typically used to gather tag data from an online comic source, if automatic.
     public String sSource = "";                           //Website, if relevant. Originally intended for comics.
 
-    public String sComicThumbnailURL = ""; //Used specifically for NH Comic import preview.
+    public String sComicThumbnailURL = "";                //Used specifically for NH Comic import preview.
     public ArrayList<String[]> alsComicPageURLsAndDestFileNames; //Used specifically for NH Comic import.
+
+    public static final int POST_PROCESSING_NONE = 0;
+    public static final int POST_PROCESSING_COMIC_DLM_MOVE = 1; //DownloadIdleService will delete files
+                                            // that have been downloaded and not touched after about a week.
+                                            //  these files must be moved so that DIS can't find them.
+    public int iPostProcessingCode = POST_PROCESSING_NONE; //Used to tell the app to that file requires post-processing of some sort after an operation.
 
     public int iGrade = 3;                                //Rating (grade) of the item, 1-5. Default to 3.
 }

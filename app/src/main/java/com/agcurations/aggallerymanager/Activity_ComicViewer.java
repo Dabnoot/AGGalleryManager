@@ -190,6 +190,13 @@ public class Activity_ComicViewer extends AppCompatActivity {
                 + gciCatalogItem.sFolder_Name;
 
         //Load the full path to each comic page into tmComicPages:
+        if(gciCatalogItem.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+            //If this is a downloaded comic and the files from DownloadManager have not been moved as
+            //  part of download post-processing, look in the [comic]\download folder for the files:
+            sComicFolderPath = sComicFolder_AbsolutePath + File.separator
+                    + gciCatalogItem.sFolder_Name + File.separator
+                    + GlobalClass.gsDLTempFolderName + File.separator;
+        }
         File fComicFolder = new File(sComicFolderPath);
         TreeMap<String, String> tmSortByFileName = new TreeMap<>();
         if(fComicFolder.exists()){
@@ -199,8 +206,10 @@ public class Activity_ComicViewer extends AppCompatActivity {
             String sReadableFileName;
             if(fComicPages != null) {
                 for (File fComicPage : fComicPages) {
-                    sReadableFileName = GlobalClass.JumbleFileName(fComicPage.getName());
-                    tmSortByFileName.put(sReadableFileName, fComicPage.getAbsolutePath());
+                    if(fComicPage.isFile()) {
+                        sReadableFileName = GlobalClass.JumbleFileName(fComicPage.getName());
+                        tmSortByFileName.put(sReadableFileName, fComicPage.getAbsolutePath());
+                    }
                 }
             }
             int i = 0;

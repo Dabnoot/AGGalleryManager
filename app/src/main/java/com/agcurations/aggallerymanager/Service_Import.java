@@ -2,7 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import android.app.DownloadManager;
 import android.app.IntentService;
-import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
@@ -16,6 +15,7 @@ import android.util.Log;
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -53,7 +52,6 @@ public class Service_Import extends IntentService {
     private static final String ACTION_GET_COMIC_DETAILS_ONLINE = "com.agcurations.aggallerymanager.action.GET_COMIC_DETAILS_ONLINE";
     private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
     private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
-    private static final String ACTION_DOWNLOAD_TEST = "com.agcurations.aggallerymanager.action.DOWNLOAD_TEST";
     private static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
     private static final String ACTION_DELETE_FILES = "com.agcurations.aggallerymanager.action.DELETE_FILES";
 
@@ -149,12 +147,6 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionDownloadTest(Context context){
-        Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_DOWNLOAD_TEST);
-        context.startService(intent);
-    }
-
     public static void startActionVideoAnalyzeHTML(Context context, String sHMTL, String sXPathExpressionTagsLocator){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
@@ -229,13 +221,7 @@ public class Service_Import extends IntentService {
                 }
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
-            } else if (ACTION_DOWNLOAD_TEST.equals(action)) {
 
-                try {
-                    handleAction_startActionDownloadTest();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             } else if (ACTION_VIDEO_ANALYZE_HTML.equals(action)) {
 
                 final String sHTML = intent.getStringExtra(EXTRA_STRING_HTML);
@@ -1662,6 +1648,7 @@ public class Service_Import extends IntentService {
 
     }
 
+    @Nullable
     private ArrayList<String[]> handleAction_startActionGetComicDetailsOnline(String sAddress, String sIntentActionFilter){
         //Optionally returns an arraylist of the comic image URLs. This is because sometimes the DownloadManager fails
         //  to download the file, and it has to be redone.
@@ -2062,6 +2049,11 @@ public class Service_Import extends IntentService {
 
         if(ci.alsComicPageURLsAndDestFileNames.size() > 0){
             //If there are image addresses to attempt to download...
+
+            //NOTE: Android has DownloadIdleService which is reponsible for cleaning up stale or orphan downloads.
+            //  I have witnessed disappearance of downloaded files. This service seems to be deleting comic files.
+            //See article at: https://www.vvse.com/blog/blog/2020/01/06/android-10-automatically-deletes-downloaded-files/
+
             InputStream input = null;
             OutputStream output = null;
             try {
@@ -2076,10 +2068,11 @@ public class Service_Import extends IntentService {
                 int FILE_NAME_AND_EXTENSION = 1;
                 for(String[] sData: ci.alsComicPageURLsAndDestFileNames) {
 
-                    String sNewFilename = ci.sItemID + "_" +sData[FILE_NAME_AND_EXTENSION];
+                    String sNewFilename = ci.sItemID + "_" + sData[FILE_NAME_AND_EXTENSION];
+                    ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE; //Tell the app to move the files after download to avoid DLM-automated deletion.
                     String sJumbledNewFileName = GlobalClass.JumbleFileName(sNewFilename);
                     String sNewFullPathFilename = fDestination.getPath() +
-                            File.separator +
+                            File.separator + GlobalClass.gsDLTempFolderName + File.separator + //Use DL folder name to allow move to a different folder after download.
                             sJumbledNewFileName;
 
                     if(ci.sFilename.equals("")){
@@ -2184,78 +2177,18 @@ public class Service_Import extends IntentService {
 
         }
 
+        if(ci.iPostProcessingCode != ItemClass_CatalogItem.POST_PROCESSING_NONE){
+            //Update the catalog file to note the post-processing code:
+            globalClass.CatalogDataFile_UpdateRecord(ci);
+        }
+
+        //Put processed catalog item in globalclass to allow easier pass-back of catalog item:
+        globalClass.gci_ImportComicWebItem = ci;
+
         //Modify viewer settings to show the newly-imported files:
         globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
         globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
 
-    }
-
-    private void handleAction_startActionDownloadTest(){ //todo: remove this.
-        String sAddress = "https://www.xnxx.com/video-10olx73e/jay_s_pov_-_i_had_a_threesome_with_two_hot_blonde_teens";
-        sAddress = "https://hls-hw.xnxx-cdn.com/videos/hls/0e/01/24/0e0124dc524ebea496445e40d41288a9/hls.m3u8";
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        File fDestination = new File(
-                globalClass.gfAppFolder.getAbsolutePath() + File.separator + "Test.txt");
-        InputStream input = null;
-        OutputStream output = null;
-
-        long lTotalBytesDownloaded = 0;
-        try {
-
-            if(!fDestination.exists()) {
-                // Output stream
-                output = new FileOutputStream(fDestination.getPath());
-
-                byte[] data = new byte[1024];
-
-                URL url = new URL(sAddress);
-                URLConnection connection = url.openConnection();
-                connection.connect();
-
-                // download the file
-                input = new BufferedInputStream(url.openStream(), 8192);
-
-                int count;
-                int iLoopCount = 0;
-                String sTextLine;
-                while ((count = input.read(data)) != -1) {
-
-                    // writing data to file
-                    output.write(data, 0, count);
-                    lTotalBytesDownloaded += count;
-                    iLoopCount++;
-                    if(iLoopCount % 10 == 0){
-                        sTextLine = GlobalClass.CleanStorageSize(lTotalBytesDownloaded,
-                                GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
-                        sTextLine = "Download progress: " + sTextLine;
-                        //gTextView_DownloadStatus.setText(sTextLine);
-                    }
-                }
-
-                // flushing output
-                output.flush();
-
-                // closing streams
-                output.close();
-                input.close();
-
-            }
-
-            if(output != null) {
-                output.close();
-            }
-            if(input != null) {
-                input.close();
-            }
-
-        } catch (Exception e) {
-            String sMsg = e.getMessage();
-            if(sMsg != null) {
-                Log.e("Download Test Error: ", sMsg);
-            } else {
-                Log.e("Download Test Error: ", "Unknown error.");
-            }
-        }
     }
 
     private void handleAction_startActionVideoAnalyzeHTML(String sHTML, String sXPathExpressionTagsLocator){
@@ -2384,6 +2317,7 @@ public class Service_Import extends IntentService {
                          */
 
                         //Locate the M3U8 items:
+                        //Go through the M3U8 master list and identify the .M3U8 files.
                         String sM3U8_MasterData = sbM3U8Content.toString();
                         String[] sM3U8_MasterDataLines = sM3U8_MasterData.split("\n");
                         ArrayList<ItemClass_M3U8_HLS> al_M3U8 = new ArrayList<>();
@@ -2422,6 +2356,7 @@ public class Service_Import extends IntentService {
                             }
                         }
 
+                        //Evaluate the M3U8 files and create a list of the .ts files in each M3U8 file:
                         ArrayList<ArrayList<String>> alals_TSDownloads = new ArrayList<>();
 
                         for(ItemClass_M3U8_HLS icM3U8_entry: al_M3U8){
@@ -2431,7 +2366,7 @@ public class Service_Import extends IntentService {
                             connection = url.openConnection();
                             connection.connect();
 
-                            // download the file
+                            // download the M3U8 text file:
                             input = new BufferedInputStream(url.openStream(), 8192);
 
                             data = new byte[1024];
@@ -2443,6 +2378,7 @@ public class Service_Import extends IntentService {
                             }
                             input.close();
 
+                            //Evaluate if this line in the M3U8 file is a .ts file name and add it to the arraylist if so:
                             String sTest = sbM3U8_HLS_File_Content.toString();
                             String[] sLines = sTest.split("\n");
                             for(String sLine: sLines) {
@@ -2454,6 +2390,7 @@ public class Service_Import extends IntentService {
                             }
                             alals_TSDownloads.add(als_TSDownloads);
                         }
+
 
                         //Test download of TS files:
                         File fDestinationFolder = new File(

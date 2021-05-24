@@ -129,6 +129,15 @@ public class GlobalClass extends Application {
     public StringBuilder gsbImportComicWebAnalysisLog = new StringBuilder();
     public ItemClass_CatalogItem gci_ImportComicWebItem;  //To capture a potential import.
 
+    //The variable below is used to identify files that were acquired using the Android DownloadManager.
+    //  The Android DownloadIdleService will automatically delete the files that this program downloads
+    //  after about a week. This program must go through and find these files and rename them so that
+    //  the service does not delete them.
+    //  See https://www.vvse.com/blog/blog/2020/01/06/android-10-automatically-deletes-downloaded-files/.
+    //  See https://android.googlesource.com/platform/packages/providers/DownloadProvider/+/master/src/com/android/providers/downloads/DownloadIdleService.java#109.
+    //  See https://developer.android.com/reference/android/app/DownloadManager.Request.html#setVisibleInDownloadsUi(boolean).
+    public static String gsDLTempFolderName = "DL";
+
     //=====================================================================================
     //===== Network Monitoring ============================================================
     //=====================================================================================
@@ -204,13 +213,19 @@ public class GlobalClass extends Application {
         return Double.parseDouble(sTimeStamp);
     }
 
-    /*static final String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
     static final String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
     public String GetTimeStampReadReady(){
         //Get an easily readable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternReadReady);
         return gdtfDateFormatter.format(LocalDateTime.now());
-    }*/
+    }
+
+    static final String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
+    public String GetTimeStampFileSafe(){
+        //Get an easily readable time stamp.
+        gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternFileSafe);
+        return gdtfDateFormatter.format(LocalDateTime.now());
+    }
 
     public static String JumbleStorageText(String sSourceText){
         if(sSourceText.equals("")){
@@ -256,7 +271,7 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
-    public final int giCatalogFileVersion = 5;
+    public final int giCatalogFileVersion = 6;
     public String getCatalogHeader(){
         String sHeader = "";
         sHeader = sHeader + "MediaCategory";                         //Video, image, or comic.
@@ -291,6 +306,7 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "Comic_Source";
 
         sHeader = sHeader + "\t" + "Grade";                          //Grade of the item, set by the user
+        sHeader = sHeader + "\t" + "PostProcessingCode";             //Code for required post-processing.
 
         sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
 
@@ -334,6 +350,7 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;     //Typically used to gather tag data from an online comic source, if automatic.
         sReadableData = sReadableData + "\t" + ci.sSource;                         //Website, if relevant. ended for comics.
         sReadableData = sReadableData + "\t" + ci.iGrade;                          //Grade.
+        sReadableData = sReadableData + "\t" + ci.iPostProcessingCode;             //Code for required post-processing.
 
         return sReadableData;
     }
@@ -372,6 +389,7 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.iPostProcessingCode);             //Code for required post-processing.
 
         return sRecord;
     }
@@ -409,8 +427,13 @@ public class GlobalClass extends Application {
         ci.iComic_File_Count = Integer.parseInt(JumbleStorageText(sRecord[25]));    //Files included with the comic. Can be used for egrity check.
         ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[26]));  //Typically used to gather tag data from an online comic source, if automatic.
         ci.sSource = JumbleStorageText(sRecord[27]);                        //Website, if relevant. ended for comics.
-        if(sRecord.length == 29) { //String.split will not give the last item if it is an empty string.
+        if(sRecord.length >= 29) { //String.split will not give the last item if it is an empty string.
             ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[28]));   //Grade, supplied by user.
+        } else {
+            Log.d("Catalog record parse", "Shortage of expected columns.");
+        }
+        if(sRecord.length == 30) { //String.split will not give the last item if it is an empty string.
+            ci.iPostProcessingCode = Integer.parseInt(JumbleStorageText(sRecord[29]));  //Code for required post-processing.
         }
         return ci;
     }
@@ -606,6 +629,41 @@ public class GlobalClass extends Application {
                 Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         }
+    }
+
+    public void CatalogDataFile_CreateBackups(Context context){
+
+        for(int i = 0; i < 3; i++){
+            StringBuilder sbBuffer = new StringBuilder();
+            boolean bHeaderWritten = false;
+            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(i).entrySet()){
+
+                if(!bHeaderWritten) {
+                    sbBuffer.append(getCatalogHeader()); //Append the header.
+                    sbBuffer.append("\n");
+                    bHeaderWritten = true;
+                }
+
+                sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
+                sbBuffer.append("\n");
+            }
+
+            try {
+                //Write the catalog file:
+                String sDateTimeStamp = GetTimeStampFileSafe();
+                File fBackup = new File(gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");
+                FileWriter fwNewCatalogContentsFile = new FileWriter(fBackup, false);
+
+                fwNewCatalogContentsFile.write(sbBuffer.toString());
+                fwNewCatalogContentsFile.flush();
+                fwNewCatalogContentsFile.close();
+
+            } catch (Exception e) {
+                Toast.makeText(context, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
+        Toast.makeText(context, "Catalog database files backup completed.", Toast.LENGTH_LONG).show();
     }
 
 

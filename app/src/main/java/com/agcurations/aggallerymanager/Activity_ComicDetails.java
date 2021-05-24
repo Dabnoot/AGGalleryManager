@@ -118,19 +118,35 @@ public class Activity_ComicDetails extends AppCompatActivity {
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gciCatalogItem.sFolder_Name;
+        if(gciCatalogItem.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+            //If this is a downloaded comic and the files from DownloadManager have not been moved as
+            //  part of download post-processing, look in the [comic]\download folder for the files:
+            sComicFolderPath = sComicFolder_AbsolutePath + File.separator
+                    + gciCatalogItem.sFolder_Name + File.separator
+                    + GlobalClass.gsDLTempFolderName + File.separator;
+        }
 
         //Load the full path to each comic page into tmComicPages:
+        if(gciCatalogItem.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+            //If this is a downloaded comic and the files from DownloadManager have not been moved as
+            //  part of download post-processing, look in the [comic]\download folder for the files:
+            sComicFolderPath = sComicFolder_AbsolutePath + File.separator
+                    + gciCatalogItem.sFolder_Name + File.separator
+                    + GlobalClass.gsDLTempFolderName + File.separator;
+        }
         File fComicFolder = new File(sComicFolderPath);
         TreeMap<String, String> tmSortByFileName = new TreeMap<>();
         if(fComicFolder.exists()){
             File[] fComicPages = fComicFolder.listFiles();
             if(fComicPages != null) {
                 for (File fComicPage : fComicPages) {
-                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath());
+                    if(fComicPage.isFile()) {
+                        tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath());
+                    }
                 }
             }
 
-            if(fComicPages.length == 0) {
+            if(tmSortByFileName.size() == 0) {
                 gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
                 String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + "\n";
                 sMessage = sMessage + "If this is a comic from NH, try 'Sync Details Online' from the menu." + "\n";
@@ -797,6 +813,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
                             //Tell Activity_CatalogViewer to refresh its view (thumbnail image may have changed):
                             globalClass.gbCatalogViewerRefresh = true;
                             gmiSaveDetails.setEnabled(true);
+                            //No need to automatically save the comic item details in order to preserve
+                            // the post-processing code because this is done in Service_Import if required.
+
                             Toast.makeText(getApplicationContext(), "Files may be downloading in background. Refresh to view new files.", Toast.LENGTH_LONG).show();
                         }
                     }
