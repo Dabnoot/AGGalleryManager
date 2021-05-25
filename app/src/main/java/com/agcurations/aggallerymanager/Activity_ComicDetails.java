@@ -738,53 +738,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            /*boolean bComicDetailsDataServiceSuccess;
-            bComicDetailsDataServiceSuccess = intent.getBooleanExtra(Service_ComicDetails.COMIC_DETAILS_SUCCESS,
-                                                         false);
-
-            String sErrorMessage;
-            if(bComicDetailsDataServiceSuccess) {
-
-
-                gciCatalogItem = (ItemClass_CatalogItem) intent.getSerializableExtra(Service_ComicDetails.COMIC_CATALOG_ITEM);
-                gciCatalogItem.bComic_Online_Data_Acquired = true;
-                gmiSaveDetails.setEnabled(true);
-
-                //Update the title bar:
-                if(!globalClass.ObfuscationOn) {
-                    //(only if not obfuscated)
-                    RemoveObfuscation();
-                }
-
-                boolean bMissingComicPagesAcquired =  intent.getBooleanExtra(Service_ComicDetails.COMIC_MISSING_PAGES_ACQUIRED, false);
-                if(bMissingComicPagesAcquired){
-                    loadComicPageData();
-                }
-
-
-                if(gtmComicPages.containsKey(0)) {
-                    String sFilePath = gtmComicPages.get(0);
-                    gciCatalogItem.sFilename = sFilePath.substring(sFilePath.lastIndexOf("/") + 1);
-                    gciCatalogItem.sThumbnail_File = gciCatalogItem.sFilename;
-                }
-
-
-                //Update the RecyclerView:
-                gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
-
-                if(gbAutoAcquireData){
-                    Toast.makeText(getApplicationContext(), "Online data acquired. Auto saving...", Toast.LENGTH_LONG).show();
-                    SaveDetails(gciCatalogItem);
-                } else {
-                    Toast.makeText(getApplicationContext(), "Online data acquired. Don't forget to save.", Toast.LENGTH_LONG).show();
-                }
-
-
-
-            } else {
-                sErrorMessage = intent.getStringExtra(Service_ComicDetails.COMIC_DETAILS_ERROR_MESSAGE);
-                Toast.makeText(getApplicationContext(), "Error getting data online.\n" + sErrorMessage, Toast.LENGTH_LONG).show();
-            }*/
 
             boolean bError;
             //Get boolean indicating that an error may have occurred:
@@ -812,7 +765,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
                             loadComicPageData();
                             //Tell Activity_CatalogViewer to refresh its view (thumbnail image may have changed):
                             globalClass.gbCatalogViewerRefresh = true;
-                            gmiSaveDetails.setEnabled(true);
+                            if(gmiGetOnlineData != null) {
+                                gmiSaveDetails.setEnabled(true);
+                            }
                             //No need to automatically save the comic item details in order to preserve
                             // the post-processing code because this is done in Service_Import if required.
 
@@ -823,8 +778,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
 
             }
-
-            gmiGetOnlineData.setEnabled(true);
 
         }
     }

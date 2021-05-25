@@ -171,31 +171,34 @@ public class Service_Main extends IntentService {
                 File fComicItemFolder = new File(sComicItemFolderPath);
                 String sComicItemDLFolderPath = sComicItemFolderPath + File.separator + GlobalClass.gsDLTempFolderName;
                 File fComicItemDLFolder = new File(sComicItemDLFolderPath);
-                File[] fComicDLFiles = fComicItemDLFolder.listFiles();
-                if(fComicDLFiles.length == ci.iComicPages){
-                    //All of the files have been downloaded.
-                    //Attempt to move the files:
-                    boolean bMoveSuccessful = true;
-                    for(File fDLFile: fComicDLFiles){
-                        String sFileName = fDLFile.getName();
-                        File fDestination = new File(sComicItemFolderPath + File.separator + sFileName);
-                        if(fDLFile.isFile()) {
-                            if (!fDLFile.renameTo(fDestination)) {
-                                Log.d("File move", "Cannot move file " + sFileName + " from " + fDLFile.getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
-                                bMoveSuccessful = false;
+                if(fComicItemDLFolder.exists()) {
+                    File[] fComicDLFiles = fComicItemDLFolder.listFiles();
+                    if (fComicDLFiles.length == ci.iComicPages) {
+                        //All of the files have been downloaded.
+                        //Attempt to move the files:
+                        boolean bMoveSuccessful = true;
+                        for (File fDLFile : fComicDLFiles) {
+                            String sFileName = fDLFile.getName();
+                            File fDestination = new File(sComicItemFolderPath + File.separator + sFileName);
+                            if (fDLFile.isFile()) {
+                                if (!fDLFile.renameTo(fDestination)) {
+                                    Log.d("File move", "Cannot move file " + sFileName + " from " + fDLFile.getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
+                                    bMoveSuccessful = false;
+                                }
                             }
                         }
-                    }
-                    if(bMoveSuccessful) {
-                        //Delete the DL folder:
-                        if(!fComicItemDLFolder.delete()){
-                            Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
+                        if (bMoveSuccessful) {
+                            //Delete the DL folder:
+                            if (!fComicItemDLFolder.delete()) {
+                                Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
+                            }
+                            ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                            alsCatalogItemsToUpdate.add(ci);
                         }
-                        ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
-                        alsCatalogItemsToUpdate.add(ci);
                     }
+                } else {
+                    Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
                 }
-
 
             }
         }
