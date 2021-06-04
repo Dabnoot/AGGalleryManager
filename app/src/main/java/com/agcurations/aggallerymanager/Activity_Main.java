@@ -83,11 +83,12 @@ public class Activity_Main extends AppCompatActivity {
 
         //AlertDialogTest2();
 
-
+        //Put together a progressbar to indicate progress of a worker (originally incorporated to track video concatenation):
         progressBar_WorkerTest = findViewById(R.id.progressBar_WorkerTest);
         progressBar_WorkerTest.setMax(100);
         textView_WorkerTest = findViewById(R.id.textView_WorkerTest);
 
+        //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
         workInfoObserver_VideoConcatenator = new Observer<WorkInfo>() {
             @Override
             public void onChanged(WorkInfo workInfo) {
@@ -454,8 +455,7 @@ public class Activity_Main extends AppCompatActivity {
      * @param dateFormat Date format
      * @return String representing date in specified format
      */
-    public static String getDate(long milliSeconds, String dateFormat)
-    {
+    public static String getDate(long milliSeconds, String dateFormat) {
         // Create a DateFormatter object for displaying date in specified format.
         SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
 

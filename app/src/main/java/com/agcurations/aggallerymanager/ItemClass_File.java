@@ -10,6 +10,7 @@ public class ItemClass_File implements Serializable {
     public final static int TYPE_FOLDER = 1;
     public final static int TYPE_FILE = 2;
     public final static int TYPE_URL = 3;
+    public final static int TYPE_M3U8 = 4;
     public final String sFileOrFolderName;
     public String sExtension = "";
     public long lSizeBytes = 0;
@@ -38,6 +39,8 @@ public class ItemClass_File implements Serializable {
     //Items for video download:
     public String sURL = "";
     public ArrayList<String> alsProspectiveTags;
+    ItemClass_M3U8_HLS ic_M3U8_HLS; //Captures a streaming download, which consists of a set of TS files.
+
 
     public int iGrade = 3;  //Grade, to be specified by user.
 

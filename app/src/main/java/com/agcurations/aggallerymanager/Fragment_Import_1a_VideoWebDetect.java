@@ -237,7 +237,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                     if(gButton_Next != null){
                         if(iMatchCount > 0) {
-                            SetTextStatusMessage("Data located. Looking for other data.");
+                            SetTextStatusMessage("Data located. Analyzing results...");
                             Service_Import.startActionVideoAnalyzeHTML(getContext(), sHTML, "//div[@class='metadata-row video-tags']//a/text()");
                         } else {
                             SetTextStatusMessage("No other data found within this webpage.");
