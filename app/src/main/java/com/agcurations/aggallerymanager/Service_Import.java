@@ -2327,13 +2327,13 @@ public class Service_Import extends IntentService {
                         //Go through the M3U8 master list and identify the .M3U8 files.
                         String sM3U8_MasterData = sbM3U8Content.toString();
                         String[] sM3U8_MasterDataLines = sM3U8_MasterData.split("\n");
-                        ArrayList<ItemClass_M3U8_HLS> al_M3U8 = new ArrayList<>();
+                        ArrayList<ItemClass_M3U8> al_M3U8 = new ArrayList<>();
                         boolean bReadingM3U8Item = false;
-                        ItemClass_M3U8_HLS icM3U8 = null;
+                        ItemClass_M3U8 icM3U8 = null;
                         for(String sLine: sM3U8_MasterDataLines){
                             if(sLine.startsWith("#EXT-X-STREAM-INF")){
                                 bReadingM3U8Item = true;
-                                icM3U8 = new ItemClass_M3U8_HLS();
+                                icM3U8 = new ItemClass_M3U8();
                                 icM3U8.sTitle = sTitle;
                                 icM3U8.sBaseURL = vdsk.sSearchStringMatchContent.substring(0, vdsk.sSearchStringMatchContent.lastIndexOf("/"));
                                 String[] sTemp1 = sLine.split(":");
@@ -2392,7 +2392,7 @@ public class Service_Import extends IntentService {
                         */
 
                         //Evaluate the M3U8 files and create a list of the .ts files in each M3U8 item:
-                        for(ItemClass_M3U8_HLS icM3U8_entry: al_M3U8){
+                        for(ItemClass_M3U8 icM3U8_entry: al_M3U8){
                             String sUrl = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
                             url = new URL(sUrl);
                             connection = url.openConnection();
@@ -2460,7 +2460,7 @@ public class Service_Import extends IntentService {
 
                         //Obtain size of each TS file set of downloads:
                         //Loop through the M3U8 entries, such as video @ 240x320, video @ 640x480, @720p, @1080p, etc:
-                        for(ItemClass_M3U8_HLS icM3U8_entry: al_M3U8){
+                        for(ItemClass_M3U8 icM3U8_entry: al_M3U8){
                             //Loop through the TS downloads for each of the M3U8 entries and accumulate the file sizes:
 
                             int iFileSizeLoopCount = 0;

@@ -39,7 +39,7 @@ public class ItemClass_File implements Serializable {
     //Items for video download:
     public String sURL = "";
     public ArrayList<String> alsProspectiveTags;
-    ItemClass_M3U8_HLS ic_M3U8_HLS; //Captures a streaming download, which consists of a set of TS files.
+    ItemClass_M3U8 ic_M3U8_HLS; //Captures a streaming download, which consists of a set of TS files.
 
 
     public int iGrade = 3;  //Grade, to be specified by user.
