@@ -375,7 +375,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 Uri uriVideoFile = Uri.parse(gFileItems[giFileItemIndex].sUri);
                 gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
             } else if (gFileItems[giFileItemIndex].iTypeFileFolderURL == ItemClass_File.TYPE_URL) {
-                gVideoView_VideoPlayer.setVideoPath(gFileItems[giFileItemIndex].sURL);
+                gVideoView_VideoPlayer.setVideoPath(gFileItems[giFileItemIndex].sURLVideoLink);
             }
             // Skipping to 1 shows the first frame of the video.
             gVideoView_VideoPlayer.seekTo(1);

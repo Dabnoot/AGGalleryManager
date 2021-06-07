@@ -36,7 +36,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1271,6 +1276,23 @@ public class Activity_Import extends AppCompatActivity {
 
             tvLine1.setText(alFileItems.get(position).sFileOrFolderName);
 
+            String sLine2 = GlobalClass.CleanStorageSize(alFileItems.get(position).lSizeBytes, "");
+
+            if (alFileItems.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) {
+                if (alFileItems.get(position).ic_M3U8 != null) {
+                    sLine2 = sLine2 + ". Resolution: " + alFileItems.get(position).ic_M3U8.sResolution + ".";
+                    if (alFileItems.get(position).ic_M3U8.als_TSDownloads != null) {
+                        sLine2 = sLine2 + " " + alFileItems.get(position).ic_M3U8.als_TSDownloads.size() +
+                                " MPEG-2 files to be downloaded and concatenated.";
+                    } else {
+                        sLine2 = "Possible corrupted download information.";
+                    }
+                } else {
+                    sLine2 = "Possible corrupted download information.";
+                }
+            }
+            tvLine2.setText(sLine2);
+
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
@@ -1302,6 +1324,16 @@ public class Activity_Import extends AppCompatActivity {
                 }
             }
             tvLine3.setText(sbTags.toString());
+
+            //Display a thumbnail:
+            String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
+            if(!sURLThumbnail.equals("")) {
+                Glide.with(getContext()).
+                        load(sURLThumbnail).
+                        into(ivFileType);
+            }
+
+
 
             cbStorageItemSelect.setChecked(alFileItems.get(position).bIsChecked);
 
@@ -1345,6 +1377,8 @@ public class Activity_Import extends AppCompatActivity {
             boolean bItemIsVideo = alFileItems.get(position).sMimeType.startsWith("video")  ||
                     (alFileItems.get(position).sMimeType.equals("application/octet-stream") &&
                             alFileItems.get(position).sExtension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
+
+            button_MediaPreview.setVisibility(View.INVISIBLE); //For now, disable preview of web-detected video.
 
             //button_MediaPreview.setVisibility(Button.VISIBLE);
             button_MediaPreview.setOnClickListener(new View.OnClickListener(){
@@ -1396,6 +1430,12 @@ public class Activity_Import extends AppCompatActivity {
 
                 }
             });
+
+            //Hide the delete button since this is a download (delete doesn't make sense):
+            Button button_Delete = row.findViewById(R.id.button_Delete);
+            if(button_Delete != null){
+                button_Delete.setVisibility(View.INVISIBLE);
+            }
 
 
             return row;

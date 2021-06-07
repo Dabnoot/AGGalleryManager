@@ -83,6 +83,7 @@ public class Service_Import extends IntentService {
 
     public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
     public static final String EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_TAGSLOCATOR";
+    public static final String EXTRA_STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR";
 
     public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
 
@@ -149,10 +150,11 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionVideoAnalyzeHTML(Context context, String sHMTL, String sXPathExpressionTagsLocator){
+    public static void startActionVideoAnalyzeHTML(Context context, String sHMTL, String sXPathExpressionThumbnailLocator, String sXPathExpressionTagsLocator){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
         intent.putExtra(EXTRA_STRING_HTML, sHMTL);
+        intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR, sXPathExpressionThumbnailLocator);
         intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR, sXPathExpressionTagsLocator);
         context.startService(intent);
 
@@ -227,9 +229,10 @@ public class Service_Import extends IntentService {
             } else if (ACTION_VIDEO_ANALYZE_HTML.equals(action)) {
 
                 final String sHTML = intent.getStringExtra(EXTRA_STRING_HTML);
-                final String sxPathExpression = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR);
+                final String sXPathExpressionThumbnail = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR);
+                final String sxPathExpressionTags = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR);
                 try{
-                    handleAction_startActionVideoAnalyzeHTML(sHTML, sxPathExpression);
+                    handleAction_startActionVideoAnalyzeHTML(sHTML, sXPathExpressionThumbnail, sxPathExpressionTags);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -2193,7 +2196,7 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionVideoAnalyzeHTML(String sHTML, String sXPathExpressionTagsLocator){
+    private void handleAction_startActionVideoAnalyzeHTML(String sHTML, String sXPathExpressionThumbnailLocator, String sXPathExpressionTagsLocator){
 
         String sIntentActionFilter = Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT;
 
@@ -2212,12 +2215,32 @@ public class Service_Import extends IntentService {
         TagNode node = pageParser.clean(sHTML);
 
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
-        //String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
+        String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
+
+        //Attempt to get the thumbnail address from the Webpage html:
+        boolean bProblem = false;
+        String sProblemMessage = "";
+        String sURLThumbnail = "";
+        try {
+            //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
+            Object[] objsTags = node.evaluateXPath(sXPathExpressionThumbnailLocator);
+            //Check to see if we found anything:
+            String sResult;
+            if (objsTags != null && objsTags.length > 0) {
+                //If we found something, assign it to a string:
+                for(Object oTags:  objsTags){
+                    sURLThumbnail = oTags.toString();
+                }
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            bProblem = true;
+            sProblemMessage = e.getMessage();
+        }
+
 
         //Attempt to get the tags from the WebPage html:
         ArrayList<String> alsTags = new ArrayList<>();
-        boolean bProblem = false;
-        String sProblemMessage = "";
         try {
             //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
             Object[] objsTags = node.evaluateXPath(sXPathExpressionTagsLocator);
@@ -2265,8 +2288,7 @@ public class Service_Import extends IntentService {
                         }
                         sTempFilename = sTempFilename.substring(iStartLocation, iEndLocation);
                         ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_URL, sTempFilename);
-
-                        icf.sURL = vdsk.sSearchStringMatchContent;
+                        icf.sURLVideoLink = vdsk.sSearchStringMatchContent;
 
                         HttpURLConnection connection = (HttpURLConnection) urlVideoLink.openConnection();
                         connection.setRequestProperty("Accept-Encoding", "identity");
@@ -2274,6 +2296,7 @@ public class Service_Import extends IntentService {
                         icf.lSizeBytes = vdsk.lFileSize;
                         connection.disconnect();
 
+                        icf.sURLThumbnail = sURLThumbnail;
                         icf.alsProspectiveTags = alsTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
 
                         alicf_VideoDownloadFileItems.add(icf);
@@ -2494,8 +2517,9 @@ public class Service_Import extends IntentService {
                             //Create a file item to record the results:
                             String sFilename = cleanFileNameViaTrim(icM3U8_entry.sFileName);
                             ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_M3U8, sFilename);
-                            icf.ic_M3U8_HLS = icM3U8_entry;
+                            icf.ic_M3U8 = icM3U8_entry;
                             icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;
+                            icf.sURLThumbnail = sURLThumbnail;
                             icf.alsProspectiveTags = alsTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
                             alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
 

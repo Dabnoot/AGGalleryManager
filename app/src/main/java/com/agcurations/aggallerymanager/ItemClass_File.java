@@ -37,9 +37,12 @@ public class ItemClass_File implements Serializable {
     public String sUriThumbnailFile = ""; //For use by the comic folder ItemClass_File.
 
     //Items for video download:
-    public String sURL = "";
+    public String sURLVideoLink = "";
+    public String sURLThumbnail = "";
     public ArrayList<String> alsProspectiveTags;
-    ItemClass_M3U8 ic_M3U8_HLS; //Captures a streaming download, which consists of a set of TS files.
+    ItemClass_M3U8 ic_M3U8; //Captures a streaming download, which consists of a set of TS files.
+    //A video download will have either sURLVideoLink, or in the case of a streaming download
+    //  an entry for ic_M3U8 which will contain many files to be downloaded.
 
 
     public int iGrade = 3;  //Grade, to be specified by user.
