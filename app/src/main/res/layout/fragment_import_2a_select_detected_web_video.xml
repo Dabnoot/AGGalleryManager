@@ -24,7 +24,7 @@
         android:textSize="24sp"
         android:scrollbarSize="20dp"
         android:layout_below="@id/textView_Instructions"
-        android:layout_above="@+id/linearLayout_ButtonBar"/>
+        android:layout_above="@+id/linearLayout_ButtonBar" />
 
     <LinearLayout
         android:id="@+id/linearLayout_ButtonBar"

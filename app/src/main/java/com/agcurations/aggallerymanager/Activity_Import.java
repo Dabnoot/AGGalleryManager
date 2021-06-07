@@ -69,12 +69,13 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 6;
     public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 7;
     public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 8;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 9;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 10;
-    public static final int FRAGMENT_IMPORT_5A_WEB_CONFIRMATION = 11;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 12;
+    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 9;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 10;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 11;
+    public static final int FRAGMENT_IMPORT_5A_WEB_CONFIRMATION = 12;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 13;
 
-    public static final int FRAGMENT_COUNT = 13;
+    public static final int FRAGMENT_COUNT = 14;
 
     //=================================================
     //User selection global variables:
@@ -434,7 +435,14 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
+        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+            //If we are importing a video from the web, allow the user to confirm import of tags that
+            //  don't already exist in the list of tags.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
+        } else {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
+        }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
@@ -1293,37 +1301,7 @@ public class Activity_Import extends AppCompatActivity {
             }
             tvLine2.setText(sLine2);
 
-            //Get tag text to apply to list item if tags are assigned to the item:
-            StringBuilder sbTags = new StringBuilder();
-            sbTags.append("Tags: ");
-            ArrayList<Integer> aliPreConfirmedTagIDs = alFileItems.get(position).aliProspectiveTags;
-
-            //Confirm tag exists before displaying (user can delete tags using preview->tagEditor)
-            boolean bTagsChanged = false;
-            ArrayList<Integer> aliConfirmedTagIDs = new ArrayList<>();
-            for(int iTagID: aliPreConfirmedTagIDs){
-                if(!globalClass.TagIDExists(iTagID, viewModelImportActivity.iImportMediaCategory)){
-                    bTagsChanged = true;
-                } else {
-                    aliConfirmedTagIDs.add(iTagID);
-                }
-            }
-            if(bTagsChanged){
-                alFileItems.get(position).aliProspectiveTags = aliConfirmedTagIDs;
-            }
-
-            ArrayList<Integer> aliTagIDs = alFileItems.get(position).aliProspectiveTags;
-
-            if(aliTagIDs != null){
-                if(aliTagIDs.size() > 0) {
-                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), viewModelImportActivity.iImportMediaCategory));
-                    for (int i = 1; i < aliTagIDs.size(); i++) {
-                        sbTags.append(", ");
-                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), viewModelImportActivity.iImportMediaCategory));
-                    }
-                }
-            }
-            tvLine3.setText(sbTags.toString());
+            tvLine3.setVisibility(View.INVISIBLE);
 
             //Display a thumbnail:
             String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
@@ -1444,51 +1422,24 @@ public class Activity_Import extends AppCompatActivity {
 
         private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
 
+            for(ItemClass_File icf: alFileItems){
+                icf.bIsChecked = false;  //Reset all items to not-checked state as only one item gets checked.
+            }
 
-            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                //If this is a comic, need to select all of the files that are part of that comic.
-                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    //If the user is importing comic pages downloaded by the NHComicDownloader, find
-                    // all files with the comic ID and apply the checked state:
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItems.get(iFileItemsDisplayPosition).sFileOrFolderName);
-                    String sNHComicFilter = sNHComicID + ".+";
-                    for (ItemClass_File icf : alFileItems) {
-                        if (icf.sFileOrFolderName.matches(sNHComicFilter)) {
-                            icf.bIsChecked = bNewCheckedState;
-                        }
-                    }
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                    //If the user is importing comic pages by folder, find
-                    // all files with the comic parent Uri assigned and apply the checked state:
-                    String sUriParent = alFileItems.get(iFileItemsDisplayPosition).sUri;
-                    for (ItemClass_File icf : alFileItems) {
-                        if (icf.sUriParent.equals(sUriParent)) {
-                            icf.bIsChecked = bNewCheckedState;
-                        }
-                    }
-                }
-            } else {
-                //Find the item that is checked/unchecked in alFileList and apply the property.
-                //  The user will have clicked an item in alFileListDisplay, not alFileList.
-                //  alFileListDisplay may be a subset of alFileList.
-                for(ItemClass_File icf: alFileItems){
-                    if(icf.sFileOrFolderName.equals(alFileItems.get(iFileItemsDisplayPosition).sFileOrFolderName)){
+            if(bNewCheckedState) {
+                //Apply the checked-state to the item:
+                for (ItemClass_File icf : alFileItems) {
+                    if (icf.sFileOrFolderName.equals(alFileItems.get(iFileItemsDisplayPosition).sFileOrFolderName)) {
                         icf.bIsChecked = bNewCheckedState;
                         break; //Break, as only one item should match.
                     }
                 }
             }
 
-            if(!bNewCheckedState){
-                recalcButtonNext();
-            } else {
-                Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
-                if(button_ItemSelectComplete != null){
-                    button_ItemSelectComplete.setEnabled(true);
-                }
-            }
+            //Enable/disable next button:
+            recalcButtonNext();
 
-
+            notifyDataSetChanged(); //Update the checkboxes for all items.
         }
 
         public void recalcButtonNext(){
@@ -1609,6 +1560,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_2a_SelectDetectedWebVideo();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
                     return new Fragment_Import_3_SelectTags();
+                case FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT:
+                    return new Fragment_Import_3a_ItemDownloadTagImport();
                 case FRAGMENT_IMPORT_4_ID_IMPORT_METHOD:
                     return new Fragment_Import_4_CopyOrMoveFiles();
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
