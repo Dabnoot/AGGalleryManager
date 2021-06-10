@@ -2257,6 +2257,29 @@ public class Service_Import extends IntentService {
             bProblem = true;
             sProblemMessage = e.getMessage();
         }
+        //Pre-process tags. Identify tags that already exist, and create a list of new tags for
+        //  the user to approve - don't automatically add new tags to the system (I've encountered
+        //  garbage tags, tags that already exist in another form, and tags that the user might
+        //  not want to add.
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        ArrayList<String> alsUnidentifiedTags = new ArrayList<>();
+        ArrayList<Integer> aliIdentifiedTags = new ArrayList<>();
+        for(String sTag: alsTags){
+            String sIncomingTagCleaned = sTag.toLowerCase().trim();
+            boolean bTagFound = false;
+            for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+                String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+                if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
+                    bTagFound = true;
+                    aliIdentifiedTags.add(TagEntry.getValue().iTagID);
+                    break;
+                }
+            }
+            if(!bTagFound){
+                alsUnidentifiedTags.add(sTag.trim());
+            }
+        }
+
 
         String sTitle = "This is the title to use for the import name";
 
@@ -2265,7 +2288,6 @@ public class Service_Import extends IntentService {
         ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = new ArrayList<>();
 
         //Look for potential downloads' file sizes, and download any m3u8 text file if it exists:
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
         for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
             if(vdsk.bMatchFound) {
                 if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_TITLE)) {
@@ -2297,7 +2319,8 @@ public class Service_Import extends IntentService {
                         connection.disconnect();
 
                         icf.sURLThumbnail = sURLThumbnail;
-                        icf.alsProspectiveTags = alsTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                        icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                        icf.aliIdentifiedTags = aliIdentifiedTags;
 
                         alicf_VideoDownloadFileItems.add(icf);
 
@@ -2520,7 +2543,8 @@ public class Service_Import extends IntentService {
                             icf.ic_M3U8 = icM3U8_entry;
                             icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;
                             icf.sURLThumbnail = sURLThumbnail;
-                            icf.alsProspectiveTags = alsTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                            icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                            icf.aliIdentifiedTags = aliIdentifiedTags;
                             alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
 
                         }

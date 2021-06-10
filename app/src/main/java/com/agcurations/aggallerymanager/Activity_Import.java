@@ -446,6 +446,10 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
+    public void buttonNextClick_TagImportSelectionComplete(View v){
+
+    }
+
     public void buttonNextClick_TagSelectComplete(View v){
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD, false);
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
@@ -1426,15 +1430,8 @@ public class Activity_Import extends AppCompatActivity {
                 icf.bIsChecked = false;  //Reset all items to not-checked state as only one item gets checked.
             }
 
-            if(bNewCheckedState) {
-                //Apply the checked-state to the item:
-                for (ItemClass_File icf : alFileItems) {
-                    if (icf.sFileOrFolderName.equals(alFileItems.get(iFileItemsDisplayPosition).sFileOrFolderName)) {
-                        icf.bIsChecked = bNewCheckedState;
-                        break; //Break, as only one item should match.
-                    }
-                }
-            }
+            //Apply the checked-state to the item:
+            alFileItems.get(iFileItemsDisplayPosition).bIsChecked = bNewCheckedState;
 
             //Enable/disable next button:
             recalcButtonNext();

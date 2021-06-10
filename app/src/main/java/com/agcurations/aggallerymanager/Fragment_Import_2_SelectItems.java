@@ -128,9 +128,6 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         if(ListViewState == null || viewModelImportActivity.bUpdateImportSelectList){
             initComponents();
         }
-
-
-
     }
 
     @Override

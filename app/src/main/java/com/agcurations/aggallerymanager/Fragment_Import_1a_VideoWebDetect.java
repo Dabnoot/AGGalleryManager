@@ -306,6 +306,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                 ArrayList<ItemClass_File> alicf_DownloadFileItems;
                 alicf_DownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE);
+                viewModelImportActivity.bUpdateImportSelectList = true;
 
                 if(alicf_DownloadFileItems != null) {
                     SetTextStatusMessage("Finished data analysis. Select 'Next' to continue.");

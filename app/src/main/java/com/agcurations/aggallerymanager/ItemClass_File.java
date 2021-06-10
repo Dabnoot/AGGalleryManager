@@ -39,7 +39,8 @@ public class ItemClass_File implements Serializable {
     //Items for video download:
     public String sURLVideoLink = "";
     public String sURLThumbnail = "";
-    public ArrayList<String> alsProspectiveTags;
+    public ArrayList<Integer> aliIdentifiedTags;  //For tags assigned by the source and found in our tags catalog.
+    public ArrayList<String> alsUnidentifiedTags; //For tags assigned by the source but not found in our tags catalog. User approval required.
     ItemClass_M3U8 ic_M3U8; //Captures a streaming download, which consists of a set of TS files.
     //A video download will have either sURLVideoLink, or in the case of a streaming download
     //  an entry for ic_M3U8 which will contain many files to be downloaded.
