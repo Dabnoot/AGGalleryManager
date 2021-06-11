@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -31,6 +32,8 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
 
     private int giSelectItemsListViewWidth;
 
+    private Button gbutton_ImportTags;
+
     public Fragment_Import_3a_ItemDownloadTagImport() {
         // Required empty public constructor
     }
@@ -54,6 +57,13 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_import_3a_item_download_tag_import, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        gbutton_ImportTags = getView().findViewById(R.id.button_ImportTags);
     }
 
     @Override
@@ -150,6 +160,8 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
     }
 
 
+
+
     //==================================
     //===== ListView Adapter ===========
     //==================================
@@ -205,6 +217,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
                     boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
                     checkBox_StorageItemSelect.setChecked(bNewCheckedState);
                     alTagCandidates.get(position).bIsChecked = bNewCheckedState;
+                    recalcImportButton();
                 }
             });
 
@@ -216,12 +229,27 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
                 public void onClick(View view) {
                     CheckBox checkBox_StorageItemSelect = (CheckBox) view;
                     alTagCandidates.get(position).bIsChecked = checkBox_StorageItemSelect.isChecked();
+                    recalcImportButton();
                 }
             });
 
 
 
             return row;
+        }
+
+        public void recalcImportButton(){
+            boolean bEnabled = false;
+            for(tagCandidate tc: alTagCandidates){
+                if(tc.bIsChecked){
+                    bEnabled = true;
+                    break;
+                }
+            }
+            if(gbutton_ImportTags != null) {
+                gbutton_ImportTags.setEnabled(bEnabled);
+            }
+
         }
 
         //To prevent data resetting when scrolled
