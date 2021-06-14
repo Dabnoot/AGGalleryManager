@@ -740,7 +740,7 @@ public class GlobalClass extends Application {
     }
 
     public TreeMap<String, ItemClass_Tag> InitTagData(int iMediaCategory){
-        TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>();
+        TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
 
