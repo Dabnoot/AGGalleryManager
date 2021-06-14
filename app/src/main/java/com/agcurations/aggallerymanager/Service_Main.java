@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,11 +28,12 @@ import androidx.preference.PreferenceManager;
 public class Service_Main extends IntentService {
 
     // IntentService Actions:
-    private static final String ACTION_LOAD_APP_DATA = "com.agcurations.aggallerymanager.action.LAD";
+    private static final String ACTION_LOAD_APP_DATA = "com.agcurations.aggallerymanager.action.Load_App_Data";
+    private static final String ACTION_CATALOG_BACKUP = "com.agcurations.aggallerymanager.action.Catalog_Backup";
     //Parameters:
-    public static final String EXTRA_BOOL_DATA_LOAD_PROBLEM = "com.agcurations.aggallerymanager.extra.BDLP";
-    public static final String EXTRA_STRING_DATA_LOAD_PROBLEM = "com.agcurations.aggallerymanager.extra.SDLP";
-
+    public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.Bool_Problem";
+    public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.String_Problem";
+    public static final String EXTRA_STRING_STATUS_MESSAGE = "com.agcurations.aggallerymanager.extra.String_Status_Message";
     //Global Variables:
     private GlobalClass globalClass;
 
@@ -46,6 +48,12 @@ public class Service_Main extends IntentService {
         context.startService(intent);
     }
 
+    public static void startActionCatalogBackup(Context context) {
+        Intent intent = new Intent(context, Service_Main.class);
+        intent.setAction(ACTION_CATALOG_BACKUP);
+        context.startService(intent);
+    }
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -54,6 +62,8 @@ public class Service_Main extends IntentService {
             final String action = intent.getAction();
             if (ACTION_LOAD_APP_DATA.equals(action)) {
                 handleActionLoadAppData();
+            } else if (ACTION_CATALOG_BACKUP.equals(action)){
+                handleActionCatalogBackup();
             }
         }
     }
@@ -77,15 +87,24 @@ public class Service_Main extends IntentService {
                 globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
                 obtainFolderStructureItem(globalClass.gfCatalogFolders[i]);
                 //Identify the CatalogContents.dat file:
-                globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "CatalogContents.dat");
+                /*globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "CatalogContents.dat");*/
+                globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfAppFolder + File.separator
+                        + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat");
+
+
                 //Identify the Logs folder for the catalog:
-                globalClass.gfCatalogLogsFolders[i] = new File(globalClass.gfCatalogFolders[i]
-                        + File.separator + "Logs");
-                obtainFolderStructureItem(globalClass.gfCatalogLogsFolders[i]);
+                /*globalClass.gfCatalogLogsFolders[i] = new File(globalClass.gfCatalogFolders[i]
+                        + File.separator + "Logs");*/
+
+
+                //obtainFolderStructureItem(globalClass.gfCatalogLogsFolders[i]);
+
                 //Identify the tags file for the catalog:
-                globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "Tags.dat");
+                /*globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "Tags.dat");*/
+                globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfAppFolder + File.separator
+                        + GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat");
             }
 
             //Attempt to read a pin number set by the user:
@@ -156,6 +175,101 @@ public class Service_Main extends IntentService {
 
     }
 
+    private void handleActionCatalogBackup(){
+        Intent broadcastIntent = new Intent();
+        boolean bProblem = false;
+
+        //Backup the catalog text files:
+        for(int i = 0; i < 3; i++){
+            StringBuilder sbBuffer = new StringBuilder();
+            boolean bHeaderWritten = false;
+            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(i).entrySet()){
+
+                if(!bHeaderWritten) {
+                    sbBuffer.append(globalClass.getCatalogHeader()); //Append the header.
+                    sbBuffer.append("\n");
+                    bHeaderWritten = true;
+                }
+
+                sbBuffer.append(globalClass.getCatalogRecordString(tmEntry.getValue())); //Append the data.
+                sbBuffer.append("\n");
+            }
+
+            try {
+                //Write the catalog file:
+                String sDateTimeStamp = globalClass.GetTimeStampFileSafe();
+                /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");*/
+                File fBackup = new File(globalClass.gfAppFolder + File.separator
+                        + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents_" + sDateTimeStamp + ".dat");
+
+                FileWriter fwNewCatalogContentsFile = new FileWriter(fBackup, false);
+
+                fwNewCatalogContentsFile.write(sbBuffer.toString());
+                fwNewCatalogContentsFile.flush();
+                fwNewCatalogContentsFile.close();
+
+            } catch (Exception e) {
+                String sMessage = "Problem creating backup of CatalogContents.dat.\n" + e.getMessage();
+                broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, true);
+                broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+                bProblem = true;
+            }
+        }
+
+        //Backup the tag files:
+        for(int i = 0; i < 3; i++){
+            StringBuilder sbBuffer = new StringBuilder();
+            boolean bHeaderWritten = false;
+            for(Map.Entry<String, ItemClass_Tag> tmEntry: globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()){
+
+                if(!bHeaderWritten) {
+                    sbBuffer.append(GlobalClass.getTagFileHeader()); //Append the header.
+                    sbBuffer.append("\n");
+                    bHeaderWritten = true;
+                }
+
+                sbBuffer.append(globalClass.getTagRecordString(tmEntry.getValue())); //Append the data.
+                sbBuffer.append("\n");
+            }
+
+            try {
+                //Write the tag file:
+                String sDateTimeStamp = globalClass.GetTimeStampFileSafe();
+                /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
+                        + File.separator + "Tags_" + sDateTimeStamp + ".dat");*/
+                File fBackup = new File(globalClass.gfAppFolder + File.separator
+                        + GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat");
+                FileWriter fwNewTagsFile = new FileWriter(fBackup, false);
+
+                fwNewTagsFile.write(sbBuffer.toString());
+                fwNewTagsFile.flush();
+                fwNewTagsFile.close();
+
+            } catch (Exception e) {
+                String sMessage = "Problem creating backup of Tags.dat.\n" + e.getMessage();
+                broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, true);
+                broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+                bProblem = true;
+            }
+        }
+        if(!bProblem) {
+            String sMessage = "Database files backup completed.";
+            broadcastIntent.putExtra(EXTRA_STRING_STATUS_MESSAGE, sMessage);
+        }
+
+        //Send broadcast to the Import Activity:
+        broadcastIntent.setAction(Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+    }
+
+
+
+
+
+
     private void ExecuteDownloadManagerPostProcessing(){
         //DownloadIdleService will delete files after about a week. Rename downloaded files to prevent
         //  this from happening. This will need to occur for downloaded comics or
@@ -225,7 +339,7 @@ public class Service_Main extends IntentService {
 
         File fCatalogFolder = globalClass.gfCatalogFolders[iMediaCategory];
         File fCatalogContentsFile = globalClass.gfCatalogContentsFiles[iMediaCategory];
-        File fLogsFolder = globalClass.gfCatalogLogsFolders[iMediaCategory];
+        //File fLogsFolder = globalClass.gfCatalogLogsFolders[iMediaCategory];
 
         boolean bFolderOk = false ;
         if(!fCatalogFolder.exists()) {
@@ -275,12 +389,12 @@ public class Service_Main extends IntentService {
                 }
             }
 
-            //Look for the Logs folder. If it does not exist, create it.
+            /*//Look for the Logs folder. If it does not exist, create it.
             if(!fLogsFolder.exists()) {
                 if(!fLogsFolder.mkdirs()){
                     problemNotificationConfig("Could not create log folder at" + fLogsFolder.getAbsolutePath());
                 }
-            }
+            }*/
 
             //Build the internal list of entries:
             TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = new TreeMap<>();
@@ -320,8 +434,8 @@ public class Service_Main extends IntentService {
 
     void problemNotificationConfig(String sMessage){
         Intent broadcastIntent_Notification = new Intent();
-        broadcastIntent_Notification.putExtra(EXTRA_BOOL_DATA_LOAD_PROBLEM, true);
-        broadcastIntent_Notification.putExtra(EXTRA_STRING_DATA_LOAD_PROBLEM, sMessage);
+        broadcastIntent_Notification.putExtra(EXTRA_BOOL_PROBLEM, true);
+        broadcastIntent_Notification.putExtra(EXTRA_STRING_PROBLEM, sMessage);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Notification);
     }
 

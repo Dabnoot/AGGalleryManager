@@ -2033,17 +2033,32 @@ public class Service_Import extends IntentService {
                 aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
             }
             //Look for any tags that could not be found:
-            for (int i = 0; i < aliTags.size(); i++) {
-                if (aliTags.get(i) == -1) {
-                    //Create the tag:
-                    if (!sTags[i].equals("")) {
-                        ItemClass_Tag ictNewTag = globalClass.TagDataFile_CreateNewRecord(sTags[i], GlobalClass.MEDIA_CATEGORY_COMICS);
-                        if (ictNewTag != null) {
-                            aliTags.set(i, ictNewTag.iTagID); //Replace the -1 with the new TagID.
+            ArrayList<String> alsNewTags = new ArrayList<>();
+            for(int i = 0; i < aliTags.size(); i++){
+                if(aliTags.get(i) == -1){
+                    //Prepare a list of strings representing the new tags that must be created:
+                    if(!sTags[i].equals("")) {
+                        alsNewTags.add(sTags[i]);
+                    }
+                }
+            }
+            if(alsNewTags.size() > 0) {
+                //Create the missing tags:
+                ArrayList<ItemClass_Tag> alictNewTags = globalClass.TagDataFile_CreateNewRecords(alsNewTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+                //Insert the new tag IDs into aliTags:
+                int k = 0;
+                for (int i = 0; i < aliTags.size(); i++) {
+                    if (aliTags.get(i) == -1) {
+                        if (!sTags[i].equals("")) {
+                            if(k < alictNewTags.size()) {
+                                aliTags.set(i, alictNewTags.get(k).iTagID);
+                                k++;
+                            }
                         }
                     }
                 }
             }
+
             ci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
 
             //The below call should add the record to both the catalog contents file

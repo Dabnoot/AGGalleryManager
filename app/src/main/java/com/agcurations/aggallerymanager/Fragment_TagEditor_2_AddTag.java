@@ -1,7 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -144,10 +142,13 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             return;
         }
 
-        ItemClass_Tag ictNewTagItem = globalClass.TagDataFile_CreateNewRecord(sTagName, viewModelTagEditor.iTagEditorMediaCategory);
-        if(ictNewTagItem != null){
+        ArrayList<String> alsTagNames = new ArrayList<>();
+        alsTagNames.add(sTagName);
+
+        ArrayList<ItemClass_Tag> alictNewTagItem = globalClass.TagDataFile_CreateNewRecords(alsTagNames, viewModelTagEditor.iTagEditorMediaCategory);
+        if(alictNewTagItem != null){
             RefreshTagListView();
-            galNewTags.add(ictNewTagItem);
+            galNewTags.add(alictNewTagItem.get(0));
             viewModelTagEditor.alNewTags = galNewTags; //To allow new tags to be sent back to a possible calling activity.
             viewModelTagEditor.bTagAdded = true;
             Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();

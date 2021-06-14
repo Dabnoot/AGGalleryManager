@@ -59,7 +59,7 @@ public class GlobalClass extends Application {
     public int giSelectedCatalogMediaCategory;
 
     public final File[] gfCatalogFolders = new File[3];
-    public final File[] gfCatalogLogsFolders = new File[3];
+    //public final File[] gfCatalogLogsFolders = new File[3];
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
@@ -635,37 +635,7 @@ public class GlobalClass extends Application {
 
     public void CatalogDataFile_CreateBackups(Context context){
 
-        for(int i = 0; i < 3; i++){
-            StringBuilder sbBuffer = new StringBuilder();
-            boolean bHeaderWritten = false;
-            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(i).entrySet()){
 
-                if(!bHeaderWritten) {
-                    sbBuffer.append(getCatalogHeader()); //Append the header.
-                    sbBuffer.append("\n");
-                    bHeaderWritten = true;
-                }
-
-                sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
-                sbBuffer.append("\n");
-            }
-
-            try {
-                //Write the catalog file:
-                String sDateTimeStamp = GetTimeStampFileSafe();
-                File fBackup = new File(gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");
-                FileWriter fwNewCatalogContentsFile = new FileWriter(fBackup, false);
-
-                fwNewCatalogContentsFile.write(sbBuffer.toString());
-                fwNewCatalogContentsFile.flush();
-                fwNewCatalogContentsFile.close();
-
-            } catch (Exception e) {
-                Toast.makeText(context, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        }
-        Toast.makeText(context, "Catalog database files backup completed.", Toast.LENGTH_LONG).show();
     }
 
 
@@ -824,43 +794,72 @@ public class GlobalClass extends Application {
         return tmTags;
     }
 
-    public ItemClass_Tag TagDataFile_CreateNewRecord(String sTagName, int iMediaCategory){
+    public ArrayList<ItemClass_Tag> TagDataFile_CreateNewRecords(ArrayList<String> sNewTagNames, int iMediaCategory){
 
+        //Get the tags file:
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
-        int iNextRecordId = -1;
-        ItemClass_Tag ictNewTag = null;
-        try {
 
+        int iNextRecordId = -1;
+
+        //Create an ArrayList to store the new tags:
+        ArrayList<ItemClass_Tag> ictNewTags = new ArrayList<>();
+        ItemClass_Tag ictNewTag = null;
+
+        //Find the greatest tag ID:
+        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
             int iThisId;
-            if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-                for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                    iThisId = entry.getValue().iTagID;
-                    if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-                    if (entry.getValue().sTagText.toLowerCase().equals(sTagName.toLowerCase())) {
-                        //If the tag already exists, abort adding a new tag.
-                        return null;
+            for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                iThisId = entry.getValue().iTagID;
+                if (iThisId >= iNextRecordId){
+                    iNextRecordId = iThisId + 1;
+                }
+            }
+        } else {
+            iNextRecordId = 0;
+        }
+
+        try {
+            //Open the tags file write-mode append:
+            FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
+
+            for(String sNewTagName: sNewTagNames) {
+                boolean bTagAlreadyExists = false;
+                if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+                    for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+
+                        if (entry.getValue().sTagText.toLowerCase().equals(sNewTagName.toLowerCase())) {
+                            //If the tag already exists, abort adding this tag.
+                            bTagAlreadyExists = true;
+                            break;
+                        }
+                    }
+                    if(bTagAlreadyExists){
+                        continue; //Skip and process the next tag.
                     }
                 }
-            } else {
-                iNextRecordId = 0;
+
+
+                ictNewTag = new ItemClass_Tag(iNextRecordId, sNewTagName);
+                gtmCatalogTagReferenceLists.get(iMediaCategory).put(sNewTagName, ictNewTag);
+
+                //Prep for return of new tag items to the caller:
+                ictNewTags.add(ictNewTag);
+
+                //Add the new record to the catalog file:
+                String sLine = getTagRecordString(ictNewTag);
+                fwNewTagsFile.write(sLine);
+                fwNewTagsFile.write("\n");
+                iNextRecordId++;
             }
-            //New record ID identified.
 
-            ictNewTag = new ItemClass_Tag(iNextRecordId, sTagName);
-            gtmCatalogTagReferenceLists.get(iMediaCategory).put(sTagName, ictNewTag);
-
-            //Add the new record to the catalog file:
-            String sLine = getTagRecordString(ictNewTag);
-            FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
-            fwNewTagsFile.write(sLine);
-            fwNewTagsFile.write("\n");
             fwNewTagsFile.flush();
             fwNewTagsFile.close();
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        return ictNewTag;
+
+        return ictNewTags;
 
     }
 

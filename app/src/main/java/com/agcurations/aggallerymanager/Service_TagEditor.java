@@ -25,12 +25,18 @@ public class Service_TagEditor extends IntentService {
 
     // Action names that describe tasks that this IntentService can perform:
     private static final String ACTION_DELETE_TAG = "com.agcurations.aggallerymanager.action.delete_tag";
+    private static final String ACTION_ADD_TAGS = "com.agcurations.aggallerymanager.action.add_tags";
 
     // Parameters
     private static final String EXTRA_TAG_TO_BE_DELETED = "com.agcurations.aggallerymanager.extra.TAG_TO_BE_DELETED";
     private static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
 
     public static final String EXTRA_TAG_DELETE_COMPLETE = "com.agcurations.aggallerymanager.extra.TAG_DELETE_COMPLETE";
+
+    public static final String EXTRA_ARRAYLIST_STRING_TAGS_TO_ADD = "com.agcurations.aggallerymanager.extra.TAGS_TO_ADD";
+    public static final String EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS = "com.agcurations.aggallerymanager.extra.ADDED_TAGS";
+
+
 
     public Service_TagEditor() {
         super("Service_TagEditor");
@@ -44,6 +50,14 @@ public class Service_TagEditor extends IntentService {
         context.startService(intent);
     }
 
+    public static void startActionAddTags(Context context, ArrayList<String> alsTags, int iMediaCategory) {
+        Intent intent = new Intent(context, Service_TagEditor.class);
+        intent.setAction(ACTION_ADD_TAGS);
+        intent.putExtra(EXTRA_ARRAYLIST_STRING_TAGS_TO_ADD, alsTags);
+        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
+        context.startService(intent);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -52,17 +66,23 @@ public class Service_TagEditor extends IntentService {
                 final ItemClass_Tag ict_TagToDelete = (ItemClass_Tag) intent.getSerializableExtra(EXTRA_TAG_TO_BE_DELETED);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,0);
                 handleActionDeleteTag(ict_TagToDelete, iMediaCategory);
+            } else if (ACTION_ADD_TAGS.equals(action)){
+                final ArrayList<String> alsTags = intent.getStringArrayListExtra(EXTRA_ARRAYLIST_STRING_TAGS_TO_ADD);
+                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,0);
+                handleActionAddTags(alsTags, iMediaCategory);
             }
         }
     }
 
 
     public static final String EXTRA_BOOL_PROBLEM = "EXTRA_BOOL_PROBLEM";
-    public static final String EXTRA_BOOL_PROBLEM_MESSAGE = "EXTRA_BOOL_PROBLEM_MESSAGE";
+    public static final String EXTRA_STRING_PROBLEM = "EXTRA_BOOL_PROBLEM_MESSAGE";
     void problemNotificationConfig(String sMessage){
+
+        //Todo: Set intent action via .setAction so that the intent is properly captured by a response receiver.
         Intent broadcastIntent_Notification = new Intent();
         broadcastIntent_Notification.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Notification.putExtra(EXTRA_BOOL_PROBLEM_MESSAGE, sMessage);
+        broadcastIntent_Notification.putExtra(EXTRA_STRING_PROBLEM, sMessage);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Notification);
     }
 
@@ -291,6 +311,22 @@ public class Service_TagEditor extends IntentService {
 
     }
 
+    private void handleActionAddTags(ArrayList<String> alsTags, int iMediaCategory){
 
+        ArrayList<ItemClass_Tag> itemClass_tags = null;
+
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        itemClass_tags = globalClass.TagDataFile_CreateNewRecords(alsTags, iMediaCategory);
+
+        //Broadcast the completion of this task:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Fragment_Import_3a_ItemDownloadTagImport.AddTagsServiceResponseReceiver.ADD_TAGS_SERVICE_EXECUTE_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        if(itemClass_tags != null) {
+            broadcastIntent.putExtra(EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS, itemClass_tags);
+        }
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+    }
 
 }

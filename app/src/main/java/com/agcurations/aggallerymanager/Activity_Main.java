@@ -3,24 +3,19 @@ package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
@@ -37,9 +32,7 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
@@ -73,10 +66,11 @@ public class Activity_Main extends AppCompatActivity {
 
         //Configure a response receiver to listen for updates from the Main Activity (MA) Data Service:
         //  This will load the tags files for videos, pictures, and comics.
-        IntentFilter filter = new IntentFilter(MainActivityDataServiceResponseReceiver.MA_DATA_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
-        registerReceiver(mainActivityDataServiceResponseReceiver, filter);
+        //registerReceiver(mainActivityDataServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mainActivityDataServiceResponseReceiver, filter);
         //Call the MA Data Service, which will create a call to a service:
         Service_Main.startActionLoadData(this);
 
@@ -214,7 +208,7 @@ public class Activity_Main extends AppCompatActivity {
 
     public static class MainActivityDataServiceResponseReceiver extends BroadcastReceiver {
         //MADataService = Main Activity Data Service
-        public static final String MA_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MA_DATA_SERVICE";
+        public static final String MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MAIN_ACTIVITY_DATA_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -222,10 +216,15 @@ public class Activity_Main extends AppCompatActivity {
             boolean bError;
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Main.EXTRA_BOOL_DATA_LOAD_PROBLEM,false);
+            bError = intent.getBooleanExtra(Service_Main.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_Main.EXTRA_STRING_DATA_LOAD_PROBLEM);
+                String sMessage = intent.getStringExtra(Service_Main.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                String sStatusMessage = intent.getStringExtra(Service_Main.EXTRA_STRING_STATUS_MESSAGE);
+                if(sStatusMessage != null){
+                    Toast.makeText(context, sStatusMessage, Toast.LENGTH_LONG).show();
+                }
             }
 
         }
@@ -233,7 +232,8 @@ public class Activity_Main extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(mainActivityDataServiceResponseReceiver);
+        //unregisterReceiver(mainActivityDataServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(mainActivityDataServiceResponseReceiver);
         super.onDestroy();
     }
 
@@ -338,7 +338,7 @@ public class Activity_Main extends AppCompatActivity {
         } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
 
             //Backup the database files (CatalogContents.dat):
-            globalClass.CatalogDataFile_CreateBackups(this);
+            Service_Main.startActionCatalogBackup(this);
 
             return true;
         } else if(item.getItemId() == R.id.menu_About) {
@@ -583,6 +583,12 @@ public class Activity_Main extends AppCompatActivity {
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS);
         startActivity(intentImportGuided);
     }
+
+
+    //=====================================================================================
+    //===== Broadcast listener ============================================================
+    //=====================================================================================
+
 
 
 

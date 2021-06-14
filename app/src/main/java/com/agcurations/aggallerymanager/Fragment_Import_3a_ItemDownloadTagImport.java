@@ -1,13 +1,16 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +18,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import com.bumptech.glide.Glide;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -33,6 +34,8 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
     private int giSelectItemsListViewWidth;
 
     private Button gbutton_ImportTags;
+
+    AddTagsServiceResponseReceiver addTagsServiceResponseReceiver;
 
     public Fragment_Import_3a_ItemDownloadTagImport() {
         // Required empty public constructor
@@ -50,6 +53,15 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         if(getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
         }
+
+        //Configure a response receiver to listen for response from Service_TagEditor when adding tags:
+        IntentFilter filter = new IntentFilter(AddTagsServiceResponseReceiver.ADD_TAGS_SERVICE_EXECUTE_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        addTagsServiceResponseReceiver = new AddTagsServiceResponseReceiver();
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(addTagsServiceResponseReceiver, filter);
+        }
+
     }
 
     @Override
@@ -181,7 +193,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
             for(String sTagText: altc){
                 alTagCandidates.add(new tagCandidate(sTagText));
             }
-
+            recalcImportButton();
 
         }
 
@@ -269,8 +281,8 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         }
 
     }
-    
-    public class tagCandidate{
+
+    public static class tagCandidate{
         String sTagText = "";
         boolean bIsChecked = false;
 
@@ -278,6 +290,41 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
             sTagText = sTT;
         }
 
+    }
+
+
+    //=============================================
+    //======= Response Receiver ===================
+    //=============================================
+
+    public  class AddTagsServiceResponseReceiver extends BroadcastReceiver {
+        public static final String ADD_TAGS_SERVICE_EXECUTE_RESPONSE = "com.agcurations.aggallerymanager.intent.action.ADD_TAGS_SERVICE_EXECUTE_RESPONSE";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(Service_TagEditor.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(Service_TagEditor.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to tag addition:
+                ItemClass_Tag[] itemClass_tags;
+
+                itemClass_tags = (ItemClass_Tag[]) intent.getSerializableExtra(Service_TagEditor.EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS);
+
+                if(itemClass_tags != null){
+                    //Tag addition complete. Update listViews.
+                    initComponents(); //This will also recalc the Import button enabled state.
+                }
+
+
+            }
+
+        }
     }
 
 
