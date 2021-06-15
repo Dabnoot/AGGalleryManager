@@ -100,12 +100,59 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         }
 
 
+        //If this is a single download item, preselect the tags.
+        //  We do this here because the previous fragment allowed the user to choose whether or
+        //  not to import any new tags associated with this download. Downloads are always single
+        //  videos or complete comics, so tags apply to one item.
+        //Get the text of the tags and display:
+        /*                            ----Don't display the tags until the default tags thing is removed from Fragment_SelectTags.
+                                        ---- That system selects only the tags which are visible in that list, which poses a problem
+                                        ---- as some tags are hidden, and some tags are in the 'All' category, as in 'not used'.
+        if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
+            ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags;
+            ArrayList<ItemClass_Tag> alict = new ArrayList<>();
+            StringBuilder sb = new StringBuilder();
+            if (aliPreSelectedTags.size() > 0) {
+                int iTagID = aliPreSelectedTags.get(0);
+                String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
+                ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
+                alict.add(ict);
+                sb.append(sTagText);
+                for (int i = 1; i < aliPreSelectedTags.size(); i++) {
+                    sb.append(", ");
+                    iTagID = aliPreSelectedTags.get(i);
+                    sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
+                    ict = new ItemClass_Tag(iTagID, sTagText);
+                    alict.add(ict);
+                    sb.append(sTagText);
+                }
+            }
+            Activity_Import.viewModelTags.altiTagsSelected.setValue(alict);
+
+            //Display the tags:
+            if (getView() != null) {
+                TextView textView_ImportTags = getView().findViewById(R.id.textView_ImportTags);
+                if (textView_ImportTags != null) {
+                    textView_ImportTags.setText(sb.toString());
+                }
+            }
+        }
+        */
 
         //Start the tag selection fragment:
         FragmentTransaction ft = getChildFragmentManager().beginTransaction();
         Fragment_SelectTags fst = new Fragment_SelectTags();
         Bundle args = new Bundle();
         args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory);
+        //If this is a video download import, seed the tag selection fragment with the tags from
+        // the video that also exist in the tags catalog:
+        if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+            ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags;
+            ArrayList<String> alsIgnoredNewTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).alsDownloadUnidentifiedTags;
+            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliPreSelectedTags);
+            }
         fst.setArguments(args);
         ft.replace(R.id.child_fragment_tag_selector, fst);
         ft.commit();
@@ -126,9 +173,9 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 }
                 //Display the tags:
                 if(getView() != null) {
-                    TextView tv = getView().findViewById(R.id.textView_ImportTags);
-                    if (tv != null) {
-                        tv.setText(sb.toString());
+                    TextView textView_ImportTags = getView().findViewById(R.id.textView_ImportTags);
+                    if (textView_ImportTags != null) {
+                        textView_ImportTags.setText(sb.toString());
                     }
                 }
 
@@ -191,22 +238,22 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 row = inflater.inflate(R.layout.listview_fileitem, parent, false);
             }
 
-            ImageView imageView_StorageItemIcon =  row.findViewById(R.id.imageView_StorageItemIcon);
-            TextView textView_Line1 =  row.findViewById(R.id.textView_Line1);  //For Name
+            ImageView imageView_StorageItemIcon = row.findViewById(R.id.imageView_StorageItemIcon);
+            TextView textView_Line1 = row.findViewById(R.id.textView_Line1);  //For Name
             TextView textView_Line2 = row.findViewById(R.id.textView_Line2);  //For item details
             TextView textView_Line3 = row.findViewById(R.id.textView_Line3);  //For Tags
 
 
             String sLine1 = "";  //For Name
-            if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) ||
-                    (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)){
+            if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) ||
+                    (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)) {
                 sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
             } else {
                 //If import type is comic...
-                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
                     //Get the title of the comic from the file name:
                     sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).sFileOrFolderName);
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //Get the title of the comic from the file name:
                     sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
                 }
@@ -219,7 +266,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             sLine2 = sLine2 + dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);*/
             String sRequiredStorageSize = "Size: " + GlobalClass.CleanStorageSize(alFileItemsDisplay.get(position).lSizeBytes, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
-            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 //If type is video or gif, get the duration:
                 String sDuration = "";
                 long durationInMilliseconds = -1L;
@@ -259,21 +306,21 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 }
                 sLine2 = sDuration + "\t" + sRequiredStorageSize;
 
-            } else if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+            } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                 sLine2 = sRequiredStorageSize;
 
-            } else if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+            } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 //If import type is comic...
                 //Get the file count for the comic:
                 String sComicPageCount = "";
-                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
                     String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
                     int iComicFileCount = getFilterMatchCount(sNHComicID + ".+");
                     sComicPageCount = "File count: " + iComicFileCount + ".";
                     long lCombinedSize = getFilterMatchCombinedSize(sNHComicID + ".+");
                     sRequiredStorageSize = "Comic size: " + GlobalClass.CleanStorageSize(lCombinedSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE) + ".";
 
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     String sUriParent = alFileItemsDisplay.get(position).sUri;
                     int iComicFileCount = getParentUriChildCount(sUriParent);
                     sComicPageCount = "File count: " + iComicFileCount + ".";
@@ -287,15 +334,13 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             textView_Line2.setText(sLine2);
 
 
-
-
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
             ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
 
-            if(aliTagIDs != null){
-                if(aliTagIDs.size() > 0) {
+            if (aliTagIDs != null) {
+                if (aliTagIDs.size() > 0) {
                     sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), viewModelImportActivity.iImportMediaCategory));
                     for (int i = 1; i < aliTagIDs.size(); i++) {
                         sbTags.append(", ");
@@ -306,9 +351,9 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             textView_Line3.setText(sbTags.toString());
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
-                if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
-                    (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER)){
+            if (alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
+                if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
+                        (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER)) {
                     //Get the Uri of the file and create/display a thumbnail:
                     String sUri = alFileItemsDisplay.get(position).sUriThumbnailFile;
                     Uri uri = Uri.parse(sUri);
@@ -320,6 +365,15 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     //  If we are here, I think there is an mistake in logic somewhere.
                     imageView_StorageItemIcon.setImageResource(R.drawable.baseline_folder_white_18dp);
                 }
+            } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                    && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+                String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
+                if(!sURLThumbnail.equals("")) {
+                    Glide.with(getContext()).
+                            load(sURLThumbnail).
+                            into(imageView_StorageItemIcon);
+                }
+
             } else {
 
                 //Get the Uri of the file and create/display a thumbnail:

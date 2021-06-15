@@ -2334,8 +2334,9 @@ public class Service_Import extends IntentService {
                         connection.disconnect();
 
                         icf.sURLThumbnail = sURLThumbnail;
-                        icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
-                        icf.aliIdentifiedTags = aliIdentifiedTags;
+                        icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                        icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
+                        icf.aliProspectiveTags = aliIdentifiedTags;
 
                         alicf_VideoDownloadFileItems.add(icf);
 
@@ -2558,8 +2559,9 @@ public class Service_Import extends IntentService {
                             icf.ic_M3U8 = icM3U8_entry;
                             icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;
                             icf.sURLThumbnail = sURLThumbnail;
-                            icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
-                            icf.aliIdentifiedTags = aliIdentifiedTags;
+                            icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                            icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
+                            icf.aliProspectiveTags = aliIdentifiedTags;
                             alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
 
                         }

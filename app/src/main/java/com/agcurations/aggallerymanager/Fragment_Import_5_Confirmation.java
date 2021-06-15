@@ -97,11 +97,11 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         }
 
         //Populate the ListView with selected file names from an earlier step:
-        ListView listView_FilesToImport = getView().findViewById(R.id.listView_FilesToImport);
+        ListView listView_FilesToImport = getView().findViewById(R.id.listView_GlobalTagsSelection);
         if (getActivity() == null) {
             return;
         }
-        confirmationFileListCustomAdapter = new ConfirmationFileListCustomAdapter(getActivity(), R.id.listView_FilesToImport, viewModelImportActivity.alfiConfirmedFileImports);
+        confirmationFileListCustomAdapter = new ConfirmationFileListCustomAdapter(getActivity(), R.id.listView_GlobalTagsSelection, viewModelImportActivity.alfiConfirmedFileImports);
         if(listView_FilesToImport != null) {
             listView_FilesToImport.setAdapter(confirmationFileListCustomAdapter);
         }
@@ -175,8 +175,12 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
             tvLine1.setText(alFileItemsDisplay.get(position).sFileOrFolderName);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
-            String sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
-
+            String sLine2 = "";
+            if (!(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                    && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)) {
+                //If this is not a video download, display the datetime of the file:
+                sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
+            }
 
             boolean bIsVideoOrGif = (alFileItemsDisplay.get(position).sMimeType.startsWith("video")) ||
                     (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) ||
@@ -216,8 +220,10 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                     Toast.makeText(activityContext, e.getMessage() + "; File: " + alFileItemsDisplay.get(position).sFileOrFolderName, Toast.LENGTH_LONG).show();
                 }
             }
-
-            sLine2 = sLine2 + "\tFile size: " + GlobalClass.CleanStorageSize(
+            if(!sLine2.equals("")){
+                sLine2 = sLine2 + "\t";
+            }
+            sLine2 = sLine2 + "File size: " + GlobalClass.CleanStorageSize(
                     alFileItemsDisplay.get(position).lSizeBytes,
                     GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
@@ -254,14 +260,24 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
-                //ivFileType.setImageResource(R.drawable.baseline_file_white_18dp);
+                if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+                    //If this is a video download, get the thumbnail from the IRL and display it:
+                    String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
+                    if(!sURLThumbnail.equals("")) {
+                        Glide.with(getContext()).
+                                load(sURLThumbnail).
+                                into(ivFileType);
+                    }
 
-                //Get the Uri of the file and create/display a thumbnail:
-                String sUri = alFileItemsDisplay.get(position).sUri;
-                Uri uri = Uri.parse(sUri);
-                Glide.with(getContext()).
-                        load(uri).
-                        into(ivFileType);
+                } else {
+                    //Get the Uri of the file and create/display a thumbnail:
+                    String sUri = alFileItemsDisplay.get(position).sUri;
+                    Uri uri = Uri.parse(sUri);
+                    Glide.with(getContext()).
+                            load(uri).
+                            into(ivFileType);
+                }
             }
 
 

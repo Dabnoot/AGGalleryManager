@@ -33,9 +33,13 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
 
     private int giSelectItemsListViewWidth;
 
+    TagImportCustomAdapter gTagImportCustomAdapter;
+
     private Button gbutton_ImportTags;
 
     AddTagsServiceResponseReceiver addTagsServiceResponseReceiver;
+
+
 
     public Fragment_Import_3a_ItemDownloadTagImport() {
         // Required empty public constructor
@@ -76,6 +80,34 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         gbutton_ImportTags = getView().findViewById(R.id.button_ImportTags);
+
+        if(gbutton_ImportTags != null){
+            gbutton_ImportTags.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(gTagImportCustomAdapter != null){
+                        //Sort through the data in the adapter to find selected tag text for import:
+                        ArrayList<tagCandidate> alTagCandidates = gTagImportCustomAdapter.alTagCandidates;
+                        if(alTagCandidates != null){
+                            if(alTagCandidates.size() > 0){
+                                gbutton_ImportTags.setEnabled(false);
+                                ArrayList<String> alsNewTagTexts = new ArrayList<>();
+                                for(tagCandidate tc: alTagCandidates){
+                                    if(tc.bIsChecked){
+                                        alsNewTagTexts.add(tc.sTagText);
+                                    }
+                                }
+                                //Call the service to add the tags:
+                                Service_TagEditor.startActionAddTags(getActivity().getApplicationContext(), alsNewTagTexts, viewModelImportActivity.iImportMediaCategory);
+                            }
+                        }
+
+                    }
+
+                }
+            });
+        }
+
     }
 
     @Override
@@ -131,7 +163,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         //Grab all prospective unidentified tags from all to-be-imported file items:
         ArrayList<String> alsProspectiveUnidentifiedTags = new ArrayList<>();
         for(ItemClass_File icf: viewModelImportActivity.alfiConfirmedFileImports) {
-            alsProspectiveUnidentifiedTags.addAll(icf.alsUnidentifiedTags);
+            alsProspectiveUnidentifiedTags.addAll(icf.alsDownloadUnidentifiedTags);
         }
         //Weed-out any duplicates:
         TreeMap<String, String> tmProspectiveUTsNoDuplicates = new TreeMap<>();
@@ -166,8 +198,8 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         giSelectItemsListViewWidth = listView_UnidentifiedTags.getWidth();
 
         //Create the adapter and assign to the listView:
-        TagImportCustomAdapter aasTags = new TagImportCustomAdapter(getActivity(), R.layout.listview_tageditor_tagtext, alsConfirmedUnidentifiedTags);
-        listView_UnidentifiedTags.setAdapter(aasTags);
+        gTagImportCustomAdapter = new TagImportCustomAdapter(getActivity(), R.layout.listview_tageditor_tagtext, alsConfirmedUnidentifiedTags);
+        listView_UnidentifiedTags.setAdapter(gTagImportCustomAdapter);
 
     }
 
@@ -297,10 +329,12 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
     //======= Response Receiver ===================
     //=============================================
 
+
     public  class AddTagsServiceResponseReceiver extends BroadcastReceiver {
         public static final String ADD_TAGS_SERVICE_EXECUTE_RESPONSE = "com.agcurations.aggallerymanager.intent.action.ADD_TAGS_SERVICE_EXECUTE_RESPONSE";
 
         @Override
+        @SuppressWarnings("unchecked")
         public void onReceive(Context context, Intent intent) {
 
             boolean bError;
@@ -312,17 +346,28 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
             } else {
 
                 //Check to see if this is a response to tag addition:
-                ItemClass_Tag[] itemClass_tags;
+                ArrayList<ItemClass_Tag> alictTags;
 
-                itemClass_tags = (ItemClass_Tag[]) intent.getSerializableExtra(Service_TagEditor.EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS);
+                alictTags = (ArrayList<ItemClass_Tag>) intent.getSerializableExtra(Service_TagEditor.EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS);
 
-                if(itemClass_tags != null){
-                    //Tag addition complete. Update listViews.
-                    initComponents(); //This will also recalc the Import button enabled state.
+                if(alictTags == null){
+                    if(getActivity() != null) {
+                        Toast.makeText(getActivity().getApplicationContext(), "Something went wrong with tag addition.", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    for(ItemClass_Tag ict: alictTags){
+                        //Add the newly-added tags' tagIDs to the download-recognized tags:
+                        viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags.add(ict.iTagID);
+                        viewModelImportActivity.alfiConfirmedFileImports.get(0).aliProspectiveTags.add(ict.iTagID);
+                    }
+
+
                 }
 
 
             }
+            //Update listViews.
+            initComponents(); //This will also recalc the Import button enabled state.
 
         }
     }

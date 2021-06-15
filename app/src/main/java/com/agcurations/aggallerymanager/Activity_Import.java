@@ -447,12 +447,20 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_TagImportSelectionComplete(View v){
-
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_TagSelectComplete(View v){
-        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD, false);
-        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+
+        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+            //If we are importing a video from the web, go to import confirm.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION, false);
+        } else {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD, false);
+        }
+
     }
 
     public void buttonNextClick_ImportMethodComplete(View v){
