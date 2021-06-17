@@ -182,7 +182,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
         if( gciCatalogItem == null) return;
         gsActivityTitleString = gciCatalogItem.sComicName;
-        giMaxFileCount = gciCatalogItem.iComic_File_Count;
+        giMaxFileCount = gciCatalogItem.iFile_Count;
 
         String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
         String sComicFolderPath;

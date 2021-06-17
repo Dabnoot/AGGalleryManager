@@ -88,8 +88,8 @@ public class Activity_Main extends AppCompatActivity {
             public void onChanged(WorkInfo workInfo) {
                 if (workInfo != null) {
                     Data progress = workInfo.getProgress();
-                    int value = progress.getInt(Worker_VideoConcatenator.PROGRESS, 0);
-                    String sFileName = progress.getString(Worker_VideoConcatenator.FILENAME);
+                    int value = progress.getInt(Worker_VideoPostProcessing.PROGRESS, 0);
+                    String sFileName = progress.getString(Worker_VideoPostProcessing.FILENAME);
 
                     if(progressBar_WorkerTest != null && textView_WorkerTest != null)
                     if (workInfo.getState() == WorkInfo.State.RUNNING) {
@@ -111,7 +111,7 @@ public class Activity_Main extends AppCompatActivity {
 
         //Look to see if there are any workers out there processing data for AGGalleryManager,
         //  and if so, attempt to listen to their progress:
-        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_VideoConcatenator.WORKER_VIDEOCONCATENATOR_TAG);
+        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_VideoPostProcessing.WORKER_VIDEOCONCATENATOR_TAG);
         try {
             int iWorkerCount = lfListWorkInfo.get().size();
             for(int i = 0; i < iWorkerCount; i++) {
@@ -422,12 +422,12 @@ public class Activity_Main extends AppCompatActivity {
             //Testing WorkManager for video concatenation:
             //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
             Data dataVideoConcatenator = new Data.Builder()
-                    .putString(Worker_VideoConcatenator.KEY_ARG_VIDEO_SEGMENT_FOLDER, "Test")
-                    .putString(Worker_VideoConcatenator.KEY_ARG_VIDEO_OUTPUT_FILENAME, "TestOutputConcatenation.mpeg")
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_SEGMENT_FOLDER, "Test")
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, "TestOutputConcatenation.mpeg")
                     .build();
-            OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoConcatenator.class)
+            OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
                     .setInputData(dataVideoConcatenator)
-                    .addTag(Worker_VideoConcatenator.WORKER_VIDEOCONCATENATOR_TAG) //To allow finding the worker later.
+                    .addTag(Worker_VideoPostProcessing.WORKER_VIDEOCONCATENATOR_TAG) //To allow finding the worker later.
                     .build();
             UUID UUIDWorkID = otwrVideoConcatenation.getId();
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoConcatenation);

@@ -1245,7 +1245,7 @@ public class Service_Import extends IntentService {
 
                     //Make sure that it is not a duplicate page.
                     if (!isPageDuplicate(fileItem.sFileOrFolderName)) {
-                        ciNewComic.iComic_File_Count++;
+                        ciNewComic.iFile_Count++;
                         String sNewFilename = fileItem.sFileOrFolderName;
                         sNewFilename = sNewFilename.substring(sNewFilename.indexOf("_")); //Get rid of the NH comic ID.
                         sNewFilename = ciNewComic.sItemID + sNewFilename; //Add on the sequenced comic record ID.
@@ -1512,7 +1512,7 @@ public class Service_Import extends IntentService {
             for (Map.Entry<String, ItemClass_File> entryComicFile : tmComicFiles.entrySet()) {
                 ItemClass_File fileItem = entryComicFile.getValue();
 
-                ciNewComic.iComic_File_Count++;
+                ciNewComic.iFile_Count++;
                 ciNewComic.iComicPages++;
                 ciNewComic.iComic_Max_Page_ID++;
 
@@ -1923,7 +1923,7 @@ public class Service_Import extends IntentService {
             }
             if(alsImageNameData.size() > 0){
                 //If there are image addresses to attempt to download...
-                ci.alsComicPageURLsAndDestFileNames = alsImageNameData;
+                ci.alsDownloadURLsAndDestFileNames = alsImageNameData;
             }
             BroadcastProgress_ComicDetails("Finished analyzing web data.\n", sIntentActionFilter);
 
@@ -1954,9 +1954,8 @@ public class Service_Import extends IntentService {
             BroadcastProgress_ComicDetails("No comic pages found.\n", sIntentActionFilter);
         }
 
-        return ci.alsComicPageURLsAndDestFileNames;
+        return ci.alsDownloadURLsAndDestFileNames;
     }
-
 
     private void handleAction_startActionImportComicWebFiles(ItemClass_CatalogItem ci, String sIntentActionFilter) throws IOException {
         //sIntentActionFilter is used to send out the broadcast responses.
@@ -1975,7 +1974,7 @@ public class Service_Import extends IntentService {
             //If we are updating an existing comic, get the download file list:
             ArrayList<String[]> alsURLs;
             alsURLs = handleAction_startActionGetComicDetailsOnline(ci.sSource, sIntentActionFilter);
-            ci.alsComicPageURLsAndDestFileNames = alsURLs;
+            ci.alsDownloadURLsAndDestFileNames = alsURLs;
         }
 
         //Determine the next Comic Catalog ID:
@@ -2067,7 +2066,7 @@ public class Service_Import extends IntentService {
             globalClass.CatalogDataFile_CreateNewRecord(ci);
         }
 
-        if(ci.alsComicPageURLsAndDestFileNames.size() > 0){
+        if(ci.alsDownloadURLsAndDestFileNames.size() > 0){
             //If there are image addresses to attempt to download...
 
             //NOTE: Android has DownloadIdleService which is reponsible for cleaning up stale or orphan downloads.
@@ -2086,7 +2085,7 @@ public class Service_Import extends IntentService {
                 //Download the files:
                 int FILE_DOWNLOAD_ADDRESS = 0;
                 int FILE_NAME_AND_EXTENSION = 1;
-                for(String[] sData: ci.alsComicPageURLsAndDestFileNames) {
+                for(String[] sData: ci.alsDownloadURLsAndDestFileNames) {
 
                     String sNewFilename = ci.sItemID + "_" + sData[FILE_NAME_AND_EXTENSION];
                     ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE; //Tell the app to move the files after download to avoid DLM-automated deletion.
@@ -2210,6 +2209,8 @@ public class Service_Import extends IntentService {
         globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
 
     }
+
+    //====== Video Download Routines ===============================================================
 
     private void handleAction_startActionVideoAnalyzeHTML(String sHTML, String sXPathExpressionThumbnailLocator, String sXPathExpressionTagsLocator){
 
@@ -2604,6 +2605,196 @@ public class Service_Import extends IntentService {
 
 
     }
+
+    private void handleAction_startActionVideoDownload(){
+
+        String sIntentActionFilter = Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE;
+
+        int iMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
+
+        long lProgressNumerator = 0L;
+        long lProgressDenominator;
+        int iProgressBarValue = 0;
+
+        GlobalClass globalClass;
+        globalClass = (GlobalClass) getApplicationContext();
+
+        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
+        ItemClass_File icfDownloadItem = alFileList.get(0);
+        //Use file count as progress denominator:
+        if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
+            //If this is a single download file, only 1 file needs to be downloaded.
+            lProgressDenominator = 1;
+        } else {
+            //If this is an M3U8 download, a set of files must be downloaded.
+            lProgressDenominator = (long) icfDownloadItem.ic_M3U8.als_TSDownloads.size();
+        }
+
+        //Find the next record ID:
+        int iNextRecordId = 0;
+        int iThisId;
+        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
+            iThisId = Integer.parseInt(entry.getValue().sItemID);
+            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
+        }
+        //New record ID identified.
+
+
+        //Create a folder to capture the downloads:
+        File fTempDestination = new File(
+                globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                        icfDownloadItem.sDestinationFolder + File.separator + iNextRecordId);
+
+        if (!fTempDestination.exists()) {
+            if (!fTempDestination.mkdir()) {
+                //Unable to create directory
+                BroadcastProgress(true, "Unable to create destination folder at: " + fTempDestination.getPath() + "\n",
+                        false, iProgressBarValue,
+                        true, "Operation halted.",
+                        sIntentActionFilter);
+                return;
+            } else {
+                BroadcastProgress(true, "Destination folder created: " + fTempDestination.getPath() + "\n",
+                        false, iProgressBarValue,
+                        false, "",
+                        sIntentActionFilter);
+            }
+        } else {
+            BroadcastProgress(true, "Destination folder verified: " + fTempDestination.getPath() + "\n",
+                    true, iProgressBarValue,
+                    false, "",
+                    sIntentActionFilter);
+        }
+
+        // With the download folder successfully created, record the catalog item:
+        // The below call should add the record to both the catalog contents file
+        //  and memory:
+        //Next create a new catalog item data structure:
+        ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+        ciNew.iMediaCategory = iMediaCategory;
+        ciNew.sItemID = String.valueOf(iNextRecordId);
+        ciNew.sFilename = icfDownloadItem.sFileOrFolderName;
+        ciNew.lSize = icfDownloadItem.lSizeBytes;
+        ciNew.lDuration_Milliseconds = icfDownloadItem.lVideoTimeInMilliseconds;
+        ciNew.sDuration_Text = icfDownloadItem.sVideoTimeText;
+        ciNew.iWidth = Integer.parseInt(icfDownloadItem.sWidth);
+        ciNew.iHeight = Integer.parseInt(icfDownloadItem.sHeight);
+        ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
+        ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
+        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+        ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
+        ciNew.dDatetime_Import = dTimeStamp;
+        ciNew.iGrade = icfDownloadItem.iGrade;
+        if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
+            ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE;
+            ciNew.iFile_Count = 1;
+        } else {
+            //M3U8. Mark post-processing to concat videos and move the result.
+            ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
+            ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count so that we know when all of the files have been downloaded.
+        }
+        globalClass.CatalogDataFile_CreateNewRecord(ciNew);
+
+        //Map-out the files to be downloaded with destination file names:
+        ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
+        if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
+            //If this is a single download file, only 1 file needs to be downloaded.
+            String sDownloadAddress = icfDownloadItem.sURLVideoLink;
+            String sFileName = icfDownloadItem.sFileOrFolderName;
+            ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sFileName});
+        } else {
+            //If this is an M3U8 download, a set of files must be downloaded.
+            for(String sFileName: icfDownloadItem.ic_M3U8.als_TSDownloads){
+                String sDownloadAddress = icfDownloadItem.ic_M3U8.sBaseURL + "/" + sFileName;
+                String sNewFilename = ciNew.sItemID + "_" + sFileName;
+                ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
+            }
+        }
+
+
+
+        //Initiate the download(s):
+
+        //NOTE: Android has DownloadIdleService which is reponsible for cleaning up stale or orphan downloads.
+        //  I have witnessed disappearance of downloaded files. This service seems to be deleting comic files.
+        //See article at: https://www.vvse.com/blog/blog/2020/01/06/android-10-automatically-deletes-downloaded-files/
+
+        try {
+
+            DownloadManager downloadManager = null;
+            downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+
+            //Download the file(s):
+            int FILE_DOWNLOAD_ADDRESS = 0;
+            int FILE_NAME_AND_EXTENSION = 1;
+            for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
+
+                String sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
+
+                File fNewFile = new File(sNewFullPathFilename);
+
+                if(!fNewFile.exists()) {
+
+                    BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
+                            false, iProgressBarValue,
+                            true, "Submitting download requests...",
+                            sIntentActionFilter);
+
+                    //Use the download manager to download the file:
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
+                    request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
+                            .setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                            //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                            //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                            //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                            .setMimeType("application/octet-stream")
+                            .setDestinationUri(Uri.fromFile(fNewFile));
+                    downloadManager.enqueue(request);
+
+                    lProgressNumerator++;
+
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, "\n",
+                            true, iProgressBarValue,
+                            false, "",
+                            sIntentActionFilter);
+                }
+
+            }
+            //Success downloading file(s).
+
+            //Start Video Post-Processing Worker.
+
+
+            BroadcastProgress(true, "Operation complete. Downloads may continue in the backgound. If this is a M3U8 (streaming) download, multiple files " +
+                            "will be post-processed after downloads are completed.",
+                    true, iProgressBarValue,
+                    false, "",
+                    sIntentActionFilter);
+
+        } catch (Exception e) {
+            if(e.getMessage() != null) {
+                Log.e("Error: ", e.getMessage());
+            }
+            BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
+                    false, iProgressBarValue,
+                    true, "Operation halted.",
+                    sIntentActionFilter);
+        }
+
+        //Modify viewer settings to show the newly-imported files:
+        globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;
+
+        BroadcastProgress(true, "Operation complete.",
+                true, iProgressBarValue,
+                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+    }
+
+    //====== Delete files (user can delete files while selecting imports) ==========================
 
     private void handleAction_startActionDeleteFiles( ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter){
 

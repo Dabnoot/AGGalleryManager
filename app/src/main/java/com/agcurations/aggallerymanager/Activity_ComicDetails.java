@@ -156,7 +156,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
             } else {
                 gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
                 gtextView_ComicDetailsLog.setText("");
-                gciCatalogItem.iComic_File_Count = fComicPages.length; //update the comic file count. Files may have been downloaded, deleted, etc.
+                gciCatalogItem.iFile_Count = fComicPages.length; //update the comic file count. Files may have been downloaded, deleted, etc.
 
                 if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
                     String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
@@ -569,7 +569,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     holder.tvCategories.setText(gciCatalogItem.sComicCategories);
                     String sPages = "" + gciCatalogItem.iComicPages;
                     holder.tvPages.setText(sPages);
-                    String sFileCount = "" + gciCatalogItem.iComic_File_Count;
+                    String sFileCount = "" + gciCatalogItem.iFile_Count;
                     holder.textView_FileCount.setText(sFileCount);
                     if(!gciCatalogItem.sComic_Missing_Pages.equals("")){
                         String sMissingPages = gciCatalogItem.sComic_Missing_Pages;

@@ -303,7 +303,8 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "ComicPages";                     //Total number of pages as defined at the comic source
         sHeader = sHeader + "\t" + "Comic_Max_Page_ID";              //Max comic page id extracted from file names
         sHeader = sHeader + "\t" + "Comic_Missing_Pages";            //Missing page numbers
-        sHeader = sHeader + "\t" + "Comic_File_Count";               //Files included with the comic. Can be used for egrity check.
+        sHeader = sHeader + "\t" + "File_Count";                     //Files included with the comic. Can be used for integrity check. Also used
+                                                                     // for video M3U8 download completion check.
         sHeader = sHeader + "\t" + "Comic_Online_Data_Acquired";     //Typically used to gather tag data from an online comic source, if automatic.
         sHeader = sHeader + "\t" + "Comic_Source";
 
@@ -348,7 +349,8 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.iComicPages;                     //Total number of pages as defined at the comic source
         sReadableData = sReadableData + "\t" + ci.iComic_Max_Page_ID;              //Max comic page id extracted from file names
         sReadableData = sReadableData + "\t" + ci.sComic_Missing_Pages;            //Missing page numbers
-        sReadableData = sReadableData + "\t" + ci.iComic_File_Count;               //Files included with the comic. Can be used for egrity check.
+        sReadableData = sReadableData + "\t" + ci.iFile_Count;                     //Files included with the comic. Can be used for integrity check. Also used
+                                                                                   // for video M3U8 download completion check.
         sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;     //Typically used to gather tag data from an online comic source, if automatic.
         sReadableData = sReadableData + "\t" + ci.sSource;                         //Website, if relevant. ended for comics.
         sReadableData = sReadableData + "\t" + ci.iGrade;                          //Grade.
@@ -387,7 +389,8 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComicPages);                     //Total number of pages as defined at the comic source
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_Max_Page_ID);              //Max comic page id extracted from file names
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComic_Missing_Pages);            //Missing page numbers
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_File_Count);               //Files included with the comic. Can be used for egrity check.
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.iFile_Count);                     //Files included with the comic. Can be used for integrity check. Also used
+                                                                                          // for video M3U8 download completion check.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
@@ -426,7 +429,8 @@ public class GlobalClass extends Application {
         ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[22]));  //Total number of pages as defined at the comic source
         ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[23]));   //Max comic page id extracted from file names
         ci.sComic_Missing_Pages = JumbleStorageText(sRecord[24]);           //Missing page numbers
-        ci.iComic_File_Count = Integer.parseInt(JumbleStorageText(sRecord[25]));    //Files included with the comic. Can be used for egrity check.
+        ci.iFile_Count = Integer.parseInt(JumbleStorageText(sRecord[25]));  //Files included with the comic. Can be used for integrity check. Also used
+                                                                            // for video M3U8 download completion check.
         ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[26]));  //Typically used to gather tag data from an online comic source, if automatic.
         ci.sSource = JumbleStorageText(sRecord[27]);                        //Website, if relevant. ended for comics.
         if(sRecord.length >= 29) { //String.split will not give the last item if it is an empty string.
@@ -690,7 +694,7 @@ public class GlobalClass extends Application {
 
             }
             ci.iComic_Max_Page_ID = iMaxPageID;
-            ci.iComic_File_Count = aliComicPageNumbers.size();
+            ci.iFile_Count = aliComicPageNumbers.size();
 
             if(aliMissingPages.size() > 0) {
                 String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ",");

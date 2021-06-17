@@ -126,6 +126,11 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     Service_Import.startActionImportComicWebFiles(getContext(),
                             globalClass.gci_ImportComicWebItem, ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
+            } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                    && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
+                    //If this is a video download:
+
+
             } else {
                 Service_Import.startActionImportFiles(getContext(),
                         viewModelImportActivity.iImportMethod,

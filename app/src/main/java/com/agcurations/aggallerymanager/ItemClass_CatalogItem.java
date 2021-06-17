@@ -35,17 +35,20 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iComicPages = 0;                           //Total number of pages as defined at the comic source
     public int iComic_Max_Page_ID = 0;                    //Max comic page id extracted from file names
     public String sComic_Missing_Pages = "";              //String of comma-delimited missing page numbers
-    public int iComic_File_Count = 0;                     //Files included with the comic. Can be used for integrity check.
+    public int iFile_Count = 0;                           //Files included with the comic. Can be used for integrity check.
+                                                          //  Also used for post-processing of M3U8 video file download completion check for post-processing.
     public boolean bComic_Online_Data_Acquired = false;   //Typically used to gather tag data from an online comic source, if automatic.
     public String sSource = "";                           //Website, if relevant. Originally intended for comics.
 
     public String sComicThumbnailURL = "";                //Used specifically for NH Comic import preview.
-    public ArrayList<String[]> alsComicPageURLsAndDestFileNames; //Used specifically for NH Comic import.
+    public ArrayList<String[]> alsDownloadURLsAndDestFileNames; //Used to map downloads to a download file name for both comic page and video downloads.
 
     public static final int POST_PROCESSING_NONE = 0;
     public static final int POST_PROCESSING_COMIC_DLM_MOVE = 1; //DownloadIdleService will delete files
                                             // that have been downloaded and not touched after about a week.
                                             //  these files must be moved so that DIS can't find them.
+    public static final int POST_PROCESSING_VIDEO_DLM_SINGLE = 2; //Move a single video file to avoid DIS deletion.
+    public static final int POST_PROCESSING_VIDEO_DLM_CONCAT = 3; //Concatenate multiple video files and move the result.
     public int iPostProcessingCode = POST_PROCESSING_NONE; //Used to tell the app to that file requires post-processing of some sort after an operation.
 
     public int iGrade = 3;                                //Rating (grade) of the item, 1-5. Default to 3.
