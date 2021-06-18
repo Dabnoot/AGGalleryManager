@@ -20,16 +20,16 @@ import android.widget.EditText;
 
 import java.util.ArrayList;
 
-public class Fragment_Import_1b_WebAddress extends Fragment {
+public class Fragment_Import_1b_ComicWebDetect extends Fragment {
 
     ViewModel_ImportActivity viewModelImportActivity;
 
-    public Fragment_Import_1b_WebAddress() {
+    public Fragment_Import_1b_ComicWebDetect() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_1b_WebAddress newInstance() {
-        return new Fragment_Import_1b_WebAddress();
+    public static Fragment_Import_1b_ComicWebDetect newInstance() {
+        return new Fragment_Import_1b_ComicWebDetect();
     }
 
     @Override
@@ -124,7 +124,7 @@ public class Fragment_Import_1b_WebAddress extends Fragment {
                             }
                         }
                     }
-                    Button button_NextStep = getView().findViewById(R.id.button_NextStep);
+
                     if(bAddressOK) {
                         viewModelImportActivity.sWebAddress = sAddressCandidate;
                     } else {

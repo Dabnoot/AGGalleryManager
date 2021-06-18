@@ -39,6 +39,7 @@ public class ItemClass_CatalogItem implements Serializable {
                                                           //  Also used for post-processing of M3U8 video file download completion check for post-processing.
     public boolean bComic_Online_Data_Acquired = false;   //Typically used to gather tag data from an online comic source, if automatic.
     public String sSource = "";                           //Website, if relevant. Originally intended for comics.
+    public String sVideoLink = "";                        //Link to the .mp4, .m3u8, etc, if it is a video download.
 
     public String sComicThumbnailURL = "";                //Used specifically for NH Comic import preview.
     public ArrayList<String[]> alsDownloadURLsAndDestFileNames; //Used to map downloads to a download file name for both comic page and video downloads.

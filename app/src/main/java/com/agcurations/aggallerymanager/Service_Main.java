@@ -23,6 +23,7 @@ import java.util.TreeMap;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.work.ListenableWorker;
 
 
 public class Service_Main extends IntentService {
@@ -312,6 +313,97 @@ public class Service_Main extends IntentService {
                     }
                 } else {
                     Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
+                }
+
+            } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE) {
+                //Check for, and if it exists, move a single file.
+                String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                        File.separator + ci.sFolder_Name;
+                String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                String sVideoDownloadedFile = sVideoDownloadFolder + File.separator + ci.sFilename;
+                File fVideoDownloadedFile = new File(sVideoDownloadedFile);
+                if(fVideoDownloadedFile.exists()){
+                    //Move the file:
+                    String sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + ci.sFilename;
+                    File fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
+                    if (!fOutputFileFinalDestination.exists()) {
+                        if(!fVideoDownloadedFile.renameTo(fOutputFileFinalDestination)){
+                            Log.d("File Move", "Unable to move file from " + fVideoDownloadedFile.getAbsolutePath() + " to " + fOutputFileFinalDestination.getAbsolutePath());
+                        } else {
+                            //Move successful, delete the temp folder:
+                            File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                            if(!fVideoDownloadFolder.delete()){
+                                Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
+                            }
+                        }
+                        //Update the catalog to indicate that this item has been moved.
+                        ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                        alsCatalogItemsToUpdate.add(ci);
+                    }
+                }
+
+
+            } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT) {
+                //Check to see if the concatenation operation is complete:
+                String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                        File.separator + ci.sFolder_Name;
+                String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                if(fVideoDownloadFolder.exists()){
+                    File[] fVideoDownloadFolderListing = fVideoDownloadFolder.listFiles();
+                    ArrayList<File> alfOutputFolders = new ArrayList<>();
+                    if(fVideoDownloadFolderListing != null) {
+                        for (File f : fVideoDownloadFolderListing) {
+                            //Locate the output folder
+                            if (f.isDirectory()) {
+                                alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
+                            }
+                        }
+                        //Attempt to locate the output file of a concatenation operation:
+                        for (File f : alfOutputFolders) {
+                            String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
+                            File fOutputFile = new File(sOutputFileAbsolutePath);
+                            if (fOutputFile.exists()) {
+                                //Concatenation is complete
+                                //Move the file:
+                                String sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + ci.sFilename;
+                                File fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
+                                if (!fOutputFileFinalDestination.exists()) {
+                                    if(!fOutputFile.renameTo(fOutputFileFinalDestination)){
+                                        Log.d("File Move", "Unable to move file from " + fOutputFile.getAbsolutePath() + " to " + fOutputFileFinalDestination.getAbsolutePath());
+                                        break;
+                                    }
+                                }
+
+                                //Delete output folder contents:
+                                for (File f2 : alfOutputFolders) {
+                                    File[] f2_Contents = f2.listFiles();
+                                    if (f2_Contents != null) {
+                                        for (File f3 : f2_Contents) {
+                                            if(!f3.delete()){
+                                                Log.d("File Deletion", "Unable to delete file " + f3.getAbsolutePath());
+                                            }
+                                        }
+                                    }
+                                }
+                                //Delete download folder contents:
+                                for (File f4 : fVideoDownloadFolderListing) {
+                                    if(!f4.delete()){
+                                        Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath());
+                                    }
+                                }
+                                //Delete download folder:
+                                if(!fVideoDownloadFolder.delete()){
+                                    Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
+                                }
+
+                                //Update catalog item to indicate no post-processing needed:
+                                ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                                alsCatalogItemsToUpdate.add(ci);
+                                break; //Don't go through any more "output" folders in this temp download directory.
+                            }
+                        }
+                    }
                 }
 
             }

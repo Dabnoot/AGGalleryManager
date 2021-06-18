@@ -7,7 +7,6 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -82,7 +81,7 @@ public class Activity_Main extends AppCompatActivity {
         progressBar_WorkerTest.setMax(100);
         textView_WorkerTest = findViewById(R.id.textView_WorkerTest);
 
-        //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
+        /*//Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
         workInfoObserver_VideoConcatenator = new Observer<WorkInfo>() {
             @Override
             public void onChanged(WorkInfo workInfo) {
@@ -111,7 +110,7 @@ public class Activity_Main extends AppCompatActivity {
 
         //Look to see if there are any workers out there processing data for AGGalleryManager,
         //  and if so, attempt to listen to their progress:
-        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_VideoPostProcessing.WORKER_VIDEOCONCATENATOR_TAG);
+        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_VideoPostProcessing.WORKER_VIDEO_POST_PROCESSING_TAG);
         try {
             int iWorkerCount = lfListWorkInfo.get().size();
             for(int i = 0; i < iWorkerCount; i++) {
@@ -127,7 +126,7 @@ public class Activity_Main extends AppCompatActivity {
             }
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
 
 
 
@@ -419,7 +418,7 @@ public class Activity_Main extends AppCompatActivity {
                 } while (c.moveToNext());
             }*/
 
-            //Testing WorkManager for video concatenation:
+            /*//Testing WorkManager for video concatenation:
             //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
             Data dataVideoConcatenator = new Data.Builder()
                     .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_SEGMENT_FOLDER, "Test")
@@ -436,8 +435,9 @@ public class Activity_Main extends AppCompatActivity {
 
             WorkManager wm = WorkManager.getInstance(getApplicationContext());
             LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
-            ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);
+            ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);*/
 
+            Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();
 
             return true; //End Test Options item.
         } else {
@@ -583,11 +583,6 @@ public class Activity_Main extends AppCompatActivity {
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS);
         startActivity(intentImportGuided);
     }
-
-
-    //=====================================================================================
-    //===== Broadcast listener ============================================================
-    //=====================================================================================
 
 
 

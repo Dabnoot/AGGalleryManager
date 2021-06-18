@@ -23,7 +23,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
 
-public class Fragment_Import_5a_WebComicConfirmation extends Fragment {
+public class Fragment_Import_5a_ComicWebConfirmation extends Fragment {
 
     ViewModel_ImportActivity viewModelImportActivity;
 
@@ -33,12 +33,12 @@ public class Fragment_Import_5a_WebComicConfirmation extends Fragment {
 
     GlobalClass globalClass;
 
-    public Fragment_Import_5a_WebComicConfirmation() {
+    public Fragment_Import_5a_ComicWebConfirmation() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_5a_WebComicConfirmation newInstance() {
-        return new Fragment_Import_5a_WebComicConfirmation();
+    public static Fragment_Import_5a_ComicWebConfirmation newInstance() {
+        return new Fragment_Import_5a_ComicWebConfirmation();
     }
 
     @Override

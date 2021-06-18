@@ -17,6 +17,8 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -87,7 +89,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         Button button_PasteAddress = null;
-        EditText editText_WebAddress = null;
 
         if(getView() != null) {
             button_PasteAddress = getView().findViewById(R.id.button_PasteAddress);
@@ -161,6 +162,47 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
         String sTestAddress = "https://www.xnxx.com/video-10olx73e/jay_s_pov_-_i_had_a_threesome_with_two_hot_blonde_teens";
         gEditText_WebAddress.setText(sTestAddress);
+
+        if(gEditText_WebAddress != null){
+
+            gEditText_WebAddress.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    boolean bAddressOK = false;
+                    String sAddressCandidate = String.valueOf(charSequence);
+                    if(sAddressCandidate.length() > 0) {
+                        //Evaluate if the address matches a pattern:
+                        String sNHRegexExpression = "https:\\/\\/xnxx.com\\/";
+                        ArrayList<String> alsVideoSiteRegexExpressions = new ArrayList<>();
+                        alsVideoSiteRegexExpressions.add(sNHRegexExpression);
+
+                        for(String sRegex: alsVideoSiteRegexExpressions){
+                            if(sAddressCandidate.matches(sRegex)){
+                                bAddressOK = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(bAddressOK) {
+                        viewModelImportActivity.sWebAddress = sAddressCandidate;
+                    } else {
+                        viewModelImportActivity.sWebAddress = "";
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+
+                }
+            });
+
+
+        }
 
 
         gButton_Go.setOnClickListener(new View.OnClickListener() {

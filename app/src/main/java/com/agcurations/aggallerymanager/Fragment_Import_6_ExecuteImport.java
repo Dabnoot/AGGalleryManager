@@ -129,7 +129,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                     && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
                     //If this is a video download:
-
+                    Service_Import.startActionVideoDownload(getContext(), viewModelImportActivity.sWebAddress);
 
             } else {
                 Service_Import.startActionImportFiles(getContext(),

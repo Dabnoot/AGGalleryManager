@@ -36,12 +36,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1558,7 +1553,7 @@ public class Activity_Import extends AppCompatActivity {
                 case FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT:
                     return new Fragment_Import_1a_VideoWebDetect();
                 case FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS:
-                    return new Fragment_Import_1b_WebAddress();
+                    return new Fragment_Import_1b_ComicWebDetect();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM:
@@ -1572,7 +1567,7 @@ public class Activity_Import extends AppCompatActivity {
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                     return new Fragment_Import_5_Confirmation();
                 case FRAGMENT_IMPORT_5A_WEB_CONFIRMATION:
-                    return new Fragment_Import_5a_WebComicConfirmation();
+                    return new Fragment_Import_5a_ComicWebConfirmation();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
                 default:

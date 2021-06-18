@@ -38,9 +38,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE;
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK;
@@ -55,6 +59,7 @@ public class Service_Import extends IntentService {
     private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
     private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
     private static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
+    private static final String ACTION_VIDEO_DOWNLOAD = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_DOWNLOAD";
     private static final String ACTION_DELETE_FILES = "com.agcurations.aggallerymanager.action.DELETE_FILES";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
@@ -160,6 +165,13 @@ public class Service_Import extends IntentService {
 
     }
 
+    public static void startActionVideoDownload(Context context, String sWebPageAddress){
+        Intent intent = new Intent(context, Service_Import.class);
+        intent.setAction(ACTION_VIDEO_DOWNLOAD);
+        intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sWebPageAddress);
+        context.startService(intent);
+    }
+
     public static void startActionDeleteFiles(Context context, ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_DELETE_FILES);
@@ -233,6 +245,15 @@ public class Service_Import extends IntentService {
                 final String sxPathExpressionTags = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR);
                 try{
                     handleAction_startActionVideoAnalyzeHTML(sHTML, sXPathExpressionThumbnail, sxPathExpressionTags);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+            } else if (ACTION_VIDEO_DOWNLOAD.equals(action)) {
+
+                final String sWebAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
+                try{
+                    handleAction_startActionVideoDownload(sWebAddress);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -2606,7 +2627,7 @@ public class Service_Import extends IntentService {
 
     }
 
-    private void handleAction_startActionVideoDownload(){
+    private void handleAction_startActionVideoDownload(String sAddress){
 
         String sIntentActionFilter = Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE;
 
@@ -2639,6 +2660,9 @@ public class Service_Import extends IntentService {
         }
         //New record ID identified.
 
+        if(icfDownloadItem.sDestinationFolder.equals("")) {
+            icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
+        }
 
         //Create a folder to capture the downloads:
         File fTempDestination = new File(
@@ -2685,14 +2709,18 @@ public class Service_Import extends IntentService {
         ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ciNew.dDatetime_Import = dTimeStamp;
         ciNew.iGrade = icfDownloadItem.iGrade;
+        ciNew.sSource = sAddress;
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
+            ciNew.sVideoLink = icfDownloadItem.sURLVideoLink;
         } else {
             //M3U8. Mark post-processing to concat videos and move the result.
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count so that we know when all of the files have been downloaded.
+            ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
         }
+
         globalClass.CatalogDataFile_CreateNewRecord(ciNew);
 
         //Map-out the files to be downloaded with destination file names:
@@ -2762,9 +2790,45 @@ public class Service_Import extends IntentService {
                 }
 
             }
-            //Success downloading file(s).
+            //Success initiating file download(s).
 
             //Start Video Post-Processing Worker.
+            //Testing WorkManager for video concatenation:
+            //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
+
+            //Send:
+            // Location to monitor
+            // Single-file or M3U8 result (M3U8 => multiple .ts files)
+            // Expected file count (needed for M3U8)
+            // Name of file to create
+
+            /*public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8 = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8";
+            public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
+            public static final String KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT = "KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT";
+            public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";*/
+
+            int iSingleOrM3U8;
+            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
+                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_SINGLE;
+            } else {
+                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8;
+            }
+            String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                    File.separator + ciNew.sFolder_Name;
+            String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ciNew.sItemID;
+            Data dataVideoConcatenator = new Data.Builder()
+                    .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
+                    .putInt(Worker_VideoPostProcessing.KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT, ciNew.iFile_Count)
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, ciNew.sFilename)
+                    .build();
+            OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
+                    .setInputData(dataVideoConcatenator)
+                    .addTag(Worker_VideoPostProcessing.WORKER_VIDEO_POST_PROCESSING_TAG) //To allow finding the worker later.
+                    .build();
+            UUID UUIDWorkID = otwrVideoConcatenation.getId();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoConcatenation);
+
 
 
             BroadcastProgress(true, "Operation complete. Downloads may continue in the backgound. If this is a M3U8 (streaming) download, multiple files " +
@@ -3020,7 +3084,7 @@ public class Service_Import extends IntentService {
         }
 
         if(sIntentActionFilter.equals(
-                Fragment_Import_5a_WebComicConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
+                Fragment_Import_5a_ComicWebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
             globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
         }
 

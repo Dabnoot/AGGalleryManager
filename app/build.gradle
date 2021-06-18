@@ -56,4 +56,6 @@ dependencies {
     //WorkManager, for background tasks such as internet file download:
     implementation "androidx.work:work-runtime:2.7.0-alpha02"
 
+    //FFMPEG, for video concatenation:
+    implementation 'com.arthenica:ffmpeg-kit-full:4.4.LTS'
 }

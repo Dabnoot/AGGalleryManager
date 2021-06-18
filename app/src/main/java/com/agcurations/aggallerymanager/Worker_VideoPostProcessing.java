@@ -189,6 +189,8 @@ public class Worker_VideoPostProcessing extends Worker {
                 }
 
                 //Execute the FFMPEG concatenation:
+                final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
+                final File fLog = new File(sLogFilePath);
                 String sCommand = "-f concat -safe 0 -i " + sFFMPEGInputFilePath + " -c copy " + sOutputFolderPath + File.separator + gsVideoOutputFilename;
                 FFmpegKit.executeAsync(sCommand, new ExecuteCallback() {
 
@@ -197,12 +199,22 @@ public class Worker_VideoPostProcessing extends Worker {
                         // CALLED WHEN SESSION IS EXECUTED
                         SessionState state = session.getState();
                         ReturnCode returnCode = session.getReturnCode();
+                        //Write the data to the log file:
+                        try {
+                            FileWriter fwLogFile = null;
+                            fwLogFile = new FileWriter(fLog, true);
+                            fwLogFile.write(String.format("\nFFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
 
-                        //broadcastLogMessage(String.format("\nFFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
+                            String sMessage = session.getFailStackTrace();
+                            if(sMessage != null) {
+                                fwLogFile.write(sMessage + "\n");
+                            }
 
-                        String sMessage = session.getFailStackTrace();
-                        if(sMessage != null) {
-                            //broadcastLogMessage(sMessage + "\n");
+                            fwLogFile.flush();
+                            fwLogFile.close();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }, new LogCallback() {
@@ -211,22 +223,45 @@ public class Worker_VideoPostProcessing extends Worker {
                     public void apply(com.arthenica.ffmpegkit.Log log) {
                         // CALLED WHEN SESSION PRINTS LOGS
                         String sMessage = log.getMessage();
-                        //broadcastLogMessage(sMessage);
+
+                        //Write the data to the log file:
+                        try {
+                            FileWriter fwLogFile = null;
+                            fwLogFile = new FileWriter(fLog, true);
+                            fwLogFile.write(sMessage + "\n");
+                            fwLogFile.flush();
+                            fwLogFile.close();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                     }
                 }, new StatisticsCallback() {
 
                     @Override
                     public void apply(Statistics statistics) {
                         // CALLED WHEN SESSION GENERATES STATISTICS
-                        String sMessage = "File size: " + String.valueOf(statistics.getSize());
-                        //broadcastLogMessage(sMessage + "\n");
+                        String sMessage = "File size: " + statistics.getSize();
+
+                        //Write the data to the log file:
+                        try {
+                            FileWriter fwLogFile = null;
+                            fwLogFile = new FileWriter(fLog, true);
+                            fwLogFile.write(sMessage + "\n");
+                            fwLogFile.flush();
+                            fwLogFile.close();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+
+
                     }
                 });
 
-                //Delete the downloaded files, FFMPEG input file:
-
-
-                //Move the output file to the temporary download folder (for the main program to "find":
+                //Execute no further processing as the FFMPEG call is asynchronous.
 
 
             }
