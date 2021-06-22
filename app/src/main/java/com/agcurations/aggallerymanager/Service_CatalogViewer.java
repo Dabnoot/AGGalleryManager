@@ -3,11 +3,13 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -95,16 +97,66 @@ public class Service_CatalogViewer extends IntentService {
             String sFullPath = sFileFolder + File.separator +
                     sItemFileName;
             File fFileToBeDeleted = new File(sFullPath);
-            if(fFileToBeDeleted.exists()){
-                if(!fFileToBeDeleted.delete()){
-                    problemNotificationConfig("Could not delete file.");
+
+            if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT ||
+               ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE){
+                //Delete the temporary download folders, etc.
+                String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                        File.separator + ci.sFolder_Name;
+                String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                if(fVideoDownloadFolder.exists()){
+                    File[] fVideoDownloadFolderListing = fVideoDownloadFolder.listFiles();
+                    ArrayList<File> alfOutputFolders = new ArrayList<>();
+                    if(fVideoDownloadFolderListing != null) {
+                        for (File f : fVideoDownloadFolderListing) {
+                            //Locate the output folder
+                            if (f.isDirectory()) {
+                                alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
+                            }
+                        }
+                        //Go through the output folders and delete contents:
+                        for (File f2 : alfOutputFolders) {
+                            File[] f2_Contents = f2.listFiles();
+                            if (f2_Contents != null) {
+                                for (File f3 : f2_Contents) {
+                                    if(!f3.delete()){
+                                        Log.d("File Deletion", "Unable to delete file " + f3.getAbsolutePath());
+                                    }
+                                }
+                            }
+                        }
+                        //Delete download folder contents:
+                        for (File f4 : fVideoDownloadFolderListing) {
+                            if(!f4.delete()){
+                                Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath());
+                            }
+                        }
+                        //Delete download folder:
+                        if(!fVideoDownloadFolder.delete()){
+                            Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
+                        }
+
+                    }
+                }
+
+
+
+
+
+
+            } else {
+
+                if (fFileToBeDeleted.exists()) {
+                    if (!fFileToBeDeleted.delete()) {
+                        problemNotificationConfig("Could not delete file.");
+                        bSuccess = false;
+                    }
+                } else {
+                    problemNotificationConfig("Could not find file at this location: " + sFullPath);
                     bSuccess = false;
                 }
-            } else {
-                problemNotificationConfig("Could not find file at this location: " + sFullPath);
-                bSuccess = false;
             }
-
             if(bSuccess) {
 
                 //Delete the folder if the folder is now empty:
