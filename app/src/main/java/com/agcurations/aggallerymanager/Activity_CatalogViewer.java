@@ -42,6 +42,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 public class Activity_CatalogViewer extends AppCompatActivity {
@@ -615,13 +616,41 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             + GlobalClass.gsDLTempFolderName + File.separator
                             + ci.sFilename;
                 }
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
+                        ci.iPostProcessingCode != ItemClass_CatalogItem.POST_PROCESSING_NONE){
+                    //If this is a video and the post-processing is incomplete, at least look in the output folder for a result.
 
-                /*if(ci.sFilename.equals("1000_egaP_058813.gpj")){
-                    sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
-                            + ci.sFolder_Name + File.separator
-                            + "2000_egaP_058813.gpj";
-                    Log.d("Test","Test");
-                }*/
+                    String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                            File.separator + ci.sFolder_Name;
+                    String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                    File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                    if(fVideoDownloadFolder.exists()){
+                        File[] fVideoDownloadFolderListing = fVideoDownloadFolder.listFiles();
+                        ArrayList<File> alfOutputFolders = new ArrayList<>();
+                        if(fVideoDownloadFolderListing != null) {
+                            for (File f : fVideoDownloadFolderListing) {
+                                //Locate the output folder
+                                if (f.isDirectory()) {
+                                    alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
+                                }
+                            }
+                            //Attempt to locate the output file of a concatenation operation:
+                            for (File f : alfOutputFolders) {
+                                String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
+                                File fOutputFile = new File(sOutputFileAbsolutePath);
+                                if (fOutputFile.exists()) {
+                                    //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
+                                    sThumbnailFilePath = fOutputFile.getAbsolutePath();
+
+
+                                    break; //Don't go through any more "output" folders in this temp download directory.
+                                }
+                            }
+                        }
+                    }
+
+                }
+
 
                 File fThumbnail = new File(sThumbnailFilePath);
 

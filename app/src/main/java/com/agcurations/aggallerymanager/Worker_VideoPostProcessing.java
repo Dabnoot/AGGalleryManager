@@ -1,12 +1,24 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.DownloadManager;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.database.Cursor;
+import android.os.Looper;
+import android.text.InputType;
+import android.widget.EditText;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -29,7 +41,7 @@ public class Worker_VideoPostProcessing extends Worker {
     //public static final String FILENAME = "FILENAME";
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
-    //int iSavedNumerator = -1;
+    DownloadManager downloadManager;
 
     //=========================
     // Define keys for arguments passed to this worker:
@@ -37,14 +49,18 @@ public class Worker_VideoPostProcessing extends Worker {
     public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
     public static final String KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT = "KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT";
     public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";
+    public static final String KEY_ARG_VIDEO_TOTAL_FILE_SIZE = "KEY_ARG_VIDEO_TOTAL_FILE_SIZE";
+    public static final String KEY_ARG_VIDEO_DOWNLOAD_IDS = "KEY_ARG_VIDEO_DOWNLOAD_IDS";
 
     //=========================
     int giDownloadTypeSingleOrM3U8 = 0;
     public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
-    String gsPathToMonitorForDownloads;                  //Location to monitor for download file(s)
-    int giExpectedDownloadFileCount;                     //Expected count of downloaded files
-    String gsVideoOutputFilename;                        //Name of output file
+    String gsPathToMonitorForDownloads;                 //Location to monitor for download file(s)
+    int giExpectedDownloadFileCount;                    //Expected count of downloaded files
+    String gsVideoOutputFilename;                       //Name of output file
+    long glTotalFileSize;
+    long[] glDownloadIDs;                               //Used to determine if a download ID in DownloadManager has status 'completed'.
 
     //=========================
 
@@ -58,6 +74,8 @@ public class Worker_VideoPostProcessing extends Worker {
         gsPathToMonitorForDownloads = getInputData().getString(KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS);
         giExpectedDownloadFileCount = getInputData().getInt(KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT,0);
         gsVideoOutputFilename = getInputData().getString(KEY_ARG_VIDEO_OUTPUT_FILENAME);
+        glTotalFileSize = getInputData().getLong(KEY_ARG_VIDEO_TOTAL_FILE_SIZE,0);
+        glDownloadIDs = getInputData().getLongArray(KEY_ARG_VIDEO_DOWNLOAD_IDS);
     }
 
     @NonNull
@@ -95,10 +113,12 @@ public class Worker_VideoPostProcessing extends Worker {
             sOutputFolderPath = fThisDownloadFolder + File.separator + sOutputFolder;
             fOutputFolder = new File(sOutputFolderPath);
         }
-        if(!fOutputFolder.mkdir()){
+
+        if (!fOutputFolder.mkdir()) {
             String sFailureMessage = "Could not create folder at " + fOutputFolder.getAbsolutePath();
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
+
 
         /*//https://developer.android.com/topic/libraries/architecture/workmanager/how-to/intermediate-progress
         try {
@@ -133,34 +153,155 @@ public class Worker_VideoPostProcessing extends Worker {
         int iElapsedWaitTime = 0;
         int iWaitDuration = 5000; //milliseconds
         boolean bFileDownloadsComplete = false;
+        boolean bDownloadProblem = false;
+        boolean bPaused = false;
         File[] fDownloadedFiles = null;
-        while( (iElapsedWaitTime < GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete) {
+        String sDownloadFailedReason = "";
+        String sDownloadPausedReason = "";
+
+        while( (iElapsedWaitTime < GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
+
             try {
                 Thread.sleep(iWaitDuration);
-                iElapsedWaitTime += iWaitDuration;
-                fDownloadedFiles = fThisDownloadFolder.listFiles();
-                if(fDownloadedFiles == null){
-                    break;
-                }
-                int iFileCount = 0;
-                for(File f:fDownloadedFiles){
-                    if(f.isFile()){
-                        iFileCount++;
-                    }
-                }
-                if(iFileCount == giExpectedDownloadFileCount){
-                    bFileDownloadsComplete = true;
-                }
-
-
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if(!bPaused) {
+                iElapsedWaitTime += iWaitDuration;
+            } else {
+                iElapsedWaitTime += (int) (iWaitDuration/ 10.0); //Wait longer if a download is paused.
+            }
 
-        }
+            /*fDownloadedFiles = fThisDownloadFolder.listFiles();
+            if(fDownloadedFiles == null){
+                break;
+            }
+            int iFileCount = 0;
+            long lFileSizeSum = 0;
+            for(File f:fDownloadedFiles){
+                if(f.isFile()){
+                    iFileCount++;
+                    //Sum size of files:
+                    lFileSizeSum += f.length();
+                }
+            }
+            if(iFileCount == giExpectedDownloadFileCount){
+                if(lFileSizeSum >= glTotalFileSize) {
+                    bFileDownloadsComplete = true;
+                }
+            }*/
+            DownloadManager.Query dmQuery = new DownloadManager.Query();
+            dmQuery.setFilterById(glDownloadIDs);
+            downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+            Cursor cursor = downloadManager.query(dmQuery);
 
+            if(cursor.moveToFirst()) {
+                do {
+                    int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                    int status = cursor.getInt(columnIndex);
+                    int columnReason = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+                    int reason = cursor.getInt(columnReason);
+
+
+                    bDownloadProblem = false;
+                    bPaused = false;
+                    bFileDownloadsComplete = false;
+
+                    switch (status) {
+                        case DownloadManager.STATUS_FAILED:
+                            bDownloadProblem = true;
+                            switch (reason) {
+                                case DownloadManager.ERROR_CANNOT_RESUME:
+                                    sDownloadFailedReason = "ERROR_CANNOT_RESUME";
+                                    break;
+                                case DownloadManager.ERROR_DEVICE_NOT_FOUND:
+                                    sDownloadFailedReason = "ERROR_DEVICE_NOT_FOUND";
+                                    break;
+                                case DownloadManager.ERROR_FILE_ALREADY_EXISTS:
+                                    sDownloadFailedReason = "ERROR_FILE_ALREADY_EXISTS";
+                                    break;
+                                case DownloadManager.ERROR_FILE_ERROR:
+                                    sDownloadFailedReason = "ERROR_FILE_ERROR";
+                                    break;
+                                case DownloadManager.ERROR_HTTP_DATA_ERROR:
+                                    sDownloadFailedReason = "ERROR_HTTP_DATA_ERROR";
+                                    break;
+                                case DownloadManager.ERROR_INSUFFICIENT_SPACE:
+                                    sDownloadFailedReason = "ERROR_INSUFFICIENT_SPACE";
+                                    break;
+                                case DownloadManager.ERROR_TOO_MANY_REDIRECTS:
+                                    sDownloadFailedReason = "ERROR_TOO_MANY_REDIRECTS";
+                                    break;
+                                case DownloadManager.ERROR_UNHANDLED_HTTP_CODE:
+                                    sDownloadFailedReason = "ERROR_UNHANDLED_HTTP_CODE";
+                                    break;
+                                case DownloadManager.ERROR_UNKNOWN:
+                                    sDownloadFailedReason = "ERROR_UNKNOWN";
+                                    break;
+                            }
+                            break;
+                        case DownloadManager.STATUS_PAUSED:
+                            bPaused = true;
+                            switch (reason) {
+                                case DownloadManager.PAUSED_QUEUED_FOR_WIFI:
+                                    sDownloadPausedReason = "PAUSED_QUEUED_FOR_WIFI";
+                                    break;
+                                case DownloadManager.PAUSED_UNKNOWN:
+                                    sDownloadPausedReason = "PAUSED_UNKNOWN";
+                                    break;
+                                case DownloadManager.PAUSED_WAITING_FOR_NETWORK:
+                                    sDownloadPausedReason = "PAUSED_WAITING_FOR_NETWORK";
+                                    break;
+                                case DownloadManager.PAUSED_WAITING_TO_RETRY:
+                                    sDownloadPausedReason = "PAUSED_WAITING_TO_RETRY";
+                                    break;
+                            }                            break;
+                        case DownloadManager.STATUS_PENDING:
+                            //No action.
+                            break;
+                        case DownloadManager.STATUS_RUNNING:
+                            //No action.
+                            break;
+                        case DownloadManager.STATUS_SUCCESSFUL:
+                            bFileDownloadsComplete = true;
+                            break;
+                    }
+                } while (cursor.moveToNext() && bFileDownloadsComplete && !bDownloadProblem); //End loop through download query results.
+
+
+
+            } //End if cursor has a record.
+
+        } //End loop waiting for download completion.
+
+
+        final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
+        final File fLog = new File(sLogFilePath);
         if(bFileDownloadsComplete) {
-            if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
+            fDownloadedFiles = fThisDownloadFolder.listFiles();
+            if(fDownloadedFiles == null){
+                String sFailureMessage = "Downloaded file(s) missing from folder: " + gsPathToMonitorForDownloads;
+                return Result.failure(DataErrorMessage(sFailureMessage));
+            } else if (fDownloadedFiles.length < 2) {
+                String sFailureMessage = "Downloaded file(s) missing from folder: " + gsPathToMonitorForDownloads;
+                return Result.failure(DataErrorMessage(sFailureMessage));
+            }
+            if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_SINGLE) {
+                //Move the file to the output folder to get captured by the main program:
+                File fInputFile = fDownloadedFiles[1]; //There should be but 1 file in the download folder for DOWNLOAD_TYPE_SINGLE. Index 0 is the folder.
+                for(File f: fDownloadedFiles){
+                    if(f.isFile()){
+                        fInputFile = f;
+                    }
+                }
+                File fOutputFile = new File(sOutputFolderPath + File.separator + gsVideoOutputFilename);
+                if(!fInputFile.renameTo(fOutputFile)){
+                    String sFailureMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
+                    return Result.failure(DataErrorMessage(sFailureMessage));
+                }
+                //VideoPostProcessingNotification("Video download post-processing complete.");
+            } else {
+            //if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
                 //Process the files.
 
                 //Create a file listing the files which are to be concatenated:
@@ -189,8 +330,7 @@ public class Worker_VideoPostProcessing extends Worker {
                 }
 
                 //Execute the FFMPEG concatenation:
-                final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
-                final File fLog = new File(sLogFilePath);
+
                 String sCommand = "-f concat -safe 0 -i " + sFFMPEGInputFilePath + " -c copy " + sOutputFolderPath + File.separator + gsVideoOutputFilename;
                 FFmpegKit.executeAsync(sCommand, new ExecuteCallback() {
 
@@ -267,10 +407,27 @@ public class Worker_VideoPostProcessing extends Worker {
             }
             return Result.success();
         } else {
-            String sFailureMessage = "Download wait timeout exceeded. Wait time " + iElapsedWaitTime + " milliseconds.";
+
+            //Write a failure message to the log:
+            FileWriter fwLogFile = null;
+            String sFailureMessage = "";
+            if( iElapsedWaitTime >= GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) {
+                sFailureMessage = "Download elapsed time exceeds timeout of " + GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT + " milliseconds.";
+            } else if (bDownloadProblem) {
+                sFailureMessage = "There was a problem with a download. " + sDownloadFailedReason;
+            }
+
+            try {
+                fwLogFile = new FileWriter(fLog, true);
+                fwLogFile.write(sFailureMessage + "\n");
+                fwLogFile.flush();
+                fwLogFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
-
 
     }
 
@@ -279,6 +436,29 @@ public class Worker_VideoPostProcessing extends Worker {
         return new Data.Builder()
                 .putString(FAILURE_MESSAGE, sMessage)
                 .build();
+    }
+
+    private void VideoPostProcessingNotification(String sMessage){
+        final String _sMessage = sMessage;
+        ContextCompat.getMainExecutor(getApplicationContext()).execute(new Runnable() {
+            @Override
+            public void run() {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext(), R.style.AlertDialogCustomStyle);
+                builder.setTitle("Video Post Processing");
+                builder.setMessage(_sMessage);
+
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+                AlertDialog adConfirmationDialog = builder.create();
+                adConfirmationDialog.show();
+            }
+        });
+
+
     }
 
 

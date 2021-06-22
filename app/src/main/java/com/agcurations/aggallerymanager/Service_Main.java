@@ -276,9 +276,11 @@ public class Service_Main extends IntentService {
         //  this from happening. This will need to occur for downloaded comics or
 
         ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+
+        //Look for comic post-processing required:
+        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE) {
+            if (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE) {
                 //Check to see if all of the files have downloaded:
                 String sComicItemFolderPath =
                         globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath()
@@ -286,43 +288,50 @@ public class Service_Main extends IntentService {
                 File fComicItemFolder = new File(sComicItemFolderPath);
                 String sComicItemDLFolderPath = sComicItemFolderPath + File.separator + GlobalClass.gsDLTempFolderName;
                 File fComicItemDLFolder = new File(sComicItemDLFolderPath);
-                if(fComicItemDLFolder.exists()) {
+                if (fComicItemDLFolder.exists()) {
                     File[] fComicDLFiles = fComicItemDLFolder.listFiles();
-                    if (fComicDLFiles.length == ci.iComicPages) {
-                        //All of the files have been downloaded.
-                        //Attempt to move the files:
-                        boolean bMoveSuccessful = true;
-                        for (File fDLFile : fComicDLFiles) {
-                            String sFileName = fDLFile.getName();
-                            File fDestination = new File(sComicItemFolderPath + File.separator + sFileName);
-                            if (fDLFile.isFile()) {
-                                if (!fDLFile.renameTo(fDestination)) {
-                                    Log.d("File move", "Cannot move file " + sFileName + " from " + fDLFile.getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
-                                    bMoveSuccessful = false;
+                    if (fComicDLFiles != null) {
+                        if (fComicDLFiles.length == ci.iComicPages) {
+                            //All of the files have been downloaded.
+                            //Attempt to move the files:
+                            boolean bMoveSuccessful = true;
+                            for (File fDLFile : fComicDLFiles) {
+                                String sFileName = fDLFile.getName();
+                                File fDestination = new File(sComicItemFolderPath + File.separator + sFileName);
+                                if (fDLFile.isFile()) {
+                                    if (!fDLFile.renameTo(fDestination)) {
+                                        Log.d("File move", "Cannot move file " + sFileName + " from " + fDLFile.getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
+                                        bMoveSuccessful = false;
+                                    }
                                 }
                             }
-                        }
-                        if (bMoveSuccessful) {
-                            //Delete the DL folder:
-                            if (!fComicItemDLFolder.delete()) {
-                                Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
+                            if (bMoveSuccessful) {
+                                //Delete the DL folder:
+                                if (!fComicItemDLFolder.delete()) {
+                                    Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
+                                }
+                                ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                                alsCatalogItemsToUpdate.add(ci);
                             }
-                            ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
-                            alsCatalogItemsToUpdate.add(ci);
                         }
                     }
                 } else {
                     Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
                 }
-
-            } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE) {
-                //Check for, and if it exists, move a single file.
+            }
+        }
+        //Look for video post-processing required:
+        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+            ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
+            if((ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE) ||
+                    (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT)) {
+                /*//Check for, and if it exists, move a single file.
                 String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                         File.separator + ci.sFolder_Name;
                 String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
                 String sVideoDownloadedFile = sVideoDownloadFolder + File.separator + ci.sFilename;
                 File fVideoDownloadedFile = new File(sVideoDownloadedFile);
-                if(fVideoDownloadedFile.exists()){
+                if(fVideoDownloadedFile.exists() && (fVideoDownloadedFile.length() >= ci.lSize)){
                     //Move the file:
                     String sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + ci.sFilename;
                     File fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
@@ -343,8 +352,8 @@ public class Service_Main extends IntentService {
                 }
 
 
-            } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT) {
-                //Check to see if the concatenation operation is complete:
+            } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT) {*/
+                //Check to see if the concatenation (or single video file download) operation is complete:
                 String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                         File.separator + ci.sFolder_Name;
                 String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;

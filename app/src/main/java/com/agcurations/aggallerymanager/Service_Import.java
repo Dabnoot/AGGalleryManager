@@ -1109,8 +1109,10 @@ public class Service_Import extends IntentService {
                 ciNew.lSize = fileItem.lSizeBytes;
                 ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
                 ciNew.sDuration_Text = fileItem.sVideoTimeText;
-                ciNew.iWidth = Integer.parseInt(fileItem.sWidth);
-                ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
+                if(!fileItem.sWidth.equals("") && !fileItem.sHeight.equals("")) {
+                    ciNew.iWidth = Integer.parseInt(fileItem.sWidth);
+                    ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
+                }
                 ciNew.sFolder_Name = fileItem.sDestinationFolder;
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
@@ -2664,11 +2666,37 @@ public class Service_Import extends IntentService {
             icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
         }
 
+        File fDestination = new File(
+                globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                        icfDownloadItem.sDestinationFolder);
+
+        if (!fDestination.exists()) {
+            if (!fDestination.mkdir()) {
+                //Unable to create directory
+                BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                        false, iProgressBarValue,
+                        true, "Operation halted.",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                return;
+            } else {
+                BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                        false, iProgressBarValue,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+            }
+        } else {
+            BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                    true, iProgressBarValue,
+                    false, "",
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+        }
+
         //Create a folder to capture the downloads:
         File fTempDestination = new File(
                 globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
                         icfDownloadItem.sDestinationFolder + File.separator + iNextRecordId);
 
+        //Create the temporary download folder (within the destination folder):
         if (!fTempDestination.exists()) {
             if (!fTempDestination.mkdir()) {
                 //Unable to create directory
@@ -2701,8 +2729,10 @@ public class Service_Import extends IntentService {
         ciNew.lSize = icfDownloadItem.lSizeBytes;
         ciNew.lDuration_Milliseconds = icfDownloadItem.lVideoTimeInMilliseconds;
         ciNew.sDuration_Text = icfDownloadItem.sVideoTimeText;
-        ciNew.iWidth = Integer.parseInt(icfDownloadItem.sWidth);
-        ciNew.iHeight = Integer.parseInt(icfDownloadItem.sHeight);
+        if(!icfDownloadItem.sWidth.equals("") && !icfDownloadItem.sHeight.equals("")) {
+            ciNew.iWidth = Integer.parseInt(icfDownloadItem.sWidth);
+            ciNew.iHeight = Integer.parseInt(icfDownloadItem.sHeight);
+        }
         ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
         ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
         Double dTimeStamp = GlobalClass.GetTimeStampFloat();
@@ -2752,6 +2782,8 @@ public class Service_Import extends IntentService {
             DownloadManager downloadManager = null;
             downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
 
+            ArrayList<Long> allDownloadIDs = new ArrayList<>();
+
             //Download the file(s):
             int FILE_DOWNLOAD_ADDRESS = 0;
             int FILE_NAME_AND_EXTENSION = 1;
@@ -2778,7 +2810,9 @@ public class Service_Import extends IntentService {
                             //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                             .setMimeType("application/octet-stream")
                             .setDestinationUri(Uri.fromFile(fNewFile));
-                    downloadManager.enqueue(request);
+                    long lDownloadID = downloadManager.enqueue(request);
+                    allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
+
 
                     lProgressNumerator++;
 
@@ -2816,11 +2850,17 @@ public class Service_Import extends IntentService {
             String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                     File.separator + ciNew.sFolder_Name;
             String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ciNew.sItemID;
+            long[] lDownloadIDs = new long[allDownloadIDs.size()];
+            for(int i = 0; i < allDownloadIDs.size(); i++){
+                lDownloadIDs[i] = allDownloadIDs.get(i);
+            }
             Data dataVideoConcatenator = new Data.Builder()
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT, ciNew.iFile_Count)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, ciNew.sFilename)
+                    .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)
+                    .putLongArray(Worker_VideoPostProcessing.KEY_ARG_VIDEO_DOWNLOAD_IDS, lDownloadIDs)
                     .build();
             OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
                     .setInputData(dataVideoConcatenator)

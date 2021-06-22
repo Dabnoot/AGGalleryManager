@@ -173,7 +173,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                 @Override
                 public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    boolean bAddressOK = false;
+                    /*boolean bAddressOK = false;
                     String sAddressCandidate = String.valueOf(charSequence);
                     if(sAddressCandidate.length() > 0) {
                         //Evaluate if the address matches a pattern:
@@ -192,7 +192,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         viewModelImportActivity.sWebAddress = sAddressCandidate;
                     } else {
                         viewModelImportActivity.sWebAddress = "";
-                    }
+                    }*/
+                    RecordWebAddress();
                 }
 
                 @Override
@@ -304,6 +305,14 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     }
 
     @Override
+    public void onPause() {
+        if(viewModelImportActivity.sWebAddress.equals("")) {
+            RecordWebAddress();
+        }
+        super.onPause();
+    }
+
+    @Override
     public void onDestroy() {
         if (getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
@@ -312,7 +321,29 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     }
 
 
+    private void RecordWebAddress(){
+        boolean bAddressOK = false;
+        String sAddressCandidate = gEditText_WebAddress.getText().toString();
+        if(sAddressCandidate.length() > 0) {
+            //Evaluate if the address matches a pattern:
+            String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.x%nxx\\.c%om\\/(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+            String sNHRegexExpression = sNonExplicitAddress.replace("%","");
 
+            ArrayList<String> alsVideoSiteRegexExpressions = new ArrayList<>();
+            alsVideoSiteRegexExpressions.add(sNHRegexExpression);
+            for(String sRegex: alsVideoSiteRegexExpressions){
+                if(sAddressCandidate.matches(sRegex)){
+                    bAddressOK = true;
+                    //break;
+                }
+            }
+        }
+        if(bAddressOK) {
+            viewModelImportActivity.sWebAddress = sAddressCandidate;
+        } else {
+            viewModelImportActivity.sWebAddress = "";
+        }
+    }
 
     private void SetTextStatusMessage(String sMessage){
         if(gTextView_ShortStatus != null){
