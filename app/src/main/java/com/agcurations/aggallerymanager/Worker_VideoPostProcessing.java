@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -299,7 +300,7 @@ public class Worker_VideoPostProcessing extends Worker {
                     String sFailureMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
                     return Result.failure(DataErrorMessage(sFailureMessage));
                 }
-                //VideoPostProcessingNotification("Video download post-processing complete.");
+
             } else {
             //if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
                 //Process the files.
@@ -437,29 +438,5 @@ public class Worker_VideoPostProcessing extends Worker {
                 .putString(FAILURE_MESSAGE, sMessage)
                 .build();
     }
-
-    private void VideoPostProcessingNotification(String sMessage){
-        final String _sMessage = sMessage;
-        ContextCompat.getMainExecutor(getApplicationContext()).execute(new Runnable() {
-            @Override
-            public void run() {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext(), R.style.AlertDialogCustomStyle);
-                builder.setTitle("Video Post Processing");
-                builder.setMessage(_sMessage);
-
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }
-                });
-
-                AlertDialog adConfirmationDialog = builder.create();
-                adConfirmationDialog.show();
-            }
-        });
-
-
-    }
-
 
 }

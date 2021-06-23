@@ -245,6 +245,9 @@ public class Service_CatalogViewer extends IntentService {
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
 
+        //First look for any download items requiring post-processing:
+        globalClass.ExecuteDownloadManagerPostProcessing();
+
         //Apply the sort field.
         //Copy over only items that match a filter, if applied.
         //Copy over only non-restricted catalog items, if necessary.

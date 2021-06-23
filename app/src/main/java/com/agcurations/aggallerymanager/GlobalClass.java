@@ -1047,6 +1047,138 @@ public class GlobalClass extends Application {
     }
 
 
+    //====================================================================================
+    //===== Download Management ==========================================================
+    //====================================================================================
+
+    public void ExecuteDownloadManagerPostProcessing(){
+        //DownloadIdleService will delete files after about a week. Rename downloaded files to prevent
+        //  this from happening. This will need to occur for downloaded comics or
+
+        ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
+
+        //Look for comic post-processing required:
+        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+            ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
+            if (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE) {
+                //Check to see if all of the files have downloaded:
+                String sComicItemFolderPath =
+                        gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath()
+                                + File.separator + ci.sFolder_Name;
+                File fComicItemFolder = new File(sComicItemFolderPath);
+                String sComicItemDLFolderPath = sComicItemFolderPath + File.separator + GlobalClass.gsDLTempFolderName;
+                File fComicItemDLFolder = new File(sComicItemDLFolderPath);
+                if (fComicItemDLFolder.exists()) {
+                    File[] fComicDLFiles = fComicItemDLFolder.listFiles();
+                    if (fComicDLFiles != null) {
+                        if (fComicDLFiles.length == ci.iComicPages) {
+                            //All of the files have been downloaded.
+                            //Attempt to move the files:
+                            boolean bMoveSuccessful = true;
+                            for (File fDLFile : fComicDLFiles) {
+                                String sFileName = fDLFile.getName();
+                                File fDestination = new File(sComicItemFolderPath + File.separator + sFileName);
+                                if (fDLFile.isFile()) {
+                                    if (!fDLFile.renameTo(fDestination)) {
+                                        Log.d("File move", "Cannot move file " + sFileName + " from " + fDLFile.getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
+                                        bMoveSuccessful = false;
+                                    }
+                                }
+                            }
+                            if (bMoveSuccessful) {
+                                //Delete the DL folder:
+                                if (!fComicItemDLFolder.delete()) {
+                                    Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
+                                }
+                                ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                                alsCatalogItemsToUpdate.add(ci);
+                            }
+                        }
+                    }
+                } else {
+                    Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
+                }
+            }
+        }
+        //Look for video post-processing required:
+        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+            ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
+            if((ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE) ||
+                    (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT)) {
+                //Check to see if the concatenation (or single video file download) operation is complete:
+                String sVideoDestinationFolder = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                        File.separator + ci.sFolder_Name;
+                String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                if(fVideoDownloadFolder.exists()){
+                    File[] fVideoDownloadFolderListing = fVideoDownloadFolder.listFiles();
+                    ArrayList<File> alfOutputFolders = new ArrayList<>();
+                    if(fVideoDownloadFolderListing != null) {
+                        for (File f : fVideoDownloadFolderListing) {
+                            //Locate the output folder
+                            if (f.isDirectory()) {
+                                alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
+                            }
+                        }
+                        //Attempt to locate the output file of a concatenation operation:
+                        for (File f : alfOutputFolders) {
+                            String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
+                            File fOutputFile = new File(sOutputFileAbsolutePath);
+                            if (fOutputFile.exists()) {
+                                //Concatenation is complete
+                                //Move the file:
+                                String sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + ci.sFilename;
+                                File fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
+                                if (!fOutputFileFinalDestination.exists()) {
+                                    if(!fOutputFile.renameTo(fOutputFileFinalDestination)){
+                                        Log.d("File Move", "Unable to move file from " + fOutputFile.getAbsolutePath() + " to " + fOutputFileFinalDestination.getAbsolutePath());
+                                        break;
+                                    }
+                                }
+
+                                //Delete output folder contents:
+                                for (File f2 : alfOutputFolders) {
+                                    File[] f2_Contents = f2.listFiles();
+                                    if (f2_Contents != null) {
+                                        for (File f3 : f2_Contents) {
+                                            if(!f3.delete()){
+                                                Log.d("File Deletion", "Unable to delete file " + f3.getAbsolutePath());
+                                            }
+                                        }
+                                    }
+                                }
+                                //Delete download folder contents:
+                                for (File f4 : fVideoDownloadFolderListing) {
+                                    if(!f4.delete()){
+                                        Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath());
+                                    }
+                                }
+                                //Delete download folder:
+                                if(!fVideoDownloadFolder.delete()){
+                                    Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
+                                }
+
+                                //Update catalog item to indicate no post-processing needed:
+                                ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                                alsCatalogItemsToUpdate.add(ci);
+                                break; //Don't go through any more "output" folders in this temp download directory.
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+        //Update any catalog records:
+        for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate) {
+            CatalogDataFile_UpdateRecord(ci);
+        }
+
+    }
+
+
+
 
     //=====================================================================================
     //===== Other Subroutines Section ===================================================
