@@ -375,14 +375,14 @@ public class Worker_VideoPostProcessing extends Worker {
                         try {
                             FileWriter fwLogFile = null;
                             fwLogFile = new FileWriter(fLog, true);
-                            fwLogFile.write(String.format("\nFFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
+                            fwLogFile.write(String.format("\nExec message: FFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
 
                             if(ReturnCode.isSuccess(returnCode)) {
                                 //Attempt to move the output file:
                                 File fFFMPEGOutputFile = new File(sFFMPEGOutputFilePath);
                                 File fFinalOutputFile = new File(sFinalOutputPath);
                                 if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
-                                    String sFailureMessage = "Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
+                                    String sFailureMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
                                     fwLogFile.write(sFailureMessage + "\n");
 
                                 }

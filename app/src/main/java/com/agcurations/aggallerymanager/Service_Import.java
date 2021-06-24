@@ -2555,10 +2555,10 @@ public class Service_Import extends IntentService {
                             for(String sTSDownloadAddress: icM3U8_entry.als_TSDownloads){
 
                                 URL urlPage = new URL(icM3U8_entry.sBaseURL + "/" + sTSDownloadAddress);
-                                BroadcastProgress(true, "Getting file size data for " + sTSDownloadAddress + "\n",
+                                /*BroadcastProgress(true, "Getting file size data for " + sTSDownloadAddress + "\n",
                                         false, 0,
                                         false, "",
-                                        sIntentActionFilter); //Broadcast progress
+                                        sIntentActionFilter); *///Broadcast progress
 
                                 HttpURLConnection httpURLConnection = (HttpURLConnection) urlPage.openConnection();
                                 httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
@@ -2884,7 +2884,7 @@ public class Service_Import extends IntentService {
 
 
 
-            BroadcastProgress(true, "Operation complete. Downloads may continue in the backgound. If this is a M3U8 (streaming) download, multiple files " +
+            BroadcastProgress(true, "Operation complete.\nDownloads may continue in the backgound. If this is a M3U8 (streaming) download, multiple files " +
                             "will be post-processed after downloads are completed.",
                     true, iProgressBarValue,
                     true, "All downloads started",

@@ -38,7 +38,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     private EditText gEditText_WebAddress;
     private Button gButton_Go;
     private Button gButton_Detect;
-    private TextView gTextView_ShortStatus;
+    private TextView gTextView_StatusInstructions;
     private WebView gWebView;
     private Button gButton_Next;
 
@@ -95,11 +95,13 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             gEditText_WebAddress  = getView().findViewById(R.id.editText_WebAddress);
             gButton_Go = getView().findViewById(R.id.button_Go);
             gButton_Detect = getView().findViewById(R.id.button_Detect);
-            gTextView_ShortStatus = getView().findViewById((R.id.textView_ShortStatus));
+            gTextView_StatusInstructions = getView().findViewById((R.id.textView_StatusInstructions));
             gWebView = getView().findViewById(R.id.webView);
             gButton_Next = getView().findViewById(R.id.button_NextStep);
 
         }
+
+        SetTextStatusMessage("Enter an address and click 'Go'.");
 
         //Configure "Paste Address" button:
         if(button_PasteAddress != null){
@@ -155,7 +157,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             @Override
             public void onPageFinished(WebView view, String url) {
                 gButton_Detect.setEnabled(true);
-                SetTextStatusMessage("Play video and click 'Detect'.");
+                SetTextStatusMessage("Click 'Detect'. If expected video does not appear in the results, try playing and pausing the video first.");
             }
         });
 
@@ -346,8 +348,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     }
 
     private void SetTextStatusMessage(String sMessage){
-        if(gTextView_ShortStatus != null){
-            gTextView_ShortStatus.setText(sMessage);
+        if(gTextView_StatusInstructions != null){
+            gTextView_StatusInstructions.setText(sMessage);
         }
     }
 

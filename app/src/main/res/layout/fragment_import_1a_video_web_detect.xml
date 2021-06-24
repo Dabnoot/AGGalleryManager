@@ -20,12 +20,12 @@
         android:id="@+id/editText_WebAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
-        android:layout_toEndOf="@id/textView_Label_WebAddress"
         android:layout_toStartOf="@id/button_PasteAddress"
-        android:maxLines="1"/>
+        android:layout_toEndOf="@id/textView_Label_WebAddress"
+        android:singleLine="true"
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/button_PasteAddress"
@@ -63,26 +63,14 @@
         android:enabled="false"/>
 
     <TextView
-        android:id="@+id/textView_Instructions"
-        android:layout_width="wrap_content"
+        android:id="@+id/textView_StatusInstructions"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
-        android:text="Load a webpage containing video. Play the video in the webpage, and then click 'detect'."
-        android:layout_below="@id/editText_WebAddress"/>
-
-    <TextView
-        android:id="@+id/textView_ShortStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="20dp"
-        android:text=""
-        android:gravity="end"
+        android:text="Enter an address and click 'Go'."
         android:layout_below="@id/editText_WebAddress"
-        android:layout_toEndOf="@id/textView_Instructions"
         android:layout_alignParentEnd="true"/>
 
     <WebView
@@ -90,7 +78,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
-        android:layout_below="@id/textView_Instructions"
+        android:layout_below="@id/textView_StatusInstructions"
         android:layout_above="@id/linearLayout_ButtonBar"
         />
 
