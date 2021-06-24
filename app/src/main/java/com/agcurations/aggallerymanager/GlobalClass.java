@@ -1129,12 +1129,25 @@ public class GlobalClass extends Application {
                                 //Move the file:
                                 String sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + ci.sFilename;
                                 File fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
-                                if (!fOutputFileFinalDestination.exists()) {
-                                    if(!fOutputFile.renameTo(fOutputFileFinalDestination)){
-                                        Log.d("File Move", "Unable to move file from " + fOutputFile.getAbsolutePath() + " to " + fOutputFileFinalDestination.getAbsolutePath());
-                                        break;
-                                    }
+                                //Make sure the 'rename-to' name is unique:
+                                int iOutputFolderRetryIterator = 0;
+                                while(fOutputFileFinalDestination.exists()){
+                                    iOutputFolderRetryIterator++;
+                                    String sDeJumbledFileName = JumbleFileName(ci.sFilename);
+                                    String sFileNameWithoutExtension = sDeJumbledFileName.replaceFirst("[.][^.]+$","");
+                                    String sNewFileName = sFileNameWithoutExtension + "_" + iOutputFolderRetryIterator;
+                                    String sFileNameExtension = sDeJumbledFileName.substring(sDeJumbledFileName.lastIndexOf(".") + 1);
+                                    sNewFileName = sNewFileName + "." + sFileNameExtension;
+                                    sNewFileName = JumbleFileName(sNewFileName);
+                                    ci.sFilename = sNewFileName;
+                                    sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + sNewFileName;
+                                    fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
                                 }
+                                if(!fOutputFile.renameTo(fOutputFileFinalDestination)){
+                                    Log.d("File Move", "Unable to move file from " + fOutputFile.getAbsolutePath() + " to " + fOutputFileFinalDestination.getAbsolutePath());
+                                    break;
+                                }
+
 
                                 //Delete output folder contents:
                                 for (File f2 : alfOutputFolders) {

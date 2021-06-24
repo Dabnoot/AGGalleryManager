@@ -31,11 +31,15 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Activity_Main extends AppCompatActivity {
 
@@ -436,6 +440,7 @@ public class Activity_Main extends AppCompatActivity {
             WorkManager wm = WorkManager.getInstance(getApplicationContext());
             LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
             ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);*/
+
 
             Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();
 

@@ -12,10 +12,13 @@ import android.widget.EditText;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -48,7 +51,7 @@ public class Worker_VideoPostProcessing extends Worker {
     // Define keys for arguments passed to this worker:
     public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8 = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8";
     public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
-    public static final String KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT = "KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT";
+    public static final String KEY_ARG_FILENAME_SEQUENCE = "KEY_ARG_FILENAME_SEQUENCE";
     public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";
     public static final String KEY_ARG_VIDEO_TOTAL_FILE_SIZE = "KEY_ARG_VIDEO_TOTAL_FILE_SIZE";
     public static final String KEY_ARG_VIDEO_DOWNLOAD_IDS = "KEY_ARG_VIDEO_DOWNLOAD_IDS";
@@ -59,6 +62,7 @@ public class Worker_VideoPostProcessing extends Worker {
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
     String gsPathToMonitorForDownloads;                 //Location to monitor for download file(s)
     int giExpectedDownloadFileCount;                    //Expected count of downloaded files
+    String[] gsFilenameSequence;
     String gsVideoOutputFilename;                       //Name of output file
     long glTotalFileSize;
     long[] glDownloadIDs;                               //Used to determine if a download ID in DownloadManager has status 'completed'.
@@ -73,7 +77,10 @@ public class Worker_VideoPostProcessing extends Worker {
         setProgressAsync(new Data.Builder().putInt(PROGRESS, 0).build());*/
         giDownloadTypeSingleOrM3U8 = getInputData().getInt(KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, DOWNLOAD_TYPE_SINGLE);
         gsPathToMonitorForDownloads = getInputData().getString(KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS);
-        giExpectedDownloadFileCount = getInputData().getInt(KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT,0);
+        gsFilenameSequence = getInputData().getStringArray(KEY_ARG_FILENAME_SEQUENCE);
+        if(gsFilenameSequence != null) {
+            giExpectedDownloadFileCount = gsFilenameSequence.length;
+        }
         gsVideoOutputFilename = getInputData().getString(KEY_ARG_VIDEO_OUTPUT_FILENAME);
         glTotalFileSize = getInputData().getLong(KEY_ARG_VIDEO_TOTAL_FILE_SIZE,0);
         glDownloadIDs = getInputData().getLongArray(KEY_ARG_VIDEO_DOWNLOAD_IDS);
@@ -82,6 +89,9 @@ public class Worker_VideoPostProcessing extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+
+
+
 
         //Validate data
         if( gsVideoOutputFilename.equals("")){
@@ -101,6 +111,10 @@ public class Worker_VideoPostProcessing extends Worker {
             String sFailureMessage = "No expected file download count provided.";
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
+
+        /*if(!gsVideoOutputFilename.equals("")){
+            return Result.failure(DataErrorMessage("Killing Worker."));
+        }*/
 
         //Establish the name of the temporary output folder for the video concatenation result,
         // and create the folder:
@@ -278,6 +292,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
         final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
         final File fLog = new File(sLogFilePath);
+        final String sFinalOutputPath = sOutputFolderPath + File.separator + GlobalClass.JumbleFileName(gsVideoOutputFilename);
         if(bFileDownloadsComplete) {
             fDownloadedFiles = fThisDownloadFolder.listFiles();
             if(fDownloadedFiles == null){
@@ -295,7 +310,8 @@ public class Worker_VideoPostProcessing extends Worker {
                         fInputFile = f;
                     }
                 }
-                File fOutputFile = new File(sOutputFolderPath + File.separator + gsVideoOutputFilename);
+                String sJumbledFileName = GlobalClass.JumbleFileName(gsVideoOutputFilename);
+                File fOutputFile = new File(sFinalOutputPath);
                 if(!fInputFile.renameTo(fOutputFile)){
                     String sFailureMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
                     return Result.failure(DataErrorMessage(sFailureMessage));
@@ -310,10 +326,24 @@ public class Worker_VideoPostProcessing extends Worker {
                 String sFFMPEGInputFilePath = sOutputFolderPath + File.separator + sFFMPEGInputFilename;
                 File fFFMPEGInputFile = new File(sFFMPEGInputFilePath);
 
+                //Sort the file names:
+                TreeMap<Integer, String> tmDownloadedFiles = new TreeMap<>();
+                for(File f: fDownloadedFiles){
+                    for(int j = 0; j < gsFilenameSequence.length; j++){
+                        if(f.isFile()){
+                            String sFilename = f.getName();
+                            if(sFilename.contains(gsFilenameSequence[j])){
+                                tmDownloadedFiles.put(j, f.getAbsolutePath());
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 StringBuilder sbBuffer = new StringBuilder();
-                for (File f : fDownloadedFiles) {
+                for (Map.Entry<Integer, String> entry: tmDownloadedFiles.entrySet()) {
                     sbBuffer.append("file '");
-                    sbBuffer.append(f.getAbsolutePath());
+                    sbBuffer.append(entry.getValue());
                     sbBuffer.append("'\n");
                 }
 
@@ -331,8 +361,9 @@ public class Worker_VideoPostProcessing extends Worker {
                 }
 
                 //Execute the FFMPEG concatenation:
+                final String sFFMPEGOutputFilePath = sOutputFolderPath + File.separator + gsVideoOutputFilename;
 
-                String sCommand = "-f concat -safe 0 -i " + sFFMPEGInputFilePath + " -c copy " + sOutputFolderPath + File.separator + gsVideoOutputFilename;
+                String sCommand = "-f concat -safe 0 -i " + sFFMPEGInputFilePath + " -c copy \"" + sFFMPEGOutputFilePath + "\"";
                 FFmpegKit.executeAsync(sCommand, new ExecuteCallback() {
 
                     @Override
@@ -346,9 +377,19 @@ public class Worker_VideoPostProcessing extends Worker {
                             fwLogFile = new FileWriter(fLog, true);
                             fwLogFile.write(String.format("\nFFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
 
+                            if(ReturnCode.isSuccess(returnCode)) {
+                                //Attempt to move the output file:
+                                File fFFMPEGOutputFile = new File(sFFMPEGOutputFilePath);
+                                File fFinalOutputFile = new File(sFinalOutputPath);
+                                if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
+                                    String sFailureMessage = "Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
+                                    fwLogFile.write(sFailureMessage + "\n");
+
+                                }
+                            }
                             String sMessage = session.getFailStackTrace();
                             if(sMessage != null) {
-                                fwLogFile.write(sMessage + "\n");
+                                fwLogFile.write("Exec message: " + sMessage + "\n");
                             }
 
                             fwLogFile.flush();
@@ -365,11 +406,11 @@ public class Worker_VideoPostProcessing extends Worker {
                         // CALLED WHEN SESSION PRINTS LOGS
                         String sMessage = log.getMessage();
 
-                        //Write the data to the log file:
+                        //Write the data to the log file and rename the output file so that the main application can find it:
                         try {
                             FileWriter fwLogFile = null;
                             fwLogFile = new FileWriter(fLog, true);
-                            fwLogFile.write(sMessage + "\n");
+                            fwLogFile.write("Log message: " + sMessage + "\n");
                             fwLogFile.flush();
                             fwLogFile.close();
 
@@ -389,7 +430,7 @@ public class Worker_VideoPostProcessing extends Worker {
                         try {
                             FileWriter fwLogFile = null;
                             fwLogFile = new FileWriter(fLog, true);
-                            fwLogFile.write(sMessage + "\n");
+                            fwLogFile.write("Stat message: " + sMessage + "\n");
                             fwLogFile.flush();
                             fwLogFile.close();
 

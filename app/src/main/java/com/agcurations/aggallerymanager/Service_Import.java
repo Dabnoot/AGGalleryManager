@@ -257,6 +257,8 @@ public class Service_Import extends IntentService {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
 
             } else if (ACTION_DELETE_FILES.equals(action)){
 
@@ -949,7 +951,8 @@ public class Service_Import extends IntentService {
                     }
                     sTempFileName = GlobalClass.JumbleFileName(sTempFileName);
                     fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sTempFileName);
-                }                sFileName = sTempFileName;
+                }
+                sFileName = sTempFileName;
 
                 boolean bCopyViaStream = true;
 
@@ -2330,8 +2333,7 @@ public class Service_Import extends IntentService {
         for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
             if(vdsk.bMatchFound) {
                 if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_TITLE)) {
-                    sTitle = cleanHTMLCodedCharacters(vdsk.sSearchStringMatchContent); //Convert any unix data
-                    //sTitle = cleanFileNameViaReplace(sTitle, ""); //Get rid of any special characters
+                    sTitle = cleanHTMLCodedCharacters(vdsk.sSearchStringMatchContent); //Convert any html coded characters
                 } else if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_LINK)) {
                     try {
                         URL urlVideoLink = new URL(vdsk.sSearchStringMatchContent);
@@ -2725,7 +2727,6 @@ public class Service_Import extends IntentService {
         ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
         ciNew.iMediaCategory = iMediaCategory;
         ciNew.sItemID = String.valueOf(iNextRecordId);
-        ciNew.sFilename = icfDownloadItem.sFileOrFolderName;
         ciNew.lSize = icfDownloadItem.lSizeBytes;
         ciNew.lDuration_Milliseconds = icfDownloadItem.lVideoTimeInMilliseconds;
         ciNew.sDuration_Text = icfDownloadItem.sVideoTimeText;
@@ -2744,11 +2745,15 @@ public class Service_Import extends IntentService {
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
             ciNew.sVideoLink = icfDownloadItem.sURLVideoLink;
+            ciNew.sFilename = GlobalClass.JumbleFileName(icfDownloadItem.sFileOrFolderName);
         } else {
             //M3U8. Mark post-processing to concat videos and move the result.
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count so that we know when all of the files have been downloaded.
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
+            String sTempFilename = icfDownloadItem.ic_M3U8.sTitle;
+            sTempFilename = cleanFileNameViaReplace(sTempFilename, "") + ".ts";
+            ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
         }
 
         globalClass.CatalogDataFile_CreateNewRecord(ciNew);
@@ -2764,7 +2769,7 @@ public class Service_Import extends IntentService {
             //If this is an M3U8 download, a set of files must be downloaded.
             for(String sFileName: icfDownloadItem.ic_M3U8.als_TSDownloads){
                 String sDownloadAddress = icfDownloadItem.ic_M3U8.sBaseURL + "/" + sFileName;
-                String sNewFilename = ciNew.sItemID + "_" + sFileName;
+                String sNewFilename = ciNew.sItemID + "_" + cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
                 ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
             }
         }
@@ -2787,8 +2792,8 @@ public class Service_Import extends IntentService {
             //Download the file(s):
             int FILE_DOWNLOAD_ADDRESS = 0;
             int FILE_NAME_AND_EXTENSION = 1;
-            for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
 
+            for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
                 String sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
 
                 File fNewFile = new File(sNewFullPathFilename);
@@ -2854,11 +2859,19 @@ public class Service_Import extends IntentService {
             for(int i = 0; i < allDownloadIDs.size(); i++){
                 lDownloadIDs[i] = allDownloadIDs.get(i);
             }
+            //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
+            String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
+            int l = 0;
+            for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
+                sFilenameSequence[l] =  sURLAndFileName[FILE_NAME_AND_EXTENSION];
+                l++;
+            }
+            //Build-out data to send to the worker:
             Data dataVideoConcatenator = new Data.Builder()
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
-                    .putInt(Worker_VideoPostProcessing.KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT, ciNew.iFile_Count)
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, ciNew.sFilename)
+                    .putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, GlobalClass.JumbleFileName(ciNew.sFilename)) //Double-jumble.
                     .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)
                     .putLongArray(Worker_VideoPostProcessing.KEY_ARG_VIDEO_DOWNLOAD_IDS, lDownloadIDs)
                     .build();
@@ -2874,7 +2887,7 @@ public class Service_Import extends IntentService {
             BroadcastProgress(true, "Operation complete. Downloads may continue in the backgound. If this is a M3U8 (streaming) download, multiple files " +
                             "will be post-processed after downloads are completed.",
                     true, iProgressBarValue,
-                    false, "",
+                    true, "All downloads started",
                     sIntentActionFilter);
 
         } catch (Exception e) {
@@ -2890,11 +2903,6 @@ public class Service_Import extends IntentService {
         //Modify viewer settings to show the newly-imported files:
         globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
         globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;
-
-        BroadcastProgress(true, "Operation complete.",
-                true, iProgressBarValue,
-                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
     }
 
