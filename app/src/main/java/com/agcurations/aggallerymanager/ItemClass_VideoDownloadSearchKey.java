@@ -4,13 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class ItemClass_VideoDownloadSearchKey implements Serializable {
+public class ItemClass_VideoDownloadSearchKey {
     //This class to define search items to use to assist with finding data in an html file.
     //  Used to find a string by first locating a match, and copy data to a second matched string position.
 
-    public final String sHostnameInfo;
-
     public static final String VIDEO_DOWNLOAD_TITLE = "VIDEO_DOWNLOAD_TITLE";
+    public static final String VIDEO_DOWNLOAD_TAGS = "VIDEO_DOWNLOAD_TAGS";
+    public static final String VIDEO_DOWNLOAD_THUMBNAIL = "VIDEO_DOWNLOAD_THUMBNAIL";
     public static final String VIDEO_DOWNLOAD_LINK = "VIDEO_DOWNLOAD_LINK";
     public static final String VIDEO_DOWNLOAD_M3U8 = "VIDEO_DOWNLOAD_M3U8";
 
@@ -18,6 +18,7 @@ public class ItemClass_VideoDownloadSearchKey implements Serializable {
 
     public final String sSearchStartString;
     public final String sSearchEndString;
+    public final String sSXPathExpression;
 
     public boolean bMatchFound = false;
     public String sSearchStringMatchContent = "";
@@ -27,15 +28,23 @@ public class ItemClass_VideoDownloadSearchKey implements Serializable {
     public boolean bErrorWithLink = false; //Used if download link.
     public String sErrorMessage = ""; //Used if download link.
 
-    public ItemClass_VideoDownloadSearchKey(String _sHostnameInfo,
-                                            String _sDataType,
-                                            String _sSearchStartString,
-                                            String _sSearchEndString)
+    public ItemClass_VideoDownloadSearchKey(String sDataType,
+                                            String sSearchStartString,
+                                            String sSearchEndString)
     {
-        this.sHostnameInfo = _sHostnameInfo;
-        this.sDataType = _sDataType;
-        this.sSearchStartString = _sSearchStartString;
-        this.sSearchEndString = _sSearchEndString;
+        this.sDataType = sDataType;
+        this.sSearchStartString = sSearchStartString;
+        this.sSearchEndString = sSearchEndString;
+        this.sSXPathExpression = null;
+    }
+
+    public ItemClass_VideoDownloadSearchKey(String sDataType,
+                                            String sSXPathExpression)
+    {
+        this.sDataType = sDataType;
+        this.sSearchStartString = null;
+        this.sSearchEndString = null;
+        this.sSXPathExpression = sSXPathExpression;
     }
 
 }

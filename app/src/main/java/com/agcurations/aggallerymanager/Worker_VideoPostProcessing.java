@@ -1,28 +1,22 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.database.Cursor;
-import android.os.Looper;
-import android.text.InputType;
-import android.widget.EditText;
+import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -51,16 +45,18 @@ public class Worker_VideoPostProcessing extends Worker {
     // Define keys for arguments passed to this worker:
     public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8 = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8";
     public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
+    public static final String KEY_ARG_WORKING_FOLDER = "KEY_ARG_WORKING_FOLDER";
     public static final String KEY_ARG_FILENAME_SEQUENCE = "KEY_ARG_FILENAME_SEQUENCE";
     public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";
     public static final String KEY_ARG_VIDEO_TOTAL_FILE_SIZE = "KEY_ARG_VIDEO_TOTAL_FILE_SIZE";
     public static final String KEY_ARG_VIDEO_DOWNLOAD_IDS = "KEY_ARG_VIDEO_DOWNLOAD_IDS";
 
     //=========================
-    int giDownloadTypeSingleOrM3U8 = 0;
+    int giDownloadTypeSingleOrM3U8;
     public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
     String gsPathToMonitorForDownloads;                 //Location to monitor for download file(s)
+    String gsWorkingFolder;                             //Location on external SD Card (big storage)
     int giExpectedDownloadFileCount;                    //Expected count of downloaded files
     String[] gsFilenameSequence;
     String gsVideoOutputFilename;                       //Name of output file
@@ -77,6 +73,7 @@ public class Worker_VideoPostProcessing extends Worker {
         setProgressAsync(new Data.Builder().putInt(PROGRESS, 0).build());*/
         giDownloadTypeSingleOrM3U8 = getInputData().getInt(KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, DOWNLOAD_TYPE_SINGLE);
         gsPathToMonitorForDownloads = getInputData().getString(KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS);
+        gsWorkingFolder = getInputData().getString((KEY_ARG_WORKING_FOLDER));
         gsFilenameSequence = getInputData().getStringArray(KEY_ARG_FILENAME_SEQUENCE);
         if(gsFilenameSequence != null) {
             giExpectedDownloadFileCount = gsFilenameSequence.length;
@@ -102,9 +99,20 @@ public class Worker_VideoPostProcessing extends Worker {
             String sFailureMessage = "No path to monitor for downloads provided.";
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
+
         File fThisDownloadFolder = new File(gsPathToMonitorForDownloads);
         if(!fThisDownloadFolder.exists()){
             String sFailureMessage = "Folder to monitor for downloads does not exist: " + gsPathToMonitorForDownloads;
+            return Result.failure(DataErrorMessage(sFailureMessage));
+        }
+
+        if( gsWorkingFolder.equals("")){
+            String sFailureMessage = "No working folder provided.";
+            return Result.failure(DataErrorMessage(sFailureMessage));
+        }
+        File fThisWorkingFolder = new File(gsWorkingFolder);
+        if(!fThisWorkingFolder.exists()){
+            String sFailureMessage = "Working folder does not exist: " + gsWorkingFolder;
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
         if( giExpectedDownloadFileCount == 0){
@@ -119,13 +127,13 @@ public class Worker_VideoPostProcessing extends Worker {
         //Establish the name of the temporary output folder for the video concatenation result,
         // and create the folder:
         String sOutputFolder = "Output";
-        String sOutputFolderPath = fThisDownloadFolder + File.separator + sOutputFolder;
+        String sOutputFolderPath = fThisWorkingFolder + File.separator + sOutputFolder;
         File fOutputFolder = new File(sOutputFolderPath);
         int iOutputFolderRetryIterator = 1;
         while(fOutputFolder.exists()){
             sOutputFolder = "Output_" + iOutputFolderRetryIterator;
             iOutputFolderRetryIterator++;
-            sOutputFolderPath = fThisDownloadFolder + File.separator + sOutputFolder;
+            sOutputFolderPath = fThisWorkingFolder + File.separator + sOutputFolder;
             fOutputFolder = new File(sOutputFolderPath);
         }
 
@@ -134,45 +142,18 @@ public class Worker_VideoPostProcessing extends Worker {
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
 
-
-        /*//https://developer.android.com/topic/libraries/architecture/workmanager/how-to/intermediate-progress
-        try {
-            // Doing work.
-            int iDenominator = 120;
-            int iNumerator;
-            if(iSavedNumerator == -1){
-                iNumerator = 0;
-            } else {
-                iNumerator = iSavedNumerator;
-            }
-
-            while( iNumerator < iDenominator) {
-                Thread.sleep(1000);
-                int iProgress = (int) ((iNumerator / (float) iDenominator) * 100);
-                //Build data for any observers to take note:
-                Data data = new Data.Builder()
-                        .putInt(PROGRESS,iProgress)
-                        .putString(FILENAME, sVideoOutputFilename)
-                        .build();
-                setProgressAsync(data);
-                iNumerator++;
-                iSavedNumerator = iNumerator;
-            }
-        } catch (InterruptedException exception) {
-            // ... handle exception
-        }
-        // Set progress to 100 after you are done doing your work.
-        setProgressAsync(new Data.Builder().putInt(PROGRESS, 100).build());*/
-
         //Monitor the location for file downloads' completion:
         int iElapsedWaitTime = 0;
         int iWaitDuration = 5000; //milliseconds
         boolean bFileDownloadsComplete = false;
         boolean bDownloadProblem = false;
         boolean bPaused = false;
-        File[] fDownloadedFiles = null;
+        File[] fDownloadedFiles;
         String sDownloadFailedReason = "";
         String sDownloadPausedReason = "";
+
+        final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
+        final File fLog = new File(sLogFilePath);
 
         while( (iElapsedWaitTime < GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
 
@@ -187,24 +168,7 @@ public class Worker_VideoPostProcessing extends Worker {
                 iElapsedWaitTime += (int) (iWaitDuration/ 10.0); //Wait longer if a download is paused.
             }
 
-            /*fDownloadedFiles = fThisDownloadFolder.listFiles();
-            if(fDownloadedFiles == null){
-                break;
-            }
-            int iFileCount = 0;
-            long lFileSizeSum = 0;
-            for(File f:fDownloadedFiles){
-                if(f.isFile()){
-                    iFileCount++;
-                    //Sum size of files:
-                    lFileSizeSum += f.length();
-                }
-            }
-            if(iFileCount == giExpectedDownloadFileCount){
-                if(lFileSizeSum >= glTotalFileSize) {
-                    bFileDownloadsComplete = true;
-                }
-            }*/
+
             DownloadManager.Query dmQuery = new DownloadManager.Query();
             dmQuery.setFilterById(glDownloadIDs);
             downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
@@ -216,7 +180,8 @@ public class Worker_VideoPostProcessing extends Worker {
                     int status = cursor.getInt(columnIndex);
                     int columnReason = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
                     int reason = cursor.getInt(columnReason);
-
+                    int iLocalURIIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
+                    String sLocalURI = cursor.getString(iLocalURIIndex);
 
                     bDownloadProblem = false;
                     bPaused = false;
@@ -279,6 +244,64 @@ public class Worker_VideoPostProcessing extends Worker {
                             break;
                         case DownloadManager.STATUS_SUCCESSFUL:
                             bFileDownloadsComplete = true;
+
+                            //As of Android version 11, API level 30, One UI 3.1, the DownloadManager
+                            //  will only store files in the onboard storage, or something like that.
+                            //  Move those files over to the SD Card before processing.
+                            sLocalURI = sLocalURI.replace("file://", "");
+                            File fSource = new File(sLocalURI);
+                            if(fSource.exists()) {
+                                String sFileName = fSource.getName();
+                                String sDestination = gsWorkingFolder + File.separator + sFileName;
+                                File fDestination = new File(sDestination);
+                                //Move the file to the working folder:
+                                if (!fDestination.exists()) {
+                                    try {
+                                        InputStream inputStream;
+                                        OutputStream outputStream;
+                                        inputStream = new FileInputStream(fSource.getPath());
+                                        outputStream = new FileOutputStream(fDestination.getPath());
+                                        byte[] buffer = new byte[100000];
+                                        while ((inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                                            outputStream.write(buffer, 0, buffer.length);
+                                        }
+                                        outputStream.flush();
+                                        outputStream.close();
+
+                                        if (!fSource.delete()) {
+                                            String sMessage = "Could not delete source file after copy. Source: " + fSource.getAbsolutePath();
+                                            FileWriter fwLogFile;
+                                            fwLogFile = new FileWriter(fLog, true);
+                                            fwLogFile.write("DownloadManager monitoring message: " + sMessage + "\n");
+                                            fwLogFile.flush();
+                                            fwLogFile.close();
+                                        }
+                                    } catch (Exception e) {
+                                        try {
+                                            String sMessage = fSource.getPath() + "\n" + e.getMessage();
+                                            FileWriter fwLogFile;
+                                            fwLogFile = new FileWriter(fLog, true);
+                                            fwLogFile.write("Stream copy exception: " + sMessage + "\n");
+                                            fwLogFile.flush();
+                                            fwLogFile.close();
+                                        } catch(Exception e2){
+                                            String sMessageI = "";
+                                            if(e.getMessage() != null) {
+                                                sMessageI = e.getMessage();
+                                            }
+                                            Log.d("Stream copy exception", sMessageI);
+                                            String sMessageII = "";
+                                            if(e2.getMessage() != null) {
+                                                sMessageII = e2.getMessage();
+                                            }
+                                            Log.d("Log write exception", sMessageII);
+                                        }
+                                    }
+                                } //End if !FDestination.exists. If it does exist, we have already copied the file over.
+                            } //End if fSource.exists. If it does not exist, we probably already moved it.
+
+
+
                             break;
                     }
                 } while (cursor.moveToNext() && bFileDownloadsComplete && !bDownloadProblem); //End loop through download query results.
@@ -290,16 +313,37 @@ public class Worker_VideoPostProcessing extends Worker {
         } //End loop waiting for download completion.
 
 
-        final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
-        final File fLog = new File(sLogFilePath);
+        //Downloads should be complete.
+        //Delete the download folder to which downloadManager downloaded the files:
+        if(fThisDownloadFolder.exists()){
+            if(!fThisDownloadFolder.delete()){
+                try {
+                    String sMessage = "Could not delete download folder: " + fThisDownloadFolder.getAbsolutePath();
+                    FileWriter fwLogFile;
+                    fwLogFile = new FileWriter(fLog, true);
+                    fwLogFile.write("Stream copy exception: " + sMessage + "\n");
+                    fwLogFile.flush();
+                    fwLogFile.close();
+                } catch(Exception e){
+                    String sMessage2 = "";
+                    if(e.getMessage() != null) {
+                        sMessage2 = e.getMessage();
+                    }
+                    Log.d("Log write exception", sMessage2);
+                }
+            }
+        }
+
+
+
         final String sFinalOutputPath = sOutputFolderPath + File.separator + GlobalClass.JumbleFileName(gsVideoOutputFilename);
         if(bFileDownloadsComplete) {
-            fDownloadedFiles = fThisDownloadFolder.listFiles();
+            fDownloadedFiles = fThisWorkingFolder.listFiles();
             if(fDownloadedFiles == null){
-                String sFailureMessage = "Downloaded file(s) missing from folder: " + gsPathToMonitorForDownloads;
+                String sFailureMessage = "Downloaded file(s) missing from folder: " + gsWorkingFolder;
                 return Result.failure(DataErrorMessage(sFailureMessage));
             } else if (fDownloadedFiles.length < 2) {
-                String sFailureMessage = "Downloaded file(s) missing from folder: " + gsPathToMonitorForDownloads;
+                String sFailureMessage = "Downloaded file(s) missing from folder: " + gsWorkingFolder;
                 return Result.failure(DataErrorMessage(sFailureMessage));
             }
             if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_SINGLE) {
@@ -310,7 +354,7 @@ public class Worker_VideoPostProcessing extends Worker {
                         fInputFile = f;
                     }
                 }
-                String sJumbledFileName = GlobalClass.JumbleFileName(gsVideoOutputFilename);
+
                 File fOutputFile = new File(sFinalOutputPath);
                 if(!fInputFile.renameTo(fOutputFile)){
                     String sFailureMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
@@ -349,7 +393,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
                 //Write the data to the file:
                 try {
-                    FileWriter fwFFMPEGInputFile = null;
+                    FileWriter fwFFMPEGInputFile;
                     fwFFMPEGInputFile = new FileWriter(fFFMPEGInputFile, false);
                     fwFFMPEGInputFile.write(sbBuffer.toString());
                     fwFFMPEGInputFile.flush();
@@ -373,7 +417,7 @@ public class Worker_VideoPostProcessing extends Worker {
                         ReturnCode returnCode = session.getReturnCode();
                         //Write the data to the log file:
                         try {
-                            FileWriter fwLogFile = null;
+                            FileWriter fwLogFile;
                             fwLogFile = new FileWriter(fLog, true);
                             fwLogFile.write(String.format("\nExec message: FFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
 
@@ -408,7 +452,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
                         //Write the data to the log file and rename the output file so that the main application can find it:
                         try {
-                            FileWriter fwLogFile = null;
+                            FileWriter fwLogFile;
                             fwLogFile = new FileWriter(fLog, true);
                             fwLogFile.write("Log message: " + sMessage + "\n");
                             fwLogFile.flush();
@@ -428,7 +472,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
                         //Write the data to the log file:
                         try {
-                            FileWriter fwLogFile = null;
+                            FileWriter fwLogFile;
                             fwLogFile = new FileWriter(fLog, true);
                             fwLogFile.write("Stat message: " + sMessage + "\n");
                             fwLogFile.flush();
@@ -451,7 +495,7 @@ public class Worker_VideoPostProcessing extends Worker {
         } else {
 
             //Write a failure message to the log:
-            FileWriter fwLogFile = null;
+            FileWriter fwLogFile;
             String sFailureMessage = "";
             if( iElapsedWaitTime >= GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) {
                 sFailureMessage = "Download elapsed time exceeds timeout of " + GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT + " milliseconds.";

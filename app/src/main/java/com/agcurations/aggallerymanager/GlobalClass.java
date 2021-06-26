@@ -224,7 +224,7 @@ public class GlobalClass extends Application {
     }
 
     static final String gsDatePatternFileSafe = "yyyyMMdd_HHmmss";
-    public String GetTimeStampFileSafe(){
+    public static String GetTimeStampFileSafe(){
         //Get an easily readable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternFileSafe);
         return gdtfDateFormatter.format(LocalDateTime.now());
@@ -650,11 +650,7 @@ public class GlobalClass extends Application {
         }
     }
 
-    public void CatalogDataFile_CreateBackups(Context context){
-
-
-    }
-
+    //Catalog backup handled in Service_Main.
 
     public ItemClass_CatalogItem analyzeComicReportMissingPages(ItemClass_CatalogItem ci){
 
@@ -1401,7 +1397,7 @@ public class GlobalClass extends Application {
 
     public final static int iComicFolderImportMaxPageSkip = 2;
         //The program attempts to recognize page numbers in filenames during comic import via folder.
-        //  The program has to recognize the page numbering pattern. This factor allows some leniency
+        //  The program alerts user to possible missing pages. This factor allows some leniency
         //  if the user is missing pages from their comic folder - perhaps a first page, or a middle
         //  page. There is no way to determine if end pages are missing. This feature is rather inert
         // and only gives a message to the user to indicate that pages might be missing.
@@ -1419,15 +1415,9 @@ public class GlobalClass extends Application {
 
     //Video import web html search strings (may change if the website changes)
     //Create an array of keys that allow program to locate video links:
-    String VIDEO_DOWNLOAD_TITLE = "VIDEO_DOWNLOAD_TITLE";
+    /*String VIDEO_DOWNLOAD_TITLE = "VIDEO_DOWNLOAD_TITLE";
     String VIDEO_DOWNLOAD_LINK = "VIDEO_DOWNLOAD_LINK";
     String VIDEO_DOWNLOAD_M3U8 = "VIDEO_DOWNLOAD_M3U8";
-    String[][] sHTML_VideoKeys = new String[][]{
-            {"www.xnxx.com", VIDEO_DOWNLOAD_TITLE, "html5player.setVideoTitle('", "');"},
-            {"www.xnxx.com", VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlLow('", "');"},
-            {"www.xnxx.com", VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlHigh('", "');"},
-            {"www.xnxx.com", VIDEO_DOWNLOAD_M3U8, "html5player.setVideoHLS('", "');"}
-    };
 
     ArrayList<ItemClass_VideoDownloadSearchKey> galVideoDownloadSearchKeys = new ArrayList<ItemClass_VideoDownloadSearchKey>() {{
 
@@ -1435,8 +1425,9 @@ public class GlobalClass extends Application {
         add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlLow('","');"));
         add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlHigh('","');"));
         add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8, "html5player.setVideoHLS('","');"));
-    }};
+    }};*/
 
+    ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
 
     public static final int VIDEO_DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
 }

@@ -10,12 +10,15 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -32,6 +35,10 @@ import android.widget.Toast;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -440,6 +447,78 @@ public class Activity_Main extends AppCompatActivity {
             WorkManager wm = WorkManager.getInstance(getApplicationContext());
             LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
             ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);*/
+
+
+
+            String sFileName = /*GlobalClass.GetTimeStampFileSafe() +*/ "_1667_hls-720p-02c5c0_0.ts";
+            /*DownloadManager downloadManager = null;
+            downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse("https://hls-hw.xnxx-cdn.com/videos/hls/0e/01/24/0e0124dc524ebea496445e40d41288a9/hls-720p-02c5c0.ts?e=1624738656&l=0&h=e2636fe7b579aabaedfe4b411cea611b"));
+            request.setTitle("AG Gallery+ File Download: " + "Video Download Test")
+                    .setDescription("Video Download Test")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                    //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                    //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                    .setMimeType("application/octet-stream")
+                    .setDestinationInExternalFilesDir(getApplicationContext(), "Videos", sFileName);
+            downloadManager.enqueue(request);*/
+
+            /*File[] fExternalFilesDirs = getExternalFilesDirs(null);
+            String sSource = fExternalFilesDirs[0].getAbsolutePath() + File.separator +
+                    "Videos" + File.separator + sFileName;
+            String sDestination = fExternalFilesDirs[1].getAbsolutePath() + File.separator +
+                    "Videos" + File.separator + sFileName;
+            File fSource = new File(sSource);
+            File fDestination = new File(sDestination);*/
+            /*if(fSource.exists()) {
+                if (!fSource.renameTo(fDestination)) {
+                    Toast.makeText(getApplicationContext(), "File move unsuccessful.", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "File does not exist.", Toast.LENGTH_SHORT).show();
+            }*/
+
+            /*if(fSource.exists() && !fDestination.exists()) {
+                try {
+                    InputStream inputStream;
+                    OutputStream outputStream;
+                    inputStream = new FileInputStream(fSource.getPath());
+                    outputStream = new FileOutputStream(fDestination.getPath());
+                    byte[] buffer = new byte[100000];
+                    while ((inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                        outputStream.write(buffer, 0, buffer.length);
+                    }
+                    outputStream.flush();
+                    outputStream.close();
+
+                    if (!fSource.delete()) {
+                        Toast.makeText(getApplicationContext(), "Could not delete source file after copy.", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }*/
+
+            /*if(fDestination.exists()){
+                if (!fDestination.delete()) {
+                    Toast.makeText(getApplicationContext(), "Could not delete destination file after test.", Toast.LENGTH_SHORT).show();
+                }
+            }*/
+
+            String sPath = "/storage/3966-3438/Android/data/com.agcurations.aggallerymanager/files/Videos/148/1668/Output/FFMPEGLog.txt";
+            File fFile = new File(sPath);
+            if(fFile.exists()) {
+                if (!fFile.delete()) {
+                    Toast.makeText(getApplicationContext(), "Could not delete file after test.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+
+
+
+
+
 
 
             Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();

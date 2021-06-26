@@ -9,7 +9,9 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.DocumentsContract;
+import android.provider.Settings;
 import android.text.Html;
 import android.util.Log;
 
@@ -68,8 +70,6 @@ public class Service_Import extends IntentService {
 
     private static final String EXTRA_COMIC_IMPORT_SOURCE = "com.agcurations.aggallerymanager.extra.COMIC_IMPORT_SOURCE";
 
-    private static final String EXTRA_IMPORT_FILES_FILELIST = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_FILELIST";
-
     private static final String EXTRA_IMPORT_FILES_MOVE_OR_COPY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_MOVE_OR_COPY";
 
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
@@ -82,13 +82,8 @@ public class Service_Import extends IntentService {
     public static final String EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
-    public static final String COMIC_DETAILS_LOG_MESSAGE = "COMIC_DETAILS_LOG_MESSAGE";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
-
-    public static final String EXTRA_STRING_HTML = "com.agcurations.aggallerymanager.extra.STRING_HTML";
-    public static final String EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_TAGSLOCATOR";
-    public static final String EXTRA_STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR = "com.agcurations.aggallerymanager.extra.STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR";
 
     public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
 
@@ -155,12 +150,9 @@ public class Service_Import extends IntentService {
         context.startService(intent);
     }
 
-    public static void startActionVideoAnalyzeHTML(Context context, String sHMTL, String sXPathExpressionThumbnailLocator, String sXPathExpressionTagsLocator){
+    public static void startActionVideoAnalyzeHTML(Context context){
         Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
-        intent.putExtra(EXTRA_STRING_HTML, sHMTL);
-        intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR, sXPathExpressionThumbnailLocator);
-        intent.putExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR, sXPathExpressionTagsLocator);
         context.startService(intent);
 
     }
@@ -239,12 +231,8 @@ public class Service_Import extends IntentService {
                 globalClass.gbImportExecutionFinished = true;
 
             } else if (ACTION_VIDEO_ANALYZE_HTML.equals(action)) {
-
-                final String sHTML = intent.getStringExtra(EXTRA_STRING_HTML);
-                final String sXPathExpressionThumbnail = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_THUMBNAILLOCATOR);
-                final String sxPathExpressionTags = intent.getStringExtra(EXTRA_STRING_XPATH_EXPRESSION_TAGSLOCATOR);
                 try{
-                    handleAction_startActionVideoAnalyzeHTML(sHTML, sXPathExpressionThumbnail, sxPathExpressionTags);
+                    handleAction_startActionVideoAnalyzeHTML();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -262,9 +250,13 @@ public class Service_Import extends IntentService {
 
             } else if (ACTION_DELETE_FILES.equals(action)){
 
-                final ArrayList<String>  alsUriFilesToDelete = intent.getStringArrayListExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE);
+                ArrayList<String>  alsUriFTD = intent.getStringArrayListExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE);
                 final String sCallerActionResponseFilter = intent.getStringExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER);
 
+                if(alsUriFTD == null){
+                    alsUriFTD = new ArrayList<>(); //This round-about method to get rid of a warning that "alsUriFilesToDelete might be null."
+                }
+                final ArrayList<String> alsUriFilesToDelete = alsUriFTD;
                 handleAction_startActionDeleteFiles(alsUriFilesToDelete, sCallerActionResponseFilter);
             }
         }
@@ -2238,9 +2230,57 @@ public class Service_Import extends IntentService {
 
     //====== Video Download Routines ===============================================================
 
-    private void handleAction_startActionVideoAnalyzeHTML(String sHTML, String sXPathExpressionThumbnailLocator, String sXPathExpressionTagsLocator){
+    private void handleAction_startActionVideoAnalyzeHTML(){
 
         String sIntentActionFilter = Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT;
+
+        BroadcastProgress(true, "Searching webpage for target data...",
+                false, 0,
+                false, "",
+                sIntentActionFilter);
+
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        ItemClass_WebVideoDataLocator icWebDataLocator = null;
+        for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators){
+            if(icWVDL.bHostNameMatchFound){
+                icWebDataLocator = icWVDL;
+                break;
+            }
+        }
+        if(icWebDataLocator == null){
+            return;
+        }
+
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
+
+            int iStart;
+            int iEnd;
+
+            if(vdsk.sSearchStartString != null && vdsk.sSearchEndString != null) {
+                //We want the data between vdsk.sSearchStartString and vdsk.sSearchEndString.
+                iStart = icWebDataLocator.sHTML.indexOf(vdsk.sSearchStartString);
+                if (iStart > -1) {
+                    iStart += vdsk.sSearchStartString.length();
+                    iEnd = icWebDataLocator.sHTML.indexOf(vdsk.sSearchEndString, iStart);
+                    if (iEnd > -1) {
+                        //We want the data between iStart and iEnd.
+                        String sTemp;
+                        sTemp = icWebDataLocator.sHTML.substring(iStart, iEnd);
+                        if (sTemp.length() > 0) {
+                            vdsk.bMatchFound = true;
+                            vdsk.sSearchStringMatchContent = sTemp;
+                        }
+
+                    }
+                }
+            }
+        } //End loop searching for data (textual search) within the HTML
+
+        BroadcastProgress(true, "Textual searches complete. Performing XPath analysis...",
+                false, 0,
+                false, "",
+                sIntentActionFilter);
+
 
         //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
         //  does not work well to parse this html. Modern html interpreters accommodate
@@ -2254,56 +2294,85 @@ public class Service_Import extends IntentService {
         props.setAllowMultiWordAttributes(true);
         props.setRecognizeUnicodeChars(true);
         props.setOmitComments(true);
-        TagNode node = pageParser.clean(sHTML);
+        TagNode node = pageParser.clean(icWebDataLocator.sHTML);
 
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
         String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
 
-        //Attempt to get the thumbnail address from the Webpage html:
+
         boolean bProblem = false;
-        String sProblemMessage = "";
-        String sURLThumbnail = "";
-        try {
-            //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
-            Object[] objsTags = node.evaluateXPath(sXPathExpressionThumbnailLocator);
-            //Check to see if we found anything:
-            String sResult;
-            if (objsTags != null && objsTags.length > 0) {
-                //If we found something, assign it to a string:
-                for(Object oTags:  objsTags){
-                    sURLThumbnail = oTags.toString();
+
+        //Attempt to get the thumbnail address from the Webpage html:
+        BroadcastProgress(true, "Looking for thumbnail address...",
+                false, 0,
+                false, "",
+                sIntentActionFilter);
+
+        String sXPathExpressionThumbnailLocator = null;
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
+            if(vdsk.sDataType.equals(ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL)){
+                if(vdsk.sSXPathExpression != null){
+                    sXPathExpressionThumbnailLocator = vdsk.sSXPathExpression;
                 }
             }
-        } catch (Exception e){
-            e.printStackTrace();
-            bProblem = true;
-            sProblemMessage = e.getMessage();
+        }
+        String sURLThumbnail = "";
+        if(sXPathExpressionThumbnailLocator != null) {
+            try {
+                //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
+                Object[] objsTags = node.evaluateXPath(sXPathExpressionThumbnailLocator);
+                //Check to see if we found anything:
+                String sResult;
+                if (objsTags != null && objsTags.length > 0) {
+                    //If we found something, assign it to a string:
+                    for (Object oTags : objsTags) {
+                        sURLThumbnail = oTags.toString();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                bProblem = true;
+                problemNotificationConfig(e.getMessage(), sIntentActionFilter);
+            }
         }
 
-
         //Attempt to get the tags from the WebPage html:
-        ArrayList<String> alsTags = new ArrayList<>();
-        try {
-            //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
-            Object[] objsTags = node.evaluateXPath(sXPathExpressionTagsLocator);
-            //Check to see if we found anything:
-            String sResult;
-            if (objsTags != null && objsTags.length > 0) {
-                //If we found something, assign it to a string:
-                for(Object oTags:  objsTags){
-                    alsTags.add(oTags.toString());
+        BroadcastProgress(true, "Looking for video category tags...",
+                false, 0,
+                false, "",
+                sIntentActionFilter);
+
+        String sXPathExpressionTagsLocator = null;
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
+            if(vdsk.sDataType.equals(ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS)){
+                if(vdsk.sSXPathExpression != null){
+                    sXPathExpressionTagsLocator = vdsk.sSXPathExpression;
                 }
             }
-        } catch (Exception e){
-            e.printStackTrace();
-            bProblem = true;
-            sProblemMessage = e.getMessage();
+        }
+        ArrayList<String> alsTags = new ArrayList<>();
+        if(sXPathExpressionTagsLocator != null) {
+            try {
+                //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
+                Object[] objsTags = node.evaluateXPath(sXPathExpressionTagsLocator);
+                //Check to see if we found anything:
+                String sResult;
+                if (objsTags != null && objsTags.length > 0) {
+                    //If we found something, assign it to a string:
+                    for (Object oTags : objsTags) {
+                        alsTags.add(oTags.toString());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                bProblem = true;
+                problemNotificationConfig(e.getMessage(), sIntentActionFilter);
+            }
         }
         //Pre-process tags. Identify tags that already exist, and create a list of new tags for
         //  the user to approve - don't automatically add new tags to the system (I've encountered
         //  garbage tags, tags that already exist in another form, and tags that the user might
         //  not want to add.
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
         ArrayList<String> alsUnidentifiedTags = new ArrayList<>();
         ArrayList<Integer> aliIdentifiedTags = new ArrayList<>();
         for(String sTag: alsTags){
@@ -2323,18 +2392,22 @@ public class Service_Import extends IntentService {
         }
 
 
-        String sTitle = "This is the title to use for the import name";
+        String sTitle = "";
 
         //Assemble a list of FileItems (ItemClass_File) listing the potential downloads.
         //  Include filename, download address, tags, and, if available, file size, resolution, and duration:
         ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = new ArrayList<>();
 
         //Look for potential downloads' file sizes, and download any m3u8 text file if it exists:
-        for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
             if(vdsk.bMatchFound) {
                 if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_TITLE)) {
                     sTitle = cleanHTMLCodedCharacters(vdsk.sSearchStringMatchContent); //Convert any html coded characters
                 } else if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_LINK)) {
+                    BroadcastProgress(true, "Analyzing video link: " + vdsk.sSearchStringMatchContent,
+                            false, 0,
+                            false, "",
+                            sIntentActionFilter);
                     try {
                         URL urlVideoLink = new URL(vdsk.sSearchStringMatchContent);
 
@@ -2372,6 +2445,10 @@ public class Service_Import extends IntentService {
                     }
 
                 } else if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_M3U8)){
+                    BroadcastProgress(true, "Analyzing video stream: " + vdsk.sSearchStringMatchContent,
+                            false, 0,
+                            false, "",
+                            sIntentActionFilter);
                     try {
                         URL url = new URL(vdsk.sSearchStringMatchContent);
                         URLConnection connection = url.openConnection();
@@ -2596,37 +2673,40 @@ public class Service_Import extends IntentService {
                     }catch(Exception e){
                         vdsk.bErrorWithLink = true;
                         vdsk.sErrorMessage = e.getMessage();
+                        problemNotificationConfig(e.getMessage(), sIntentActionFilter);
                     }
                 }
 
             }
         } //End loop searching for data within the HTML
 
-
         //Broadcast a message to be picked-up by the VideoWebDetect fragment:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
+        /*Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(sIntentActionFilter);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         if(!bProblem) {
             broadcastIntent.putExtra(EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
             broadcastIntent.putExtra(EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, alicf_VideoDownloadFileItems);
-
-            //Also send a broadcast to Activity Import to capture the download items in an array adapter:
-            {
-                Intent broadcastIntent_VideoWebDetectResponse = new Intent();
-                broadcastIntent_VideoWebDetectResponse.putExtra(EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, true);
-                broadcastIntent_VideoWebDetectResponse.putExtra(EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, alicf_VideoDownloadFileItems);
-                //Send broadcast to the Import Activity:
-                broadcastIntent_VideoWebDetectResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
-                broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
-            }
-
         } else {
             broadcastIntent.putExtra(EXTRA_BOOL_PROBLEM, bProblem);
             broadcastIntent.putExtra(EXTRA_STRING_PROBLEM, sProblemMessage);
         }
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);*/
+
+        BroadcastProgress(true, "HTML examination complete. Click 'Next' to continue.",
+                false, 0,
+                false, "",
+                sIntentActionFilter);
+
+        if(!bProblem) {
+            //Also send a broadcast to Activity Import to capture the download items in an array adapter:
+            Intent broadcastIntent_VideoWebDetectResponse = new Intent();
+            broadcastIntent_VideoWebDetectResponse.putExtra(EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, true);
+            broadcastIntent_VideoWebDetectResponse.putExtra(EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, alicf_VideoDownloadFileItems);
+            broadcastIntent_VideoWebDetectResponse.setAction(Activity_Import.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_ACTION_RESPONSE);
+            broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
+            LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
+        }
 
 
     }
@@ -2793,6 +2873,8 @@ public class Service_Import extends IntentService {
             int FILE_DOWNLOAD_ADDRESS = 0;
             int FILE_NAME_AND_EXTENSION = 1;
 
+            String sVideoDownloadFolder = "";
+
             for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
                 String sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
 
@@ -2807,14 +2889,30 @@ public class Service_Import extends IntentService {
 
                     //Use the download manager to download the file:
                     DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
-                    request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
+                    /*request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
                             .setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                             //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                             //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                             //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                             .setMimeType("application/octet-stream")
-                            .setDestinationUri(Uri.fromFile(fNewFile));
+                            .setDestinationUri(Uri.fromFile(fNewFile));*/
+                    //The above method no longer works as of Android 11 API level 30, One UI version 3.1.
+                    String sRelativePath;
+                    sRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                                    File.separator + ciNew.sFolder_Name +
+                                    File.separator + ciNew.sItemID;
+                    sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                            sRelativePath;
+                    request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
+                            .setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                            //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
+                            //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                            //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                            .setMimeType("application/octet-stream")
+                            .setDestinationInExternalFilesDir(getApplicationContext(), sRelativePath, fNewFile.getName());
+
                     long lDownloadID = downloadManager.enqueue(request);
                     allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
 
@@ -2852,9 +2950,9 @@ public class Service_Import extends IntentService {
             } else {
                 iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8;
             }
-            String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+            String sVideoFinalDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                     File.separator + ciNew.sFolder_Name;
-            String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ciNew.sItemID;
+            String sVideoWorkingFolder = sVideoFinalDestinationFolder + File.separator + ciNew.sItemID;
             long[] lDownloadIDs = new long[allDownloadIDs.size()];
             for(int i = 0; i < allDownloadIDs.size(); i++){
                 lDownloadIDs[i] = allDownloadIDs.get(i);
@@ -2870,6 +2968,7 @@ public class Service_Import extends IntentService {
             Data dataVideoConcatenator = new Data.Builder()
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_WORKING_FOLDER, sVideoWorkingFolder)
                     .putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, GlobalClass.JumbleFileName(ciNew.sFilename)) //Double-jumble.
                     .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)

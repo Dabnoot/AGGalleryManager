@@ -29,11 +29,14 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
 
 public class Fragment_Import_1a_VideoWebDetect extends Fragment {
+
+    GlobalClass globalClass;
 
     private EditText gEditText_WebAddress;
     private Button gButton_Go;
@@ -70,11 +73,19 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
 
-
         //Instantiate the ViewModel sharing data between fragments:
         if(getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
         }
+
+        if(getActivity() != null) {
+            return;
+        }
+        globalClass = (GlobalClass) getActivity().getApplicationContext();
+
+
+
+
     }
 
     @Override
@@ -162,7 +173,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         });
 
 
-        String sTestAddress = "https://www.xnxx.com/video-10olx73e/jay_s_pov_-_i_had_a_threesome_with_two_hot_blonde_teens";
+        String sTestAddress = "https://www.xnxx.com/video-uzl4597/bangbros_-_18_year_old_cutie_vanessa_phoenix_taking_big_dick_in_her_small_pussy";
+        //String sTestAddress = "https://www.pornhub.com/view_video.php?viewkey=ph5c2a55fcd7b8c";
         gEditText_WebAddress.setText(sTestAddress);
 
         if(gEditText_WebAddress != null){
@@ -175,26 +187,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                 @Override
                 public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    /*boolean bAddressOK = false;
-                    String sAddressCandidate = String.valueOf(charSequence);
-                    if(sAddressCandidate.length() > 0) {
-                        //Evaluate if the address matches a pattern:
-                        String sNHRegexExpression = "https:\\/\\/xnxx.com\\/";
-                        ArrayList<String> alsVideoSiteRegexExpressions = new ArrayList<>();
-                        alsVideoSiteRegexExpressions.add(sNHRegexExpression);
-
-                        for(String sRegex: alsVideoSiteRegexExpressions){
-                            if(sAddressCandidate.matches(sRegex)){
-                                bAddressOK = true;
-                                break;
-                            }
-                        }
-                    }
-                    if(bAddressOK) {
-                        viewModelImportActivity.sWebAddress = sAddressCandidate;
-                    } else {
-                        viewModelImportActivity.sWebAddress = "";
-                    }*/
                     RecordWebAddress();
                 }
 
@@ -235,65 +227,27 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             @Override
             public void onChanged(String sHTML) {
                 //Enter here when an assigned String is changed.
+                //In particular, we enter here when a web page has finished loading.
                 if(getActivity() != null) {
 
-                    //Search the HTML for data using "keys" that have been defined by previous
-                    //  investigation of webpage data. These keys might need to change if the
-                    //  website changes the HTML.
-                    GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-
-                    int iMatchCount = 0;
-
-                    //Clear any data from a previous search:
-                    for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
-                        if(vdsk.bMatchFound){
-                            vdsk.sSearchStringMatchContent = "";
-                            vdsk.bMatchFound = false;
-                            vdsk.lFileSize = 0;
-                            vdsk.bErrorWithLink = false;
-                            vdsk.sErrorMessage = "";
+                    //Locate the WebVideoDataLocator in-use, and assign the HTML:
+                    if(globalClass == null){
+                        globalClass = (GlobalClass) getActivity().getApplicationContext();
+                    }
+                    if(viewModelImportActivity.sWebAddress.equals("")){
+                        RecordWebAddress(); //We usually end up here during testing because I have
+                                            //  pre-loaded the editText with data, so onChanged for the editText
+                                            //  never fires.
+                    }
+                    for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
+                        if (icWVDL.bHostNameMatchFound) {
+                            icWVDL.sHTML = sHTML;
+                            break;
                         }
                     }
 
-                    SetTextStatusMessage("Searching webpage for target data...");
-                    for (ItemClass_VideoDownloadSearchKey vdsk :globalClass.galVideoDownloadSearchKeys){
-
-                        int iStart;
-                        int iEnd;
-
-                        //We want the data between vdsk.sSearchStartString and vdsk.sSearchEndString.
-                        iStart = sHTML.indexOf(vdsk.sSearchStartString);
-                        if(iStart > -1){
-                            iStart += vdsk.sSearchStartString.length();
-                            iEnd = sHTML.indexOf(vdsk.sSearchEndString, iStart);
-                            if(iEnd > -1) {
-                                //We want the data between iStart and iEnd.
-                                String sTemp;
-                                sTemp = sHTML.substring(iStart, iEnd);
-                                if(sTemp.length() > 0) {
-                                    vdsk.bMatchFound = true;
-                                    vdsk.sSearchStringMatchContent = sTemp;
-                                    iMatchCount++;
-                                }
-
-                            }
-                        }
-                    } //End loop searching for data within the HTML
-
-                    if(gButton_Next != null){
-                        if(iMatchCount > 0) {
-                            SetTextStatusMessage("Data located. Analyzing results...");
-                            Service_Import.startActionVideoAnalyzeHTML(
-                                    getContext(),
-                                    sHTML,
-                                    "//div[@class='video-pic']//@src",
-                                    "//div[@class='metadata-row video-tags']//a/text()");
-                        } else {
-                            SetTextStatusMessage("No other data found within this webpage.");
-                            gButton_Next.setEnabled(false);
-                        }
-                    }
-
+                    SetTextStatusMessage("Analyzing HTML...");
+                    Service_Import.startActionVideoAnalyzeHTML(getContext());
 
                 }
             }
@@ -324,21 +278,70 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
 
     private void RecordWebAddress(){
+
+        if(getActivity() == null){
+            return;
+        }
+
         boolean bAddressOK = false;
         String sAddressCandidate = gEditText_WebAddress.getText().toString();
         if(sAddressCandidate.length() > 0) {
-            //Evaluate if the address matches a pattern:
+
+            //Re-Populate video data locator structure (clears any previously-found data):
             String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.x%nxx\\.c%om\\/(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
             String sNHRegexExpression = sNonExplicitAddress.replace("%","");
+            ItemClass_WebVideoDataLocator itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
 
-            ArrayList<String> alsVideoSiteRegexExpressions = new ArrayList<>();
-            alsVideoSiteRegexExpressions.add(sNHRegexExpression);
-            for(String sRegex: alsVideoSiteRegexExpressions){
-                if(sAddressCandidate.matches(sRegex)){
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE,
+                            "html5player.setVideoTitle('","');"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS,
+                            "//div[@class='metadata-row video-tags']//a/text()"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL,
+                            "//div[@class='video-pic']//@src"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                            "html5player.setVideoUrlLow('","');"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                            "html5player.setVideoUrlHigh('","');"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8,
+                            "html5player.setVideoHLS('","');"));
+
+            if(globalClass == null) {
+                globalClass = (GlobalClass) getActivity().getApplicationContext();
+            }
+            globalClass.galWebVideoDataLocators = new ArrayList<>();
+            globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+
+
+            //Evaluate if an address matches a pattern:
+            for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
+                sNonExplicitAddress = icWVDL.sHostnameRegEx;
+                String sRegexExpression = sNonExplicitAddress.replace("%", "");
+                if (sAddressCandidate.matches(sRegexExpression)) {
                     bAddressOK = true;
-                    //break;
+                    itemClass_webVideoDataLocator.bHostNameMatchFound = true;
+                    break;
                 }
             }
+
         }
         if(bAddressOK) {
             viewModelImportActivity.sWebAddress = sAddressCandidate;
@@ -373,28 +376,60 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-
-
+            boolean bError;
             //Get boolean indicating that an error may have occurred:
-            boolean bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
-            if(!bError) {
-
-                ArrayList<ItemClass_File> alicf_DownloadFileItems;
-                alicf_DownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE);
-                viewModelImportActivity.bUpdateImportSelectList = true;
-
-                if(alicf_DownloadFileItems != null) {
-                    SetTextStatusMessage("Finished data analysis. Select 'Next' to continue.");
-                    gButton_Next.setEnabled(true);
-                } else {
-                    SetTextStatusMessage("No data found during analysis. Try another webpage or update search algorithms.");
-                    gButton_Next.setEnabled(false);
-                }
-
-            } else {
+            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+                SetTextStatusMessage(sMessage);
+            } else {
+
+                //Check to see if this is a response to update log or progress bar:
+                boolean 	bUpdateLog;
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdateLog = intent.getBooleanExtra(Service_Import.UPDATE_LOG_BOOLEAN,false);
+                /*bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);*/
+
+                if(bUpdateLog){
+                    String sLogLine;
+                    sLogLine = intent.getStringExtra(Service_Import.LOG_LINE_STRING);
+                    if(sLogLine != null) {
+                        //Present the text to the user:
+                        SetTextStatusMessage(sLogLine);
+                        //Check to see if the operation is complete:
+                        if (sLogLine.contains("Click 'Next' to continue.")) {
+                            gButton_Next.setEnabled(true);
+                        } else {
+                            gButton_Next.setEnabled(false);
+                        }
+                    }
+                }
+                /*if(bUpdatePercentComplete){
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    if(gProgressBar_ImportProgress != null) {
+                        gProgressBar_ImportProgress.setProgress(iAmountComplete);
+                    }
+                }
+                if(bUpdateProgressBarText){
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    if(gTextView_ImportProgressBarText != null) {
+                        gTextView_ImportProgressBarText.setText(sProgressBarText);
+                    }
+                }*/
 
             }
+
+
+
+
+
 
         }
     }
