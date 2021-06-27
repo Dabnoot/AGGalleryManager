@@ -2973,6 +2973,7 @@ public class Service_Import extends IntentService {
                     .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, GlobalClass.JumbleFileName(ciNew.sFilename)) //Double-jumble.
                     .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)
                     .putLongArray(Worker_VideoPostProcessing.KEY_ARG_VIDEO_DOWNLOAD_IDS, lDownloadIDs)
+                    .putString(Worker_VideoPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID)
                     .build();
             OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
                     .setInputData(dataVideoConcatenator)

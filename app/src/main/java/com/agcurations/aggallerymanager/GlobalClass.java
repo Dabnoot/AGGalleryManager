@@ -59,7 +59,7 @@ public class GlobalClass extends Application {
     public int giSelectedCatalogMediaCategory;
 
     public final File[] gfCatalogFolders = new File[3];
-    //public final File[] gfCatalogLogsFolders = new File[3];
+    public File gfLogsFolder;
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:

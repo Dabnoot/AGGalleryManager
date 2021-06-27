@@ -506,13 +506,13 @@ public class Activity_Main extends AppCompatActivity {
                 }
             }*/
 
-            String sPath = "/storage/3966-3438/Android/data/com.agcurations.aggallerymanager/files/Videos/148/1668/Output/FFMPEGLog.txt";
+            /*String sPath = "/storage/3966-3438/Android/data/com.agcurations.aggallerymanager/files/Videos/148/1667/Output/FFMPEGLog.txt";
             File fFile = new File(sPath);
             if(fFile.exists()) {
                 if (!fFile.delete()) {
                     Toast.makeText(getApplicationContext(), "Could not delete file after test.", Toast.LENGTH_SHORT).show();
                 }
-            }
+            }*/
 
 
 

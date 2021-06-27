@@ -50,6 +50,7 @@ public class Worker_VideoPostProcessing extends Worker {
     public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";
     public static final String KEY_ARG_VIDEO_TOTAL_FILE_SIZE = "KEY_ARG_VIDEO_TOTAL_FILE_SIZE";
     public static final String KEY_ARG_VIDEO_DOWNLOAD_IDS = "KEY_ARG_VIDEO_DOWNLOAD_IDS";
+    public static final String KEY_ARG_ITEM_ID = "KEY_ARG_ITEM_ID";
 
     //=========================
     int giDownloadTypeSingleOrM3U8;
@@ -62,6 +63,7 @@ public class Worker_VideoPostProcessing extends Worker {
     String gsVideoOutputFilename;                       //Name of output file
     long glTotalFileSize;
     long[] glDownloadIDs;                               //Used to determine if a download ID in DownloadManager has status 'completed'.
+    String gsItemID;
 
     //=========================
 
@@ -81,13 +83,23 @@ public class Worker_VideoPostProcessing extends Worker {
         gsVideoOutputFilename = getInputData().getString(KEY_ARG_VIDEO_OUTPUT_FILENAME);
         glTotalFileSize = getInputData().getLong(KEY_ARG_VIDEO_TOTAL_FILE_SIZE,0);
         glDownloadIDs = getInputData().getLongArray(KEY_ARG_VIDEO_DOWNLOAD_IDS);
+        gsItemID = getInputData().getString(KEY_ARG_ITEM_ID);
     }
 
     @NonNull
     @Override
     public Result doWork() {
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
+        if(!globalClass.gfLogsFolder.exists()){
+            String sFailureMessage = "Logs folder missing. Restarting app should create the folder.";
+            return Result.failure(DataErrorMessage(sFailureMessage));
+        }
 
+        //Put the log file in the logs folder:
+        final String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + gsItemID + "_FFMPEGLog.txt";
+        final File fLog = new File(sLogFilePath);
 
 
         //Validate data
@@ -152,8 +164,7 @@ public class Worker_VideoPostProcessing extends Worker {
         String sDownloadFailedReason = "";
         String sDownloadPausedReason = "";
 
-        final String sLogFilePath = sOutputFolderPath + File.separator + "FFMPEGLog.txt";
-        final File fLog = new File(sLogFilePath);
+        String sDownloadFolderToClean = "";
 
         while( (iElapsedWaitTime < GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
 
@@ -249,6 +260,7 @@ public class Worker_VideoPostProcessing extends Worker {
                             //  will only store files in the onboard storage, or something like that.
                             //  Move those files over to the SD Card before processing.
                             sLocalURI = sLocalURI.replace("file://", "");
+                            sDownloadFolderToClean = sLocalURI;
                             File fSource = new File(sLocalURI);
                             if(fSource.exists()) {
                                 String sFileName = fSource.getName();
@@ -312,8 +324,10 @@ public class Worker_VideoPostProcessing extends Worker {
 
         } //End loop waiting for download completion.
 
+        //Downloads should be complete and moved out of the source folder.
 
-        //Downloads should be complete.
+
+
         //Delete the download folder to which downloadManager downloaded the files:
         if(fThisDownloadFolder.exists()){
             if(!fThisDownloadFolder.delete()){
@@ -321,7 +335,7 @@ public class Worker_VideoPostProcessing extends Worker {
                     String sMessage = "Could not delete download folder: " + fThisDownloadFolder.getAbsolutePath();
                     FileWriter fwLogFile;
                     fwLogFile = new FileWriter(fLog, true);
-                    fwLogFile.write("Stream copy exception: " + sMessage + "\n");
+                    fwLogFile.write(sMessage + "\n");
                     fwLogFile.flush();
                     fwLogFile.close();
                 } catch(Exception e){
@@ -333,6 +347,37 @@ public class Worker_VideoPostProcessing extends Worker {
                 }
             }
         }
+
+        //Attempt to remove the category folder from the download location if it is empty:
+        if(!sDownloadFolderToClean.equals("")){
+            sDownloadFolderToClean = sDownloadFolderToClean.substring(0, sDownloadFolderToClean.lastIndexOf(File.separator));
+            sDownloadFolderToClean = sDownloadFolderToClean.substring(0, sDownloadFolderToClean.lastIndexOf(File.separator));
+            File fDownloadFolderToClean = new File(sDownloadFolderToClean);
+            File[] fTemp = fDownloadFolderToClean.listFiles();
+            if(fTemp != null) {
+                if (fTemp.length == 0) {
+                    if (!fDownloadFolderToClean.delete()) {
+                        //Unable to remove stub folder.
+                        try {
+                            String sMessage = "Could not delete temp category folder: " + fDownloadFolderToClean.getAbsolutePath();
+                            FileWriter fwLogFile;
+                            fwLogFile = new FileWriter(fLog, true);
+                            fwLogFile.write(sMessage + "\n");
+                            fwLogFile.flush();
+                            fwLogFile.close();
+                        } catch (Exception e) {
+                            String sMessage2 = "";
+                            if (e.getMessage() != null) {
+                                sMessage2 = e.getMessage();
+                            }
+                            Log.d("Log write exception", sMessage2);
+                        }
+                    }
+                }
+            }
+
+        }
+
 
 
 

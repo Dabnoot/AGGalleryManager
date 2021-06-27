@@ -83,6 +83,15 @@ public class Service_Main extends IntentService {
                 globalClass.gfAppFolder = fAvailableDirs[0];
             }
 
+            //Create Logs folder if it does not exist:
+            String sLogsFolderPath = globalClass.gfAppFolder + File.separator + "Logs";
+            globalClass.gfLogsFolder = new File(sLogsFolderPath);
+            if(!globalClass.gfLogsFolder.exists()){
+                if(!globalClass.gfLogsFolder.mkdir()){
+                    //todo: notify user that the logs folder could not be found and/or could not be created.
+                }
+            }
+
             //Catalog Folder Structure:
             for(int i = 0; i < 3; i++){
                 globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
