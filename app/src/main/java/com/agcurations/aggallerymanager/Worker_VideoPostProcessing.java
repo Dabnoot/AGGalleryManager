@@ -12,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -49,7 +48,7 @@ public class Worker_VideoPostProcessing extends Worker {
     public static final String KEY_ARG_FILENAME_SEQUENCE = "KEY_ARG_FILENAME_SEQUENCE";
     public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";
     public static final String KEY_ARG_VIDEO_TOTAL_FILE_SIZE = "KEY_ARG_VIDEO_TOTAL_FILE_SIZE";
-    public static final String KEY_ARG_VIDEO_DOWNLOAD_IDS = "KEY_ARG_VIDEO_DOWNLOAD_IDS";
+    public static final String KEY_ARG_DOWNLOAD_IDS = "KEY_ARG_DOWNLOAD_IDS";
     public static final String KEY_ARG_ITEM_ID = "KEY_ARG_ITEM_ID";
 
     //=========================
@@ -82,7 +81,7 @@ public class Worker_VideoPostProcessing extends Worker {
         }
         gsVideoOutputFilename = getInputData().getString(KEY_ARG_VIDEO_OUTPUT_FILENAME);
         glTotalFileSize = getInputData().getLong(KEY_ARG_VIDEO_TOTAL_FILE_SIZE,0);
-        glDownloadIDs = getInputData().getLongArray(KEY_ARG_VIDEO_DOWNLOAD_IDS);
+        glDownloadIDs = getInputData().getLongArray(KEY_ARG_DOWNLOAD_IDS);
         gsItemID = getInputData().getString(KEY_ARG_ITEM_ID);
     }
 
@@ -98,7 +97,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
         //Put the log file in the logs folder:
         final String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + gsItemID + "_FFMPEGLog.txt";
+                File.separator + GlobalClass.GetTimeStampFileSafe() + "_Video_" + gsItemID + "_FFMPEGLog.txt";
         final File fLog = new File(sLogFilePath);
 
 
@@ -166,7 +165,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
         String sDownloadFolderToClean = "";
 
-        while( (iElapsedWaitTime < GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
+        while( (iElapsedWaitTime < GlobalClass.DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
 
             try {
                 Thread.sleep(iWaitDuration);
@@ -547,8 +546,8 @@ public class Worker_VideoPostProcessing extends Worker {
             //Write a failure message to the log:
             FileWriter fwLogFile;
             String sFailureMessage = "";
-            if( iElapsedWaitTime >= GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT) {
-                sFailureMessage = "Download elapsed time exceeds timeout of " + GlobalClass.VIDEO_DOWNLOAD_WAIT_TIMEOUT + " milliseconds.";
+            if( iElapsedWaitTime >= GlobalClass.DOWNLOAD_WAIT_TIMEOUT) {
+                sFailureMessage = "Download elapsed time exceeds timeout of " + GlobalClass.DOWNLOAD_WAIT_TIMEOUT + " milliseconds.";
             } else if (bDownloadProblem) {
                 sFailureMessage = "There was a problem with a download. " + sDownloadFailedReason;
             }

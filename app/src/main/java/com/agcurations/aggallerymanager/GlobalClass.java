@@ -1054,6 +1054,8 @@ public class GlobalClass extends Application {
         ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
 
         //Look for comic post-processing required:
+        //Post-processing should not be required unless the user is missing an external SD Card. In
+        //  that case, DownloadManager will download to the final directory and those files will need to be moved.
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
             if (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE) {
@@ -1387,6 +1389,8 @@ public class GlobalClass extends Application {
     //===== Import Options ================================================================
     //=====================================================================================
 
+    boolean gbUseDownloadManager = true;
+
     //A flag to turn on/off video file duration analysis:
     public final static boolean bVideoDeepDirectoryContentFileAnalysis = true;
         //This flag allows the program to analyze video duration prior to import to allow
@@ -1415,20 +1419,8 @@ public class GlobalClass extends Application {
 
     //Video import web html search strings (may change if the website changes)
     //Create an array of keys that allow program to locate video links:
-    /*String VIDEO_DOWNLOAD_TITLE = "VIDEO_DOWNLOAD_TITLE";
-    String VIDEO_DOWNLOAD_LINK = "VIDEO_DOWNLOAD_LINK";
-    String VIDEO_DOWNLOAD_M3U8 = "VIDEO_DOWNLOAD_M3U8";
-
-    ArrayList<ItemClass_VideoDownloadSearchKey> galVideoDownloadSearchKeys = new ArrayList<ItemClass_VideoDownloadSearchKey>() {{
-
-        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE, "html5player.setVideoTitle('","');"));
-        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlLow('","');"));
-        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlHigh('","');"));
-        add(new ItemClass_VideoDownloadSearchKey("www.xnxx.com",ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8, "html5player.setVideoHLS('","');"));
-    }};*/
-
     ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
 
-    public static final int VIDEO_DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
+    public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
 }
 

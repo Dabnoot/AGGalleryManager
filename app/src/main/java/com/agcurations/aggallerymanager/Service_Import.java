@@ -9,9 +9,7 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.DocumentsContract;
-import android.provider.Settings;
 import android.text.Html;
 import android.util.Log;
 
@@ -2095,22 +2093,22 @@ public class Service_Import extends IntentService {
             OutputStream output = null;
             try {
 
-                boolean bUseDownloadManager = true; //Specify if we want to use the download manager.
+                String sComicDownloadFolder = "";
+                ArrayList<Long> allDownloadIDs = new ArrayList<>();
                 DownloadManager downloadManager = null;
-                if(bUseDownloadManager){
+                if(globalClass.gbUseDownloadManager){
                     downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
                 }
                 //Download the files:
                 int FILE_DOWNLOAD_ADDRESS = 0;
                 int FILE_NAME_AND_EXTENSION = 1;
-                for(String[] sData: ci.alsDownloadURLsAndDestFileNames) {
+                for(String[] sURLAndFileName: ci.alsDownloadURLsAndDestFileNames) {
 
-                    String sNewFilename = ci.sItemID + "_" + sData[FILE_NAME_AND_EXTENSION];
-                    ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE; //Tell the app to move the files after download to avoid DLM-automated deletion.
+                    String sNewFilename = ci.sItemID + "_" + sURLAndFileName[FILE_NAME_AND_EXTENSION];
+                    //ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE; //Tell the app to move the files after download to avoid DLM-automated deletion.
+                    //Above item no longer required as DownloadManager will not download to the final location on the SD Card, only to the emulated folder. However,
+                    //  leave this item here in the even that testing without an SD Card reveals that we want to use this again.
                     String sJumbledNewFileName = GlobalClass.JumbleFileName(sNewFilename);
-                    String sNewFullPathFilename = fDestination.getPath() +
-                            File.separator + GlobalClass.gsDLTempFolderName + File.separator + //Use DL folder name to allow move to a different folder after download.
-                            sJumbledNewFileName;
 
                     if(ci.sFilename.equals("")){
                         ci.sFilename = sJumbledNewFileName;
@@ -2119,23 +2117,26 @@ public class Service_Import extends IntentService {
                         globalClass.CatalogDataFile_UpdateRecord(ci);
                     }
 
-                    File fNewFile = new File(sNewFullPathFilename);
 
-                    if(!fNewFile.exists()) {
+                    if(!globalClass.gbUseDownloadManager) {
+                        String sNewFullPathFilename = fDestination.getPath() +
+                                File.separator + GlobalClass.gsDLTempFolderName + File.separator + //Use DL folder name to allow move to a different folder after download.
+                                sJumbledNewFileName;
+                        File fNewFile = new File(sNewFullPathFilename);
 
+                        if(!fNewFile.exists()) {
 
-                        if(!bUseDownloadManager) {
                             // Output stream
                             output = new FileOutputStream(fNewFile.getPath());
 
                             byte[] data = new byte[1024];
 
-                            BroadcastProgress(true, "Downloading: " + sData[FILE_DOWNLOAD_ADDRESS] + "...",
+                            BroadcastProgress(true, "Downloading: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
                                     false, iProgressBarValue,
                                     true, "Downloading files...",
                                     sIntentActionFilter);
 
-                            URL url = new URL(sData[FILE_DOWNLOAD_ADDRESS]);
+                            URL url = new URL(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]);
                             URLConnection connection = url.openConnection();
                             connection.connect();
 
@@ -2156,41 +2157,100 @@ public class Service_Import extends IntentService {
                             output.close();
                             input.close();
 
-                        } else { //If bUseDownloadManager....
+                        }
 
-                            BroadcastProgress(true, "Initiating download of file: " + sData[FILE_DOWNLOAD_ADDRESS] + "...",
+
+
+
+                    } else { //If bUseDownloadManager....
+
+                        String sNewFullPathFilename = fDestination.getPath() + File.separator +
+                                sJumbledNewFileName;
+                        File fNewFile = new File(sNewFullPathFilename);
+
+                        if(!fNewFile.exists()) {
+
+                            BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
                                     false, iProgressBarValue,
                                     true, "Submitting download requests...",
                                     sIntentActionFilter);
 
                             //Use the download manager to download the file:
-                            String sTimeStamp = GlobalClass.GetTimeStampFloat().toString();
-                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sData[FILE_DOWNLOAD_ADDRESS]));
-                            request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
-                                    .setDescription("Comic ID " + ci.sItemID + "; " + sData[FILE_DOWNLOAD_ADDRESS])
+                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
+                            /*request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
+                                    .setDescription("Comic ID " + ci.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                                     //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                                     //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                                     //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                                     .setMimeType("application/octet-stream")
-                                    .setDestinationUri(Uri.fromFile(fNewFile));
-                            downloadManager.enqueue(request);
+                                    .setDestinationUri(Uri.fromFile(fNewFile));*/
+                            //The above method no longer works as of Android 11 API level 30, One UI version 3.1.
 
-                        } //End if bUseDownloadManager.
+                            String sDownloadFolderRelativePath;
+                            sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS] +
+                                    File.separator + ci.sFolder_Name;
+                            sComicDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                                    sDownloadFolderRelativePath;
+                            request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
+                                    .setDescription("Comic ID " + ci.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                                    //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                                    //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                                    //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                                    .setMimeType("application/octet-stream")
+                                    .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, sJumbledNewFileName);
 
-                        lProgressNumerator++;
+                            long lDownloadID = downloadManager.enqueue(request);
+                            allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
 
-                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                        BroadcastProgress(true, "\n",
-                                true, iProgressBarValue,
-                                false, "",
-                                sIntentActionFilter);
-                    }
+                        }
+
+                    } //End if bUseDownloadManager.
+
+                    lProgressNumerator++;
+
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, "\n",
+                            true, iProgressBarValue,
+                            false, "",
+                            sIntentActionFilter);
+
 
                 }
                 //Success downloading files.
 
-                BroadcastProgress(true, "Operation complete.",
+                //Start a worker to move the downloaded files if using DownloadManager:
+                if(globalClass.gbUseDownloadManager){
+
+                    long[] lDownloadIDs = new long[allDownloadIDs.size()];
+                    for(int i = 0; i < allDownloadIDs.size(); i++){
+                        lDownloadIDs[i] = allDownloadIDs.get(i);
+                    }
+
+                    //Build-out data to send to the worker:
+                    Data dataComicDownloadPostProcessor = new Data.Builder()
+                            .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sComicDownloadFolder)
+                            .putString(Worker_VideoPostProcessing.KEY_ARG_WORKING_FOLDER, fDestination.getAbsolutePath())
+                            .putLongArray(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
+                            .putString(Worker_VideoPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
+                            .build();
+                    OneTimeWorkRequest otwrComicDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_ComicPostProcessing.class)
+                            .setInputData(dataComicDownloadPostProcessor)
+                            .addTag(Worker_ComicPostProcessing.WORKER_COMIC_POST_PROCESSING_TAG) //To allow finding the worker later.
+                            .build();
+                    UUID UUIDWorkID = otwrComicDownloadPostProcessor.getId();
+                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrComicDownloadPostProcessor);
+
+
+
+                }
+
+
+
+
+
+                BroadcastProgress(true, "Operation complete.\nSome files may continue to download in the background. Comic will be available when downloads complete.",
                         true, iProgressBarValue,
                         false, "",
                         sIntentActionFilter);
@@ -3021,7 +3081,9 @@ public class Service_Import extends IntentService {
 
             for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
                 String sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
-
+                //File name is not Jumbled for download as if it is a .ts file download of videos, FFMPEG will
+                //  not understand what to do with the files if the extension is unrecognized.
+                //  todo: Differentiate between single-file and .ts file downloads and jumble file name when we can.
                 File fNewFile = new File(sNewFullPathFilename);
 
                 if(!fNewFile.exists()) {
@@ -3042,12 +3104,12 @@ public class Service_Import extends IntentService {
                             .setMimeType("application/octet-stream")
                             .setDestinationUri(Uri.fromFile(fNewFile));*/
                     //The above method no longer works as of Android 11 API level 30, One UI version 3.1.
-                    String sRelativePath;
-                    sRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                    String sDownloadFolderRelativePath;
+                    sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                                     File.separator + ciNew.sFolder_Name +
                                     File.separator + ciNew.sItemID;
                     sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                            sRelativePath;
+                            sDownloadFolderRelativePath;
                     request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
                             .setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                             //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -3055,7 +3117,7 @@ public class Service_Import extends IntentService {
                             //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                             //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
                             .setMimeType("application/octet-stream")
-                            .setDestinationInExternalFilesDir(getApplicationContext(), sRelativePath, fNewFile.getName());
+                            .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, fNewFile.getName());
 
                     long lDownloadID = downloadManager.enqueue(request);
                     allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
@@ -3109,22 +3171,22 @@ public class Service_Import extends IntentService {
                 l++;
             }
             //Build-out data to send to the worker:
-            Data dataVideoConcatenator = new Data.Builder()
+            Data dataVideoPostProcessor = new Data.Builder()
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_WORKING_FOLDER, sVideoWorkingFolder)
                     .putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, GlobalClass.JumbleFileName(ciNew.sFilename)) //Double-jumble.
                     .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)
-                    .putLongArray(Worker_VideoPostProcessing.KEY_ARG_VIDEO_DOWNLOAD_IDS, lDownloadIDs)
+                    .putLongArray(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID)
                     .build();
-            OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
-                    .setInputData(dataVideoConcatenator)
+            OneTimeWorkRequest otwrVideoPostProcessor = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
+                    .setInputData(dataVideoPostProcessor)
                     .addTag(Worker_VideoPostProcessing.WORKER_VIDEO_POST_PROCESSING_TAG) //To allow finding the worker later.
                     .build();
-            UUID UUIDWorkID = otwrVideoConcatenation.getId();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoConcatenation);
+            UUID UUIDWorkID = otwrVideoPostProcessor.getId();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoPostProcessor);
 
 
 
