@@ -2248,8 +2248,15 @@ public class Service_Import extends IntentService {
             }
         }
         if(icWebDataLocator == null){
+            BroadcastProgress(true, "This webpage is incompatible at this time.",
+                false, 0,
+                false, "",
+                sIntentActionFilter);
             return;
         }
+
+
+
 
         for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
 
@@ -2276,10 +2283,119 @@ public class Service_Import extends IntentService {
             }
         } //End loop searching for data (textual search) within the HTML
 
+
+        String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+        String sNHRegexExpression = sNonExplicitAddress.replace("%","");
+        if(icWebDataLocator.sHostnameRegEx.equals(sNHRegexExpression)){
+            //Special behavior for this website.
+            //Finding the video download data is very difficult here and requires significant
+            //parsing.
+            String sS = "qualityItems";
+            String sE = ";";
+            int iS = icWebDataLocator.sHTML.indexOf(sS);
+            int iE = icWebDataLocator.sHTML.indexOf(sE, iS);
+            String Sub1 = icWebDataLocator.sHTML.substring(iS,iE);
+            sS = "[{";
+            sE = "}]";
+            iS = Sub1.indexOf(sS);
+            iE = Sub1.indexOf(sE, iS);
+            String Sub2 = Sub1.substring(iS,iE);
+            String Sub3 = Sub2.replace("},{", ";");
+            Sub3 = Sub3.replace("[{","");
+            String[] sVDOptions = Sub3.split(";");
+
+            int iRecordNumber = icWebDataLocator.alVideoDownloadSearchKeys.size();
+            for(String sVDORecords: sVDOptions){
+                String[] sTemp = sVDORecords.split(",");
+                if(sTemp.length >= 5){
+                    //0: "id":"quality240p"
+                    //1: "text":"240p"
+                    //2: "url":"https:\/\/ev.phncdn.com\/videos\/201812\/31\/199453331\/240P_400K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=MpIVLM9Yr5qK32YnDVbWG81%2Fhaw%3D"
+                    //3: "upgrade":0
+                    //4: "active":0
+                    String sURL = sTemp[2].substring(sTemp[2].indexOf("http"));
+                    sURL = sURL.replace("\"","");
+                    sURL = sURL.replace("\\","");
+                    icWebDataLocator.alVideoDownloadSearchKeys.add(
+                            new ItemClass_VideoDownloadSearchKey(
+                                    ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                                    "", ""));
+                    icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).sSearchStringMatchContent = sURL;
+                    icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).bMatchFound = true; //Fake it.
+
+                    iRecordNumber++;
+
+                }
+            }
+
+
+
+
+        }
+
+
+
+
+
         BroadcastProgress(true, "Textual searches complete. Performing XPath analysis...",
                 false, 0,
                 false, "",
                 sIntentActionFilter);
+
+
+
+
+
+
+        /*boolean bUseDownloadManager = false;
+        if(icWebDataLocator.alVideoDownloadSearchKeys == null){
+            //This just to get rid of the warning that bUseDownloadManager is always false.
+            bUseDownloadManager = true;
+        }
+        if(!bUseDownloadManager) {
+            try {
+                // Output stream
+                String sOutput = getExternalFilesDir(null) + File.separator + "test.txt";
+                OutputStream output = new FileOutputStream(sOutput);
+
+                byte[] data = new byte[1024];
+
+                //Trying to download a blob:
+                URL url = new URL("https://www.pornhub.com/7af454a8-af5f-49c0-8791-dab93c89983b");
+                URLConnection connection = url.openConnection();
+                connection.connect();
+
+                // download the file
+                InputStream input = new BufferedInputStream(url.openStream(), 8192);
+
+                int count;
+                while ((count = input.read(data)) != -1) {
+
+                    // writing data to file
+                    output.write(data, 0, count);
+                }
+
+                // flushing output
+                output.flush();
+
+                // closing streams
+                output.close();
+                input.close();
+            }catch (Exception e){
+                Log.d("test", e.getMessage());
+            }
+        }*/
+
+
+
+
+
+
+
+
+
+
+
 
 
         //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
@@ -2302,6 +2418,36 @@ public class Service_Import extends IntentService {
 
         boolean bProblem = false;
 
+        //Attempt to get the video title from the webpage via XPath:
+        String sXPathExpressionTitleLocator = null;
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
+            if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_TITLE)){
+                if(vdsk.sSXPathExpression != null){
+                    sXPathExpressionTitleLocator = vdsk.sSXPathExpression;
+                }
+            }
+        }
+        String sTitle = "";
+        if(sXPathExpressionTitleLocator != null) {
+            try {
+                //Use an xPathExpression (similar to RegEx) to look for the video title in the html/xml:
+                Object[] objsTitle = node.evaluateXPath(sXPathExpressionTitleLocator);
+                //Check to see if we found anything:
+                if (objsTitle != null && objsTitle.length > 0) {
+                    //If we found something, assign it to a string:
+                    for (Object oTitle : objsTitle) {
+                        sTitle = oTitle.toString();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                bProblem = true;
+                problemNotificationConfig(e.getMessage(), sIntentActionFilter);
+            }
+        }
+
+
+
         //Attempt to get the thumbnail address from the Webpage html:
         BroadcastProgress(true, "Looking for thumbnail address...",
                 false, 0,
@@ -2320,12 +2466,11 @@ public class Service_Import extends IntentService {
         if(sXPathExpressionThumbnailLocator != null) {
             try {
                 //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
-                Object[] objsTags = node.evaluateXPath(sXPathExpressionThumbnailLocator);
+                Object[] objsThumbnail = node.evaluateXPath(sXPathExpressionThumbnailLocator);
                 //Check to see if we found anything:
-                String sResult;
-                if (objsTags != null && objsTags.length > 0) {
+                if (objsThumbnail != null && objsThumbnail.length > 0) {
                     //If we found something, assign it to a string:
-                    for (Object oTags : objsTags) {
+                    for (Object oTags : objsThumbnail) {
                         sURLThumbnail = oTags.toString();
                     }
                 }
@@ -2356,7 +2501,6 @@ public class Service_Import extends IntentService {
                 //Use an xPathExpression (similar to RegEx) to look for tag data in the html/xml:
                 Object[] objsTags = node.evaluateXPath(sXPathExpressionTagsLocator);
                 //Check to see if we found anything:
-                String sResult;
                 if (objsTags != null && objsTags.length > 0) {
                     //If we found something, assign it to a string:
                     for (Object oTags : objsTags) {
@@ -2392,7 +2536,7 @@ public class Service_Import extends IntentService {
         }
 
 
-        String sTitle = "";
+
 
         //Assemble a list of FileItems (ItemClass_File) listing the potential downloads.
         //  Include filename, download address, tags, and, if available, file size, resolution, and duration:

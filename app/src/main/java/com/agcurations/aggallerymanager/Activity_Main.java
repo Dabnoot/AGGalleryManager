@@ -515,8 +515,34 @@ public class Activity_Main extends AppCompatActivity {
             }*/
 
 
+            //Code related to determining p.h.u.b.
+            //  video download parsing.
+            String sText = "['mediaDefinitions'][1]['videoUrl'] = media_1;var qualityItems_199453331 = [{\"id\":\"quality240p\",\"text\":\"240p\",\"url\":\"https:\\/\\/ev.phncdn.com\\/videos\\/201812\\/31\\/199453331\\/240P_400K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=MpIVLM9Yr5qK32YnDVbWG81%2Fhaw%3D\",\"upgrade\":0,\"active\":0},{\"id\":\"quality480p\",\"text\":\"480p\",\"url\":\"https:\\/\\/ev.phncdn.com\\/videos\\/201812\\/31\\/199453331\\/480P_2000K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=frQu1CTEhQQp33Tot3MVZs1GtO4%3D\",\"upgrade\":0,\"active\":0},{\"id\":\"quality720p\",\"text\":\"720p\",\"url\":\"https:\\/\\/ev.phncdn.com\\/videos\\/201812\\/31\\/199453331\\/720P_4000K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=ZVUXC8tpEEDrmDRQsQbREqmc4IU%3D\",\"upgrade\":0,\"active\":1}];";
+            String sS = "qualityItems";
+            String sE = ";";
+            int iS = sText.indexOf(sS);
+            int iE = sText.indexOf(sE, iS);
+            String Sub1 = sText.substring(iS,iE);
+            sS = "[{";
+            sE = "}]";
+            iS = Sub1.indexOf(sS);
+            iE = Sub1.indexOf(sE, iS);
+            String Sub2 = Sub1.substring(iS,iE);
+            String Sub3 = Sub2.replace("},{", ";");
+            Sub3 = Sub3.replace("[{","");
+            String[] sVDOptions = Sub3.split(";");
 
 
+            for(String sVDORecords: sVDOptions){
+                String[] sTemp = sVDORecords.split(",");
+                if(sTemp.length >= 5){
+
+                }
+            }
+
+
+
+            String sRegex1Block = "['mediaDefinitions'](*.)";
 
 
 

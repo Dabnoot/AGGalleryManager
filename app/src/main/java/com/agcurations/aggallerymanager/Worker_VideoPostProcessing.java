@@ -393,7 +393,7 @@ public class Worker_VideoPostProcessing extends Worker {
             }
             if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_SINGLE) {
                 //Move the file to the output folder to get captured by the main program:
-                File fInputFile = fDownloadedFiles[1]; //There should be but 1 file in the download folder for DOWNLOAD_TYPE_SINGLE. Index 0 is the folder.
+                File fInputFile = null; //There should be but 1 file in the download folder for DOWNLOAD_TYPE_SINGLE. Index 0 is the folder.
                 for(File f: fDownloadedFiles){
                     if(f.isFile()){
                         fInputFile = f;
@@ -401,8 +401,13 @@ public class Worker_VideoPostProcessing extends Worker {
                 }
 
                 File fOutputFile = new File(sFinalOutputPath);
-                if(!fInputFile.renameTo(fOutputFile)){
-                    String sFailureMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
+                if(fInputFile != null) {
+                    if (!fInputFile.renameTo(fOutputFile)) {
+                        String sFailureMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
+                        return Result.failure(DataErrorMessage(sFailureMessage));
+                    }
+                } else {
+                    String sFailureMessage = "Download file missing from folder: " + fThisWorkingFolder.getAbsolutePath();
                     return Result.failure(DataErrorMessage(sFailureMessage));
                 }
 
@@ -561,6 +566,7 @@ public class Worker_VideoPostProcessing extends Worker {
         }
 
     }
+
 
 
     private Data DataErrorMessage(String sMessage){

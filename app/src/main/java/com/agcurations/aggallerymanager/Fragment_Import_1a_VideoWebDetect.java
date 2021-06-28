@@ -173,8 +173,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         });
 
 
-        String sTestAddress = "https://www.xnxx.com/video-uzl4597/bangbros_-_18_year_old_cutie_vanessa_phoenix_taking_big_dick_in_her_small_pussy";
-        //String sTestAddress = "https://www.pornhub.com/view_video.php?viewkey=ph5c2a55fcd7b8c";
+        //String sTestAddress = "https://www.xnxx.com/video-uzl4597/bangbros_-_18_year_old_cutie_vanessa_phoenix_taking_big_dick_in_her_small_pussy";
+        String sTestAddress = "https://www.pornhub.com/view_video.php?viewkey=ph5c2a55fcd7b8c";
         gEditText_WebAddress.setText(sTestAddress);
 
         if(gEditText_WebAddress != null){
@@ -288,11 +288,10 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         if(sAddressCandidate.length() > 0) {
 
             //Re-Populate video data locator structure (clears any previously-found data):
-            String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.x%nxx\\.c%om\\/(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+            String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.x%nxx\\.c%om\\/v%ideo(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
             String sNHRegexExpression = sNonExplicitAddress.replace("%","");
             ItemClass_WebVideoDataLocator itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
             itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
-
 
             itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
                     new ItemClass_VideoDownloadSearchKey(
@@ -329,6 +328,34 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             }
             globalClass.galWebVideoDataLocators = new ArrayList<>();
             globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+
+            //Next webpage data locator:
+            sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+            sNHRegexExpression = sNonExplicitAddress.replace("%","");
+            itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE,
+                            "//span[@class='inlineFree']//text()"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS,
+                            "//div[@class='tags']/a[@class='item js-mxp']/text()"));
+
+            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                    new ItemClass_VideoDownloadSearchKey(
+                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL,
+                            "//div[@class='mgp_videoPoster']//@src"));
+
+
+
+            globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+
+
+
 
 
             //Evaluate if an address matches a pattern:
