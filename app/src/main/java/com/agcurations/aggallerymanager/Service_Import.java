@@ -2344,12 +2344,13 @@ public class Service_Import extends IntentService {
         } //End loop searching for data (textual search) within the HTML
 
 
-        String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+        String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses in this source.
         String sNHRegexExpression = sNonExplicitAddress.replace("%","");
         if(icWebDataLocator.sHostnameRegEx.equals(sNHRegexExpression)){
             //Special behavior for this website.
-            //Finding the video download data is very difficult here and requires significant
+            //Finding the mp4 contiguous (non-M3U8) video download data for this particular site requires significant
             //parsing.
+
             String sS = "qualityItems";
             String sE = ";";
             int iS = icWebDataLocator.sHTML.indexOf(sS);
@@ -2387,9 +2388,6 @@ public class Service_Import extends IntentService {
 
                 }
             }
-
-
-
 
         }
 
@@ -2784,7 +2782,7 @@ public class Service_Import extends IntentService {
                             String[] sLines = sTest.split("\n");
                             for(String sLine: sLines) {
 
-                                if (!sLine.startsWith("#") && sLine.startsWith("hls")) {
+                                if (!sLine.startsWith("#")) {// && sLine.startsWith("hls")) {
                                     if(icM3U8_entry.als_TSDownloads == null){
                                         icM3U8_entry.als_TSDownloads = new ArrayList<>();
                                     }

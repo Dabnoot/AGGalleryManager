@@ -23,6 +23,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -32,6 +34,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+
+import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8;
+import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE;
 
 
 public class Fragment_Import_1a_VideoWebDetect extends Fragment {
@@ -170,12 +175,53 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                 gButton_Detect.setEnabled(true);
                 SetTextStatusMessage("Click 'Detect'. If expected video does not appear in the results, try playing and pausing the video first.");
             }
+
+            @Nullable
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                String sURL = request.getUrl().toString();
+                //Check to see if the request is for an m3u8 file.
+                if(sURL.contains("m3u8")){
+                    if(getActivity() != null) {
+                        String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+                        String sNHRegexExpression = sNonExplicitAddress.replace("%", "");
+                        ItemClass_WebVideoDataLocator icWebDataLocator = null;
+                        if (globalClass == null) {
+                            globalClass = (GlobalClass) getActivity().getApplicationContext();
+                        }
+
+                        if (globalClass.galWebVideoDataLocators != null) {
+                            for (ItemClass_WebVideoDataLocator icWVDL : globalClass.galWebVideoDataLocators) {
+                                if (icWVDL.bHostNameMatchFound) {
+                                    icWebDataLocator = icWVDL;
+                                    break;
+                                }
+                            }
+                            if (icWebDataLocator != null) {
+                                if (icWebDataLocator.sHostnameRegEx.equals(sNHRegexExpression)) {
+                                    for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys) {
+                                        if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_M3U8)) {
+                                            if(!vdsk.bMatchFound) { //There are multiple m3u8 files. Only record the first, master m3u8 file.
+                                                vdsk.bMatchFound = true;
+                                                vdsk.sSearchStringMatchContent = sURL;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
+
+
+            }
         });
 
 
         //String sTestAddress = "https://www.xnxx.com/video-uzl4597/bangbros_-_18_year_old_cutie_vanessa_phoenix_taking_big_dick_in_her_small_pussy";
-        String sTestAddress = "https://www.pornhub.com/view_video.php?viewkey=ph5c2a55fcd7b8c";
-        gEditText_WebAddress.setText(sTestAddress);
+        //String sTestAddress = "";
+        //gEditText_WebAddress.setText(sTestAddress);
 
         if(gEditText_WebAddress != null){
 
@@ -287,84 +333,15 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         String sAddressCandidate = gEditText_WebAddress.getText().toString();
         if(sAddressCandidate.length() > 0) {
 
-            //Re-Populate video data locator structure (clears any previously-found data):
-            String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.x%nxx\\.c%om\\/v%ideo(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
-            String sNHRegexExpression = sNonExplicitAddress.replace("%","");
-            ItemClass_WebVideoDataLocator itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE,
-                            "html5player.setVideoTitle('","');"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS,
-                            "//div[@class='metadata-row video-tags']//a/text()"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL,
-                            "//div[@class='video-pic']//@src"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
-                            "html5player.setVideoUrlLow('","');"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
-                            "html5player.setVideoUrlHigh('","');"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8,
-                            "html5player.setVideoHLS('","');"));
-
-            if(globalClass == null) {
-                globalClass = (GlobalClass) getActivity().getApplicationContext();
-            }
-            globalClass.galWebVideoDataLocators = new ArrayList<>();
-            globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
-
-            //Next webpage data locator:
-            sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
-            sNHRegexExpression = sNonExplicitAddress.replace("%","");
-            itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE,
-                            "//span[@class='inlineFree']//text()"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS,
-                            "//div[@class='tags']/a[@class='item js-mxp']/text()"));
-
-            itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
-                    new ItemClass_VideoDownloadSearchKey(
-                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL,
-                            "//div[@class='mgp_videoPoster']//@src"));
-
-
-
-            globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
-
-
-
-
+            InitializeWebDataLocators();
 
             //Evaluate if an address matches a pattern:
             for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
-                sNonExplicitAddress = icWVDL.sHostnameRegEx;
+                String sNonExplicitAddress = icWVDL.sHostnameRegEx;
                 String sRegexExpression = sNonExplicitAddress.replace("%", "");
                 if (sAddressCandidate.matches(sRegexExpression)) {
                     bAddressOK = true;
-                    itemClass_webVideoDataLocator.bHostNameMatchFound = true;
+                    icWVDL.bHostNameMatchFound = true;
                     break;
                 }
             }
@@ -376,6 +353,82 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             viewModelImportActivity.sWebAddress = "";
         }
     }
+
+    private void InitializeWebDataLocators(){
+        //Re-Populate video data locator structure (clears any previously-found data):
+        String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.x%nxx\\.c%om\\/v%ideo(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+        String sNHRegexExpression = sNonExplicitAddress.replace("%","");
+        ItemClass_WebVideoDataLocator itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE,
+                        "html5player.setVideoTitle('","');"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS,
+                        "//div[@class='metadata-row video-tags']//a/text()"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL,
+                        "//div[@class='video-pic']//@src"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                        "html5player.setVideoUrlLow('","');"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                        "html5player.setVideoUrlHigh('","');"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8,
+                        "html5player.setVideoHLS('","');"));
+
+        if(globalClass == null) {
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
+        globalClass.galWebVideoDataLocators = new ArrayList<>();
+        globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+
+        //Next webpage data locator:
+        sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
+        sNHRegexExpression = sNonExplicitAddress.replace("%","");
+        itemClass_webVideoDataLocator = new ItemClass_WebVideoDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys = new ArrayList<>();
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE,
+                        "//span[@class='inlineFree']//text()"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS,
+                        "//div[@class='tags']/a[@class='item js-mxp']/text()"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL,
+                        "//div[@class='mgp_videoPoster']//@src"));
+
+        itemClass_webVideoDataLocator.alVideoDownloadSearchKeys.add(
+                new ItemClass_VideoDownloadSearchKey(
+                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8,
+                        null)); //P.H.u.b. m3u8 needs to be picked up by a request listener
+        //while playing the video.
+
+
+
+        globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+    }
+
 
     private void SetTextStatusMessage(String sMessage){
         if(gTextView_StatusInstructions != null){
