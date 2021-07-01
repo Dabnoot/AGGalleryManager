@@ -205,6 +205,9 @@ public class Service_CatalogViewer extends IntentService {
                     bSuccess = false;
                 }
             }
+
+            //todo: If this is a video item, check to see if it has a log file associated and delete that file, too. Log file from worker.
+
             if(bSuccess) {
 
                 //Delete the folder if the folder is now empty:

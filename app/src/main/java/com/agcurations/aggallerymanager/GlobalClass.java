@@ -7,6 +7,7 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.util.Log;
@@ -1064,7 +1065,6 @@ public class GlobalClass extends Application {
                 String sComicItemFolderPath =
                         gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath()
                                 + File.separator + ci.sFolder_Name;
-                File fComicItemFolder = new File(sComicItemFolderPath);
                 String sComicItemDLFolderPath = sComicItemFolderPath + File.separator + GlobalClass.gsDLTempFolderName;
                 File fComicItemDLFolder = new File(sComicItemDLFolderPath);
                 if (fComicItemDLFolder.exists()) {
@@ -1172,6 +1172,31 @@ public class GlobalClass extends Application {
 
                                 //Update catalog item to indicate no post-processing needed:
                                 ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+
+                                //Update the video time:
+                                MediaMetadataRetriever mediaMetadataRetriever;
+                                mediaMetadataRetriever = new MediaMetadataRetriever();
+                                try {
+                                    mediaMetadataRetriever.setDataSource(fOutputFileFinalDestination.getAbsolutePath());
+                                    String sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                    String sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                                    long lDurationInMilliseconds = Long.parseLong(time);
+                                    ci.lSize = fOutputFileFinalDestination.length();
+                                    ci.lDuration_Milliseconds = lDurationInMilliseconds;
+                                    ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
+                                    if(!sWidth.equals("") && !sHeight.equals("")) {
+                                        ci.iWidth = Integer.parseInt(sWidth);
+                                        ci.iHeight = Integer.parseInt(sHeight);
+                                    }
+                                } catch (Exception e) {
+                                    Log.d("Video post-processing", "Unable to obtain video metadata for item ID " + ci.sItemID);
+                                }
+
+                                mediaMetadataRetriever.release();
+                                //Update the file size:
+
+
                                 alsCatalogItemsToUpdate.add(ci);
                                 break; //Don't go through any more "output" folders in this temp download directory.
                             }

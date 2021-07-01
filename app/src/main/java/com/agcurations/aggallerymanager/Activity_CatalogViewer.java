@@ -749,8 +749,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         String sTemp = ci.sFilename;
                         sItemName = GlobalClass.JumbleFileName(sTemp);
-                        sThumbnailText = sItemName + ", " +
-                                ci.sDuration_Text;
+                        if(!ci.sTitle.equals("")){
+                            sItemName = ci.sTitle;
+                            sThumbnailText = sItemName;
+                        } else {
+                            sThumbnailText = sItemName;
+                        }
+                        if(!ci.sDuration_Text.equals("")){
+                            sThumbnailText = sThumbnailText  + ", " + ci.sDuration_Text;
+                        }
+
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
                         sItemName = GlobalClass.JumbleFileName(ci.sFilename);
