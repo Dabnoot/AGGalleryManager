@@ -167,7 +167,7 @@ public class Fragment_Import_5a_ComicWebConfirmation extends Fragment {
                 textView_Title.setVisibility(View.VISIBLE);
                 textView_WebImportDetails.setVisibility((View.VISIBLE));
 
-                textView_Title.setText(globalClass.gci_ImportComicWebItem.sComicName);
+                textView_Title.setText(globalClass.gci_ImportComicWebItem.sTitle);
                 String sComicDetails = "";
                 if (!globalClass.gci_ImportComicWebItem.sSource.equals(""))
                     sComicDetails = sComicDetails + "Source: " + globalClass.gci_ImportComicWebItem.sSource + "\n\n";

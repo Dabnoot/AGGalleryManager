@@ -76,6 +76,9 @@ public class Fragment_ItemDetails extends Fragment {
         if(args != null) {
             gciCatalogItem = (ItemClass_CatalogItem) args.getSerializable(CATALOG_ITEM); //NOTE!!!! This is passed to this fragment by reference.
                                     //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
+            if(gciCatalogItem == null){
+                return;
+            }
             gsNewTagIDs = gciCatalogItem.sTags;
             gsPreviousTagIDs = gsNewTagIDs;
             giNewGrade = gciCatalogItem.iGrade;
@@ -83,7 +86,9 @@ public class Fragment_ItemDetails extends Fragment {
         } else {
             gciCatalogItem = new ItemClass_CatalogItem(); //todo: This fragment serves no purpose if the catalog item is not received.
         }
-
+        if(getActivity() == null){
+            return;
+        }
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
         //Set on-click listener for grade:
@@ -95,6 +100,9 @@ public class Fragment_ItemDetails extends Fragment {
                 R.id.imageView_Grade5};
         ImageView[] imageView_GradeArray = new ImageView[5];
         boolean bGradeIVsOK = true;
+        if(getView() == null){
+            return;
+        }
         for(int i = 0; i < giGradeImageViews.length; i++){
             imageView_GradeArray[i] = getView().findViewById(giGradeImageViews[i]);
             if(imageView_GradeArray[i] == null){
@@ -109,18 +117,7 @@ public class Fragment_ItemDetails extends Fragment {
 
         displayGrade();
 
-        TextView textView_FileName = getView().findViewById(R.id.textView_FileName);
-        if(textView_FileName != null){
-            String sFilename = "File name: " + GlobalClass.JumbleFileName(gciCatalogItem.sFilename);
-            textView_FileName.setText(sFilename);
-        }
-
-        TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
-        if(textView_Tags != null){
-            String sTagText = "Tags: ";
-            sTagText += sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
-            textView_Tags.setText(sTagText);
-        }
+        UpdateTextViews();
 
         //Get tags for the item:
         ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
@@ -164,9 +161,11 @@ public class Fragment_ItemDetails extends Fragment {
                         sb.append(tagItems.get(i).sTagText);
                     }
                 }
-                TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
-                if(textView_Tags != null){
-                    textView_Tags.setText(sb.toString());
+                if(getView() != null) {
+                    TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+                    if (textView_Tags != null) {
+                        textView_Tags.setText(sb.toString());
+                    }
                 }
 
                 //Get the tag IDs:
@@ -227,8 +226,9 @@ public class Fragment_ItemDetails extends Fragment {
                     button_Save.setEnabled(false);
                     Toast.makeText(getContext(), "Data saved.", Toast.LENGTH_SHORT).show();
 
-                    ((Activity_VideoPlayer) getActivity()).closeDrawer();
-
+                    if(getActivity() != null) {
+                        ((Activity_VideoPlayer) getActivity()).closeDrawer();
+                    }
 
                 }
             });
@@ -246,23 +246,15 @@ public class Fragment_ItemDetails extends Fragment {
         giPreviousGrade = giNewGrade;
         displayGrade();
 
-        TextView textView_FileName = getView().findViewById(R.id.textView_FileName);
-        if(textView_FileName != null){
-            String sFilename = "File name: " + GlobalClass.JumbleFileName(gciCatalogItem.sFilename);
-            textView_FileName.setText(sFilename);
-        }
-
-        TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
-        if(textView_Tags != null){
-            String sTagText = "Tags: ";
-            sTagText += sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
-            textView_Tags.setText(sTagText);
-        }
+        UpdateTextViews();
 
         //Get tags for the item:
         ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(gciCatalogItem.sTags, ",");
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        if(getActivity() == null){
+            return;
+        }
         gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
 
         gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
@@ -281,8 +273,42 @@ public class Fragment_ItemDetails extends Fragment {
 
     }
 
+    private void UpdateTextViews(){
+        if(getView() == null){
+            return;
+        }
+
+        TextView textView_Title = getView().findViewById(R.id.textView_Title);
+        if(textView_Title != null){
+            String sTitle = "Title: " + gciCatalogItem.sTitle;
+            textView_Title.setText(sTitle);
+        }
+
+        TextView textView_FileName = getView().findViewById(R.id.textView_FileName);
+        if(textView_FileName != null){
+            String sFilename = "File name: " + GlobalClass.JumbleFileName(gciCatalogItem.sFilename);
+            textView_FileName.setText(sFilename);
+        }
+
+        TextView textView_Source = getView().findViewById(R.id.textView_Source);
+        if(textView_Source != null){
+            String sSource = "Source: " + gciCatalogItem.sSource;
+            textView_Source.setText(sSource);
+        }
+
+        TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+        if(textView_Tags != null){
+            String sTagText = "Tags: ";
+            sTagText += sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
+            textView_Tags.setText(sTagText);
+        }
+    }
+
 
     private void displayGrade(){
+        if(getView() == null){
+            return;
+        }
         //Show the rating:
         ImageView[] imageView_GradeArray = new ImageView[5];
         boolean bGradeIVsOK = true;
@@ -306,6 +332,9 @@ public class Fragment_ItemDetails extends Fragment {
     }
 
     private void enableSave(){
+        if(getView() == null){
+            return;
+        }
         Button button_Save = getView().findViewById(R.id.button_Save);
         if(button_Save != null){
             button_Save.setEnabled(true);

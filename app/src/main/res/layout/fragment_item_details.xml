@@ -84,14 +84,35 @@
         </RelativeLayout>
 
         <TextView
-            android:id="@+id/textView_FileName"
+            android:id="@+id/textView_Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="File name: "
+            android:text="Title: "
             android:layout_marginStart="15dp"
             android:layout_marginTop="30dp"
             android:textSize="20sp"
             android:layout_below="@id/relativeLayout_Grade"/>
+
+        <TextView
+            android:id="@+id/textView_FileName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="File name: "
+            android:layout_marginTop="20dp"
+            android:textSize="20sp"
+            android:layout_below="@id/textView_Title"
+            android:layout_alignStart="@id/textView_Title"/>
+
+        <TextView
+            android:id="@+id/textView_Source"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Source: "
+            android:layout_marginTop="20dp"
+            android:textSize="20sp"
+            android:layout_below="@id/textView_FileName"
+            android:layout_alignStart="@id/textView_FileName"
+            android:textIsSelectable="true"/>
 
         <TextView
             android:id="@+id/textView_Tags"
@@ -100,8 +121,8 @@
             android:text="Tags:"
             android:layout_marginTop="20dp"
             android:textSize="20sp"
-            android:layout_below="@id/textView_FileName"
-            android:layout_alignStart="@id/textView_FileName"/>
+            android:layout_below="@id/textView_Source"
+            android:layout_alignStart="@id/textView_Source"/>
 
         <Button
             android:id="@+id/button_Save"

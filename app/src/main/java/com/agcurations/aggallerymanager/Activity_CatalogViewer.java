@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,9 +20,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Parcelable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -93,6 +90,14 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         globalClass.gbCatalogViewerTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
+
+        //Pull sort-by and sort-order from preferences (recall user's last selection). Note that this item is modified by the import process so that the user can
+        //  see the item that they last imported.
+        globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] =
+                sharedPreferences.getInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory], GlobalClass.SORT_BY_DATETIME_LAST_VIEWED);
+        globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] =
+                sharedPreferences.getBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory], true);
+
 
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
@@ -231,6 +236,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
                     globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_LAST_VIEWED;
                 }
+                //Record the user's selected sort item:
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                sharedPreferences.edit()
+                        .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
+                        globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory])
+                        .apply();
+
                 populate_RecyclerViewCatalogItems();
             }
             @Override
@@ -349,6 +361,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             } else {
                 SetSortIconToAscending();
             }
+            //Record the user's selected sort order in preferences:
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            sharedPreferences.edit()
+                    .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
+                            globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory])
+                    .apply();
+
             populate_RecyclerViewCatalogItems();
 
         } else if(itemID == R.id.menu_FlipView){
@@ -528,6 +547,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             public final Button btnDelete;
             public final TextView tvThumbnailText;
             public final TextView tvDetails;
+            public final TextView textView_CatalogItemNotification;
 
             public ViewHolder(View v) {
                 super(v);
@@ -537,6 +557,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 btnDelete = v.findViewById(R.id.button_Delete);
                 tvThumbnailText = v.findViewById(R.id.textView_Title);
                 tvDetails = v.findViewById(R.id.textView_Details);
+                textView_CatalogItemNotification = v.findViewById(R.id.textView_CatalogItemNotification);
             }
         }
 
@@ -601,6 +622,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     //Don't allow delete during obfuscation.
                     holder.btnDelete.setVisibility(View.INVISIBLE);
                 }
+
+                if(holder.textView_CatalogItemNotification != null){
+                    holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
+                }
+
             } else {
 
                 //Load the non-obfuscated image into the RecyclerView ViewHolder:
@@ -618,8 +644,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
                 if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
                         ci.iPostProcessingCode != ItemClass_CatalogItem.POST_PROCESSING_NONE){
-                    //If this is a video and the post-processing is incomplete, at least look in the output folder for a result.
-
+                    //If this is a video and the post-processing is incomplete...
+                    //Every sort operation will attempt to relocate the file. However, we can
+                    // look in the output folder for a result.
+                    boolean bVideoFileFound = false;
                     String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                             File.separator + ci.sFolder_Name;
                     String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
@@ -641,14 +669,26 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                 if (fOutputFile.exists()) {
                                     //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
                                     sThumbnailFilePath = fOutputFile.getAbsolutePath();
-
-
+                                    bVideoFileFound = true;
                                     break; //Don't go through any more "output" folders in this temp download directory.
                                 }
                             }
                         }
                     }
+                    if(!bVideoFileFound){
+                        if(holder.textView_CatalogItemNotification != null){
+                            //Notify the user that post-processing is incomplete:
+                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                            String sMessage = "Item pending post-processing...";
+                            holder.textView_CatalogItemNotification.setText(sMessage);
+                        }
+                    }
 
+
+                } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+                    if(holder.textView_CatalogItemNotification != null){ //Default to turn off text notification for this video item.
+                        holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
+                    }
                 }
 
 
@@ -703,6 +743,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                 .into(holder.ivThumbnail);
                     }
                 }
+
                 String sThumbnailText = "";
                 switch (globalClass.giSelectedCatalogMediaCategory) {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
@@ -716,7 +757,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         sThumbnailText = sItemName;
                         break;
                     case GlobalClass.MEDIA_CATEGORY_COMICS:
-                        sItemName = ci.sComicName;
+                        sItemName = ci.sTitle;
                         sThumbnailText = sItemName;
                         break;
                 }

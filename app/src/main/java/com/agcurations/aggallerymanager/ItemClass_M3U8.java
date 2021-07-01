@@ -9,7 +9,7 @@ public class ItemClass_M3U8 {
     //  Sometimes an M3U8 file contains links to other M3U8 files that contain lists of .TS files, which
     //  are MPEG-2 video files, typically 10 seconds long.
 
-    String sTitle;
+    //String sTitle;
     String sName;
     String sFileName;
     String sBandwidth;

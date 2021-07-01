@@ -72,6 +72,8 @@ public class GlobalClass extends Application {
     public static final int SORT_BY_DATETIME_LAST_VIEWED = 0;
     public static final int SORT_BY_DATETIME_IMPORTED = 1;
     public int[] giCatalogViewerSortBySetting = {SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED};
+    public static final String[] gsCatalogViewerPreferenceNameSortBy = {"VIDEOS_SORT_BY", "IMAGES_SORT_BY", "COMICS_SORT_BY"};
+    public static final String[] gsCatalogViewerPreferenceNameSortAscending = {"VIDEOS_SORT_ASCENDING", "IMAGES_SORT_ASCENDING", "COMICS_SORT_ASCENDING"};
     public boolean[] gbCatalogViewerSortAscending = {true, true, true};
     public boolean[] gbCatalogViewerFiltered = {false, false, false};
     public String[] gsCatalogViewerFilterText = {"", "", ""};
@@ -300,7 +302,7 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "ComicGroups";                   //Common comic tag category
         sHeader = sHeader + "\t" + "ComicLanguages";                //Language(s) found in the comic
         sHeader = sHeader + "\t" + "ComicParodies";                 //Common comic tag category
-        sHeader = sHeader + "\t" + "ComicName";                     //Comic name
+        sHeader = sHeader + "\t" + "Title";                         //Comic name or Video Title
         sHeader = sHeader + "\t" + "ComicPages";                    //Total number of pages as defined at the comic source
         sHeader = sHeader + "\t" + "Comic_Max_Page_ID";             //Max comic page id extracted from file names
         sHeader = sHeader + "\t" + "Comic_Missing_Pages";           //Missing page numbers
@@ -314,7 +316,6 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "Video_Link";                    //For video download from web page or M3U8 stream. Web address of page is
                                                                     //  stored in sAddress. There can be multiple video downloads and streams
                                                                     //  per web page, hence this field.
-
         sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
 
         return sHeader;
@@ -349,7 +350,7 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.sComicGroups;                     //Common comic tag category
         sReadableData = sReadableData + "\t" + ci.sComicLanguages;                  //Language(s) found in the comic
         sReadableData = sReadableData + "\t" + ci.sComicParodies;                   //Common comic tag category
-        sReadableData = sReadableData + "\t" + ci.sComicName;                       //Comic name
+        sReadableData = sReadableData + "\t" + ci.sTitle;                       //Comic name
         sReadableData = sReadableData + "\t" + ci.iComicPages;                      //Total number of pages as defined at the comic source
         sReadableData = sReadableData + "\t" + ci.iComic_Max_Page_ID;               //Max comic page id extracted from file names
         sReadableData = sReadableData + "\t" + ci.sComic_Missing_Pages;             //Missing page numbers
@@ -392,7 +393,7 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicGroups);                    //Common comic tag category
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicLanguages);                 //Language(s) found in the comic
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicParodies);                  //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicName);                      //Comic name
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.sTitle);                      //Comic name
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComicPages);                     //Total number of pages as defined at the comic source
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_Max_Page_ID);              //Max comic page id extracted from file names
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComic_Missing_Pages);            //Missing page numbers
@@ -435,7 +436,7 @@ public class GlobalClass extends Application {
         ci.sComicGroups = JumbleStorageText(sRecord[18]);                               //Common comic tag category
         ci.sComicLanguages = JumbleStorageText(sRecord[19]);                            //Language(s = sRecord[0] found in the comic
         ci.sComicParodies = JumbleStorageText(sRecord[20]);                             //Common comic tag category
-        ci.sComicName = JumbleStorageText(sRecord[21]);                                 //Comic name
+        ci.sTitle = JumbleStorageText(sRecord[21]);                                 //Comic name
         ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[22]));              //Total number of pages as defined at the comic source
         ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[23]));       //Max comic page id extracted from file names
         ci.sComic_Missing_Pages = JumbleStorageText(sRecord[24]);                       //Missing page numbers
@@ -1054,7 +1055,7 @@ public class GlobalClass extends Application {
         ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
 
         //Look for comic post-processing required:
-        //Post-processing should not be required unless the user is missing an external SD Card. In
+        //Comic post-processing should not be required unless the user is missing an external SD Card. In
         //  that case, DownloadManager will download to the final directory and those files will need to be moved.
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
@@ -1106,13 +1107,13 @@ public class GlobalClass extends Application {
                 //Check to see if the concatenation (or single video file download) operation is complete:
                 String sVideoDestinationFolder = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                         File.separator + ci.sFolder_Name;
-                String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                File fVideoDownloadFolder = new File(sVideoDownloadFolder);
-                if(fVideoDownloadFolder.exists()){
-                    File[] fVideoDownloadFolderListing = fVideoDownloadFolder.listFiles();
+                String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                File fVideoWorkingFolder = new File(sVideoWorkingFolder);
+                if(fVideoWorkingFolder.exists()){
+                    File[] fVideoWorkingFolderListing = fVideoWorkingFolder.listFiles();
                     ArrayList<File> alfOutputFolders = new ArrayList<>();
-                    if(fVideoDownloadFolderListing != null) {
-                        for (File f : fVideoDownloadFolderListing) {
+                    if(fVideoWorkingFolderListing != null) {
+                        for (File f : fVideoWorkingFolderListing) {
                             //Locate the output folder
                             if (f.isDirectory()) {
                                 alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
@@ -1158,15 +1159,15 @@ public class GlobalClass extends Application {
                                         }
                                     }
                                 }
-                                //Delete download folder contents:
-                                for (File f4 : fVideoDownloadFolderListing) {
+                                //Delete working folder contents:
+                                for (File f4 : fVideoWorkingFolderListing) {
                                     if(!f4.delete()){
                                         Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath());
                                     }
                                 }
-                                //Delete download folder:
-                                if(!fVideoDownloadFolder.delete()){
-                                    Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
+                                //Delete working folder:
+                                if(!fVideoWorkingFolder.delete()){
+                                    Log.d("File Deletion", "Unable to delete folder " + fVideoWorkingFolder.getAbsolutePath());
                                 }
 
                                 //Update catalog item to indicate no post-processing needed:

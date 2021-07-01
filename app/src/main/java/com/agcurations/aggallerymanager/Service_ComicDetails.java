@@ -223,7 +223,7 @@ public class Service_ComicDetails extends IntentService {
                 }
             }
 
-            ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
+            ci.sTitle = sReturnData[COMIC_DETAILS_TITLE_INDEX];
             ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
             ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
 

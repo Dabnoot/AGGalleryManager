@@ -45,6 +45,7 @@ public class ItemClass_File implements Serializable {
     //A video download will have either sURLVideoLink, or in the case of a streaming download
     //  an entry for ic_M3U8 which will contain many files to be downloaded.
 
+    String sTitle = "";  //Particularly for facilitation of video title (could be, but is not used for comic title as of 6/29/2021 commit).
 
     public int iGrade = 3;  //Grade, to be specified by user.
 

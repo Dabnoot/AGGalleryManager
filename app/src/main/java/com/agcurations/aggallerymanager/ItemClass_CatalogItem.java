@@ -31,7 +31,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public String sComicGroups = "";                      //Common comic tag category
     public String sComicLanguages = "";                   //Language(s) found in the comic
     public String sComicParodies = "";                    //Common comic tag category
-    public String sComicName = "";                        //Comic name
+    public String sTitle = "";                            //Comic name or Video title
     public int iComicPages = 0;                           //Total number of pages as defined at the comic source
     public int iComic_Max_Page_ID = 0;                    //Max comic page id extracted from file names
     public String sComic_Missing_Pages = "";              //String of comma-delimited missing page numbers

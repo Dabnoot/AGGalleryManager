@@ -555,7 +555,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
                     holder.imageView_EditComicDetails.setVisibility(View.VISIBLE);
 
-                    sThumbnailText = gciCatalogItem.sComicName;
+                    sThumbnailText = gciCatalogItem.sTitle;
                     holder.tvComicSource.setText(gciCatalogItem.sSource);
                     holder.tvParodies.setText(gciCatalogItem.sComicParodies);
                     holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
@@ -698,7 +698,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     public void RemoveObfuscation(){
         //Remove obfuscation:
-        setTitle(gciCatalogItem.sComicName);
+        setTitle(gciCatalogItem.sTitle);
 
         //Update the RecyclerView:
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();

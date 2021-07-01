@@ -4,18 +4,24 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
+import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.res.TypedArrayUtils;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -29,6 +35,8 @@ import com.arthenica.ffmpegkit.SessionState;
 import com.arthenica.ffmpegkit.Statistics;
 import com.arthenica.ffmpegkit.StatisticsCallback;
 
+import static com.agcurations.aggallerymanager.Worker_ComicPostProcessing.KEY_ARG_DOWNLOAD_IDS;
+
 public class Worker_VideoPostProcessing extends Worker {
 
     //Define string used to identify this worker type:
@@ -38,6 +46,8 @@ public class Worker_VideoPostProcessing extends Worker {
     //public static final String FILENAME = "FILENAME";
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
+    public static final String VIDEO_FILE_SEQUENCE_FILE_NAME = "Video_FileSequence.txt";
+
     DownloadManager downloadManager;
 
     //=========================
@@ -45,10 +55,10 @@ public class Worker_VideoPostProcessing extends Worker {
     public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8 = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8";
     public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
     public static final String KEY_ARG_WORKING_FOLDER = "KEY_ARG_WORKING_FOLDER";
-    public static final String KEY_ARG_FILENAME_SEQUENCE = "KEY_ARG_FILENAME_SEQUENCE";
+    //public static final String KEY_ARG_FILENAME_SEQUENCE = "KEY_ARG_FILENAME_SEQUENCE";
     public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";
     public static final String KEY_ARG_VIDEO_TOTAL_FILE_SIZE = "KEY_ARG_VIDEO_TOTAL_FILE_SIZE";
-    public static final String KEY_ARG_DOWNLOAD_IDS = "KEY_ARG_DOWNLOAD_IDS";
+    //public static final String KEY_ARG_DOWNLOAD_IDS = "KEY_ARG_DOWNLOAD_IDS";
     public static final String KEY_ARG_ITEM_ID = "KEY_ARG_ITEM_ID";
 
     //=========================
@@ -75,13 +85,9 @@ public class Worker_VideoPostProcessing extends Worker {
         giDownloadTypeSingleOrM3U8 = getInputData().getInt(KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, DOWNLOAD_TYPE_SINGLE);
         gsPathToMonitorForDownloads = getInputData().getString(KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS);
         gsWorkingFolder = getInputData().getString((KEY_ARG_WORKING_FOLDER));
-        gsFilenameSequence = getInputData().getStringArray(KEY_ARG_FILENAME_SEQUENCE);
-        if(gsFilenameSequence != null) {
-            giExpectedDownloadFileCount = gsFilenameSequence.length;
-        }
         gsVideoOutputFilename = getInputData().getString(KEY_ARG_VIDEO_OUTPUT_FILENAME);
         glTotalFileSize = getInputData().getLong(KEY_ARG_VIDEO_TOTAL_FILE_SIZE,0);
-        glDownloadIDs = getInputData().getLongArray(KEY_ARG_DOWNLOAD_IDS);
+
         gsItemID = getInputData().getString(KEY_ARG_ITEM_ID);
     }
 
@@ -126,10 +132,84 @@ public class Worker_VideoPostProcessing extends Worker {
             String sFailureMessage = "Working folder does not exist: " + gsWorkingFolder;
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
+
+
+        final String sFileSequenceFilePath = gsWorkingFolder +
+                File.separator + VIDEO_FILE_SEQUENCE_FILE_NAME;
+        final File fFileSequenceFile = new File(sFileSequenceFilePath);
+
+        if(fFileSequenceFile.exists()) {
+            //Get data from file:
+            BufferedReader brReader;
+            try {
+                brReader = new BufferedReader(new FileReader(fFileSequenceFile.getAbsolutePath()));
+                brReader.readLine();//First line is the header, skip it.
+                String sLine = brReader.readLine();
+                ArrayList<Long> allDownloadIDs = new ArrayList<>();
+                ArrayList<String> alsDownloadFileSequence = new ArrayList<>();
+                int j = 0;
+                while (sLine != null) {
+                    j++;
+                    if(!sLine.equals("")){
+                        String[] sTemp = sLine.split("\t");
+                        if(sTemp.length == 2){
+                            long lTemp;
+                            try {
+                                lTemp = Long.parseLong(sTemp[0]);
+                                allDownloadIDs.add(lTemp);
+                                alsDownloadFileSequence.add(sTemp[1]);
+                            } catch (Exception e){
+                                String sFailureMessage = "Could not parse long while reading file sequence file, line " + j + ": " + sFileSequenceFilePath;
+                                return Result.failure(DataErrorMessage(sFailureMessage));
+                            }
+
+                        } else {
+                            String sFailureMessage = "Data missing while reading file sequence file, line " + j + ": " + sFileSequenceFilePath;
+                            return Result.failure(DataErrorMessage(sFailureMessage));
+                        }
+                    }
+                    sLine = brReader.readLine();
+                }
+                brReader.close();
+
+                gsFilenameSequence = new String[alsDownloadFileSequence.size()];
+                gsFilenameSequence = alsDownloadFileSequence.toArray(gsFilenameSequence);
+                giExpectedDownloadFileCount = gsFilenameSequence.length;
+                glDownloadIDs = new long[allDownloadIDs.size()];
+                for(int l = 0; l < allDownloadIDs.size(); l++) {
+                    glDownloadIDs[l] = allDownloadIDs.get(l);
+                }
+
+            } catch (IOException e) {
+                String sFailureMessage = "Problem reading file sequence file: " + sFileSequenceFilePath;
+                return Result.failure(DataErrorMessage(sFailureMessage));
+            }
+
+
+        } else {
+            String sFailureMessage = "File sequence file does not exist: " + sFileSequenceFilePath;
+            return Result.failure(DataErrorMessage(sFailureMessage));
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
         if( giExpectedDownloadFileCount == 0){
             String sFailureMessage = "No expected file download count provided.";
             return Result.failure(DataErrorMessage(sFailureMessage));
         }
+
+
+
 
         /*if(!gsVideoOutputFilename.equals("")){
             return Result.failure(DataErrorMessage("Killing Worker."));
@@ -424,10 +504,12 @@ public class Worker_VideoPostProcessing extends Worker {
                 for(File f: fDownloadedFiles){
                     for(int j = 0; j < gsFilenameSequence.length; j++){
                         if(f.isFile()){
-                            String sFilename = f.getName();
-                            if(sFilename.contains(gsFilenameSequence[j])){
-                                tmDownloadedFiles.put(j, f.getAbsolutePath());
-                                break;
+                            if(!f.getName().contains(VIDEO_FILE_SEQUENCE_FILE_NAME)) {
+                                String sFilename = f.getName();
+                                if (sFilename.contains(gsFilenameSequence[j])) {
+                                    tmDownloadedFiles.put(j, f.getAbsolutePath());
+                                    break;
+                                }
                             }
                         }
                     }

@@ -4,11 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
@@ -205,7 +207,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                                     button_ImportRestart.setEnabled(true);
                                 }
                             }
-
                         }
                     }
                 }

@@ -5,6 +5,7 @@ import android.app.IntentService;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -22,6 +23,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -42,6 +44,7 @@ import java.util.UUID;
 
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -59,7 +62,7 @@ public class Service_Import extends IntentService {
     private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
     private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
     private static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
-    private static final String ACTION_VIDEO_DOWNLOAD = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_DOWNLOAD";
+    private static final String ACTION_IMPORT_VIDEO_WEB_FILES = "com.agcurations.aggallerymanager.action.ACTION_IMPORT_VIDEO_WEB_FILES";
     private static final String ACTION_DELETE_FILES = "com.agcurations.aggallerymanager.action.DELETE_FILES";
 
     private static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
@@ -157,7 +160,7 @@ public class Service_Import extends IntentService {
 
     public static void startActionVideoDownload(Context context, String sWebPageAddress){
         Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_VIDEO_DOWNLOAD);
+        intent.setAction(ACTION_IMPORT_VIDEO_WEB_FILES);
         intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sWebPageAddress);
         context.startService(intent);
     }
@@ -180,6 +183,22 @@ public class Service_Import extends IntentService {
             String sIntentActionFilter = intent.getStringExtra(EXTRA_STRING_INTENT_ACTION_FILTER); //used to send broadcasts to proper receivers.
 
             GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+            if(ACTION_IMPORT_FILES.equals(action) ||
+                    ACTION_IMPORT_COMIC_FOLDERS.equals(action) ||
+                    ACTION_IMPORT_NHCOMICS.equals(action) ||
+                    ACTION_IMPORT_COMIC_WEB_FILES.equals(action) ||
+                    ACTION_IMPORT_VIDEO_WEB_FILES.equals(action)){
+
+                //Set the flags to tell the catalogViewer to view the imported files first:
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                sharedPreferences.edit()
+                        .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
+                                GlobalClass.SORT_BY_DATETIME_IMPORTED)
+                        .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
+                                false)
+                        .apply();
+            }
 
             if (ACTION_GET_DIRECTORY_CONTENTS.equals(action)) {
                 final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
@@ -235,7 +254,7 @@ public class Service_Import extends IntentService {
                     e.printStackTrace();
                 }
 
-            } else if (ACTION_VIDEO_DOWNLOAD.equals(action)) {
+            } else if (ACTION_IMPORT_VIDEO_WEB_FILES.equals(action)) {
 
                 final String sWebAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
                 try{
@@ -1131,8 +1150,8 @@ public class Service_Import extends IntentService {
         }
 
         //Modify viewer settings to show the newly-imported files:
-        globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;
+        /*globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;*/ //Handled in onHandleIntent.
 
         BroadcastProgress(true, "Operation complete.",
                 true, iProgressBarValue,
@@ -1236,7 +1255,7 @@ public class Service_Import extends IntentService {
             ItemClass_CatalogItem ciNewComic = new ItemClass_CatalogItem();
             ciNewComic.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
             ciNewComic.sItemID = tmEntryNHComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
-            ciNewComic.sComicName = tmEntryNHComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
+            ciNewComic.sTitle = tmEntryNHComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
             ciNewComic.sTags = tmEntryNHComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
             ciNewComic.iGrade = Integer.parseInt(tmEntryNHComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade. Either default or selected by user.
             ciNewComic.sFolder_Name = sDestinationFolder;
@@ -1412,8 +1431,8 @@ public class Service_Import extends IntentService {
 
 
         //Modify viewer settings to show the newly-imported files:
-        globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
+        /*globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;*/ //Handled in onHandleIntent.
 
         BroadcastProgress(true, "Operation complete.\n",
                 true, iProgressBarValue,
@@ -1506,7 +1525,7 @@ public class Service_Import extends IntentService {
             ItemClass_CatalogItem ciNewComic = new ItemClass_CatalogItem();
             ciNewComic.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
             ciNewComic.sItemID = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
-            ciNewComic.sComicName = tmEntryComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
+            ciNewComic.sTitle = tmEntryComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
             ciNewComic.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
             ciNewComic.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNewComic.sFolder_Name = sDestinationFolder;
@@ -1659,8 +1678,8 @@ public class Service_Import extends IntentService {
         } //End NHComics (plural) Import Loop.
         
         //Modify viewer settings to show the newly-imported files:
-        globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
+        /*globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;*/ //Handled in onHandleIntent.
 
         BroadcastProgress(true, "Operation complete.\n",
                 true, iProgressBarValue,
@@ -1837,7 +1856,7 @@ public class Service_Import extends IntentService {
                 }
             }
 
-            ci.sComicName = sReturnData[COMIC_DETAILS_TITLE_INDEX];
+            ci.sTitle = sReturnData[COMIC_DETAILS_TITLE_INDEX];
             ci.sComicParodies = sReturnData[COMIC_DETAILS_PARODIES_DATA_INDEX];
             ci.sComicCharacters = sReturnData[COMIC_DETAILS_CHARACTERS_DATA_INDEX];
             ci.sTags = sReturnData[COMIC_DETAILS_TAGS_DATA_INDEX]; //NOTE: THESE ARE TEXTUAL TAGS, NOT TAG IDS.
@@ -2230,10 +2249,10 @@ public class Service_Import extends IntentService {
 
                     //Build-out data to send to the worker:
                     Data dataComicDownloadPostProcessor = new Data.Builder()
-                            .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sComicDownloadFolder)
-                            .putString(Worker_VideoPostProcessing.KEY_ARG_WORKING_FOLDER, fDestination.getAbsolutePath())
-                            .putLongArray(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
-                            .putString(Worker_VideoPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
+                            .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sComicDownloadFolder)
+                            .putString(Worker_ComicPostProcessing.KEY_ARG_WORKING_FOLDER, fDestination.getAbsolutePath())
+                            .putLongArray(Worker_ComicPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
+                            .putString(Worker_ComicPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
                             .build();
                     OneTimeWorkRequest otwrComicDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_ComicPostProcessing.class)
                             .setInputData(dataComicDownloadPostProcessor)
@@ -2283,8 +2302,8 @@ public class Service_Import extends IntentService {
         globalClass.gci_ImportComicWebItem = ci;
 
         //Modify viewer settings to show the newly-imported files:
-        globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;
+        /*globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;*/ //Handled in onHandleIntent.
 
     }
 
@@ -2374,17 +2393,20 @@ public class Service_Import extends IntentService {
                     //2: "url":"https:\/\/ev.phncdn.com\/videos\/201812\/31\/199453331\/240P_400K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=MpIVLM9Yr5qK32YnDVbWG81%2Fhaw%3D"
                     //3: "upgrade":0
                     //4: "active":0
-                    String sURL = sTemp[2].substring(sTemp[2].indexOf("http"));
-                    sURL = sURL.replace("\"","");
-                    sURL = sURL.replace("\\","");
-                    icWebDataLocator.alVideoDownloadSearchKeys.add(
-                            new ItemClass_VideoDownloadSearchKey(
-                                    ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
-                                    "", ""));
-                    icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).sSearchStringMatchContent = sURL;
-                    icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).bMatchFound = true; //Fake it.
+                    int iHTTPLocation = sTemp[2].indexOf("http");
+                    if(iHTTPLocation >= 0) {
+                        String sURL = sTemp[2].substring(sTemp[2].indexOf("http"));
+                        sURL = sURL.replace("\"", "");
+                        sURL = sURL.replace("\\", "");
+                        icWebDataLocator.alVideoDownloadSearchKeys.add(
+                                new ItemClass_VideoDownloadSearchKey(
+                                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                                        "", ""));
+                        icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).sSearchStringMatchContent = sURL;
+                        icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).bMatchFound = true; //Fake it.
 
-                    iRecordNumber++;
+                        iRecordNumber++;
+                    }
 
                 }
             }
@@ -2468,8 +2490,14 @@ public class Service_Import extends IntentService {
         props.setAllowMultiWordAttributes(true);
         props.setRecognizeUnicodeChars(true);
         props.setOmitComments(true);
-        TagNode node = pageParser.clean(icWebDataLocator.sHTML);
-
+        TagNode node = null;
+        try {
+            node = pageParser.clean(icWebDataLocator.sHTML);
+        } catch (Exception e){
+            String sMessage = "Problem with HTML parser. Try again?\n" + e.getMessage();
+            problemNotificationConfig(sMessage, sIntentActionFilter);
+            return;
+        }
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
         String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
 
@@ -2600,199 +2628,211 @@ public class Service_Import extends IntentService {
         //  Include filename, download address, tags, and, if available, file size, resolution, and duration:
         ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = new ArrayList<>();
 
+        //First go through and grab the title so that the title can be passed into FileItems that are created next:
+        for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys) {
+            if (vdsk.bMatchFound) {
+                if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_TITLE)) {
+                    sTitle = cleanHTMLCodedCharacters(vdsk.sSearchStringMatchContent); //Convert any html coded characters
+                }
+            }
+        }
+
         //Look for potential downloads' file sizes, and download any m3u8 text file if it exists:
         for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
             if(vdsk.bMatchFound) {
-                if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_TITLE)) {
-                    sTitle = cleanHTMLCodedCharacters(vdsk.sSearchStringMatchContent); //Convert any html coded characters
-                } else if(vdsk.sDataType.equals(VIDEO_DOWNLOAD_LINK)) {
-                    BroadcastProgress(true, "Analyzing video link: " + vdsk.sSearchStringMatchContent,
-                            false, 0,
-                            false, "",
-                            sIntentActionFilter);
-                    try {
-                        URL urlVideoLink = new URL(vdsk.sSearchStringMatchContent);
+                switch (vdsk.sDataType) {
+                    case VIDEO_DOWNLOAD_TITLE:
+                        //Do nothing (this is processed above)
+                        break;
+                    case VIDEO_DOWNLOAD_LINK:
+                        BroadcastProgress(true, "Analyzing video link: " + vdsk.sSearchStringMatchContent,
+                                false, 0,
+                                false, "",
+                                sIntentActionFilter);
+                        try {
+                            URL urlVideoLink = new URL(vdsk.sSearchStringMatchContent);
 
-                        //Locate a file name, likely in between the last '/' and either a '?' or length of string.
-                        String sTempFilename;
-                        sTempFilename = vdsk.sSearchStringMatchContent;
-                        int iStartLocation = Math.max(sTempFilename.lastIndexOf("/") + 1, 0);
-                        int iEndLocation;
-                        int iSpecialEndCharLocation = sTempFilename.lastIndexOf("?");
-                        if(iSpecialEndCharLocation > 0){
-                            iEndLocation = iSpecialEndCharLocation;
-                        } else {
-                            iEndLocation = sTempFilename.length();
-                        }
-                        sTempFilename = sTempFilename.substring(iStartLocation, iEndLocation);
-                        ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_URL, sTempFilename);
-                        icf.sURLVideoLink = vdsk.sSearchStringMatchContent;
-
-                        HttpURLConnection connection = (HttpURLConnection) urlVideoLink.openConnection();
-                        connection.setRequestProperty("Accept-Encoding", "identity");
-                        vdsk.lFileSize = connection.getContentLength(); //Returns -1 if content size is not in the header.
-                        icf.lSizeBytes = vdsk.lFileSize;
-                        connection.disconnect();
-
-                        icf.sURLThumbnail = sURLThumbnail;
-                        icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
-                        icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
-                        icf.aliProspectiveTags = aliIdentifiedTags;
-
-                        alicf_VideoDownloadFileItems.add(icf);
-
-                    }catch(Exception e){
-                        vdsk.bErrorWithLink = true;
-                        vdsk.sErrorMessage = e.getMessage();
-                    }
-
-                } else if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_M3U8)){
-                    BroadcastProgress(true, "Analyzing video stream: " + vdsk.sSearchStringMatchContent,
-                            false, 0,
-                            false, "",
-                            sIntentActionFilter);
-                    try {
-                        URL url = new URL(vdsk.sSearchStringMatchContent);
-                        URLConnection connection = url.openConnection();
-                        connection.connect();
-
-                        // download the file
-                        InputStream input = new BufferedInputStream(url.openStream(), 8192);
-
-                        byte[] data = new byte[1024];
-                        StringBuilder sbM3U8Content = new StringBuilder();
-                        while ((input.read(data)) != -1) {
-
-                            sbM3U8Content.append(new String(data, StandardCharsets.UTF_8));
-                        }
-                        input.close();
-
-                        /*
-                        HLS: Http Live Streaming
-                        https://www.toptal.com/apple/introduction-to-http-live-streaming-hls#:~:text=What%20is%20an%20M3U8%20file,used%20to%20define%20media%20streams.
-
-                        Below is an example of an M3U8 "master" file. It points to other M3U8 files with video "chunks".
-
-                        M3U comments begin with the '#' character, unless ended with a semicolon.
-                        My comments begin with '!'.
-                        Example M3U8 data:
-
-                        #EXTM3U               !Header. Must be first line. Required. Standard.
-                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=763904,RESOLUTION=854x480,NAME="480p"  !Optional. This example gives some data about the stream.
-                        hls-480p-fe738.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
-                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1327104,RESOLUTION=1280x720,NAME="720p"
-                        hls-720p-02c5c.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbbf
-                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2760704,RESOLUTION=1920x1080,NAME="1080p"
-                        hls-1080p-cffd4.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
-                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=423936,RESOLUTION=640x360,NAME="360p"
-                        hls-360p-f6185.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
-                        #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=155648,RESOLUTION=444x250,NAME="250p"
-                        hls-250p-2b29e.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
-                         */
-
-                        //Locate the M3U8 items:
-                        //Go through the M3U8 master list and identify the .M3U8 files.
-                        String sM3U8_MasterData = sbM3U8Content.toString();
-                        String[] sM3U8_MasterDataLines = sM3U8_MasterData.split("\n");
-                        ArrayList<ItemClass_M3U8> al_M3U8 = new ArrayList<>();
-                        boolean bReadingM3U8Item = false;
-                        ItemClass_M3U8 icM3U8 = null;
-                        for(String sLine: sM3U8_MasterDataLines){
-                            if(sLine.startsWith("#EXT-X-STREAM-INF")){
-                                bReadingM3U8Item = true;
-                                icM3U8 = new ItemClass_M3U8();
-                                icM3U8.sTitle = sTitle;
-                                icM3U8.sBaseURL = vdsk.sSearchStringMatchContent.substring(0, vdsk.sSearchStringMatchContent.lastIndexOf("/"));
-                                String[] sTemp1 = sLine.split(":");
-                                if(sTemp1.length > 1) {
-                                    String[] sTemp2 = sTemp1[1].split(",");
-                                    for(String sDataItem: sTemp2){
-                                        String[] sDataSplit = sDataItem.split("=");
-                                        if(sDataSplit.length > 1) {
-                                            if (sDataSplit[0].equals("BANDWIDTH")) {
-                                                icM3U8.sBandwidth = sDataSplit[1];
-                                            }
-                                            if (sDataSplit[0].equals("RESOLUTION")) {
-                                                icM3U8.sResolution = sDataSplit[1];
-                                            }
-                                            if (sDataSplit[0].equals("NAME")) {
-                                                icM3U8.sName = sDataSplit[1];
-                                            }
-                                        }
-                                    }
-                                }
-                            } else if (bReadingM3U8Item){
-                                bReadingM3U8Item = false;
-                                if(icM3U8 != null) {
-                                    icM3U8.sFileName = sLine;
-                                    al_M3U8.add(icM3U8);
-                                }
+                            //Locate a file name, likely in between the last '/' and either a '?' or length of string.
+                            String sTempFilename;
+                            sTempFilename = vdsk.sSearchStringMatchContent;
+                            int iStartLocation = Math.max(sTempFilename.lastIndexOf("/") + 1, 0);
+                            int iEndLocation;
+                            int iSpecialEndCharLocation = sTempFilename.lastIndexOf("?");
+                            if (iSpecialEndCharLocation > 0) {
+                                iEndLocation = iSpecialEndCharLocation;
+                            } else {
+                                iEndLocation = sTempFilename.length();
                             }
+                            sTempFilename = sTempFilename.substring(iStartLocation, iEndLocation);
+                            ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_URL, sTempFilename);
+                            icf.sURLVideoLink = vdsk.sSearchStringMatchContent;
+
+                            HttpURLConnection connection = (HttpURLConnection) urlVideoLink.openConnection();
+                            connection.setRequestProperty("Accept-Encoding", "identity");
+                            vdsk.lFileSize = connection.getContentLength(); //Returns -1 if content size is not in the header.
+                            icf.lSizeBytes = vdsk.lFileSize;
+                            connection.disconnect();
+
+                            icf.sTitle = sTitle;
+                            icf.sURLThumbnail = sURLThumbnail;
+                            icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                            icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
+                            icf.aliProspectiveTags = aliIdentifiedTags;
+
+                            alicf_VideoDownloadFileItems.add(icf);
+
+                        } catch (Exception e) {
+                            vdsk.bErrorWithLink = true;
+                            vdsk.sErrorMessage = e.getMessage();
                         }
 
-
-                        //Example of an M3U8 item file containing TS file entries:
-                        /*
-                        #EXTM3U
-                        #EXT-X-VERSION:3
-                        #EXT-X-TARGETDURATION:10
-                        #EXT-X-MEDIA-SEQUENCE:0
-                        #EXTINF:10.010011,
-                        hls-480p-fe7380.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTINF:10.010011,
-                        hls-480p-fe7381.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTINF:10.010011,
-                        hls-480p-fe7382.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTINF:10.010011,
-                        hls-480p-fe73880.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTINF:9.743067,
-                        hls-480p-fe73881.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXT-X-ENDLIST
-                        e7dff1bc
-                        #EXTINF:10.010011,
-                        hls-480p-fe73871.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTINF:10.010011,
-                        hls-480p-fe73872.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTINF:10.010011,
-                        hls-480p-fe73877.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
-                        #EXTIN
-                        */
-
-                        //Evaluate the M3U8 files and create a list of the .ts files in each M3U8 item:
-                        for(ItemClass_M3U8 icM3U8_entry: al_M3U8){
-                            String sUrl = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
-                            url = new URL(sUrl);
-                            connection = url.openConnection();
+                        break;
+                    case VIDEO_DOWNLOAD_M3U8:
+                        BroadcastProgress(true, "Analyzing video stream: " + vdsk.sSearchStringMatchContent,
+                                false, 0,
+                                false, "",
+                                sIntentActionFilter);
+                        try {
+                            URL url = new URL(vdsk.sSearchStringMatchContent);
+                            URLConnection connection = url.openConnection();
                             connection.connect();
 
-                            // download the M3U8 text file:
-                            input = new BufferedInputStream(url.openStream(), 8192);
+                            // download the file
+                            InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
-                            data = new byte[1024];
-                            StringBuilder sbM3U8_HLS_File_Content = new StringBuilder();
+                            byte[] data = new byte[1024];
+                            StringBuilder sbM3U8Content = new StringBuilder();
                             while ((input.read(data)) != -1) {
-                                String sLine = new String(data, StandardCharsets.UTF_8);
-                                sbM3U8_HLS_File_Content.append(sLine);
 
+                                sbM3U8Content.append(new String(data, StandardCharsets.UTF_8));
                             }
                             input.close();
 
-                            //Evaluate if this line in the M3U8 file is a .ts file name and add it to the arraylist if so:
-                            String sTest = sbM3U8_HLS_File_Content.toString();
-                            String[] sLines = sTest.split("\n");
-                            for(String sLine: sLines) {
+                            /*
+                            HLS: Http Live Streaming
+                            https://www.toptal.com/apple/introduction-to-http-live-streaming-hls#:~:text=What%20is%20an%20M3U8%20file,used%20to%20define%20media%20streams.
 
-                                if (!sLine.startsWith("#")) {// && sLine.startsWith("hls")) {
-                                    if(icM3U8_entry.als_TSDownloads == null){
-                                        icM3U8_entry.als_TSDownloads = new ArrayList<>();
+                            Below is an example of an M3U8 "master" file. It points to other M3U8 files with video "chunks".
+
+                            M3U comments begin with the '#' character, unless ended with a semicolon.
+                            My comments begin with '!'.
+                            Example M3U8 data:
+
+                            #EXTM3U               !Header. Must be first line. Required. Standard.
+                            #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=763904,RESOLUTION=854x480,NAME="480p"  !Optional. This example gives some data about the stream.
+                            hls-480p-fe738.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                            #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1327104,RESOLUTION=1280x720,NAME="720p"
+                            hls-720p-02c5c.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbbf
+                            #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2760704,RESOLUTION=1920x1080,NAME="1080p"
+                            hls-1080p-cffd4.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                            #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=423936,RESOLUTION=640x360,NAME="360p"
+                            hls-360p-f6185.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                            #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=155648,RESOLUTION=444x250,NAME="250p"
+                            hls-250p-2b29e.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
+                             */
+
+                            //Locate the M3U8 items:
+                            //Go through the M3U8 master list and identify the .M3U8 files.
+                            String sM3U8_MasterData = sbM3U8Content.toString();
+                            String[] sM3U8_MasterDataLines = sM3U8_MasterData.split("\n");
+                            ArrayList<ItemClass_M3U8> al_M3U8 = new ArrayList<>();
+                            boolean bReadingM3U8Item = false;
+                            ItemClass_M3U8 icM3U8 = null;
+                            for (String sLine : sM3U8_MasterDataLines) {
+                                if (sLine.startsWith("#EXT-X-STREAM-INF")) {
+                                    bReadingM3U8Item = true;
+                                    icM3U8 = new ItemClass_M3U8();
+                                    icM3U8.sBaseURL = vdsk.sSearchStringMatchContent.substring(0, vdsk.sSearchStringMatchContent.lastIndexOf("/"));
+                                    String[] sTemp1 = sLine.split(":");
+                                    if (sTemp1.length > 1) {
+                                        String[] sTemp2 = sTemp1[1].split(",");
+                                        for (String sDataItem : sTemp2) {
+                                            String[] sDataSplit = sDataItem.split("=");
+                                            if (sDataSplit.length > 1) {
+                                                if (sDataSplit[0].equals("BANDWIDTH")) {
+                                                    icM3U8.sBandwidth = sDataSplit[1];
+                                                }
+                                                if (sDataSplit[0].equals("RESOLUTION")) {
+                                                    icM3U8.sResolution = sDataSplit[1];
+                                                }
+                                                if (sDataSplit[0].equals("NAME")) {
+                                                    icM3U8.sName = sDataSplit[1];
+                                                }
+                                            }
+                                        }
                                     }
-                                    icM3U8_entry.als_TSDownloads.add(sLine); //Add our detected TS download address to the M3U8 item.
-                                } else if (sLine.contains("ENDLIST")) {
-                                    break;
+                                } else if (bReadingM3U8Item) {
+                                    bReadingM3U8Item = false;
+                                    if (icM3U8 != null) {
+                                        icM3U8.sFileName = sLine;
+                                        al_M3U8.add(icM3U8);
+                                    }
                                 }
-
                             }
-                        }
+
+
+                            //Example of an M3U8 item file containing TS file entries:
+                            /*
+                            #EXTM3U
+                            #EXT-X-VERSION:3
+                            #EXT-X-TARGETDURATION:10
+                            #EXT-X-MEDIA-SEQUENCE:0
+                            #EXTINF:10.010011,
+                            hls-480p-fe7380.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTINF:10.010011,
+                            hls-480p-fe7381.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTINF:10.010011,
+                            hls-480p-fe7382.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTINF:10.010011,
+                            hls-480p-fe73880.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTINF:9.743067,
+                            hls-480p-fe73881.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXT-X-ENDLIST
+                            e7dff1bc
+                            #EXTINF:10.010011,
+                            hls-480p-fe73871.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTINF:10.010011,
+                            hls-480p-fe73872.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTINF:10.010011,
+                            hls-480p-fe73877.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+                            #EXTIN
+                            */
+
+                            //Evaluate the M3U8 files and create a list of the .ts files in each M3U8 item:
+                            for (ItemClass_M3U8 icM3U8_entry : al_M3U8) {
+                                String sUrl = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
+                                url = new URL(sUrl);
+                                connection = url.openConnection();
+                                connection.connect();
+
+                                // download the M3U8 text file:
+                                input = new BufferedInputStream(url.openStream(), 8192);
+
+                                data = new byte[1024];
+                                StringBuilder sbM3U8_HLS_File_Content = new StringBuilder();
+                                while ((input.read(data)) != -1) {
+                                    String sLine = new String(data, StandardCharsets.UTF_8);
+                                    sbM3U8_HLS_File_Content.append(sLine);
+
+                                }
+                                input.close();
+
+                                //Evaluate if this line in the M3U8 file is a .ts file name and add it to the arraylist if so:
+                                String sTest = sbM3U8_HLS_File_Content.toString();
+                                String[] sLines = sTest.split("\n");
+                                for (String sLine : sLines) {
+
+                                    if (!sLine.startsWith("#")) {// && sLine.startsWith("hls")) {
+                                        if (icM3U8_entry.als_TSDownloads == null) {
+                                            icM3U8_entry.als_TSDownloads = new ArrayList<>();
+                                        }
+                                        icM3U8_entry.als_TSDownloads.add(sLine); //Add our detected TS download address to the M3U8 item.
+                                    } else if (sLine.contains("ENDLIST")) {
+                                        break;
+                                    }
+
+                                }
+                            }
 
 
                         /*//Test download of TS files:
@@ -2825,58 +2865,60 @@ public class Service_Import extends IntentService {
                             }
                         }*/
 
-                        //Obtain size of each TS file set of downloads:
-                        //Loop through the M3U8 entries, such as video @ 240x320, video @ 640x480, @720p, @1080p, etc:
-                        for(ItemClass_M3U8 icM3U8_entry: al_M3U8){
-                            //Loop through the TS downloads for each of the M3U8 entries and accumulate the file sizes:
+                            //Obtain size of each TS file set of downloads:
+                            //Loop through the M3U8 entries, such as video @ 240x320, video @ 640x480, @720p, @1080p, etc:
+                            for (ItemClass_M3U8 icM3U8_entry : al_M3U8) {
+                                //Loop through the TS downloads for each of the M3U8 entries and accumulate the file sizes:
 
-                            int iFileSizeLoopCount = 0;
-                            for(String sTSDownloadAddress: icM3U8_entry.als_TSDownloads){
+                                int iFileSizeLoopCount = 0;
+                                for (String sTSDownloadAddress : icM3U8_entry.als_TSDownloads) {
 
-                                URL urlPage = new URL(icM3U8_entry.sBaseURL + "/" + sTSDownloadAddress);
+                                    URL urlPage = new URL(icM3U8_entry.sBaseURL + "/" + sTSDownloadAddress);
                                 /*BroadcastProgress(true, "Getting file size data for " + sTSDownloadAddress + "\n",
                                         false, 0,
                                         false, "",
                                         sIntentActionFilter); *///Broadcast progress
 
-                                HttpURLConnection httpURLConnection = (HttpURLConnection) urlPage.openConnection();
-                                httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
-                                long lSingleTSFileDownloadSize = httpURLConnection.getContentLength(); //Returns -1 if content size is not in the header.
-                                httpURLConnection.disconnect();
+                                    HttpURLConnection httpURLConnection = (HttpURLConnection) urlPage.openConnection();
+                                    httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
+                                    long lSingleTSFileDownloadSize = httpURLConnection.getContentLength(); //Returns -1 if content size is not in the header.
+                                    httpURLConnection.disconnect();
 
-                                if(lSingleTSFileDownloadSize > 0){
-                                    //The size of one of the TS files will be representative of all of the TS file sizes for the given video
-                                    //  because all TS files for an M3U8 entry are the same resolution and time length.
-                                    //Multiply the size of this single download by the number of TS files to get the overall size of the set of TS files:
-                                    icM3U8_entry.lTotalTSFileSetSize = lSingleTSFileDownloadSize * icM3U8_entry.als_TSDownloads.size();
-                                    break;
-                                } else {
-                                    iFileSizeLoopCount++;
-                                    if (iFileSizeLoopCount == 5) {
-                                        //Unable to determine the size of the download. Leave the result at -1.
+                                    if (lSingleTSFileDownloadSize > 0) {
+                                        //The size of one of the TS files will be representative of all of the TS file sizes for the given video
+                                        //  because all TS files for an M3U8 entry are the same resolution and time length.
+                                        //Multiply the size of this single download by the number of TS files to get the overall size of the set of TS files:
+                                        icM3U8_entry.lTotalTSFileSetSize = lSingleTSFileDownloadSize * icM3U8_entry.als_TSDownloads.size();
                                         break;
+                                    } else {
+                                        iFileSizeLoopCount++;
+                                        if (iFileSizeLoopCount == 5) {
+                                            //Unable to determine the size of the download. Leave the result at -1.
+                                            break;
+                                        }
                                     }
                                 }
+                                //Create a file item to record the results:
+                                String sFilename = cleanFileNameViaTrim(icM3U8_entry.sFileName);
+                                ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_M3U8, sFilename);
+                                icf.ic_M3U8 = icM3U8_entry;
+                                icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;
+                                icf.sURLThumbnail = sURLThumbnail;
+                                icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                                icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
+                                icf.aliProspectiveTags = aliIdentifiedTags;
+                                icf.sTitle = sTitle;
+                                alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
+
                             }
-                            //Create a file item to record the results:
-                            String sFilename = cleanFileNameViaTrim(icM3U8_entry.sFileName);
-                            ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_M3U8, sFilename);
-                            icf.ic_M3U8 = icM3U8_entry;
-                            icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;
-                            icf.sURLThumbnail = sURLThumbnail;
-                            icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
-                            icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
-                            icf.aliProspectiveTags = aliIdentifiedTags;
-                            alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
+                            //Finished obtaining sizes of the TS file sets.
 
+                        } catch (Exception e) {
+                            vdsk.bErrorWithLink = true;
+                            vdsk.sErrorMessage = e.getMessage();
+                            problemNotificationConfig(e.getMessage(), sIntentActionFilter);
                         }
-                        //Finished obtaining sizes of the TS file sets.
-
-                    }catch(Exception e){
-                        vdsk.bErrorWithLink = true;
-                        vdsk.sErrorMessage = e.getMessage();
-                        problemNotificationConfig(e.getMessage(), sIntentActionFilter);
-                    }
+                        break;
                 }
 
             }
@@ -3023,6 +3065,7 @@ public class Service_Import extends IntentService {
         ciNew.dDatetime_Import = dTimeStamp;
         ciNew.iGrade = icfDownloadItem.iGrade;
         ciNew.sSource = sAddress;
+        ciNew.sTitle = icfDownloadItem.sTitle;
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
@@ -3033,8 +3076,12 @@ public class Service_Import extends IntentService {
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count so that we know when all of the files have been downloaded.
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
-            String sTempFilename = icfDownloadItem.ic_M3U8.sTitle;
-            sTempFilename = cleanFileNameViaReplace(sTempFilename, "") + ".ts";
+            //Form a name for the concatenated video file:
+            String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
+            sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
+            sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
+            sTempFilename = sTempFilename.substring(0,sTempFilename.lastIndexOf(".")); //Remove extension (probably .m3u8).
+            sTempFilename = sTempFilename + ".ts"; //Add appropriate extension.
             ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
         }
 
@@ -3162,21 +3209,33 @@ public class Service_Import extends IntentService {
                 lDownloadIDs[i] = allDownloadIDs.get(i);
             }
             //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
-            String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
-            int l = 0;
-            for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
+            //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
+            //int l = 0;
+            //A file sequence string array can be too big to pass to a worker, so write it to a file:
+            final String sFileSequenceFilePath = sVideoWorkingFolder +
+                    File.separator + Worker_VideoPostProcessing.VIDEO_FILE_SEQUENCE_FILE_NAME;
+            final File fFileSequenceFile = new File(sFileSequenceFilePath);
+            FileWriter fwFileSequenceFile;
+            fwFileSequenceFile = new FileWriter(fFileSequenceFile, true);
+            for(int l = 0; l < ciNew.alsDownloadURLsAndDestFileNames.size(); l++) {
+                String sLine = lDownloadIDs[l] + "\t" + ciNew.alsDownloadURLsAndDestFileNames.get(l)[FILE_NAME_AND_EXTENSION] + "\n";
+                fwFileSequenceFile.write(sLine);
+            }
+            fwFileSequenceFile.flush();
+            fwFileSequenceFile.close();
+            /*for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
                 sFilenameSequence[l] =  sURLAndFileName[FILE_NAME_AND_EXTENSION];
                 l++;
-            }
+            }*/
             //Build-out data to send to the worker:
             Data dataVideoPostProcessor = new Data.Builder()
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_WORKING_FOLDER, sVideoWorkingFolder)
-                    .putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)
+                    //.putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, GlobalClass.JumbleFileName(ciNew.sFilename)) //Double-jumble.
                     .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)
-                    .putLongArray(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
+                    //.putLongArray(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID)
                     .build();
             OneTimeWorkRequest otwrVideoPostProcessor = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
@@ -3205,8 +3264,8 @@ public class Service_Import extends IntentService {
         }
 
         //Modify viewer settings to show the newly-imported files:
-        globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;
+        /*globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;*/ //Handled in onHandleIntent.
 
     }
 

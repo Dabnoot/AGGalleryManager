@@ -8,9 +8,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Intent;
-import android.media.Image;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -79,7 +77,7 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
         button_Save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                gciCatalogItem.sComicName = editText_ComicTitle.getText().toString();
+                gciCatalogItem.sTitle = editText_ComicTitle.getText().toString();
                 gciCatalogItem.sSource = editText_ComicSource.getText().toString();
                 gciCatalogItem.sComicParodies = editText_Parodies.getText().toString();
                 gciCatalogItem.sComicCharacters = editText_Characters.getText().toString();
@@ -194,7 +192,7 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        editText_ComicTitle.setText(gciCatalogItem.sComicName);
+        editText_ComicTitle.setText(gciCatalogItem.sTitle);
         editText_ComicSource.setText(gciCatalogItem.sSource);
         editText_Parodies.setText(gciCatalogItem.sComicParodies);
         editText_Characters.setText(gciCatalogItem.sComicCharacters);
