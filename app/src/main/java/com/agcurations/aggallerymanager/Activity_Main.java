@@ -351,6 +351,10 @@ public class Activity_Main extends AppCompatActivity {
             Service_Main.startActionCatalogBackup(this);
 
             return true;
+        } else if(item.getItemId() == R.id.menu_LogViewer){
+            Intent intentLogViewerActivity = new Intent(this, Activity_LogViewer.class);
+            startActivity(intentLogViewerActivity);
+            return true;
         } else if(item.getItemId() == R.id.menu_About) {
 
 

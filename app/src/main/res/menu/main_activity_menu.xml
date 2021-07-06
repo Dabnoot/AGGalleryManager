@@ -11,6 +11,8 @@
         android:title="Tag Editor" />
     <item android:id="@+id/menu_DatabaseBackup"
         android:title="Database Backup" />
+    <item android:id="@+id/menu_LogViewer"
+        android:title="Log Viewer"/>
     <item android:id="@+id/menu_About"
         android:title="@string/about" />
     <item android:id="@+id/menu_Test"

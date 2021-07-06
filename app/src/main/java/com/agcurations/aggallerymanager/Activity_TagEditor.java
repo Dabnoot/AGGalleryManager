@@ -152,12 +152,6 @@ public class Activity_TagEditor extends AppCompatActivity {
                 stackFragmentOrder.push(giStartingFragment);
             }
         }
-
-
-
-
-
-
     }
 
     public void buttonNextClick_MediaCategorySelected(View v){
