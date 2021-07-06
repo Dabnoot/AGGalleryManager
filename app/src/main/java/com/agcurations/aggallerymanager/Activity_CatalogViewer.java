@@ -758,7 +758,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         if(!ci.sDuration_Text.equals("")){
                             sThumbnailText = sThumbnailText  + ", " + ci.sDuration_Text;
                         }
-
+                        sThumbnailText = ci.sItemID + " " + sThumbnailText; //For debugging.
                         break;
                     case GlobalClass.MEDIA_CATEGORY_IMAGES:
                         sItemName = GlobalClass.JumbleFileName(ci.sFilename);

@@ -2817,21 +2817,44 @@ public class Service_Import extends IntentService {
                                 }
                                 input.close();
 
+                                //Write the m3u8 file to the logs folder for debugging purposes:
+                                final String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_M3U8.txt";
+                                final File fM3U8 = new File(sM3U8FilePath);
+                                FileWriter fwM3U8File;
+                                fwM3U8File = new FileWriter(fM3U8, true);
+                                fwM3U8File.write(sbM3U8_HLS_File_Content.toString());
+                                fwM3U8File.flush();
+                                fwM3U8File.close();
+
+                                final String sM3U8InterprettedFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_M3U8_interpretted.txt";
+                                final File fM3U8Interpretted = new File(sM3U8InterprettedFilePath);
+                                FileWriter fwM3U8InterprettedFile;
+                                fwM3U8InterprettedFile = new FileWriter(fM3U8Interpretted, true);
+
+
                                 //Evaluate if this line in the M3U8 file is a .ts file name and add it to the arraylist if so:
                                 String sTest = sbM3U8_HLS_File_Content.toString();
                                 String[] sLines = sTest.split("\n");
                                 for (String sLine : sLines) {
 
-                                    if (!sLine.startsWith("#")) {// && sLine.startsWith("hls")) {
+                                    if (!sLine.startsWith("#") && sLine.contains(".ts")) {// && sLine.startsWith("hls")) {
                                         if (icM3U8_entry.als_TSDownloads == null) {
                                             icM3U8_entry.als_TSDownloads = new ArrayList<>();
                                         }
                                         icM3U8_entry.als_TSDownloads.add(sLine); //Add our detected TS download address to the M3U8 item.
+                                        fwM3U8InterprettedFile.write(sLine + "\n");
                                     } else if (sLine.contains("ENDLIST")) {
                                         break;
                                     }
 
                                 }
+                                fwM3U8InterprettedFile.flush();
+                                fwM3U8InterprettedFile.close();
+
+
+
                             }
 
 
