@@ -259,9 +259,11 @@ public class Worker_VideoPostProcessing extends Worker {
                         int columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
                         int status = cursor.getInt(columnIndex);
                         int columnReason = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
-                        int reason = cursor.getInt(columnReason);
+                        int iReasonID = cursor.getInt(columnReason);
                         int iLocalURIIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
                         String sLocalURI = cursor.getString(iLocalURIIndex);
+                        int iDownloadURI = cursor.getColumnIndex(DownloadManager.COLUMN_URI);
+                        String sDownloadURI = cursor.getString(iDownloadURI);
 
                         bDownloadProblem = false;
                         bPaused = false;
@@ -270,7 +272,7 @@ public class Worker_VideoPostProcessing extends Worker {
                         switch (status) {
                             case DownloadManager.STATUS_FAILED:
                                 bDownloadProblem = true;
-                                switch (reason) {
+                                switch (iReasonID) {
                                     case DownloadManager.ERROR_CANNOT_RESUME:
                                         sDownloadFailedReason = "ERROR_CANNOT_RESUME";
                                         break;
@@ -299,10 +301,18 @@ public class Worker_VideoPostProcessing extends Worker {
                                         sDownloadFailedReason = "ERROR_UNKNOWN";
                                         break;
                                 }
+                                String sMessage = "There was a problem with a download.";
+                                sMessage = sMessage + "\n" + "Download: " + sDownloadURI;
+                                sMessage = sMessage + "\n" + "Reason ID: " + iReasonID;
+                                sMessage = sMessage + "\n" + "Reason text: " + sDownloadFailedReason;
+                                fwLogFile = new FileWriter(fLog, true);
+                                fwLogFile.write(sMessage + "\n");
+                                fwLogFile.flush();
+                                fwLogFile.close();
                                 break;
                             case DownloadManager.STATUS_PAUSED:
                                 bPaused = true;
-                                switch (reason) {
+                                switch (iReasonID) {
                                     case DownloadManager.PAUSED_QUEUED_FOR_WIFI:
                                         sDownloadPausedReason = "PAUSED_QUEUED_FOR_WIFI";
                                         break;
@@ -351,7 +361,7 @@ public class Worker_VideoPostProcessing extends Worker {
                                             outputStream.close();
 
                                             if (!fSource.delete()) {
-                                                String sMessage = "Could not delete source file after copy. Source: " + fSource.getAbsolutePath();
+                                                sMessage = "Could not delete source file after copy. Source: " + fSource.getAbsolutePath();
                                                 fwLogFile = new FileWriter(fLog, true);
                                                 fwLogFile.write("DownloadManager monitoring message: " + sMessage + "\n");
                                                 fwLogFile.flush();
@@ -359,7 +369,7 @@ public class Worker_VideoPostProcessing extends Worker {
                                             }
                                         } catch (Exception e) {
                                             try {
-                                                String sMessage = fSource.getPath() + "\n" + e.getMessage();
+                                                sMessage = fSource.getPath() + "\n" + e.getMessage();
                                                 fwLogFile = new FileWriter(fLog, true);
                                                 fwLogFile.write("Stream copy exception: " + sMessage + "\n");
                                                 fwLogFile.flush();
@@ -614,7 +624,7 @@ public class Worker_VideoPostProcessing extends Worker {
                 if (iElapsedWaitTime >= GlobalClass.DOWNLOAD_WAIT_TIMEOUT) {
                     sFailureMessage = "Download elapsed time exceeds timeout of " + GlobalClass.DOWNLOAD_WAIT_TIMEOUT + " milliseconds.";
                 } else if (bDownloadProblem) {
-                    sFailureMessage = "There was a problem with a download. " + sDownloadFailedReason;
+                    sFailureMessage = "There was a problem with a download resulting in a stop of the worker. ";
                 }
 
                 try {

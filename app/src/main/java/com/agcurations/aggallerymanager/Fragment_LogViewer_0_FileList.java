@@ -1,6 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -87,6 +86,22 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             });
         }
 
+        CheckBox checkBox_SelectAll = getView().findViewById(R.id.checkBox_SelectAll);
+        checkBox_SelectAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(getActivity() == null){
+                    return;
+                }
+                if(logListCustomAdapter != null) {
+                    for (int i = 0; i < logListCustomAdapter.fLogFiles.length; i++) {
+                        logListCustomAdapter.bRowSelected[i] = ((CheckBox) view).isChecked();
+                    }
+                    logListCustomAdapter.notifyDataSetChanged();
+                }
+            }
+        });
+
     }
 
     public void initializeLogFileList(){
@@ -100,6 +115,16 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             logListCustomAdapter = new LogListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, fLogFiles);
             ListView listView_LogFiles = getView().findViewById(R.id.listView_LogFiles);
             listView_LogFiles.setAdapter(logListCustomAdapter);
+
+            TextView textView_NotificationNoLogFiles = getView().findViewById(R.id.textView_NotificationNoLogFiles);
+            if(textView_NotificationNoLogFiles != null) {
+                if (fLogFiles.length > 0) {
+                    textView_NotificationNoLogFiles.setVisibility(View.INVISIBLE);
+                } else {
+                    textView_NotificationNoLogFiles.setVisibility(View.VISIBLE);
+                }
+            }
+
         }
     }
 
@@ -130,6 +155,8 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             CheckBox checkBox_ItemSelect =  row.findViewById(R.id.checkBox_ItemSelect);
             TextView textView_Line1 = row.findViewById(R.id.textView_Line1);
             Button button_View = row.findViewById(R.id.button_View);
+
+            checkBox_ItemSelect.setChecked(bRowSelected[position]);
 
             checkBox_ItemSelect.setOnClickListener(new View.OnClickListener() {
                 @Override

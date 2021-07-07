@@ -83,6 +83,7 @@ public class Fragment_LogViewer_1_View extends Fragment {
                 String sLine = brReader.readLine();
                 while (sLine != null) {
                     sb.append(sLine);
+                    sb.append("\n");
                     sLine = brReader.readLine();
                 }
                 brReader.close();

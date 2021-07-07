@@ -10,8 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorBlack"
-        android:textColor="@color/colorGrey1"
+        android:scrollbarSize="20dp"
         android:scrollbars="vertical"
-        android:scrollbarSize="20dp"/>
+        android:textColor="@color/colorGrey1" />
 
 </FrameLayout>

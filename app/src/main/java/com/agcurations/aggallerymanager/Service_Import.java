@@ -2818,8 +2818,9 @@ public class Service_Import extends IntentService {
                                 input.close();
 
                                 //Write the m3u8 file to the logs folder for debugging purposes:
+                                String sShortFileName = cleanFileNameViaTrim(icM3U8_entry.sFileName);
                                 final String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_M3U8.txt";
+                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
                                 final File fM3U8 = new File(sM3U8FilePath);
                                 FileWriter fwM3U8File;
                                 fwM3U8File = new FileWriter(fM3U8, true);
@@ -2828,7 +2829,7 @@ public class Service_Import extends IntentService {
                                 fwM3U8File.close();
 
                                 final String sM3U8InterprettedFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_M3U8_interpretted.txt";
+                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + "_interpretted.txt";
                                 final File fM3U8Interpretted = new File(sM3U8InterprettedFilePath);
                                 FileWriter fwM3U8InterprettedFile;
                                 fwM3U8InterprettedFile = new FileWriter(fM3U8Interpretted, true);
