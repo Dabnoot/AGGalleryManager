@@ -14,6 +14,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channel;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -99,7 +104,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
         //Put the log file in the logs folder:
         String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                File.separator + GlobalClass.GetTimeStampFileSafe() + "_Video_" + gsItemID + "_WorkerLog.txt";
+                File.separator + gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_WorkerLog.txt";
         File fLog = new File(sLogFilePath);
         FileWriter fwLogFile;
         try {
@@ -550,12 +555,14 @@ public class Worker_VideoPostProcessing extends Worker {
                     }
                     fwLogFile.write("File write completed." + "\n");
 
-                    //Execute the FFMPEG concatenation:
-                    String sFFMPEGLogFilePath_DebugData = globalClass.gfLogsFolder.getAbsolutePath() +
-                            File.separator + GlobalClass.GetTimeStampFileSafe() + "_Video_" + gsItemID + "_FFMPEGLog_FileData.txt";
+                    //==============================================================================
+                    //Execute the FFMPEG video data investigation:
+                    //View information about a file for debugging:
+                    /*String sFFMPEGLogFilePath_DebugData = globalClass.gfLogsFolder.getAbsolutePath() +
+                            File.separator + gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_FFMPEGLog_FileData.txt";
                     final File fFFMPEGLog_FileData = new File(sFFMPEGLogFilePath_DebugData);
 
-                    //View information about a file for debugging:
+
                     String sCommand1 = "-i " + sTestFileAbsolutePath;
                     fwLogFile.write("Starting FFMPEG operation asynchronously. See FFMPEG log for process-related data." + "\n");
                     fwLogFile.write("Issuing command:\n" + sCommand1 + "\n");
@@ -624,107 +631,160 @@ public class Worker_VideoPostProcessing extends Worker {
 
 
                         }
-                    });
+                    });*/
 
 
+                    final String sConcatIntermediateOutputFilePath = sOutputFolderPath + File.separator + gsVideoOutputFilename;
+                    if(globalClass.gbUseFFMPEGToMerge) {
+                        String sFFMPEGLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                                File.separator + gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_FFMPEGLog.txt";
+                        final File fFFMPEGLog = new File(sFFMPEGLogFilePath);
 
-                    String sFFMPEGLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                            File.separator + GlobalClass.GetTimeStampFileSafe() + "_Video_" + gsItemID + "_FFMPEGLog.txt";
-                    final File fFFMPEGLog = new File(sFFMPEGLogFilePath);
-                    final String sFFMPEGOutputFilePath = sOutputFolderPath + File.separator + gsVideoOutputFilename;
-                    String sCommand = "-f concat -safe 0 -i " + sFFMPEGInputFilePath + " -c copy \"" + sFFMPEGOutputFilePath + "\"";
-                    fwLogFile.write("Starting FFMPEG operation asynchronously. See FFMPEG log for process-related data." + "\n");
-                    fwLogFile.write("Issuing command:\n" + sCommand + "\n");
-                    FFmpegKit.executeAsync(sCommand, new ExecuteCallback() {
+                        String sCommand = "-f concat -safe 0 -i " + sFFMPEGInputFilePath + " -c copy \"" + sConcatIntermediateOutputFilePath + "\"";
+                        fwLogFile.write("Starting FFMPEG operation asynchronously. See FFMPEG log for process-related data." + "\n");
+                        fwLogFile.write("Issuing command:\n" + sCommand + "\n");
+                        FFmpegKit.executeAsync(sCommand, new ExecuteCallback() {
 
-                        @Override
-                        public void apply(Session session) {
-                            // CALLED WHEN SESSION IS EXECUTED
-                            SessionState state = session.getState();
-                            ReturnCode returnCode = session.getReturnCode();
-                            //Write the data to the log file:
-                            try {
-                                FileWriter fwFFMPEGLogFile;
-                                fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
-                                fwFFMPEGLogFile.write(String.format("\nExec message: FFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
+                            @Override
+                            public void apply(Session session) {
+                                // CALLED WHEN SESSION IS EXECUTED
+                                SessionState state = session.getState();
+                                ReturnCode returnCode = session.getReturnCode();
+                                //Write the data to the log file:
+                                try {
+                                    FileWriter fwFFMPEGLogFile;
+                                    fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
+                                    fwFFMPEGLogFile.write(String.format("\nExec message: FFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
 
-                                if (ReturnCode.isSuccess(returnCode)) {
-                                    //Attempt to move the output file:
-                                    File fFFMPEGOutputFile = new File(sFFMPEGOutputFilePath);
-                                    File fFinalOutputFile = new File(sFinalOutputPath);
-                                    if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
-                                        String sMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
-                                        fwFFMPEGLogFile.write(sMessage + "\n");
+                                    if (ReturnCode.isSuccess(returnCode)) {
+                                        //Attempt to move the output file:
+                                        File fFFMPEGOutputFile = new File(sConcatIntermediateOutputFilePath);
+                                        File fFinalOutputFile = new File(sFinalOutputPath);
+                                        if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
+                                            String sMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
+                                            fwFFMPEGLogFile.write(sMessage + "\n");
+                                        }
+                                    } else {
+                                        //Attempt to move the output file:
+                                        File fFFMPEGOutputFile = new File(sConcatIntermediateOutputFilePath);
+                                        File fFinalOutputFile = new File(sFinalOutputPath);
+                                        if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
+                                            String sMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
+                                            fwFFMPEGLogFile.write(sMessage + "\n");
+                                        }
                                     }
-                                } else {
-                                    //Attempt to move the output file:
-                                    File fFFMPEGOutputFile = new File(sFFMPEGOutputFilePath);
-                                    File fFinalOutputFile = new File(sFinalOutputPath);
-                                    if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
-                                        String sMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
-                                        fwFFMPEGLogFile.write(sMessage + "\n");
+                                    String sMessage = session.getFailStackTrace();
+                                    if (sMessage != null) {
+                                        fwFFMPEGLogFile.write("Exec message: " + sMessage + "\n");
                                     }
+
+                                    fwFFMPEGLogFile.flush();
+                                    fwFFMPEGLogFile.close();
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
-                                String sMessage = session.getFailStackTrace();
-                                if (sMessage != null) {
-                                    fwFFMPEGLogFile.write("Exec message: " + sMessage + "\n");
+                            }
+                        }, new LogCallback() {
+
+                            @Override
+                            public void apply(com.arthenica.ffmpegkit.Log log) {
+                                // CALLED WHEN SESSION PRINTS LOGS
+                                String sMessage = log.getMessage();
+
+                                //Write the data to the log file and rename the output file so that the main application can find it:
+                                try {
+                                    FileWriter fwFFMPEGLogFile;
+                                    fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
+                                    fwFFMPEGLogFile.write("Log message: " + sMessage + "\n");
+                                    fwFFMPEGLogFile.flush();
+                                    fwFFMPEGLogFile.close();
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
 
-                                fwFFMPEGLogFile.flush();
-                                fwFFMPEGLogFile.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
                             }
-                        }
-                    }, new LogCallback() {
+                        }, new StatisticsCallback() {
 
-                        @Override
-                        public void apply(com.arthenica.ffmpegkit.Log log) {
-                            // CALLED WHEN SESSION PRINTS LOGS
-                            String sMessage = log.getMessage();
+                            @Override
+                            public void apply(Statistics statistics) {
+                                // CALLED WHEN SESSION GENERATES STATISTICS
+                                String sMessage = "File size: " + statistics.getSize();
 
-                            //Write the data to the log file and rename the output file so that the main application can find it:
+                                //Write the data to the log file:
+                                try {
+                                    FileWriter fwFFMPEGLogFile;
+                                    fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
+                                    fwFFMPEGLogFile.write("Stat message: " + sMessage + "\n");
+                                    fwFFMPEGLogFile.flush();
+                                    fwFFMPEGLogFile.close();
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+
+                            }
+                        });
+
+                        fwLogFile.write("Success calling FFMPEG to concatenate files." + "\n");
+
+                        //Execute no further processing as the FFMPEG call is asynchronous.
+                    } else {
+                        //Use something else to execute file merge:
+
+                        fwLogFile.write("Attempting to merge files using file channels..." + "\n");
+                        //Get channel for output file:
+                        File fConcatIntermediateOutputFilePath = new File(sConcatIntermediateOutputFilePath);
+                        FileOutputStream fos = new FileOutputStream(fConcatIntermediateOutputFilePath);
+                        WritableByteChannel targetChannel = fos.getChannel();
+
+                        fwLogFile.write("Merging to output file: " + sConcatIntermediateOutputFilePath + "\n");
+                        for (Map.Entry<Integer, String> entry : tmDownloadedFiles.entrySet()) {
+                            //Get channel for input file:
+
+                            String sCurrentInputFileAbsPath = entry.getValue();
+                            fwLogFile.write("Merging input file: " + sCurrentInputFileAbsPath + "\n");
+
                             try {
-                                FileWriter fwFFMPEGLogFile;
-                                fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
-                                fwFFMPEGLogFile.write("Log message: " + sMessage + "\n");
-                                fwFFMPEGLogFile.flush();
-                                fwFFMPEGLogFile.close();
+                                File fInput = new File(sCurrentInputFileAbsPath);
+                                FileInputStream fis = new FileInputStream(fInput);
+                                FileChannel inputChannel = fis.getChannel();
 
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                                //Transfer data from input channel to output channel:
+                                inputChannel.transferTo(0, inputChannel.size(), targetChannel);
 
-                        }
-                    }, new StatisticsCallback() {
+                                //Close the input channel:
+                                inputChannel.close();
+                                fis.close();
 
-                        @Override
-                        public void apply(Statistics statistics) {
-                            // CALLED WHEN SESSION GENERATES STATISTICS
-                            String sMessage = "File size: " + statistics.getSize();
-
-                            //Write the data to the log file:
-                            try {
-                                FileWriter fwFFMPEGLogFile;
-                                fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
-                                fwFFMPEGLogFile.write("Stat message: " + sMessage + "\n");
-                                fwFFMPEGLogFile.flush();
-                                fwFFMPEGLogFile.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                                fwLogFile.write("Success." + "\n");
+                            } catch (Exception e){
+                                fwLogFile.write("Failed. " + e.getMessage() + "\n");
                             }
 
 
                         }
-                    });
+                        targetChannel.close();
+                        fos.close();
 
-                    //Execute no further processing as the FFMPEG call is asynchronous.
+                        fwLogFile.write("Finished attempted merge of all files." + "\n");
 
+                        fwLogFile.write("Attempting to move output file to final destination." + "\n");
+                        //Attempt to move the output file:
+                        File fFinalOutputFile = new File(sFinalOutputPath);
+                        if (!fConcatIntermediateOutputFilePath.renameTo(fFinalOutputFile)) {
+                            sMessage = "Exec message: Could not rename concatination output file to final file name: " + fConcatIntermediateOutputFilePath.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
+                            fwLogFile.write(sMessage + "\n");
+                        } else {
+                            fwLogFile.write("Success." + "\n");
+                        }
+
+                    }
 
                 }
-                fwLogFile.write("Success calling FFMPEG to concatenate files." + "\n");
+
                 fwLogFile.flush();
                 fwLogFile.close();
                 return Result.success();
