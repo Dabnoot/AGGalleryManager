@@ -33,6 +33,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -2693,20 +2694,22 @@ public class Service_Import extends IntentService {
                                 false, "",
                                 sIntentActionFilter);
                         try {
+                            String sURL = vdsk.sSearchStringMatchContent;
                             URL url = new URL(vdsk.sSearchStringMatchContent);
                             URLConnection connection = url.openConnection();
                             connection.connect();
 
                             // download the file
-                            InputStream input = new BufferedInputStream(url.openStream(), 8192);
+                            InputStream inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
 
-                            byte[] data = new byte[1024];
+                            byte[] data = new byte[1024 * 8];
                             StringBuilder sbM3U8Content = new StringBuilder();
-                            while ((input.read(data)) != -1) {
-
+                            while (inputStream.read(data) != -1) {
                                 sbM3U8Content.append(new String(data, StandardCharsets.UTF_8));
+                                Arrays.fill(data, (byte)0);
                             }
-                            input.close();
+                            inputStream.close();
+
 
                             /*
                             HLS: Http Live Streaming
@@ -2730,6 +2733,21 @@ public class Service_Import extends IntentService {
                             #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=155648,RESOLUTION=444x250,NAME="250p"
                             hls-250p-2b29e.m3u8?e=1616648203&l=0&h=8f2321bd696368a1795a61fc978a0dbb
                              */
+
+                            if(globalClass.gbLogM3U8Files) {
+                                //Write the m3u8 master file to the logs folder for debugging purposes:
+                                String sShortFileName = sURL.substring(sURL.lastIndexOf("/") + 1);
+                                sShortFileName = cleanFileNameViaTrim(sShortFileName);
+                                String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
+                                File fM3U8 = new File(sM3U8FilePath);
+                                FileWriter fwM3U8File = new FileWriter(fM3U8, true);
+                                fwM3U8File.write("#" + sURL + "\n");
+                                fwM3U8File.write(sbM3U8Content.toString());
+                                fwM3U8File.flush();
+                                fwM3U8File.close();
+                            }
+
 
                             //Locate the M3U8 items:
                             //Go through the M3U8 master list and identify the .M3U8 files.
@@ -2806,38 +2824,50 @@ public class Service_Import extends IntentService {
                                 connection.connect();
 
                                 // download the M3U8 text file:
-                                input = new BufferedInputStream(url.openStream(), 8192);
-
-                                data = new byte[1024];
+                                /*inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
+                                data = new byte[1024 * 8];
                                 StringBuilder sbM3U8_HLS_File_Content = new StringBuilder();
                                 while ((input.read(data)) != -1) {
                                     String sLine = new String(data, StandardCharsets.UTF_8);
+                                    Arrays.fill(data, (byte)0);
                                     sbM3U8_HLS_File_Content.append(sLine);
-
                                 }
                                 input.close();
 
-                                //Write the m3u8 file to the logs folder for debugging purposes:
-                                String sShortFileName = cleanFileNameViaTrim(icM3U8_entry.sFileName);
-                                final String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                                final File fM3U8 = new File(sM3U8FilePath);
-                                FileWriter fwM3U8File;
-                                fwM3U8File = new FileWriter(fM3U8, true);
-                                fwM3U8File.write(sbM3U8_HLS_File_Content.toString());
-                                fwM3U8File.flush();
-                                fwM3U8File.close();
+                                String sM3U8Content = sbM3U8_HLS_File_Content.toString();
+                                sbM3U8_HLS_File_Content = null; //Free the memory used for this.*/
 
-                                final String sM3U8InterprettedFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                                inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
+                                BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
+                                StringBuilder total = new StringBuilder();
+                                for (String line; (line = r.readLine()) != null; ) {
+                                    total.append(line).append('\n');
+                                }
+                                String sM3U8Content = total.toString();
+
+                                String sShortFileName = cleanFileNameViaTrim(icM3U8_entry.sFileName);
+                                if(globalClass.gbLogM3U8Files) {
+                                    //Write the m3u8 file to the logs folder for debugging purposes:
+
+                                    String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                                            File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
+                                    File fM3U8 = new File(sM3U8FilePath);
+                                    FileWriter fwM3U8File = new FileWriter(fM3U8, true);
+                                    fwM3U8File.write(sM3U8Content);
+                                    fwM3U8File.flush();
+                                    fwM3U8File.close();
+                                }
+
+                                /*final String sM3U8InterprettedFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
                                         File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + "_interpretted.txt";
                                 final File fM3U8Interpretted = new File(sM3U8InterprettedFilePath);
                                 FileWriter fwM3U8InterprettedFile;
-                                fwM3U8InterprettedFile = new FileWriter(fM3U8Interpretted, true);
+                                fwM3U8InterprettedFile = new FileWriter(fM3U8Interpretted, true);*/
 
 
-                                //Evaluate if this line in the M3U8 file is a .ts file name and add it to the arraylist if so:
-                                String sTest = sbM3U8_HLS_File_Content.toString();
-                                String[] sLines = sTest.split("\n");
+                                //Evaluate lines in the M3U8 file to check if a .ts file name and add it to the arraylist if so:
+                                String[] sLines = sM3U8Content.split("\n");
+                                float fDurationInSeconds = 0.0f;
                                 for (String sLine : sLines) {
 
                                     if (!sLine.startsWith("#") && sLine.contains(".ts")) {// && sLine.startsWith("hls")) {
@@ -2845,81 +2875,97 @@ public class Service_Import extends IntentService {
                                             icM3U8_entry.als_TSDownloads = new ArrayList<>();
                                         }
                                         icM3U8_entry.als_TSDownloads.add(sLine); //Add our detected TS download address to the M3U8 item.
-                                        fwM3U8InterprettedFile.write(sLine + "\n");
+                                        //fwM3U8InterprettedFile.write(sLine + "\n");
                                     } else if (sLine.contains("ENDLIST")) {
                                         break;
+                                    } else if (sLine.contains("EXTINF")){
+                                        //Try to pull out duration:
+                                        String[] sData1 = sLine.split(":");
+                                        if(sData1.length > 1){
+                                            String sData2 = sData1[1];
+                                            sData2 = sData2.replace(",","");
+                                            //sData2 should now have the duration of the ts file.
+                                            try{
+                                                float fTemp = Float.parseFloat(sData2);
+                                                fDurationInSeconds = fDurationInSeconds + fTemp;
+                                            } catch (Exception e){
+                                                Log.d("M3U8", "String to float conversion error. Cannot convert: " + sData2);
+                                            }
+                                        }
                                     }
 
                                 }
-                                fwM3U8InterprettedFile.flush();
-                                fwM3U8InterprettedFile.close();
+                                /*fwM3U8InterprettedFile.flush();
+                                fwM3U8InterprettedFile.close();*/
 
-
+                                icM3U8_entry.fDurationInSeconds = fDurationInSeconds; //Load the duration now for confirmation of video concatenation completion later.
 
                             }
 
 
-                        /*//Test download of TS files:
-                        File fDestinationFolder = new File(
-                                globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath()
-                                        + File.separator + "Test");
-                        if(!fDestinationFolder.exists()){
+                            /*//Test download of TS files:
+                            File fDestinationFolder = new File(
+                                    globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath()
+                                            + File.separator + "Test");
+                            if(!fDestinationFolder.exists()){
 
-                            fDestinationFolder.mkdir();
+                                fDestinationFolder.mkdir();
 
-                            DownloadManager downloadManager = null;
+                                DownloadManager downloadManager = null;
 
-                            downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                                downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
 
-                            String sDownloadName;
-                            for(int i = 0; i < alals_TSDownloads.get(0).size(); i++){
-                                sDownloadName = alals_TSDownloads.get(0).get(i);
-                                //Use the download manager to download the file:
-                                String sAbbrevFileName = sDownloadName.substring(0,sDownloadName.lastIndexOf("?"));
-                                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(al_M3U8.get(0).sBaseURL + "/" + sDownloadName));
-                                File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sAbbrevFileName);
-                                request.setTitle("AG Gallery+ File Download : " + sAbbrevFileName)
-                                        .setDescription(sAbbrevFileName)
-                                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                        //Set to equivalent of binary file so that Android MediaStore will not try to index it,
-                                        //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
-                                        .setMimeType("application/octet-stream")
-                                        .setDestinationUri(Uri.fromFile(fDestinationFile));
-                                downloadManager.enqueue(request);
-                            }
-                        }*/
+                                String sDownloadName;
+                                for(int i = 0; i < alals_TSDownloads.get(0).size(); i++){
+                                    sDownloadName = alals_TSDownloads.get(0).get(i);
+                                    //Use the download manager to download the file:
+                                    String sAbbrevFileName = sDownloadName.substring(0,sDownloadName.lastIndexOf("?"));
+                                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(al_M3U8.get(0).sBaseURL + "/" + sDownloadName));
+                                    File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sAbbrevFileName);
+                                    request.setTitle("AG Gallery+ File Download : " + sAbbrevFileName)
+                                            .setDescription(sAbbrevFileName)
+                                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                            //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                                            //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                                            .setMimeType("application/octet-stream")
+                                            .setDestinationUri(Uri.fromFile(fDestinationFile));
+                                    downloadManager.enqueue(request);
+                                }
+                            }*/
 
                             //Obtain size of each TS file set of downloads:
                             //Loop through the M3U8 entries, such as video @ 240x320, video @ 640x480, @720p, @1080p, etc:
+
                             for (ItemClass_M3U8 icM3U8_entry : al_M3U8) {
                                 //Loop through the TS downloads for each of the M3U8 entries and accumulate the file sizes:
 
                                 int iFileSizeLoopCount = 0;
+                                int iDataAcquiredLoopCount = 0;
+                                long lFileSizeAccumulator = 0;
+
                                 for (String sTSDownloadAddress : icM3U8_entry.als_TSDownloads) {
 
                                     URL urlPage = new URL(icM3U8_entry.sBaseURL + "/" + sTSDownloadAddress);
-                                /*BroadcastProgress(true, "Getting file size data for " + sTSDownloadAddress + "\n",
+                                    String sFilename = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
+                                    BroadcastProgress(true, "Getting file size data for video stream: " + sFilename + "\n",
                                         false, 0,
                                         false, "",
-                                        sIntentActionFilter); *///Broadcast progress
+                                        sIntentActionFilter); //Broadcast progress
 
                                     HttpURLConnection httpURLConnection = (HttpURLConnection) urlPage.openConnection();
                                     httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
                                     long lSingleTSFileDownloadSize = httpURLConnection.getContentLength(); //Returns -1 if content size is not in the header.
                                     httpURLConnection.disconnect();
+                                    iFileSizeLoopCount++;
 
                                     if (lSingleTSFileDownloadSize > 0) {
-                                        //The size of one of the TS files will be representative of all of the TS file sizes for the given video
-                                        //  because all TS files for an M3U8 entry are the same resolution and time length.
-                                        //Multiply the size of this single download by the number of TS files to get the overall size of the set of TS files:
-                                        icM3U8_entry.lTotalTSFileSetSize = lSingleTSFileDownloadSize * icM3U8_entry.als_TSDownloads.size();
+                                        iDataAcquiredLoopCount++;
+                                        lFileSizeAccumulator = lFileSizeAccumulator + lSingleTSFileDownloadSize;
+                                    }
+                                    if (iDataAcquiredLoopCount == 5 || iFileSizeLoopCount == 10) {
+                                        //A set of the TS files will be representative of all of the TS file sizes for the given video.
+                                        icM3U8_entry.lTotalTSFileSetSize = (lFileSizeAccumulator / iDataAcquiredLoopCount) * icM3U8_entry.als_TSDownloads.size();
                                         break;
-                                    } else {
-                                        iFileSizeLoopCount++;
-                                        if (iFileSizeLoopCount == 5) {
-                                            //Unable to determine the size of the download. Leave the result at -1.
-                                            break;
-                                        }
                                     }
                                 }
                                 //Create a file item to record the results:
@@ -3100,6 +3146,7 @@ public class Service_Import extends IntentService {
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count so that we know when all of the files have been downloaded.
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
+            ciNew.lDuration_Milliseconds = (long) (icfDownloadItem.ic_M3U8.fDurationInSeconds * 1000); //Load the duration now for confirmation of video concatenation completion later.
             //Form a name for the concatenated video file:
             String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
             sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
@@ -3124,6 +3171,32 @@ public class Service_Import extends IntentService {
                 String sDownloadAddress = icfDownloadItem.ic_M3U8.sBaseURL + "/" + sFileName;
                 String sNewFilename = ciNew.sItemID + "_" + cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
                 ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
+
+                //Debugging an issue...
+                String sNewFullPathFilename = fTempDestination + File.separator + sNewFilename;
+                File fNewFile = new File(sNewFullPathFilename);
+                String s;
+                try{
+                    s = fNewFile.getCanonicalPath();
+                } catch (Exception e2){
+                    Log.d("File exception", e2.getMessage());
+
+                    int iL1 = sFileName.length();
+                    sNewFilename = cleanFileNameViaTrim(sFileName);
+                    int iL2 = sNewFilename.length();
+                    sNewFullPathFilename = fTempDestination + File.separator + sNewFilename;
+                    fNewFile = new File(sNewFullPathFilename);
+                    try{
+                        s = fNewFile.getCanonicalPath();
+                    } catch (Exception e3){
+                        Log.d("File exception", e3.getMessage());
+                    }
+
+
+
+                }
+
+
             }
         }
 
@@ -3154,7 +3227,20 @@ public class Service_Import extends IntentService {
                 //  not understand what to do with the files if the extension is unrecognized.
                 //  todo: Differentiate between single-file and .ts file downloads and jumble file name when we can.
                 File fNewFile = new File(sNewFullPathFilename);
-
+                /*//Debugging an issue...
+                String s;
+                try {
+                    s = fNewFile.getCanonicalPath();  //Check to see if the file name and path is valid:
+                } catch (Exception e){
+                    sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
+                    fNewFile = new File(sNewFullPathFilename);
+                    try{
+                        s = fNewFile.getCanonicalPath();
+                    } catch (Exception e2){
+                        Log.d("File exception", e2.getMessage());
+                    }
+                    Log.d("File exception", e.getMessage());
+                }*/
                 if(!fNewFile.exists()) {
 
                     BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
@@ -3422,10 +3508,8 @@ public class Service_Import extends IntentService {
             "[",
             "]",
             "'"};
-        sOutput = sFilename;
         for(String sReservedChar: sReservedChars) {
             int iReservedCharLocation = sOutput.indexOf(sReservedChar);
-            int iLength = sOutput.length();
             if( iReservedCharLocation > 0){
                 sOutput = sOutput.substring(0, iReservedCharLocation);
             }

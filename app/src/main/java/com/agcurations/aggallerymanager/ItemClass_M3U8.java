@@ -15,6 +15,7 @@ public class ItemClass_M3U8 {
     String sBandwidth;
     String sResolution;
     String sBaseURL;
+    float fDurationInSeconds;
 
     ArrayList<String> als_TSDownloads; //This item captures the TS file addresses for a given M3U8 entry.
     long lTotalTSFileSetSize = -1; //This captures the total size of all of the TS files for a given M3U8 entry.

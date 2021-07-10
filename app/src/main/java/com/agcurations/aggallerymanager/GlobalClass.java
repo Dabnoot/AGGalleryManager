@@ -1183,7 +1183,16 @@ public class GlobalClass extends Application {
                                     String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                                     long lDurationInMilliseconds = Long.parseLong(time);
                                     ci.lSize = fOutputFileFinalDestination.length();
-                                    ci.lDuration_Milliseconds = lDurationInMilliseconds;
+                                    int iErrorSign = 1;
+                                    if(ci.lDuration_Milliseconds != 0){
+                                        double dPercentPredictedDuration = lDurationInMilliseconds / (float) ci.lDuration_Milliseconds;
+                                        if(dPercentPredictedDuration < .95){
+                                            //Duration of the converted video may indicate that an FFMPEG error occurred. Set the duration to
+                                            //  negative to allow flagging of this issue.
+                                            iErrorSign = -1;
+                                        }
+                                    }
+                                    ci.lDuration_Milliseconds = lDurationInMilliseconds * iErrorSign;
                                     ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
                                     if(!sWidth.equals("") && !sHeight.equals("")) {
                                         ci.iWidth = Integer.parseInt(sWidth);
@@ -1444,6 +1453,10 @@ public class GlobalClass extends Application {
     public final String snHentai_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
 
     //Video import web html search strings (may change if the website changes)
+
+    boolean gbLogM3U8Files = false;     //Writes M3U8 files as they are read and analyzed as part of an
+                                        //  import interpretive analysis.
+
     //Create an array of keys that allow program to locate video links:
     ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
 

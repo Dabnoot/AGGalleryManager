@@ -821,6 +821,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     String sAttentionNote = "Missing pages: " + ci.sComic_Missing_Pages;
                     holder.textView_AttentionNote.setText(sAttentionNote);
                 }
+            } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                if (ci.lDuration_Milliseconds >= 0) {
+                    holder.imageView_Attention.setVisibility(View.INVISIBLE);
+                    holder.textView_AttentionNote.setVisibility(View.INVISIBLE);
+                } else {
+                    //Duration is <0 only when the source is from an online stream (M3U8), and suggests
+                    //  that there was an error in the FFMPEG concatenation activity
+                    holder.imageView_Attention.setVisibility(View.VISIBLE);
+                    holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    String sAttentionNote = "Possible incomplete stream download.";
+                    holder.textView_AttentionNote.setText(sAttentionNote);
+                }
             }
 
             if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){

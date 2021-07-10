@@ -5,13 +5,18 @@
     android:layout_height="match_parent"
     tools:context=".Fragment_LogViewer_1_View">
 
-    <TextView
-        android:id="@+id/textView_LogText"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorBlack"
-        android:scrollbarSize="20dp"
-        android:scrollbars="vertical"
-        android:textColor="@color/colorGrey1" />
+        android:scrollbarSize="20dp">
+        <TextView
+            android:id="@+id/textView_LogText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorBlack"
+            android:textColor="@color/colorGrey1"
+            android:textIsSelectable="true"/>
+    </ScrollView>
 
 </FrameLayout>

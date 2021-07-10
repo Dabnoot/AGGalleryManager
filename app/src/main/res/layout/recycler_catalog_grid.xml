@@ -26,7 +26,11 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:visibility="invisible"
-        android:layout_toEndOf="@id/imageView_Attention"/>
+        android:layout_toEndOf="@id/imageView_Attention"
+        android:shadowColor = "#000000"
+        android:shadowDx = "3"
+        android:shadowDy = "3"
+        android:shadowRadius = "3"/>
 
     <Button
         android:id="@+id/button_Delete"

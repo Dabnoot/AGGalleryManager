@@ -22,6 +22,18 @@
         android:visibility="invisible"/>
 
     <TextView
+        android:id="@+id/textView_AttentionNote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:visibility="invisible"
+        android:layout_toEndOf="@id/imageView_Attention"
+        android:shadowColor = "#000000"
+        android:shadowDx = "3"
+        android:shadowDy = "3"
+        android:shadowRadius = "3"/>
+
+    <TextView
         android:id="@+id/textView_CatalogItemNotification"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

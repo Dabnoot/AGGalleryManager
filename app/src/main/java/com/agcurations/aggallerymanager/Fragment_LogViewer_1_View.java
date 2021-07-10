@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,7 +57,6 @@ public class Fragment_LogViewer_1_View extends Fragment {
             return;
         }
         textView_LogText = getView().findViewById(R.id.textView_LogText);
-        textView_LogText.setMovementMethod(new ScrollingMovementMethod());
     }
 
     @Override
