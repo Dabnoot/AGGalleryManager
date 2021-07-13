@@ -2702,13 +2702,20 @@ public class Service_Import extends IntentService {
                             // download the file
                             InputStream inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
 
-                            byte[] data = new byte[1024 * 8];
+
                             StringBuilder sbM3U8Content = new StringBuilder();
-                            while (inputStream.read(data) != -1) {
-                                sbM3U8Content.append(new String(data, StandardCharsets.UTF_8));
-                                Arrays.fill(data, (byte)0);
+                            BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
+                            for (String line; (line = r.readLine()) != null; ) {
+                                sbM3U8Content.append(line).append('\n');
                             }
                             inputStream.close();
+
+
+
+
+
+
+
 
 
                             /*
@@ -2838,7 +2845,7 @@ public class Service_Import extends IntentService {
                                 sbM3U8_HLS_File_Content = null; //Free the memory used for this.*/
 
                                 inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
-                                BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
+                                r = new BufferedReader(new InputStreamReader(inputStream));
                                 StringBuilder total = new StringBuilder();
                                 for (String line; (line = r.readLine()) != null; ) {
                                     total.append(line).append('\n');
@@ -3152,7 +3159,11 @@ public class Service_Import extends IntentService {
             sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
             sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
             sTempFilename = sTempFilename.substring(0,sTempFilename.lastIndexOf(".")); //Remove extension (probably .m3u8).
-            sTempFilename = sTempFilename + ".ts"; //Add appropriate extension.
+            if(globalClass.gbUseFFMPEGConvertToMP4) {
+                sTempFilename = sTempFilename + ".mp4"; //Add appropriate extension.
+            } else {
+                sTempFilename = sTempFilename + ".ts"; //Add appropriate extension.
+            }
             ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
         }
 

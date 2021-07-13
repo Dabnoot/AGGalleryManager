@@ -1457,6 +1457,7 @@ public class GlobalClass extends Application {
     boolean gbLogM3U8Files = false;     //Writes M3U8 files as they are read and analyzed as part of an
                                         //  import interpretive analysis.
     boolean gbUseFFMPEGToMerge = true;
+    boolean gbUseFFMPEGConvertToMP4 = true;
 
     //Create an array of keys that allow program to locate video links:
     ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
