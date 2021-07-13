@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +40,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
@@ -63,6 +65,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     private CatalogViewerServiceResponseReceiver catalogViewerServiceResponseReceiver;
 
+    boolean gbWriteApplicationLog = false;
+    String gsApplicationLogFilePath = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
@@ -71,23 +76,39 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog_viewer);
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
+        if(gbWriteApplicationLog){
+            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
+        }
+
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
+
+        if(globalClass.giSelectedCatalogMediaCategory == null){
+            ApplicationLogWriter("Selected media category is null. Returning to Main Activity.");
+            finish();
+            return;
+        }
+
+        ApplicationLogWriter("OnCreate Start");
 
         //Intent intent = getIntent();
         //giMediaCategory = intent.getIntExtra("MEDIA_CATEGORY", -1);
 
+        ApplicationLogWriter("Adjusting for obfuscation condition");
         if(globalClass.ObfuscationOn) {
             setTitle(globalClass.getObfuscatedProgramName());
         } else {
             setTitle(globalClass.sNonObfuscatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
         }
 
+        ApplicationLogWriter("Notifying zero catalog items if applicable");
         //Update TextView to show 0 catalog items if applicable:
         notifyZeroCatalogItemsIfApplicable();
 
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        ApplicationLogWriter("Obtaining preferences");
 
         globalClass.gbCatalogViewerTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
@@ -98,22 +119,44 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] =
                 sharedPreferences.getBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory], true);
 
+        ApplicationLogWriter("Configuring RecyclerView");
 
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
+
+        ApplicationLogWriter("Creating ResponseReceiver");
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         catalogViewerServiceResponseReceiver = new CatalogViewerServiceResponseReceiver();
         //registerReceiver(importDataServiceResponseReceiver, filter);
+
+        ApplicationLogWriter("Registering ResponseReceiver");
+
         LocalBroadcastManager.getInstance(this).registerReceiver(catalogViewerServiceResponseReceiver,filter);
 
         gProgressBar_CatalogSortProgress = findViewById(R.id.progressBar_CatalogSortProgress);
         gTextView_CatalogSortProgressBarText = findViewById(R.id.textView_CatalogSortProgressBarText);
 
+        ApplicationLogWriter("OnCreate End");
 
         //See additional initialization in onCreateOptionsMenu().
+    }
+
+
+    private void ApplicationLogWriter(String sMessage){
+        if(gbWriteApplicationLog){
+            try {
+                File fLog = new File(gsApplicationLogFilePath);
+                FileWriter fwLogFile = new FileWriter(fLog, true);
+                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
+                fwLogFile.close();
+            } catch (Exception e) {
+                Log.d("Log FileWriter", e.getMessage());
+            }
+        }
+
     }
 
     @Override
@@ -127,12 +170,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         //Update TextView to show 0 items if applicable:
         TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
-        if (globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).size() == 0 ) {
-            tvCatalogStatus.setVisibility(View.VISIBLE);
-            String s = "Catalog contains 0 items.";
-            tvCatalogStatus.setText(s);
-        } else {
-            tvCatalogStatus.setVisibility(View.INVISIBLE);
+        try {
+            if (globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).size() == 0) {
+                tvCatalogStatus.setVisibility(View.VISIBLE);
+                String s = "Catalog contains 0 items.";
+                tvCatalogStatus.setText(s);
+            } else {
+                tvCatalogStatus.setVisibility(View.INVISIBLE);
+            }
+        }catch (Exception e){
+            ApplicationLogWriter(e.getMessage());
         }
 
     }

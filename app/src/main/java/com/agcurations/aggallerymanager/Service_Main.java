@@ -8,22 +8,18 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
-import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
-import androidx.work.ListenableWorker;
 
 
 public class Service_Main extends IntentService {
@@ -92,6 +88,14 @@ public class Service_Main extends IntentService {
                 }
             }
 
+            //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
+            //  This can occur if Android closed the application, but saves the last Activity and the user returns.
+            //  We want to record the log location so that data can be written to it.
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            sharedPreferences.edit()
+                    .putString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, sLogsFolderPath + File.separator + GlobalClass.gsApplicationLogName)
+                    .apply();
+
             //Catalog Folder Structure:
             for(int i = 0; i < 3; i++){
                 globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
@@ -118,7 +122,6 @@ public class Service_Main extends IntentService {
             }
 
             //Attempt to read a pin number set by the user:
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
             globalClass.gsPin = sharedPreferences.getString(GlobalClass.gsPinPreference, "");
 
         }

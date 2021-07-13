@@ -115,6 +115,14 @@ public class Activity_AppSettings extends AppCompatActivity implements
         }
     }
 
+    public static class GeneralFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.general_preferences, rootKey);
+        }
+    }
+
     public static class ComicsFragment extends PreferenceFragmentCompat {
 
         @Override

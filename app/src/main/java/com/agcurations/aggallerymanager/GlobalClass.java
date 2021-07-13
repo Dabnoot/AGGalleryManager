@@ -57,7 +57,7 @@ public class GlobalClass extends Application {
     public static final int MEDIA_CATEGORY_IMAGES = 1;
     public static final int MEDIA_CATEGORY_COMICS = 2;
 
-    public int giSelectedCatalogMediaCategory;
+    public Integer giSelectedCatalogMediaCategory = null;
 
     public final File[] gfCatalogFolders = new File[3];
     public File gfLogsFolder;
@@ -144,6 +144,8 @@ public class GlobalClass extends Application {
     //  See https://developer.android.com/reference/android/app/DownloadManager.Request.html#setVisibleInDownloadsUi(boolean).
     public static String gsDLTempFolderName = "DL";
 
+    public static String gsApplicationLogName = "ApplicationLog.txt";
+
     //=====================================================================================
     //===== Network Monitoring ============================================================
     //=====================================================================================
@@ -220,7 +222,7 @@ public class GlobalClass extends Application {
     }
 
     static final String gsDatePatternReadReady = "yyyy-MM-dd HH:mm:ss";
-    public String GetTimeStampReadReady(){
+    public static String GetTimeStampReadReady(){
         //Get an easily readable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternReadReady);
         return gdtfDateFormatter.format(LocalDateTime.now());
@@ -1463,5 +1465,13 @@ public class GlobalClass extends Application {
     ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
 
     public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
+
+
+    //==============================================================================================
+    //=========== Other Preferences ================================================================
+
+    public static String PREF_APPLICATION_LOG_PATH_FILENAME = "APPLICATION_LOG_PATH_FILENAME";
+    public static String PREF_WRITE_APPLICATION_LOG_FILE = "WRITE_APPLICATION_LOG_FILE";
+
 }
 

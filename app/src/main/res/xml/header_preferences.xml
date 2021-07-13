@@ -1,6 +1,9 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-
+    <Preference
+        app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$GeneralFragment"
+        app:key="general_header"
+        app:title="General" />
 
     <Preference
         app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$ComicsFragment"
