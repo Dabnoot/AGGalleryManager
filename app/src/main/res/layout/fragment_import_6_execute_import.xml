@@ -40,20 +40,22 @@
             android:layout_centerInParent="true"/>
     </RelativeLayout>
 
-    <TextView
-        android:id="@+id/textView_ImportLog"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginStart="10dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
-        android:gravity="bottom"
-        android:scrollbars="vertical"
-        android:scrollbarSize="20dp"
         android:layout_below="@+id/linearLayout_Progress"
-        android:layout_above="@+id/linearLayout_ButtonBar"/>
-
+        android:layout_above="@+id/linearLayout_ButtonBar"
+        android:scrollbarSize="20dp">
+        <TextView
+            android:id="@+id/textView_ImportLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="bottom"/>
+    </ScrollView>
 
     <LinearLayout
         android:id="@+id/linearLayout_ButtonBar"
