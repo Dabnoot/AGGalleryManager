@@ -139,60 +139,56 @@ public class Service_CatalogViewer extends IntentService {
 
                     }
 
-                    //Check to see if the download folder exists as well, and delete if it does:
-                    //Delete the download folder to which downloadManager downloaded the files:
-                    String sDownloadFolderRelativePath;
-                    sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                            File.separator + ci.sFolder_Name +
-                            File.separator + ci.sItemID;
-                    if(getApplicationContext().getExternalFilesDir(null) != null) {
+                } //End if VideoWorkingFolderExists
 
-                        String sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                                sDownloadFolderRelativePath;
-                        File fVideoDownloadFolder = new File(sVideoDownloadFolder);
-                        if (fVideoDownloadFolder.exists()) {
+                //Check to see if the download folder exists as well and delete if it does:
+                //Delete the download folder to which downloadManager downloaded the files:
+                String sDownloadFolderRelativePath;
+                sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                        File.separator + ci.sFolder_Name +
+                        File.separator + ci.sItemID;
+                if(getApplicationContext().getExternalFilesDir(null) != null) {
 
-                            File[] fVideoDownloadFolderContents = fVideoDownloadFolder.listFiles();
-                            if(fVideoDownloadFolderContents != null){
-                                for(File f1:fVideoDownloadFolderContents){
-                                    if(!f1.delete()){
-                                        Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
-                                    }
+                    String sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                            sDownloadFolderRelativePath;
+                    File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                    if (fVideoDownloadFolder.exists()) {
+
+                        File[] fVideoDownloadFolderContents = fVideoDownloadFolder.listFiles();
+                        if(fVideoDownloadFolderContents != null){
+                            for(File f1:fVideoDownloadFolderContents){
+                                if(!f1.delete()){
+                                    Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
                                 }
-                            } //End attempt to delete download folder contents for this video.
-
-                            if (!fVideoDownloadFolder.delete()) {
-                                Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
                             }
+                        } //End attempt to delete download folder contents for this video.
 
-                            //Delete the category folder on the temp storage if it is empty:
-                            String sDownloadCategoryFolderRelativePath;
-                            sDownloadCategoryFolderRelativePath = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                                    File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                                    File.separator + ci.sFolder_Name;
-                            File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
-                            if(fCatFolder.exists()){
-                                File[] fCatFolderContents = fCatFolder.listFiles();
-                                if(fCatFolderContents != null){
-                                    if(fCatFolderContents.length == 0){
-                                        if (!fCatFolder.delete()) {
-                                            Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
-                                        }
+                        if (!fVideoDownloadFolder.delete()) {
+                            Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
+                        }
+
+                        //Delete the category folder on the temp storage if it is empty:
+                        String sDownloadCategoryFolderRelativePath;
+                        sDownloadCategoryFolderRelativePath = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                                File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                                File.separator + ci.sFolder_Name;
+                        File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
+                        if(fCatFolder.exists()){
+                            File[] fCatFolderContents = fCatFolder.listFiles();
+                            if(fCatFolderContents != null){
+                                if(fCatFolderContents.length == 0){
+                                    if (!fCatFolder.delete()) {
+                                        Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
                                     }
                                 }
                             }
                         }
-
                     }
 
+                }
 
-                } //End if VideoWorkingFolderExists
+                //End if the catalog item was sourced as a download.
 
-
-
-
-
-            //End if video item marked for Video Post Processing.
             } else {
 
                 if (fFileToBeDeleted.exists()) {

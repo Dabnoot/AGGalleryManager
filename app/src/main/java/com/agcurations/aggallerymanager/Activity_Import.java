@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -21,9 +22,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,6 +40,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -106,6 +111,9 @@ public class Activity_Import extends AppCompatActivity {
     static Stack<Integer> stackFragmentOrder;
     private static int giStartingFragment;
 
+    boolean gbWriteApplicationLog = false;
+    String gsApplicationLogFilePath = "";
+
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,8 +121,21 @@ public class Activity_Import extends AppCompatActivity {
         setContentView(R.layout.activity_import);
         setTitle("Import");
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
+        if(gbWriteApplicationLog){
+            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
+        }
+
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
+
+        if(globalClass.giSelectedCatalogMediaCategory == null){
+            ApplicationLogWriter("Selected media category is null. Returning to Main Activity.");
+            finish();
+            return;
+        }
 
         ViewPager2_Import = findViewById(R.id.viewPager_Import);
 
@@ -191,6 +212,20 @@ public class Activity_Import extends AppCompatActivity {
                 }
             }
 
+        }
+
+    }
+
+    private void ApplicationLogWriter(String sMessage){
+        if(gbWriteApplicationLog){
+            try {
+                File fLog = new File(gsApplicationLogFilePath);
+                FileWriter fwLogFile = new FileWriter(fLog, true);
+                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
+                fwLogFile.close();
+            } catch (Exception e) {
+                Log.d("Log FileWriter", e.getMessage());
+            }
         }
 
     }

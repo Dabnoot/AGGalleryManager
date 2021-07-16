@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +30,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     ProgressBar gProgressBar_ImportProgress;
     TextView gTextView_ImportProgressBarText;
     TextView gtextView_ImportLog;
+    ScrollView gScrollView_ImportLog;
 
     GlobalClass globalClass;
 
@@ -102,7 +104,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
 
         //Set the log textView to be able to scroll vertically:
         gtextView_ImportLog = getView().findViewById(R.id.textView_ImportLog);
-        gtextView_ImportLog.setMovementMethod(new ScrollingMovementMethod());
+        gScrollView_ImportLog = getView().findViewById(R.id.scrollView_ImportLog);
 
 
         if(globalClass.gbImportExecutionStarted && !globalClass.gbImportExecutionRunning) {
@@ -195,6 +197,9 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     if(sLogLine != null) {
                         if (gtextView_ImportLog != null) {
                             gtextView_ImportLog.append(sLogLine);
+                            if(gScrollView_ImportLog != null){
+                                gScrollView_ImportLog.scrollTo(0,gScrollView_ImportLog.getBottom());
+                            }
                         }
                         if (sLogLine.contains("Operation complete.")) {
                             if(getView() != null) {

@@ -3398,7 +3398,7 @@ public class Service_Import extends IntentService {
                 }
             }
             if(bRestrictedTagInUse) {
-                sMessage = sMessage + "Recall that the item will not be readily shown in the catalog because a restricted tag has been selected.\n";
+                sMessage = sMessage + "The item will not be readily shown in the catalog due to the application of a restricted tag.\n";
             }
 
             BroadcastProgress(true, sMessage,

@@ -44,6 +44,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     GlobalClass globalClass;
 
     private EditText gEditText_WebAddress;
+    private Button gbutton_PasteAddress;
     private Button gButton_Go;
     private Button gButton_Detect;
     private TextView gTextView_StatusInstructions;
@@ -104,10 +105,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Button button_PasteAddress = null;
-
         if(getView() != null) {
-            button_PasteAddress = getView().findViewById(R.id.button_PasteAddress);
+            gbutton_PasteAddress = getView().findViewById(R.id.button_PasteAddress);
             gEditText_WebAddress  = getView().findViewById(R.id.editText_WebAddress);
             gButton_Go = getView().findViewById(R.id.button_Go);
             gButton_Detect = getView().findViewById(R.id.button_Detect);
@@ -120,21 +119,9 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         SetTextStatusMessage("Enter an address and click 'Go'.");
 
         //Configure "Paste Address" button:
-        if(button_PasteAddress != null){
-            if(getContext() != null) {
-                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clipData = clipboard.getPrimaryClip();
-                if(clipData != null) {
-                    ClipData.Item clipData_Item = clipData.getItemAt(0);
-                    if (clipData_Item != null) {
-                        String sClipString = clipData_Item.getText().toString();
-                        button_PasteAddress.setEnabled(!sClipString.equals(""));
-                    }
-                }
-            }
+        if(gbutton_PasteAddress != null){
 
-
-            button_PasteAddress.setOnClickListener(new View.OnClickListener() {
+            gbutton_PasteAddress.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     if(getContext() != null) {
@@ -301,6 +288,20 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
         if(getActivity() != null) {
             gmLiveDataStringHTML.observe(getActivity(), observerStringHTML); //When the HTML code changes...
+        }
+
+        if(gbutton_PasteAddress != null) {
+            if (getContext() != null) {
+                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clipData = clipboard.getPrimaryClip();
+                if (clipData != null) {
+                    ClipData.Item clipData_Item = clipData.getItemAt(0);
+                    if (clipData_Item != null) {
+                        String sClipString = clipData_Item.getText().toString();
+                        gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
+                    }
+                }
+            }
         }
 
 
