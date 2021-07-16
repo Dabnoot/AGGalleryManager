@@ -514,18 +514,21 @@ public class Activity_Main extends AppCompatActivity {
     public void startImportVideos(View v){
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         startActivity(intentImportGuided);
     }
 
     public void startImportImages(View v){
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES);
+        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentImportGuided);
     }
 
     public void startImportComics(View v){
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS);
+        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentImportGuided);
     }
 
