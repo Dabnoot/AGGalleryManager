@@ -3366,10 +3366,42 @@ public class Service_Import extends IntentService {
             UUID UUIDWorkID = otwrVideoPostProcessor.getId();
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoPostProcessor);
 
+            String sMessage = "Operation complete.\n";
+            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
+                sMessage = sMessage + "The download will continue in the background and will be available once completed.\n";
+            } else {
+                sMessage = sMessage + "M3U8 video downloads will continue in the background and will be concatenated into a single video once completed.\n";
+            }
+            //Check to see if the user has applied a restricted tag so that an appropriate reminder
+            //  message can be shown:
+            boolean bRestrictedTagInUse = false;
+            String sRecordTags = ciNew.sTags;
+            if(sRecordTags.length() > 0) {
+                String[] saRecordTags = sRecordTags.split(",");
+                for (String s : saRecordTags) {
+                    //if list of restricted tags contains this particular record tag, mark as restricted item:
+                    int iTagID;
+                    //String sErrorMessage;
+                    try {
+                        iTagID = Integer.parseInt(s);
+                    } catch (Exception e){
+                        //sErrorMessage = e.getMessage();
+                        continue;
+                    }
+                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(globalClass.getTagTextFromID(iTagID, GlobalClass.MEDIA_CATEGORY_VIDEOS));
+                    if (ict != null) {
+                        if (ict.bIsRestricted) {
+                            bRestrictedTagInUse = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if(bRestrictedTagInUse) {
+                sMessage = sMessage + "Recall that the item will not be readily shown in the catalog because a restricted tag has been selected.\n";
+            }
 
-
-            BroadcastProgress(true, "Operation complete.\nDownloads may continue in the backgound. If this is a M3U8 (streaming) download, multiple files " +
-                            "will be post-processed after downloads are completed.",
+            BroadcastProgress(true, sMessage,
                     true, iProgressBarValue,
                     true, "All downloads started",
                     sIntentActionFilter);

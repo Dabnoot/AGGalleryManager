@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,8 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
     LogListCustomAdapter logListCustomAdapter;
 
     private ViewModel_Fragment_LogViewer viewModel_fragment_logViewer;
+
+    boolean bItemsDeletedFlag = false;
 
     public Fragment_LogViewer_0_FileList() {
         // Required empty public constructor
@@ -80,6 +83,7 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
                                 }
                             }
                         }
+                        bItemsDeletedFlag = true;
                         initializeLogFileList();
                     }
                 }
@@ -122,10 +126,23 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
                     textView_NotificationNoLogFiles.setVisibility(View.INVISIBLE);
                 } else {
                     textView_NotificationNoLogFiles.setVisibility(View.VISIBLE);
+                    if (bItemsDeletedFlag){
+                        //If items were just deleted and now the list of files is empty, wait a moment
+                        // and then end this activity.
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                getActivity().finish();
+                            }
+                        }, 2000);
+                    }
+
                 }
             }
 
         }
+        bItemsDeletedFlag = false;
     }
 
 

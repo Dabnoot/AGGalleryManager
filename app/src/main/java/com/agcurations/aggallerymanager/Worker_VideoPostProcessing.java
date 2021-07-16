@@ -154,7 +154,6 @@ public class Worker_VideoPostProcessing extends Worker {
                     BufferedReader brReader;
                     try {
                         brReader = new BufferedReader(new FileReader(fFileSequenceFile.getAbsolutePath()));
-                        brReader.readLine();//First line is the header, skip it.
                         String sLine = brReader.readLine();
                         ArrayList<Long> allDownloadIDs = new ArrayList<>();
                         ArrayList<String> alsDownloadFileSequence = new ArrayList<>();
@@ -262,6 +261,11 @@ public class Worker_VideoPostProcessing extends Worker {
 
             String sDownloadFolderToClean = "";
 
+            ArrayList<Long> alRemainingDownloadIDs = new ArrayList<>();
+            for(int i = 0; i < glDownloadIDs.length; i++){
+                alRemainingDownloadIDs.add(glDownloadIDs[i]);
+            }
+
             sMessage = "Waiting for download(s) to complete, a maximum of " + (GlobalClass.DOWNLOAD_WAIT_TIMEOUT / 1000) + " seconds.";
             fwLogFile.write(sMessage + "\n");
             fwLogFile.flush();
@@ -280,8 +284,13 @@ public class Worker_VideoPostProcessing extends Worker {
                 fwLogFile.write(".");
                 fwLogFile.flush();
 
+                //Query for remaining downloads:
+                long[] lRemainingDownloadIDs = new long[alRemainingDownloadIDs.size()];
+                for(int i = 0; i < alRemainingDownloadIDs.size(); i++){
+                    lRemainingDownloadIDs[i] = alRemainingDownloadIDs.get(i);
+                }
                 DownloadManager.Query dmQuery = new DownloadManager.Query();
-                dmQuery.setFilterById(glDownloadIDs);
+                dmQuery.setFilterById(lRemainingDownloadIDs);
                 downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
                 Cursor cursor = downloadManager.query(dmQuery);
 
@@ -295,6 +304,8 @@ public class Worker_VideoPostProcessing extends Worker {
                         String sLocalURI = cursor.getString(iLocalURIIndex);
                         int iDownloadURI = cursor.getColumnIndex(DownloadManager.COLUMN_URI);
                         String sDownloadURI = cursor.getString(iDownloadURI);
+                        int iDownloadID = cursor.getColumnIndex(DownloadManager.COLUMN_ID);
+                        long lDownloadID = cursor.getLong(iDownloadID);
 
                         bDownloadProblem = false;
                         bPaused = false;
@@ -375,10 +386,12 @@ public class Worker_VideoPostProcessing extends Worker {
                                 //  will only store files in the onboard storage, or something like that.
                                 //  Move those files over to the SD Card before processing.
                                 sLocalURI = sLocalURI.replace("file://", "");
+
                                 sDownloadFolderToClean = sLocalURI;
                                 File fSource = new File(sLocalURI);
+                                String sFileName = fSource.getName();
+                                fwLogFile.write("Download completed: " + sFileName);
                                 if (fSource.exists()) {
-                                    String sFileName = fSource.getName();
                                     String sDestination = gsWorkingFolder + File.separator + sFileName;
                                     File fDestination = new File(sDestination);
                                     //Move the file to the working folder:
@@ -394,20 +407,27 @@ public class Worker_VideoPostProcessing extends Worker {
                                             }
                                             outputStream.flush();
                                             outputStream.close();
-
+                                            fwLogFile.write(" Copied to working folder.");
                                             if (!fSource.delete()) {
                                                 sMessage = "Could not delete source file after copy. Source: " + fSource.getAbsolutePath();
-                                                fwLogFile.write("DownloadManager monitoring message: " + sMessage + "\n");
-                                                fwLogFile.flush();
+                                                fwLogFile.write("Download monitoring: " + sMessage + "\n");
+                                            } else {
+                                                fwLogFile.write(" Source file deleted.");
+                                                if(!alRemainingDownloadIDs.remove(lDownloadID)){
+                                                    sMessage = "Could not remove download ID " + lDownloadID + " from download monitoring. This is a non-critical issue.";
+                                                    fwLogFile.write("Download monitoring: " + sMessage + "\n");
+                                                }
                                             }
                                         } catch (Exception e) {
                                             sMessage = fSource.getPath() + "\n" + e.getMessage();
                                             fwLogFile.write("Stream copy exception: " + sMessage + "\n");
-                                            fwLogFile.flush();
                                         }
                                     } //End if !FDestination.exists. If it does exist, we have already copied the file over.
-                                } //End if fSource.exists. If it does not exist, we probably already moved it.
-
+                                } else { //End if fSource.exists. If it does not exist, we probably already moved it.
+                                    fwLogFile.write(" Source file does not exist (already moved?).");
+                                }
+                                fwLogFile.write("\n");
+                                fwLogFile.flush();
 
                                 break;
                         }
@@ -418,10 +438,10 @@ public class Worker_VideoPostProcessing extends Worker {
 
             } //End loop waiting for download completion.
             if (bFileDownloadsComplete) {
-                fwLogFile.write("All downloads reported as completed." + "\n");
+                fwLogFile.write("\nAll downloads reported as completed." + "\n");
                 fwLogFile.flush();
             } else {
-                fwLogFile.write("A download may have failed." + "\n");
+                fwLogFile.write("\nA download may have failed." + "\n");
                 if (iElapsedWaitTime >= GlobalClass.DOWNLOAD_WAIT_TIMEOUT) {
                     sMessage = "Download elapsed time exceeds timeout of " + (GlobalClass.DOWNLOAD_WAIT_TIMEOUT / 1000) + " seconds.";
                     fwLogFile.write(sMessage + "\n");

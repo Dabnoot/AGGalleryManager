@@ -98,9 +98,9 @@ public class Service_CatalogViewer extends IntentService {
                     sItemFileName;
             File fFileToBeDeleted = new File(sFullPath);
 
-            if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT ||
-               ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE){
+            if(ci.sSource.startsWith("http")){
                 //Delete the temporary download folders, etc.
+                //Delete any working folders:
                 String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                         File.separator + ci.sFolder_Name;
                 String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
@@ -206,7 +206,19 @@ public class Service_CatalogViewer extends IntentService {
                 }
             }
 
-            //todo: If this is a video item, check to see if it has a log file associated and delete that file, too. Log file from worker.
+            File fLogFolder = globalClass.gfLogsFolder;
+            if(fLogFolder.exists()){
+                File[] fLogFiles = fLogFolder.listFiles();
+                if(fLogFiles != null){
+                    for(File f: fLogFiles){
+                        if(f.isFile() && f.getName().startsWith(ci.sItemID)){
+                            if(!f.delete()){
+                                problemNotificationConfig("Could not delete log file associated with this item: " + f.getName() + ".");
+                            }
+                        }
+                    }
+                }
+            }
 
             if(bSuccess) {
 
