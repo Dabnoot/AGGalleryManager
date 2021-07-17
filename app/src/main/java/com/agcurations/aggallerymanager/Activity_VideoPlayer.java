@@ -409,8 +409,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     //==============================================================================================
 
     private boolean bFileIsGif;
-    private Uri getMedia() {
+
+    private void initializePlayer() {
+
         int iMediaCategory = globalClass.giSelectedCatalogMediaCategory;
+        Uri gMediaUri = null;
         if(treeMapRecyclerViewVideos.containsKey(giKey)) {
             ItemClass_CatalogItem ci;
             ci = treeMapRecyclerViewVideos.get(giKey);
@@ -448,14 +451,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 Service_CatalogViewer.startActionUpdateCatalogItem(this, ci);
 
 
-                return Uri.parse(sFilePath);
+                gMediaUri = Uri.parse(sFilePath);
             }
         }
-        return null;
-    }
 
-    private void initializePlayer() {
-        Uri gMediaUri = getMedia();
+
         if(bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)){
             if(gMediaUri != null) {
                 if (gMediaUri.getPath() != null) {
