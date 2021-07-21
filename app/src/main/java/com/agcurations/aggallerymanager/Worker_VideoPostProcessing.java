@@ -15,6 +15,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -396,6 +398,7 @@ public class Worker_VideoPostProcessing extends Worker {
                                 sLocalURI = sLocalURI.replace("file://", "");
 
                                 sDownloadFolderToClean = sLocalURI;
+                                sLocalURI = URLDecoder.decode(sLocalURI, StandardCharsets.UTF_8.toString());
                                 File fSource = new File(sLocalURI);
                                 String sFileName = fSource.getName();
                                 fwLogFile.write("Download completed: " + sFileName);

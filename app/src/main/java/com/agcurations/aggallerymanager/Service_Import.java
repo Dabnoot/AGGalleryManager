@@ -3624,7 +3624,6 @@ public class Service_Import extends IntentService {
                 "[",
                 "]",
                 "'"};
-        sOutput = sFilename;
         for(String sReservedChar: sReservedChars) {
             sOutput = sOutput.replace(sReservedChar, sReplaceChar);
         }
@@ -3632,7 +3631,7 @@ public class Service_Import extends IntentService {
         return sOutput;
     }
 
-    public String cleanHTMLCodedCharacters(String sInput){
+    public static String cleanHTMLCodedCharacters(String sInput){
 
         String sOutput = Html.fromHtml(sInput,0).toString();
         return sOutput;
