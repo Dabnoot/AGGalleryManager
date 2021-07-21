@@ -2292,7 +2292,7 @@ public class Service_Import extends IntentService {
 
         }
 
-        if(ci.iPostProcessingCode != ItemClass_CatalogItem.POST_PROCESSING_NONE){
+        if(ci.iSpecialFlag != ItemClass_CatalogItem.FLAG_NO_CODE){
             //Update the catalog file to note the post-processing code:
             globalClass.CatalogDataFile_UpdateRecord(ci);
         }
@@ -3134,14 +3134,14 @@ public class Service_Import extends IntentService {
         ciNew.sTitle = icfDownloadItem.sTitle;
         ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
-            ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE;
+            ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
             ciNew.sVideoLink = icfDownloadItem.sURLVideoLink;
             ciNew.sFilename = GlobalClass.JumbleFileName(icfDownloadItem.sFileOrFolderName);
         } else {
             //M3U8. Mark post-processing to concat videos and move the result.
             if(globalClass.gbUseFFMPEGToMerge) {
-                ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
+                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_CONCAT;
                 //Form a name for the concatenated video file:
                 String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
                 sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
@@ -3155,7 +3155,7 @@ public class Service_Import extends IntentService {
                 ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
                 ciNew.iFile_Count = 1; //There will only be 1 file after concatenation.
             } else {
-                ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL;
+                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL;
                 //Form a name for the M3U8 file:
                 String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
                 sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
@@ -3194,7 +3194,7 @@ public class Service_Import extends IntentService {
             for(String sFileName: icfDownloadItem.ic_M3U8.als_TSDownloads){
                 String sDownloadAddress = icfDownloadItem.ic_M3U8.sBaseURL + "/" + sFileName;
                 String sNewFilename = ciNew.sItemID + "_" + cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
-                if(ciNew.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL){
+                if(ciNew.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL){
                     //If we will be holding the .ts files in storage as part of a local M3U8 configuration,
                     // jumble the .ts filenames:
                     sNewFilename = GlobalClass.JumbleFileName(sNewFilename);

@@ -681,7 +681,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         + ci.sFolder_Name + File.separator
                         + ci.sFilename;
                 if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
-                    ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+                    ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE){
                     //If this is a comic, and the files from DownloadManager have not been moved as
                     //  part of download post-processing, look in the [comic]\download folder for the files:
                     sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
@@ -690,7 +690,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             + ci.sFilename;
                 }
                 if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
-                        ci.iPostProcessingCode != ItemClass_CatalogItem.POST_PROCESSING_NONE){
+                        ci.iSpecialFlag != ItemClass_CatalogItem.FLAG_NO_CODE){
                     //If this is a video and the post-processing is incomplete...
                     //Every sort operation will attempt to relocate the file. However, we can
                     // look in the output folder for a result.
@@ -703,7 +703,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         File[] fVideoDownloadFolderListing = fVideoWorkingFolder.listFiles();
                         ArrayList<File> alfOutputFolders = new ArrayList<>();
                         if(fVideoDownloadFolderListing != null) {
-                            if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL){
+                            if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL){
                                 //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
                                 String sDownloadedThumbnailPath = fVideoWorkingFolder.getPath() + File.separator + ci.sThumbnail_File;
                                 File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);

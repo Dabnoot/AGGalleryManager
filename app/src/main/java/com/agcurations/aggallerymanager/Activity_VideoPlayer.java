@@ -481,7 +481,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
                         gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
                     }
-                } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL) {
+                } else if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);

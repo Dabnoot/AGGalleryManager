@@ -118,7 +118,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gciCatalogItem.sFolder_Name;
-        if(gciCatalogItem.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE){
             //If this is a downloaded comic and the files from DownloadManager have not been moved as
             //  part of download post-processing, look in the [comic]\download folder for the files:
             sComicFolderPath = sComicFolder_AbsolutePath + File.separator
@@ -127,7 +127,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }
 
         //Load the full path to each comic page into tmComicPages:
-        if(gciCatalogItem.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE){
+        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE){
             //If this is a downloaded comic and the files from DownloadManager have not been moved as
             //  part of download post-processing, look in the [comic]\download folder for the files:
             sComicFolderPath = sComicFolder_AbsolutePath + File.separator

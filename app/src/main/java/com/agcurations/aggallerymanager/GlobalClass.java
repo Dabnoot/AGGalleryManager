@@ -362,7 +362,7 @@ public class GlobalClass extends Application {
         sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;      //Typically used to gather tag data from an online comic source, if automatic.
         sReadableData = sReadableData + "\t" + ci.sSource;                          //Website, if relevant. ended for comics.
         sReadableData = sReadableData + "\t" + ci.iGrade;                           //Grade.
-        sReadableData = sReadableData + "\t" + ci.iPostProcessingCode;              //Code for required post-processing.
+        sReadableData = sReadableData + "\t" + ci.iSpecialFlag;              //Code for required post-processing.
         sReadableData = sReadableData + "\t" + ci.sVideoLink;                       //For video download from web page or M3U8 stream. Web address of page is
                                                                                     //  stored in sAddress. There can be multiple video downloads and streams
                                                                                     //  per web page, hence this field.
@@ -405,7 +405,7 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iPostProcessingCode);             //Code for required post-processing.
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.iSpecialFlag);             //Code for required post-processing.
         sRecord = sRecord + "\t" + ci.sVideoLink;                                         //For video download from web page or M3U8 stream. Web address of page is
                                                                                           //  stored in sAddress. There can be multiple video downloads and streams
                                                                                           //  per web page, hence this field.
@@ -451,7 +451,7 @@ public class GlobalClass extends Application {
             ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[28]));               //Grade, supplied by user.
         }
         if(sRecord.length >= 30) {
-            ci.iPostProcessingCode = Integer.parseInt(JumbleStorageText(sRecord[29]));  //Code for required post-processing.
+            ci.iSpecialFlag = Integer.parseInt(JumbleStorageText(sRecord[29]));  //Code for required post-processing.
         }
         if(sRecord.length >= 31) {
             ci.sVideoLink = JumbleStorageText(sRecord[30]);                             //For video download from web page or M3U8 stream. Web address of page is
@@ -1062,7 +1062,7 @@ public class GlobalClass extends Application {
         //  that case, DownloadManager will download to the final directory and those files will need to be moved.
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE) {
+            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE) {
                 //Check to see if all of the files have downloaded:
                 String sComicItemFolderPath =
                         gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath()
@@ -1091,7 +1091,7 @@ public class GlobalClass extends Application {
                                 if (!fComicItemDLFolder.delete()) {
                                     Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
                                 }
-                                ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                                ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
                                 alsCatalogItemsToUpdate.add(ci);
                             }
                         }
@@ -1104,8 +1104,8 @@ public class GlobalClass extends Application {
         //Look for video post-processing required:
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if((ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE) ||
-                    (ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT)) {
+            if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE) ||
+                    (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_CONCAT)) {
                 //Check to see if the concatenation (or single video file download) operation is complete:
                 String sVideoDestinationFolder = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                         File.separator + ci.sFolder_Name;
@@ -1173,7 +1173,7 @@ public class GlobalClass extends Application {
                                 }
 
                                 //Update catalog item to indicate no post-processing needed:
-                                ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_NONE;
+                                ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
 
                                 //Update the video time:
                                 MediaMetadataRetriever mediaMetadataRetriever;
