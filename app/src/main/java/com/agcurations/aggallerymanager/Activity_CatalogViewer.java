@@ -39,7 +39,9 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.TreeMap;
@@ -689,32 +691,20 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             + GlobalClass.gsDLTempFolderName + File.separator
                             + ci.sFilename;
                 }
-                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
-                        ci.iSpecialFlag != ItemClass_CatalogItem.FLAG_NO_CODE){
-                    //If this is a video and the post-processing is incomplete...
-                    //Every sort operation will attempt to relocate the file. However, we can
-                    // look in the output folder for a result.
-                    boolean bVideoFileFound = false;
-                    String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
-                            File.separator + ci.sFolder_Name;
-                    String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                    File fVideoWorkingFolder = new File(sVideoWorkingFolder);
-                    if(fVideoWorkingFolder.exists()){
-                        File[] fVideoDownloadFolderListing = fVideoWorkingFolder.listFiles();
-                        ArrayList<File> alfOutputFolders = new ArrayList<>();
-                        if(fVideoDownloadFolderListing != null) {
-                            if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL){
-                                //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
-                                String sDownloadedThumbnailPath = fVideoWorkingFolder.getPath() + File.separator + ci.sThumbnail_File;
-                                File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);
-                                if(fDownloadedThumbnail.exists()) {
-                                    sThumbnailFilePath = sDownloadedThumbnailPath;
-                                } else {
-                                    //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
-                                    //todo: do the above.
-                                }
-                            } else {
-                                //If this is not a local M3U8:
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_CONCAT) {
+                        //If this is a video and the post-processing is incomplete...
+                        //Every sort operation will attempt to relocate the file. However, we can
+                        // look in the output folder for a result.
+                        boolean bVideoFileFound = false;
+                        String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                                File.separator + ci.sFolder_Name;
+                        String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                        File fVideoWorkingFolder = new File(sVideoWorkingFolder);
+                        if (fVideoWorkingFolder.exists()) {
+                            File[] fVideoDownloadFolderListing = fVideoWorkingFolder.listFiles();
+                            ArrayList<File> alfOutputFolders = new ArrayList<>();
+                            if (fVideoDownloadFolderListing != null) {
                                 for (File f : fVideoDownloadFolderListing) {
                                     //Locate the output folder
                                     if (f.isDirectory()) {
@@ -732,21 +722,67 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                         break; //Don't go through any more "output" folders in this temp download directory.
                                     }
                                 }
+
                             }
                         }
-                    }
-                    if(!bVideoFileFound){
-                        if(holder.textView_CatalogItemNotification != null){
-                            //Notify the user that post-processing is incomplete:
-                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
-                            String sMessage = "Item pending post-processing...";
-                            holder.textView_CatalogItemNotification.setText(sMessage);
+                        if (!bVideoFileFound) {
+                            if (holder.textView_CatalogItemNotification != null) {
+                                //Notify the user that post-processing is incomplete:
+                                holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                String sMessage = "Item pending post-processing...";
+                                holder.textView_CatalogItemNotification.setText(sMessage);
+                            }
+                        }
+
+
+                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+                            //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
+                        String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                                File.separator + ci.sFolder_Name;
+                        String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                        String sDownloadedThumbnailPath = sVideoWorkingFolder + File.separator + ci.sThumbnail_File;
+                        File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);
+                        if (fDownloadedThumbnail.exists()) {
+                            sThumbnailFilePath = sDownloadedThumbnailPath;
+                        } else {
+                            //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                            boolean bVideoFileFound = false;
+                            String sM3U8File = sVideoWorkingFolder + File.separator + ci.sFilename;
+                            File fM3U8File = new File(sM3U8File);
+                            if(fM3U8File.exists()) {
+                                try {
+                                    BufferedReader brReader;
+                                    brReader = new BufferedReader(new FileReader(sM3U8File));
+                                    String sLine = brReader.readLine();
+                                    while (sLine != null) {
+                                        if (!sLine.startsWith("#") && sLine.contains(".st")) {
+                                            sThumbnailFilePath = sLine;
+                                            bVideoFileFound = true;
+                                            break;
+                                        }
+                                        // read next line
+                                        sLine = brReader.readLine();
+                                    }
+                                    brReader.close();
+
+                                } catch (Exception e){
+                                    //Probably a file IO exception.
+                                    bVideoFileFound = false; //redundant, but don't want special behavior.
+                                }
+                            }
+                            if (!bVideoFileFound) {
+                                if (holder.textView_CatalogItemNotification != null) {
+                                    //Notify the user that post-processing is incomplete:
+                                    holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                    String sMessage = "Item pending post-processing...";
+                                    holder.textView_CatalogItemNotification.setText(sMessage);
+                                }
+                            }
+
                         }
                     }
-
-
-                } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-                    if(holder.textView_CatalogItemNotification != null){ //Default to turn off text notification for this video item.
+                } else {
+                    if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
                         holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
                     }
                 }
