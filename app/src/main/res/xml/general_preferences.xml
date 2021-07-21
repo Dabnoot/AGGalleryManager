@@ -8,5 +8,9 @@
         app:title="Write application log file (used for error reporting).">
     </SwitchPreferenceCompat>
 
+    <SwitchPreferenceCompat
+        app:key="USE_FFMPEG_TO_MERGE_VIDEO_STREAMS"
+        app:title="Use FFMPEG to merge video streams into a single file when downloading video.">
+    </SwitchPreferenceCompat>
 
 </PreferenceScreen>

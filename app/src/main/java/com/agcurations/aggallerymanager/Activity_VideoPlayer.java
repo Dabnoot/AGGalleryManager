@@ -18,6 +18,10 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.ui.PlayerControlView;
+import com.google.android.exoplayer2.ui.PlayerView;
 
 import java.io.File;
 import java.util.Map;
@@ -50,6 +54,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private ImageView gImageView_GifViewer;
     private MediaController gMediaController;
 
+    //ExoPlayer is used for playback of local M3U8 files:
+    private SimpleExoPlayer gSimpleExoPlayer;
+    private PlayerView gplayerView_ExoVideoPlayer;
+    private PlayerControlView gPlayerControlView_ExoPlayerControls;
+
     private Fragment_ItemDetails gFragment_itemDetails;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -61,8 +70,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         mVisible = true;
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
+        gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
+        gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gDrawerLayout = findViewById(R.id.drawer_layout);
+
+
 
         globalClass = (GlobalClass) getApplicationContext();
 
@@ -358,6 +371,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         };
         viewModel_fragment_selectTags.bTagDeleted.observe(this, observerTagDeleted);
 
+        gSimpleExoPlayer = new SimpleExoPlayer.Builder(this).build();
+        gplayerView_ExoVideoPlayer.setPlayer(gSimpleExoPlayer);
+        gPlayerControlView_ExoPlayerControls.setPlayer(gSimpleExoPlayer);
+
         initializePlayer();
     }
 
@@ -425,9 +442,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                 setTitle(GlobalClass.JumbleFileName(sFileName));
 
-                //Determine if this is a gif file, which the VideoView will not play:
-                bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
-
                 //Populate the item details fragment:
                 if(gFragment_itemDetails == null) {
                     FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
@@ -441,44 +455,68 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     fragmentTransaction.commit();
                 } else {
                     gFragment_itemDetails.initData(ci);
-
                 }
 
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampFloat();
 
-                //globalClass.CatalogDataFile_UpdateRecord(ci);
                 Service_CatalogViewer.startActionUpdateCatalogItem(this, ci);
 
-
                 gMediaUri = Uri.parse(sFilePath);
-            }
-        }
 
+                //Determine if this is a gif file, which the VideoView will not play:
+                bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
-        if(bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)){
-            if(gMediaUri != null) {
-                if (gMediaUri.getPath() != null) {
-                    File fGif = new File(gMediaUri.getPath());
-                    Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
+                if(bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)){
+                    if(gMediaUri != null) {
+                        if (gMediaUri.getPath() != null) {
+                            File fGif = new File(gMediaUri.getPath());
+                            Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
+                        }
+                    }
+                    if(!gImageView_GifViewer.isShown()) {
+                        gImageView_GifViewer.setVisibility(View.VISIBLE);
+                        gVideoView_VideoPlayer.setZOrderOnTop(false);
+                        gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+                        gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
+                        gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                    }
+                } else if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL) {
+                    gImageView_GifViewer.setVisibility(View.INVISIBLE);
+                    gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+                    gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
+                    gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
+                    String sVideoPath = globalClass.gfCatalogFolders[iMediaCategory] +
+                            File.separator + ci.sFolder_Name +
+                            File.separator + ci.sItemID +
+                            File.separator + ci.sFilename;
+                    File fTemp = new File(sVideoPath);
+                    if(fTemp.exists()) {
+                        MediaItem mediaItem = MediaItem.fromUri(sVideoPath);
+                        gSimpleExoPlayer.setMediaItem(mediaItem);
+                        gSimpleExoPlayer.prepare();
+
+                        gSimpleExoPlayer.play();
+                    } else {
+                        Toast.makeText(this, "Cannot find M3U8 file.", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    gImageView_GifViewer.setVisibility(View.INVISIBLE);
+                    gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
+                    gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                    gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
+                    gVideoView_VideoPlayer.setVideoURI(gMediaUri);
+
+                    if(gVideoView_VideoPlayer.getDuration() > giCurrentVideoPosition){
+                        giCurrentVideoPosition = 1;
+                    }
+                    gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+                    gVideoView_VideoPlayer.start();
                 }
-            }
-            if(!gImageView_GifViewer.isShown()) {
-                gImageView_GifViewer.setVisibility(View.VISIBLE);
-                gVideoView_VideoPlayer.setZOrderOnTop(false);
-                gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
-            }
-        } else {
-            gImageView_GifViewer.setVisibility(View.INVISIBLE);
-            gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
-            gVideoView_VideoPlayer.setVideoURI(gMediaUri);
 
-            if(gVideoView_VideoPlayer.getDuration() > giCurrentVideoPosition){
-                giCurrentVideoPosition = 1;
-            }
-            gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
-            gVideoView_VideoPlayer.start();
-        }
+            } //End if our catalog item is not null.
+
+        } //End if the catalog item was found in the passed-in list.
 
     }
 

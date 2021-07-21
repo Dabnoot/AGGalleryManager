@@ -31,9 +31,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -2831,19 +2829,6 @@ public class Service_Import extends IntentService {
                                 connection.connect();
 
                                 // download the M3U8 text file:
-                                /*inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
-                                data = new byte[1024 * 8];
-                                StringBuilder sbM3U8_HLS_File_Content = new StringBuilder();
-                                while ((input.read(data)) != -1) {
-                                    String sLine = new String(data, StandardCharsets.UTF_8);
-                                    Arrays.fill(data, (byte)0);
-                                    sbM3U8_HLS_File_Content.append(sLine);
-                                }
-                                input.close();
-
-                                String sM3U8Content = sbM3U8_HLS_File_Content.toString();
-                                sbM3U8_HLS_File_Content = null; //Free the memory used for this.*/
-
                                 inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
                                 r = new BufferedReader(new InputStreamReader(inputStream));
                                 StringBuilder total = new StringBuilder();
@@ -2851,6 +2836,7 @@ public class Service_Import extends IntentService {
                                     total.append(line).append('\n');
                                 }
                                 String sM3U8Content = total.toString();
+                                inputStream.close();
 
                                 String sShortFileName = cleanFileNameViaTrim(icM3U8_entry.sFileName);
                                 if(globalClass.gbLogM3U8Files) {
@@ -3045,6 +3031,9 @@ public class Service_Import extends IntentService {
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        globalClass.gbUseFFMPEGToMerge = sharedPreferences.getBoolean(GlobalClass.PREF_USE_FFMPEG_TO_MERGE_VIDEO_STREAMS, false);
+
         ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
         ItemClass_File icfDownloadItem = alFileList.get(0);
         //Use file count as progress denominator:
@@ -3094,28 +3083,28 @@ public class Service_Import extends IntentService {
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         }
 
-        //Create a folder to capture the downloads:
-        File fTempDestination = new File(
+        //Create a folder to serve as a working folder:
+        File fWorkingFolder = new File(
                 globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
                         icfDownloadItem.sDestinationFolder + File.separator + iNextRecordId);
 
         //Create the temporary download folder (within the destination folder):
-        if (!fTempDestination.exists()) {
-            if (!fTempDestination.mkdir()) {
+        if (!fWorkingFolder.exists()) {
+            if (!fWorkingFolder.mkdir()) {
                 //Unable to create directory
-                BroadcastProgress(true, "Unable to create destination folder at: " + fTempDestination.getPath() + "\n",
+                BroadcastProgress(true, "Unable to create destination folder at: " + fWorkingFolder.getPath() + "\n",
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         sIntentActionFilter);
                 return;
             } else {
-                BroadcastProgress(true, "Destination folder created: " + fTempDestination.getPath() + "\n",
+                BroadcastProgress(true, "Destination folder created: " + fWorkingFolder.getPath() + "\n",
                         false, iProgressBarValue,
                         false, "",
                         sIntentActionFilter);
             }
         } else {
-            BroadcastProgress(true, "Destination folder verified: " + fTempDestination.getPath() + "\n",
+            BroadcastProgress(true, "Destination folder verified: " + fWorkingFolder.getPath() + "\n",
                     true, iProgressBarValue,
                     false, "",
                     sIntentActionFilter);
@@ -3143,6 +3132,7 @@ public class Service_Import extends IntentService {
         ciNew.iGrade = icfDownloadItem.iGrade;
         ciNew.sSource = sAddress;
         ciNew.sTitle = icfDownloadItem.sTitle;
+        ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
             ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
@@ -3150,27 +3140,50 @@ public class Service_Import extends IntentService {
             ciNew.sFilename = GlobalClass.JumbleFileName(icfDownloadItem.sFileOrFolderName);
         } else {
             //M3U8. Mark post-processing to concat videos and move the result.
-            ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
-            ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count so that we know when all of the files have been downloaded.
+            if(globalClass.gbUseFFMPEGToMerge) {
+                ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_VIDEO_DLM_CONCAT;
+                //Form a name for the concatenated video file:
+                String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
+                sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
+                sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
+                sTempFilename = sTempFilename.substring(0,sTempFilename.lastIndexOf(".")); //Remove extension (probably .m3u8).
+                if(globalClass.gbUseFFMPEGConvertToMP4) {
+                    sTempFilename = sTempFilename + ".mp4"; //Add appropriate extension.
+                } else {
+                    sTempFilename = sTempFilename + ".ts"; //Add appropriate extension.
+                }
+                ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
+                ciNew.iFile_Count = 1; //There will only be 1 file after concatenation.
+            } else {
+                ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL;
+                //Form a name for the M3U8 file:
+                String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
+                sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
+                sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
+                ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
+                ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
+
+                //Configure thumbnail file for M3U8:
+                String sThumbnailURL = icfDownloadItem.sURLThumbnail;
+                try{
+                    String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
+                    sThumbnailFileName = cleanFileNameViaTrim(sThumbnailFileName);
+                    ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
+                    ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
+                } catch (Exception e){
+                    problemNotificationConfig("Could not get thumbnail image.", sIntentActionFilter);
+                }
+            }
+
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
             ciNew.lDuration_Milliseconds = (long) (icfDownloadItem.ic_M3U8.fDurationInSeconds * 1000); //Load the duration now for confirmation of video concatenation completion later.
-            //Form a name for the concatenated video file:
-            String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
-            sTempFilename = cleanFileNameViaTrim(sTempFilename); //Remove special characters.
-            sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
-            sTempFilename = sTempFilename.substring(0,sTempFilename.lastIndexOf(".")); //Remove extension (probably .m3u8).
-            if(globalClass.gbUseFFMPEGConvertToMP4) {
-                sTempFilename = sTempFilename + ".mp4"; //Add appropriate extension.
-            } else {
-                sTempFilename = sTempFilename + ".ts"; //Add appropriate extension.
-            }
-            ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
+
         }
 
         globalClass.CatalogDataFile_CreateNewRecord(ciNew);
 
         //Map-out the files to be downloaded with destination file names:
-        ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
+
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
             //If this is a single download file, only 1 file needs to be downloaded.
             String sDownloadAddress = icfDownloadItem.sURLVideoLink;
@@ -3181,33 +3194,12 @@ public class Service_Import extends IntentService {
             for(String sFileName: icfDownloadItem.ic_M3U8.als_TSDownloads){
                 String sDownloadAddress = icfDownloadItem.ic_M3U8.sBaseURL + "/" + sFileName;
                 String sNewFilename = ciNew.sItemID + "_" + cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
-                ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
-
-                //Debugging an issue...
-                String sNewFullPathFilename = fTempDestination + File.separator + sNewFilename;
-                File fNewFile = new File(sNewFullPathFilename);
-                String s;
-                try{
-                    s = fNewFile.getCanonicalPath();
-                } catch (Exception e2){
-                    Log.d("File exception", e2.getMessage());
-
-                    int iL1 = sFileName.length();
-                    sNewFilename = cleanFileNameViaTrim(sFileName);
-                    int iL2 = sNewFilename.length();
-                    sNewFullPathFilename = fTempDestination + File.separator + sNewFilename;
-                    fNewFile = new File(sNewFullPathFilename);
-                    try{
-                        s = fNewFile.getCanonicalPath();
-                    } catch (Exception e3){
-                        Log.d("File exception", e3.getMessage());
-                    }
-
-
-
+                if(ciNew.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL){
+                    //If we will be holding the .ts files in storage as part of a local M3U8 configuration,
+                    // jumble the .ts filenames:
+                    sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
                 }
-
-
+                ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
             }
         }
 
@@ -3233,10 +3225,9 @@ public class Service_Import extends IntentService {
             String sVideoDownloadFolder = "";
 
             for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
-                String sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
+                String sNewFullPathFilename = fWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
                 //File name is not Jumbled for download as if it is a .ts file download of videos, FFMPEG will
                 //  not understand what to do with the files if the extension is unrecognized.
-                //  todo: Differentiate between single-file and .ts file downloads and jumble file name when we can.
                 File fNewFile = new File(sNewFullPathFilename);
                 /*//Debugging an issue...
                 String s;
@@ -3301,6 +3292,67 @@ public class Service_Import extends IntentService {
             }
             //Success initiating file download(s).
 
+            int iSingleOrM3U8;
+            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
+                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_SINGLE;
+            } else if(!globalClass.gbUseFFMPEGToMerge) {
+                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8_LOCAL;
+            } else {
+                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8;
+            }
+
+            //If this is an M3U8 stream download and the user has elected not to concatenate via
+            //  FFMPEG, download the M3U8 file as well:
+            if((icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) &&
+                    (!globalClass.gbUseFFMPEGToMerge)){
+
+                ItemClass_M3U8 icM3U8_entry = icfDownloadItem.ic_M3U8;
+
+                String sUrl = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
+                URL url = new URL(sUrl);
+                URLConnection connection = url.openConnection();
+                connection.connect();
+
+                // download the M3U8 text file:
+                InputStream inputStream = new BufferedInputStream(url.openStream(), 1024 * 8);
+                BufferedReader r = new BufferedReader(new InputStreamReader(inputStream));
+                StringBuilder total = new StringBuilder();
+                for (String line; (line = r.readLine()) != null; ) {
+                    total.append(line).append('\n');
+                }
+                String sM3U8Content = total.toString();
+                inputStream.close();
+
+                //Write the m3u8 file to the working folder:
+                String sM3U8FilePath = fWorkingFolder.getAbsolutePath() +
+                        File.separator + ciNew.sFilename;
+                File fM3U8 = new File(sM3U8FilePath);
+                FileWriter fwM3U8File = new FileWriter(fM3U8, true);
+
+                String[] sLines = sM3U8Content.split("\n");
+                for (String sLine : sLines) {
+                    if (!sLine.startsWith("#") && sLine.contains(".ts")) {// && sLine.startsWith("hls")) {
+                        String sTSShortFileName = ciNew.sItemID + "_" + cleanFileNameViaTrim(sLine);
+                        String sJumbledTSShortFileName = GlobalClass.JumbleFileName(sTSShortFileName);
+                        String sFullPathToTSFile = fWorkingFolder.getAbsolutePath() + File.separator + sJumbledTSShortFileName;
+                        fwM3U8File.write(sFullPathToTSFile + "\n");
+                    } else if (sLine.contains("ENDLIST")) {
+                        fwM3U8File.write(sLine + "\n");
+                        break;
+                    } else {
+                        fwM3U8File.write(sLine + "\n");
+                    }
+
+                }
+
+                fwM3U8File.flush();
+                fwM3U8File.close();
+
+            }
+
+
+
+
             //Start Video Post-Processing Worker.
             //Testing WorkManager for video concatenation:
             //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
@@ -3316,12 +3368,7 @@ public class Service_Import extends IntentService {
             public static final String KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT = "KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT";
             public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";*/
 
-            int iSingleOrM3U8;
-            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
-                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_SINGLE;
-            } else {
-                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8;
-            }
+
             String sVideoFinalDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                     File.separator + ciNew.sFolder_Name;
             String sVideoWorkingFolder = sVideoFinalDestinationFolder + File.separator + ciNew.sItemID;
@@ -3333,24 +3380,24 @@ public class Service_Import extends IntentService {
             //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
             //int l = 0;
             //A file sequence string array can be too big to pass to a worker, so write it to a file:
-            final String sFileSequenceFilePath = sVideoWorkingFolder +
-                    File.separator + Worker_VideoPostProcessing.VIDEO_FILE_SEQUENCE_FILE_NAME;
-            final File fFileSequenceFile = new File(sFileSequenceFilePath);
-            FileWriter fwFileSequenceFile;
-            fwFileSequenceFile = new FileWriter(fFileSequenceFile, true);
+            final String sDLIDFileSequenceFilePath = sVideoWorkingFolder +
+                    File.separator + Worker_VideoPostProcessing.VIDEO_DLID_AND_SEQUENCE_FILE_NAME;
+            final File fDLIDFileSequenceFile = new File(sDLIDFileSequenceFilePath);
+            FileWriter fwDLIDFileSequenceFile;
+            fwDLIDFileSequenceFile = new FileWriter(fDLIDFileSequenceFile, true);
             for(int l = 0; l < ciNew.alsDownloadURLsAndDestFileNames.size(); l++) {
                 String sLine = lDownloadIDs[l] + "\t" + ciNew.alsDownloadURLsAndDestFileNames.get(l)[FILE_NAME_AND_EXTENSION] + "\n";
-                fwFileSequenceFile.write(sLine);
+                fwDLIDFileSequenceFile.write(sLine);
             }
-            fwFileSequenceFile.flush();
-            fwFileSequenceFile.close();
+            fwDLIDFileSequenceFile.flush();
+            fwDLIDFileSequenceFile.close();
             /*for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
                 sFilenameSequence[l] =  sURLAndFileName[FILE_NAME_AND_EXTENSION];
                 l++;
             }*/
             //Build-out data to send to the worker:
             Data dataVideoPostProcessor = new Data.Builder()
-                    .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, iSingleOrM3U8)
+                    .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_M3U8_M3U8LOCAL, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_WORKING_FOLDER, sVideoWorkingFolder)
                     //.putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)

@@ -697,27 +697,40 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     boolean bVideoFileFound = false;
                     String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                             File.separator + ci.sFolder_Name;
-                    String sVideoDownloadFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                    File fVideoDownloadFolder = new File(sVideoDownloadFolder);
-                    if(fVideoDownloadFolder.exists()){
-                        File[] fVideoDownloadFolderListing = fVideoDownloadFolder.listFiles();
+                    String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                    File fVideoWorkingFolder = new File(sVideoWorkingFolder);
+                    if(fVideoWorkingFolder.exists()){
+                        File[] fVideoDownloadFolderListing = fVideoWorkingFolder.listFiles();
                         ArrayList<File> alfOutputFolders = new ArrayList<>();
                         if(fVideoDownloadFolderListing != null) {
-                            for (File f : fVideoDownloadFolderListing) {
-                                //Locate the output folder
-                                if (f.isDirectory()) {
-                                    alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
+                            if(ci.iPostProcessingCode == ItemClass_CatalogItem.POST_PROCESSING_M3U8_LOCAL){
+                                //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
+                                String sDownloadedThumbnailPath = fVideoWorkingFolder.getPath() + File.separator + ci.sThumbnail_File;
+                                File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);
+                                if(fDownloadedThumbnail.exists()) {
+                                    sThumbnailFilePath = sDownloadedThumbnailPath;
+                                } else {
+                                    //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                                    //todo: do the above.
                                 }
-                            }
-                            //Attempt to locate the output file of a concatenation operation:
-                            for (File f : alfOutputFolders) {
-                                String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
-                                File fOutputFile = new File(sOutputFileAbsolutePath);
-                                if (fOutputFile.exists()) {
-                                    //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
-                                    sThumbnailFilePath = fOutputFile.getAbsolutePath();
-                                    bVideoFileFound = true;
-                                    break; //Don't go through any more "output" folders in this temp download directory.
+                            } else {
+                                //If this is not a local M3U8:
+                                for (File f : fVideoDownloadFolderListing) {
+                                    //Locate the output folder
+                                    if (f.isDirectory()) {
+                                        alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
+                                    }
+                                }
+                                //Attempt to locate the output file of a concatenation operation:
+                                for (File f : alfOutputFolders) {
+                                    String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
+                                    File fOutputFile = new File(sOutputFileAbsolutePath);
+                                    if (fOutputFile.exists()) {
+                                        //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
+                                        sThumbnailFilePath = fOutputFile.getAbsolutePath();
+                                        bVideoFileFound = true;
+                                        break; //Don't go through any more "output" folders in this temp download directory.
+                                    }
                                 }
                             }
                         }

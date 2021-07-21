@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.util.Log;
 
@@ -14,13 +15,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -43,13 +43,13 @@ public class Worker_VideoPostProcessing extends Worker {
     //public static final String FILENAME = "FILENAME";
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
-    public static final String VIDEO_FILE_SEQUENCE_FILE_NAME = "Video_FileSequence.txt";
+    public static final String VIDEO_DLID_AND_SEQUENCE_FILE_NAME = "DLID_And_Sequence.txt";
 
     DownloadManager downloadManager;
 
     //=========================
     // Define keys for arguments passed to this worker:
-    public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8 = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8";
+    public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_M3U8_M3U8LOCAL = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_M3U8_M3U8LOCAL";
     public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
     public static final String KEY_ARG_WORKING_FOLDER = "KEY_ARG_WORKING_FOLDER";
     //public static final String KEY_ARG_FILENAME_SEQUENCE = "KEY_ARG_FILENAME_SEQUENCE";
@@ -62,6 +62,7 @@ public class Worker_VideoPostProcessing extends Worker {
     int giDownloadTypeSingleOrM3U8;
     public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
+    public static final int DOWNLOAD_TYPE_M3U8_LOCAL = 3;
     String gsPathToMonitorForDownloads;                 //Location to monitor for download file(s)
     String gsWorkingFolder;                             //Location on external SD Card (big storage)
     int giExpectedDownloadFileCount;                    //Expected count of downloaded files
@@ -79,7 +80,7 @@ public class Worker_VideoPostProcessing extends Worker {
         super(appContext, workerParameters);
         /*// Set initial progress to 0
         setProgressAsync(new Data.Builder().putInt(PROGRESS, 0).build());*/
-        giDownloadTypeSingleOrM3U8 = getInputData().getInt(KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8, DOWNLOAD_TYPE_SINGLE);
+        giDownloadTypeSingleOrM3U8 = getInputData().getInt(KEY_ARG_DOWNLOAD_TYPE_SINGLE_M3U8_M3U8LOCAL, DOWNLOAD_TYPE_SINGLE);
         gsPathToMonitorForDownloads = getInputData().getString(KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS);
         gsWorkingFolder = getInputData().getString((KEY_ARG_WORKING_FOLDER));
         gsVideoOutputFilename = getInputData().getString(KEY_ARG_VIDEO_OUTPUT_FILENAME);
@@ -92,6 +93,10 @@ public class Worker_VideoPostProcessing extends Worker {
     @Override
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        globalClass.gbUseFFMPEGToMerge = sharedPreferences.getBoolean(GlobalClass.PREF_USE_FFMPEG_TO_MERGE_VIDEO_STREAMS, false);
+
         String sMessage;
 
         if(!globalClass.gfLogsFolder.exists()){
@@ -144,9 +149,9 @@ public class Worker_VideoPostProcessing extends Worker {
             }
 
 
-            if (giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
+            if (giDownloadTypeSingleOrM3U8 != DOWNLOAD_TYPE_SINGLE) {
                 String sFileSequenceFilePath = gsWorkingFolder +
-                        File.separator + VIDEO_FILE_SEQUENCE_FILE_NAME;
+                        File.separator + VIDEO_DLID_AND_SEQUENCE_FILE_NAME;
                 File fFileSequenceFile = new File(sFileSequenceFilePath);
 
                 if (fFileSequenceFile.exists()) {
@@ -201,6 +206,10 @@ public class Worker_VideoPostProcessing extends Worker {
                         return Result.failure(DataErrorMessage(sMessage));
                     }
 
+                    if(!fFileSequenceFile.delete()){
+                        sMessage = "Could not delete download ID and sequence file: " + sFileSequenceFilePath;
+                        fwLogFile.write(sMessage + "\n");
+                    }
 
                 } else {
                     sMessage = "File sequence file does not exist: " + sFileSequenceFilePath;
@@ -222,18 +231,16 @@ public class Worker_VideoPostProcessing extends Worker {
 
 
 
-        /*if(!gsVideoOutputFilename.equals("")){
-            return Result.failure(DataErrorMessage("Killing Worker."));
-        }*/
+
 
             //Establish the name of the temporary output folder for the video concatenation result,
             // and create the folder:
-            String sOutputFolder = "Output";
+            String sOutputFolder = "Final";
             String sOutputFolderPath = fThisWorkingFolder + File.separator + sOutputFolder;
             File fOutputFolder = new File(sOutputFolderPath);
             int iOutputFolderRetryIterator = 1;
             while (fOutputFolder.exists()) {
-                sOutputFolder = "Output_" + iOutputFolderRetryIterator;
+                sOutputFolder = "Final_" + iOutputFolderRetryIterator;
                 iOutputFolderRetryIterator++;
                 sOutputFolderPath = fThisWorkingFolder + File.separator + sOutputFolder;
                 fOutputFolder = new File(sOutputFolderPath);
@@ -248,6 +255,7 @@ public class Worker_VideoPostProcessing extends Worker {
             }
             fwLogFile.write("Success." + "\n");
             fwLogFile.flush();
+
 
             //Monitor the location for file downloads' completion:
             int iElapsedWaitTime = 0;
@@ -451,92 +459,89 @@ public class Worker_VideoPostProcessing extends Worker {
 
             //Downloads should be complete and moved out of the source folder.
 
+            //Delete the download folder to which downloadManager downloaded the files:
+            fwLogFile.write("Attempting delete of download folder:" + fThisDownloadFolder.getAbsolutePath() + "\n");
+            if (fThisDownloadFolder.exists()) {
+                if (!fThisDownloadFolder.delete()) {
+                    sMessage = "Could not delete download folder: " + fThisDownloadFolder.getAbsolutePath();
+                    fwLogFile.write(sMessage + "\n");
+                } else {
+                    fwLogFile.write("Success." + "\n");
+                    fwLogFile.flush();
+                    //Attempt to remove the category folder from the download location if it is empty:
+                    if (!sDownloadFolderToClean.equals("")) {
+                        sDownloadFolderToClean = sDownloadFolderToClean.substring(0, sDownloadFolderToClean.lastIndexOf(File.separator));
+                        sDownloadFolderToClean = sDownloadFolderToClean.substring(0, sDownloadFolderToClean.lastIndexOf(File.separator));
+                        fwLogFile.write("Attempting to delete category folder from download location:" + sDownloadFolderToClean + "\n");
+                        fwLogFile.flush();
+                        File fDownloadFolderToClean = new File(sDownloadFolderToClean);
+                        File[] fTemp = fDownloadFolderToClean.listFiles();
+                        if (fTemp != null) {
+                            if (fTemp.length == 0) {
+                                if (!fDownloadFolderToClean.delete()) {
+                                    //Unable to remove stub folder.
+                                    sMessage = "Could not delete temp category folder: " + fDownloadFolderToClean.getAbsolutePath();
+                                    fwLogFile.write(sMessage + "\n");
+                                } else {
+                                    fwLogFile.write("Success." + "\n");
+                                }
+                            }
+                        }
 
-
+                    }
+                }
+            }
+            fwLogFile.flush();
 
 
 
 
             final String sFinalOutputPath = sOutputFolderPath + File.separator + GlobalClass.JumbleFileName(gsVideoOutputFilename);
-            //if (bFileDownloadsComplete) {
-                fDownloadedFiles = fThisWorkingFolder.listFiles();
-                if (fDownloadedFiles == null) {
-                    sMessage = "Downloaded file(s) missing from working folder: " + gsWorkingFolder;
-                    fwLogFile.write(sMessage + "\n");
-                    fwLogFile.close();
-                    return Result.failure(DataErrorMessage(sMessage));
-                } else if (fDownloadedFiles.length < 2) {
-                    sMessage = "Downloaded file(s) missing from working folder: " + gsWorkingFolder;
-                    fwLogFile.write(sMessage + "\n");
-                    fwLogFile.close();
-                    return Result.failure(DataErrorMessage(sMessage));
-                }
-                if (giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_SINGLE) {
-                    //Move the file to the output folder to get captured by the main program:
-                    File fInputFile = null; //There should be but 1 file in the download folder for DOWNLOAD_TYPE_SINGLE. Index 0 is the folder.
-                    for (File f : fDownloadedFiles) {
-                        if (f.isFile()) {
-                            fInputFile = f;
-                        }
-                    }
 
-                    File fOutputFile = new File(sFinalOutputPath);
-                    if (fInputFile != null) {
-                        fwLogFile.write("Moving downloaded file to output folder: " + fInputFile.getAbsolutePath() + "\n");
-                        if (!fInputFile.renameTo(fOutputFile)) {
-                            sMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
-                            fwLogFile.write(sMessage + "\n");
-                            fwLogFile.close();
-                            return Result.failure(DataErrorMessage(sMessage));
-                        }
-                    } else {
-                        sMessage = "Download file missing from folder: " + fThisWorkingFolder.getAbsolutePath();
+            fDownloadedFiles = fThisWorkingFolder.listFiles();
+            if (fDownloadedFiles == null) {
+                sMessage = "Downloaded file(s) missing from working folder: " + gsWorkingFolder;
+                fwLogFile.write(sMessage + "\n");
+                fwLogFile.close();
+                return Result.failure(DataErrorMessage(sMessage));
+            } else if (fDownloadedFiles.length < 2) {
+                sMessage = "Downloaded file(s) missing from working folder: " + gsWorkingFolder;
+                fwLogFile.write(sMessage + "\n");
+                fwLogFile.close();
+                return Result.failure(DataErrorMessage(sMessage));
+            }
+
+            if (giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_SINGLE) {
+                //Move the file to the output folder to get captured by the main program:
+                File fInputFile = null; //There should be but 1 file in the working folder for DOWNLOAD_TYPE_SINGLE.
+                for (File f : fDownloadedFiles) {
+                    if (f.isFile()) {
+                        fInputFile = f;
+                    }
+                }
+
+                File fOutputFile = new File(sFinalOutputPath);
+                if (fInputFile != null) {
+                    fwLogFile.write("Moving downloaded file to output folder: " + fInputFile.getAbsolutePath() + "\n");
+                    if (!fInputFile.renameTo(fOutputFile)) {
+                        sMessage = "Could not move downloaded file to output folder: " + fInputFile.getAbsolutePath();
                         fwLogFile.write(sMessage + "\n");
                         fwLogFile.close();
                         return Result.failure(DataErrorMessage(sMessage));
                     }
-                    fwLogFile.write("Success." + "\n");
-                    fwLogFile.flush();
-
                 } else {
-                    //if(giDownloadTypeSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
-                    //Process the files.
+                    sMessage = "Download file missing from folder: " + fThisWorkingFolder.getAbsolutePath();
+                    fwLogFile.write(sMessage + "\n");
+                    fwLogFile.close();
+                    return Result.failure(DataErrorMessage(sMessage));
+                }
+                fwLogFile.write("Success." + "\n");
+                fwLogFile.flush();
 
-                    //Delete the download folder to which downloadManager downloaded the files:
-                    fwLogFile.write("Attempting delete of download folder:" + fThisDownloadFolder.getAbsolutePath() + "\n");
-                    if (fThisDownloadFolder.exists()) {
-                        if (!fThisDownloadFolder.delete()) {
-                            sMessage = "Could not delete download folder: " + fThisDownloadFolder.getAbsolutePath();
-                            fwLogFile.write(sMessage + "\n");
-                        } else {
-                            fwLogFile.write("Success." + "\n");
-                            fwLogFile.flush();
-                            //Attempt to remove the category folder from the download location if it is empty:
-                            if (!sDownloadFolderToClean.equals("")) {
-                                sDownloadFolderToClean = sDownloadFolderToClean.substring(0, sDownloadFolderToClean.lastIndexOf(File.separator));
-                                sDownloadFolderToClean = sDownloadFolderToClean.substring(0, sDownloadFolderToClean.lastIndexOf(File.separator));
-                                fwLogFile.write("Attempting to delete category folder from download location:" + sDownloadFolderToClean + "\n");
-                                fwLogFile.flush();
-                                File fDownloadFolderToClean = new File(sDownloadFolderToClean);
-                                File[] fTemp = fDownloadFolderToClean.listFiles();
-                                if (fTemp != null) {
-                                    if (fTemp.length == 0) {
-                                        if (!fDownloadFolderToClean.delete()) {
-                                            //Unable to remove stub folder.
-                                            sMessage = "Could not delete temp category folder: " + fDownloadFolderToClean.getAbsolutePath();
-                                            fwLogFile.write(sMessage + "\n");
-                                        } else {
-                                            fwLogFile.write("Success." + "\n");
-                                        }
-                                    }
-                                }
+            } else {
+                //Process the files.
 
-                            }
-                        }
-                    }
-                    fwLogFile.flush();
-
-
+                if(giDownloadTypeSingleOrM3U8 != DOWNLOAD_TYPE_M3U8_LOCAL) {
                     //Create a file listing the files which are to be concatenated:
                     String sFFMPEGInputFilename = "FFMPEGInputFileName.txt";
                     String sFFMPEGInputFilePath = sOutputFolderPath + File.separator + sFFMPEGInputFilename;
@@ -549,7 +554,7 @@ public class Worker_VideoPostProcessing extends Worker {
                     for (File f : fDownloadedFiles) {
                         for (int j = 0; j < gsFilenameSequence.length; j++) {
                             if (f.isFile()) {
-                                if (!f.getName().contains(VIDEO_FILE_SEQUENCE_FILE_NAME)) {
+                                if (!f.getName().contains(VIDEO_DLID_AND_SEQUENCE_FILE_NAME)) {
                                     String sFilename = f.getName();
                                     if (sFilename.contains(gsFilenameSequence[j])) {
                                         tmDownloadedFiles.put(j, f.getAbsolutePath());
@@ -590,87 +595,10 @@ public class Worker_VideoPostProcessing extends Worker {
                     }
                     fwLogFile.write("File write completed." + "\n");
                     fwLogFile.flush();
-                    //==============================================================================
-                    //Execute the FFMPEG video data investigation:
-                    //View information about a file for debugging:
-                    /*String sFFMPEGLogFilePath_DebugData = globalClass.gfLogsFolder.getAbsolutePath() +
-                            File.separator + gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_FFMPEGLog_FileData.txt";
-                    final File fFFMPEGLog_FileData = new File(sFFMPEGLogFilePath_DebugData);
 
 
-                    String sCommand1 = "-i " + sTestFileAbsolutePath;
-                    fwLogFile.write("Starting FFMPEG operation asynchronously. See FFMPEG log for process-related data." + "\n");
-                    fwLogFile.write("Issuing command:\n" + sCommand1 + "\n");
-                    FFmpegKit.executeAsync(sCommand1, new ExecuteCallback() {
-
-                        @Override
-                        public void apply(Session session) {
-                            // CALLED WHEN SESSION IS EXECUTED
-                            SessionState state = session.getState();
-                            ReturnCode returnCode = session.getReturnCode();
-                            //Write the data to the log file:
-                            try {
-                                FileWriter fwFFMPEGLogFile;
-                                fwFFMPEGLogFile = new FileWriter(fFFMPEGLog_FileData, true);
-                                fwFFMPEGLogFile.write(String.format("\nExec message: FFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
-                                String sMessage = session.getFailStackTrace();
-                                if (sMessage != null) {
-                                    fwFFMPEGLogFile.write("Exec message: " + sMessage + "\n");
-                                }
-
-                                fwFFMPEGLogFile.flush();
-                                fwFFMPEGLogFile.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }, new LogCallback() {
-
-                        @Override
-                        public void apply(com.arthenica.ffmpegkit.Log log) {
-                            // CALLED WHEN SESSION PRINTS LOGS
-                            String sMessage = log.getMessage();
-
-                            //Write the data to the log file and rename the output file so that the main application can find it:
-                            try {
-                                FileWriter fwFFMPEGLogFile;
-                                fwFFMPEGLogFile = new FileWriter(fFFMPEGLog_FileData, true);
-                                fwFFMPEGLogFile.write("Log message: " + sMessage + "\n");
-                                fwFFMPEGLogFile.flush();
-                                fwFFMPEGLogFile.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-                        }
-                    }, new StatisticsCallback() {
-
-                        @Override
-                        public void apply(Statistics statistics) {
-                            // CALLED WHEN SESSION GENERATES STATISTICS
-                            String sMessage = "File size: " + statistics.getSize();
-
-                            //Write the data to the log file:
-                            try {
-                                FileWriter fwFFMPEGLogFile;
-                                fwFFMPEGLogFile = new FileWriter(fFFMPEGLog_FileData, true);
-                                fwFFMPEGLogFile.write("Stat message: " + sMessage + "\n");
-                                fwFFMPEGLogFile.flush();
-                                fwFFMPEGLogFile.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-
-                        }
-                    });*/
-
-
-                    final String sConcatIntermediateOutputFilePath = sOutputFolderPath + File.separator + gsVideoOutputFilename;
                     if(globalClass.gbUseFFMPEGToMerge) {
+                        final String sConcatIntermediateOutputFilePath = sOutputFolderPath + File.separator + gsVideoOutputFilename;
                         String sFFMPEGLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
                                 File.separator + gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_FFMPEGLog.txt";
                         final File fFFMPEGLog = new File(sFFMPEGLogFilePath);
@@ -764,162 +692,14 @@ public class Worker_VideoPostProcessing extends Worker {
                         fwLogFile.write("Success calling FFMPEG to concatenate files." + "\n");
                         fwLogFile.flush();
                         //Execute no further processing as the FFMPEG call is asynchronous.
-                    } else {
-                        //Use something else to execute file merge:
-                        //This section primarily used to try to get around a stutter in the merge output.
-
-                        fwLogFile.write("Attempting to merge files using file channels..." + "\n");
-                        //Get channel for output file:
-                        String sBaseFileName = gsVideoOutputFilename.substring(0, gsVideoOutputFilename.lastIndexOf("."));
-                        String sDeadConcat = sOutputFolderPath + File.separator + "_" + sBaseFileName + ".ts";
-                        File fConcatIntermediateOutputFilePath = new File(sDeadConcat);
-                        FileOutputStream fos = new FileOutputStream(fConcatIntermediateOutputFilePath);
-                        WritableByteChannel targetChannel = fos.getChannel();
-
-                        fwLogFile.write("Merging to output file: " + sDeadConcat + "\n");
-                        fwLogFile.flush();
-                        for (Map.Entry<Integer, String> entry : tmDownloadedFiles.entrySet()) {
-                            //Get channel for input file:
-
-                            String sCurrentInputFileAbsPath = entry.getValue();
-                            fwLogFile.write("Merging input file: " + sCurrentInputFileAbsPath + "\n");
-                            fwLogFile.flush();
-                            try {
-                                File fInput = new File(sCurrentInputFileAbsPath);
-                                FileInputStream fis = new FileInputStream(fInput);
-                                FileChannel inputChannel = fis.getChannel();
-
-                                //Transfer data from input channel to output channel:
-                                inputChannel.transferTo(0, inputChannel.size(), targetChannel);
-
-                                //Close the input channel:
-                                inputChannel.close();
-                                fis.close();
-
-                                fwLogFile.write("Success." + "\n");
-                            } catch (Exception e){
-                                fwLogFile.write("Failed. " + e.getMessage() + "\n");
-                            }
-                            fwLogFile.flush();
-
-                        }
-                        targetChannel.close();
-                        fos.close();
-
-                        fwLogFile.write("Finished attempted merge of all files." + "\n");
-
-
-
-
-                        String sFFMPEGLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                                File.separator + gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_FFMPEGLog.txt";
-                        final File fFFMPEGLog = new File(sFFMPEGLogFilePath);
-
-                        String sCommand = "-i " + sDeadConcat + " -acodec copy -vcodec copy \"" + sConcatIntermediateOutputFilePath + "\"";
-                        fwLogFile.write("Starting FFMPEG operation asynchronously. See FFMPEG log for process-related data." + "\n");
-                        fwLogFile.write("Issuing command:\n" + sCommand + "\n");
-                        fwLogFile.flush();
-                        FFmpegKit.executeAsync(sCommand, new ExecuteCallback() {
-
-                            @Override
-                            public void apply(Session session) {
-                                // CALLED WHEN SESSION IS EXECUTED
-                                SessionState state = session.getState();
-                                ReturnCode returnCode = session.getReturnCode();
-                                //Write the data to the log file:
-                                try {
-                                    FileWriter fwFFMPEGLogFile;
-                                    fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
-                                    fwFFMPEGLogFile.write(String.format("\nExec message: FFmpeg process exited with state %s and return code %s.\n", state, returnCode) + "\n");
-
-                                    if (ReturnCode.isSuccess(returnCode)) {
-                                        //Attempt to move the output file:
-                                        File fFFMPEGOutputFile = new File(sConcatIntermediateOutputFilePath);
-                                        File fFinalOutputFile = new File(sFinalOutputPath);
-                                        if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
-                                            String sMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
-                                            fwFFMPEGLogFile.write(sMessage + "\n");
-                                        }
-                                    } else {
-                                        //Attempt to move the output file:
-                                        File fFFMPEGOutputFile = new File(sConcatIntermediateOutputFilePath);
-                                        File fFinalOutputFile = new File(sFinalOutputPath);
-                                        if (!fFFMPEGOutputFile.renameTo(fFinalOutputFile)) {
-                                            String sMessage = "Exec message: Could not rename FFMPEG output file to final file name: " + fFFMPEGOutputFile.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
-                                            fwFFMPEGLogFile.write(sMessage + "\n");
-                                        }
-                                    }
-                                    String sMessage = session.getFailStackTrace();
-                                    if (sMessage != null) {
-                                        fwFFMPEGLogFile.write("Exec message: " + sMessage + "\n");
-                                    }
-                                    fwFFMPEGLogFile.close();
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }, new LogCallback() {
-
-                            @Override
-                            public void apply(com.arthenica.ffmpegkit.Log log) {
-                                // CALLED WHEN SESSION PRINTS LOGS
-                                String sMessage = log.getMessage();
-
-                                //Write the data to the log file and rename the output file so that the main application can find it:
-                                try {
-                                    FileWriter fwFFMPEGLogFile;
-                                    fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
-                                    fwFFMPEGLogFile.write("Log message: " + sMessage + "\n");
-                                    fwFFMPEGLogFile.close();
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
-                            }
-                        }, new StatisticsCallback() {
-
-                            @Override
-                            public void apply(Statistics statistics) {
-                                // CALLED WHEN SESSION GENERATES STATISTICS
-                                String sMessage = "File size: " + statistics.getSize();
-
-                                //Write the data to the log file:
-                                try {
-                                    FileWriter fwFFMPEGLogFile;
-                                    fwFFMPEGLogFile = new FileWriter(fFFMPEGLog, true);
-                                    fwFFMPEGLogFile.write("Stat message: " + sMessage + "\n");
-                                    fwFFMPEGLogFile.close();
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-
-
-                            }
-                        });
-
-
-
-
-                        fwLogFile.write("Attempting to move output file to final destination." + "\n");
-                        //Attempt to move the output file:
-                        File fFinalOutputFile = new File(sFinalOutputPath);
-                        if (!fConcatIntermediateOutputFilePath.renameTo(fFinalOutputFile)) {
-                            sMessage = "Exec message: Could not rename concatination output file to final file name: " + fConcatIntermediateOutputFilePath.getAbsolutePath() + " => " + fFinalOutputFile.getAbsolutePath();
-                            fwLogFile.write(sMessage + "\n");
-                        } else {
-                            fwLogFile.write("Success." + "\n");
-                        }
-
                     }
-
                 }
 
-                fwLogFile.close();
-                return Result.success();
-            //}  //End if bDownloadsComplete.
+            }
+
+            fwLogFile.close();
+            return Result.success();
+
         } catch (Exception e){
             sMessage = e.getMessage();
             if(sMessage == null){

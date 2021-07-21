@@ -20,7 +20,12 @@ android {
         }
     }
 
+    compileOptions {
+        targetCompatibility JavaVersion.VERSION_1_8 //Required for ExoPlayer.
+    }
 }
+
+
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
@@ -56,6 +61,10 @@ dependencies {
     //WorkManager, for background tasks such as internet file download:
     implementation "androidx.work:work-runtime:2.7.0-alpha02"
 
-    //FFMPEG, for video concatenation:
+    //FFMPEG, for video concatenation:javjava -v
+
     implementation 'com.arthenica:ffmpeg-kit-full:4.4.LTS'
+
+    //ExoPlayer, for playing local m3u8 playlists:
+    implementation 'com.google.android.exoplayer:exoplayer:2.14.1'
 }
