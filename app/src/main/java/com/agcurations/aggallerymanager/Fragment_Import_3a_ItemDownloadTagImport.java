@@ -125,7 +125,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
 
     private void RefreshExistingTagsListView(){
         //Populate the tag listView:
-        if(getView() == null){
+        if(getView() == null || getActivity() == null){
             return;
         }
         final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
@@ -133,7 +133,9 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsTags = new ArrayList<>();
         for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
-            alsTags.add(entry.getValue().sTagText);
+            if(!entry.getValue().bIsDeleted) {
+                alsTags.add(entry.getValue().sTagText);
+            }
         }
 
         String[] sTemp = new String[alsTags.size()];
@@ -183,10 +185,12 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
             for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
-                String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
-                if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
-                    bTagFound = true;
-                    break;
+                if(!TagEntry.getValue().bIsDeleted) {
+                    String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+                    if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
+                        bTagFound = true;
+                        break;
+                    }
                 }
             }
             if(!bTagFound){

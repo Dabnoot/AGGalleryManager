@@ -98,6 +98,15 @@ public class Service_Main extends IntentService {
                 }
             }
 
+            File[] files = globalClass.gfAppFolder.listFiles();
+            for(File f: files){
+                if(f.isFile()){
+                    if(f.getName().contains("9999")){
+                        f.delete();
+                    }
+                }
+            }
+
             //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
             //  This can occur if Android closed the application, but saves the last Activity and the user returns.
             //  We want to record the log location so that data can be written to it.

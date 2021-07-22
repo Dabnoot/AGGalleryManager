@@ -10,6 +10,7 @@ import android.content.Context;
 import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.nfc.Tag;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -734,20 +735,16 @@ public class GlobalClass extends Application {
         return "TagID" +
                 "\t" + "TagText" +
                 "\t" + "TagDescription" +
+                "\t" + "Deleted" +
                 "\t" + "Version:" + giTagFileVersion;
     }
 
     public static ItemClass_Tag ConvertFileLineToTagItem(String[] sRecord){
         //Designed for interpretting a line as read from a tags file.
         ItemClass_Tag ict;
-        if(sRecord.length >= 2) {
-            ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
-        } else {
-            ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), "");
-        }
-        if(sRecord.length >2) {
-            ict.sTagDescription = JumbleStorageText(sRecord[2]);
-        }
+        ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
+        ict.sTagDescription = JumbleStorageText(sRecord[2]);
+        ict.bIsDeleted = Boolean.parseBoolean(JumbleStorageText(sRecord[3]));
         return ict;
     }
 
@@ -938,7 +935,8 @@ public class GlobalClass extends Application {
         String sTagRecord =
                 JumbleStorageText(ict.iTagID.toString()) + "\t" +
                 JumbleStorageText(ict.sTagText) + "\t" +
-                JumbleStorageText(ict.sTagDescription);
+                JumbleStorageText(ict.sTagDescription) + "\t" +
+                JumbleStorageText(Boolean.toString(ict.bIsDeleted));
         return sTagRecord;
     }
 
@@ -1025,7 +1023,46 @@ public class GlobalClass extends Application {
         return false;
     }
 
+    public void AddTagField(int iMediaCategory){
+        //Used during development.
 
+        File fTagsFile = new File(gfAppFolder + File.separator
+                + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat");
+
+
+        TreeMap<String, ItemClass_Tag> tmTagsInUse = new TreeMap<>();
+
+        TreeMap<Integer, String> tmTagsSortedByID = new TreeMap<>();
+
+        for (Map.Entry<String, ItemClass_Tag> TagEntry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            tmTagsSortedByID.put(TagEntry.getValue().iTagID, TagEntry.getValue().sTagText);
+        }
+
+        try {
+            FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
+
+            //Write the header record:
+            fwTagsFile.write(getTagFileHeader());
+            fwTagsFile.write("\n");
+
+            for (Map.Entry<Integer, String> TagEntry: tmTagsSortedByID.entrySet()) {
+                String sTagRecord =
+                        JumbleStorageText(TagEntry.getKey()) + "\t" +
+                                JumbleStorageText(TagEntry.getValue()) + "\t" +
+                                "" + "\t" +
+                                JumbleStorageText("false");
+                fwTagsFile.write(sTagRecord + "\n");
+            }
+
+            //Close the tags file:
+            fwTagsFile.flush();
+            fwTagsFile.close();
+
+        } catch (IOException e) {
+            Toast.makeText(this, "Trouble writing file at\n" + fTagsFile.getAbsolutePath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+
+    }
 
     public ArrayList<String> getTagTextsFromIDs(ArrayList<Integer> ali, int iMediaCategory){
         ArrayList<String> als = new ArrayList<>();
