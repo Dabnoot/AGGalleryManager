@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -85,6 +86,15 @@ public class Service_Main extends IntentService {
             if(!globalClass.gfLogsFolder.exists()){
                 if(!globalClass.gfLogsFolder.mkdir()){
                     //todo: notify user that the logs folder could not be found and/or could not be created.
+                }
+            }
+
+            //Create Backup folder if it does not exist:
+            String sBackupFolderPath = globalClass.gfAppFolder + File.separator + "Backup";
+            File fBackupFolderPath = new File(sBackupFolderPath);
+            if(!fBackupFolderPath.exists()){
+                if(!fBackupFolderPath.mkdir()){
+                    //todo: notify user that the Backup folder could not be found and/or could not be created.
                 }
             }
 
@@ -214,6 +224,7 @@ public class Service_Main extends IntentService {
                 /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
                         + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");*/
                 File fBackup = new File(globalClass.gfAppFolder + File.separator
+                        + "Backup" + File.separator
                         + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents_" + sDateTimeStamp + ".dat");
 
                 FileWriter fwNewCatalogContentsFile = new FileWriter(fBackup, false);
@@ -252,6 +263,7 @@ public class Service_Main extends IntentService {
                 /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
                         + File.separator + "Tags_" + sDateTimeStamp + ".dat");*/
                 File fBackup = new File(globalClass.gfAppFolder + File.separator
+                        + "Backup" + File.separator
                         + GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat");
                 FileWriter fwNewTagsFile = new FileWriter(fBackup, false);
 
