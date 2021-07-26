@@ -85,7 +85,7 @@ public class Service_Main extends IntentService {
             globalClass.gfLogsFolder = new File(sLogsFolderPath);
             if(!globalClass.gfLogsFolder.exists()){
                 if(!globalClass.gfLogsFolder.mkdir()){
-                    //todo: notify user that the logs folder could not be found and/or could not be created.
+                    problemNotificationConfig("Could not create logs folder.");
                 }
             }
 
@@ -94,18 +94,20 @@ public class Service_Main extends IntentService {
             File fBackupFolderPath = new File(sBackupFolderPath);
             if(!fBackupFolderPath.exists()){
                 if(!fBackupFolderPath.mkdir()){
-                    //todo: notify user that the Backup folder could not be found and/or could not be created.
+                    problemNotificationConfig("Could not create backup folder.");
                 }
             }
 
-            File[] files = globalClass.gfAppFolder.listFiles();
-            for(File f: files){
-                if(f.isFile()){
-                    if(f.getName().contains("9999")){
-                        f.delete();
+            /*File[] files = globalClass.gfAppFolder.listFiles();
+            if(files != null) {
+                for (File f : files) {
+                    if (f.isFile()) {
+                        if (f.getName().contains("9999")) {
+                            f.delete();
+                        }
                     }
                 }
-            }
+            }*/
 
             //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
             //  This can occur if Android closed the application, but saves the last Activity and the user returns.
@@ -203,7 +205,6 @@ public class Service_Main extends IntentService {
 
         globalClass.ExecuteDownloadManagerPostProcessing();
 
-        //globalClass.CatalogDataFile_AddNewField(); //Call when a new field is added.
 
     }
 
@@ -229,7 +230,7 @@ public class Service_Main extends IntentService {
 
             try {
                 //Write the catalog file:
-                String sDateTimeStamp = globalClass.GetTimeStampFileSafe();
+                String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
                         + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");*/
                 File fBackup = new File(globalClass.gfAppFolder + File.separator
@@ -268,7 +269,7 @@ public class Service_Main extends IntentService {
 
             try {
                 //Write the tag file:
-                String sDateTimeStamp = globalClass.GetTimeStampFileSafe();
+                String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
                         + File.separator + "Tags_" + sDateTimeStamp + ".dat");*/
                 File fBackup = new File(globalClass.gfAppFolder + File.separator
@@ -312,6 +313,7 @@ public class Service_Main extends IntentService {
         if(!file.exists()){
             if(!file.mkdir()){
                 problemNotificationConfig("Could not create item at " + file.getAbsolutePath());
+
             }
         }
     }
@@ -350,7 +352,6 @@ public class Service_Main extends IntentService {
 
                         } catch (Exception e) {
                             problemNotificationConfig("Problem during Catalog Contents File write:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-
                         } finally {
                             try {
                                 if (fwCatalogContentsFile != null) {
@@ -415,10 +416,9 @@ public class Service_Main extends IntentService {
 
 
     void problemNotificationConfig(String sMessage){
-        Intent broadcastIntent_Notification = new Intent();
-        broadcastIntent_Notification.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Notification.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Notification);
+        GlobalClass.problemNotificationConfig(sMessage,
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE,
+                getApplicationContext());
     }
 
 

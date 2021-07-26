@@ -133,9 +133,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsTags = new ArrayList<>();
         for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
-            if(!entry.getValue().bIsDeleted) {
-                alsTags.add(entry.getValue().sTagText);
-            }
+            alsTags.add(entry.getValue().sTagText);
         }
 
         String[] sTemp = new String[alsTags.size()];
@@ -184,13 +182,11 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         for(String sTag: alsProspectiveUnidentifiedTags){
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
-            for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
-                if(!TagEntry.getValue().bIsDeleted) {
-                    String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
-                    if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
-                        bTagFound = true;
-                        break;
-                    }
+        for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
+                String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+                if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
+                    bTagFound = true;
+                    break;
                 }
             }
             if(!bTagFound){

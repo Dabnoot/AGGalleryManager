@@ -81,6 +81,8 @@ public class Service_CatalogViewer extends IntentService {
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
 
+        String sAction = Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE;
+
         //Delete the item record from the CatalogContentsFile:
         boolean bSuccess = true;
         try {
@@ -385,11 +387,11 @@ public class Service_CatalogViewer extends IntentService {
             }
 
             iProgressNumerator++;
-            if(iProgressNumerator % 1 == 0) {
-                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                BroadcastProgress(true, iProgressBarValue,
-                        true, iProgressBarValue + "%");
-            }
+
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            BroadcastProgress(true, iProgressBarValue,
+                    true, iProgressBarValue + "%");
+
         }
 
         //TreeMap presort will auto-sort itself.
@@ -438,12 +440,7 @@ public class Service_CatalogViewer extends IntentService {
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
 
     void problemNotificationConfig(String sMessage){
-        Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
-        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
+        GlobalClass.problemNotificationConfig(sMessage, Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE, getApplicationContext());
     }
 
     public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";

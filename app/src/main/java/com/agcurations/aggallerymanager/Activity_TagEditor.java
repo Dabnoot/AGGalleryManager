@@ -6,14 +6,19 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioButton;
+import android.widget.Toast;
 
 import java.util.Stack;
 
@@ -41,8 +46,7 @@ public class Activity_TagEditor extends AppCompatActivity {
     public static final String EXTRA_BOOL_TAG_RENAMED = "EXTRA_BOOL_TAG_RENAMED";
     public static final String EXTRA_BOOL_TAG_DELETED = "EXTRA_BOOL_TAG_DELETED";
 
-
-//    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
+    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
 
     static Stack<Integer> stackFragmentOrder;
     private static int giStartingFragment;
@@ -86,6 +90,12 @@ public class Activity_TagEditor extends AppCompatActivity {
 
         stackFragmentOrder.push(giStartingFragment);
 
+        //Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter(TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        tagEditorServiceResponseReceiver = new TagEditorServiceResponseReceiver();
+        //registerReceiver(tagEditorServiceResponseReceiver, filter);
+        LocalBroadcastManager.getInstance(this).registerReceiver(tagEditorServiceResponseReceiver,filter);
 
     }
 
@@ -119,7 +129,11 @@ public class Activity_TagEditor extends AppCompatActivity {
         finish();
     }
 
-
+    @Override
+    protected void onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(tagEditorServiceResponseReceiver);
+        super.onDestroy();
+    }
 
     //======================================================
     //======  FRAGMENT NAVIGATION ROUTINES  ================
@@ -193,7 +207,7 @@ public class Activity_TagEditor extends AppCompatActivity {
     }
 
 
-    /*public class TagEditorServiceResponseReceiver extends BroadcastReceiver {
+    public class TagEditorServiceResponseReceiver extends BroadcastReceiver {
         public static final String TAG_EDITOR_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_TAG_EDITOR_SERVICE";
 
         @Override
@@ -206,14 +220,10 @@ public class Activity_TagEditor extends AppCompatActivity {
             if(bError) {
                 String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-            } else {
-                //Perform actions
-                int i = 0;
-
             }
 
         }
-    }*/
+    }
 
     //================================================
     //  Adapters

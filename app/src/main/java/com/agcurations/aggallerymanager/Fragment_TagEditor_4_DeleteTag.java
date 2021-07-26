@@ -208,23 +208,15 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            boolean bError;
-
-            //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_TagEditor.EXTRA_BOOL_PROBLEM,false);
-            if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
-                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-            } else {
-                //Check to see if this is a message indicating that a tag deletion is complete:
-                boolean bTagDeleteComplete = intent.getBooleanExtra(Service_TagEditor.EXTRA_TAG_DELETE_COMPLETE,false);
-                if(bTagDeleteComplete){
-                    RefreshTagListView();
-                    Toast.makeText(context, "Tag deletion complete.", Toast.LENGTH_LONG).show();
-                }
-
+            //Errors are checked for in Activity_TagEditor.
+            //Check to see if this is a message indicating that a tag deletion is complete:
+            boolean bTagDeleteComplete = intent.getBooleanExtra(Service_TagEditor.EXTRA_TAG_DELETE_COMPLETE,false);
+            if(bTagDeleteComplete){
+                RefreshTagListView();
+                Toast.makeText(context, "Tag deletion complete.", Toast.LENGTH_LONG).show();
             }
+
+
 
         }
     }

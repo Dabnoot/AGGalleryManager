@@ -7,6 +7,7 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -34,6 +35,8 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -275,6 +278,17 @@ public class GlobalClass extends Application {
         StringBuilder sFileNameBody = new StringBuilder();
         sFileNameBody.append(sFileName.substring(0,sFileName.lastIndexOf(".")));
         return sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
+    }
+
+    public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
+    public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
+    public static void problemNotificationConfig(String sMessage, String sAction, Context context){
+        Intent broadcastIntent_Problem = new Intent();
+        broadcastIntent_Problem.setAction(sAction);
+        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
+        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+        LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent_Problem);
     }
 
     //=====================================================================================
@@ -735,7 +749,6 @@ public class GlobalClass extends Application {
         return "TagID" +
                 "\t" + "TagText" +
                 "\t" + "TagDescription" +
-                "\t" + "Deleted" +
                 "\t" + "Version:" + giTagFileVersion;
     }
 
@@ -744,7 +757,6 @@ public class GlobalClass extends Application {
         ItemClass_Tag ict;
         ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
         ict.sTagDescription = JumbleStorageText(sRecord[2]);
-        ict.bIsDeleted = Boolean.parseBoolean(JumbleStorageText(sRecord[3]));
         return ict;
     }
 
@@ -888,10 +900,9 @@ public class GlobalClass extends Application {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
             brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
-            sbBuffer.append(brReader.readLine());  //todo: Append header.
+            sbBuffer.append(getTagFileHeader());
             sbBuffer.append("\n");
 
-            String[] sFields;
             String sLine = brReader.readLine();
             while (sLine != null) {
 
@@ -935,8 +946,7 @@ public class GlobalClass extends Application {
         String sTagRecord =
                 JumbleStorageText(ict.iTagID.toString()) + "\t" +
                 JumbleStorageText(ict.sTagText) + "\t" +
-                JumbleStorageText(ict.sTagDescription) + "\t" +
-                JumbleStorageText(Boolean.toString(ict.bIsDeleted));
+                JumbleStorageText(ict.sTagDescription);
         return sTagRecord;
     }
 
@@ -1023,14 +1033,11 @@ public class GlobalClass extends Application {
         return false;
     }
 
-    public void AddTagField(int iMediaCategory){
+    public void ReWriteTagFile(int iMediaCategory){
         //Used during development.
 
         File fTagsFile = new File(gfAppFolder + File.separator
                 + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat");
-
-
-        TreeMap<String, ItemClass_Tag> tmTagsInUse = new TreeMap<>();
 
         TreeMap<Integer, String> tmTagsSortedByID = new TreeMap<>();
 
@@ -1049,8 +1056,7 @@ public class GlobalClass extends Application {
                 String sTagRecord =
                         JumbleStorageText(TagEntry.getKey()) + "\t" +
                                 JumbleStorageText(TagEntry.getValue()) + "\t" +
-                                "" + "\t" +
-                                JumbleStorageText("false");
+                                "";
                 fwTagsFile.write(sTagRecord + "\n");
             }
 
