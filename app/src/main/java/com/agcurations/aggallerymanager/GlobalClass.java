@@ -756,7 +756,9 @@ public class GlobalClass extends Application {
         //Designed for interpretting a line as read from a tags file.
         ItemClass_Tag ict;
         ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
-        ict.sTagDescription = JumbleStorageText(sRecord[2]);
+        if(sRecord.length > 2) {
+            ict.sTagDescription = JumbleStorageText(sRecord[2]);
+        }
         return ict;
     }
 
