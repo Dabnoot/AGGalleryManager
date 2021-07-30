@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -105,9 +106,6 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         //  not to import any new tags associated with this download. Downloads are always single
         //  videos or complete comics, so tags apply to one item.
         //Get the text of the tags and display:
-        /*                            ----Don't display the tags until the default tags thing is removed from Fragment_SelectTags.
-                                        ---- That system selects only the tags which are visible in that list, which poses a problem
-                                        ---- as some tags are hidden, and some tags are in the 'All' category, as in 'not used'.
         if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
             ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags;
@@ -138,7 +136,6 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 }
             }
         }
-        */
 
         //Start the tag selection fragment:
         FragmentTransaction ft = getChildFragmentManager().beginTransaction();
@@ -186,9 +183,9 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     selectedFileListCustomAdapter.applyTagToItems(tiAdded.iTagID);
                     bUpdateAdapter = true;
                 }
-                ItemClass_Tag tiRemoved = Activity_Import.viewModelTags.tiTagItemRemoved.getValue();
-                if(tiRemoved != null){
-                    selectedFileListCustomAdapter.removeTagFromItems(tiRemoved.iTagID);
+                ArrayList<ItemClass_Tag> alictTagsRemoved = Activity_Import.viewModelTags.tiTagItemsRemoved.getValue();
+                if(alictTagsRemoved != null){
+                    selectedFileListCustomAdapter.removeTagsFromItems(alictTagsRemoved);
                     bUpdateAdapter = true;
                 }
                 if(bUpdateAdapter){
@@ -413,10 +410,12 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             }
         }
 
-        public void removeTagFromItems(Integer iTagID){
-            //Remove tag from items if the item has the tag:
-            for(ItemClass_File fm: alFileItemsDisplay){
-                fm.aliProspectiveTags.remove(iTagID);
+        public void removeTagsFromItems(ArrayList<ItemClass_Tag> alict_TagsToRemove){
+            //Remove tags from items if the item has the tag:
+            for(ItemClass_Tag ictTagToRemoveEntry: alict_TagsToRemove) {
+                for (ItemClass_File fm : alFileItemsDisplay) {
+                    fm.aliProspectiveTags.remove(ictTagToRemoveEntry.iTagID);
+                }
             }
         }
 

@@ -29,24 +29,16 @@
         android:layout_alignParentEnd="true"
         style="?android:attr/borderlessButtonStyle"/>
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout_TagListings"
-        android:layout_height="wrap_content"
-        android:layout_width="match_parent"
-        app:tabTextColor="@color/colorGrey1"
-        android:layout_below="@+id/textView_Title">
 
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="USED" />
-
-        <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ALL" />
-
-    </com.google.android.material.tabs.TabLayout>
+    <Button
+        android:id="@+id/button_UncheckTags"
+        android:title="tags_uncheck"
+        android:layout_width="70dp"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="10dp"
+        android:drawableLeft="@drawable/outline_unpublished_white_24"
+        style="?android:attr/borderlessButtonStyle"/>
 
     <ListView
         android:id="@+id/listView_ImportTagSelection"
@@ -54,7 +46,7 @@
         android:layout_height="match_parent"
         android:defaultValue="@array/empty_array"
         android:scrollbarSize="20dp"
-        android:layout_below="@+id/tabLayout_TagListings"
+        android:layout_below="@+id/button_UncheckTags"
         android:layout_above="@+id/button_TagEditor"/>
 
     <ImageView

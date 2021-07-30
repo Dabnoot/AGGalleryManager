@@ -53,10 +53,6 @@ public class Fragment_SelectTags extends Fragment {
 
     ListViewTagsAdapter gListViewTagsAdapter;
 
-    private TreeMap<String, ItemClass_Tag> tmCatalogTagsInUse; //Gather tags in use only once.
-    // This is require for when the user switches between tabs. We will transfer selected tags here
-    //  in addition to globally-used tags so that the user's choices are not wiped out when switching tabs.
-
     TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
 
     private boolean gbCatalogTagsRestrictionsOn;
@@ -176,43 +172,17 @@ public class Fragment_SelectTags extends Fragment {
                     ((Button)view).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
                     Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
                 }
-
-
             }
         });
 
-
-        //Configure the tabLayout to change the ListView:
-        TabLayout tabLayout_TagListings = getView().findViewById(R.id.tabLayout_TagListings);
-        tabLayout_TagListings.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        Button button_UncheckTags = getView().findViewById(R.id.button_UncheckTags);
+        button_UncheckTags.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewModel_fragment_selectTags.iTabLayoutListingSelection = tab.getPosition();
-                initListViewData();
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
+            public void onClick(View view) {
+                gListViewTagsAdapter.uncheckAll();
             }
         });
 
-
-        //Get tags that are in-use, for popuplating tab 0 later:
-        tmCatalogTagsInUse = globalClass.GetCatalogTagsInUse(viewModel_fragment_selectTags.iMediaCategory);
-
-        //If there are no tags in use, select tab 1 (the second tab, zero-based):
-        if(tmCatalogTagsInUse.size() == 0){
-            TabLayout.Tab tab = tabLayout_TagListings.getTabAt(1);
-            if(tab != null) {
-                tab.select();
-            }
-        }
 
         //Configure the button to start the tag editor:
         if (getView() == null) {
@@ -301,29 +271,6 @@ public class Fragment_SelectTags extends Fragment {
         viewModel_fragment_selectTags.alTagsAll.clear();
 
         TreeMap<String, ItemClass_Tag> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
-
-        if(viewModel_fragment_selectTags.iTabLayoutListingSelection == 0) {
-            //Show only tags which are in-use.
-            tmTagPool = tmCatalogTagsInUse;
-            //If this fragment is running as part of the Import and Preview activities,
-            //  bring in tags that have been selected by the user for other items. The case may be that
-            //  the user has selected a tag that is not already in use in the catalog, so it would not
-            //  be picked up in tmCatalogTagsInUse.
-            if(tmImportSessionTagsInUse != null) {
-                for (Map.Entry<String, ItemClass_Tag> entry : tmImportSessionTagsInUse.entrySet()) {
-                    tmTagPool.put(entry.getKey(), entry.getValue()); //TreeMap will not allow duplicate keys, so no issue here.
-                }
-            }
-            if(galNewTags != null) {
-                //Add any newly-created tags to the list. Tags that were added by the user JUST NOW
-                // by clicking the TagEditor button:
-                for (ItemClass_Tag ictNewTag : galNewTags) {
-                    tmTagPool.put(ictNewTag.sTagText, ictNewTag); //TreeMap will not allow duplicate keys, so no issue here.
-                }
-            }
-
-
-        }
 
         //Go through the tags treeMap and put the ListView together:
         for (Map.Entry<String, ItemClass_Tag> tmEntryTagReferenceItem : tmTagPool.entrySet()) {
@@ -442,18 +389,8 @@ public class Fragment_SelectTags extends Fragment {
                                 viewModel_fragment_selectTags.altiTagsSelected.setValue(altiUpdatedExistingSelectedTags);
                             }
 
-                            //Update tags gathered from tags in use by other catalog items:
-                            TreeMap<String, ItemClass_Tag> tmNewCatalogTagsInUse = new TreeMap<>();
-                            for (Map.Entry<String, ItemClass_Tag> entry : tmCatalogTagsInUse.entrySet()) {
-                                if(globalClass.TagIDExists(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory)){
-                                    entry.getValue().sTagText = globalClass.getTagTextFromID(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory);
-                                    tmNewCatalogTagsInUse.put(entry.getKey(), entry.getValue());
-                                }
-                            }
-                            tmCatalogTagsInUse = tmNewCatalogTagsInUse;
 
-                            //Update tags copied into the in-use column which are part of the import session
-                            //  but not necessarily in use by catalog items:
+                            //Update tags which are part of the import session:
                             TreeMap<String, ItemClass_Tag> tmNewImportSessionTagsInUse = new TreeMap<>();
                             if(tmImportSessionTagsInUse != null) {
                                 for (Map.Entry<String, ItemClass_Tag> entry : tmImportSessionTagsInUse.entrySet()) {
@@ -476,6 +413,20 @@ public class Fragment_SelectTags extends Fragment {
         public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems, int iPreselectedCount) {
             super(context, 0, tagItems);
             iOrderIterator = iPreselectedCount;
+        }
+
+        public void uncheckAll(){
+            for(int i = 0; i < getCount(); i++){
+                ItemClass_Tag tagItem = getItem(i);
+                tagItem.bIsChecked = false;
+            }
+            if(galiPreselectedTags != null){
+                galiPreselectedTags.clear();
+            }
+            ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+            viewModel_fragment_selectTags.setSelectedTags(alTagItems);
+
+            notifyDataSetChanged();
         }
 
         @Override
@@ -520,11 +471,6 @@ public class Fragment_SelectTags extends Fragment {
                             galiPreselectedTags = new ArrayList<>();
                         }
                         galiPreselectedTags.add(tagItem.iTagID);
-                        //The user may be in the ALL tags section, selecting a tag that is not in the IN USE tags section.
-                        //  If this is the case, and the user switches over to the IN USE section, the program will not have a "preselected tag"
-                        //  that matches the IN USE list. Add this tag to the IN USE section. If it is already there, it will automatically fail to add without error
-                        //  by the nature of the TreeMap class:
-                        tmCatalogTagsInUse.put(tagItem.sTagText, new ItemClass_Tag(tagItem.iTagID, tagItem.sTagText));
                     } else {
                         //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
                         tagItem.iSelectionOrder = 0; //Remove the index showing the order in which this item was selected.

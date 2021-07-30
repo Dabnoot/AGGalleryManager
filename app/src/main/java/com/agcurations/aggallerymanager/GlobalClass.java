@@ -969,44 +969,6 @@ public class GlobalClass extends Application {
         return sTagTexts;
     }
 
-    public TreeMap<String, ItemClass_Tag> GetCatalogTagsInUse(Integer iMediaCategory){
-
-        SortedSet<String> ssTemp = new TreeSet<>();//todo: refactor.
-        for(Map.Entry<String, ItemClass_CatalogItem>
-                CatalogEntry : gtmCatalogLists.get(iMediaCategory).entrySet()) {
-            //Sort the strings:
-            String[] sTempArray = CatalogEntry.getValue().sTags.split(",");
-            for (String s : sTempArray) {
-                if(s.length() > 0) { //Zero-length string will cause problem for parseInt used later.
-                    ssTemp.add(s.trim()); //This will not allow the addition of duplicate tags.
-                }
-            }
-        }
-
-        TreeMap<String, ItemClass_Tag> tmTagsInUse = new TreeMap<>();
-        if(ssTemp.size() > 0) {
-            //Format the strings:
-            ArrayList<Integer> aliTagsInUse = new ArrayList<>();
-            Iterator<String> isIterator = ssTemp.iterator();
-            aliTagsInUse.add(Integer.parseInt(isIterator.next()));
-            while (isIterator.hasNext()) {
-                aliTagsInUse.add(Integer.parseInt(isIterator.next()));
-            }
-
-            for (Integer iTagID : aliTagsInUse) {
-                String sTagText = getTagTextFromID(iTagID, iMediaCategory);
-                ItemClass_Tag ict = new ItemClass_Tag(iTagID, sTagText);
-                ItemClass_Tag ictTemp = gtmCatalogTagReferenceLists.get(iMediaCategory).get(ict.sTagText);
-                if (ictTemp != null) {
-                    ict.bIsRestricted = ictTemp.bIsRestricted;
-                }
-                tmTagsInUse.put(sTagText, ict);
-            }
-        }
-
-        return tmTagsInUse;
-    }
-
     public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){
         String sTagText = "[Tag ID " + iTagID + " not found]";
 
