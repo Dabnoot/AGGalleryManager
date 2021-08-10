@@ -495,7 +495,9 @@ public class Service_Import extends IntentService {
                                     sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
                                     sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
                                     String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                                    lDurationInMilliseconds = Long.parseLong(time);
+                                    if(time != null) {
+                                        lDurationInMilliseconds = Long.parseLong(time);
+                                    }
                                 } else { //if it's not a video file, check to see if it's a gif:
                                     if (fileExtension.equals(".gif")) {
                                         //Get the duration of the gif image:
@@ -3692,7 +3694,7 @@ public class Service_Import extends IntentService {
         }
 
         if(sIntentActionFilter.equals(
-                Fragment_Import_5a_ComicWebConfirmation.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
+                Fragment_Import_2b_SelectSingleWebComic.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
             globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
         }
 
