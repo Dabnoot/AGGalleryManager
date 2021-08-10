@@ -828,6 +828,7 @@ public class Service_Import extends IntentService {
                 } //End if "there are items in the folder that the user selected.
 
             }catch (Exception e){
+                //todo: This does not appear to make it to the import activity:
                 problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                 return;
             }
