@@ -23,7 +23,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 
 
-public class Fragment_Import_5a_ComicWebConfirmation extends Fragment {
+public class Fragment_Import_2b_SelectSingleWebComic extends Fragment {
 
     ViewModel_ImportActivity viewModelImportActivity;
 
@@ -33,12 +33,12 @@ public class Fragment_Import_5a_ComicWebConfirmation extends Fragment {
 
     GlobalClass globalClass;
 
-    public Fragment_Import_5a_ComicWebConfirmation() {
+    public Fragment_Import_2b_SelectSingleWebComic() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_5a_ComicWebConfirmation newInstance() {
-        return new Fragment_Import_5a_ComicWebConfirmation();
+    public static Fragment_Import_2b_SelectSingleWebComic newInstance() {
+        return new Fragment_Import_2b_SelectSingleWebComic();
     }
 
     @Override
@@ -75,7 +75,7 @@ public class Fragment_Import_5a_ComicWebConfirmation extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_5a_web_confirmation, container, false);
+        return inflater.inflate(R.layout.fragment_import_2b_select_single_web_comic, container, false);
     }
 
 

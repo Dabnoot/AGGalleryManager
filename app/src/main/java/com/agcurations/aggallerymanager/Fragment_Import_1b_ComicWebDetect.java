@@ -61,11 +61,7 @@ public class Fragment_Import_1b_ComicWebDetect extends Fragment {
                 ClipData.Item clipData_Item = clipData.getItemAt(0);
                 if (clipData_Item != null) {
                     String sClipString = clipData_Item.getText().toString();
-                    if (sClipString != null) {
-                        button_PasteAddress.setEnabled(true);
-                    } else {
-                        button_PasteAddress.setEnabled(false);
-                    }
+                    button_PasteAddress.setEnabled(sClipString != null);
                 }
             } else {
                 button_PasteAddress.setEnabled(false);

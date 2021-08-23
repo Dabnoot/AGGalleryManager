@@ -6,7 +6,7 @@ import java.util.Date;
 
 public class ItemClass_File implements Serializable {
 
-    public final int iTypeFileFolderURL; //folder or file
+    public final int iTypeFileFolderURL; //folder, file, url, etc.
     public final static int TYPE_FOLDER = 1;
     public final static int TYPE_FILE = 2;
     public final static int TYPE_URL = 3;

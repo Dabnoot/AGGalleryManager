@@ -72,7 +72,7 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 9;
     public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 10;
     public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 11;
-    public static final int FRAGMENT_IMPORT_5A_WEB_CONFIRMATION = 12;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 12;
     public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 13;
 
     public static final int FRAGMENT_COUNT = 14;
@@ -184,7 +184,7 @@ public class Activity_Import extends AppCompatActivity {
         } else if(globalClass.gbImportComicWebAnalysisRunning && !globalClass.gbImportComicWebAnalysisFinished){
             //If a comic web analysis operation has been started and is not finished, go to the appropriate
             // fragment.
-            giStartingFragment = FRAGMENT_IMPORT_5A_WEB_CONFIRMATION;
+            giStartingFragment = FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC;
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.push(giStartingFragment);
 
@@ -454,7 +454,7 @@ public class Activity_Import extends AppCompatActivity {
 
             globalClass.gbImportComicWebAnalysisStarted = true;
             globalClass.gbImportComicWebAnalysisFinished = false;
-            giStartingFragment = FRAGMENT_IMPORT_5A_WEB_CONFIRMATION; //Don't allow user to go back.
+            giStartingFragment = FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC; //Don't allow user to go back.
             ViewPager2_Import.setCurrentItem(giStartingFragment, false);
             stackFragmentOrder.clear();
             stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
@@ -465,10 +465,12 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
-            //If we are importing a video from the web, allow the user to confirm import of tags that
-            //  don't already exist in the list of tags.
+        if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+        || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
+            //If we are importing a video or comic from the web, allow the user to confirm import
+            // of tags that don't already exist in the list of tags.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
         } else {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
@@ -1593,6 +1595,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM:
                     return new Fragment_Import_2a_SelectDetectedWebVideo();
+                case FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC:
+                    return new Fragment_Import_2b_SelectSingleWebComic();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
                     return new Fragment_Import_3_SelectTags();
                 case FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT:
@@ -1601,8 +1605,7 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_4_CopyOrMoveFiles();
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                     return new Fragment_Import_5_Confirmation();
-                case FRAGMENT_IMPORT_5A_WEB_CONFIRMATION:
-                    return new Fragment_Import_5a_ComicWebConfirmation();
+
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
                 default:
