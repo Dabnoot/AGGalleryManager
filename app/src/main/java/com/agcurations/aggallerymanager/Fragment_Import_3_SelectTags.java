@@ -23,7 +23,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -108,7 +107,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         //Get the text of the tags and display:
         if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
-            ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags;
+            ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags;
             ArrayList<ItemClass_Tag> alict = new ArrayList<>();
             StringBuilder sb = new StringBuilder();
             if (aliPreSelectedTags.size() > 0) {
@@ -146,8 +145,8 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         // the video that also exist in the tags catalog:
         if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
-            ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags;
-            ArrayList<String> alsIgnoredNewTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).alsDownloadUnidentifiedTags;
+            ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags;
+            ArrayList<String> alsIgnoredNewTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).alsUnidentifiedTags;
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliPreSelectedTags);
             }
         fst.setArguments(args);

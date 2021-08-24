@@ -376,14 +376,11 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ComicSourceSelected(View v){
-        RadioButton radioButton_ComicSourceNHDownloader = findViewById(R.id.radioButton_ComicSourceNHDownloader);
         RadioButton radioButton_ComicSourceFolder = findViewById(R.id.radioButton_ComicSourceFolder);
 
         int iNewComicSource;
 
-        if (radioButton_ComicSourceNHDownloader.isChecked()){
-            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER;
-        } else if (radioButton_ComicSourceFolder.isChecked()){
+        if (radioButton_ComicSourceFolder.isChecked()){
             iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
         } else {
             iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;

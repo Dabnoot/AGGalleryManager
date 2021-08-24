@@ -163,7 +163,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         //Grab all prospective unidentified tags from all to-be-imported file items:
         ArrayList<String> alsProspectiveUnidentifiedTags = new ArrayList<>();
         for(ItemClass_File icf: viewModelImportActivity.alfiConfirmedFileImports) {
-            alsProspectiveUnidentifiedTags.addAll(icf.alsDownloadUnidentifiedTags);
+            alsProspectiveUnidentifiedTags.addAll(icf.alsUnidentifiedTags);
         }
         //Weed-out any duplicates:
         TreeMap<String, String> tmProspectiveUTsNoDuplicates = new TreeMap<>();
@@ -357,7 +357,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
                 } else {
                     for(ItemClass_Tag ict: alictTags){
                         //Add the newly-added tags' tagIDs to the download-recognized tags:
-                        viewModelImportActivity.alfiConfirmedFileImports.get(0).aliDownloadRecognizedTags.add(ict.iTagID);
+                        viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags.add(ict.iTagID);
                         viewModelImportActivity.alfiConfirmedFileImports.get(0).aliProspectiveTags.add(ict.iTagID);
                     }
 

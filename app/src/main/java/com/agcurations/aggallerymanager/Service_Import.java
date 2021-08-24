@@ -18,6 +18,10 @@ import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -40,6 +44,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -455,6 +462,14 @@ public class Service_Import extends IntentService {
                         cal.setTimeInMillis(lLastModified);
                         Date dateLastModified = cal.getTime();
 
+                        //Data for comic from xml if available:
+                        String sTitle = "";
+                        String sURL = "";
+                        String sPageCount = "";
+                        String sArtist = "";
+                        String sParody = "";
+                        ArrayList<Integer> aliRecognizedTags = new ArrayList<>();
+                        ArrayList<String> alsUnidentifiedTags = new ArrayList<>();
 
                         if (!isDirectory) {
 
@@ -557,7 +572,7 @@ public class Service_Import extends IntentService {
                             //File item IS a directory...
                             if((iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
                                     (iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER)){
-                                //If the user is importing comics by the folder, not necessarily NHComics...
+                                //If the user is getting directory contents for importing comics by the folder...
 
 
 
@@ -605,17 +620,19 @@ public class Service_Import extends IntentService {
                                         //Analyze the file item.
 
                                         //If this file is a folder, skip to the next item:
+                                        final String sComicPageFilename = cComicPages.getString(1);
                                         final String sComicPageMimeType = cComicPages.getString(2);
                                         boolean bComicPageIsDirectory;
                                         bComicPageIsDirectory = (sComicPageMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
                                         int iComicPageItemFileType = (bComicPageIsDirectory) ? ItemClass_File.TYPE_FOLDER : ItemClass_File.TYPE_FILE;
-                                        if((iComicPageItemFileType != ItemClass_File.TYPE_FILE) || !sComicPageMimeType.contains("image")){
+                                        if((iComicPageItemFileType != ItemClass_File.TYPE_FILE) ||
+                                                (!sComicPageMimeType.contains("image") && !sComicPageFilename.equals("ComicData.xml"))){
                                             continue;
                                         }
 
 
                                         //Build a ItemClass_File item for this file:
-                                        final String sComicPageFilename = cComicPages.getString(1);
+
                                         ItemClass_File icf_ComicPage = new ItemClass_File(iComicPageItemFileType, sComicPageFilename);
 
                                         //Get a Uri for this individual document:
@@ -642,22 +659,71 @@ public class Service_Import extends IntentService {
                                         icf_ComicPage.lSizeBytes = lFileSize;
 
                                         //Get the image dimensions:
-                                        try {
-                                            InputStream input = this.getContentResolver().openInputStream(uriComicPageUri);
-                                            if (input != null) {
-                                                BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
-                                                onlyBoundsOptions.inJustDecodeBounds = true;
-                                                BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
-                                                input.close();
-                                                sWidth = "" + onlyBoundsOptions.outWidth;
-                                                sHeight = "" + onlyBoundsOptions.outHeight;
-                                            }
+                                        if(icf_ComicPage.sMimeType.contains("image")) {
+                                            try {
+                                                InputStream input = this.getContentResolver().openInputStream(uriComicPageUri);
+                                                if (input != null) {
+                                                    BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                                    onlyBoundsOptions.inJustDecodeBounds = true;
+                                                    BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                                    input.close();
+                                                    sWidth = "" + onlyBoundsOptions.outWidth;
+                                                    sHeight = "" + onlyBoundsOptions.outHeight;
+                                                }
 
-                                        } catch (Exception e) {
-                                            continue; //Skip the rest of this loop.
-                                        }
-                                        icf_ComicPage.sWidth = sWidth;
-                                        icf_ComicPage.sHeight = sHeight;
+                                            } catch (Exception e) {
+                                                continue; //Skip the rest of this loop.
+                                            }
+                                            icf_ComicPage.sWidth = sWidth;
+                                            icf_ComicPage.sHeight = sHeight;
+                                        } else {
+                                            //Check to see if this is an xml file.
+                                            //If this is an xml file, it likely contains comic details.
+
+                                            if(sComicPageFilename.equals("ComicData.xml")) {
+                                                //Get Document Builder
+                                                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                                                DocumentBuilder builder = factory.newDocumentBuilder();
+                                                //Build Document
+                                                InputStream inputStream = contentResolver.openInputStream(uriComicPageUri);
+                                                Document docComicXML = builder.parse(inputStream);
+                                                inputStream.close();
+
+                                                sTitle = getXMLNodeText(docComicXML, "ComicTitle");
+                                                sURL = getXMLNodeText(docComicXML, "URL");
+                                                sPageCount = getXMLNodeText(docComicXML, "PageCount");
+                                                sArtist = getXMLNodeText(docComicXML, "Artist");
+                                                sParody = getXMLNodeText(docComicXML, "Parody");
+
+                                                NodeList nlTemp;
+                                                ArrayList<String> alsTags = new ArrayList<>();
+                                                nlTemp = docComicXML.getElementsByTagName("Tag");
+                                                for(int i = 0; i < nlTemp.getLength(); i++) {
+                                                    alsTags.add(nlTemp.item(i).getTextContent());
+                                                }
+                                                //Pre-process tags. Identify tags that already exist, and create a list of new tags for
+                                                //  the user to approve - don't automatically add new tags to the system (I've encountered
+                                                //  garbage tags, tags that already exist in another form, and tags that the user might
+                                                //  not want to add.
+                                                for(String sTag: alsTags){
+                                                    String sIncomingTagCleaned = sTag.toLowerCase().trim();
+                                                    boolean bTagFound = false;
+                                                    for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+                                                        String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+                                                        if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
+                                                            bTagFound = true;
+                                                            aliRecognizedTags.add(TagEntry.getValue().iTagID);
+                                                            break;
+                                                        }
+                                                    }
+                                                    if(!bTagFound){
+                                                        alsUnidentifiedTags.add(sTag.trim());
+                                                    }
+                                                }
+
+                                            } //End if this is an xml file containing comic data.
+
+                                        } //End if this is/not an image file.
 
                                         //Set the parent folder Uri for various uses later:
                                         icf_ComicPage.sUriParent = docUri.toString();
@@ -697,6 +763,15 @@ public class Service_Import extends IntentService {
                                     icf_ComicFolderItem.sUri = docUri.toString();
 
                                     icf_ComicFolderItem.dateLastModified = dateLastModified;
+
+                                    //Transfer data acquired from an XML file (no worries if no XML file contained the data):
+                                    icf_ComicFolderItem.sTitle = sTitle;
+                                    icf_ComicFolderItem.sURL = sURL;
+                                    icf_ComicFolderItem.sPageCount = sPageCount;
+                                    icf_ComicFolderItem.sArtist = sArtist;
+                                    icf_ComicFolderItem.sParody = sParody;
+                                    icf_ComicFolderItem.aliRecognizedTags = aliRecognizedTags;
+                                    icf_ComicFolderItem.alsUnidentifiedTags = alsUnidentifiedTags;
 
                                     //All of the comic pages in this directory have been added to an
                                     //  arraylist of file items. Now look for a page numbering pattern:
@@ -849,6 +924,15 @@ public class Service_Import extends IntentService {
                     Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
         }
+    }
+    private String getXMLNodeText(Document docXML, String sNodeTagName){
+        NodeList nlTemp;
+        String sReturnData = "";
+        nlTemp = docXML.getElementsByTagName(sNodeTagName);
+        if (nlTemp.getLength() > 0){
+            sReturnData = nlTemp.item(0).getTextContent();
+        }
+        return sReturnData;
     }
 
     private void handleAction_startActionImportFiles(int iMoveOrCopy, int iMediaCategory) {
@@ -2677,8 +2761,8 @@ public class Service_Import extends IntentService {
 
                             icf.sTitle = sTitle;
                             icf.sURLThumbnail = sURLThumbnail;
-                            icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
-                            icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
+                            icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                            icf.aliRecognizedTags = aliIdentifiedTags; //todo: redundant?
                             icf.aliProspectiveTags = aliIdentifiedTags;
 
                             alicf_VideoDownloadFileItems.add(icf);
@@ -2970,8 +3054,8 @@ public class Service_Import extends IntentService {
                                 icf.ic_M3U8 = icM3U8_entry;
                                 icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;
                                 icf.sURLThumbnail = sURLThumbnail;
-                                icf.alsDownloadUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
-                                icf.aliDownloadRecognizedTags = aliIdentifiedTags; //todo: redundant?
+                                icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
+                                icf.aliRecognizedTags = aliIdentifiedTags; //todo: redundant?
                                 icf.aliProspectiveTags = aliIdentifiedTags;
                                 icf.sTitle = sTitle;
                                 alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
