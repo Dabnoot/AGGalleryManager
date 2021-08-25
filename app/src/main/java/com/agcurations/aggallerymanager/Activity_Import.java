@@ -664,6 +664,21 @@ public class Activity_Import extends AppCompatActivity {
                     }
                 }
             }
+            ArrayList<String> alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
+            if(alsUnidentifiedTags.size() > 0) {
+                sbTags.append("\n[Includes tags not in dictionary: ");
+                boolean bFirstOne = true;
+                for(String sUnidentifiedTag: alsUnidentifiedTags){
+                    if(bFirstOne){
+                        sbTags.append(sUnidentifiedTag);
+                        bFirstOne = false;
+                    } else {
+                        String sTemp = ", " + sUnidentifiedTag;
+                        sbTags.append(sTemp);
+                    }
+                }
+                sbTags.append("]");
+            }
             tvLine3.setText(sbTags.toString());
 
             //set the image type if folder or file
