@@ -142,28 +142,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             giFileItemIndex = b.getInt(Activity_Import.PREVIEW_FILE_ITEMS_POSITION, 0);
             giMediaCategory = b.getInt(Activity_Import.MEDIA_CATEGORY, 0);
 
-            HashMap<String , ItemClass_Tag> hashMapTemp = (HashMap<String , ItemClass_Tag>) b.getSerializable(Activity_Import.IMPORT_SESSION_TAGS_IN_USE);
-            TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
-            if(hashMapTemp != null){
-                tmImportSessionTagsInUse = new TreeMap<>(hashMapTemp);
-            }
-
             //Start the tag selection fragment:
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             fragment_selectTags = new Fragment_SelectTags();
             Bundle args = new Bundle();
             args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, giMediaCategory);
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItems[giFileItemIndex].aliProspectiveTags);
-            if(tmImportSessionTagsInUse != null){
-                if(tmImportSessionTagsInUse.size() > 0){
-                    //During import preview of other items, the user may have selected tags that
-                    // have not yet been used in the catalog. These new items will not show up in
-                    //  Fragment_SelectTags IN-USE tag tab, as that function only queries what is
-                    //  already in the catalog. Send the list of tags that have been selected by the
-                    //  user for other selected items to the tags fragment:
-                    args.putSerializable(Fragment_SelectTags.IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
-                }
-            }
+
             fragment_selectTags.setArguments(args);
             ft.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
             ft.commit();

@@ -27,6 +27,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +36,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.RadioButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,12 +72,13 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 7;
     public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 8;
     public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 9;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 10;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 11;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 12;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 13;
+    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 10;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 11;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 12;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 13;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 14;
 
-    public static final int FRAGMENT_COUNT = 14;
+    public static final int FRAGMENT_COUNT = 15;
 
     //=================================================
     //User selection global variables:
@@ -89,7 +92,6 @@ public class Activity_Import extends AppCompatActivity {
     public VideoDownloadListCustomAdapter videoDownloadListCustomAdapter; //For the video download selector.
     public static final String PREVIEW_FILE_ITEMS = "PREVIEW_FILE_ITEMS";
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
-    public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
     public static final String MEDIA_CATEGORY = "MEDIA_CATEGORY";
 
@@ -279,6 +281,7 @@ public class Activity_Import extends AppCompatActivity {
     ActivityResultLauncher<Intent> garlGetTagsForImportItems = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
+                //This ActivityResultLauncher gathers results of tag selection from a preview operation.
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if(result.getResultCode() == RESULT_OK){
@@ -333,6 +336,11 @@ public class Activity_Import extends AppCompatActivity {
                 stackFragmentOrder.push(giStartingFragment);
             }
         }
+    }
+
+    public void buttonClick_ComicTagImportReturn(View v){
+        fileListCustomAdapter.recalcUnidentifiedTags();
+        onBackPressed();
     }
 
     public void buttonNextClick_MediaCategorySelected(View v){
@@ -548,10 +556,18 @@ public class Activity_Import extends AppCompatActivity {
         private boolean bSelectAllSelected = false;
         Context contextFromCaller;
 
+        private final int iHideTagImportButtonHeightDP = 67;
+        private final int iShowTagImportButtonHeightDP = 67 + 50;
+        private int iHideTagImportButtonHeightPixels;
+        private int iShowTagImportButtonHeightPixels;
+
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<ItemClass_File> alfi) {
             super(context, textViewResourceId, alfi);
             contextFromCaller = context;
             alFileItems = new ArrayList<>(alfi);
+
+            iHideTagImportButtonHeightPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iHideTagImportButtonHeightDP, getResources().getDisplayMetrics());
+            iShowTagImportButtonHeightPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iShowTagImportButtonHeightDP, getResources().getDisplayMetrics());
 
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
                 if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
@@ -586,6 +602,8 @@ public class Activity_Import extends AppCompatActivity {
             TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
+            RelativeLayout relativeLayout_AdaptiveButtons = row.findViewById(R.id.relativeLayout_AdaptiveButtons);
+            Button button_TagImport = row.findViewById(R.id.button_TagImport);
 
             tvLine1.setText(alFileItemsDisplay.get(position).sFileOrFolderName);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
@@ -664,20 +682,55 @@ public class Activity_Import extends AppCompatActivity {
                     }
                 }
             }
-            ArrayList<String> alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
-            if(alsUnidentifiedTags.size() > 0) {
-                sbTags.append("\n[Includes tags not in dictionary: ");
-                boolean bFirstOne = true;
-                for(String sUnidentifiedTag: alsUnidentifiedTags){
-                    if(bFirstOne){
-                        sbTags.append(sUnidentifiedTag);
-                        bFirstOne = false;
-                    } else {
-                        String sTemp = ", " + sUnidentifiedTag;
-                        sbTags.append(sTemp);
+
+            //Add unidentified tags to the row if they exist. This happens during import of comic with tags specified in an XML file.
+            if(alFileItemsDisplay.get(position).alsUnidentifiedTags != null) {
+                ArrayList<String> alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
+                //Prepare to check/adjust the view capability of the "Tag Import" button:
+                ViewGroup.LayoutParams params = relativeLayout_AdaptiveButtons.getLayoutParams();
+                if (alsUnidentifiedTags.size() > 0) {
+                    sbTags.append("\n[Tags not in dictionary: ");
+                    boolean bFirstOne = true;
+                    for (String sUnidentifiedTag : alsUnidentifiedTags) {
+                        if (bFirstOne) {
+                            sbTags.append(sUnidentifiedTag);
+                            bFirstOne = false;
+                        } else {
+                            String sTemp = ", " + sUnidentifiedTag;
+                            sbTags.append(sTemp);
+                        }
+                    }
+                    sbTags.append("]");
+
+                    //Show the "Tag Import" button on the row:
+                    params.height = iShowTagImportButtonHeightPixels;
+                    relativeLayout_AdaptiveButtons.setLayoutParams(params);
+
+                    //Set the action for the "Tag Import" button:
+                    button_TagImport.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            //Send the file item to the ComicTagImport fragment:
+                            ArrayList<ItemClass_File> alicf = new ArrayList<>();
+                            alicf.add(alFileItemsDisplay.get(position));
+                            viewModelImportActivity.alfiConfirmedFileImports = alicf;
+
+                            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT, false);
+                            stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+
+
+                        }
+                    });
+
+                } else {
+                    //Make sure the "Tag Import" button is not shown:
+                    if (params.height != iHideTagImportButtonHeightPixels) {
+                        //If it is shown, hide it by shrinking the LinearLayout:
+                        params.height = iHideTagImportButtonHeightPixels;
+                        relativeLayout_AdaptiveButtons.setLayoutParams(params);
                     }
                 }
-                sbTags.append("]");
             }
             tvLine3.setText(sbTags.toString());
 
@@ -848,13 +901,8 @@ public class Activity_Import extends AppCompatActivity {
                 }
             });
 
-            //If the file item is video mimeType, set the preview button visibility to visible:
-            Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
-            boolean bItemIsVideo = alFileItemsDisplay.get(position).sMimeType.startsWith("video")  ||
-                    (alFileItemsDisplay.get(position).sMimeType.equals("application/octet-stream") &&
-                            alFileItemsDisplay.get(position).sExtension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
 
-            //button_MediaPreview.setVisibility(Button.VISIBLE);
+            Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
             button_MediaPreview.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
@@ -868,21 +916,6 @@ public class Activity_Import extends AppCompatActivity {
                             viewModelImportActivity.iImportMediaCategory); //viewModel not intended
                     // to be used between Activities. Therefore, pass media category via bundle in
                     // intent.
-
-                    //Form a list of tags in use by the selected items. There may be a tag that has just been applied
-                    //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
-                    //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
-                    TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
-                    for(ItemClass_File fi: alFileItems){ //Loop through file items in this listView.
-                        if(fi.bIsChecked){               //If the user has selected this fileItem...
-                            for(Integer iTagID: fi.aliProspectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
-                                String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
-                                tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
-                            }
-                        }
-                    }
-                    //Add the treeMap to the bundle to send to the preview:
-                    b.putSerializable(IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
 
                     ItemClass_File[] fileItems;
                     if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
@@ -946,6 +979,12 @@ public class Activity_Import extends AppCompatActivity {
                             for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
                                 icf[i] = entry.getValue();
                                 i++;
+                            }
+                            //Put the tags into the first item in the file array. This is only
+                            // for comics. The item selected by the user is a "folder" item and is not
+                            // transferred to preview, but this is the item holding the tags.
+                            if(icf.length > 0){
+                                icf[0].aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags;
                             }
 
                             icfComicFiles = icf;
@@ -1043,7 +1082,6 @@ public class Activity_Import extends AppCompatActivity {
             boolean bFoundAndUpdated = false;
             //Find the items to apply individualized tags.
             //This routine is not designed to apply the same tags to multiple items.
-
 
             for(ItemClass_File icfIncoming: icfIncomingFIs) {
                 if(icfIncoming.bDataUpdateFlag) {
@@ -1308,6 +1346,62 @@ public class Activity_Import extends AppCompatActivity {
             return bSortOrderIsAscending;
         }
 
+
+        public void recalcUnidentifiedTags(){
+            //For import of comic. If the comic comes with an xml file containing a list of tags,
+            //  some of those tags may not be in the catalog. This function is called if the
+            //  user imports some of those tags. This refreshes the file item listing to show
+            //  tags that are now imported.
+
+            for(ItemClass_File fi: alFileItems){
+
+                //If this item has unidentified tags:
+                if (fi.alsUnidentifiedTags != null) {
+                    if (fi.alsUnidentifiedTags.size() > 0) {
+
+                        //Pre-process tags. Identify tags that already exist, and create a list of new tags for
+                        //  the user to approve - don't automatically add new tags to the system (I've encountered
+                        //  garbage tags, tags that already exist in another form, and tags that the user might
+                        //  not want to add.
+                        for(String sTag: fi.alsUnidentifiedTags){
+                            String sIncomingTagCleaned = sTag.toLowerCase().trim();
+                            boolean bTagFound = false;
+                            for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+                                String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+                                if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
+                                    bTagFound = true;
+                                    fi.aliRecognizedTags.add(TagEntry.getValue().iTagID);
+                                    fi.aliProspectiveTags.add(TagEntry.getValue().iTagID);
+                                    break;
+                                }
+                            }
+                            if(!bTagFound){
+                                fi.alsUnidentifiedTags.add(sTag.trim());
+                            }
+                        }
+
+
+                    }
+                }
+
+                //Transfer the re-processed tags to the display listing:
+                for(ItemClass_File fiDisplayed: alFileItemsDisplay){
+                    if(fi.sFileOrFolderName.contentEquals(fiDisplayed.sFileOrFolderName)){
+                        fiDisplayed.aliProspectiveTags = fi.aliProspectiveTags;
+                        fiDisplayed.alsUnidentifiedTags = fi.alsUnidentifiedTags;
+                        fiDisplayed.aliRecognizedTags = fi.aliRecognizedTags;
+                        break;
+                    }
+                }
+            }
+
+            //Refresh the records shown on the listview:
+            notifyDataSetChanged();
+
+        }
+
+
+
     }
 
     public class VideoDownloadListCustomAdapter extends ArrayAdapter<ItemClass_File> {
@@ -1428,21 +1522,6 @@ public class Activity_Import extends AppCompatActivity {
                             viewModelImportActivity.iImportMediaCategory); //viewModel not intended
                     // to be used between Activities. Therefore, pass media category via bundle in
                     // intent.
-
-                    //Form a list of tags in use by the selected items. There may be a tag that has just been applied
-                    //  that is not currently used by any tags in the catalog. Such a tag would not get picked up by the
-                    //  IN-USE function in globalClass, and get listed in the IN-USE section of the tag selector.
-                    TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = new TreeMap<>();
-                    for(ItemClass_File fi: alFileItems){ //Loop through file items in this listView.
-                        if(fi.bIsChecked){               //If the user has selected this fileItem...
-                            for(Integer iTagID: fi.aliProspectiveTags){  //loop through the prospectiveTags and add them to the non-duplicate TreeMap.
-                                String sTagText = globalClass.getTagTextFromID(iTagID, viewModelImportActivity.iImportMediaCategory);
-                                tmImportSessionTagsInUse.put(sTagText,new ItemClass_Tag(iTagID, sTagText));
-                            }
-                        }
-                    }
-                    //Add the treeMap to the bundle to send to the preview:
-                    b.putSerializable(IMPORT_SESSION_TAGS_IN_USE, tmImportSessionTagsInUse);
 
                     ItemClass_File[] fileItems;
 
@@ -1613,6 +1692,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_3_SelectTags();
                 case FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT:
                     return new Fragment_Import_3a_ItemDownloadTagImport();
+                case FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT:
+                    return new Fragment_Import_3b_ComicTagImport();
                 case FRAGMENT_IMPORT_4_ID_IMPORT_METHOD:
                     return new Fragment_Import_4_CopyOrMoveFiles();
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:

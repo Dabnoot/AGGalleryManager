@@ -47,13 +47,10 @@ public class Fragment_SelectTags extends Fragment {
 
     public final static String MEDIA_CATEGORY = "MEDIA_CATEGORY";
     public final static String PRESELECTED_TAG_ITEMS = "PRESELECTED_TAG_ITEMS";
-    public static final String IMPORT_SESSION_TAGS_IN_USE = "IMPORT_SESSION_TAGS_IN_USE";
 
     private ArrayList<Integer> galiPreselectedTags;
 
     ListViewTagsAdapter gListViewTagsAdapter;
-
-    TreeMap<String, ItemClass_Tag> tmImportSessionTagsInUse = null;
 
     private boolean gbCatalogTagsRestrictionsOn;
 
@@ -86,9 +83,6 @@ public class Fragment_SelectTags extends Fragment {
         } else {
             viewModel_fragment_selectTags.iMediaCategory = args.getInt(MEDIA_CATEGORY, 0);
             galiPreselectedTags = args.getIntegerArrayList(PRESELECTED_TAG_ITEMS);
-
-            tmImportSessionTagsInUse = (TreeMap<String, ItemClass_Tag>) args.getSerializable(IMPORT_SESSION_TAGS_IN_USE);
-
         }
 
         if (getView() == null) {
@@ -389,18 +383,6 @@ public class Fragment_SelectTags extends Fragment {
                                 viewModel_fragment_selectTags.altiTagsSelected.setValue(altiUpdatedExistingSelectedTags);
                             }
 
-
-                            //Update tags which are part of the import session:
-                            TreeMap<String, ItemClass_Tag> tmNewImportSessionTagsInUse = new TreeMap<>();
-                            if(tmImportSessionTagsInUse != null) {
-                                for (Map.Entry<String, ItemClass_Tag> entry : tmImportSessionTagsInUse.entrySet()) {
-                                    if(globalClass.TagIDExists(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory)){
-                                        entry.getValue().sTagText = globalClass.getTagTextFromID(entry.getValue().iTagID, viewModel_fragment_selectTags.iMediaCategory);
-                                        tmNewImportSessionTagsInUse.put(entry.getKey(), entry.getValue());
-                                    }
-                                }
-                            }
-                            tmImportSessionTagsInUse = tmNewImportSessionTagsInUse;
                         }
                     }
                 }

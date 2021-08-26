@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activity_Import"
+    android:orientation="horizontal">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="99">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_above="@id/linearLayout_ButtonBar">
+
+                <TextView
+                    android:id="@+id/textView_Title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:text="Select tags to import"
+                    android:textSize="20sp"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"/>
+
+                <ListView
+                    android:id="@+id/listView_UnidentifiedTags"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_below="@id/textView_Title"
+                    android:layout_alignParentBottom="true"
+                    android:scrollbarSize="20dp"/>
+
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout_ButtonBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true">
+
+                <Button
+                    android:id="@+id/button_Return"
+                    android:layout_width="149dp"
+                    android:layout_height="67dp"
+                    android:layout_marginEnd="20dp"
+                    android:onClick="buttonClick_ComicTagImportReturn"
+                    android:text="Return"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorBlackboardRed" />
+
+                <Button
+                    android:id="@+id/button_ImportTags"
+                    android:layout_width="149dp"
+                    android:layout_height="67dp"
+                    android:layout_marginEnd="20dp"
+                    android:text="Import"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorBlackboardRed"
+                    android:enabled="false" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <ListView
+        android:id="@+id/listView_TagViewer"
+        android:layout_width="200dp"
+        android:layout_height="match_parent"
+        android:scrollbarSize="20dp"
+        android:layout_weight="1"/>
+
+
+</LinearLayout>

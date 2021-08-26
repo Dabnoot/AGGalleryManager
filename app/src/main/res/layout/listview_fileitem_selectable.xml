@@ -31,7 +31,7 @@
         android:orientation="vertical"
         android:layout_gravity="center"
         android:layout_toEndOf="@id/imageView_StorageItemIcon"
-        android:layout_toStartOf="@id/button_MediaPreview"
+        android:layout_toStartOf="@id/relativeLayout_AdaptiveButtons"
         android:layout_centerVertical="true">
 
         <TextView
@@ -60,17 +60,35 @@
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/button_MediaPreview"
+    <RelativeLayout
+        android:id="@+id/relativeLayout_AdaptiveButtons"
         android:layout_width="wrap_content"
         android:layout_height="67dp"
         android:layout_marginStart="20dp"
-        android:text="Preview"
-        android:textSize="16sp"
         android:layout_marginEnd="20dp"
-        android:backgroundTint="@color/colorBlackboardRed"
         android:layout_toStartOf="@id/button_Delete"
-        android:layout_centerVertical="true"/>
+        android:layout_centerVertical="true">
+
+        <Button
+            android:id="@+id/button_MediaPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="67dp"
+            android:text="Preview"
+            android:textSize="16sp"
+            android:backgroundTint="@color/colorBlackboardRed"
+            android:layout_alignStart="@id/button_TagImport"
+            android:layout_alignEnd="@id/button_TagImport"/>
+
+        <Button
+            android:id="@+id/button_TagImport"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:text="Tag Import"
+            android:textSize="16sp"
+            android:backgroundTint="@color/colorBlackboardRed"
+            android:layout_below="@id/button_MediaPreview"/>
+
+    </RelativeLayout>
 
     <Button
         android:id="@+id/button_Delete"

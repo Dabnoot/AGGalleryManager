@@ -781,6 +781,9 @@ public class Service_Import extends IntentService {
                                     boolean bQtyNumBlocksOk = false;
                                     int iNumBlocks = -1;
                                     for(ItemClass_File file: alicf_ComicFiles){
+                                        if(file.sFileOrFolderName.equals("ComicData.xml")){
+                                            continue; //Don't try to find a page number on this file.
+                                        }
                                         if(iNumBlocks == -1){  //If this is the first set of number blocks we are testing, record the count.
                                             iNumBlocks = file.aliNumberBlocks.size();
                                             bQtyNumBlocksOk = true;
@@ -811,6 +814,9 @@ public class Service_Import extends IntentService {
 
                                             boolean bPossibleNumberBlockCandidate = true;
                                             for (ItemClass_File icfComicPage : alicf_ComicFiles) {
+                                                if(icfComicPage.sFileOrFolderName.equals("ComicData.xml")){
+                                                    continue; //Don't try to find a page number on this file.
+                                                }
                                                 //Attempt to get the integer value from this filename using the current number block:
                                                 String sPageID  = icfComicPage.sFileOrFolderName.substring(icfComicPage.aliNumberBlocks.get(iNumberBlock)[0], icfComicPage.aliNumberBlocks.get(iNumberBlock)[1]);
                                                 if(sPageID.length() > 4){
@@ -905,6 +911,8 @@ public class Service_Import extends IntentService {
 
             }catch (Exception e){
                 //todo: This does not appear to make it to the import activity:
+                String sMessage = "Problem during handleAction_GetDirectoryContents: " + e.getMessage();
+                globalClass.gsbImportFolderAnalysisLog.append(sMessage);
                 problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                 return;
             }
