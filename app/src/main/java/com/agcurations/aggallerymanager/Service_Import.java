@@ -771,7 +771,7 @@ public class Service_Import extends IntentService {
                                     icf_ComicFolderItem.sArtist = sArtist;
                                     icf_ComicFolderItem.sParody = sParody;
                                     icf_ComicFolderItem.aliRecognizedTags = aliRecognizedTags;
-                                    icf_ComicFolderItem.aliProspectiveTags = aliRecognizedTags;
+                                    icf_ComicFolderItem.aliProspectiveTags = new ArrayList<>(aliRecognizedTags); //Don't copy the pointer.
                                     icf_ComicFolderItem.alsUnidentifiedTags = alsUnidentifiedTags;
 
                                     //All of the comic pages in this directory have been added to an

@@ -22,6 +22,8 @@ public class ViewModel_ImportActivity extends ViewModel {
     public int iImportMethod;  //Move or copy.
     public ArrayList<ItemClass_File> alfiConfirmedFileImports;
 
+    public ArrayList<String> alsUnidentifiedTags; //Used to import new tags, primarily due to comic xml file.
+
     public String sWebAddress = "";
     public String sLPWebAddress = "";  //For detecting a change in the user-specified web address.
     public boolean bWebAddressChanged = false;  //Used to tell Fragment_Import_5a_WebConfirmation to gather the data.

@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -38,7 +39,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
 
     AddTagsServiceResponseReceiver addTagsServiceResponseReceiver;
 
-
+    ArrayList<String> alsUnidentifiedTags;
 
     public Fragment_Import_3b_ComicTagImport() {
         // Required empty public constructor
@@ -55,6 +56,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         //Instantiate the ViewModel sharing data between fragments:
         if(getActivity() != null) {
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+            alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
         }
 
         //Configure a response receiver to listen for response from Service_TagEditor when adding tags:
@@ -71,7 +73,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_3a_item_download_tag_import, container, false);
+        return inflater.inflate(R.layout.fragment_import_3b_comic_tag_import, container, false);
     }
 
     @Override
@@ -97,7 +99,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
                                     }
                                 }
                                 //Call the service to add the tags:
-                                Service_TagEditor.startActionAddTags(getActivity().getApplicationContext(), alsNewTagTexts, viewModelImportActivity.iImportMediaCategory);
+                                Service_TagEditor.startActionAddTags(getActivity().getApplicationContext(), alsNewTagTexts, GlobalClass.MEDIA_CATEGORY_COMICS);
                             }
                         }
 
@@ -152,25 +154,14 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         }
         final ListView listView_UnidentifiedTags = getView().findViewById(R.id.listView_UnidentifiedTags);
 
-        //Get the list of supposed tags which do not exist in the tags catalog:
-        if(viewModelImportActivity.alfiConfirmedFileImports == null){
-            return;
-        }
-        if(viewModelImportActivity.alfiConfirmedFileImports.size() == 0){
-            return;
-        }
         //Grab all prospective unidentified tags from all to-be-imported file items:
-        ArrayList<String> alsProspectiveUnidentifiedTags = new ArrayList<>();
-        for(ItemClass_File icf: viewModelImportActivity.alfiConfirmedFileImports) {
-            alsProspectiveUnidentifiedTags.addAll(icf.alsUnidentifiedTags);
-        }
         //Weed-out any duplicates:
         TreeMap<String, String> tmProspectiveUTsNoDuplicates = new TreeMap<>();
-        for(String sPT: alsProspectiveUnidentifiedTags){
+        for(String sPT: alsUnidentifiedTags){
             tmProspectiveUTsNoDuplicates.put(sPT, sPT);
         }
         //Re-form the prospective tags without duplicates:
-        alsProspectiveUnidentifiedTags.clear();
+        ArrayList<String> alsProspectiveUnidentifiedTags = new ArrayList<>();
         for(Map.Entry<String, String> entry: tmProspectiveUTsNoDuplicates.entrySet()){
             alsProspectiveUnidentifiedTags.add(entry.getKey());
         }
@@ -181,7 +172,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         for(String sTag: alsProspectiveUnidentifiedTags){
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
-        for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
+        for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
                 String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
                 if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
                     bTagFound = true;
@@ -199,6 +190,8 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         //Create the adapter and assign to the listView:
         gTagImportCustomAdapter = new TagImportCustomAdapter(getActivity(), R.layout.listview_tageditor_tagtext, alsConfirmedUnidentifiedTags);
         listView_UnidentifiedTags.setAdapter(gTagImportCustomAdapter);
+
+
 
     }
 
@@ -354,13 +347,30 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
                         Toast.makeText(getActivity().getApplicationContext(), "Something went wrong with tag addition.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    for(ItemClass_Tag ict: alictTags){
-                        //Add the newly-added tags' tagIDs to the download-recognized tags:
-                        viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags.add(ict.iTagID);
-                        viewModelImportActivity.alfiConfirmedFileImports.get(0).aliProspectiveTags.add(ict.iTagID);
+                    String sMessage = "Added " + alictTags.size();
+                    if(alictTags.size() == 1){
+                        sMessage = sMessage + " tag.";
+                    } else {
+                        sMessage = sMessage + " tags.";
                     }
 
-
+                    //Recalc unidentified tags list:
+                    ArrayList<String> alsNewUnidentifiedTags = new ArrayList<>();
+                    for(String sPreviouslyUnidentifiedTag: alsUnidentifiedTags){
+                        boolean bThisTagAdded = false;
+                        for(ItemClass_Tag ictAddedTag: alictTags){
+                            if(ictAddedTag.sTagText.equals(sPreviouslyUnidentifiedTag)){
+                                bThisTagAdded = true;
+                                break;
+                            }
+                        }
+                        if(!bThisTagAdded){
+                            alsNewUnidentifiedTags.add(sPreviouslyUnidentifiedTag);
+                        }
+                    }
+                    if(getActivity() != null) {
+                        Toast.makeText(getActivity().getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                    }
                 }
 
 

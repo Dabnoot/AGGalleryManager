@@ -556,17 +556,17 @@ public class Activity_Import extends AppCompatActivity {
         private boolean bSelectAllSelected = false;
         Context contextFromCaller;
 
-        private final int iHideTagImportButtonHeightDP = 67;
-        private final int iShowTagImportButtonHeightDP = 67 + 50;
-        private int iHideTagImportButtonHeightPixels;
-        private int iShowTagImportButtonHeightPixels;
+        private final int iHideTagImportButtonHeightPixels;
+        private final int iShowTagImportButtonHeightPixels;
 
         public FileListCustomAdapter(Context context, int textViewResourceId, ArrayList<ItemClass_File> alfi) {
             super(context, textViewResourceId, alfi);
             contextFromCaller = context;
             alFileItems = new ArrayList<>(alfi);
 
+            int iHideTagImportButtonHeightDP = 67;
             iHideTagImportButtonHeightPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iHideTagImportButtonHeightDP, getResources().getDisplayMetrics());
+            int iShowTagImportButtonHeightDP = 67 + 50;
             iShowTagImportButtonHeightPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iShowTagImportButtonHeightDP, getResources().getDisplayMetrics());
 
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
@@ -711,14 +711,10 @@ public class Activity_Import extends AppCompatActivity {
                         @Override
                         public void onClick(View view) {
 
-                            //Send the file item to the ComicTagImport fragment:
-                            ArrayList<ItemClass_File> alicf = new ArrayList<>();
-                            alicf.add(alFileItemsDisplay.get(position));
-                            viewModelImportActivity.alfiConfirmedFileImports = alicf;
+                            viewModelImportActivity.alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
 
                             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT, false);
                             stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
-
 
                         }
                     });
@@ -962,8 +958,6 @@ public class Activity_Import extends AppCompatActivity {
                             icfComicFiles = icf;
 
                         } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                            //final public ArrayList<ItemClass_File> alFileItems;
-                            //private ArrayList<ItemClass_File> alFileItemsDisplay;
 
                             //Sort the files for this comic by putting them into a TreeMap:
                             TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
@@ -1363,6 +1357,7 @@ public class Activity_Import extends AppCompatActivity {
                         //  the user to approve - don't automatically add new tags to the system (I've encountered
                         //  garbage tags, tags that already exist in another form, and tags that the user might
                         //  not want to add.
+                        ArrayList<String> alsNewUnidentifiedTags = new ArrayList<>();
                         for(String sTag: fi.alsUnidentifiedTags){
                             String sIncomingTagCleaned = sTag.toLowerCase().trim();
                             boolean bTagFound = false;
@@ -1376,10 +1371,10 @@ public class Activity_Import extends AppCompatActivity {
                                 }
                             }
                             if(!bTagFound){
-                                fi.alsUnidentifiedTags.add(sTag.trim());
+                                alsNewUnidentifiedTags.add(sTag.trim());
                             }
                         }
-
+                        fi.alsUnidentifiedTags = alsNewUnidentifiedTags;
 
                     }
                 }

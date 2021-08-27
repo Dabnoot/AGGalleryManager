@@ -160,6 +160,11 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alict_TagItems);
         listView_TagDelete.setAdapter(gListViewTagsAdapter);
         listView_TagDelete.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+        if(getView() != null) {
+            Button button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
+            button_DeleteTag.setEnabled(false);
+        }
     }
 
 
