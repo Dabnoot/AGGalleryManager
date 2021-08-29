@@ -654,6 +654,18 @@ public class Activity_Import extends AppCompatActivity {
 
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
+
+            if(!alFileItemsDisplay.get(position).sParody.equals("")){
+                sbTags.append("Parody: ");
+                sbTags.append(alFileItemsDisplay.get(position).sParody);
+                sbTags.append("\n");
+            }
+            if(!alFileItemsDisplay.get(position).sArtist.equals("")){
+                sbTags.append("Artist: ");
+                sbTags.append(alFileItemsDisplay.get(position).sArtist);
+                sbTags.append("\n");
+            }
+
             sbTags.append("Tags: ");
             ArrayList<Integer> aliPreConfirmedTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
 

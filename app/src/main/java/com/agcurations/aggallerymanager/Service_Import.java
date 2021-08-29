@@ -101,6 +101,8 @@ public class Service_Import extends IntentService {
     public static final String FILE_DELETION_MESSAGE = "Deleting file: ";
     public static final String FILE_DELETION_OP_COMPLETE_MESSAGE = "File deletion operation complete.";
 
+    public static final String STRING_COMIC_XML_FILENAME = "ComicData.xml";
+
     public Service_Import() {
         super("ImportActivityDataService");
     }
@@ -626,7 +628,7 @@ public class Service_Import extends IntentService {
                                         bComicPageIsDirectory = (sComicPageMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
                                         int iComicPageItemFileType = (bComicPageIsDirectory) ? ItemClass_File.TYPE_FOLDER : ItemClass_File.TYPE_FILE;
                                         if((iComicPageItemFileType != ItemClass_File.TYPE_FILE) ||
-                                                (!sComicPageMimeType.contains("image") && !sComicPageFilename.equals("ComicData.xml"))){
+                                                (!sComicPageMimeType.contains("image") && !sComicPageFilename.equals(STRING_COMIC_XML_FILENAME))){
                                             continue;
                                         }
 
@@ -680,7 +682,7 @@ public class Service_Import extends IntentService {
                                             //Check to see if this is an xml file.
                                             //If this is an xml file, it likely contains comic details.
 
-                                            if(sComicPageFilename.equals("ComicData.xml")) {
+                                            if(sComicPageFilename.equals(STRING_COMIC_XML_FILENAME)) {
                                                 //Get Document Builder
                                                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                                                 DocumentBuilder builder = factory.newDocumentBuilder();
@@ -781,7 +783,7 @@ public class Service_Import extends IntentService {
                                     boolean bQtyNumBlocksOk = false;
                                     int iNumBlocks = -1;
                                     for(ItemClass_File file: alicf_ComicFiles){
-                                        if(file.sFileOrFolderName.equals("ComicData.xml")){
+                                        if(file.sFileOrFolderName.equals(STRING_COMIC_XML_FILENAME)){
                                             continue; //Don't try to find a page number on this file.
                                         }
                                         if(iNumBlocks == -1){  //If this is the first set of number blocks we are testing, record the count.
@@ -814,7 +816,7 @@ public class Service_Import extends IntentService {
 
                                             boolean bPossibleNumberBlockCandidate = true;
                                             for (ItemClass_File icfComicPage : alicf_ComicFiles) {
-                                                if(icfComicPage.sFileOrFolderName.equals("ComicData.xml")){
+                                                if(icfComicPage.sFileOrFolderName.equals(STRING_COMIC_XML_FILENAME)){
                                                     continue; //Don't try to find a page number on this file.
                                                 }
                                                 //Attempt to get the integer value from this filename using the current number block:
@@ -935,6 +937,7 @@ public class Service_Import extends IntentService {
         }
     }
     private String getXMLNodeText(Document docXML, String sNodeTagName){
+        //This routine used to simplify coding in handleAction_GetDirectoryContents for Comic XML read.
         NodeList nlTemp;
         String sReturnData = "";
         nlTemp = docXML.getElementsByTagName(sNodeTagName);
@@ -965,15 +968,6 @@ public class Service_Import extends IntentService {
             lTotalImportSize = lTotalImportSize + fi.lSizeBytes;
         }
         lProgressDenominator = lTotalImportSize;
-
-        //Find the next record ID:
-        int iNextRecordId = 0;
-        int iThisId;
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
-            iThisId = Integer.parseInt(entry.getValue().sItemID);
-            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-        }
-        //New record ID identified.
 
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
@@ -1211,7 +1205,7 @@ public class Service_Import extends IntentService {
 
                 ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
                 ciNew.iMediaCategory = iMediaCategory;
-                ciNew.sItemID = String.valueOf(iNextRecordId);
+                ciNew.sItemID = globalClass.getNewCatalogRecordID(iMediaCategory);
                 ciNew.sFilename = sFileName;
                 ciNew.lSize = fileItem.lSizeBytes;
                 ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
@@ -1230,8 +1224,6 @@ public class Service_Import extends IntentService {
                 //  and memory:
                 globalClass.CatalogDataFile_CreateNewRecord(ciNew);
 
-
-                iNextRecordId += 1; //Identify the next record ID to assign.
 
 
             } catch (Exception e) {
@@ -1281,14 +1273,6 @@ public class Service_Import extends IntentService {
         }
         lProgressDenominator = lTotalImportSize;
 
-        //Find the next record ID:
-        int iNextRecordId = 0;
-        int iThisId;
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-            iThisId = Integer.parseInt(entry.getValue().sItemID);
-            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-        }
-        //New record ID identified.
 
         TreeMap<String, String[]> tmNHComicIDs = new TreeMap<>(); //Map NH_Comic_Downloader ComicID to a record ID/folder and also grab the comic title.
 
@@ -1301,8 +1285,7 @@ public class Service_Import extends IntentService {
             if(fileItem.sFileOrFolderName.matches(GlobalClass.gsNHComicCoverPageFilter)){
                 String sComicID = GetNHComicID(fileItem.sFileOrFolderName);
                 lProgressDenominator = lProgressDenominator - fileItem.lSizeBytes; //We don't copy over the cover page.
-                String sRecordID = iNextRecordId + "";
-                iNextRecordId++;
+                String sRecordID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
                 String sComicName = GetNHComicNameFromCoverFile(fileItem.sFileOrFolderName);
                 String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 int iGrade = fileItem.iGrade;
@@ -1558,15 +1541,6 @@ public class Service_Import extends IntentService {
         }
         lProgressDenominator = lTotalImportSize;
 
-        //Find the next record ID:
-        int iNextRecordId = 0;
-        int iThisId;
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-            iThisId = Integer.parseInt(entry.getValue().sItemID);
-            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-        }
-        //New record ID identified.
-
         TreeMap<String, String[]> tmComics = new TreeMap<>(); //Map Comic to a record ID/folder and also grab the comic title.
 
         //If comic folder import, loop and find all of the comic parent Uris:
@@ -1574,15 +1548,39 @@ public class Service_Import extends IntentService {
         int INDEX_COMIC_NAME = 1;
         int INDEX_COMIC_TAGS = 2;
         int INDEX_COMIC_GRADE = 3;
+        int INDEX_COMIC_SOURCE = 4;
+        int INDEX_COMIC_PARODY = 5;
+        int INDEX_COMIC_ARTIST = 6;
         for(ItemClass_File fileItem: alFileList) {
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
                 String sUriParent = fileItem.sUri;
-                String sRecordID = iNextRecordId + "";
-                iNextRecordId++;
+                String sRecordID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
                 String sComicName = fileItem.sFileOrFolderName;
+                if(!fileItem.sTitle.equals("")){
+                    sComicName = fileItem.sTitle;
+                }
+                String sSource = "Folder Import";
+                if(!fileItem.sURL.equals("")){
+                    sSource = fileItem.sURL;
+                }
+                String sParody = "";
+                if(!fileItem.sParody.equals("")){
+                    sParody = fileItem.sParody;
+                }
+                String sArtist = "";
+                if(!fileItem.sArtist.equals("")){
+                    sArtist = fileItem.sArtist;
+                }
                 String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 int iGrade = fileItem.iGrade;
-                tmComics.put(sUriParent, new String[]{sRecordID, sComicName, sComicTags, String.valueOf(iGrade)});
+                tmComics.put(sUriParent, new String[]{
+                        sRecordID,
+                        sComicName,
+                        sComicTags,
+                        String.valueOf(iGrade),
+                        sSource,
+                        sParody,
+                        sArtist});
             }
         }
 
@@ -1628,7 +1626,9 @@ public class Service_Import extends IntentService {
             Double dTimeStamp = GlobalClass.GetTimeStampFloat();
             ciNewComic.dDatetime_Last_Viewed_by_User = dTimeStamp;
             ciNewComic.dDatetime_Import = dTimeStamp;
-            ciNewComic.sSource = "Folder Import";
+            ciNewComic.sSource = tmEntryComic.getValue()[INDEX_COMIC_SOURCE];
+            ciNewComic.sComicParodies = tmEntryComic.getValue()[INDEX_COMIC_PARODY];
+            ciNewComic.sComicArtists = tmEntryComic.getValue()[INDEX_COMIC_ARTIST];
 
             //Find comic files belonging to this comic and put them in a tree map for sorting.
             TreeMap<String, ItemClass_File> tmComicFiles = new TreeMap<>();
@@ -1641,6 +1641,26 @@ public class Service_Import extends IntentService {
 
             for (Map.Entry<String, ItemClass_File> entryComicFile : tmComicFiles.entrySet()) {
                 ItemClass_File fileItem = entryComicFile.getValue();
+
+                String sLogLine;
+                Uri uriSourceFile = Uri.parse(fileItem.sUri);
+                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+
+                if(fileItem.sFileOrFolderName.equals(STRING_COMIC_XML_FILENAME)){
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+
+                        if (!dfSource.delete()) {
+                            sLogLine = "Could not delete xml file from source folder.\n";
+                        } else {
+                            sLogLine = "Success deleting xml file from source folder.\n";
+                        }
+                        BroadcastProgress(true, sLogLine,
+                                false, 0,
+                                false, "",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    }
+                    continue; //If this is the xml file, take no action to copy it into our catalog.
+                }
 
                 ciNewComic.iFile_Count++;
                 ciNewComic.iComicPages++;
@@ -1655,13 +1675,9 @@ public class Service_Import extends IntentService {
                 }
                 ciNewComic.lSize += fileItem.lSizeBytes;
 
-                Uri uriSourceFile;
-                String sLogLine;
                 InputStream inputStream;
                 OutputStream outputStream;
 
-                uriSourceFile = Uri.parse(fileItem.sUri);
-                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
                 try {
                     //Write next behavior to the screen log:
                     sLogLine = "Attempting ";
@@ -2107,18 +2123,9 @@ public class Service_Import extends IntentService {
             ci.alsDownloadURLsAndDestFileNames = alsURLs;
         }
 
-        //Determine the next Comic Catalog ID:
-        //Find the next record ID:
-        int iNextRecordId = 0;
-        int iThisId;
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-            iThisId = Integer.parseInt(entry.getValue().sItemID);
-            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-        }
-
         //Create the comic folder.
         if(!bUpdateExistingComic) {
-            ci.sItemID = String.valueOf(iNextRecordId);
+            ci.sItemID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
             ci.sFolder_Name = ci.sItemID;
         }
 
@@ -3142,13 +3149,7 @@ public class Service_Import extends IntentService {
         }
 
         //Find the next record ID:
-        int iNextRecordId = 0;
-        int iThisId;
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()) {
-            iThisId = Integer.parseInt(entry.getValue().sItemID);
-            if (iThisId >= iNextRecordId) iNextRecordId = iThisId + 1;
-        }
-        //New record ID identified.
+        String sNextRecordId = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         if(icfDownloadItem.sDestinationFolder.equals("")) {
             icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
@@ -3182,7 +3183,7 @@ public class Service_Import extends IntentService {
         //Create a folder to serve as a working folder:
         File fWorkingFolder = new File(
                 globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                        icfDownloadItem.sDestinationFolder + File.separator + iNextRecordId);
+                        icfDownloadItem.sDestinationFolder + File.separator + sNextRecordId);
 
         //Create the temporary download folder (within the destination folder):
         if (!fWorkingFolder.exists()) {
@@ -3212,7 +3213,7 @@ public class Service_Import extends IntentService {
         //Next create a new catalog item data structure:
         ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
         ciNew.iMediaCategory = iMediaCategory;
-        ciNew.sItemID = String.valueOf(iNextRecordId);
+        ciNew.sItemID = sNextRecordId;
         ciNew.lSize = icfDownloadItem.lSizeBytes;
         ciNew.lDuration_Milliseconds = icfDownloadItem.lVideoTimeInMilliseconds;
         ciNew.sDuration_Text = icfDownloadItem.sVideoTimeText;

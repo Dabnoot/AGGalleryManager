@@ -205,7 +205,6 @@ public class Service_Main extends IntentService {
 
         globalClass.ExecuteDownloadManagerPostProcessing();
 
-
     }
 
     private void handleActionCatalogBackup(){

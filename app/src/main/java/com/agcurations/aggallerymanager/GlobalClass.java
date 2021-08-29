@@ -8,6 +8,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -93,6 +95,12 @@ public class GlobalClass extends Application {
             "multi_select_list_videos_restricted_tags",
             "multi_select_list_images_restricted_tags",
             "multi_select_list_comics_restricted_tags"};
+
+    private static final String[] gsCurrentMaxItemIDStoredPreference = new String[]{
+            "current_max_item_ID_videos",
+            "current_max_item_ID_images",
+            "current_max_item_ID_comics"
+    };
 
     public static final String gsPinPreference = "preferences_pin";
 
@@ -740,6 +748,27 @@ public class GlobalClass extends Application {
         return ci;
     }
 
+    public String getNewCatalogRecordID(int iMediaCategory){
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        int iCurrentMaxID = sharedPreferences.getInt(gsCurrentMaxItemIDStoredPreference[iMediaCategory], 0);
+        if(iCurrentMaxID == 0){
+            //Make sure that there has not been an error with the preferences by double-checking with the catalog:
+            int iThisId;
+            for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
+                iThisId = Integer.parseInt(entry.getValue().sItemID);
+                if (iThisId > iCurrentMaxID) iCurrentMaxID = iThisId;
+            }
+        }
+
+        int iNewCatalogRecordID = iCurrentMaxID + 1;
+
+        sharedPreferences.edit()
+                .putInt(gsCurrentMaxItemIDStoredPreference[iMediaCategory], iNewCatalogRecordID)
+                .apply();
+
+        return String.valueOf(iNewCatalogRecordID);
+    }
 
     //=====================================================================================
     //===== Tag Subroutines Section ===================================================
