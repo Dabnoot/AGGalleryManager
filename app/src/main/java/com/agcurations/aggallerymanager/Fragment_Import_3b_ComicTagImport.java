@@ -53,12 +53,6 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //Instantiate the ViewModel sharing data between fragments:
-        if(getActivity() != null) {
-            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-            alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
-        }
-
         //Configure a response receiver to listen for response from Service_TagEditor when adding tags:
         IntentFilter filter = new IntentFilter(AddTagsServiceResponseReceiver.ADD_TAGS_SERVICE_EXECUTE_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -114,6 +108,11 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        //Instantiate the ViewModel sharing data between fragments:
+        if(getActivity() != null) {
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+            alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
+        }
         initComponents();
     }
 
