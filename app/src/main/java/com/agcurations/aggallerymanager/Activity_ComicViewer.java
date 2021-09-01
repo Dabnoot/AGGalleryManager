@@ -934,10 +934,57 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                toggle();
-                if (mVisible && AUTO_HIDE) {
-                    delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                //Go back a page, forward a page, or show the title and navigation bars,
+                //  depending on the tap location.
+                float fXMidPoint = gpDisplaySize.x / 2f;
+                float fTouchDeadband = gpDisplaySize.x * .10f;
+                float fNavigateBackTapXLocation = fXMidPoint - fTouchDeadband;
+                float fNavigateNextTapXLocation = fXMidPoint + fTouchDeadband;
+                float fTapXLocation = e.getRawX();
+                if(fTapXLocation < fNavigateBackTapXLocation){
+                    if(giCurrentCatalogItemIndex == 0){
+                        if(iSwipeToExitCounter == 0) {
+                            makeToast("Start of comic", Toast.LENGTH_SHORT);
+                        } else if (iSwipeToExitCounter == 1){
+                            //right/left - it feels like a "right-swipe" in the comic reference frame.
+                            makeToast("Tap left again to exit", Toast.LENGTH_SHORT);
+                        } else if (iSwipeToExitCounter == 2){
+                            if(toastLastToastMessage != null){
+                                toastLastToastMessage.cancel();
+                            }
+                            finish();
+                        }
+                        iSwipeToExitCounter++;
+                    } else {
+                        gotoPreviousComicPage();
+                        iSwipeToExitCounter = 0;
+                    }
+                } else if (fTapXLocation > fNavigateNextTapXLocation){
+                    if(giCurrentCatalogItemIndex == (giMaxFileCount - 1)){
+                        if(iSwipeToExitCounter == 0) {
+                            makeToast("End of comic", Toast.LENGTH_SHORT);
+                        } else if (iSwipeToExitCounter == 1){
+                            //right/left - it feels like a "right-swipe" in the comic reference frame.
+                            makeToast("Tap right again to exit", Toast.LENGTH_SHORT);
+                        } else if (iSwipeToExitCounter == 2){
+                            if(toastLastToastMessage != null){
+                                toastLastToastMessage.cancel();
+                            }
+                            finish();
+                        }
+                        iSwipeToExitCounter++;
+                    } else {
+                        gotoNextComicPage();
+                        iSwipeToExitCounter = 0;
+                    }
+                } else {
+                    toggle();
+                    if (mVisible && AUTO_HIDE) {
+                        delayedHide(AUTO_HIDE_DELAY_MILLIS);
+                    }
                 }
+
+
                 if(gbDebugSwiping){
                     makeToast("Single Tap Detected", Toast.LENGTH_SHORT);
                 }
