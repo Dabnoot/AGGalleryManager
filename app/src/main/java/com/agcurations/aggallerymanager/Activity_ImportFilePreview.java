@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -21,8 +20,6 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -34,7 +31,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 public class Activity_ImportFilePreview extends AppCompatActivity {
 
-    private ItemClass_File[] gFileItems;
+    private ArrayList<ItemClass_File> galFileItems;
     private int giFileItemIndex;
     private int giMaxFileItemIndex;
     private static final String IMAGE_PREVIEW_INDEX = "image_preview_index";
@@ -48,7 +45,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     private ImageView gImagePreview;
 
-
     private int giCurrentVideoPosition = 1;
     private final int VIDEO_PLAYBACK_STATE_PAUSED = 0;
     private final int VIDEO_PLAYBACK_STATE_PLAYING = 1;
@@ -57,7 +53,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     int[] giGradeImageViews;
 
-    @SuppressWarnings("unchecked") //For HashMap<String , ItemClass_Tag> aquisistion from an intent.
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -106,29 +101,23 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 //If the media type is Comics, tags are applied to each
                 //  file item.
                 if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                    for(ItemClass_File icf: gFileItems){
+                    for(ItemClass_File icf: galFileItems){
                         icf.aliProspectiveTags = aliTagIDs;
                         icf.bDataUpdateFlag = true;
                         icf.bIsChecked = true;
                     }
 
                 } else {
-                    gFileItems[giFileItemIndex].aliProspectiveTags = aliTagIDs;
-                    gFileItems[giFileItemIndex].bDataUpdateFlag = true;
-                    gFileItems[giFileItemIndex].bIsChecked = true;
+                    galFileItems.get(giFileItemIndex).aliProspectiveTags = aliTagIDs;
+                    galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+                    galFileItems.get(giFileItemIndex).bIsChecked = true;
                 }
 
                 CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
                 checkBox_ImportItem.setChecked(true);
 
-                //Prepare a result to send back to the calling activity (this is also done on checkbox click):
-                Intent data = new Intent();
-                Bundle b = new Bundle();
-                //Put back the file URI string so that the file can be located:
-                b.putSerializable(Activity_Import.PREVIEW_FILE_ITEMS, gFileItems);
-                //b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
-                data.putExtra(Activity_Import.TAG_SELECTION_RESULT_BUNDLE, b);
-                setResult(RESULT_OK, data);
+                //Set a result to send back to the calling activity (this is also done on checkbox click):
+                setResult(RESULT_OK);
 
             }
         };
@@ -136,9 +125,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         Bundle b = getIntent().getExtras();
         if(b != null) {
-
-            gFileItems = (ItemClass_File[]) b.getSerializable(Activity_Import.PREVIEW_FILE_ITEMS);
-            giMaxFileItemIndex = gFileItems.length - 1;
+            GlobalClass globalClass = (GlobalClass) getApplicationContext(); 
+            galFileItems = globalClass.galPreviewFileList;
+            giMaxFileItemIndex = galFileItems.size() - 1;
             giFileItemIndex = b.getInt(Activity_Import.PREVIEW_FILE_ITEMS_POSITION, 0);
             giMediaCategory = b.getInt(Activity_Import.MEDIA_CATEGORY, 0);
 
@@ -147,7 +136,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             fragment_selectTags = new Fragment_SelectTags();
             Bundle args = new Bundle();
             args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, giMediaCategory);
-            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, gFileItems[giFileItemIndex].aliProspectiveTags);
+            args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, galFileItems.get(giFileItemIndex).aliProspectiveTags);
 
             fragment_selectTags.setArguments(args);
             ft.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
@@ -155,16 +144,14 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             //Init the tags list if there are tags already assigned to this item:
             //Get the text of the tags and display:
-            if(gFileItems[giFileItemIndex].aliProspectiveTags != null) {
-                if (gFileItems[giFileItemIndex].aliProspectiveTags.size() > 0) {
+            if(galFileItems.get(giFileItemIndex).aliProspectiveTags != null) {
+                if (galFileItems.get(giFileItemIndex).aliProspectiveTags.size() > 0) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Tags: ");
-                    GlobalClass globalClass;
-                    globalClass = (GlobalClass) getApplicationContext();
-                    sb.append(globalClass.getTagTextFromID(gFileItems[giFileItemIndex].aliProspectiveTags.get(0), GlobalClass.MEDIA_CATEGORY_VIDEOS));
-                    for (int i = 1; i < gFileItems[giFileItemIndex].aliProspectiveTags.size(); i++) {
+                    sb.append(globalClass.getTagTextFromID(galFileItems.get(giFileItemIndex).aliProspectiveTags.get(0), GlobalClass.MEDIA_CATEGORY_VIDEOS));
+                    for (int i = 1; i < galFileItems.get(giFileItemIndex).aliProspectiveTags.size(); i++) {
                         sb.append(", ");
-                        sb.append(globalClass.getTagTextFromID(gFileItems[giFileItemIndex].aliProspectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
+                        sb.append(globalClass.getTagTextFromID(galFileItems.get(giFileItemIndex).aliProspectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
                     }
                     TextView textView_VideoPopupSelectedTags = findViewById(R.id.textView_SelectedTags);
                     if (textView_VideoPopupSelectedTags != null) {
@@ -267,7 +254,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
             if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                long lVideoDuration = gFileItems[giFileItemIndex].lVideoTimeInMilliseconds;
+                long lVideoDuration = galFileItems.get(giFileItemIndex).lVideoTimeInMilliseconds;
                 if (lVideoDuration < 0L) {
                     //If there is no video length, exit this activity.
                     finish();
@@ -356,11 +343,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private void initializeFile(){
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
-            if(gFileItems[giFileItemIndex].iTypeFileFolderURL == ItemClass_File.TYPE_FILE) {
-                Uri uriVideoFile = Uri.parse(gFileItems[giFileItemIndex].sUri);
+            if(galFileItems.get(giFileItemIndex).iTypeFileFolderURL == ItemClass_File.TYPE_FILE) {
+                Uri uriVideoFile = Uri.parse(galFileItems.get(giFileItemIndex).sUri);
                 gVideoView_VideoPlayer.setVideoURI(uriVideoFile);
-            } else if (gFileItems[giFileItemIndex].iTypeFileFolderURL == ItemClass_File.TYPE_URL) {
-                gVideoView_VideoPlayer.setVideoPath(gFileItems[giFileItemIndex].sURLVideoLink);
+            } else if (galFileItems.get(giFileItemIndex).iTypeFileFolderURL == ItemClass_File.TYPE_URL) {
+                gVideoView_VideoPlayer.setVideoPath(galFileItems.get(giFileItemIndex).sURLVideoLink);
             }
             // Skipping to 1 shows the first frame of the video.
             gVideoView_VideoPlayer.seekTo(1);
@@ -369,7 +356,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
         } else {
-            Glide.with(getApplicationContext()).load(gFileItems[giFileItemIndex].sUri).into(gImagePreview);
+            Glide.with(getApplicationContext()).load(galFileItems.get(giFileItemIndex).sUri).into(gImagePreview);
         }
 
         CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
@@ -377,30 +364,23 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //Check/uncheck the checkbox.
-                boolean bIsChecked = ((CheckBox)view).isChecked();
-                gFileItems[giFileItemIndex].bIsChecked = bIsChecked;
-                gFileItems[giFileItemIndex].bDataUpdateFlag = true;
+                galFileItems.get(giFileItemIndex).bIsChecked = ((CheckBox)view).isChecked();
+                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
 
-                //Update results to send back to the calling activity (this is also done on tag change):
-                Intent data = new Intent();
-                Bundle b = new Bundle();
-                //Put back the file URI string so that the file can be located:
-                b.putSerializable(Activity_Import.PREVIEW_FILE_ITEMS, gFileItems);
-                //b.putIntegerArrayList(Activity_Import.TAG_SELECTION_TAG_IDS, aliTagIDs);
-                data.putExtra(Activity_Import.TAG_SELECTION_RESULT_BUNDLE, b);
-                setResult(RESULT_OK, data);
+                //Update result to send back to the calling activity (this is also done on tag change):
+                setResult(RESULT_OK);
             }
         });
 
-        checkBox_ImportItem.setChecked(gFileItems[giFileItemIndex].bIsChecked);
+        checkBox_ImportItem.setChecked(galFileItems.get(giFileItemIndex).bIsChecked);
 
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
-        textView_FileName.setText(gFileItems[giFileItemIndex].sFileOrFolderName);
+        textView_FileName.setText(galFileItems.get(giFileItemIndex).sFileOrFolderName);
 
         //Init the tags list if there are tags already assigned to this item:
         //Get the text of the tags and display:
-        if(gFileItems[giFileItemIndex].aliProspectiveTags != null) {
+        if(galFileItems.get(giFileItemIndex).aliProspectiveTags != null) {
             TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
             StringBuilder sbTags = new StringBuilder();
             sbTags.append("Tags: ");
@@ -411,24 +391,24 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 iFileItemTagsIndex = giFileItemIndex;
             }
 
-            if (gFileItems[iFileItemTagsIndex].aliProspectiveTags.size() > 0) {
+            if (galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.size() > 0) {
 
                 GlobalClass globalClass;
                 globalClass = (GlobalClass) getApplicationContext();
 
                 ArrayList<Integer> aliConfirmedProspectiveTags = new ArrayList<>(); //Confirm all tags exist as user may have deleted a tag.
-                for(Integer iTagID: gFileItems[iFileItemTagsIndex].aliProspectiveTags){
+                for(Integer iTagID: galFileItems.get(iFileItemTagsIndex).aliProspectiveTags){
                     if(globalClass.TagIDExists(iTagID, giMediaCategory)){
                         aliConfirmedProspectiveTags.add(iTagID);
                     }
                 }
-                gFileItems[iFileItemTagsIndex].aliProspectiveTags = aliConfirmedProspectiveTags;
+                galFileItems.get(iFileItemTagsIndex).aliProspectiveTags = aliConfirmedProspectiveTags;
 
                 //Update the Tag text listing on the preview display:
-                sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].aliProspectiveTags.get(0), giMediaCategory));
-                for (int i = 1; i < gFileItems[iFileItemTagsIndex].aliProspectiveTags.size(); i++) {
+                sbTags.append(globalClass.getTagTextFromID(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.get(0), giMediaCategory));
+                for (int i = 1; i < galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.size(); i++) {
                     sbTags.append(", ");
-                    sbTags.append(globalClass.getTagTextFromID(gFileItems[iFileItemTagsIndex].aliProspectiveTags.get(i), giMediaCategory));
+                    sbTags.append(globalClass.getTagTextFromID(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.get(i), giMediaCategory));
                 }
 
             }
@@ -437,7 +417,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
 
             if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
-                fragment_selectTags.resetTagListViewData(gFileItems[iFileItemTagsIndex].aliProspectiveTags);
+                fragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
             }
 
             displayGrade(); //Update the displayed grade
@@ -505,10 +485,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         if (bGradeIVsOK){
             Drawable drawable_SolidStar = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_grade_white_18dp, null);
             Drawable drawable_EmptyStar = ResourcesCompat.getDrawable(getResources(), R.drawable.outline_grade_white_18dp, null);
-            for(int i = 0; i < gFileItems[giFileItemIndex].iGrade; i++) {
+            for(int i = 0; i < galFileItems.get(giFileItemIndex).iGrade; i++) {
                 imageView_GradeArray[i].setImageDrawable(drawable_SolidStar);
             }
-            for(int i = gFileItems[giFileItemIndex].iGrade; i < giGradeImageViews.length; i++) {
+            for(int i = galFileItems.get(giFileItemIndex).iGrade; i < giGradeImageViews.length; i++) {
                 imageView_GradeArray[i].setImageDrawable(drawable_EmptyStar);
             }
         }
@@ -525,7 +505,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         @Override
         public void onClick(View view) {
-            gFileItems[giFileItemIndex].iGrade = iGrade;
+            galFileItems.get(giFileItemIndex).iGrade = iGrade;
             displayGrade();
         }
     }

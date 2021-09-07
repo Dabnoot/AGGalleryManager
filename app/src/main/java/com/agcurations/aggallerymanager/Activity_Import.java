@@ -285,18 +285,8 @@ public class Activity_Import extends AppCompatActivity {
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     if(result.getResultCode() == RESULT_OK){
-                        Intent data = result.getData();
-                        if(data != null) {
-                            Bundle b = data.getBundleExtra(TAG_SELECTION_RESULT_BUNDLE);
-                            if (b == null) return;
-                            ItemClass_File[] fileItems = (ItemClass_File[]) b.getSerializable(PREVIEW_FILE_ITEMS);
-                            if (fileItems == null) return;
-                            //ArrayList<Integer> aliTagIDs;
-                            //aliTagIDs = b.getIntegerArrayList(TAG_SELECTION_TAG_IDS);
-                            //Apply the change to the fileListCustomAdapter:
-                            //fileListCustomAdapter.updateFileItemTags(fileItems[0].uri, aliTagIDs);
-                            fileListCustomAdapter.updateFileItemDetails(fileItems);
-                        }
+                        fileListCustomAdapter.updateFileItemDetails(globalClass.galPreviewFileList);
+                        globalClass.galPreviewFileList = null; //Release memory.
                     }
                 }
             });
@@ -925,29 +915,19 @@ public class Activity_Import extends AppCompatActivity {
                     // to be used between Activities. Therefore, pass media category via bundle in
                     // intent.
 
-                    ItemClass_File[] fileItems;
+                    ArrayList<ItemClass_File> alPreviewFileList = new ArrayList<>();
                     if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
                             viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
 
                         //Send all of the video and image file items that are shown to the preview, and tell position.
                         //  That way the user can swipe to the next video or image and apply tags to that one as well.
-                        ItemClass_File[] icf = new ItemClass_File[alFileItemsDisplay.size()];
-                        int i = 0;
-                        for(ItemClass_File icfSource: alFileItemsDisplay){
-                            icf[i] = icfSource;
-                            i++;
-                        }
-                        fileItems = icf;
-
+                        alPreviewFileList = alFileItemsDisplay;
                         b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
 
                     } else { //If comic...
                         //If this is a comic, put together all of the page fileItems for the preview.
-                        ItemClass_File[] icfComicFiles = new ItemClass_File[]{};
 
                         if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                            //final public ArrayList<ItemClass_File> alFileItems;
-                            //private ArrayList<ItemClass_File> alFileItemsDisplay;
 
                             //Sort the files for this comic by putting them into a TreeMap:
                             TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
@@ -960,14 +940,10 @@ public class Activity_Import extends AppCompatActivity {
                                 }
                             }
 
-                            ItemClass_File[] icf = new ItemClass_File[tmFiles.size()];
-                            int i = 0;
                             for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
-                                icf[i] = entry.getValue();
-                                i++;
+                                alPreviewFileList.add(entry.getValue()); //todo: simplify?
                             }
 
-                            icfComicFiles = icf;
 
                         } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
 
@@ -980,34 +956,26 @@ public class Activity_Import extends AppCompatActivity {
                                 }
                             }
                             //Put the files into a standard array:
-                            ItemClass_File[] icf = new ItemClass_File[tmFiles.size()];
-                            int i = 0;
                             for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
-                                icf[i] = entry.getValue();
-                                i++;
+                                alPreviewFileList.add(entry.getValue()); //todo: simplify?
                             }
                             //Put the tags into the first item in the file array. This is only
                             // for comics. The item selected by the user is a "folder" item and is not
                             // transferred to preview, but this is the item holding the tags.
-                            if(icf.length > 0){
-                                icf[0].aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags;
+                            if(alPreviewFileList.size() > 0){
+                                alPreviewFileList.get(0).aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags; //todo: simplify?
                             }
 
-                            icfComicFiles = icf;
 
                         }
 
-                        fileItems = icfComicFiles;
                     }
 
+                    globalClass.galPreviewFileList = alPreviewFileList;
 
-                    b.putSerializable(PREVIEW_FILE_ITEMS, fileItems);
-                    intentPreviewPopup.putExtras(b);
-
+                    intentPreviewPopup.putExtras(b); //Just the int index for whichever item on display the user selected.
 
                     garlGetTagsForImportItems.launch(intentPreviewPopup);
-
-
 
                 }
             });
@@ -1084,12 +1052,12 @@ public class Activity_Import extends AppCompatActivity {
 
 
 
-        public void updateFileItemDetails(ItemClass_File[] icfIncomingFIs){
+        public void updateFileItemDetails(ArrayList<ItemClass_File> alicfIncomingFIs){
             boolean bFoundAndUpdated = false;
             //Find the items to apply individualized tags.
             //This routine is not designed to apply the same tags to multiple items.
 
-            for(ItemClass_File icfIncoming: icfIncomingFIs) {
+            for(ItemClass_File icfIncoming: alicfIncomingFIs) {
                 if(icfIncoming.bDataUpdateFlag) {
                     for (ItemClass_File icfUpdate : alFileItems) {
                         if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
@@ -1106,12 +1074,12 @@ public class Activity_Import extends AppCompatActivity {
             if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //If we are importing comics from folders, update the comic parent item with the selected tags.
-                    if(icfIncomingFIs.length > 0) {
-                        String sParentComic = icfIncomingFIs[0].sUriParent;
+                    if(alicfIncomingFIs.size() > 0) {
+                        String sParentComic = alicfIncomingFIs.get(0).sUriParent;
                         for (ItemClass_File icfUpdate : alFileItems) {
                             if (icfUpdate.sUri.equals(sParentComic)) {
-                                icfUpdate.aliProspectiveTags = icfIncomingFIs[0].aliProspectiveTags;
-                                icfUpdate.iGrade = icfIncomingFIs[0].iGrade;
+                                icfUpdate.aliProspectiveTags = alicfIncomingFIs.get(0).aliProspectiveTags;
+                                icfUpdate.iGrade = alicfIncomingFIs.get(0).iGrade;
                                 icfUpdate.bIsChecked = true;
                             }
                         }
@@ -1595,13 +1563,13 @@ public class Activity_Import extends AppCompatActivity {
 
 
 
-        public void updateFileItemDetails(ItemClass_File[] icfIncomingFIs){
+        public void updateFileItemDetails(ArrayList<ItemClass_File> alicfIncomingFIs){
             boolean bFoundAndUpdated = false;
             //Find the items to apply individualized tags.
             //This routine is not designed to apply the same tags to multiple items.
 
 
-            for(ItemClass_File icfIncoming: icfIncomingFIs) {
+            for(ItemClass_File icfIncoming: alicfIncomingFIs) {
                 if(icfIncoming.bDataUpdateFlag) {
                     for (ItemClass_File icfUpdate : alFileItems) {
                         if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
@@ -1618,12 +1586,12 @@ public class Activity_Import extends AppCompatActivity {
             if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //If we are importing comics from folders, update the comic parent item with the selected tags.
-                    if(icfIncomingFIs.length > 0) {
-                        String sParentComic = icfIncomingFIs[0].sUriParent;
+                    if(alicfIncomingFIs.size() > 0) {
+                        String sParentComic = alicfIncomingFIs.get(0).sUriParent;
                         for (ItemClass_File icfUpdate : alFileItems) {
                             if (icfUpdate.sUri.equals(sParentComic)) {
-                                icfUpdate.aliProspectiveTags = icfIncomingFIs[0].aliProspectiveTags;
-                                icfUpdate.iGrade = icfIncomingFIs[0].iGrade;
+                                icfUpdate.aliProspectiveTags = alicfIncomingFIs.get(0).aliProspectiveTags;
+                                icfUpdate.iGrade = alicfIncomingFIs.get(0).iGrade;
                                 icfUpdate.bIsChecked = true;
                             }
                         }

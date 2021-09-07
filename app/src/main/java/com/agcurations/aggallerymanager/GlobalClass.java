@@ -108,6 +108,7 @@ public class GlobalClass extends Application {
 
 
     ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
+    ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
     //  This is done because the list of files can exceed the intent extra transaction size limit.
 
 
