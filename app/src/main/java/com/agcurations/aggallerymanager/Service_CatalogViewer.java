@@ -85,202 +85,174 @@ public class Service_CatalogViewer extends IntentService {
 
         //Delete the item record from the CatalogContentsFile:
         boolean bSuccess = true;
-        try {
 
-            //Delete the file:
+        //Delete the file:
 
-            //Get a path to the file to delete:
-            String sCatalogFolderPath = globalClass.gfCatalogFolders[ci.iMediaCategory].getPath();
-            String sItemFolderName = ci.sFolder_Name;
-            String sItemFileName = ci.sFilename;
+        //Get a path to the file to delete:
+        String sCatalogFolderPath = globalClass.gfCatalogFolders[ci.iMediaCategory].getPath();
+        String sItemFolderName = ci.sFolder_Name;
+        String sItemFileName = ci.sFilename;
 
-            String sFileFolder = sCatalogFolderPath + File.separator +
-                    sItemFolderName;
-            String sFullPath = sFileFolder + File.separator +
-                    sItemFileName;
-            File fFileToBeDeleted = new File(sFullPath);
+        String sFileFolder = sCatalogFolderPath + File.separator +
+                sItemFolderName;
+        String sFullPath = sFileFolder + File.separator +
+                sItemFileName;
+        File fFileToBeDeleted = new File(sFullPath);
 
-            if(ci.sSource.startsWith("http")){
-                //Delete the temporary download folders, etc.
-                //Delete any working folders:
-                String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
-                        File.separator + ci.sFolder_Name;
-                String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                File fVideoWorkingFolder = new File(sVideoWorkingFolder);
-                if(fVideoWorkingFolder.exists()){
-                    File[] fVideoWorkingFolderListing = fVideoWorkingFolder.listFiles();
-                    ArrayList<File> alfOutputFolders = new ArrayList<>();
-                    if(fVideoWorkingFolderListing != null) {
-                        for (File f : fVideoWorkingFolderListing) {
-                            //Locate the output folder
-                            if (f.isDirectory()) {
-                                alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
-                            }
+        boolean bSingleFileDeleteAndFileNotFound = false;
+
+        if(ci.sSource.startsWith("http")){
+            //Delete the temporary download folders, etc.
+            //Delete any working folders:
+            String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                    File.separator + ci.sFolder_Name;
+            String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+            File fVideoWorkingFolder = new File(sVideoWorkingFolder);
+            if(fVideoWorkingFolder.exists()){
+                File[] fVideoWorkingFolderListing = fVideoWorkingFolder.listFiles();
+                ArrayList<File> alfOutputFolders = new ArrayList<>();
+                if(fVideoWorkingFolderListing != null) {
+                    for (File f : fVideoWorkingFolderListing) {
+                        //Locate the output folder
+                        if (f.isDirectory()) {
+                            alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
                         }
-                        //Go through the output folders and delete contents:
-                        for (File f2 : alfOutputFolders) {
-                            File[] f2_Contents = f2.listFiles();
-                            if (f2_Contents != null) {
-                                for (File f3 : f2_Contents) {
-                                    if(!f3.delete()){
-                                        Log.d("File Deletion", "Unable to delete file " + f3.getAbsolutePath() + ".");
-                                    }
-                                }
-                            }
-                        }
-                        //Delete download folder contents:
-                        for (File f4 : fVideoWorkingFolderListing) {
-                            if(!f4.delete()){
-                                Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath() + ".");
-                            }
-                        }
-                        //Delete download folder:
-                        if(!fVideoWorkingFolder.delete()){
-                            Log.d("File Deletion", "Unable to delete folder " + fVideoWorkingFolder.getAbsolutePath() + ".");
-                        }
-
                     }
-
-                } //End if VideoWorkingFolderExists
-
-                //Check to see if the download folder exists as well and delete if it does:
-                //Delete the download folder to which downloadManager downloaded the files:
-                String sDownloadFolderRelativePath;
-                sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                        File.separator + ci.sFolder_Name +
-                        File.separator + ci.sItemID;
-                if(getApplicationContext().getExternalFilesDir(null) != null) {
-
-                    String sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                            sDownloadFolderRelativePath;
-                    File fVideoDownloadFolder = new File(sVideoDownloadFolder);
-                    if (fVideoDownloadFolder.exists()) {
-
-                        File[] fVideoDownloadFolderContents = fVideoDownloadFolder.listFiles();
-                        if(fVideoDownloadFolderContents != null){
-                            for(File f1:fVideoDownloadFolderContents){
-                                if(!f1.delete()){
-                                    Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
-                                }
-                            }
-                        } //End attempt to delete download folder contents for this video.
-
-                        if (!fVideoDownloadFolder.delete()) {
-                            Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
-                        }
-
-                        //Delete the category folder on the temp storage if it is empty:
-                        String sDownloadCategoryFolderRelativePath;
-                        sDownloadCategoryFolderRelativePath = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                                File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                                File.separator + ci.sFolder_Name;
-                        File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
-                        if(fCatFolder.exists()){
-                            File[] fCatFolderContents = fCatFolder.listFiles();
-                            if(fCatFolderContents != null){
-                                if(fCatFolderContents.length == 0){
-                                    if (!fCatFolder.delete()) {
-                                        Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
-                                    }
+                    //Go through the output folders and delete contents:
+                    for (File f2 : alfOutputFolders) {
+                        File[] f2_Contents = f2.listFiles();
+                        if (f2_Contents != null) {
+                            for (File f3 : f2_Contents) {
+                                if(!f3.delete()){
+                                    Log.d("File Deletion", "Unable to delete file " + f3.getAbsolutePath() + ".");
                                 }
                             }
                         }
+                    }
+                    //Delete download folder contents:
+                    for (File f4 : fVideoWorkingFolderListing) {
+                        if(!f4.delete()){
+                            Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath() + ".");
+                        }
+                    }
+                    //Delete download folder:
+                    if(!fVideoWorkingFolder.delete()){
+                        Log.d("File Deletion", "Unable to delete folder " + fVideoWorkingFolder.getAbsolutePath() + ".");
                     }
 
                 }
 
-                //End if the catalog item was sourced as a download.
+            } //End if VideoWorkingFolderExists
 
-            } else {
+            //Check to see if the download folder exists as well and delete if it does:
+            //Delete the download folder to which downloadManager downloaded the files:
+            String sDownloadFolderRelativePath;
+            sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                    File.separator + ci.sFolder_Name +
+                    File.separator + ci.sItemID;
+            if(getApplicationContext().getExternalFilesDir(null) != null) {
 
-                if (fFileToBeDeleted.exists()) {
-                    if (!fFileToBeDeleted.delete()) {
-                        problemNotificationConfig("Could not delete file.");
-                        bSuccess = false;
+                String sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                        sDownloadFolderRelativePath;
+                File fVideoDownloadFolder = new File(sVideoDownloadFolder);
+                if (fVideoDownloadFolder.exists()) {
+
+                    File[] fVideoDownloadFolderContents = fVideoDownloadFolder.listFiles();
+                    if(fVideoDownloadFolderContents != null){
+                        for(File f1:fVideoDownloadFolderContents){
+                            if(!f1.delete()){
+                                Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
+                            }
+                        }
+                    } //End attempt to delete download folder contents for this video.
+
+                    if (!fVideoDownloadFolder.delete()) {
+                        Log.d("File Deletion", "Unable to delete folder " + fVideoDownloadFolder.getAbsolutePath());
                     }
-                } else {
-                    problemNotificationConfig("Could not find file at this location: " + sFullPath + ".");
+
+                    //Delete the category folder on the temp storage if it is empty:
+                    String sDownloadCategoryFolderRelativePath;
+                    sDownloadCategoryFolderRelativePath = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                            File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                            File.separator + ci.sFolder_Name;
+                    File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
+                    if(fCatFolder.exists()){
+                        File[] fCatFolderContents = fCatFolder.listFiles();
+                        if(fCatFolderContents != null){
+                            if(fCatFolderContents.length == 0){
+                                if (!fCatFolder.delete()) {
+                                    Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            //End if the catalog item was sourced as a download.
+
+        } else {
+
+            if (fFileToBeDeleted.exists()) {
+                if (!fFileToBeDeleted.delete()) {
+                    problemNotificationConfig("Could not delete file.");
                     bSuccess = false;
                 }
-            }
-
-            File fLogFolder = globalClass.gfLogsFolder;
-            if(fLogFolder.exists()){
-                File[] fLogFiles = fLogFolder.listFiles();
-                if(fLogFiles != null){
-                    for(File f: fLogFiles){
-                        if(f.isFile() && f.getName().startsWith(ci.sItemID)){
-                            if(!f.delete()){
-                                problemNotificationConfig("Could not delete log file associated with this item: " + f.getName() + ".");
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(bSuccess) {
-
-                //Delete the folder if the folder is now empty:
-                File fFolder = new File(sFileFolder);
-                String[] sFilesRemaining = fFolder.list();
-                if(sFilesRemaining != null) {
-                    if (sFilesRemaining.length == 0) {
-                        if (!fFolder.delete()) {
-                            problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + sFileFolder + ".");
-                        }
-                    }
-                }
-
-                //Now delete the item record from the Catalog File:
-                StringBuilder sbBuffer = new StringBuilder();
-                BufferedReader brReader;
-                brReader = new BufferedReader(new FileReader(globalClass.gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
-                sbBuffer.append(brReader.readLine());
-                sbBuffer.append("\n");
-
-                String sLine = brReader.readLine();
+            } else {
+                problemNotificationConfig("Could not find file at this location: " + sFullPath + ".");
                 bSuccess = false;
-                ItemClass_CatalogItem ciFromFile;
-                while (sLine != null) {
-                    ciFromFile = GlobalClass.ConvertStringToCatalogItem(sLine);
-                    if (!(ciFromFile.sItemID.equals(ci.sItemID))) {
-                        //If the line is not the comic we are trying to delete, transfer it over:
-                        sbBuffer.append(sLine);
-                        sbBuffer.append("\n");
-                    } else {
-                        //Item record is located and we are skipping copying it into the buffer (thus deleting it).
-                        bSuccess = true;
-                    }
-
-                    // read next line
-                    sLine = brReader.readLine();
-                }
-                brReader.close();
-
-                if(!bSuccess){
-                    problemNotificationConfig("Could not locate item data record (ID: " +
-                            GlobalClass.JumbleStorageText(ci.sItemID) +
-                            ") in CatalogContents.dat.\n" +
-                            globalClass.gfCatalogContentsFiles[ci.iMediaCategory]);
-
-                }
-
-                //Re-write the CatalogContentsFile without the deleted item's data record:
-                FileWriter fwNewCatalogContentsFile = new FileWriter(globalClass.gfCatalogContentsFiles[ci.iMediaCategory], false);
-                fwNewCatalogContentsFile.write(sbBuffer.toString());
-                fwNewCatalogContentsFile.flush();
-                fwNewCatalogContentsFile.close();
-
-
-                //Now update memory to no longer include the item:
-                globalClass.gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
-
-            } //End if for continuing after successful file deletion.
-
-        } catch (Exception e) {
-            problemNotificationConfig("Problem updating CatalogContents.dat.\n" + e.getMessage());
-            bSuccess = false;
+                bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
+            }
         }
+
+        File fLogFolder = globalClass.gfLogsFolder;
+        if(fLogFolder.exists()){
+            File[] fLogFiles = fLogFolder.listFiles();
+            if(fLogFiles != null){
+                for(File f: fLogFiles){
+                    if(f.isFile() && f.getName().startsWith(ci.sItemID)){
+                        if(!f.delete()){
+                            problemNotificationConfig("Could not delete log file associated with this item: " + f.getName() + ".");
+                        }
+                    }
+                }
+            }
+        }
+
+        if(bSuccess) {
+
+            //Delete the folder if the folder is now empty:
+            File fFolder = new File(sFileFolder);
+            String[] sFilesRemaining = fFolder.list();
+            if(sFilesRemaining != null) {
+                if (sFilesRemaining.length == 0) {
+                    if (!fFolder.delete()) {
+                        problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + sFileFolder + ".");
+                    }
+                }
+            }
+
+            //Now delete the item record from the Catalog File:
+            bSuccess = deleteItemFromCatalogFile(ci);
+
+            //End if for continuing after successful file deletion.
+        } else {
+            //Check to see if this is a single video file or single image file. If so, deletion
+            //  failue most likely due to unable to find file. If this is true, delete the catalog
+            //  item.
+            if(ci.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES ||
+                    (ci.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
+                            (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_NO_CODE || ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE))){
+                if(bSingleFileDeleteAndFileNotFound){
+
+                    bSuccess = deleteItemFromCatalogFile(ci);
+
+                }
+            }
+        }
+
+
 
         //Broadcast the result of the delete item action:
         Intent broadcastIntent_DeleteCatalogItemResponse = new Intent();
@@ -292,6 +264,60 @@ public class Service_CatalogViewer extends IntentService {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);
 
 
+    }
+
+    private boolean deleteItemFromCatalogFile(ItemClass_CatalogItem ci){
+        boolean bSuccess = true;
+        GlobalClass globalClass = (GlobalClass)getApplicationContext();
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(globalClass.gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String sLine = brReader.readLine();
+            bSuccess = false;
+            ItemClass_CatalogItem ciFromFile;
+            while (sLine != null) {
+                ciFromFile = GlobalClass.ConvertStringToCatalogItem(sLine);
+                if (!(ciFromFile.sItemID.equals(ci.sItemID))) {
+                    //If the line is not the comic we are trying to delete, transfer it over:
+                    sbBuffer.append(sLine);
+                    sbBuffer.append("\n");
+                } else {
+                    //Item record is located and we are skipping copying it into the buffer (thus deleting it).
+                    bSuccess = true;
+                }
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            if(!bSuccess){
+                problemNotificationConfig("Could not locate item data record (ID: " +
+                        GlobalClass.JumbleStorageText(ci.sItemID) +
+                        ") in CatalogContents.dat.\n" +
+                        globalClass.gfCatalogContentsFiles[ci.iMediaCategory]);
+
+            }
+
+            //Re-write the CatalogContentsFile without the deleted item's data record:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(globalClass.gfCatalogContentsFiles[ci.iMediaCategory], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+
+            //Now update memory to no longer include the item:
+            globalClass.gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
+
+        } catch (Exception e) {
+            problemNotificationConfig("Problem updating CatalogContents.dat.\n" + e.getMessage());
+            bSuccess = false;
+        }
+        return bSuccess;
     }
 
     private void handleActionUpdateCatalogItem(ItemClass_CatalogItem ciToUpdate) {
