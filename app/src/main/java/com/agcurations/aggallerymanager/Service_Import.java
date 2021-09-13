@@ -1031,203 +1031,78 @@ public class Service_Import extends IntentService {
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
+                ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+                ciNew.sItemID = globalClass.getNewCatalogRecordID(iMediaCategory);
+
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
-                String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
-                //todo: VERY IMPORTANT IF USING A WORKER: sFileName = ID__ + "_" + dfSource.getName();
+                String sTempFileName = ciNew.sItemID + "_" + dfSource.getName(); //Create unique filename. Using ID will allow database error checking.
+                String sFileName = GlobalClass.JumbleFileName(sTempFileName);
                 File fDestinationFolder = new File(fDestination.getPath());
                 File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sFileName);
-                //Check to see if the file already exists in the destination, and if so, create a new filename:
-                int i = 0;
-                String sTempFileName = sFileName;
-                while(fDestinationFile.exists()){
-                    i++;
-                    sTempFileName = GlobalClass.JumbleFileName(sFileName);
-                    int j = sTempFileName.lastIndexOf(".");
-                    if(j > 0) {
-                        sTempFileName = sTempFileName.substring(0, j) + "(" + i + ")" + sTempFileName.substring(j);
-                    } else {
-                        sTempFileName = sTempFileName + "(" + i + ")";
-                    }
-                    sTempFileName = GlobalClass.JumbleFileName(sTempFileName);
-                    fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sTempFileName);
-                }
-                sFileName = sTempFileName;
 
-                boolean bCopyViaStream = true;
+                boolean bCopyViaWorker = true;
+                if(bCopyViaWorker){
 
-                /*File fIdentifiedLocalSource = null;
-                if(iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                    //Attempt to determine if the file being imported is local, and if it is,
-                    //  attempt to move the file using File.move rather than stream copy followed
-                    //  by delete.
-                    String sSourcePath = dfSource.getUri().toString();
-                    while(sSourcePath.contains("%")){
-                        int iStart = sSourcePath.indexOf("%");
-                        if(sSourcePath.length() < (iStart + 3)){
-                            bCopyViaStream = true;
-                            break;
-                        }
-                        String sHex = sSourcePath.substring(iStart, iStart + 3);
-                        char cChar = ((char) Integer.parseInt(sHex.substring(1,3), 16));
-                        sSourcePath = sSourcePath.replace(sHex, Character.toString(cChar));
-                    }
-                    String sSourceIntermediatePath = "";
-                    if(sSourcePath.contains(":")) {
-                        if((sSourcePath.lastIndexOf(":") + 1) < sSourcePath.length()) {
-                            sSourceIntermediatePath = sSourcePath.substring(sSourcePath.lastIndexOf(":") + 1);
-                        }
-                    } else {
-                        bCopyViaStream = true;
-                    }
-                    if(sSourceIntermediatePath.length() > 0) {
-                        String sAF = globalClass.gfAppFolder.getAbsolutePath();
-                        String[] sPathFolders = sAF.split("/");
+                    //Create a file with a listing of the files to be copied/moved:
+                    String sDateTime = GlobalClass.GetTimeStampFileSafe();
+                    String sJobFileName = "Job_" + sDateTime + ".txt";
+                    final String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
+                            File.separator + sJobFileName;
+                    final File fJobFile = new File(sJobFilePath);
+                    FileWriter fwJobFile;
+                    fwJobFile = new FileWriter(fJobFile, true);
 
-                        if (sPathFolders.length >= 2) {
-                            //Build the alternative path:
-                            //Expecting /storage/0000-0000/...
-                            String sAlternativeSourceBase = File.separator +sPathFolders[1] + File.separator + sPathFolders[2] + File.separator;
-                            sSourcePath = sAlternativeSourceBase + sSourceIntermediatePath;
-                        } else {
-                            bCopyViaStream = true;
-                        }
-                    }
-                    if(!bCopyViaStream){
-                        //Check to see if the file exists in the local location:
-                        fIdentifiedLocalSource = new File(sSourcePath);
-                        if(!fIdentifiedLocalSource.exists()){
-                            bCopyViaStream = true;
-                        }
-                    }
-                    if(!bCopyViaStream) {
-                        //Attempt to move the file:
-                        //"rename" the source file object to the destination file object.
-                        File fs = new File("/storage/emulated/0/SimCity4/New Folder/Bond/20121114230840.jpg");
-                        File fd = new File("/storage/emulated/0/Android/data/com.agcurations.aggallerymanager/files/Images/29/04803241112102.gpj");
-                        if(fs.renameTo(fd)){
-                        //if(fIdentifiedLocalSource.renameTo(fDestinationFile)) {
-                            lProgressNumerator += fIdentifiedLocalSource.length();
-                        } else {
-                            bCopyViaStream = true;
-                        }
+                    String sLine = dfSource.getUri() + "\t" + fileItem.sDestinationFolder + "\t" + fDestinationFile.getName() + "\n";
+                    fwJobFile.write(sLine);
 
-                    }
+                    fwJobFile.flush();
+                    fwJobFile.close();
+
+                    //Build-out data to send to the worker:
+                    Data dataLocalFileTransfer = new Data.Builder()
+                            .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sDateTime)
+                            .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
+                            .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
+                            .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
+                            .build();
+                    OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
+                            .setInputData(dataLocalFileTransfer)
+                            .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
+                            .build();
+                    UUID UUIDWorkID = otwrLocalFileTransfer.getId();
+                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
                 } else {
-                    bCopyViaStream = true;
-                }*/
-                /*String sDestinationFolder = "content://com.android.externalstorage.documents/tree/0000-0000%3AAndroid%2Fdata%2Fcom.agcurations.aggallerymanager%2Ffiles%2FVideos%2F7";
-                Uri uriDestinationFolder = Uri.parse(sDestinationFolder);
-                URI uri1 = URI.create(sDestinationFolder);
+                    inputStream = contentResolver.openInputStream(dfSource.getUri());
 
-                //First, attempt to transfer the document using DocumentsContract:
-                Uri uriTransferredDocument = null;
-                DocumentFile dfParentFile = dfSource.getParentFile();
+                    outputStream = new FileOutputStream(fDestinationFile.getPath());
+                    int iLoopCount = 0;
+                    byte[] buffer = new byte[100000];
+                    if (inputStream == null) continue;
+                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                        outputStream.write(buffer, 0, buffer.length);
+                        lProgressNumerator += lLoopBytesRead;
+                        iLoopCount++;
+                        if (iLoopCount % 10 == 0) {
+                            //Send update every 10 loops:
+                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                            BroadcastProgress(false, "",
+                                    true, iProgressBarValue,
+                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        }
+                    }
+                    outputStream.flush();
+                    outputStream.close();
 
-
-                //Attempt to copy via move when on the same device was unsuccessful because I was unable
-                //  to get a DocumentFile for the destination.
-
-                //if(dfParentFile != null) {
+                    sLogLine = "Success.\n";
                     if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        //Attempt to move the document using DocumentsContract.moveDocument:
-                        uriTransferredDocument = DocumentsContract.moveDocument(
-                                getContentResolver(),
-                                dfSource.getUri(),
-                                dfSource.getUri(),
-                                uriDestinationFolder);
-                    } else if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_COPY) {
-                        //Attempt to move the document using DocumentsContract.moveDocument:
-                        uriTransferredDocument = DocumentsContract.copyDocument(
-                                getContentResolver(),
-                                dfSource.getUri(),
-                                uriDestinationFolder);
-                    }
-                //}
-                if(uriTransferredDocument == null){
-                    bCopyViaStream = true; //If the document move failed... copy via stream.
-                } else {
-                    //If DocumentsContract transfer succeeded, rename the file to the Jumbled filename:
-                    DocumentFile dfMovedFile = DocumentFile.fromSingleUri(getApplicationContext(), uriTransferredDocument);
-                    if(!dfMovedFile.renameTo(sFileName)) {
-                        BroadcastProgress(true, "Problem renaming transferred file.",
-                                false, iProgressBarValue,
-                                false, "");
-                    }
-                    lProgressNumerator += fileItem.sizeBytes;
-                }*/
-                //bCopyViaStream = true;
-
-                //If we need to copy via stream:
-                if(bCopyViaStream) {
-                    boolean bCopyViaWorker = true;
-                    if(bCopyViaWorker){
-                        //Create a file with a listing of the files to be copied/moved:
-                        String sDateTime = GlobalClass.GetTimeStampFileSafe();
-                        String sJobFileName = "Job_" + sDateTime + ".txt";
-                        final String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
-                                File.separator + sJobFileName;
-                        final File fJobFile = new File(sJobFilePath);
-                        FileWriter fwJobFile;
-                        fwJobFile = new FileWriter(fJobFile, true);
-
-                        String sLine = dfSource.getUri() + "\t" + fileItem.sDestinationFolder + "\t" + fDestinationFile.getName() + "\n";
-                        fwJobFile.write(sLine);
-
-                        fwJobFile.flush();
-                        fwJobFile.close();
-
-                        //Build-out data to send to the worker:
-                        Data dataLocalFileTransfer = new Data.Builder()
-                                .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sDateTime)
-                                .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
-                                .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
-                                .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
-                                .build();
-                        OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
-                                .setInputData(dataLocalFileTransfer)
-                                .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
-                                .build();
-                        UUID UUIDWorkID = otwrLocalFileTransfer.getId();
-                        WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
-
-
-
-
-
-
-
-                    } else {
-                        inputStream = contentResolver.openInputStream(dfSource.getUri());
-
-                        outputStream = new FileOutputStream(fDestinationFile.getPath());
-                        int iLoopCount = 0;
-                        byte[] buffer = new byte[100000];
-                        if (inputStream == null) continue;
-                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                            outputStream.write(buffer, 0, buffer.length);
-                            lProgressNumerator += lLoopBytesRead;
-                            iLoopCount++;
-                            if (iLoopCount % 10 == 0) {
-                                //Send update every 10 loops:
-                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                                BroadcastProgress(false, "",
-                                        true, iProgressBarValue,
-                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                            }
-                        }
-                        outputStream.flush();
-                        outputStream.close();
-
-                        sLogLine = "Success.\n";
-                        if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                            if (!dfSource.delete()) {
-                                sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                            }
+                        if (!dfSource.delete()) {
+                            sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                         }
                     }
                 }
+
 
 
                 //Update the progress bar for the file move/copy:
@@ -1243,9 +1118,8 @@ public class Service_Import extends IntentService {
                 //Create a timestamp to be used to create the data record:
                 Double dTimeStamp = GlobalClass.GetTimeStampFloat();
 
-                ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+
                 ciNew.iMediaCategory = iMediaCategory;
-                ciNew.sItemID = globalClass.getNewCatalogRecordID(iMediaCategory);
                 ciNew.sFilename = sFileName;
                 ciNew.lSize = fileItem.lSizeBytes;
                 ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
