@@ -359,12 +359,25 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             Glide.with(getApplicationContext()).load(galFileItems.get(giFileItemIndex).sUri).into(gImagePreview);
         }
 
-        CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+        final CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
         checkBox_ImportItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //Check/uncheck the checkbox.
                 galFileItems.get(giFileItemIndex).bIsChecked = ((CheckBox)view).isChecked();
+                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+
+                //Update result to send back to the calling activity (this is also done on tag change):
+                setResult(RESULT_OK);
+            }
+        });
+        TextView textView_LabelImport = findViewById(R.id.textView_LabelImport);
+        textView_LabelImport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Check/uncheck the checkbox.
+                checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
+                galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
                 galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
 
                 //Update result to send back to the calling activity (this is also done on tag change):
