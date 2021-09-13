@@ -89,6 +89,15 @@ public class Service_Main extends IntentService {
                 }
             }
 
+            //Create Logs folder if it does not exist:
+            String sJobFilesFolderPath = globalClass.gfAppFolder + File.separator + "JobFiles";
+            globalClass.gfJobFilesFolder = new File(sJobFilesFolderPath);
+            if(!globalClass.gfJobFilesFolder.exists()){
+                if(!globalClass.gfJobFilesFolder.mkdir()){
+                    problemNotificationConfig("Could not create JobFiles folder.");
+                }
+            }
+
             //Create Backup folder if it does not exist:
             String sBackupFolderPath = globalClass.gfAppFolder + File.separator + "Backup";
             File fBackupFolderPath = new File(sBackupFolderPath);

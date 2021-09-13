@@ -1033,6 +1033,7 @@ public class Service_Import extends IntentService {
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 String sFileName = GlobalClass.JumbleFileName(dfSource.getName());
+                //todo: VERY IMPORTANT IF USING A WORKER: sFileName = ID__ + "_" + dfSource.getName();
                 File fDestinationFolder = new File(fDestination.getPath());
                 File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sFileName);
                 //Check to see if the file already exists in the destination, and if so, create a new filename:
@@ -1159,32 +1160,71 @@ public class Service_Import extends IntentService {
 
                 //If we need to copy via stream:
                 if(bCopyViaStream) {
-                    inputStream = contentResolver.openInputStream(dfSource.getUri());
+                    boolean bCopyViaWorker = true;
+                    if(bCopyViaWorker){
+                        //Create a file with a listing of the files to be copied/moved:
+                        String sDateTime = GlobalClass.GetTimeStampFileSafe();
+                        String sJobFileName = "Job_" + sDateTime + ".txt";
+                        final String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
+                                File.separator + sJobFileName;
+                        final File fJobFile = new File(sJobFilePath);
+                        FileWriter fwJobFile;
+                        fwJobFile = new FileWriter(fJobFile, true);
 
-                    outputStream = new FileOutputStream(fDestinationFile.getPath());
-                    int iLoopCount = 0;
-                    byte[] buffer = new byte[100000];
-                    if (inputStream == null) continue;
-                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                        outputStream.write(buffer, 0, buffer.length);
-                        lProgressNumerator += lLoopBytesRead;
-                        iLoopCount++;
-                        if (iLoopCount % 10 == 0) {
-                            //Send update every 10 loops:
-                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                            BroadcastProgress(false, "",
-                                    true, iProgressBarValue,
-                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        String sLine = dfSource.getUri() + "\t" + fileItem.sDestinationFolder + "\t" + fDestinationFile.getName() + "\n";
+                        fwJobFile.write(sLine);
+
+                        fwJobFile.flush();
+                        fwJobFile.close();
+
+                        //Build-out data to send to the worker:
+                        Data dataLocalFileTransfer = new Data.Builder()
+                                .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sDateTime)
+                                .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
+                                .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
+                                .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
+                                .build();
+                        OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
+                                .setInputData(dataLocalFileTransfer)
+                                .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
+                                .build();
+                        UUID UUIDWorkID = otwrLocalFileTransfer.getId();
+                        WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
+
+
+
+
+
+
+
+                    } else {
+                        inputStream = contentResolver.openInputStream(dfSource.getUri());
+
+                        outputStream = new FileOutputStream(fDestinationFile.getPath());
+                        int iLoopCount = 0;
+                        byte[] buffer = new byte[100000];
+                        if (inputStream == null) continue;
+                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                            outputStream.write(buffer, 0, buffer.length);
+                            lProgressNumerator += lLoopBytesRead;
+                            iLoopCount++;
+                            if (iLoopCount % 10 == 0) {
+                                //Send update every 10 loops:
+                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                BroadcastProgress(false, "",
+                                        true, iProgressBarValue,
+                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            }
                         }
-                    }
-                    outputStream.flush();
-                    outputStream.close();
+                        outputStream.flush();
+                        outputStream.close();
 
-                    sLogLine = "Success.\n";
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        if (!dfSource.delete()) {
-                            sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                        sLogLine = "Success.\n";
+                        if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                            if (!dfSource.delete()) {
+                                sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                            }
                         }
                     }
                 }

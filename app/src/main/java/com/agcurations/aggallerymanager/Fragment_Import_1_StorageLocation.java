@@ -6,7 +6,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.UriPermission;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResult;
@@ -35,6 +37,7 @@ import android.widget.Toast;
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -287,7 +290,16 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         if(result.getData() == null) {
                             return;
                         }
-                        Activity_Import.guriImportTreeURI = result.getData().getData();
+                        Intent data = result.getData();
+                        Uri treeUri = data.getData();
+                        Activity_Import.guriImportTreeURI = treeUri;
+                        List<UriPermission> uriPermissionList;
+                        uriPermissionList = getActivity().getContentResolver().getPersistedUriPermissions();
+                        final int takeFlags = data.getFlags() & (
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        getActivity().getContentResolver().takePersistableUriPermission(treeUri,
+                                takeFlags);
+                        uriPermissionList = getActivity().getContentResolver().getPersistedUriPermissions();
 
                         assert Activity_Import.guriImportTreeURI != null;
                         DocumentFile df1 = DocumentFile.fromTreeUri(getActivity(), Activity_Import.guriImportTreeURI);
