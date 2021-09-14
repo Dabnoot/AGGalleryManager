@@ -141,21 +141,25 @@ public class Worker_LocalFileTransfer extends Worker {
                 BufferedReader brReader;
                 try {
                     brReader = new BufferedReader(new FileReader(fJobFile.getAbsolutePath()));
-                    String sLine = brReader.readLine();
+
                     int j = 0;
-                    while (sLine != null) {
+                    do {
+                        String sLine = brReader.readLine();
+                        if(sLine == null){
+                            break;
+                        }
+
                         j++;
                         if (!sLine.equals("")) {
                             String[] sTemp = sLine.split("\t");
                             if (sTemp.length == 3) {
 
-                                String sDestinationFolder = sTemp[DESTINATION_FOLDER];
+                                String sDestinationFolder = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator + sTemp[DESTINATION_FOLDER];
                                 String sDestinationFileName = sTemp[DESTINATION_FILENAME];
 
-                                //This folder should always exist, but just make sure it is there, just in case...
                                 File fDestinationFolder = new File(sDestinationFolder);
-                                if(!fDestinationFolder.exists()) {
-                                    if(!fDestinationFolder.mkdir()){
+                                if (!fDestinationFolder.exists()) {
+                                    if (!fDestinationFolder.mkdir()) {
                                         sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + j + ": " + sJobFilePath;
                                         fwLogFile.write(sMessage + "\n");
                                         bProblemWithFileTransfer = true;
@@ -169,30 +173,26 @@ public class Worker_LocalFileTransfer extends Worker {
                                 Uri uriSourceFile = Uri.parse(sSourceFileUri);
                                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
                                 if (dfSource == null) {
-                                    sLine = brReader.readLine(); //Read the next line before skipping to the next iteration. //todo: figure out logic to use readLine only once in this loop.
                                     continue;
                                 }
-                                if (dfSource.getName() == null){
-                                    sLine = brReader.readLine(); //Read the next line before skipping to the next iteration.
+                                if (dfSource.getName() == null) {
                                     continue;
                                 }
 
-                                if(dfSource.exists()){
-                                    String sDestinationFileFullPath = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath()
-                                            + File.separator + sDestinationFolder + File.separator + sDestinationFileName;
+                                if (dfSource.exists()) {
+                                    String sDestinationFileFullPath = sDestinationFolder + File.separator + sDestinationFileName;
                                     File fDestinationFile = new File(sDestinationFileFullPath);
-                                    if(fDestinationFile.exists()){
+                                    if (fDestinationFile.exists()) {
                                         //The file copy has already been executed by a previous instance of this requested worker.
                                         //If the operation was a move operation, we are here only because the source file still
                                         //  exists. Attempt to delete the source file.
-                                        if(giCopyOrMove == LOCAL_FILE_TRANSFER_MOVE) {
+                                        if (giCopyOrMove == LOCAL_FILE_TRANSFER_MOVE) {
                                             if (!dfSource.delete()) {
-                                                sMessage = "Source file copied, but could not delete source file as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + j + " in job file " + sJobFilePath;
+                                                sMessage = "Source file copied, but could not delete source file, " + dfSource.getName() + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + j + " in job file " + sJobFilePath;
                                                 fwLogFile.write(sMessage + "\n");
                                                 bProblemWithFileTransfer = true;
                                             }
                                         }
-                                        sLine = brReader.readLine(); //Read the next line before skipping to the next iteration.
                                         continue; //Skip to the end of the loop and read the next line in the job file.
                                     }
                                     //Destination file does not exist.
@@ -205,13 +205,16 @@ public class Worker_LocalFileTransfer extends Worker {
                                         sLogLine = "Copying ";
                                     }
                                     sLogLine = sLogLine + " file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
+                                    fwLogFile.write(sLogLine + "\n");
                                     ContentResolver contentResolver = getApplicationContext().getContentResolver();
                                     InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
 
                                     OutputStream outputStream = new FileOutputStream(fDestinationFile.getPath());
                                     int iLoopCount = 0;
                                     byte[] buffer = new byte[100000];
-                                    if (inputStream == null) continue;
+                                    if (inputStream == null) {
+                                        continue;
+                                    }
                                     while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
                                         outputStream.write(buffer, 0, buffer.length);
                                         lProgressNumerator += lLoopBytesRead;
@@ -224,15 +227,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                     outputStream.flush();
                                     outputStream.close();
 
-                                    sLogLine = "Success.\n";
+                                    sLogLine = " Success.\n";
                                     fwLogFile.write(sLogLine + "\n");
 
                                     if (giCopyOrMove == LOCAL_FILE_TRANSFER_MOVE) {
                                         if (!dfSource.delete()) {
-                                            sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                            sLogLine = "Could not delete source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                                             fwLogFile.write(sLogLine + "\n");
                                         } else {
-                                            sLogLine = "\nSuccess deleting source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                            sLogLine = "Success deleting source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                                             fwLogFile.write(sLogLine + "\n");
                                         }
                                     }
@@ -246,10 +249,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
                         }
-                        sLine = brReader.readLine();
-                    }
+                    } while (true);
                     brReader.close();
-
 
                 } catch (IOException e) {
                     sMessage = "Problem reading job file: " + sJobFilePath;
