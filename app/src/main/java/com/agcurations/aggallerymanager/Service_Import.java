@@ -969,6 +969,47 @@ public class Service_Import extends IntentService {
         }
         lProgressDenominator = lTotalImportSize;
 
+        String sLogLine;
+
+        boolean bCopyViaWorker = true;
+        String sJobDateTime = "";
+        String sJobFileName = "";
+        FileWriter fwJobFile = null;
+        if(bCopyViaWorker) {
+            //Inform user of preparation of worker:
+            String sMoveOrCopy;
+            if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                sMoveOrCopy = "move";
+            } else {
+                sMoveOrCopy = "copy";
+            }
+            sLogLine = "Using background worker for file " + sMoveOrCopy + " operations.\n"
+                     + "Preparing job file.\n\n";
+            lProgressDenominator = alFileList.size();
+            BroadcastProgress(true, sLogLine,
+                    false, iProgressBarValue,
+                    true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+            //Create a file with a listing of the files to be copied/moved:
+            sJobDateTime = GlobalClass.GetTimeStampFileSafe();
+            sJobFileName = "Job_" + sJobDateTime + ".txt";
+            String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
+                    File.separator + sJobFileName;
+            File fJobFile = new File(sJobFilePath);
+            try {
+                fwJobFile = new FileWriter(fJobFile, true);
+            } catch (Exception e){
+                BroadcastProgress(true, "Unable to open job file for writing at: " + sJobFilePath + "\n",
+                        false, iProgressBarValue,
+                        true, "Operation halted.",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                return;
+            }
+        }
+
+        ArrayList<String> alsVerifiedDestinationFolders = new ArrayList<>(); //Used to avoid re-confirm and additional messaging.
+
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
 
@@ -976,60 +1017,59 @@ public class Service_Import extends IntentService {
                 fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }
 
-            File fDestination = new File(
-                    globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                            fileItem.sDestinationFolder);
+            String sDestination = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                    fileItem.sDestinationFolder;
+            File fDestination = new File(sDestination);
 
-            if (!fDestination.exists()) {
-                if (!fDestination.mkdir()) {
-                    //Unable to create directory
-                    BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
-                            false, iProgressBarValue,
-                            true, "Operation halted.",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                    return;
+            if( !alsVerifiedDestinationFolders.contains(sDestination)) {
+
+                if (!fDestination.exists()) {
+                    if (!fDestination.mkdir()) {
+                        //Unable to create directory
+                        BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                                false, iProgressBarValue,
+                                true, "Operation halted.",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        return;
+                    } else {
+                        alsVerifiedDestinationFolders.add(sDestination);
+                        BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                                false, iProgressBarValue,
+                                false, "",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    }
                 } else {
-                    BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
-                            false, iProgressBarValue,
+                    alsVerifiedDestinationFolders.add(sDestination);
+                    BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                            true, iProgressBarValue,
                             false, "",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
-            } else {
-                BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
-                        true, iProgressBarValue,
-                        false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
-
             Uri uriSourceFile;
-            String sLogLine;
             InputStream inputStream;
             OutputStream outputStream;
 
             uriSourceFile = Uri.parse(fileItem.sUri);
             DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+            boolean bProblemWithSourceFile = false;
             if (dfSource == null) {
-                BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
+                bProblemWithSourceFile = true;
+            }
+            if (dfSource.getName() == null){
+                bProblemWithSourceFile = true;
+            }
+            if(bProblemWithSourceFile){
+                BroadcastProgress(true, "Problem with source reference for " + fileItem.sFileOrFolderName + "\n",
                         false, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 lProgressNumerator += fileItem.lSizeBytes;
                 continue;
             }
-            if (dfSource.getName() == null) continue;
 
             try {
-                //Write next behavior to the screen log:
-                if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                    sLogLine = "Moving ";
-                } else {
-                    sLogLine = "Copying ";
-                }
-                sLogLine = sLogLine + " file " + fileItem.sFileOrFolderName + " to destination...";
-                BroadcastProgress(true, sLogLine,
-                        false, iProgressBarValue,
-                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
 
                 ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
                 ciNew.sItemID = globalClass.getNewCatalogRecordID(iMediaCategory);
@@ -1037,42 +1077,37 @@ public class Service_Import extends IntentService {
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 String sTempFileName = ciNew.sItemID + "_" + dfSource.getName(); //Create unique filename. Using ID will allow database error checking.
                 String sFileName = GlobalClass.JumbleFileName(sTempFileName);
-                File fDestinationFolder = new File(fDestination.getPath());
-                File fDestinationFile = new File(fDestinationFolder.getPath() + File.separator + sFileName);
+                File fDestinationFile = new File(fDestination.getPath() + File.separator + sFileName);
 
-                boolean bCopyViaWorker = true;
                 if(bCopyViaWorker){
 
-                    //Create a file with a listing of the files to be copied/moved:
-                    String sDateTime = GlobalClass.GetTimeStampFileSafe();
-                    String sJobFileName = "Job_" + sDateTime + ".txt";
-                    final String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
-                            File.separator + sJobFileName;
-                    final File fJobFile = new File(sJobFilePath);
-                    FileWriter fwJobFile;
-                    fwJobFile = new FileWriter(fJobFile, true);
+                    //Write next behavior to the screen log:
+                    sLogLine = "Writing data to job file: " + fileItem.sFileOrFolderName + ".\n";
+                    lProgressNumerator++;
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                     String sLine = dfSource.getUri() + "\t" + fileItem.sDestinationFolder + "\t" + fDestinationFile.getName() + "\n";
                     fwJobFile.write(sLine);
 
-                    fwJobFile.flush();
-                    fwJobFile.close();
-
-                    //Build-out data to send to the worker:
-                    Data dataLocalFileTransfer = new Data.Builder()
-                            .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sDateTime)
-                            .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
-                            .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
-                            .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
-                            .build();
-                    OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
-                            .setInputData(dataLocalFileTransfer)
-                            .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
-                            .build();
-                    UUID UUIDWorkID = otwrLocalFileTransfer.getId();
-                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
                 } else {
+
+                    //Write next behavior to the screen log:
+                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                        sLogLine = "Moving ";
+                    } else {
+                        sLogLine = "Copying ";
+                    }
+                    sLogLine = sLogLine + " file " + fileItem.sFileOrFolderName + " to destination...";
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
                     inputStream = contentResolver.openInputStream(dfSource.getUri());
 
                     outputStream = new FileOutputStream(fDestinationFile.getPath());
@@ -1094,6 +1129,7 @@ public class Service_Import extends IntentService {
                     }
                     outputStream.flush();
                     outputStream.close();
+                    //This file has now been copied.
 
                     sLogLine = "Success.\n";
                     if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
@@ -1101,23 +1137,20 @@ public class Service_Import extends IntentService {
                             sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                         }
                     }
-                }
 
+                    //Update the progress bar for the file move/copy:
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
+                } //End else if copying via this routine (versus assigning to a worker).
 
-                //Update the progress bar for the file move/copy:
-                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                BroadcastProgress(true, sLogLine,
-                        false, iProgressBarValue,
-                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                //This file has now been copied.
                 //Next add the data to the catalog file and memory:
 
                 //Create a timestamp to be used to create the data record:
                 Double dTimeStamp = GlobalClass.GetTimeStampFloat();
-
 
                 ciNew.iMediaCategory = iMediaCategory;
                 ciNew.sFilename = sFileName;
@@ -1148,15 +1181,48 @@ public class Service_Import extends IntentService {
             }
 
 
+        } //End file processing loop.
+
+        if(bCopyViaWorker){
+
+            //Close the job file, written-to in the file loop above:
+            try {
+                fwJobFile.flush();
+                fwJobFile.close();
+            } catch (Exception e){
+                BroadcastProgress(true, "Problem with closing the job file. This may be a recoverable error.\n" + e.getMessage(),
+                        false, iProgressBarValue,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+            }
+            //Write next behavior to the screen log:
+            sLogLine = "\nStarting worker to process job file.\n\n"
+                    + "Files will appear in the catalog as the worker progresses.\n"
+                    + "Refresh the catalog viewer (exit/re-enter, change sort direction) to view newly-added files.\n";
+            BroadcastProgress(true, sLogLine,
+                    false, iProgressBarValue,
+                    true, lProgressNumerator + "/" + lProgressDenominator + " files written to job file",
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+            //Build-out data to send to the worker:
+            Data dataLocalFileTransfer = new Data.Builder()
+                    .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
+                    .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
+                    .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
+                    .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
+                    .build();
+            OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
+                    .setInputData(dataLocalFileTransfer)
+                    .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
+                    .build();
+            UUID UUIDWorkID = otwrLocalFileTransfer.getId();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
+
         }
 
-        //Modify viewer settings to show the newly-imported files:
-        /*globalClass.giCatalogViewerSortBySetting[iMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[iMediaCategory] = false;*/ //Handled in onHandleIntent.
-
         BroadcastProgress(true, "Operation complete.",
-                true, iProgressBarValue,
-                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                false, iProgressBarValue,
+                false, "",
                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
     }
