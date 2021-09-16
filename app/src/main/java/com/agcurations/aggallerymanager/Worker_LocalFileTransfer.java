@@ -52,16 +52,19 @@ public class Worker_LocalFileTransfer extends Worker {
     public static final String KEY_ARG_JOB_FILE = "KEY_ARG_JOB_FILE";
     public static final String KEY_ARG_MEDIA_CATEGORY = "KEY_ARG_MEDIA_CATEGORY";
     public static final String KEY_ARG_COPY_OR_MOVE = "KEY_ARG_COPY_OR_MOVE";
+    public static final String KEY_ARG_TOTAL_IMPORT_SIZE = "KEY_ARG_TOTAL_IMPORT_SIZE";
 
     public static final int LOCAL_FILE_TRANSFER_MOVE = 0;
     public static final int LOCAL_FILE_TRANSFER_COPY = 1;
 
+    public static final String WORKER_PROGRESS = "WORKER_PROGRESS";
 
     //=========================
     String gsJobRequestDateTime;    //Date/Time of job request for logging purposes.
     String gsJobFile;               //Name of file containing a list of files to transfer
     int giMediaCategory;            //Media category for base folder determination
     int giCopyOrMove;               //Copy the files or move the files?
+    long glTotalImportSize;         //Collective file size of the import operation, for reporting progress.
 
     //=========================
 
@@ -69,14 +72,14 @@ public class Worker_LocalFileTransfer extends Worker {
             @NonNull Context appContext,
             @NonNull WorkerParameters workerParameters) {
         super(appContext, workerParameters);
-        /*// Set initial progress to 0
-        setProgressAsync(new Data.Builder().putInt(PROGRESS, 0).build());*/
+        // Set initial progress to 0
+        setProgressAsync(new Data.Builder().putInt(WORKER_PROGRESS, 0).build());
 
         gsJobRequestDateTime = getInputData().getString(KEY_ARG_JOB_REQUEST_DATETIME);
         gsJobFile = getInputData().getString(KEY_ARG_JOB_FILE);
         giCopyOrMove = getInputData().getInt(KEY_ARG_COPY_OR_MOVE, LOCAL_FILE_TRANSFER_COPY);
         giMediaCategory = getInputData().getInt(KEY_ARG_MEDIA_CATEGORY, -1);
-
+        glTotalImportSize = getInputData().getLong(KEY_ARG_TOTAL_IMPORT_SIZE, -1);
     }
 
     @NonNull

@@ -7,8 +7,10 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+import androidx.work.Worker;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
@@ -57,7 +59,7 @@ public class Activity_Main extends AppCompatActivity {
 
     ProgressBar progressBar_WorkerTest;
     TextView textView_WorkerTest;
-    Observer<WorkInfo> workInfoObserver_VideoConcatenator;
+    Observer<WorkInfo> workInfoObserver_TrackingTest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,52 +94,7 @@ public class Activity_Main extends AppCompatActivity {
         progressBar_WorkerTest.setMax(100);
         textView_WorkerTest = findViewById(R.id.textView_WorkerTest);
 
-        /*//Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
-        workInfoObserver_VideoConcatenator = new Observer<WorkInfo>() {
-            @Override
-            public void onChanged(WorkInfo workInfo) {
-                if (workInfo != null) {
-                    Data progress = workInfo.getProgress();
-                    int value = progress.getInt(Worker_VideoPostProcessing.PROGRESS, 0);
-                    String sFileName = progress.getString(Worker_VideoPostProcessing.FILENAME);
 
-                    if(progressBar_WorkerTest != null && textView_WorkerTest != null)
-                    if (workInfo.getState() == WorkInfo.State.RUNNING) {
-                        progressBar_WorkerTest.setVisibility(View.VISIBLE);
-                        progressBar_WorkerTest.setProgress(value);
-                        if (sFileName != null) {
-                            textView_WorkerTest.setVisibility(View.VISIBLE);
-                            textView_WorkerTest.setText(sFileName);
-                        }
-                    } else if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
-                        progressBar_WorkerTest.setVisibility(View.INVISIBLE);
-                        progressBar_WorkerTest.setProgress(0);
-                        textView_WorkerTest.setVisibility(View.INVISIBLE);
-                        textView_WorkerTest.setText("");
-                    }
-                }
-            }
-        };
-
-        //Look to see if there are any workers out there processing data for AGGalleryManager,
-        //  and if so, attempt to listen to their progress:
-        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_VideoPostProcessing.WORKER_VIDEO_POST_PROCESSING_TAG);
-        try {
-            int iWorkerCount = lfListWorkInfo.get().size();
-            for(int i = 0; i < iWorkerCount; i++) {
-                WorkInfo.State stateWorkState = lfListWorkInfo.get().get(i).getState();
-                UUID UUIDWorkID = lfListWorkInfo.get().get(i).getId();
-                Log.d("Workstate", stateWorkState.toString() + ", ID " + UUIDWorkID.toString());
-                if(stateWorkState == WorkInfo.State.RUNNING || stateWorkState == WorkInfo.State.ENQUEUED) {
-
-                    WorkManager wm = WorkManager.getInstance(getApplicationContext());
-                    LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
-                    ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);
-                }
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }*/
 
 
 
@@ -361,28 +318,28 @@ public class Activity_Main extends AppCompatActivity {
             return true;
         } else if(item.getItemId() == R.id.menu_Test) {
 
-            /*//Testing WorkManager for video concatenation:
+            //Testing WorkManager for video concatenation:
             //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
-            Data dataVideoConcatenator = new Data.Builder()
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_SEGMENT_FOLDER, "Test")
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, "TestOutputConcatenation.mpeg")
+            String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
+            Data dataTrackingTest = new Data.Builder()
+                    .putString(Worker_TrackingTest.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
                     .build();
-            OneTimeWorkRequest otwrVideoConcatenation = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
-                    .setInputData(dataVideoConcatenator)
-                    .addTag(Worker_VideoPostProcessing.WORKER_VIDEOCONCATENATOR_TAG) //To allow finding the worker later.
+            OneTimeWorkRequest otwrWorkerTrackingTest = new OneTimeWorkRequest.Builder(Worker_TrackingTest.class)
+                    .setInputData(dataTrackingTest)
+                    .addTag(Worker_TrackingTest.WORKER_TRACKING_TEST_TAG) //To allow finding the worker later.
                     .build();
-            UUID UUIDWorkID = otwrVideoConcatenation.getId();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoConcatenation);
+            UUID UUIDWorkID = otwrWorkerTrackingTest.getId();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrWorkerTrackingTest);
 
             //Next: configure worker to write progressbar on ActivityMain.
 
             WorkManager wm = WorkManager.getInstance(getApplicationContext());
             LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
-            ldWorkInfo.observe(this, workInfoObserver_VideoConcatenator);*/
+            ldWorkInfo.observe(this, workInfoObserver_TrackingTest);
 
+            Toast.makeText(getApplicationContext(), "Worker started with job datetime " + sJobDateTime, Toast.LENGTH_SHORT).show();
 
-
-            Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();
 
             return true; //End Test Options item.
         } else {
@@ -425,6 +382,60 @@ public class Activity_Main extends AppCompatActivity {
             //Remove obfuscation:
             RemoveObfuscation();
         }
+
+
+        //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
+        workInfoObserver_TrackingTest = new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(WorkInfo workInfo) {
+                if (workInfo != null) {
+                    Data progress = workInfo.getProgress();
+                    int value = progress.getInt(Worker_TrackingTest.WORKER_PROGRESS, 0);
+                    String sWorkerID = progress.getString(Worker_TrackingTest.WORKER_ID);
+
+                    if(progressBar_WorkerTest != null && textView_WorkerTest != null)
+                        if (workInfo.getState() == WorkInfo.State.RUNNING) {
+                            progressBar_WorkerTest.setVisibility(View.VISIBLE);
+                            progressBar_WorkerTest.setProgress(value);
+                            if (sWorkerID != null) {
+                                textView_WorkerTest.setVisibility(View.VISIBLE);
+                                textView_WorkerTest.setText(sWorkerID);
+                            }
+                        } else if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                            progressBar_WorkerTest.setVisibility(View.INVISIBLE);
+                            progressBar_WorkerTest.setProgress(0);
+                            textView_WorkerTest.setVisibility(View.INVISIBLE);
+                            textView_WorkerTest.setText("");
+                        }
+                }
+            }
+        };
+
+        //Look to see if there are any workers out there processing data for AGGalleryManager,
+        //  and if so, attempt to listen to their progress:
+        ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getApplicationContext()).getWorkInfosByTag(Worker_TrackingTest.WORKER_TRACKING_TEST_TAG);
+        try {
+            int iWorkerCount = lfListWorkInfo.get().size();
+            for(int i = 0; i < iWorkerCount; i++) {
+                WorkInfo.State stateWorkState = lfListWorkInfo.get().get(i).getState();
+                UUID UUIDWorkID = lfListWorkInfo.get().get(i).getId();
+                Log.d("Workstate", stateWorkState.toString() + ", ID " + UUIDWorkID.toString());
+                if(stateWorkState == WorkInfo.State.RUNNING || stateWorkState == WorkInfo.State.ENQUEUED) {
+
+                    WorkManager wm = WorkManager.getInstance(getApplicationContext());
+                    LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
+                    ldWorkInfo.observe(this, workInfoObserver_TrackingTest);
+                }
+            }
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+
+
+
+
     }
 
     public void FlipObfuscation() {

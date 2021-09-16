@@ -1090,7 +1090,10 @@ public class Service_Import extends IntentService {
                             true, "File " + lProgressNumerator + "/" + lProgressDenominator,
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                    String sLine = dfSource.getUri() + "\t" + fileItem.sDestinationFolder + "\t" + fDestinationFile.getName() + "\n";
+                    String sLine = dfSource.getUri() + "\t"
+                            + fileItem.sDestinationFolder + "\t"
+                            + fDestinationFile.getName() + "\t"
+                            + fileItem.lSizeBytes + "\n";
                     fwJobFile.write(sLine);
 
 
@@ -1210,6 +1213,7 @@ public class Service_Import extends IntentService {
                     .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
                     .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
                     .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
+                    .putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE, lTotalImportSize)
                     .build();
             OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
                     .setInputData(dataLocalFileTransfer)
