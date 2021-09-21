@@ -308,6 +308,10 @@ public class Activity_Main extends AppCompatActivity {
             Service_Main.startActionCatalogBackup(this);
 
             return true;
+        } else if(item.getItemId() == R.id.menu_WorkerConsole){
+            Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
+            startActivity(intentWorkerConsoleActivity);
+            return true;
         } else if(item.getItemId() == R.id.menu_LogViewer){
             Intent intentLogViewerActivity = new Intent(this, Activity_LogViewer.class);
             startActivity(intentLogViewerActivity);
@@ -390,13 +394,15 @@ public class Activity_Main extends AppCompatActivity {
             public void onChanged(WorkInfo workInfo) {
                 if (workInfo != null) {
                     Data progress = workInfo.getProgress();
-                    int value = progress.getInt(Worker_TrackingTest.WORKER_PROGRESS, 0);
+                    long lProgressNumerator = progress.getLong(Worker_TrackingTest.WORKER_BYTES_PROCESSED, 0);
+                    long lProgressDenominator = progress.getLong(Worker_TrackingTest.WORKER_BYTES_TOTAL, 100);
+                    int iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     String sWorkerID = progress.getString(Worker_TrackingTest.WORKER_ID);
 
                     if(progressBar_WorkerTest != null && textView_WorkerTest != null)
                         if (workInfo.getState() == WorkInfo.State.RUNNING) {
                             progressBar_WorkerTest.setVisibility(View.VISIBLE);
-                            progressBar_WorkerTest.setProgress(value);
+                            progressBar_WorkerTest.setProgress(iProgressBarValue);
                             if (sWorkerID != null) {
                                 textView_WorkerTest.setVisibility(View.VISIBLE);
                                 textView_WorkerTest.setText(sWorkerID);

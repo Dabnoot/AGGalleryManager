@@ -19,8 +19,6 @@ import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.BufferedInputStream;
@@ -1213,7 +1211,7 @@ public class Service_Import extends IntentService {
                     .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
                     .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
                     .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
-                    .putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE, lTotalImportSize)
+                    .putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, lTotalImportSize)
                     .build();
             OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
                     .setInputData(dataLocalFileTransfer)

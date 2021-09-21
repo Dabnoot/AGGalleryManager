@@ -1,40 +1,21 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.DownloadManager;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-import com.arthenica.ffmpegkit.ExecuteCallback;
-import com.arthenica.ffmpegkit.FFmpegKit;
-import com.arthenica.ffmpegkit.LogCallback;
-import com.arthenica.ffmpegkit.ReturnCode;
-import com.arthenica.ffmpegkit.Session;
-import com.arthenica.ffmpegkit.SessionState;
-import com.arthenica.ffmpegkit.Statistics;
-import com.arthenica.ffmpegkit.StatisticsCallback;
-
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
-import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -52,12 +33,13 @@ public class Worker_LocalFileTransfer extends Worker {
     public static final String KEY_ARG_JOB_FILE = "KEY_ARG_JOB_FILE";
     public static final String KEY_ARG_MEDIA_CATEGORY = "KEY_ARG_MEDIA_CATEGORY";
     public static final String KEY_ARG_COPY_OR_MOVE = "KEY_ARG_COPY_OR_MOVE";
-    public static final String KEY_ARG_TOTAL_IMPORT_SIZE = "KEY_ARG_TOTAL_IMPORT_SIZE";
+    public static final String KEY_ARG_TOTAL_IMPORT_SIZE_BYTES = "KEY_ARG_TOTAL_IMPORT_SIZE_BYTES";
+
+    public static final String WORKER_PROGRESS = "WORKER_PROGRESS";
+    public static final String WORKER_BYTES_PROCESSED = "WORKER_BYTES_PROCESSED";
 
     public static final int LOCAL_FILE_TRANSFER_MOVE = 0;
     public static final int LOCAL_FILE_TRANSFER_COPY = 1;
-
-    public static final String WORKER_PROGRESS = "WORKER_PROGRESS";
 
     //=========================
     String gsJobRequestDateTime;    //Date/Time of job request for logging purposes.
@@ -79,7 +61,7 @@ public class Worker_LocalFileTransfer extends Worker {
         gsJobFile = getInputData().getString(KEY_ARG_JOB_FILE);
         giCopyOrMove = getInputData().getInt(KEY_ARG_COPY_OR_MOVE, LOCAL_FILE_TRANSFER_COPY);
         giMediaCategory = getInputData().getInt(KEY_ARG_MEDIA_CATEGORY, -1);
-        glTotalImportSize = getInputData().getLong(KEY_ARG_TOTAL_IMPORT_SIZE, -1);
+        glTotalImportSize = getInputData().getLong(KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, -1);
     }
 
     @NonNull
@@ -134,6 +116,7 @@ public class Worker_LocalFileTransfer extends Worker {
                 int SOURCE_FILE_URI_INDEX = 0;
                 int DESTINATION_FOLDER = 1;
                 int DESTINATION_FILENAME = 2;
+                int SOURCE_FILE_SIZE_BYTES = 3;
 
                 long lProgressNumerator = 0L;
                 long lProgressDenominator = 1L;
@@ -155,7 +138,7 @@ public class Worker_LocalFileTransfer extends Worker {
                         j++;
                         if (!sLine.equals("")) {
                             String[] sTemp = sLine.split("\t");
-                            if (sTemp.length == 3) {
+                            if (sTemp.length == 4) {
 
                                 String sDestinationFolder = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator + sTemp[DESTINATION_FOLDER];
                                 String sDestinationFileName = sTemp[DESTINATION_FILENAME];

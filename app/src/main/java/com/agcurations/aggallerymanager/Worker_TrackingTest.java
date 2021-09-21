@@ -18,16 +18,24 @@ public class Worker_TrackingTest extends Worker {
 
     public static final String WORKER_PROGRESS = "WORKER_PROGRESS";
     public static final String WORKER_ID = "WORKER_ID";
+    public static final String WORKER_BYTES_PROCESSED = "WORKER_BYTES_PROCESSED";
+    public static final String WORKER_BYTES_TOTAL = "WORKER_BYTES_TOTAL";
 
     public static final String KEY_ARG_JOB_REQUEST_DATETIME = "KEY_ARG_JOB_REQUEST_DATETIME";
+    public static final String KEY_ARG_TOTAL_BYTES = "KEY_ARG_TOTAL_BYTES";
 
-    private int giNotificationID;
+    private String gsJobRequestDateTime;
+    private long glTotalBytes;
 
     public Worker_TrackingTest(
             @NonNull Context appContext,
             @NonNull WorkerParameters workerParameters) {
         super(appContext, workerParameters);
+
+        gsJobRequestDateTime = getInputData().getString(KEY_ARG_JOB_REQUEST_DATETIME);
+        glTotalBytes = getInputData().getLong(KEY_ARG_TOTAL_BYTES, 100);
     }
+
 
     @NonNull
     @Override
@@ -43,39 +51,46 @@ public class Worker_TrackingTest extends Worker {
                 .setOngoing(true)
                 .setProgress(100, 0, false);
 
-        giNotificationID = globalClass.iNotificationID;
+        int iNotificationID = globalClass.iNotificationID;
         globalClass.iNotificationID++;
         Notification notification = notificationBuilder.build();
-        globalClass.notificationManager.notify(giNotificationID, notification);
+        globalClass.notificationManager.notify(iNotificationID, notification);
 
         Data data = new Data.Builder()
                 .putInt(WORKER_PROGRESS, 0)
-                .putString(WORKER_ID, "Worker_ID_Test_Data")
+                .putString(WORKER_ID, gsJobRequestDateTime)
                 .build();
         setProgressAsync(data);
 
-        int i = 0;
-        while(i <= 100){
+        int iProgressBarValue;
+        long lProgressNumerator = 0;
+        long lProgressDenominator = glTotalBytes;
+        while(lProgressNumerator <= glTotalBytes){
             try {
                 Thread.currentThread();
                 Thread.sleep(500);
             }catch (Exception e){
                 Log.d("Test", "doWork: " + e.getMessage());
             }
-            i+=10;
-            notificationBuilder.setProgress(100, i, (i > 25 && i < 50));
-            if(i == 100){
+
+            lProgressNumerator++; //Accumulate bytes transferred.
+
+            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+            notificationBuilder.setProgress(100, iProgressBarValue, (iProgressBarValue > 25 && iProgressBarValue < 50));
+
+            if(lProgressNumerator == lProgressDenominator){
                 notificationBuilder.setOngoing(false);
                 // When done, update the notification one more time to remove the progress bar
                 notificationBuilder.setContentText("Testing complete")
                         .setProgress(0,0,false);
             }
             notification = notificationBuilder.build();
-            globalClass.notificationManager.notify(giNotificationID, notification);
+            globalClass.notificationManager.notify(iNotificationID, notification);
 
             data = new Data.Builder()
-                    .putInt(WORKER_PROGRESS, i)
-                    .putString(WORKER_ID, "Worker_ID_Test_Data")
+                    .putLong(WORKER_BYTES_PROCESSED, lProgressNumerator)
+                    .putLong(WORKER_BYTES_TOTAL, glTotalBytes)
+                    .putString(WORKER_ID, gsJobRequestDateTime)
                     .build();
             setProgressAsync(data);
 
