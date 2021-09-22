@@ -112,7 +112,9 @@ public class GlobalClass extends Application {
     ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
     //  This is done because the list of files can exceed the intent extra transaction size limit.
 
-
+    public static final int MOVE = 0;
+    public static final int COPY = 1;
+    public static final String[] gsMoveOrCopy = {"MOVE", "COPY"};
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
