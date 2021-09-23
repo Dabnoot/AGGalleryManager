@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.Notification;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.NotificationCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.Worker;
@@ -31,23 +33,32 @@ public class Worker_LocalFileTransfer extends Worker {
     // Define keys for arguments passed to this worker:
     public static final String KEY_ARG_JOB_REQUEST_DATETIME = "KEY_ARG_JOB_REQUEST_DATETIME";
     public static final String KEY_ARG_JOB_FILE = "KEY_ARG_JOB_FILE";
-    public static final String KEY_ARG_MEDIA_CATEGORY = "KEY_ARG_MEDIA_CATEGORY";
-    public static final String KEY_ARG_COPY_OR_MOVE = "KEY_ARG_COPY_OR_MOVE";
-    public static final String KEY_ARG_TOTAL_IMPORT_SIZE_BYTES = "KEY_ARG_TOTAL_IMPORT_SIZE_BYTES";
+    //public static final String KEY_ARG_MEDIA_CATEGORY = "KEY_ARG_MEDIA_CATEGORY";
+    //public static final String KEY_ARG_COPY_OR_MOVE = "KEY_ARG_COPY_OR_MOVE";
+    //public static final String KEY_ARG_TOTAL_IMPORT_SIZE_BYTES = "KEY_ARG_TOTAL_IMPORT_SIZE_BYTES";
 
-    public static final String WORKER_PROGRESS = "WORKER_PROGRESS";
-    public static final String WORKER_BYTES_PROCESSED = "WORKER_BYTES_PROCESSED";
+    public static final String JOB_PROGRESS = "JOB_PROGRESS";
+    public static final String JOB_BYTES_PROCESSED = "JOB_BYTES_PROCESSED";
+    public static final String JOB_BYTES_TOTAL = "JOB_BYTES_TOTAL";
 
-    public static final int LOCAL_FILE_TRANSFER_MOVE = 0;
-    public static final int LOCAL_FILE_TRANSFER_COPY = 1;
+    public static final String JOB_DATETIME = "JOB_DATETIME";
+
+    //public static final int LOCAL_FILE_TRANSFER_MOVE = 0;
+    //public static final int LOCAL_FILE_TRANSFER_COPY = 1;
 
     //=========================
     String gsJobRequestDateTime;    //Date/Time of job request for logging purposes.
     String gsJobFile;               //Name of file containing a list of files to transfer
-    int giMediaCategory;            //Media category for base folder determination
-    int giCopyOrMove;               //Copy the files or move the files?
-    long glTotalImportSize;         //Collective file size of the import operation, for reporting progress.
+    long glProgressNumerator = 0L;
+    long glProgressDenominator;
+    int giFileCount;
+    int giFilesProcessed;
+    String gsMoveCopyPastTense;
 
+    GlobalClass globalClass;
+    int giNotificationID;
+    Notification gNotification;
+    NotificationCompat.Builder gNotificationBuilder;
     //=========================
 
     public Worker_LocalFileTransfer(
@@ -55,19 +66,19 @@ public class Worker_LocalFileTransfer extends Worker {
             @NonNull WorkerParameters workerParameters) {
         super(appContext, workerParameters);
         // Set initial progress to 0
-        setProgressAsync(new Data.Builder().putInt(WORKER_PROGRESS, 0).build());
+        setProgressAsync(new Data.Builder().putInt(JOB_PROGRESS, 0).build());
 
         gsJobRequestDateTime = getInputData().getString(KEY_ARG_JOB_REQUEST_DATETIME);
         gsJobFile = getInputData().getString(KEY_ARG_JOB_FILE);
-        giCopyOrMove = getInputData().getInt(KEY_ARG_COPY_OR_MOVE, LOCAL_FILE_TRANSFER_COPY);
-        giMediaCategory = getInputData().getInt(KEY_ARG_MEDIA_CATEGORY, -1);
-        glTotalImportSize = getInputData().getLong(KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, -1);
     }
 
     @NonNull
     @Override
     public Result doWork() {
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+        Data dataProgress;
+
+        globalClass = (GlobalClass) getApplicationContext();
 
         String sMessage;
 
@@ -81,19 +92,13 @@ public class Worker_LocalFileTransfer extends Worker {
                 File.separator + gsJobRequestDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_LocalFileTransfer_WorkerLog.txt";
         File fLog = new File(sLogFilePath);
         FileWriter fwLogFile;
-        try {
+        try { //Required for the log file.
+
             fwLogFile = new FileWriter(fLog, true);
 
             //Validate data
             if (gsJobFile.equals("")) {
                 sMessage = "No job file name provided. This is the file telling the worker what files to copy, and where to place them.";
-                fwLogFile.write(sMessage + "\n");
-                fwLogFile.close();
-                return Result.failure(DataErrorMessage(sMessage));
-            }
-
-            if (giMediaCategory == -1) {
-                sMessage = "Media category missing in data transfer. Cannot determine where to store files.";
                 fwLogFile.write(sMessage + "\n");
                 fwLogFile.close();
                 return Result.failure(DataErrorMessage(sMessage));
@@ -118,35 +123,115 @@ public class Worker_LocalFileTransfer extends Worker {
                 int DESTINATION_FILENAME = 2;
                 int SOURCE_FILE_SIZE_BYTES = 3;
 
-                long lProgressNumerator = 0L;
-                long lProgressDenominator = 1L;
-                int iProgressBarValue = 0;
-                long lTotalImportSize = 0L;
                 long lLoopBytesRead;
 
                 BufferedReader brReader;
-                try {
+                try { //Required for the job file.
                     brReader = new BufferedReader(new FileReader(fJobFile.getAbsolutePath()));
 
-                    int j = 0;
+                    int iMediaCategory;
+                    int iMoveOrCopy;
+
+                    //Read the header and get the media category and specified move/copy behavior:
+                    String sConfig = brReader.readLine();
+                    try {  //A Try/Catch to simplify error messaging with examination of the job file header.
+                        String[] sData = sConfig.split("\t");
+                        if (sData.length != 4) {
+                            throw new Exception("Data header missing data in job file.");
+                        }
+                    /*
+                    "MediaCategory:1\tMoveOrCopy:0\tTotalSize:999999"
+                    * */
+                        //Determine media category:
+                        String[] sMediaCategoryData = sData[0].split(":");
+                        if (sMediaCategoryData.length != 2) {
+                            throw new Exception("Data header missing data for media category in job file.");
+                        }
+                        if (sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[2])){
+                            iMediaCategory = 2; //Comics only if specifically coded to do so. This worker not designed for this at origin.
+                        } else if(sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[0])){
+                            iMediaCategory = 0; //Videos
+                        } else {
+                            iMediaCategory = 1; //default to Images.
+                        }
+
+                        //Determine move or copy:
+                        String[] sMoveOrCopyData = sData[1].split(":");
+                        if (sMoveOrCopyData.length != 2) {
+                            throw new Exception("Data header missing data for 'move or copy behavior selection' in job file.");
+                        }
+                        if(sMoveOrCopyData[1].equals(GlobalClass.gsMoveOrCopy[GlobalClass.MOVE])){
+                            iMoveOrCopy = GlobalClass.MOVE;
+                        } else {
+                            iMoveOrCopy = GlobalClass.COPY;
+                        }
+
+                        //Read total size:
+                        String[] sTotalSizeData = sData[2].split(":");
+                        if (sTotalSizeData.length != 2) {
+                            throw new Exception("Data header missing data for 'total file transfer size' in job file.");
+                        }
+                        glProgressDenominator = Long.parseLong(sTotalSizeData[1]);
+
+                        //Read file count:
+                        String[] sFileCountData = sData[3].split(":");
+                        if (sFileCountData.length != 2) {
+                            throw new Exception("Data header missing data for 'file count' in job file.");
+                        }
+                        giFileCount = Integer.parseInt(sFileCountData[1]);
+
+                    } catch (Exception e){
+                        sMessage = e.getMessage();
+                        fwLogFile.write(sMessage + "\n");
+                        fwLogFile.close();
+                        return Result.failure(DataErrorMessage(sMessage));
+                    }
+
+                    //Prepare a notification for the notification bar:
+                    String sNotificationTitle = "File " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase() + " job " + gsJobRequestDateTime + ".";
+                    gsMoveCopyPastTense = (iMoveOrCopy == GlobalClass.MOVE) ?  "moved" : "copied";
+                    String sNotificationText = giFilesProcessed + "/" + giFileCount + " files " + gsMoveCopyPastTense + ".";
+                    gNotificationBuilder = new NotificationCompat.Builder(getApplicationContext(), GlobalClass.NOTIFICATION_CHANNEL_ID)
+                            .setSmallIcon(R.drawable.copy)
+                            .setContentTitle(sNotificationTitle)
+                            .setContentText(sNotificationText)
+                            .setPriority(NotificationCompat.PRIORITY_LOW)
+                            .setOnlyAlertOnce(true) //Alert once and then update the notification silently.
+                            .setOngoing(true) //Prevents the user from swiping it off the notification area.
+                            .setProgress(100, 0, false);
+                    giNotificationID = globalClass.iNotificationID;
+                    globalClass.iNotificationID++;
+                    gNotification = gNotificationBuilder.build();
+                    globalClass.notificationManager.notify(giNotificationID, gNotification);
+
+                    //Build progress data associated with this worker:
+                    dataProgress = new Data.Builder()
+                            .putLong(JOB_BYTES_PROCESSED, glProgressNumerator)
+                            .putLong(JOB_BYTES_TOTAL, glProgressDenominator)
+                            .putString(JOB_DATETIME, gsJobRequestDateTime)
+                            .build();
+                    setProgressAsync(dataProgress);
+
+                    //Read the data records in the job file and move/copy files:
                     do {
                         String sLine = brReader.readLine();
                         if(sLine == null){
                             break;
                         }
 
-                        j++;
+                        giFilesProcessed++;
                         if (!sLine.equals("")) {
                             String[] sTemp = sLine.split("\t");
                             if (sTemp.length == 4) {
 
-                                String sDestinationFolder = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator + sTemp[DESTINATION_FOLDER];
+                                String sDestinationFolder = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator + sTemp[DESTINATION_FOLDER];
                                 String sDestinationFileName = sTemp[DESTINATION_FILENAME];
+                                long lFileSize = Long.parseLong(sTemp[SOURCE_FILE_SIZE_BYTES]);
 
                                 File fDestinationFolder = new File(sDestinationFolder);
                                 if (!fDestinationFolder.exists()) {
                                     if (!fDestinationFolder.mkdir()) {
-                                        sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + j + ": " + sJobFilePath;
+                                        sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
                                         fwLogFile.write(sMessage + "\n");
                                         bProblemWithFileTransfer = true;
                                         continue; //Skip to the end of the loop and read the next line in the job file.
@@ -172,25 +257,22 @@ public class Worker_LocalFileTransfer extends Worker {
                                         //The file copy has already been executed by a previous instance of this requested worker.
                                         //If the operation was a move operation, we are here only because the source file still
                                         //  exists. Attempt to delete the source file.
-                                        if (giCopyOrMove == LOCAL_FILE_TRANSFER_MOVE) {
+                                        if (iMoveOrCopy == GlobalClass.MOVE) {
                                             if (!dfSource.delete()) {
-                                                sMessage = "Source file copied, but could not delete source file, " + dfSource.getName() + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + j + " in job file " + sJobFilePath;
+                                                sMessage = "Source file copied, but could not delete source file, " + dfSource.getName() + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
                                                 fwLogFile.write(sMessage + "\n");
                                                 bProblemWithFileTransfer = true;
                                             }
                                         }
+                                        glProgressNumerator = glProgressNumerator + lFileSize;
                                         continue; //Skip to the end of the loop and read the next line in the job file.
                                     }
                                     //Destination file does not exist.
 
                                     // Execute the copy or move operation:
                                     String sLogLine;
-                                    if (giCopyOrMove == LOCAL_FILE_TRANSFER_MOVE) {
-                                        sLogLine = "Moving ";
-                                    } else {
-                                        sLogLine = "Copying ";
-                                    }
-                                    sLogLine = sLogLine + " file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
+                                    sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
+                                                 + " of file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
                                     fwLogFile.write(sLogLine + "\n");
                                     ContentResolver contentResolver = getApplicationContext().getContentResolver();
                                     InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
@@ -203,11 +285,18 @@ public class Worker_LocalFileTransfer extends Worker {
                                     }
                                     while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
                                         outputStream.write(buffer, 0, buffer.length);
-                                        lProgressNumerator += lLoopBytesRead;
+                                        glProgressNumerator += lLoopBytesRead;
                                         iLoopCount++;
-                                        if (iLoopCount % 10 == 0) {
-                                            //Send update every 10 loops:
-                                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                        /*Thread.currentThread();
+                                        Thread.sleep(50);*/
+                                        if(giFileCount == 1) {
+                                            //Only update progress of single transfer if we are working with a single file.
+                                            //  Otherwise, the update frequency break between files causes the notification
+                                            //  to become an alerting notification, which may be jarring to the user.
+                                            if (iLoopCount % 10 == 0) {
+                                                //Send update every 10 loops:
+                                                UpdateProgressOutput();
+                                            }
                                         }
                                     }
                                     outputStream.flush();
@@ -216,27 +305,34 @@ public class Worker_LocalFileTransfer extends Worker {
                                     sLogLine = " Success.\n";
                                     fwLogFile.write(sLogLine + "\n");
 
-                                    if (giCopyOrMove == LOCAL_FILE_TRANSFER_MOVE) {
+                                    if (iMoveOrCopy == GlobalClass.MOVE) {
                                         if (!dfSource.delete()) {
                                             sLogLine = "Could not delete source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                                            fwLogFile.write(sLogLine + "\n");
                                         } else {
                                             sLogLine = "Success deleting source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                                            fwLogFile.write(sLogLine + "\n");
                                         }
+                                        fwLogFile.write(sLogLine + "\n");
                                     }
 
+                                } else {
+                                    //If the source does not exist, assume that the file has already been transferred.
+                                    //todo: make sure that the file exists in the destination, and if not, provide an error message.
+                                    glProgressNumerator = glProgressNumerator + lFileSize;
                                 }
+                                dataProgress = UpdateProgressOutput();
 
                             } else {
-                                sMessage = "Data missing while reading job file, line " + j + ": " + sJobFilePath;
+                                sMessage = "Data missing while reading job file, line " + giFilesProcessed + ": " + sJobFilePath;
                                 fwLogFile.write(sMessage + "\n");
                                 fwLogFile.close();
+                                CloseNotification();
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
                         }
                     } while (true);
                     brReader.close();
+
+                    CloseNotification();
 
                 } catch (IOException e) {
                     sMessage = "Problem reading job file: " + sJobFilePath;
@@ -261,7 +357,8 @@ public class Worker_LocalFileTransfer extends Worker {
             }
 
             fwLogFile.close();
-            return Result.success();
+
+            return Result.success(dataProgress);
 
         } catch (Exception e){
             sMessage = e.getMessage();
@@ -276,12 +373,55 @@ public class Worker_LocalFileTransfer extends Worker {
 
     }
 
+    private Data UpdateProgressOutput(){
+        //Update the notification on the notification bar:
+        int iProgressBarValue = Math.round((glProgressNumerator / (float) glProgressDenominator) * 100);
+        String sNotificationText = giFilesProcessed + "/" + giFileCount + " files " + gsMoveCopyPastTense + "."; //Setting the notification text causes the notification to "jump".
+        gNotificationBuilder.setContentText(sNotificationText)
+                            .setProgress(100, iProgressBarValue,false);
+        gNotification = gNotificationBuilder.build();
+        globalClass.notificationManager.notify(giNotificationID, gNotification);
 
+        //Update the progress data associated with this worker:
+        Data dataProgress = new Data.Builder()
+                .putLong(JOB_BYTES_PROCESSED, glProgressNumerator)
+                .putLong(JOB_BYTES_TOTAL, glProgressDenominator)
+                .putString(JOB_DATETIME, gsJobRequestDateTime)
+                .build();
+        setProgressAsync(dataProgress);
+
+        return dataProgress;
+    }
+
+    private void UpdateNotificationProgressOnly(int iProgressBarValue){
+        gNotificationBuilder.setProgress(100, iProgressBarValue,false);
+        gNotification = gNotificationBuilder.build();
+        globalClass.notificationManager.notify(giNotificationID, gNotification);
+    }
+
+    private void UpdateNotificationTextOnly(String sNotificationText){
+        gNotificationBuilder.setContentText(sNotificationText);
+        gNotification = gNotificationBuilder.build();
+        globalClass.notificationManager.notify(giNotificationID, gNotification);
+    }
+
+
+    private void CloseNotification(){
+        gNotificationBuilder.setOngoing(false) //Let the user remove the notification from the notification bar.
+                            .setProgress(0, 0,false); //Remove the progress bar from the notification.
+        gNotification = gNotificationBuilder.build();
+        globalClass.notificationManager.notify(giNotificationID, gNotification);
+    }
 
     private Data DataErrorMessage(String sMessage){
-        return new Data.Builder()
+        Data dataProgress = new Data.Builder()
+                .putLong(JOB_BYTES_PROCESSED, glProgressNumerator)
+                .putLong(JOB_BYTES_TOTAL, glProgressDenominator)
+                .putString(JOB_DATETIME, gsJobRequestDateTime)
                 .putString(FAILURE_MESSAGE, sMessage)
                 .build();
+
+        return dataProgress;
     }
 
 }

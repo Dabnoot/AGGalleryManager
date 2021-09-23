@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -133,7 +134,9 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                getActivity().finish();
+                                if(getActivity() instanceof Activity_LogViewer) {
+                                    getActivity().finish();
+                                }
                             }
                         }, 2000);
                     }

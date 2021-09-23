@@ -970,41 +970,8 @@ public class Service_Import extends IntentService {
         String sLogLine;
 
         boolean bCopyViaWorker = true;
-        String sJobDateTime = "";
-        String sJobFileName = "";
-        FileWriter fwJobFile = null;
-        if(bCopyViaWorker) {
-            //Inform user of preparation of worker:
-            String sMoveOrCopy;
-            if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                sMoveOrCopy = "move";
-            } else {
-                sMoveOrCopy = "copy";
-            }
-            sLogLine = "Using background worker for file " + sMoveOrCopy + " operations.\n"
-                     + "Preparing job file.\n\n";
-            lProgressDenominator = alFileList.size();
-            BroadcastProgress(true, sLogLine,
-                    false, iProgressBarValue,
-                    true, "File " + lProgressNumerator + "/" + lProgressDenominator,
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-            //Create a file with a listing of the files to be copied/moved:
-            sJobDateTime = GlobalClass.GetTimeStampFileSafe();
-            sJobFileName = "Job_" + sJobDateTime + ".txt";
-            String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
-                    File.separator + sJobFileName;
-            File fJobFile = new File(sJobFilePath);
-            try {
-                fwJobFile = new FileWriter(fJobFile, true);
-            } catch (Exception e){
-                BroadcastProgress(true, "Unable to open job file for writing at: " + sJobFilePath + "\n",
-                        false, iProgressBarValue,
-                        true, "Operation halted.",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                return;
-            }
-        }
+        StringBuilder sbJobFileRecords = new StringBuilder();
 
         ArrayList<String> alsVerifiedDestinationFolders = new ArrayList<>(); //Used to avoid re-confirm and additional messaging.
 
@@ -1053,8 +1020,7 @@ public class Service_Import extends IntentService {
             boolean bProblemWithSourceFile = false;
             if (dfSource == null) {
                 bProblemWithSourceFile = true;
-            }
-            if (dfSource.getName() == null){
+            } else if (dfSource.getName() == null){
                 bProblemWithSourceFile = true;
             }
             if(bProblemWithSourceFile){
@@ -1080,7 +1046,7 @@ public class Service_Import extends IntentService {
                 if(bCopyViaWorker){
 
                     //Write next behavior to the screen log:
-                    sLogLine = "Writing data to job file: " + fileItem.sFileOrFolderName + ".\n";
+                    sLogLine = "Preparing data for job file " + fileItem.sFileOrFolderName + ".\n";
                     lProgressNumerator++;
                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     BroadcastProgress(true, sLogLine,
@@ -1092,17 +1058,13 @@ public class Service_Import extends IntentService {
                             + fileItem.sDestinationFolder + "\t"
                             + fDestinationFile.getName() + "\t"
                             + fileItem.lSizeBytes + "\n";
-                    fwJobFile.write(sLine);
+                    sbJobFileRecords.append(sLine);
 
 
                 } else {
 
                     //Write next behavior to the screen log:
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        sLogLine = "Moving ";
-                    } else {
-                        sLogLine = "Copying ";
-                    }
+                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy];
                     sLogLine = sLogLine + " file " + fileItem.sFileOrFolderName + " to destination...";
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
@@ -1133,7 +1095,7 @@ public class Service_Import extends IntentService {
                     //This file has now been copied.
 
                     sLogLine = "Success.\n";
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                    if (iMoveOrCopy == GlobalClass.MOVE) {
                         if (!dfSource.delete()) {
                             sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                         }
@@ -1187,11 +1149,41 @@ public class Service_Import extends IntentService {
         if(bCopyViaWorker){
 
             //Close the job file, written-to in the file loop above:
+            String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
+            String sJobFileName = "Job_" + sJobDateTime + ".txt";
+
             try {
+
+                //Inform user of preparation of worker:
+                String sMoveOrCopy = GlobalClass.gsMoveOrCopy[iMoveOrCopy];
+                sLogLine = "Using background worker for file " + sMoveOrCopy.toLowerCase() + " operations.\n"
+                        + "Preparing job file.\n\n";
+                lProgressDenominator = alFileList.size();
+                BroadcastProgress(true, sLogLine,
+                        false, iProgressBarValue,
+                        true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+                //Create a file with a listing of the files to be copied/moved:
+                String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
+                        File.separator + sJobFileName;
+                File fJobFile = new File(sJobFilePath);
+
+                FileWriter fwJobFile = new FileWriter(fJobFile, true);
+                //Write the data header:
+                String sConfig = "MediaCategory:" + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "\t"
+                        + "MoveOrCopy:" + sMoveOrCopy + "\t"
+                        + "TotalSize:" + lTotalImportSize + "\t"
+                        + "FileCount:" + alFileList.size() + "\n";
+                fwJobFile.write(sConfig);
+                fwJobFile.write(sbJobFileRecords.toString());
                 fwJobFile.flush();
                 fwJobFile.close();
+
+
+
             } catch (Exception e){
-                BroadcastProgress(true, "Problem with closing the job file. This may be a recoverable error.\n" + e.getMessage(),
+                BroadcastProgress(true, "Problem with writing the job file.\n" + e.getMessage(),
                         false, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
@@ -1209,9 +1201,9 @@ public class Service_Import extends IntentService {
             Data dataLocalFileTransfer = new Data.Builder()
                     .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
                     .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
-                    .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
-                    .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
-                    .putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, lTotalImportSize)
+                    //.putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
+                    //.putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
+                    //.putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, lTotalImportSize)
                     .build();
             OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
                     .setInputData(dataLocalFileTransfer)
@@ -1362,13 +1354,8 @@ public class Service_Import extends IntentService {
                         DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
                         try {
                             //Write next behavior to the screen log:
-                            sLogLine = "Attempting ";
-                            if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                                sLogLine = sLogLine + "move ";
-                            } else {
-                                sLogLine = sLogLine + "copy ";
-                            }
-                            sLogLine = sLogLine + "of file " + fileItem.sFileOrFolderName + " to destination...";
+                            sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase();
+                            sLogLine = sLogLine + " of file " + fileItem.sFileOrFolderName + " to destination...";
                             BroadcastProgress(true, sLogLine,
                                     false, iProgressBarValue,
                                     true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -1417,7 +1404,7 @@ public class Service_Import extends IntentService {
 
                             //Delete the source file if 'Move' specified:
                             boolean bUpdateLogOneMoreTime = false;
-                            if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                            if (iMoveOrCopy == GlobalClass.MOVE) {
                                 bUpdateLogOneMoreTime = true;
                                 if (!dfSource.delete()) {
                                     sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
@@ -1457,7 +1444,7 @@ public class Service_Import extends IntentService {
 
             //Delete the cover page from source folder if required:
             if(icfCoverPageFile != null) {
-                if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                if (iMoveOrCopy == GlobalClass.MOVE) {
                     Uri uriSourceFile;
                     String sLogLine;
 
@@ -1629,12 +1616,15 @@ public class Service_Import extends IntentService {
                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
                 if(fileItem.sFileOrFolderName.equals(STRING_COMIC_XML_FILENAME)){
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-
-                        if (!dfSource.delete()) {
-                            sLogLine = "Could not delete xml file from source folder.\n";
+                    if (iMoveOrCopy == GlobalClass.MOVE) {
+                        if(dfSource != null) {
+                            if (!dfSource.delete()) {
+                                sLogLine = "Could not delete xml file from source folder.\n";
+                            } else {
+                                sLogLine = "Success deleting xml file from source folder.\n";
+                            }
                         } else {
-                            sLogLine = "Success deleting xml file from source folder.\n";
+                            sLogLine = "Could not delete xml file from source folder.\n";
                         }
                         BroadcastProgress(true, sLogLine,
                                 false, 0,
@@ -1662,13 +1652,8 @@ public class Service_Import extends IntentService {
 
                 try {
                     //Write next behavior to the screen log:
-                    sLogLine = "Attempting ";
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
-                        sLogLine = sLogLine + "move ";
-                    } else {
-                        sLogLine = sLogLine + "copy ";
-                    }
-                    sLogLine = sLogLine + "of file " + fileItem.sFileOrFolderName + " to destination...";
+                    sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase();
+                    sLogLine = sLogLine + " of file " + fileItem.sFileOrFolderName + " to destination...";
                     BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -1717,7 +1702,7 @@ public class Service_Import extends IntentService {
 
                     //Delete the source file if 'Move' specified:
                     boolean bUpdateLogOneMoreTime = false;
-                    if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+                    if (iMoveOrCopy == GlobalClass.MOVE) {
                         bUpdateLogOneMoreTime = true;
                         if (!dfSource.delete()) {
                             sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
@@ -1750,7 +1735,7 @@ public class Service_Import extends IntentService {
             globalClass.CatalogDataFile_CreateNewRecord(ciNewComic);
 
             //Delete the comic folder from source directory if required:
-            if (iMoveOrCopy == ViewModel_ImportActivity.IMPORT_METHOD_MOVE) {
+            if (iMoveOrCopy == GlobalClass.MOVE) {
                 Uri uriComicSourceFolder; //This is not the folder that the user selected, but rather
                     //a comic folder within that folder.
                 String sLogLine;

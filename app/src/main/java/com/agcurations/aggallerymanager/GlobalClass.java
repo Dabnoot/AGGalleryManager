@@ -114,7 +114,7 @@ public class GlobalClass extends Application {
 
     public static final int MOVE = 0;
     public static final int COPY = 1;
-    public static final String[] gsMoveOrCopy = {"MOVE", "COPY"};
+    public static final String[] gsMoveOrCopy = {"Move", "Copy"};
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================

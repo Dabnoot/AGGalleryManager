@@ -494,9 +494,9 @@ public class Activity_Import extends AppCompatActivity {
         RadioButton rbMove = findViewById(R.id.radioButton_MoveFiles);
 
         if (rbMove.isChecked()){
-            viewModelImportActivity.iImportMethod = ViewModel_ImportActivity.IMPORT_METHOD_MOVE;
+            viewModelImportActivity.iImportMethod = GlobalClass.MOVE;
         } else{
-            viewModelImportActivity.iImportMethod = ViewModel_ImportActivity.IMPORT_METHOD_COPY;
+            viewModelImportActivity.iImportMethod = GlobalClass.COPY;
         }
 
         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION, false);

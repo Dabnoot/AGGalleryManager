@@ -107,16 +107,26 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                         return;
                     }
 
+                    boolean bDeleteAll = true;
                     if(workerListCustomAdapter != null) {
-                        for (int i = 0; i < workerListCustomAdapter.lftWorkerData.length; i++) {
+                        for (int i = 0; i < workerListCustomAdapter.customWorkerData.length; i++) {
                             if (workerListCustomAdapter.bRowSelected[i]) {
-                                if (workerListCustomAdapter.lftWorkerData[i].fJobFile != null) {
-                                    if (!workerListCustomAdapter.lftWorkerData[i].fJobFile.delete()) {
-                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + workerListCustomAdapter.lftWorkerData[i].fJobFile.getName(), Toast.LENGTH_SHORT).show();
+                                if (workerListCustomAdapter.customWorkerData[i].fJobFile != null) {
+                                    if (!workerListCustomAdapter.customWorkerData[i].fJobFile.delete()) {
+                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + workerListCustomAdapter.customWorkerData[i].fJobFile.getName(), Toast.LENGTH_SHORT).show();
                                     }
                                 }
+                            } else {
+                                bDeleteAll = false;
                             }
                         }
+                        if(bDeleteAll){
+                            //If the user is trying to delete all items from the list, issue a command to prune workers.
+                            //  This command tells WorkManager to clear all with SUCCESS, FAILED, or CANCELLED.
+                            //  No way as of 9/22/2021 to prune individual workers.
+                            WorkManager.getInstance(getActivity().getApplicationContext()).pruneWork();
+                        }
+
                         bItemsDeletedFlag = true;
                         initializeWorkerList();
                     }
@@ -132,7 +142,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                     return;
                 }
                 if(workerListCustomAdapter != null) {
-                    for (int i = 0; i < workerListCustomAdapter.lftWorkerData.length; i++) {
+                    for (int i = 0; i < workerListCustomAdapter.customWorkerData.length; i++) {
                         workerListCustomAdapter.bRowSelected[i] = ((CheckBox) view).isChecked();
                     }
                     workerListCustomAdapter.notifyDataSetChanged();
@@ -171,12 +181,14 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
 
         //Look to see if there are any workers out there processing data for AGGalleryManager,
         //  and if so, attempt to listen to their progress:
-        ArrayList<LFTWorkerData> alWorkerData = new ArrayList<>();
+        ArrayList<CustomWorkerData> alWorkerData = new ArrayList<>();
         ListenableFuture<List<WorkInfo>> lfListWorkInfo = WorkManager.getInstance(getActivity().getApplicationContext()).getWorkInfosByTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG);
         try {
             int iWorkerCount = lfListWorkInfo.get().size();
             for(int i = 0; i < iWorkerCount; i++) {
                 WorkInfo.State stateWorkState = lfListWorkInfo.get().get(i).getState();
+                Data dataOutput = lfListWorkInfo.get().get(i).getOutputData();
+                CustomWorkerData newWorkerData = new CustomWorkerData();
                 UUID UUIDWorkerID = lfListWorkInfo.get().get(i).getId();
                 Log.d("Workstate", stateWorkState.toString() + ", ID " + UUIDWorkerID.toString());
                 String sState = "Unknown";
@@ -188,17 +200,29 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                     sState = "Cancelled";
                 } else if( stateWorkState == WorkInfo.State.FAILED) {
                     sState = "Failed";
+                    newWorkerData.sFailureMessage = dataOutput.getString(Worker_LocalFileTransfer.FAILURE_MESSAGE);
                 } else if( stateWorkState == WorkInfo.State.RUNNING) {
                     sState = "Running";
                 } else if( stateWorkState == WorkInfo.State.SUCCEEDED) {
                     sState = "Succeeded";
                 }
-                Data progress = lfListWorkInfo.get().get(i).getProgress();
-                LFTWorkerData lftWorkerData = new LFTWorkerData();
-                lftWorkerData.uuidWorkerID = UUIDWorkerID;
-                lftWorkerData.sJobRequestDateTime = "";//progress.getString(Worker_TrackingTest.WORKER_ID);  //todo:fix.
-                lftWorkerData.sWorkerStatus = sState;
-                alWorkerData.add(lftWorkerData);
+                newWorkerData.uuidWorkerID = UUIDWorkerID;
+
+                newWorkerData.sWorkerStatus = sState;
+                if(stateWorkState == WorkInfo.State.SUCCEEDED ||
+                        stateWorkState == WorkInfo.State.FAILED ||
+                        stateWorkState == WorkInfo.State.CANCELLED){
+                    //If the job is permanently stopped, get data from the output data:
+                    newWorkerData.sJobRequestDateTime = dataOutput.getString(Worker_LocalFileTransfer.JOB_DATETIME);
+                    newWorkerData.lProgressNumerator = dataOutput.getLong(Worker_LocalFileTransfer.JOB_BYTES_PROCESSED, 0);
+                    newWorkerData.lProgressDenominator = dataOutput.getLong(Worker_LocalFileTransfer.JOB_BYTES_TOTAL, 100);
+                } else {
+                    //If the job is ongoing, get the data from the progress data:
+                    Data progress = lfListWorkInfo.get().get(i).getProgress();
+                    newWorkerData.lProgressNumerator = progress.getLong(Worker_TrackingTest.WORKER_BYTES_PROCESSED, 0);
+                    newWorkerData.lProgressDenominator = progress.getLong(Worker_TrackingTest.WORKER_BYTES_TOTAL, 100);
+                }
+                alWorkerData.add(newWorkerData);
                 WorkManager wm = WorkManager.getInstance(getActivity().getApplicationContext());
                 LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkerID);
                 ldWorkInfo.observe(this, workInfoObserver_TrackingTest);
@@ -214,38 +238,40 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             String sJobFileName = fJobFile.getName();
             String sJobRequestDateTime = sJobFileName.substring(("Job_").length(),sJobFileName.length()-(".txt").length());
             boolean bDataFound = false;
-            for(LFTWorkerData lftWorkerData: alWorkerData){
-                if(lftWorkerData.sJobRequestDateTime.equals(sJobRequestDateTime)){
-                    lftWorkerData.sJobRequestDateTime = sJobRequestDateTime;
-                    lftWorkerData.fJobFile = fJobFile;
+            for(CustomWorkerData customWorkerData : alWorkerData){
+                if(customWorkerData.sJobRequestDateTime.equals(sJobRequestDateTime)){
+                    customWorkerData.sJobRequestDateTime = sJobRequestDateTime;
+                    customWorkerData.fJobFile = fJobFile;
                     bDataFound = true;
                 }
             }
             if(!bDataFound){
-                LFTWorkerData lftWorkerDataNew = new LFTWorkerData();
-                lftWorkerDataNew.sJobRequestDateTime = sJobRequestDateTime;
-                lftWorkerDataNew.fJobFile = fJobFile;
-                lftWorkerDataNew.sWorkerStatus = "Does not exist.";
-                alWorkerData.add(lftWorkerDataNew);
+                CustomWorkerData customWorkerDataNew = new CustomWorkerData();
+                customWorkerDataNew.sJobRequestDateTime = sJobRequestDateTime;
+                customWorkerDataNew.fJobFile = fJobFile;
+                customWorkerDataNew.sWorkerStatus = "Does not exist.";
+                alWorkerData.add(customWorkerDataNew);
             }
 
             //todo: check to make sure that the files were copied successfully (might not be able to confirm source exists/does not exist).
         }
 
 
-        LFTWorkerData[] lftWorkerData = new LFTWorkerData[alWorkerData.size()];
-        lftWorkerData = alWorkerData.toArray(lftWorkerData);
+        CustomWorkerData[] customWorkerData = new CustomWorkerData[alWorkerData.size()];
+        customWorkerData = alWorkerData.toArray(customWorkerData);
 
-        workerListCustomAdapter = new WorkerListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, lftWorkerData);
+        workerListCustomAdapter = new WorkerListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, customWorkerData);
         ListView listView_Workers = getView().findViewById(R.id.listView_Workers);
         listView_Workers.setAdapter(workerListCustomAdapter);
 
         TextView textView_NotificationNoWorkers = getView().findViewById(R.id.textView_NotificationNoWorkers);
         if(textView_NotificationNoWorkers != null) {
-            if (lftWorkerData.length > 0) {
+            if (customWorkerData.length > 0) {
                 textView_NotificationNoWorkers.setVisibility(View.INVISIBLE);
             } else {
                 textView_NotificationNoWorkers.setVisibility(View.VISIBLE);
+                /* Don't automatically close the workers console when all items are deleted -
+                     there's a lot to take in with this activity.
                 if (bItemsDeletedFlag){
                     //If items were just deleted and now the list of files is empty, wait a moment
                     // and then end this activity.
@@ -253,10 +279,12 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                     handler.postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            getActivity().finish();
+                            if(getActivity() instanceof Activity_WorkerConsole) {
+                                getActivity().finish();
+                            }
                         }
                     }, 2000);
-                }
+                }*/
 
             }
         }
@@ -269,12 +297,12 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
 
     public class WorkerListCustomAdapter extends ArrayAdapter<String> {
 
-        LFTWorkerData[] lftWorkerData;
+        CustomWorkerData[] customWorkerData;
         boolean[] bRowSelected;
 
-        public WorkerListCustomAdapter(@NonNull Context context, int resource, @NonNull LFTWorkerData[] objects) {
+        public WorkerListCustomAdapter(@NonNull Context context, int resource, @NonNull CustomWorkerData[] objects) {
             super(context, resource);
-            lftWorkerData = objects;
+            customWorkerData = objects;
             bRowSelected = new boolean[objects.length];
         }
 
@@ -306,19 +334,35 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             });
 
 
-            final String sJobRequestDateTime = lftWorkerData[position].sJobRequestDateTime;
-            String sWorkerStatus = lftWorkerData[position].sWorkerStatus;
+
             final String sJobFileName;
-            if(lftWorkerData[position].fJobFile != null){
-                sJobFileName = lftWorkerData[position].fJobFile.getName();
+            if(customWorkerData[position].fJobFile != null){
+                sJobFileName = customWorkerData[position].fJobFile.getName();
             } else {
                 sJobFileName = "";
             }
-            String sLine1 = "Job date/time: " + sJobRequestDateTime;
-            String sLine2 = "Worker Status: " + sWorkerStatus;
-            String sLine3 = "Job File: " + sJobFileName;
+            String sLine1 = "Worker UUID: " + customWorkerData[position].uuidWorkerID.toString();
             textView_Line1.setText(sLine1);
+
+            String sProgress;
+            String sWorkerStatus = customWorkerData[position].sWorkerStatus;
+            if(sWorkerStatus.equals("Failed")){
+                sProgress = customWorkerData[position].sFailureMessage;
+            } else {
+                long lProgressNumerator = customWorkerData[position].lProgressNumerator;
+                long lProgressDenominator = customWorkerData[position].lProgressDenominator;
+                int iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                if (iProgressBarValue == 0) {
+                    sProgress = "Progress: 0% / Unknown";
+                } else {
+                    sProgress = "Progress: " + iProgressBarValue + "%";
+                }
+            }
+            String sLine2 = "Worker Status: " + sWorkerStatus + ".\t" + sProgress;
             textView_Line2.setText(sLine2);
+
+            final String sJobRequestDateTime = customWorkerData[position].sJobRequestDateTime;
+            String sLine3 = "Job date/time: " + sJobRequestDateTime + "\tJob File: " + sJobFileName;
             textView_Line3.setText(sLine3);
 
             //Set button enable/disable based on presence of job file:
@@ -328,7 +372,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             button_View.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    viewModel_fragment_workerConsole.fJobFile = lftWorkerData[position].fJobFile;
+                    viewModel_fragment_workerConsole.fJobFile = customWorkerData[position].fJobFile;
 
                     Activity_WorkerConsole activity_workerConsole = (Activity_WorkerConsole) getActivity();
                     if(activity_workerConsole != null){
@@ -345,9 +389,6 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                     Data dataLocalFileTransfer = new Data.Builder()
                             .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sJobRequestDateTime)
                             .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
-                            .putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES)
-                            .putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, Worker_LocalFileTransfer.LOCAL_FILE_TRANSFER_MOVE)
-                            .putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, 0)
                             .build();
                     OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
                             .setInputData(dataLocalFileTransfer)
@@ -364,16 +405,19 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
 
         @Override
         public int getCount() {
-            return lftWorkerData.length;
+            return customWorkerData.length;
         }
     }
 
 
-    class LFTWorkerData{
+    class CustomWorkerData {
         UUID uuidWorkerID;
         String sJobRequestDateTime;
         String sWorkerStatus;
+        String sFailureMessage;
         File fJobFile;
+        long lProgressNumerator;
+        long lProgressDenominator;
     }
 
 

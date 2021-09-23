@@ -17,8 +17,6 @@ public class ViewModel_ImportActivity extends ViewModel {
     public static final int COMIC_SOURCE_WEBPAGE = 2;
     public int iComicImportSource = -1;  //Guides the import process for comics.
 
-    public static final int IMPORT_METHOD_MOVE = 0;
-    public static final int IMPORT_METHOD_COPY = 1;
     public int iImportMethod;  //Move or copy.
     public ArrayList<ItemClass_File> alfiConfirmedFileImports;
 
