@@ -1,0 +1,107 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base application theme. -->
+    <!--<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">-->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <item name="colorPrimaryDark">@color/colorStatusBar</item>    <!-- Status bar color -->
+        <item name="colorPrimary">@color/colorActionBar</item>        <!-- Action bar color -->
+
+        <item name="android:windowBackground">@color/colorBackgroundMain</item>
+        <item name="android:navigationBarColor">@color/colorNavigationBar</item>
+        <item name="android:textColor">@color/colorTextColor</item>
+        <item name="android:textColorPrimary">@color/colorTextColor</item>         <!-- sets AlertDialog summaryText color -->
+        <item name="android:textColorSecondary">@color/colorTextColor</item>
+        <!--<item name="colorBackgroundFloating">@color/colorLightOrange</item>    &lt;!&ndash; Sets AlertDialog color &ndash;&gt;-->
+        <item name="textColorAlertDialogListItem">@color/colorTextColor</item>     <!-- Sets AlertDialog text color -->
+        <item name="android:editTextColor">@color/colorTextColor</item>
+
+        <item name="subtitleTextColor">@color/colorTextColor</item>
+        <item name="editTextColor">@color/colorTextColor</item>
+        <item name="actionMenuTextColor">@color/colorTextColor</item>
+        <item name="badgeTextColor">@color/colorTextColor</item>
+        <item name="counterOverflowTextColor">@color/colorTextColor</item>
+        <item name="counterTextColor">@color/colorTextColor</item>
+        <item name="errorTextColor">@color/colorTextColor</item>
+        <item name="itemTextColor">@color/colorTextColor</item>
+        <item name="hintTextColor">@color/colorTextColor</item>
+        <item name="placeholderTextColor">@color/colorTextColor</item>
+        <item name="prefixTextColor">@color/colorTextColor</item>
+        <item name="suffixTextColor">@color/colorTextColor</item>
+        <item name="tabTextColor">@color/colorTextColor</item>
+        <item name="titleTextColor">@color/colorTextColor</item>
+        <item name="actionTextColorAlpha">@color/colorTextColor</item>
+        <item name="helperTextTextColor">@color/colorTextColor</item>
+
+        <item name="colorSurface">@color/colorNavigationBar</item> <!-- Background of menu, as well as multiSelect preference popup.-->
+
+        <!--<item name="actionBarStyle">@style/ActionBarTheme</item>-->            <!-- Sets the popup menu color -->
+
+    </style>
+
+
+    <style name="MainTheme" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/wp3651583_red_glitter_wallpaper</item>
+    </style>
+
+    <!--<style name="ActionBarTheme" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="popupTheme">@style/ActionBarPopupTheme</item>
+    </style>
+
+    &lt;!&ndash; Popup menu theme &ndash;&gt;
+    <style name="ActionBarPopupTheme">
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="android:background">@color/colorPopupPurple</item>
+    </style>-->
+
+
+    <!-- Starting activity theme -->
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@drawable/startup_screen</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="BusyBackgroundOverlayText"> <!-- This is for putting a shadow behind text. -->
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:shadowColor">#000000</item>
+        <item name="android:shadowDx">3</item>
+        <item name="android:shadowDy">3</item>
+        <item name="android:shadowRadius">3</item>
+    </style>
+
+
+    <style name="AppTheme.PinCodePopup">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:background">@color/colorBlack</item>
+    </style>
+
+
+    <style name="AlertDialogCustomStyle" parent="@style/Theme.AppCompat.DayNight.Dialog">
+        <item name="android:textColor">@color/colorTextColor</item>
+        <item name="android:textColorPrimary">@color/colorTextColor</item>
+        <item name="android:background">@color/colorBlack</item>
+        <item name="buttonBarButtonStyle">@style/ButtonBarStyleCustom</item>
+    </style>
+
+    <style name="ButtonBarStyleCustom" parent="@style/Theme.AppCompat.DayNight.Dialog">
+        <item name="android:textColor">@color/colorBlack</item>
+        <item name="textAllCaps">true</item>
+        <item name="android:textStyle">bold</item>
+        <!--        <item name="android:background">?android:attr/selectableItemBackground</item> Hide the button edges. -->
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_gravity">start</item>
+        <item name="android:gravity">center</item> <!-- Affects the text position in the button -->
+        <item name="android:layout_marginStart">15dp</item>
+        <item name="backgroundTint">@color/colorButton</item>
+    </style>
+
+
+
+</resources>
