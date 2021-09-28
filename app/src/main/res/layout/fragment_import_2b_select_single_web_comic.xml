@@ -104,7 +104,7 @@
             android:onClick="buttonClick_Cancel"
             android:text="Cancel"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed" />
+            app:backgroundTint="@color/colorButton" />
 
         <Button
             android:id="@+id/button_ImportConfirmation"
@@ -112,7 +112,7 @@
             android:layout_height="67dp"
             android:text="IMPORT"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             android:enabled="false"
             android:onClick="buttonNextClick_ImportConfirm"/>
 

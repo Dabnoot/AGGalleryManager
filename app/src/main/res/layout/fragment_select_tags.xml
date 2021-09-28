@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     tools:context=".Fragment_SelectTags"
     android:orientation="vertical"
-    android:background="@color/colorActionBarPurple">
+    android:background="@color/colorActionBar">
 
     <TextView
         android:id="@+id/textView_Title"
@@ -57,7 +57,7 @@
         android:layout_below="@+id/listView_ImportTagSelection"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:backgroundTint="@color/colorPopupPurple"/>
+        android:backgroundTint="@color/colorPopup"/>
 
     <Button
         android:id="@+id/button_TagEditor"
@@ -67,7 +67,7 @@
         android:textSize="20sp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        app:backgroundTint="@color/colorBlackboardRed"
+        app:backgroundTint="@color/colorButton"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>
 

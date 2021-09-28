@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -29,6 +30,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -95,7 +97,19 @@ public class Activity_Main extends AppCompatActivity {
         textView_WorkerTest = findViewById(R.id.textView_WorkerTest);
 
 
-
+        ImageButton imageButton_DayNight = findViewById(R.id.imageButton_DayNight);
+        imageButton_DayNight.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!globalClass.gbIsDarkModeOn) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                    globalClass.gbIsDarkModeOn = true;
+                } else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                    globalClass.gbIsDarkModeOn = false;
+                }
+            }
+        });
 
 
 

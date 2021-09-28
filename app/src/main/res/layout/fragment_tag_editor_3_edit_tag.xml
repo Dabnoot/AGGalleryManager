@@ -106,7 +106,7 @@
                     android:layout_marginTop="40dp"
                     android:text="Apply"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed"
+                    app:backgroundTint="@color/colorButton"
                     android:enabled="false"/>
 
                 <Button
@@ -117,7 +117,7 @@
                     android:layout_marginTop="40dp"
                     android:text="Finish"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed" />
+                    app:backgroundTint="@color/colorButton" />
 
             </LinearLayout>
 

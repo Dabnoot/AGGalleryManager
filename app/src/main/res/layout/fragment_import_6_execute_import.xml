@@ -74,7 +74,7 @@
             android:text="Back"
             android:textSize="24sp"
             android:enabled="false"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             />
 
         <Button
@@ -87,7 +87,7 @@
             android:text="Finish"
             android:textSize="24sp"
             android:enabled="false"
-            app:backgroundTint="@color/colorBlackboardRed" />
+            app:backgroundTint="@color/colorButton" />
 
     </LinearLayout>
 

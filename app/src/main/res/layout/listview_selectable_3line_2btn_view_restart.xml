@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@null"
-        android:buttonTint="@color/colorGrey1"
+        android:buttonTint="@color/colorTextColor"
         android:layout_marginStart="20dp"
         android:layout_alignParentStart="true"
         android:layout_centerVertical="true"/>
@@ -63,7 +63,7 @@
             android:layout_height="50dp"
             android:text="View"
             android:textSize="16sp"
-            android:backgroundTint="@color/colorBlackboardRed"/>
+            android:backgroundTint="@color/colorButton"/>
 
         <Button
             android:id="@+id/button_Restart"
@@ -71,7 +71,7 @@
             android:layout_height="50dp"
             android:text="Restart"
             android:textSize="16sp"
-            android:backgroundTint="@color/colorBlackboardRed"
+            android:backgroundTint="@color/colorButton"
             android:layout_below="@id/button_View"/>
 
     </RelativeLayout>

@@ -1,49 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--<color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>!-->
-
-    <!-- https://www.vogella.com/tutorials/AndroidStylesThemes/article.html -->
-
     <color name="colorPrimary">#9966ff</color>
     <color name="colorPrimaryDark">#9933ff</color>
-    <color name="colorDarkPurple">#5f55af</color>
     <color name="colorAccent">#03DAC5</color>
 
-    <color name="colorStatusBarPurple">#282668</color>
-    <color name="colorActionBarPurple">#333087</color>
-    <color name="colorBackgroundPurple">#3f3b9c</color>
-    <color name="colorPopupPurple">#343995</color>
-    <color name="colorNavigationBarPurple">#203892</color>
-    <color name="colorFragmentImportBackground">#1d4890</color>
-    <color name="colorFragmentImportBackgroundHighlight">#255dbb</color>
-    <color name="colorFragmentImportBackgroundHighlight2">#447ad4</color>
+    <color name="colorStatusBar">#282668</color>
+    <color name="colorActionBar">#333087</color>
+    <color name="colorBackgroundMain">#3f3b9c</color>
+    <color name="colorPopup">#343995</color>
+    <color name="colorNavigationBar">#203892</color>
+    <color name="colorFragmentBackground">#1d4890</color>
+    <color name="colorFragmentBackgroundHighlight">#255dbb</color>
+    <color name="colorFragmentBackgroundHighlight2">#447ad4</color>
 
-
-    <color name="colorBlackboardRed">#eb305b</color>
-    <color name="colorDarkOrange">#ea552d</color>
-    <color name="colorLightOrange">#f77026</color>
-    <color name="colorDarkDarkOrange">#bc3f2a</color>
+    <color name="colorButton">#eb305b</color>
 
     <color name="colorBlack">#000000</color>
+    <color name="black_overlay">#66000000</color>
 
-    <color name="colorWhite">#ffffff</color>
-    <color name="colorGrey1">#efefef</color>
-    <color name="colorGrey2">#dddddd</color>
-    <color name="colorGrey3">#ceccca</color>
-
-    <color name="colorBlueGrey1">#8da2b5</color>
-    <color name="colorBlueGrey2">#7d93aa</color>
-    <color name="colorBlueGrey3">#647892</color>
-    <color name="colorBlueGrey4">#546d87</color>
-    <color name="colorBlueGrey5">#4d6682</color>
+    <color name="colorTextColor">#efefef</color>
 
     <color name="startup_screen_background">#292929</color>
 
-    <color name="black_overlay">#66000000</color>
-    <color name="light_blue_600">#FF039BE5</color>
-    <color name="light_blue_900">#FF01579B</color>
-    <color name="light_blue_A200">#FF40C4FF</color>
-    <color name="light_blue_A400">#FF00B0FF</color>
+
 </resources>

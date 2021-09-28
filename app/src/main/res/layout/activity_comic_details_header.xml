@@ -77,7 +77,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/parodies_"
-                android:textColor="@color/colorGrey1"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_ComicSource"

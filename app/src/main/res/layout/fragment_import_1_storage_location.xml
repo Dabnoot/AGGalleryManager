@@ -20,10 +20,10 @@
             android:id="@+id/button_SelectFolder"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/colorBlackboardRed"
+            android:background="@color/colorButton"
             android:text="Select Folder"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -115,7 +115,7 @@
                 android:onClick="buttonClick_Cancel"
                 android:text="Cancel"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorBlackboardRed" />
+                app:backgroundTint="@color/colorButton" />
 
             <Button
                 android:id="@+id/button_FolderSelectComplete"
@@ -123,7 +123,7 @@
                 android:layout_height="67dp"
                 android:text="Next"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorBlackboardRed"
+                app:backgroundTint="@color/colorButton"
                 android:onClick="buttonNextClick_StorageImportFromLocation"
                 android:enabled="false"/>
         </LinearLayout>

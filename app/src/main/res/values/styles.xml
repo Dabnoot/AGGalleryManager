@@ -5,36 +5,36 @@
 
         <item name="colorAccent">@color/colorAccent</item>
 
-        <item name="colorPrimaryDark">@color/colorStatusBarPurple</item>    <!-- Status bar color -->
-        <item name="colorPrimary">@color/colorActionBarPurple</item>        <!-- Action bar color -->
+        <item name="colorPrimaryDark">@color/colorStatusBar</item>    <!-- Status bar color -->
+        <item name="colorPrimary">@color/colorActionBar</item>        <!-- Action bar color -->
 
-        <item name="android:windowBackground">@color/colorBackgroundPurple</item>
-        <item name="android:navigationBarColor">@color/colorNavigationBarPurple</item>
-        <item name="android:textColor">@color/colorGrey1</item>
-        <item name="android:textColorPrimary">@color/colorGrey1</item>         <!-- sets AlertDialog summaryText color -->
-        <item name="android:textColorSecondary">@color/colorGrey1</item>
+        <item name="android:windowBackground">@color/colorBackgroundMain</item>
+        <item name="android:navigationBarColor">@color/colorNavigationBar</item>
+        <item name="android:textColor">@color/colorTextColor</item>
+        <item name="android:textColorPrimary">@color/colorTextColor</item>         <!-- sets AlertDialog summaryText color -->
+        <item name="android:textColorSecondary">@color/colorTextColor</item>
         <!--<item name="colorBackgroundFloating">@color/colorLightOrange</item>    &lt;!&ndash; Sets AlertDialog color &ndash;&gt;-->
-        <item name="textColorAlertDialogListItem">@color/colorGrey1</item>     <!-- Sets AlertDialog text color -->
-        <item name="android:editTextColor">@color/colorGrey1</item>
+        <item name="textColorAlertDialogListItem">@color/colorTextColor</item>     <!-- Sets AlertDialog text color -->
+        <item name="android:editTextColor">@color/colorTextColor</item>
 
-        <item name="subtitleTextColor">@color/colorGrey1</item>
-        <item name="editTextColor">@color/colorGrey1</item>
-        <item name="actionMenuTextColor">@color/colorGrey1</item>
-        <item name="badgeTextColor">@color/colorGrey1</item>
-        <item name="counterOverflowTextColor">@color/colorGrey1</item>
-        <item name="counterTextColor">@color/colorGrey1</item>
-        <item name="errorTextColor">@color/colorGrey1</item>
-        <item name="itemTextColor">@color/colorGrey1</item>
-        <item name="hintTextColor">@color/colorGrey1</item>
-        <item name="placeholderTextColor">@color/colorGrey1</item>
-        <item name="prefixTextColor">@color/colorGrey1</item>
-        <item name="suffixTextColor">@color/colorGrey1</item>
-        <item name="tabTextColor">@color/colorGrey1</item>
-        <item name="titleTextColor">@color/colorGrey1</item>
-        <item name="actionTextColorAlpha">@color/colorGrey1</item>
-        <item name="helperTextTextColor">@color/colorGrey1</item>
+        <item name="subtitleTextColor">@color/colorTextColor</item>
+        <item name="editTextColor">@color/colorTextColor</item>
+        <item name="actionMenuTextColor">@color/colorTextColor</item>
+        <item name="badgeTextColor">@color/colorTextColor</item>
+        <item name="counterOverflowTextColor">@color/colorTextColor</item>
+        <item name="counterTextColor">@color/colorTextColor</item>
+        <item name="errorTextColor">@color/colorTextColor</item>
+        <item name="itemTextColor">@color/colorTextColor</item>
+        <item name="hintTextColor">@color/colorTextColor</item>
+        <item name="placeholderTextColor">@color/colorTextColor</item>
+        <item name="prefixTextColor">@color/colorTextColor</item>
+        <item name="suffixTextColor">@color/colorTextColor</item>
+        <item name="tabTextColor">@color/colorTextColor</item>
+        <item name="titleTextColor">@color/colorTextColor</item>
+        <item name="actionTextColorAlpha">@color/colorTextColor</item>
+        <item name="helperTextTextColor">@color/colorTextColor</item>
 
-        <item name="colorSurface">@color/colorNavigationBarPurple</item> <!-- Background of menu, as well as multiSelect preference popup.-->
+        <item name="colorSurface">@color/colorNavigationBar</item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
         <!--<item name="actionBarStyle">@style/ActionBarTheme</item>-->            <!-- Sets the popup menu color -->
 
@@ -84,8 +84,8 @@
 
 
     <style name="AlertDialogCustomStyle" parent="@style/Theme.AppCompat.DayNight.Dialog">
-        <item name="android:textColor">@color/colorGrey3</item>
-        <item name="android:textColorPrimary">@color/colorGrey3</item>
+        <item name="android:textColor">@color/colorTextColor</item>
+        <item name="android:textColorPrimary">@color/colorTextColor</item>
         <item name="android:background">@color/colorBlack</item>
         <item name="buttonBarButtonStyle">@style/ButtonBarStyleCustom</item>
     </style>
@@ -99,7 +99,7 @@
         <item name="android:layout_gravity">start</item>
         <item name="android:gravity">center</item> <!-- Affects the text position in the button -->
         <item name="android:layout_marginStart">15dp</item>
-        <item name="backgroundTint">@color/colorBlackboardRed</item>
+        <item name="backgroundTint">@color/colorButton</item>
     </style>
 
 

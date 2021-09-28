@@ -45,7 +45,7 @@
                 android:onClick="buttonCancelClick"
                 android:text="Cancel"
                 android:textSize="20sp"
-                android:background="@color/colorBlackboardRed"
+                android:background="@color/colorButton"
                 style="@android:style/ButtonBar"/>
 
             <Button
@@ -56,7 +56,7 @@
                 android:onClick="buttonOkClick"
                 android:text="OK"
                 android:textSize="20sp"
-                android:background="@color/colorBlackboardRed"
+                android:background="@color/colorButton"
                 style="@android:style/ButtonBar"/>
 
         </LinearLayout>

@@ -38,7 +38,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginEnd="10dp"
             android:text="CANCEL"
-            android:backgroundTint="@color/colorBlackboardRed"/>
+            android:backgroundTint="@color/colorButton"/>
 
         <Button
             android:id="@+id/button_PinCodeOK"
@@ -47,7 +47,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="20dp"
             android:text="OK"
-            android:backgroundTint="@color/colorBlackboardRed"/>
+            android:backgroundTint="@color/colorButton"/>
 
 
 

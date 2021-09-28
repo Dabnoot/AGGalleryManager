@@ -42,7 +42,7 @@
             android:onClick="buttonClick_Cancel"
             android:text="Cancel"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed" />
+            app:backgroundTint="@color/colorButton" />
 
         <Button
             android:id="@+id/button_ItemSelectComplete"
@@ -51,7 +51,7 @@
             android:onClick="buttonNextClick_ItemSelectComplete"
             android:text="Next"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             android:enabled="false"/>
 
     </LinearLayout>

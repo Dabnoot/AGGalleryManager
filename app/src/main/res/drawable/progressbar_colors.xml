@@ -3,7 +3,7 @@
     <item android:id="@android:id/background">
         <shape>
             <solid
-                android:color="@color/colorFragmentImportBackground" />
+                android:color="@color/colorFragmentBackground" />
         </shape>
     </item>
 

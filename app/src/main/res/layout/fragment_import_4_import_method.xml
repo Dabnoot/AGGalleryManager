@@ -50,7 +50,7 @@
                 android:layout_height="wrap_content"
                 android:checked="true"
                 android:text="Move Files"
-                android:textColor="@color/colorGrey1"
+                android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -67,7 +67,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Copy Files"
-                android:textColor="@color/colorGrey1"
+                android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -95,7 +95,7 @@
                 android:onClick="buttonClick_Cancel"
                 android:text="Cancel"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorBlackboardRed" />
+                app:backgroundTint="@color/colorButton" />
 
             <Button
                 android:id="@+id/button_ImportMethodSelected"
@@ -104,7 +104,7 @@
                 android:onClick="buttonNextClick_ImportMethodComplete"
                 android:text="Next"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorBlackboardRed" />
+                app:backgroundTint="@color/colorButton" />
 
         </LinearLayout>
 

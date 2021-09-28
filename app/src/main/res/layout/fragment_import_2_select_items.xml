@@ -12,7 +12,7 @@
         android:id="@+id/linearLayout_ListViewControlBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/colorFragmentImportBackgroundHighlight"
+        android:background="@color/colorFragmentBackgroundHighlight"
         android:gravity="center_vertical"
         android:paddingTop="7dp"
         android:paddingBottom="7dp"
@@ -24,15 +24,15 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginEnd="40dp"
-            android:buttonTint="@color/colorGrey1"
+            android:buttonTint="@color/colorTextColor"
             android:text="Select All"
-            android:textColor="@color/colorGrey1" />
+            android:textColor="@color/colorTextColor" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="40dp"
-            android:background="@color/colorFragmentImportBackgroundHighlight2"
+            android:background="@color/colorFragmentBackgroundHighlight2"
             android:gravity="center_vertical"
             android:paddingTop="2dp"
             android:paddingBottom="2dp">
@@ -121,7 +121,7 @@
             android:onClick="buttonClick_Cancel"
             android:text="Cancel"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed" />
+            app:backgroundTint="@color/colorButton" />
 
         <Button
             android:id="@+id/button_ItemSelectComplete"
@@ -130,7 +130,7 @@
             android:onClick="buttonNextClick_ItemSelectComplete"
             android:text="Next"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             android:enabled="false"/>
 
     </LinearLayout>

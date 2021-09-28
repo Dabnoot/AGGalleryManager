@@ -67,7 +67,7 @@
                     android:onClick="buttonClick_ComicTagImportReturn"
                     android:text="Return"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed" />
+                    app:backgroundTint="@color/colorButton" />
 
                 <Button
                     android:id="@+id/button_ImportTags"
@@ -76,7 +76,7 @@
                     android:layout_marginEnd="20dp"
                     android:text="Import"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed"
+                    app:backgroundTint="@color/colorButton"
                     android:enabled="false" />
 
             </LinearLayout>

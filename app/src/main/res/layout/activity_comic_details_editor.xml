@@ -94,7 +94,7 @@
                     android:layout_marginEnd="15dp"
                     android:inputType="textMultiLine"
                     android:text="@string/parodies_"
-                    android:textColor="@color/colorGrey1"
+                    android:textColor="@color/colorTextColor"
                     android:textSize="20sp"
                     android:layout_below="@id/editText_ComicSource"
                     android:layout_toEndOf="@id/textView_LabelComicSource"
@@ -274,7 +274,7 @@
                     android:layout_height="67dp"
                     android:text="Cancel"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed"/>
+                    app:backgroundTint="@color/colorButton"/>
 
                 <Button
                     android:id="@+id/button_Save"
@@ -283,7 +283,7 @@
                     android:layout_marginStart="20dp"
                     android:text="Save"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorBlackboardRed" />
+                    app:backgroundTint="@color/colorButton" />
 
             </LinearLayout>
 

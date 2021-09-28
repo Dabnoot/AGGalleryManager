@@ -6,6 +6,6 @@
     android:layout_height="wrap_content"
     android:textSize="16sp"
     android:gravity="center"
-    android:background="@color/colorStatusBarPurple"
+    android:background="@color/colorStatusBar"
     android:padding="15dp"
     />

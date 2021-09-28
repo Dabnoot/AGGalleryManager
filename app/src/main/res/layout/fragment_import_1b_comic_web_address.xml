@@ -45,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Paste"
-                android:backgroundTint="@color/colorBlackboardRed"
+                android:backgroundTint="@color/colorButton"
                 android:enabled="false"
                 android:layout_alignParentEnd="true"/>
         </RelativeLayout>
@@ -63,7 +63,7 @@
                 android:onClick="buttonClick_Cancel"
                 android:text="Cancel"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorBlackboardRed" />
+                app:backgroundTint="@color/colorButton" />
 
             <Button
                 android:id="@+id/button_NextStep"
@@ -72,7 +72,7 @@
                 android:onClick="buttonNextClick_WebAddress"
                 android:text="Next"
                 android:textSize="24sp"
-                app:backgroundTint="@color/colorBlackboardRed"
+                app:backgroundTint="@color/colorButton"
                 android:enabled="true"/>
 
         </LinearLayout>

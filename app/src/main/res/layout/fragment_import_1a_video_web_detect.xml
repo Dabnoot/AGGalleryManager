@@ -36,7 +36,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
         android:layout_toStartOf="@id/button_Go"
-        android:backgroundTint="@color/colorBlackboardRed"
+        android:backgroundTint="@color/colorButton"
         android:enabled="false"/>
 
     <Button
@@ -48,7 +48,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
         android:layout_toStartOf="@id/button_Detect"
-        android:backgroundTint="@color/colorBlackboardRed"/>
+        android:backgroundTint="@color/colorButton"/>
 
     <Button
         android:id="@+id/button_Detect"
@@ -59,7 +59,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
         android:layout_alignParentEnd="true"
-        android:backgroundTint="@color/colorBlackboardRed"
+        android:backgroundTint="@color/colorButton"
         android:enabled="false"/>
 
     <TextView
@@ -98,7 +98,7 @@
             android:onClick="buttonClick_Cancel"
             android:text="Cancel"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed" />
+            app:backgroundTint="@color/colorButton" />
 
         <Button
             android:id="@+id/button_NextStep"
@@ -107,7 +107,7 @@
             android:onClick="buttonNextClick_VideoWebDetect"
             android:text="Next"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             android:enabled="false"/>
 
     </LinearLayout>

@@ -20,9 +20,9 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
         android:layout_marginStart="20dp"
-        android:buttonTint="@color/colorGrey1"
+        android:buttonTint="@color/colorTextColor"
         android:text="Select All"
-        android:textColor="@color/colorGrey1"/>
+        android:textColor="@color/colorTextColor"/>
 
     <ListView
         android:id="@+id/listView_Workers"
@@ -46,7 +46,7 @@
             android:layout_marginEnd="20dp"
             android:text="Delete"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed" />
+            app:backgroundTint="@color/colorButton" />
 
         <Button
             android:id="@+id/button_Return"
@@ -54,7 +54,7 @@
             android:layout_height="67dp"
             android:text="Return"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorBlackboardRed"
+            app:backgroundTint="@color/colorButton"
             android:enabled="true"/>
 
     </LinearLayout>

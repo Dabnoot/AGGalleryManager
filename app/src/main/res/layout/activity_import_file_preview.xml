@@ -61,7 +61,7 @@
                 android:layout_alignParentStart="true"
                 android:layout_alignBaseline="@id/textView_LabelRating"
                 android:paddingTop="5dp"
-                android:buttonTint="@color/colorGrey1"/>
+                android:buttonTint="@color/colorTextColor"/>
 
             <TextView
                 android:id="@+id/textView_LabelImport"

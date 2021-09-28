@@ -4,7 +4,7 @@
     android:id="@+id/checkedTextView_TagText"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:textColor="@color/colorGrey1"
+    android:textColor="@color/colorTextColor"
     android:textSize="20sp"
     android:textAlignment="center"
     android:padding="5dp"/>

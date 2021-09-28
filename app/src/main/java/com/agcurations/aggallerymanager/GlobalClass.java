@@ -116,6 +116,8 @@ public class GlobalClass extends Application {
     public static final int COPY = 1;
     public static final String[] gsMoveOrCopy = {"Move", "Copy"};
 
+    public boolean gbIsDarkModeOn = false;
+
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
     //=====================================================================================
