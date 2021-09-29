@@ -65,13 +65,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comic_details);
 
-        getWindow().setStatusBarColor(ContextCompat.getColor(getApplicationContext(), R.color.colorDarkDarkOrange));
-        ActionBar bar = getSupportActionBar();
-        assert bar != null;
-        bar.setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.colorDarkDarkOrange)));
-        this.getWindow().setNavigationBarColor(ContextCompat.getColor(this, R.color.startup_screen_background));
-
-
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 

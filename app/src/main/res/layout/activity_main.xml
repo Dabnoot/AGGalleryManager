@@ -7,6 +7,17 @@
     android:layout_height="match_parent"
     tools:context=".Activity_Main">
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text=""
+        android:background="#30000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <!--    The above TextView is used to provide an darkening to the background.-->
 
     <ImageView
         android:id="@+id/imageView_Video"

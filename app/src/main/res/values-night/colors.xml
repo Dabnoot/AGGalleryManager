@@ -4,17 +4,40 @@
     <color name="colorPrimaryDark">#9933ff</color>
     <color name="colorAccent">#03DAC5</color>
 
-    <color name="colorStatusBar">#282668</color>
-    <color name="colorActionBar">#333087</color>
-    <color name="colorBackgroundMain">#3f3b9c</color>
-    <color name="colorPopup">#343995</color>
-    <color name="colorNavigationBar">#203892</color>
-    <color name="colorFragmentBackground">#1d4890</color>
-    <color name="colorFragmentBackgroundHighlight">#255dbb</color>
-    <color name="colorFragmentBackgroundHighlight2">#447ad4</color>
+    <!--<color name="colorStatusBar">                   #682628</color>
+    <color name="colorActionBar">                   #873033</color>
+    <color name="colorBackgroundMain">              #9c3b3f</color>
+    <color name="colorPopup">                       #953934</color>
+    <color name="colorNavigationBar">               #923820</color>
+    <color name="colorFragmentBackground">          #90481d</color>
+    <color name="colorFragmentBackgroundHighlight"> #bb5d25</color>
+    <color name="colorFragmentBackgroundHighlight2">#d47a44</color>
+    <color name="colorButton">                      #eb305b</color>
+    <color name="colorDarkDarkOrange">              #bc3f2a</color>-->
 
-    <color name="colorButton">#eb305b</color>
-    <color name="colorDarkDarkOrange">#bc3f2a</color>
+    <!--Ruby Color Scheme-->
+    <!--<color name="colorStatusBar">                   #86001E</color>
+    <color name="colorActionBar">                   #A50829</color>
+    <color name="colorBackgroundMain">              #BA1335</color>
+    <color name="colorPopup">                       #B3112A</color>
+    <color name="colorNavigationBar">               #B01016</color>
+    <color name="colorFragmentBackground">          #AE2013</color>
+    <color name="colorFragmentBackgroundHighlight"> #D9351B</color>
+    <color name="colorFragmentBackgroundHighlight2">#F2523A</color>
+    <color name="colorButton">                      #FF0851</color>
+    <color name="colorDarkDarkOrange">              #DA1720</color>-->
+
+    <!--Scarlet Color Scheme-->
+    <color name="colorStatusBar">                   #680000</color>
+    <color name="colorActionBar">                   #87000B</color>
+    <color name="colorBackgroundMain">              #9C0017</color>
+    <color name="colorPopup">                       #95000C</color>
+    <color name="colorNavigationBar">               #920000</color>
+    <color name="colorFragmentBackground">          #900200</color>
+    <color name="colorFragmentBackgroundHighlight"> #BB1700</color>
+    <color name="colorFragmentBackgroundHighlight2">#D4341C</color>
+    <color name="colorButton">                      #E10033</color>
+
 
     <color name="colorBlack">#000000</color>
     <color name="black_overlay">#66000000</color>
@@ -22,6 +45,5 @@
     <color name="colorTextColor">#efefef</color>
 
     <color name="startup_screen_background">#292929</color>
-
 
 </resources>
