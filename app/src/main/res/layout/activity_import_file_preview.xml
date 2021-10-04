@@ -166,8 +166,24 @@
             android:layout_marginBottom="20dp"
             android:textSize="16sp"
             android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true"
-            android:layout_toStartOf="@+id/textView_ImportItemNumberOfNumber"/>
+            android:layout_alignParentBottom="true"/>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_RecentTags"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_alignTop="@id/textView_SelectedTags"
+            android:layout_toEndOf="@id/textView_SelectedTags"
+            android:layout_toStartOf="@id/textView_ImportItemNumberOfNumber">
+
+            <me.gujun.android.taggroup.TagGroup
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tag_group"
+                style="@style/TagGroup"
+                android:layout_alignParentEnd="true"/>
+
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/textView_ImportItemNumberOfNumber"

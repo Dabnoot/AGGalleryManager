@@ -1,8 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
-import android.content.res.ColorStateList;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -32,6 +30,7 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import me.gujun.android.taggroup.TagGroup;
 
 public class Activity_ImportFilePreview extends AppCompatActivity {
 
@@ -56,6 +55,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private static final String PLAYBACK_TIME = "play_time";
 
     int[] giGradeImageViews;
+
+    TagGroup gTagGroup;
 
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
@@ -126,6 +127,28 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
         };
         viewModel_fragment_selectTags.altiTagsSelected.observe(this, selectedTagsObserver);
+
+        //Watch for changes in suggested tags:
+        final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                //Get the text of the tags and display:
+
+                if(tagItems.size() > 0) {
+                    String[] sTags = new String[tagItems.size()];
+
+                    for (int i = 0; i < tagItems.size(); i++) {
+                        sTags[i] = tagItems.get(i).sTagText;
+                    }
+                    gTagGroup.setTags(sTags);
+                }
+
+
+
+            }
+        };
+        viewModel_fragment_selectTags.altiTagSuggestions.observe(this, suggestedTagsObserver);
 
         Bundle b = getIntent().getExtras();
         if(b != null) {
@@ -338,6 +361,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
         }
 
+        gTagGroup = (TagGroup) findViewById(R.id.tag_group);
+
+
         initializeFile();
         displayGrade();
 
@@ -463,8 +489,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     }
 
     private void CheckboxColorSwitch(boolean bChecked){
-        CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
-        TextView textView_LabelImport = findViewById(R.id.textView_LabelImport);
         RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
         if(bChecked) {
             relativeLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorActionBar));
@@ -554,5 +578,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             displayGrade();
         }
     }
+
+    private void tagGroupInitialize(){
+
+
+
+    }
+
+
 
 }

@@ -485,6 +485,8 @@ public class Fragment_SelectTags extends Fragment {
                         }
                     }
 
+
+
                     //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
                     ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
 
@@ -492,6 +494,27 @@ public class Fragment_SelectTags extends Fragment {
                             entry : tmSelectedItems.entrySet()) {
                         alTagItems.add(entry.getValue());
                     }
+
+                    //Update the suggested tags list:
+                    ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    if(alictSuggestions == null){
+                        alictSuggestions = new ArrayList<>();
+                        alictNewSuggestions = new ArrayList<>();
+                    }
+                    for(ItemClass_Tag ict: alTagItems){
+                        boolean bNotInList = true;
+                        for(ItemClass_Tag ictSuggestion: alictSuggestions){
+                            if(ict.iTagID == ictSuggestion.iTagID){
+                                bNotInList = false;
+                            }
+                        }
+                        if(bNotInList){
+                            alictNewSuggestions.add(ict);
+                        }
+                    }
+                    viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
+
 
                     viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 

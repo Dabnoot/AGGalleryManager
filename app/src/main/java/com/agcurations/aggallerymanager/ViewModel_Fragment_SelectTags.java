@@ -32,6 +32,9 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
 
     public int iMediaCategory = -1;
 
+    public final MutableLiveData<ArrayList<ItemClass_Tag>> altiTagSuggestions =
+            new MutableLiveData<>(); //To popup recently used tags to simplify tagging by user.
+
     public void setSelectedTags(ArrayList<ItemClass_Tag> altiNewListOfSelectedTags){
 
         //Find which tag has been added or removed, and set tiTagItemRemoved or tiTagItemAdded:
