@@ -1,6 +1,8 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -14,6 +16,7 @@ import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 
@@ -24,6 +27,7 @@ import java.util.ArrayList;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -363,9 +367,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         checkBox_ImportItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Check/uncheck the checkbox.
                 galFileItems.get(giFileItemIndex).bIsChecked = ((CheckBox)view).isChecked();
                 galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+                CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
                 //Update result to send back to the calling activity (this is also done on tag change):
                 setResult(RESULT_OK);
@@ -379,6 +383,21 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
                 galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
                 galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+                CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+
+                //Update result to send back to the calling activity (this is also done on tag change):
+                setResult(RESULT_OK);
+            }
+        });
+        RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
+        relativeLayout_ImportIndication.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Check/uncheck the checkbox.
+                checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
+                galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
+                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+                CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
                 //Update result to send back to the calling activity (this is also done on tag change):
                 setResult(RESULT_OK);
@@ -386,6 +405,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         });
 
         checkBox_ImportItem.setChecked(galFileItems.get(giFileItemIndex).bIsChecked);
+        CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
@@ -440,6 +460,18 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             String sTemp = (giFileItemIndex + 1) + "/" + (giMaxFileItemIndex + 1);
             textView_ImportItemNumberOfNumber.setText(sTemp);
         }
+    }
+
+    private void CheckboxColorSwitch(boolean bChecked){
+        CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+        TextView textView_LabelImport = findViewById(R.id.textView_LabelImport);
+        RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
+        if(bChecked) {
+            relativeLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorActionBar));
+        } else {
+            relativeLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorBlack));
+        }
+
     }
 
 
