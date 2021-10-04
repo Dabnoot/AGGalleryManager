@@ -4,17 +4,16 @@
     <color name="colorPrimaryDark">#9933ff</color>
     <color name="colorAccent">#03DAC5</color>
 
+
     <color name="colorStatusBar">#282668</color>
     <color name="colorActionBar">#333087</color>
     <color name="colorBackgroundMain">#3f3b9c</color>
     <color name="colorPopup">#343995</color>
     <color name="colorNavigationBar">#203892</color>
-    <color name="colorFragmentBackground">#1d4890</color>
+    <color name="colorUnfilledUnselected">#1d4890</color>
     <color name="colorFragmentBackgroundHighlight">#255dbb</color>
     <color name="colorFragmentBackgroundHighlight2">#447ad4</color>
-
     <color name="colorButton">#eb305b</color>
-    <color name="colorDarkDarkOrange">#bc3f2a</color>
 
     <color name="colorBlack">#000000</color>
     <color name="black_overlay">#66000000</color>
