@@ -10,6 +10,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 import co.lujun.androidtagview.TagContainerLayout;
+import co.lujun.androidtagview.TagView;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -69,7 +71,7 @@ public class Fragment_SelectTags extends Fragment {
 
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         if(getActivity() == null) return;
@@ -273,6 +275,40 @@ public class Fragment_SelectTags extends Fragment {
 
         //Maintain the display of suggested tags:
         gTagContainerLayout_SuggestedTags = getView().findViewById(R.id.tagContainerLayout_SuggestedTags);
+        gTagContainerLayout_SuggestedTags.setOnTagClickListener(new TagView.OnTagClickListener() {
+            @Override
+            public void onTagClick(int position, String text) {
+
+                gListViewTagsAdapter.selectTagByName(text);
+             }
+
+            @Override
+            public void onTagLongClick(int position, String text) {
+
+            }
+
+            @Override
+            public void onSelectedTagDrag(int position, String text) {
+
+            }
+
+            @Override
+            public void onTagCrossClick(int position) {
+                //Remove the item from suggested tags:
+                String sTagText = gTagContainerLayout_SuggestedTags.getTagText(position);
+                //Update the suggested tags list in the viewmodel:
+                ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                ArrayList<ItemClass_Tag> alictNewSuggestions = new ArrayList<>();
+                for(ItemClass_Tag ict: alictSuggestions){
+                    if(!ict.sTagText.equals(sTagText)){
+                        alictNewSuggestions.add(ict);
+                    }
+                }
+                viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
+
+            }
+        });
+
         //Watch for changes in suggested tags:
         final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
             @Override
@@ -317,8 +353,27 @@ public class Fragment_SelectTags extends Fragment {
 
     }
 
-    private void updateSuggestedTagDisplay(){
-        updateSuggestedTagDisplay(viewModel_fragment_selectTags.altiTagSuggestions.getValue());
+    private void InitializeSuggestedTagDisplay(){
+        //Go through the selected tags and only display suggested tags that are not selected:
+        ArrayList<ItemClass_Tag> alict_TagSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+        if(alict_TagSuggestions == null){
+            return;
+        }
+        ArrayList<String> alsValidSuggestions = new ArrayList<>();
+        for(ItemClass_Tag ictSuggestion: alict_TagSuggestions){
+            boolean bSuggestedTagNotSelected = true;
+            for(int iPreSelectedTagID: galiPreselectedTags){
+                if(iPreSelectedTagID == ictSuggestion.iTagID){
+                    bSuggestedTagNotSelected = false;
+                    break;
+                }
+            }
+            if(bSuggestedTagNotSelected){
+                alsValidSuggestions.add(ictSuggestion.sTagText);
+            }
+        }
+        gTagContainerLayout_SuggestedTags.setTags(alsValidSuggestions);
+
     }
 
 
@@ -419,7 +474,7 @@ public class Fragment_SelectTags extends Fragment {
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
         //Initialize suggested tags by sending an updated list of what is selected:
-        viewModel_fragment_selectTags.setSelectedTags(new ArrayList<ItemClass_Tag>());
+        InitializeSuggestedTagDisplay();
 
 
     }
@@ -605,6 +660,78 @@ public class Fragment_SelectTags extends Fragment {
             // Return the completed view to render on screen
             return v;
         }
+
+        public void selectTagByName(String sTagName){
+            //This is specifically for the "suggested tags" selection feature when the user selects
+            //  one of the suggested tags.
+
+            //Determine the tag ID:
+            ArrayList<ItemClass_Tag> alict_AllDisplayedTags = viewModel_fragment_selectTags.alTagsAll;
+            int iTagIDIncoming = -1;
+            for(ItemClass_Tag ict: alict_AllDisplayedTags){
+                if(ict.sTagText.equals(sTagName)){
+                    iTagIDIncoming = ict.iTagID;
+                    break;
+                }
+            }
+            //Go and look to make sure that the tag is not already selected:
+            boolean bTagAlreadySelected = false;
+            for(int iTagID: galiPreselectedTags){
+                if(iTagIDIncoming == iTagID){
+                    bTagAlreadySelected = true;
+                    break;
+                }
+            }
+
+            if(!bTagAlreadySelected){
+                //Find the tagItem in the list:
+                for(int i = 0; i < getCount(); i++) {
+                    ItemClass_Tag tagItem = getItem(i);
+                    if(tagItem.iTagID == iTagIDIncoming){
+                        //Select the tagItem:
+                        iOrderIterator++;
+                        tagItem.iSelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
+                        if(galiPreselectedTags == null){
+                            galiPreselectedTags = new ArrayList<>();
+                        }
+                        galiPreselectedTags.add(tagItem.iTagID);
+                        tagItem.bIsChecked = true;
+                        notifyDataSetChanged();
+                        break;
+                    }
+                }
+
+                //Reform the tags string listing all of the selected tags:
+
+                //Iterate through all of the items in this ArrayAdapter, gathering the items,
+                //  and using a TreeMap to automatically sort the items by selection order:
+                int iItemCount = getCount();
+                TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
+                for(int i=0; i< iItemCount; i++){
+                    if(getItem(i) != null){
+                        ItemClass_Tag tagItem1 = getItem(i);
+                        assert tagItem1 != null;
+                        if(tagItem1.bIsChecked) {
+                            tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
+                        }
+                    }
+                }
+
+
+
+                //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
+                ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+
+                for (Map.Entry<Integer, ItemClass_Tag>
+                        entry : tmSelectedItems.entrySet()) {
+                    alTagItems.add(entry.getValue());
+                }
+
+                viewModel_fragment_selectTags.setSelectedTags(alTagItems);
+
+            }
+        }
+
     }
 
 }
