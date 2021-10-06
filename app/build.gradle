@@ -69,7 +69,6 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer:2.14.1'
 
     //For adding recently-used tags:
-    implementation 'me.gujun.android.taggroup:library:1.4@aar'
-
+    implementation 'co.lujun:androidtagview:1.1.7'
 
 }

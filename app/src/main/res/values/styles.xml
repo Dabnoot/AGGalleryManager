@@ -102,10 +102,4 @@
         <item name="backgroundTint">@color/colorButton</item>
     </style>
 
-    <style name="TagGroup">
-        <item name="atg_backgroundColor"> @color/colorButton</item>
-        <item name="atg_textColor"> @color/colorTextColor</item>
-
-    </style>
-
 </resources>

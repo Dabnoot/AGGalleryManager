@@ -6,6 +6,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.app.Activity;
@@ -18,15 +19,18 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
+import co.lujun.androidtagview.TagContainerLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -54,6 +58,8 @@ public class Fragment_SelectTags extends Fragment {
 
     ArrayList<ItemClass_Tag> galNewTags; //Used in conjunction with the TagEditor.
     // If the user creates new tags from this fragment, select those tags in the list upon return.
+
+    TagContainerLayout gTagContainerLayout_SuggestedTags;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -232,7 +238,90 @@ public class Fragment_SelectTags extends Fragment {
             }
         });
 
+
+        //Create adapations for "suggested tags":
+        //Update a maintained list of suggested tags:
+        //React to changes in the selected tag data in the ViewModel:
+        final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserverForTagSuggestions = new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                //Update the suggested tags list in the viewmodel:
+                ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                if(alictSuggestions == null){
+                    alictSuggestions = new ArrayList<>();
+                    alictNewSuggestions = new ArrayList<>();
+                }
+                for(ItemClass_Tag ict: tagItems){
+                    boolean bNotInList = true;
+                    for(ItemClass_Tag ictSuggestion: alictSuggestions){
+                        if(ict.iTagID.equals(ictSuggestion.iTagID)){
+                            bNotInList = false;
+                            break;
+                        }
+                    }
+                    if(bNotInList){
+                        alictNewSuggestions.add(ict);
+                    }
+                }
+                viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
+
+            }
+        };
+        viewModel_fragment_selectTags.altiTagsSelected.observe(getActivity(), selectedTagsObserverForTagSuggestions);
+
+        //Maintain the display of suggested tags:
+        gTagContainerLayout_SuggestedTags = getView().findViewById(R.id.tagContainerLayout_SuggestedTags);
+        //Watch for changes in suggested tags:
+        final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+                updateSuggestedTagDisplay(tagItems);
+            }
+        };
+        viewModel_fragment_selectTags.altiTagSuggestions.observe(getActivity(), suggestedTagsObserver);
+
+
+
+
     }
+
+    private void updateSuggestedTagDisplay(ArrayList<ItemClass_Tag> alTagSuggestions){
+        //Get the text of the tags and display tag suggestions:
+
+        if(alTagSuggestions == null){
+            return;
+        }
+
+        if(alTagSuggestions.size() > 0) {
+
+            //Go through the selected tags and only display suggested tags that are not selected:
+            ArrayList<ItemClass_Tag> alTagSelections = viewModel_fragment_selectTags.altiTagsSelected.getValue();
+            ArrayList<String> alsValidSuggestions = new ArrayList<>();
+            for(ItemClass_Tag ictSuggestion: alTagSuggestions){
+                boolean bSuggestedTagNotSelected = true;
+                for(ItemClass_Tag ictSelection: alTagSelections){
+                    if(ictSelection.iTagID.equals(ictSuggestion.iTagID)){
+                        bSuggestedTagNotSelected = false;
+                        break;
+                    }
+                }
+                if(bSuggestedTagNotSelected){
+                    alsValidSuggestions.add(ictSuggestion.sTagText);
+                }
+            }
+            gTagContainerLayout_SuggestedTags.setTags(alsValidSuggestions);
+        }
+
+
+    }
+
+    private void updateSuggestedTagDisplay(){
+        updateSuggestedTagDisplay(viewModel_fragment_selectTags.altiTagSuggestions.getValue());
+    }
+
+
 
     @Override
     public void onResume() {
@@ -244,6 +333,12 @@ public class Fragment_SelectTags extends Fragment {
         //This is called by the host activity when the user goes to the next image or video.
         //  The user specifies the new tags and we "check mark" the tags that apply.
         galiPreselectedTags = aliPreselectedTags;
+
+
+
+
+
+
         initListViewData();
     }
 
@@ -301,16 +396,16 @@ public class Fragment_SelectTags extends Fragment {
                 }
             }
 
-            ItemClass_Tag tiNew = new ItemClass_Tag(
+            ItemClass_Tag ictNew = new ItemClass_Tag(
                     tmEntryTagReferenceItem.getValue().iTagID,
                     tmEntryTagReferenceItem.getValue().sTagText);
-            tiNew.bIsChecked = bIsChecked;
-            tiNew.iSelectionOrder = iSelectionOrder;
-            tiNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
+            ictNew.bIsChecked = bIsChecked;
+            ictNew.iSelectionOrder = iSelectionOrder;
+            ictNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
 
-            if(!(gbCatalogTagsRestrictionsOn && tiNew.bIsRestricted)) {
+            if(!(gbCatalogTagsRestrictionsOn && ictNew.bIsRestricted)) {
                 //Don't add the tag if TagRestrictions are on and this is a restricted tag.
-                viewModel_fragment_selectTags.alTagsAll.add(tiNew);
+                viewModel_fragment_selectTags.alTagsAll.add(ictNew);
             }
 
         }
@@ -322,8 +417,14 @@ public class Fragment_SelectTags extends Fragment {
         gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), viewModel_fragment_selectTags.alTagsAll, iPreSelectedTagsCount);
         listView_ImportTagSelection.setAdapter(gListViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
+        //Initialize suggested tags by sending an updated list of what is selected:
+        viewModel_fragment_selectTags.setSelectedTags(new ArrayList<ItemClass_Tag>());
+
+
     }
 
+    @SuppressWarnings("unchecked")
     ActivityResultLauncher<Intent> garlGetResultFromTagEditor = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
@@ -494,27 +595,6 @@ public class Fragment_SelectTags extends Fragment {
                             entry : tmSelectedItems.entrySet()) {
                         alTagItems.add(entry.getValue());
                     }
-
-                    //Update the suggested tags list:
-                    ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                    ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                    if(alictSuggestions == null){
-                        alictSuggestions = new ArrayList<>();
-                        alictNewSuggestions = new ArrayList<>();
-                    }
-                    for(ItemClass_Tag ict: alTagItems){
-                        boolean bNotInList = true;
-                        for(ItemClass_Tag ictSuggestion: alictSuggestions){
-                            if(ict.iTagID == ictSuggestion.iTagID){
-                                bNotInList = false;
-                            }
-                        }
-                        if(bNotInList){
-                            alictNewSuggestions.add(ict);
-                        }
-                    }
-                    viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
-
 
                     viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 

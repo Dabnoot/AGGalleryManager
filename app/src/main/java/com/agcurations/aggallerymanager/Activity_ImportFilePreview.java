@@ -30,7 +30,6 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import me.gujun.android.taggroup.TagGroup;
 
 public class Activity_ImportFilePreview extends AppCompatActivity {
 
@@ -55,8 +54,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private static final String PLAYBACK_TIME = "play_time";
 
     int[] giGradeImageViews;
-
-    TagGroup gTagGroup;
 
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
@@ -128,27 +125,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         };
         viewModel_fragment_selectTags.altiTagsSelected.observe(this, selectedTagsObserver);
 
-        //Watch for changes in suggested tags:
-        final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
-            @Override
-            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
 
-                //Get the text of the tags and display:
-
-                if(tagItems.size() > 0) {
-                    String[] sTags = new String[tagItems.size()];
-
-                    for (int i = 0; i < tagItems.size(); i++) {
-                        sTags[i] = tagItems.get(i).sTagText;
-                    }
-                    gTagGroup.setTags(sTags);
-                }
-
-
-
-            }
-        };
-        viewModel_fragment_selectTags.altiTagSuggestions.observe(this, suggestedTagsObserver);
 
         Bundle b = getIntent().getExtras();
         if(b != null) {
@@ -360,9 +337,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
             }
         }
-
-        gTagGroup = (TagGroup) findViewById(R.id.tag_group);
-
 
         initializeFile();
         displayGrade();
@@ -578,13 +552,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             displayGrade();
         }
     }
-
-    private void tagGroupInitialize(){
-
-
-
-    }
-
 
 
 }
