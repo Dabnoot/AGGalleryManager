@@ -226,12 +226,16 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         //Configure the "Sort by" selection Spinner:
         final int SPINNER_ITEM_FILE_NAME = 0;
         final int SPINNER_ITEM_MODIFIED_DATE = 1;
-        final int SPINNER_ITEM_DURATION = 2;
+        final int SPINNER_ITEM_RESOLUTION = 2;
+        final int SPINNER_ITEM_DURATION = 3;
+
+
+
         String[] sSpinnerItems;
         if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-            sSpinnerItems = new String[]{"Filename","Modified Date", "Duration"};
+            sSpinnerItems = new String[]{"Filename","Modified Date", "Resolution", "Duration"};
         } else {
-            sSpinnerItems = new String[]{"Filename","Modified Date"};
+            sSpinnerItems = new String[]{"Filename","Modified Date", "Resolution"};
         }
         Spinner spinner_SortBy = getView().findViewById(R.id.spinner_SortBy);
         //wrap the items in the Adapter
@@ -257,6 +261,11 @@ public class Fragment_Import_2_SelectItems extends Fragment {
                 } else if(position == SPINNER_ITEM_MODIFIED_DATE) {
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByDateModifiedAsc();
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
+                    }
+                } else if(position == SPINNER_ITEM_RESOLUTION) {
+                    if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.SortByResolutionAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 } else if(position == SPINNER_ITEM_DURATION) {

@@ -21,6 +21,7 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -409,7 +410,22 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
-        textView_FileName.setText(galFileItems.get(giFileItemIndex).sFileOrFolderName);
+        String sFileNameTextLine = galFileItems.get(giFileItemIndex).sFileOrFolderName;
+        if(!galFileItems.get(giFileItemIndex).sHeight.equals("")){ //Add resolution data to display if available:
+            sFileNameTextLine = sFileNameTextLine + " " + galFileItems.get(giFileItemIndex).sWidth + "x" + galFileItems.get(giFileItemIndex).sHeight;
+        }
+        if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+            //If category is images, include megapixels.
+            try {
+                double dWidth = Double.parseDouble(galFileItems.get(giFileItemIndex).sWidth);
+                double dHeight = Double.parseDouble(galFileItems.get(giFileItemIndex).sHeight);
+                double dMegapixels = (dWidth * dHeight) / 1048576; //2^20 pixels per megapixel.
+                sFileNameTextLine = sFileNameTextLine + " " + String.format(Locale.getDefault(), "%.1f", dMegapixels) + "MP";
+            } catch (Exception e){
+                //Do nothing. Just a textual ommision.
+            }
+        }
+        textView_FileName.setText(sFileNameTextLine);
 
         //Init the tags list if there are tags already assigned to this item:
         //Get the text of the tags and display:

@@ -45,6 +45,8 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -595,7 +597,22 @@ public class Activity_Import extends AppCompatActivity {
             RelativeLayout relativeLayout_AdaptiveButtons = row.findViewById(R.id.relativeLayout_AdaptiveButtons);
             Button button_TagImport = row.findViewById(R.id.button_TagImport);
 
-            tvLine1.setText(alFileItemsDisplay.get(position).sFileOrFolderName);
+            String sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
+            if(!alFileItemsDisplay.get(position).sHeight.equals("")){ //Add resolution data to display if available:
+                sLine1 = sLine1 + " " + alFileItemsDisplay.get(position).sWidth + "x" + alFileItemsDisplay.get(position).sHeight;
+            }
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+                //If category is images, include megapixels.
+                try {
+                    double dWidth = Double.parseDouble(alFileItemsDisplay.get(position).sWidth);
+                    double dHeight = Double.parseDouble(alFileItemsDisplay.get(position).sHeight);
+                    double dMegapixels = (dWidth * dHeight) / 1048576; //2^20 pixels per megapixel.
+                    sLine1 = sLine1 + " " + String.format(Locale.getDefault(), "%.1f", dMegapixels) + "MP";
+                } catch (Exception e){
+                    //Do nothing. Just a textual ommision.
+                }
+            }
+            tvLine1.setText(sLine1);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             String sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
 
@@ -722,7 +739,7 @@ public class Activity_Import extends AppCompatActivity {
                     });
 
                 } else {
-                    //Make sure the "Tag Import" button is not shown:
+                    //Make sure the "Tag Import" button is not shown: //todo: is this used anymore?
                     if (params.height != iHideTagImportButtonHeightPixels) {
                         //If it is shown, hide it by shrinking the LinearLayout:
                         params.height = iHideTagImportButtonHeightPixels;
@@ -1232,7 +1249,54 @@ public class Activity_Import extends AppCompatActivity {
             }
         }
 
-        //Sort by file modified date ascending:
+        //Sort by file resolution ascending:
+        private class FileResolutionAscComparator implements Comparator<ItemClass_File> {
+
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                try {
+                    int iHeight1 = Integer.parseInt(fi1.sHeight);
+                    int iWidth1 = Integer.parseInt(fi1.sWidth);
+                    int iResolution1 = iHeight1 * iWidth1;
+
+                    int iHeight2 = Integer.parseInt(fi2.sHeight);
+                    int iWidth2 = Integer.parseInt(fi2.sWidth);
+                    int iResolution2 = iHeight2 * iWidth2;
+
+                    //ascending order
+                    return iResolution1 - iResolution2;
+                } catch (Exception e){
+                    //Likely parse error on resolution
+                    //todo: Notify user that sorting may be inaccurate.
+                    return 0;
+                }
+            }
+        }
+
+        //Sort by file resolution descending:
+        private class FileResolutionDescComparator implements Comparator<ItemClass_File> {
+
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                try {
+                    int iHeight1 = Integer.parseInt(fi1.sHeight);
+                    int iWidth1 = Integer.parseInt(fi1.sWidth);
+                    int iResolution1 = iHeight1 * iWidth1;
+
+                    int iHeight2 = Integer.parseInt(fi2.sHeight);
+                    int iWidth2 = Integer.parseInt(fi2.sWidth);
+                    int iResolution2 = iHeight2 * iWidth2;
+
+                    //descending order
+                    return iResolution2 - iResolution1;
+                } catch (Exception e){
+                    //Likely parse error on resolution
+                    //todo: Notify user that sorting may be inaccurate.
+                    return 0;
+                }
+            }
+        }
+
+
+        //Sort by video duration ascending:
         private class FileDurationAscComparator implements Comparator<ItemClass_File> {
 
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
@@ -1244,7 +1308,7 @@ public class Activity_Import extends AppCompatActivity {
             }
         }
 
-        //Sort by file modified date descending:
+        //Sort by video duration descending:
         private class FileDurationDescComparator implements Comparator<ItemClass_File> {
 
             public int compare(ItemClass_File fi1, ItemClass_File fi2) {
@@ -1262,8 +1326,10 @@ public class Activity_Import extends AppCompatActivity {
         private final int SORT_METHOD_FILENAME_DESC = 2;
         private final int SORT_METHOD_MODIFIED_DATE_ASC = 3;
         private final int SORT_METHOD_MODIFIED_DATE_DESC = 4;
-        private final int SORT_METHOD_DURATION_ASC = 5;
-        private final int SORT_METHOD_DURATION_DESC = 6;
+        private final int SORT_METHOD_RESOLUTION_ASC = 5;
+        private final int SORT_METHOD_RESOLUTION_DESC = 6;
+        private final int SORT_METHOD_DURATION_ASC = 7;
+        private final int SORT_METHOD_DURATION_DESC = 8;
         public void SortByFileNameAsc(){
             Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileNameAscComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_ASC;
@@ -1279,6 +1345,14 @@ public class Activity_Import extends AppCompatActivity {
         public void SortByDateModifiedDesc(){
             Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileModifiedDateDescComparator());
             iCurrentSortMethod = SORT_METHOD_MODIFIED_DATE_DESC;
+        }
+        public void SortByResolutionAsc(){
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileResolutionAscComparator());
+            iCurrentSortMethod = SORT_METHOD_RESOLUTION_ASC;
+        }
+        public void SortByResolutionDesc(){
+            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileResolutionDescComparator());
+            iCurrentSortMethod = SORT_METHOD_RESOLUTION_DESC;
         }
         public void SortByDurationAsc(){
             Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileDurationAscComparator());
@@ -1306,6 +1380,14 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 case SORT_METHOD_MODIFIED_DATE_DESC:
                     SortByDateModifiedAsc();
+                    bSortOrderIsAscending =  true;
+                    break;
+                case SORT_METHOD_RESOLUTION_ASC:
+                    SortByResolutionDesc();
+                    bSortOrderIsAscending =  false;
+                    break;
+                case SORT_METHOD_RESOLUTION_DESC:
+                    SortByResolutionAsc();
                     bSortOrderIsAscending =  true;
                     break;
                 case SORT_METHOD_DURATION_ASC:
