@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -118,6 +119,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
                 CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
                 checkBox_ImportItem.setChecked(true);
+                CheckboxImportColorSwitch(true);
 
                 //Set a result to send back to the calling activity (this is also done on checkbox click):
                 setResult(RESULT_OK);
@@ -365,12 +367,20 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         }
 
         final CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+        final CheckBox checkBox_MarkForDeletion = findViewById(R.id.checkBox_MarkForDeletion);
+
         checkBox_ImportItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 galFileItems.get(giFileItemIndex).bIsChecked = ((CheckBox)view).isChecked();
                 galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+                CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+
+                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                    checkBox_MarkForDeletion.setChecked(false);
+                    CheckboxMarkForDeletionColorSwitch(false);
+                }
 
                 //Update result to send back to the calling activity (this is also done on tag change):
                 setResult(RESULT_OK);
@@ -384,7 +394,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
                 galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
                 galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+                CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+
+                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                    checkBox_MarkForDeletion.setChecked(false);
+                    CheckboxMarkForDeletionColorSwitch(false);
+                }
 
                 //Update result to send back to the calling activity (this is also done on tag change):
                 setResult(RESULT_OK);
@@ -398,7 +414,14 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
                 galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
                 galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+                CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+
+                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                    checkBox_MarkForDeletion.setChecked(false);
+                    CheckboxMarkForDeletionColorSwitch(false);
+                    //todo: tighten repeat coding.
+                }
 
                 //Update result to send back to the calling activity (this is also done on tag change):
                 setResult(RESULT_OK);
@@ -406,8 +429,49 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         });
 
         checkBox_ImportItem.setChecked(galFileItems.get(giFileItemIndex).bIsChecked);
-        CheckboxColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+        CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
+
+        checkBox_MarkForDeletion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                galFileItems.get(giFileItemIndex).bMarkedForDeletion = ((CheckBox)view).isChecked();
+                CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
+                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+
+                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                    galFileItems.get(giFileItemIndex).bIsChecked = false;
+                    checkBox_ImportItem.setChecked(false);
+                    CheckboxImportColorSwitch(false);
+                }
+
+                //Update result to send back to the calling activity (this is also done on tag change):
+                setResult(RESULT_OK);
+            }
+        });
+        TextView textView_LabelMarkForDeletion = findViewById(R.id.textView_LabelMarkForDeletion);
+        textView_LabelMarkForDeletion.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Check/uncheck the checkbox.
+                checkBox_MarkForDeletion.setChecked(!checkBox_MarkForDeletion.isChecked());
+                galFileItems.get(giFileItemIndex).bMarkedForDeletion = checkBox_MarkForDeletion.isChecked();
+                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+                CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
+
+                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                    galFileItems.get(giFileItemIndex).bIsChecked = false;
+                    checkBox_ImportItem.setChecked(false);
+                    CheckboxImportColorSwitch(false);
+                }
+
+                //Update result to send back to the calling activity (this is also done on tag change):
+                setResult(RESULT_OK);
+            }
+        });
+
+        checkBox_MarkForDeletion.setChecked(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
+        CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
 
         TextView textView_FileName = findViewById(R.id.textView_FileName);
         String sFileNameTextLine = galFileItems.get(giFileItemIndex).sFileOrFolderName;
@@ -478,7 +542,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         }
     }
 
-    private void CheckboxColorSwitch(boolean bChecked){
+    private void CheckboxImportColorSwitch(boolean bChecked){
         RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
         if(bChecked) {
             relativeLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorActionBar));
@@ -488,6 +552,15 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     }
 
+    private void CheckboxMarkForDeletionColorSwitch(boolean bChecked){
+        LinearLayout linearLayout_MarkForDeletion = findViewById(R.id.linearLayout_MarkForDeletion);
+        if(bChecked) {
+            linearLayout_MarkForDeletion.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorActionBar));
+        } else {
+            linearLayout_MarkForDeletion.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorBlack));
+        }
+
+    }
 
     @Override
     protected void onResume() {

@@ -769,6 +769,8 @@ public class Activity_Import extends AppCompatActivity {
 
             cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).bIsChecked);
 
+            final Button button_Delete = row.findViewById(R.id.button_Delete);
+
             //Expand the width of the listItem to the width of the ListView.
             //  This makes it so that the listItem responds to the click even when
             //  the click is off of the text.
@@ -783,8 +785,11 @@ public class Activity_Import extends AppCompatActivity {
                     boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
                     checkBox_StorageItemSelect.setChecked(bNewCheckedState);
                     alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
+                    if(bNewCheckedState){
+                        alFileItemsDisplay.get(position).bMarkedForDeletion = false;
+                        button_Delete.setPressed(false);
+                    }
                     toggleItemChecked(position, bNewCheckedState);
-
                 }
             });
 
@@ -798,13 +803,17 @@ public class Activity_Import extends AppCompatActivity {
                     CheckBox checkBox_StorageItemSelect = (CheckBox) view;
                     boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
                     alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
+                    if(bNewCheckedState){
+                        alFileItemsDisplay.get(position).bMarkedForDeletion = false;
+                        button_Delete.setPressed(false);
+                    }
                     toggleItemChecked(position, bNewCheckedState);
 
                 }
             });
 
             //Code the button to delete a file in the ListView:
-            Button button_Delete = row.findViewById(R.id.button_Delete);
+
             button_Delete.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
@@ -908,6 +917,16 @@ public class Activity_Import extends AppCompatActivity {
                     });
                     builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
+                            //if the user has selected not to delete this item, unmark it for deletion if it is marked such.
+                            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                                alFileItemsDisplay.get(position).bMarkedForDeletion = false;
+                                for(ItemClass_File icf: alFileItems){
+                                    if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(position).sFileOrFolderName)){
+                                        icf.bMarkedForDeletion = false;
+                                        break; //Break, as only one item should match.
+                                    }
+                                }
+                            }
                             dialog.dismiss();
                         }
                     });
@@ -915,6 +934,10 @@ public class Activity_Import extends AppCompatActivity {
                     alert.show();
                 }
             });
+
+            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                button_Delete.setPressed(true);
+            }
 
 
             Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
@@ -1015,6 +1038,9 @@ public class Activity_Import extends AppCompatActivity {
                     for (ItemClass_File icf : alFileItems) {
                         if (icf.sFileOrFolderName.matches(sNHComicFilter)) {
                             icf.bIsChecked = bNewCheckedState;
+                            if(bNewCheckedState){
+                                icf.bMarkedForDeletion = false;
+                            }
                         }
                     }
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
@@ -1024,6 +1050,9 @@ public class Activity_Import extends AppCompatActivity {
                     for (ItemClass_File icf : alFileItems) {
                         if (icf.sUriParent.equals(sUriParent)) {
                             icf.bIsChecked = bNewCheckedState;
+                            if(bNewCheckedState){
+                                icf.bMarkedForDeletion = false;
+                            }
                         }
                     }
                 }
@@ -1034,6 +1063,9 @@ public class Activity_Import extends AppCompatActivity {
                 for(ItemClass_File icf: alFileItems){
                     if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName)){
                         icf.bIsChecked = bNewCheckedState;
+                        if(bNewCheckedState){
+                            icf.bMarkedForDeletion = false;
+                        }
                         break; //Break, as only one item should match.
                     }
                 }
@@ -1081,6 +1113,7 @@ public class Activity_Import extends AppCompatActivity {
                             icfUpdate.aliProspectiveTags = icfIncoming.aliProspectiveTags;
                             icfUpdate.iGrade = icfIncoming.iGrade;
                             icfUpdate.bIsChecked = icfIncoming.bIsChecked;
+                            icfUpdate.bMarkedForDeletion = icfIncoming.bMarkedForDeletion;
                             bFoundAndUpdated = true;
                             break;
                         }

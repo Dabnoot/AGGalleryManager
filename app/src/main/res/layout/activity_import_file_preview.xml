@@ -105,8 +105,31 @@
                     android:layout_marginStart="0dp"
                     android:textSize="16sp"
                     app:layout_constraintStart_toEndOf="@id/textView_labelFileName"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/linearLayout_MarkForDeletion"
                     app:layout_constraintTop_toTopOf="@id/textView_labelFileName"/>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_MarkForDeletion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/checkBox_MarkForDeletion"
+                        android:layout_width="35dp"
+                        android:layout_height="20dp"
+                        android:buttonTint="@color/colorTextColor"/>
+
+                    <TextView
+                        android:id="@+id/textView_LabelMarkForDeletion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        android:text="Mark for deletion"
+                        android:textSize="16sp"/>
+                </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

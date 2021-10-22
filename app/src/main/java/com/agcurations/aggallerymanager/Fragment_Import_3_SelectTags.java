@@ -327,6 +327,10 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 sLine2 = sRequiredStorageSize + "\t" + sComicPageCount;
             }
 
+            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                sLine2 = "Marked for deletion.";
+            }
+
             textView_Line2.setText(sLine2);
 
 
@@ -344,7 +348,11 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     }
                 }
             }
-            textView_Line3.setText(sbTags.toString());
+            String sLine3 = sbTags.toString();
+            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                sLine3 = "";
+            }
+            textView_Line3.setText(sLine3);
 
             //set the image type if folder or file
             if (alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {

@@ -227,7 +227,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                     alFileItemsDisplay.get(position).lSizeBytes,
                     GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
 
-
+            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                sLine2 = "Marked for deletion.";
+            }
 
             tvLine2.setText(sLine2);
 
@@ -253,6 +255,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                         globalClass.gfCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
                         File.separator +
                         alFileItemsDisplay.get(position).sDestinationFolder;
+            }
+            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                sLine3 = "";
             }
             tvLine3.setText(sLine3);
 

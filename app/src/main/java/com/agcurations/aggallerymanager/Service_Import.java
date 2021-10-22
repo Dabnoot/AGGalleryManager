@@ -978,6 +978,21 @@ public class Service_Import extends IntentService {
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
 
+            if(fileItem.bMarkedForDeletion){
+                Uri uriSourceFileToDelete;
+                uriSourceFileToDelete = Uri.parse(fileItem.sUri);
+                DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFileToDelete);
+                sLogLine = "Deleting file: " + dfSourceToDelete.getName();
+                if (!dfSourceToDelete.delete()) {
+                    sLogLine = sLogLine + "\nCould not delete source file.\n";
+                }
+                BroadcastProgress(true, sLogLine + "\n",
+                        false, iProgressBarValue,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                continue; //jump to next item in import list.
+            }
+
             if(fileItem.sDestinationFolder.equals("")) {
                 fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }

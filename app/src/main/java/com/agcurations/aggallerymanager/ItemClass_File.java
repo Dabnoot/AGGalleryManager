@@ -26,6 +26,8 @@ public class ItemClass_File implements Serializable {
     public boolean bDataUpdateFlag = false; //Flag used to reduce excess processing
     public String sVideoTimeText = "";
 
+    public boolean bMarkedForDeletion = false;
+
     //Items for comic folder import:
     public ArrayList<Integer[]> aliNumberBlocks = new ArrayList<>(); //Tells where to find numbers that could be comic page IDs.
     public int iNumberBlockPageIDIndex = -1; //Tells which number block in aliNumberBlocks is the page ID text substring.
