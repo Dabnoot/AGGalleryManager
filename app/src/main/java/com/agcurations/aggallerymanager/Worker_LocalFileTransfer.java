@@ -122,6 +122,7 @@ public class Worker_LocalFileTransfer extends Worker {
                 int DESTINATION_FOLDER = 1;
                 int DESTINATION_FILENAME = 2;
                 int SOURCE_FILE_SIZE_BYTES = 3;
+                int SOURCE_FILE_DELETE_ONLY = 4; //If the user is not importing this item and has marked it for deletion.
 
                 long lLoopBytesRead;
 
@@ -222,22 +223,11 @@ public class Worker_LocalFileTransfer extends Worker {
                         giFilesProcessed++;
                         if (!sLine.equals("")) {
                             String[] sTemp = sLine.split("\t");
-                            if (sTemp.length == 4) {
+                            if (sTemp.length == 5) {
 
                                 String sDestinationFolder = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator + sTemp[DESTINATION_FOLDER];
                                 String sDestinationFileName = sTemp[DESTINATION_FILENAME];
                                 long lFileSize = Long.parseLong(sTemp[SOURCE_FILE_SIZE_BYTES]);
-
-                                File fDestinationFolder = new File(sDestinationFolder);
-                                if (!fDestinationFolder.exists()) {
-                                    if (!fDestinationFolder.mkdir()) {
-                                        sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
-                                        fwLogFile.write(sMessage + "\n");
-                                        bProblemWithFileTransfer = true;
-                                        continue; //Skip to the end of the loop and read the next line in the job file.
-                                    }
-                                }
-                                //Destination folder exists or has been created successfully.
 
                                 //Check if source file exists:
                                 String sSourceFileUri = sTemp[SOURCE_FILE_URI_INDEX];
@@ -250,74 +240,106 @@ public class Worker_LocalFileTransfer extends Worker {
                                     continue;
                                 }
 
-                                if (dfSource.exists()) {
-                                    String sDestinationFileFullPath = sDestinationFolder + File.separator + sDestinationFileName;
-                                    File fDestinationFile = new File(sDestinationFileFullPath);
-                                    if (fDestinationFile.exists()) {
-                                        //The file copy has already been executed by a previous instance of this requested worker.
-                                        //If the operation was a move operation, we are here only because the source file still
-                                        //  exists. Attempt to delete the source file.
-                                        if (iMoveOrCopy == GlobalClass.MOVE) {
-                                            if (!dfSource.delete()) {
-                                                sMessage = "Source file copied, but could not delete source file, " + dfSource.getName() + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
-                                                fwLogFile.write(sMessage + "\n");
-                                                bProblemWithFileTransfer = true;
-                                            }
-                                        }
-                                        glProgressNumerator = glProgressNumerator + lFileSize;
-                                        continue; //Skip to the end of the loop and read the next line in the job file.
-                                    }
-                                    //Destination file does not exist.
+                                boolean bMarkedForDeletion = Boolean.parseBoolean(sTemp[SOURCE_FILE_DELETE_ONLY]);
 
-                                    // Execute the copy or move operation:
-                                    String sLogLine;
-                                    sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
-                                                 + " of file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
+                                String sLogLine;
+
+                                if(bMarkedForDeletion) {
+                                    //If this source item is marked for deletion (no move or copy op to be performed), delete the source file:
+                                    glProgressNumerator = glProgressNumerator + dfSource.length();
+                                    UpdateProgressOutput();
+
+                                    if (!dfSource.delete()) {
+                                        sLogLine = "Could not delete file marked for deletion, " + dfSource.getName() + ".\n";
+                                    } else {
+                                        sLogLine = "Success deleting file marked for deletion, " + dfSource.getName() + ".\n";
+                                    }
                                     fwLogFile.write(sLogLine + "\n");
-                                    ContentResolver contentResolver = getApplicationContext().getContentResolver();
-                                    InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
-
-                                    OutputStream outputStream = new FileOutputStream(fDestinationFile.getPath());
-                                    int iLoopCount = 0;
-                                    byte[] buffer = new byte[100000];
-                                    if (inputStream == null) {
-                                        continue;
-                                    }
-                                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                                        outputStream.write(buffer, 0, buffer.length);
-                                        glProgressNumerator += lLoopBytesRead;
-                                        iLoopCount++;
-                                        /*Thread.currentThread();
-                                        Thread.sleep(50);*/
-                                        if(giFileCount == 1) {
-                                            //Only update progress of single transfer if we are working with a single file.
-                                            //  Otherwise, the update frequency break between files causes the notification
-                                            //  to become an alerting notification, which may be jarring to the user.
-                                            if (iLoopCount % 10 == 0) {
-                                                //Send update every 10 loops:
-                                                UpdateProgressOutput();
-                                            }
-                                        }
-                                    }
-                                    outputStream.flush();
-                                    outputStream.close();
-
-                                    sLogLine = " Success.\n";
-                                    fwLogFile.write(sLogLine + "\n");
-
-                                    if (iMoveOrCopy == GlobalClass.MOVE) {
-                                        if (!dfSource.delete()) {
-                                            sLogLine = "Could not delete source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                                        } else {
-                                            sLogLine = "Success deleting source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                                        }
-                                        fwLogFile.write(sLogLine + "\n");
-                                    }
 
                                 } else {
-                                    //If the source does not exist, assume that the file has already been transferred.
-                                    //todo: make sure that the file exists in the destination, and if not, provide an error message.
-                                    glProgressNumerator = glProgressNumerator + lFileSize;
+                                    //If this item is not merely marked for deletion...
+
+                                    File fDestinationFolder = new File(sDestinationFolder);
+                                    if (!fDestinationFolder.exists()) {
+                                        if (!fDestinationFolder.mkdir()) {
+                                            sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
+                                            fwLogFile.write(sMessage + "\n");
+                                            bProblemWithFileTransfer = true;
+                                            continue; //Skip to the end of the loop and read the next line in the job file.
+                                        }
+                                    }
+                                    //Destination folder exists or has been created successfully.
+
+                                    if (dfSource.exists()) {
+                                        String sDestinationFileFullPath = sDestinationFolder + File.separator + sDestinationFileName;
+                                        File fDestinationFile = new File(sDestinationFileFullPath);
+                                        if (fDestinationFile.exists()) {
+                                            //The file copy has already been executed by a previous instance of this requested worker.
+                                            //If the operation was a move operation, we are here only because the source file still
+                                            //  exists. Attempt to delete the source file.
+                                            if (iMoveOrCopy == GlobalClass.MOVE) {
+                                                if (!dfSource.delete()) {
+                                                    sMessage = "Source file copied, but could not delete source file, " + dfSource.getName() + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
+                                                    fwLogFile.write(sMessage + "\n");
+                                                    bProblemWithFileTransfer = true;
+                                                }
+                                            }
+                                            glProgressNumerator = glProgressNumerator + lFileSize;
+                                            continue; //Skip to the end of the loop and read the next line in the job file.
+                                        }
+                                        //Destination file does not exist.
+
+                                        // Execute the copy or move operation:
+
+                                        sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
+                                                + " of file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
+                                        fwLogFile.write(sLogLine + "\n");
+                                        ContentResolver contentResolver = getApplicationContext().getContentResolver();
+                                        InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
+
+                                        OutputStream outputStream = new FileOutputStream(fDestinationFile.getPath());
+                                        int iLoopCount = 0;
+                                        byte[] buffer = new byte[100000];
+                                        if (inputStream == null) {
+                                            continue;
+                                        }
+                                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                                            outputStream.write(buffer, 0, buffer.length);
+                                            glProgressNumerator += lLoopBytesRead;
+                                            iLoopCount++;
+                                            /*Thread.currentThread();
+                                            Thread.sleep(50);*/
+                                            if (giFileCount == 1) {
+                                                //Only update progress of single transfer if we are working with a single file.
+                                                //  Otherwise, the update frequency break between files causes the notification
+                                                //  to become an alerting notification, which may be jarring to the user.
+                                                if (iLoopCount % 10 == 0) {
+                                                    //Send update every 10 loops:
+                                                    UpdateProgressOutput();
+                                                }
+                                            }
+                                        }
+                                        outputStream.flush();
+                                        outputStream.close();
+
+                                        sLogLine = " Success.\n";
+                                        fwLogFile.write(sLogLine + "\n");
+
+                                        if (iMoveOrCopy == GlobalClass.MOVE) {
+                                            if (!dfSource.delete()) {
+                                                sLogLine = "Could not delete source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                            } else {
+                                                sLogLine = "Success deleting source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                            }
+                                            fwLogFile.write(sLogLine + "\n");
+                                        }
+
+                                    } else {
+                                        //If the source does not exist and was marked for transfer (not marked for deletion without transfer), assume that the file has already been transferred.
+                                        //todo: make sure that the file exists in the destination, and if not, provide an error message.
+                                        glProgressNumerator = glProgressNumerator + lFileSize;
+                                    }
+
                                 }
                                 dataProgress = UpdateProgressOutput();
 
@@ -376,7 +398,8 @@ public class Worker_LocalFileTransfer extends Worker {
     private Data UpdateProgressOutput(){
         //Update the notification on the notification bar:
         int iProgressBarValue = Math.round((glProgressNumerator / (float) glProgressDenominator) * 100);
-        String sNotificationText = giFilesProcessed + "/" + giFileCount + " files " + gsMoveCopyPastTense + "."; //Setting the notification text causes the notification to "jump".
+        //String sNotificationText = giFilesProcessed + "/" + giFileCount + " files " + gsMoveCopyPastTense + ".";
+        String sNotificationText = giFilesProcessed + "/" + giFileCount + " files processed.";
         gNotificationBuilder.setContentText(sNotificationText)
                             .setProgress(100, iProgressBarValue,false);
         gNotification = gNotificationBuilder.build();

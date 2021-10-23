@@ -979,58 +979,49 @@ public class Service_Import extends IntentService {
         for(ItemClass_File fileItem: alFileList) {
 
             if(fileItem.bMarkedForDeletion){
+
                 Uri uriSourceFileToDelete;
                 uriSourceFileToDelete = Uri.parse(fileItem.sUri);
                 DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFileToDelete);
-                sLogLine = "Deleting file: " + dfSourceToDelete.getName();
-                if (!dfSourceToDelete.delete()) {
-                    sLogLine = sLogLine + "\nCould not delete source file.\n";
+
+                if(bCopyViaWorker){
+
+                    //Write next behavior to the screen log:
+                    sLogLine = "Preparing data for job file, command to delete file " + fileItem.sFileOrFolderName + ".\n";
+                    lProgressNumerator++;
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, sLogLine,
+                            false, iProgressBarValue,
+                            true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    String sLine = dfSourceToDelete.getUri() + "\t"
+                            + fileItem.sDestinationFolder + "\t"
+                            + fileItem.sFileOrFolderName + "\t"
+                            + fileItem.lSizeBytes + "\t"
+                            + true + "\n";                 //Item marked for deletion?
+                    sbJobFileRecords.append(sLine);
+
+                } else {
+
+                    sLogLine = "Deleting file: " + dfSourceToDelete.getName();
+                    if (!dfSourceToDelete.delete()) {
+                        sLogLine = sLogLine + "\nCould not delete source file.\n";
+                    }
+                    lProgressNumerator += fileItem.lSizeBytes;
+                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                    BroadcastProgress(true, sLogLine,
+                            true, iProgressBarValue,
+                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
-                BroadcastProgress(true, sLogLine + "\n",
-                        false, iProgressBarValue,
-                        false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 continue; //jump to next item in import list.
-            }
+            } //End if item is marked for deletion.
 
             if(fileItem.sDestinationFolder.equals("")) {
                 fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }
 
-            String sDestination = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                    fileItem.sDestinationFolder;
-            File fDestination = new File(sDestination);
-
-            if( !alsVerifiedDestinationFolders.contains(sDestination)) {
-
-                if (!fDestination.exists()) {
-                    if (!fDestination.mkdir()) {
-                        //Unable to create directory
-                        BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
-                                false, iProgressBarValue,
-                                true, "Operation halted.",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                        return;
-                    } else {
-                        alsVerifiedDestinationFolders.add(sDestination);
-                        BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
-                                false, iProgressBarValue,
-                                false, "",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                    }
-                } else {
-                    alsVerifiedDestinationFolders.add(sDestination);
-                    BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
-                            true, iProgressBarValue,
-                            false, "",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                }
-            }
-            Uri uriSourceFile;
-            InputStream inputStream;
-            OutputStream outputStream;
-
-            uriSourceFile = Uri.parse(fileItem.sUri);
+            Uri uriSourceFile = Uri.parse(fileItem.sUri);
             DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
             boolean bProblemWithSourceFile = false;
             if (dfSource == null) {
@@ -1056,7 +1047,7 @@ public class Service_Import extends IntentService {
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 String sTempFileName = ciNew.sItemID + "_" + dfSource.getName(); //Create unique filename. Using ID will allow database error checking.
                 String sFileName = GlobalClass.JumbleFileName(sTempFileName);
-                File fDestinationFile = new File(fDestination.getPath() + File.separator + sFileName);
+
 
                 if(bCopyViaWorker){
 
@@ -1071,12 +1062,47 @@ public class Service_Import extends IntentService {
 
                     String sLine = dfSource.getUri() + "\t"
                             + fileItem.sDestinationFolder + "\t"
-                            + fDestinationFile.getName() + "\t"
-                            + fileItem.lSizeBytes + "\n";
+                            + sFileName + "\t"
+                            + fileItem.lSizeBytes + "\t"
+                            + false + "\n";                 //Item marked for deletion?
                     sbJobFileRecords.append(sLine);
 
 
                 } else {
+
+                    String sDestination = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
+                            fileItem.sDestinationFolder;
+                    File fDestination = new File(sDestination);
+
+                    if( !alsVerifiedDestinationFolders.contains(sDestination)) {
+                        if (!fDestination.exists()) {
+                            if (!fDestination.mkdir()) {
+                                //Unable to create directory
+                                BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                                        false, iProgressBarValue,
+                                        true, "Operation halted.",
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                return;
+                            } else {
+                                alsVerifiedDestinationFolders.add(sDestination);
+                                BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                                        false, iProgressBarValue,
+                                        false, "",
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            }
+                        } else {
+                            alsVerifiedDestinationFolders.add(sDestination);
+                            BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                                    true, iProgressBarValue,
+                                    false, "",
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        }
+                    }
+
+                    File fDestinationFile = new File(fDestination.getPath() + File.separator + sFileName);
+
+                    InputStream inputStream;
+                    OutputStream outputStream;
 
                     //Write next behavior to the screen log:
                     sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy];
