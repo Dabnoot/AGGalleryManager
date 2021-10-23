@@ -747,7 +747,11 @@ public class Activity_Import extends AppCompatActivity {
                     }
                 }
             }
-            tvLine3.setText(sbTags.toString());
+            String sLine3 = sbTags.toString();
+            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                sLine3 = "Marked for deletion.";
+            }
+            tvLine3.setText(sLine3);
 
             //set the image type if folder or file
             if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
