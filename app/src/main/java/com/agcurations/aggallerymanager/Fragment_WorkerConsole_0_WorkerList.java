@@ -249,7 +249,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                 CustomWorkerData customWorkerDataNew = new CustomWorkerData();
                 customWorkerDataNew.sJobRequestDateTime = sJobRequestDateTime;
                 customWorkerDataNew.fJobFile = fJobFile;
-                customWorkerDataNew.sWorkerStatus = "Does not exist.";
+                customWorkerDataNew.sWorkerStatus = "[worker not found]";
                 alWorkerData.add(customWorkerDataNew);
             }
 
@@ -341,7 +341,12 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             } else {
                 sJobFileName = "";
             }
-            String sLine1 = "Worker UUID: " + customWorkerData[position].uuidWorkerID.toString();
+            String sLine1;
+            if(customWorkerData[position].uuidWorkerID != null) {
+                sLine1 = "Worker UUID: " + customWorkerData[position].uuidWorkerID.toString();
+            } else {
+                sLine1 = "Job file only - no matching worker found. Worker may have died, suggest restart.";
+            }
             textView_Line1.setText(sLine1);
 
             String sProgress;
