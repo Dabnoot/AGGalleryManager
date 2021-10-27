@@ -102,24 +102,40 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     aliTagIDs.add(ti.iTagID);
                 }
 
+                boolean bSetCheckedDisplay = false;
                 //If the media type is Comics, tags are applied to each
                 //  file item.
                 if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                    boolean bSetChecked = aliTagIDs.size() > galFileItems.get(0).aliProspectiveTags.size();
                     for(ItemClass_File icf: galFileItems){
                         icf.aliProspectiveTags = aliTagIDs;
                         icf.bDataUpdateFlag = true;
-                        icf.bIsChecked = true;
+                        if(bSetChecked) {
+                            icf.bIsChecked = true;  //Only set if a tag has been added.
+                            icf.bMarkedForDeletion = false;
+                            bSetCheckedDisplay = true;
+                        }
                     }
 
                 } else {
+                    if(aliTagIDs.size() > galFileItems.get(giFileItemIndex).aliProspectiveTags.size()){
+                        galFileItems.get(giFileItemIndex).bIsChecked = true; //Only set if a tag has been added.
+                        galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                        bSetCheckedDisplay = true;
+                    }
                     galFileItems.get(giFileItemIndex).aliProspectiveTags = aliTagIDs;
                     galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                    galFileItems.get(giFileItemIndex).bIsChecked = true;
+
                 }
 
-                CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
-                checkBox_ImportItem.setChecked(true);
-                CheckboxImportColorSwitch(true);
+                if(bSetCheckedDisplay) {
+                    CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+                    checkBox_ImportItem.setChecked(true);
+                    CheckboxImportColorSwitch(true);
+                    CheckBox checkBox_MarkForDeletion = findViewById(R.id.checkBox_MarkForDeletion);
+                    checkBox_MarkForDeletion.setChecked(false);
+                    CheckboxMarkForDeletionColorSwitch(false);
+                }
 
                 //Set a result to send back to the calling activity (this is also done on checkbox click):
                 setResult(RESULT_OK);

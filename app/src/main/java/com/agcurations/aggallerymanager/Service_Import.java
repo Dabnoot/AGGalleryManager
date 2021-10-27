@@ -987,7 +987,7 @@ public class Service_Import extends IntentService {
                 if(bCopyViaWorker){
 
                     //Write next behavior to the screen log:
-                    sLogLine = "Preparing data for job file, command to delete file " + fileItem.sFileOrFolderName + ".\n";
+                    sLogLine = "Preparing data for job file: Delete file " + fileItem.sFileOrFolderName + ".\n";
                     lProgressNumerator++;
                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     BroadcastProgress(true, sLogLine,
@@ -1052,7 +1052,7 @@ public class Service_Import extends IntentService {
                 if(bCopyViaWorker){
 
                     //Write next behavior to the screen log:
-                    sLogLine = "Preparing data for job file " + fileItem.sFileOrFolderName + ".\n";
+                    sLogLine = "Preparing data for job file: Import " + fileItem.sFileOrFolderName + ".\n";
                     lProgressNumerator++;
                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
                     BroadcastProgress(true, sLogLine,

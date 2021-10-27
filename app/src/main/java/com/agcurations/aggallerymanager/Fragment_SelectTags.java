@@ -67,7 +67,6 @@ public class Fragment_SelectTags extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
     }
 
     @Override
@@ -337,7 +336,7 @@ public class Fragment_SelectTags extends Fragment {
             return;
         }
 
-        if(alTagSuggestions.size() > 0) {
+        //if(alTagSuggestions.size() > 0) {
 
             //Go through the selected tags and only display suggested tags that are not selected:
             ArrayList<ItemClass_Tag> alTagSelections = viewModel_fragment_selectTags.altiTagsSelected.getValue();
@@ -355,7 +354,7 @@ public class Fragment_SelectTags extends Fragment {
                 }
             }
             gTagContainerLayout_SuggestedTags.setTags(alsValidSuggestions);
-        }
+        //}
 
 
     }
@@ -423,6 +422,8 @@ public class Fragment_SelectTags extends Fragment {
 
         TreeMap<String, ItemClass_Tag> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
 
+        ArrayList<ItemClass_Tag> alict_SelectedTagsViewModelReset = new ArrayList<>();
+
         //Go through the tags treeMap and put the ListView together:
         for (Map.Entry<String, ItemClass_Tag> tmEntryTagReferenceItem : tmTagPool.entrySet()) {
 
@@ -470,9 +471,15 @@ public class Fragment_SelectTags extends Fragment {
             if(!(gbCatalogTagsRestrictionsOn && ictNew.bIsRestricted)) {
                 //Don't add the tag if TagRestrictions are on and this is a restricted tag.
                 viewModel_fragment_selectTags.alTagsAll.add(ictNew);
+                if(ictNew.bIsChecked){
+                    alict_SelectedTagsViewModelReset.add(ictNew);
+                }
             }
 
         }
+
+        //Reset the selected tags stored in the viewmodel:
+        viewModel_fragment_selectTags.setSelectedTags(alict_SelectedTagsViewModelReset);
 
         // Create the adapter for the ListView, and set the ListView adapter:
         if(getActivity() == null){
