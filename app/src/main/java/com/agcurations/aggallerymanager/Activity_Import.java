@@ -607,7 +607,7 @@ public class Activity_Import extends AppCompatActivity {
                     double dWidth = Double.parseDouble(alFileItemsDisplay.get(position).sWidth);
                     double dHeight = Double.parseDouble(alFileItemsDisplay.get(position).sHeight);
                     double dMegapixels = (dWidth * dHeight) / 1048576; //2^20 pixels per megapixel.
-                    sLine1 = sLine1 + " " + String.format(Locale.getDefault(), "%.1f", dMegapixels) + "MP";
+                    sLine1 = sLine1 + " " + String.format(Locale.getDefault(), "%.2f", dMegapixels) + "MP";
                 } catch (Exception e){
                     //Do nothing. Just a textual ommision.
                 }

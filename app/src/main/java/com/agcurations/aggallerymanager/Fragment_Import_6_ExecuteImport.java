@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -49,11 +50,10 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         super.onCreate(savedInstanceState);
 
         if(getActivity() != null) {
-            globalClass = (GlobalClass) getActivity().getApplicationContext();
-        }
-
-        if (getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
 
         //Configure a response receiver to listen for updates from the Data Service:
@@ -84,8 +84,9 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity()!=null) {
+        if(getActivity() != null) {
             getActivity().setTitle("Import");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
         initComponents();
     }

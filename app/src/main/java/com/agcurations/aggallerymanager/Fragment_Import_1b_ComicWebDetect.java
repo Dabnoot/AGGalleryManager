@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -33,10 +34,14 @@ public class Fragment_Import_1b_ComicWebDetect extends Fragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            //globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
     }
 
@@ -50,7 +55,13 @@ public class Fragment_Import_1b_ComicWebDetect extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        if(getActivity() == null || getView() == null) {
+            return;
+        }
+
         getActivity().setTitle("Import");
+        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
         Button button_PasteAddress = getView().findViewById(R.id.button_PasteAddress);
         if(button_PasteAddress != null){

@@ -2,7 +2,10 @@ package com.agcurations.aggallerymanager;
 
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,9 +28,13 @@ public class Fragment_Import_0a_VideoSource extends Fragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            //viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+        }
     }
 
     @Override
@@ -42,6 +49,7 @@ public class Fragment_Import_0a_VideoSource extends Fragment {
         super.onResume();
         if(getActivity() != null) {
             getActivity().setTitle("Import");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
     }
 }

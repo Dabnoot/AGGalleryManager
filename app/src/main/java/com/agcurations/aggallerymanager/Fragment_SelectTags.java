@@ -5,6 +5,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -62,6 +63,12 @@ public class Fragment_SelectTags extends Fragment {
     // If the user creates new tags from this fragment, select those tags in the list upon return.
 
     TagContainerLayout gTagContainerLayout_SuggestedTags;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -362,10 +369,12 @@ public class Fragment_SelectTags extends Fragment {
         ArrayList<String> alsValidSuggestions = new ArrayList<>();
         for(ItemClass_Tag ictSuggestion: alict_TagSuggestions){
             boolean bSuggestedTagNotSelected = true;
-            for(int iPreSelectedTagID: galiPreselectedTags){
-                if(iPreSelectedTagID == ictSuggestion.iTagID){
-                    bSuggestedTagNotSelected = false;
-                    break;
+            if(galiPreselectedTags != null) {
+                for (int iPreSelectedTagID : galiPreselectedTags) {
+                    if (iPreSelectedTagID == ictSuggestion.iTagID) {
+                        bSuggestedTagNotSelected = false;
+                        break;
+                    }
                 }
             }
             if(bSuggestedTagNotSelected){

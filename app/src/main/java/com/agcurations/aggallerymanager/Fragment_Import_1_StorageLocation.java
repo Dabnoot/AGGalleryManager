@@ -16,6 +16,8 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -70,8 +72,15 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
@@ -81,13 +90,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         if(getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
-        if(getActivity() != null) {
-            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-        }
 
-        if(getActivity()!=null) {
-            globalClass = (GlobalClass) getActivity().getApplicationContext();
-        }
     }
 
     @Override
@@ -159,6 +162,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         }
 
         getActivity().setTitle("Import");
+        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
         if(viewModelImportActivity.bImportCategoryChange){
             //Reset all the stuff so that it looks like time to select a folder:

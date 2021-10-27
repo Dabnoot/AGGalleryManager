@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -49,11 +50,12 @@ public class Fragment_Import_3_SelectTags extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getActivity() == null) {
-            return;
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
-        viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
 
     }
 
@@ -67,7 +69,10 @@ public class Fragment_Import_3_SelectTags extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().setTitle("Import");
+        if(getActivity() != null) {
+            getActivity().setTitle("Import");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        }
         initComponents();
     }
 

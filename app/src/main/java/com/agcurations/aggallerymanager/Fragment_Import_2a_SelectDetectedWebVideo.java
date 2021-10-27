@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -42,10 +43,13 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //Instantiate the ViewModel sharing data between fragments:
+
         if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
         }
+
     }
 
     @Override
@@ -64,6 +68,7 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
         }
 
         getActivity().setTitle("Import - Select Download Item");
+        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
         if(ListViewState != null) {
             ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_VideoDownloadItems);

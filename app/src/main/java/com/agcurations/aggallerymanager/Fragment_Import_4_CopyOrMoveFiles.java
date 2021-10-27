@@ -4,7 +4,9 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +31,13 @@ public class Fragment_Import_4_CopyOrMoveFiles extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            //viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            //globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
+
     }
 
     @Override
@@ -46,6 +55,9 @@ public class Fragment_Import_4_CopyOrMoveFiles extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        getActivity().setTitle("Import");
+        if(getActivity() != null) {
+            getActivity().setTitle("Import");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        }
     }
 }

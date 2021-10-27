@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -50,12 +51,13 @@ public class Fragment_Import_5_Confirmation extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Calling Application class (see application tag in AndroidManifest.xml)
-        if (getActivity() == null) {
-            return;
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
-        viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
     }
 
     @Override
@@ -68,8 +70,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if( getActivity() != null) {
+        if(getActivity() != null) {
             getActivity().setTitle("Import");
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
         initComponents();
     }

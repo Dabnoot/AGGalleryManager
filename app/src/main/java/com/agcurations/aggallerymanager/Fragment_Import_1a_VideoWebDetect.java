@@ -11,6 +11,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -67,8 +68,15 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
@@ -78,19 +86,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         if(getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
-
-        //Instantiate the ViewModel sharing data between fragments:
-        if(getActivity() != null) {
-            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-        }
-
-        if(getActivity() != null) {
-            return;
-        }
-        globalClass = (GlobalClass) getActivity().getApplicationContext();
-
-
-
 
     }
 
@@ -288,6 +283,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
         if(getActivity() != null) {
             gmLiveDataStringHTML.observe(getActivity(), observerStringHTML); //When the HTML code changes...
+
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
 
         if(gbutton_PasteAddress != null) {

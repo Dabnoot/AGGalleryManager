@@ -22,6 +22,7 @@ import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -52,6 +53,14 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+            //globalClass = (GlobalClass) getActivity().getApplicationContext();
+        }
+
 
         //Configure a response receiver to listen for response from Service_TagEditor when adding tags:
         IntentFilter filter = new IntentFilter(AddTagsServiceResponseReceiver.ADD_TAGS_SERVICE_EXECUTE_RESPONSE);
@@ -110,7 +119,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         super.onResume();
         //Instantiate the ViewModel sharing data between fragments:
         if(getActivity() != null) {
-            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
             alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
         }
         initComponents();

@@ -8,6 +8,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -62,6 +63,12 @@ public class Fragment_Import_2_SelectItems extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if(getActivity() != null) {
+            //Instantiate the ViewModel sharing data between fragments:
+            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
+
+        }
+
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
@@ -71,10 +78,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
 
-        //Instantiate the ViewModel sharing data between fragments:
-        if(getActivity() != null) {
-            viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-        }
+
+
     }
 
     @Override
@@ -119,6 +124,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         }
 
         getActivity().setTitle("Import - Select Items");
+        ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
 
         if(ListViewState != null) {
             ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);
