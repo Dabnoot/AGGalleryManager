@@ -1090,7 +1090,7 @@ public class GlobalClass extends Application {
 
 
     //====================================================================================
-    //===== Download Management ==========================================================
+    //===== Worker/Download Management ==========================================================
     //====================================================================================
 
     public void ExecuteDownloadManagerPostProcessing(){
@@ -1267,7 +1267,12 @@ public class GlobalClass extends Application {
 
     }
 
+    public void restartStoppedWorkers(){
 
+
+
+
+    }
 
 
     //=====================================================================================

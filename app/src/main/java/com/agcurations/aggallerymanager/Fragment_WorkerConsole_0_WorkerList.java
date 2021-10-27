@@ -201,6 +201,9 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                 } else if( stateWorkState == WorkInfo.State.FAILED) {
                     sState = "Failed";
                     newWorkerData.sFailureMessage = dataOutput.getString(Worker_LocalFileTransfer.FAILURE_MESSAGE);
+                    if(newWorkerData.sFailureMessage == null){
+                        newWorkerData.sFailureMessage = "No failure message data.";
+                    }
                 } else if( stateWorkState == WorkInfo.State.RUNNING) {
                     sState = "Running";
                 } else if( stateWorkState == WorkInfo.State.SUCCEEDED) {
@@ -239,10 +242,12 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             String sJobRequestDateTime = sJobFileName.substring(("Job_").length(),sJobFileName.length()-(".txt").length());
             boolean bDataFound = false;
             for(CustomWorkerData customWorkerData : alWorkerData){
-                if(customWorkerData.sJobRequestDateTime.equals(sJobRequestDateTime)){
-                    customWorkerData.sJobRequestDateTime = sJobRequestDateTime;
-                    customWorkerData.fJobFile = fJobFile;
-                    bDataFound = true;
+                if(customWorkerData.sJobRequestDateTime != null) {
+                    if (customWorkerData.sJobRequestDateTime.equals(sJobRequestDateTime)) {
+                        customWorkerData.sJobRequestDateTime = sJobRequestDateTime;
+                        customWorkerData.fJobFile = fJobFile;
+                        bDataFound = true;
+                    }
                 }
             }
             if(!bDataFound){

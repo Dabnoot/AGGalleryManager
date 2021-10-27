@@ -59,6 +59,8 @@ public class Worker_LocalFileTransfer extends Worker {
     int giNotificationID;
     Notification gNotification;
     NotificationCompat.Builder gNotificationBuilder;
+
+    FileWriter gfwLogFile;
     //=========================
 
     public Worker_LocalFileTransfer(
@@ -91,16 +93,16 @@ public class Worker_LocalFileTransfer extends Worker {
         String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
                 File.separator + gsJobRequestDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_LocalFileTransfer_WorkerLog.txt";
         File fLog = new File(sLogFilePath);
-        FileWriter fwLogFile;
+
         try { //Required for the log file.
 
-            fwLogFile = new FileWriter(fLog, true);
+            gfwLogFile = new FileWriter(fLog, true);
 
             //Validate data
             if (gsJobFile.equals("")) {
                 sMessage = "No job file name provided. This is the file telling the worker what files to copy, and where to place them.";
-                fwLogFile.write(sMessage + "\n");
-                fwLogFile.close();
+                gfwLogFile.write(sMessage + "\n");
+                gfwLogFile.close();
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
@@ -183,8 +185,8 @@ public class Worker_LocalFileTransfer extends Worker {
 
                     } catch (Exception e){
                         sMessage = e.getMessage();
-                        fwLogFile.write(sMessage + "\n");
-                        fwLogFile.close();
+                        gfwLogFile.write(sMessage + "\n");
+                        gfwLogFile.close();
                         return Result.failure(DataErrorMessage(sMessage));
                     }
 
@@ -244,17 +246,19 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                 String sLogLine;
 
+                                String sFileName = dfSource.getName();
+
                                 if(bMarkedForDeletion) {
                                     //If this source item is marked for deletion (no move or copy op to be performed), delete the source file:
                                     glProgressNumerator = glProgressNumerator + dfSource.length();
                                     UpdateProgressOutput();
 
                                     if (!dfSource.delete()) {
-                                        sLogLine = "Could not delete file marked for deletion, " + dfSource.getName() + ".\n";
+                                        sLogLine = "Could not delete file marked for deletion, " + sFileName + ".\n";
                                     } else {
-                                        sLogLine = "Success deleting file marked for deletion, " + dfSource.getName() + ".\n";
+                                        sLogLine = "Success deleting file marked for deletion, " + sFileName + ".\n";
                                     }
-                                    fwLogFile.write(sLogLine + "\n");
+                                    gfwLogFile.write(sLogLine + "\n");
 
                                 } else {
                                     //If this item is not merely marked for deletion...
@@ -263,7 +267,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     if (!fDestinationFolder.exists()) {
                                         if (!fDestinationFolder.mkdir()) {
                                             sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
-                                            fwLogFile.write(sMessage + "\n");
+                                            gfwLogFile.write(sMessage + "\n");
                                             bProblemWithFileTransfer = true;
                                             continue; //Skip to the end of the loop and read the next line in the job file.
                                         }
@@ -279,8 +283,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                             //  exists. Attempt to delete the source file.
                                             if (iMoveOrCopy == GlobalClass.MOVE) {
                                                 if (!dfSource.delete()) {
-                                                    sMessage = "Source file copied, but could not delete source file, " + dfSource.getName() + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
-                                                    fwLogFile.write(sMessage + "\n");
+                                                    sMessage = "Source file copied, but could not delete source file, " + sFileName + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
+                                                    gfwLogFile.write(sMessage + "\n");
                                                     bProblemWithFileTransfer = true;
                                                 }
                                             }
@@ -293,7 +297,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                         sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
                                                 + " of file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
-                                        fwLogFile.write(sLogLine + "\n");
+                                        gfwLogFile.write(sLogLine + "\n");
                                         ContentResolver contentResolver = getApplicationContext().getContentResolver();
                                         InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
 
@@ -323,15 +327,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                         outputStream.close();
 
                                         sLogLine = " Success.\n";
-                                        fwLogFile.write(sLogLine + "\n");
+                                        gfwLogFile.write(sLogLine + "\n");
 
                                         if (iMoveOrCopy == GlobalClass.MOVE) {
                                             if (!dfSource.delete()) {
-                                                sLogLine = "Could not delete source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                                sLogLine = "Could not delete source file, " + sFileName + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                                             } else {
-                                                sLogLine = "Success deleting source file, " + dfSource.getName() + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                                sLogLine = "Success deleting source file, " + sFileName + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                                             }
-                                            fwLogFile.write(sLogLine + "\n");
+                                            gfwLogFile.write(sLogLine + "\n");
                                         }
 
                                     } else {
@@ -345,8 +349,8 @@ public class Worker_LocalFileTransfer extends Worker {
 
                             } else {
                                 sMessage = "Data missing while reading job file, line " + giFilesProcessed + ": " + sJobFilePath;
-                                fwLogFile.write(sMessage + "\n");
-                                fwLogFile.close();
+                                gfwLogFile.write(sMessage + "\n");
+                                gfwLogFile.close();
                                 CloseNotification();
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
@@ -358,8 +362,8 @@ public class Worker_LocalFileTransfer extends Worker {
 
                 } catch (IOException e) {
                     sMessage = "Problem reading job file: " + sJobFilePath;
-                    fwLogFile.write(sMessage + "\n");
-                    fwLogFile.close();
+                    gfwLogFile.write(sMessage + "\n");
+                    gfwLogFile.close();
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -367,18 +371,18 @@ public class Worker_LocalFileTransfer extends Worker {
                 if(!bProblemWithFileTransfer){
                     if(!fJobFile.delete()){
                         sMessage = "Worker finished processing job but could not delete job file: " + sJobFilePath;
-                        fwLogFile.write(sMessage + "\n");
+                        gfwLogFile.write(sMessage + "\n");
                     }
                 }
 
             } else {
                 sMessage = "Job file does not exist: " + sJobFilePath;
-                fwLogFile.write(sMessage + "\n");
-                fwLogFile.close();
+                gfwLogFile.write(sMessage + "\n");
+                gfwLogFile.close();
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
-            fwLogFile.close();
+            gfwLogFile.close();
 
             return Result.success(dataProgress);
 
@@ -416,18 +420,6 @@ public class Worker_LocalFileTransfer extends Worker {
         return dataProgress;
     }
 
-    private void UpdateNotificationProgressOnly(int iProgressBarValue){
-        gNotificationBuilder.setProgress(100, iProgressBarValue,false);
-        gNotification = gNotificationBuilder.build();
-        globalClass.notificationManager.notify(giNotificationID, gNotification);
-    }
-
-    private void UpdateNotificationTextOnly(String sNotificationText){
-        gNotificationBuilder.setContentText(sNotificationText);
-        gNotification = gNotificationBuilder.build();
-        globalClass.notificationManager.notify(giNotificationID, gNotification);
-    }
-
 
     private void CloseNotification(){
         gNotificationBuilder.setOngoing(false) //Let the user remove the notification from the notification bar.
@@ -437,14 +429,49 @@ public class Worker_LocalFileTransfer extends Worker {
     }
 
     private Data DataErrorMessage(String sMessage){
-        Data dataProgress = new Data.Builder()
+
+        return new Data.Builder()
                 .putLong(JOB_BYTES_PROCESSED, glProgressNumerator)
                 .putLong(JOB_BYTES_TOTAL, glProgressDenominator)
                 .putString(JOB_DATETIME, gsJobRequestDateTime)
                 .putString(FAILURE_MESSAGE, sMessage)
                 .build();
+    }
 
-        return dataProgress;
+    @Override
+    public void onStopped() {
+        //The worker is stopping. May be that the job is done, or that the user has commanded
+        // it, or that the Android OS has commanded it.
+
+        String sNotificationText = giFilesProcessed + "/" + giFileCount + " files processed.";
+        String sMessage = "Worker stopped.";
+
+        if(giFilesProcessed != giFileCount){
+            sNotificationText = sNotificationText + " Operation paused.";
+            sMessage = sMessage + " Files processed: " + giFilesProcessed + "/" + giFileCount;
+            //How do we want to record the state of this incomplete worker?
+            //  Preference?
+            //  File?
+            //Should I construct a manager to monitor the state of jobs and workers?
+
+        } else {
+            gNotificationBuilder.setProgress(0, 0,false); //Remove the progress bar from the notification.
+            sMessage = sMessage + " File processing complete.";
+        }
+        gNotificationBuilder.setOngoing(false) //Let the user remove the notification from the notification bar.
+                .setContentText(sNotificationText);
+
+        gNotification = gNotificationBuilder.build();
+        globalClass.notificationManager.notify(giNotificationID, gNotification);
+
+        try {
+            gfwLogFile.write(sMessage + "\n");
+
+        }catch (Exception e){
+            //Do nothing at this point.
+        }
+
+        super.onStopped();
     }
 
 }
