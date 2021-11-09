@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activity_WorkerConsole"></activity>
+        <activity android:name=".Activity_Browser"></activity>
+        <activity android:name=".Activity_WorkerConsole" />
         <activity android:name=".Activity_LogViewer" />
         <activity android:name=".Activity_ComicDetailsEditor" />
         <activity android:name=".Activity_TagEditor" />
@@ -70,11 +71,14 @@
         <service
             android:name=".Service_ExportComics"
             android:exported="false" />
+        <service
+            android:name=".Service_WebPageTabs"
+            android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 </manifest>

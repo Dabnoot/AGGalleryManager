@@ -156,5 +156,16 @@
         android:src="@drawable/daynight"
         android:backgroundTint="@color/colorButton"/>
 
+    <ImageButton
+        android:id="@+id/imageButton_Browser"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_margin="20dp"
+        android:scaleType="fitXY"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:src="@drawable/icons8_globe_100_white"
+        android:background="?android:selectableItemBackground"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

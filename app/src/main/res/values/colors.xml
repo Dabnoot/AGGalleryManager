@@ -22,4 +22,8 @@
 
     <color name="startup_screen_background">#292929</color>
 
+    <color name="tab_backcolor_unselected">#FF242424</color>
+    <color name="tab_textcolor">#FFe2e2e2</color>
+    <color name="tab_backcolor_selected">#FF414141</color>
+
 </resources>

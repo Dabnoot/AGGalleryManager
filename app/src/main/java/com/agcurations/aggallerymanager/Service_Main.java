@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -117,6 +116,11 @@ public class Service_Main extends IntentService {
                     }
                 }
             }*/
+
+            //Get file to hold web page tab data:
+            String sWebPageTabDataFilePath = globalClass.gfAppFolder + File.separator + "WebpageTabData.dat";
+            globalClass.gfWebpageTabDataFile = new File(sWebPageTabDataFilePath);
+
 
             //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
             //  This can occur if Android closed the application, but saves the last Activity and the user returns.

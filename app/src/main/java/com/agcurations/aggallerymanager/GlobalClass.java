@@ -68,6 +68,7 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogFolders = new File[3];
     public File gfLogsFolder;
     public File gfJobFilesFolder;
+    public File gfWebpageTabDataFile;
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
@@ -117,6 +118,8 @@ public class GlobalClass extends Application {
     public static final String[] gsMoveOrCopy = {"Move", "Copy"};
 
     public boolean gbIsDarkModeOn = false;
+
+    ArrayList<ItemClass_WebPageTabData> gal_WebPages;
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================

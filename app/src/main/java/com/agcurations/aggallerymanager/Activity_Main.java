@@ -70,6 +70,8 @@ public class Activity_Main extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        getSupportActionBar().show();
+
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
@@ -111,6 +113,14 @@ public class Activity_Main extends AppCompatActivity {
             }
         });
 
+        ImageButton imageButton_Browser = findViewById(R.id.imageButton_Browser);
+        imageButton_Browser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intentBrowser = new Intent(getApplicationContext(), Activity_Browser.class);
+                startActivity(intentBrowser);
+            }
+        });
 
 
 
@@ -562,6 +572,8 @@ public class Activity_Main extends AppCompatActivity {
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentImportGuided);
     }
+
+
 
 
 

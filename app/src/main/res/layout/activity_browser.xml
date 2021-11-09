@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activity_Browser"
+    android:background="@android:color/background_dark">
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout_WebTabs"
+        android:layout_width="match_parent"
+        android:layout_height="34dp"
+        app:tabGravity="start"
+        app:tabMode="scrollable"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@id/imageButton_AddTab"
+        app:tabIndicatorColor="#00FFFFFF"
+        app:tabMaxWidth="200dp"
+        app:tabPaddingStart="0dp"
+        app:tabPaddingEnd="0dp"
+        android:background="@color/colorBlack">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </com.google.android.material.tabs.TabLayout>
+
+    <ImageButton
+        android:id="@+id/imageButton_AddTab"
+        android:layout_width="34dp"
+        android:layout_height="36dp"
+        app:srcCompat="@drawable/add_action"
+        android:layout_alignParentEnd="true"
+        android:backgroundTint="@color/colorBlack"/>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager2_WebPages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_below="@id/tabLayout_WebTabs"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true">
+
+
+    </androidx.viewpager2.widget.ViewPager2>
+
+</RelativeLayout>

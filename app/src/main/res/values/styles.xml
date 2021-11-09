@@ -102,4 +102,13 @@
         <item name="backgroundTint">@color/colorButton</item>
     </style>
 
+    <style name="CustomTabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabBackground">@drawable/tabitem_bg_selector</item>
+    </style>
+    <style name="CustomTabTextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="textAllCaps">false</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/tab_textcolor</item>
+    </style>
+
 </resources>
