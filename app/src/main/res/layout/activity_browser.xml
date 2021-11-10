@@ -28,6 +28,14 @@
 
     </com.google.android.material.tabs.TabLayout>
 
+    <!--<Button
+        android:id="@+id/button_testBrowser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@id/imageButton_AddTab"
+        android:text="test"
+        />-->
+
     <ImageButton
         android:id="@+id/imageButton_AddTab"
         android:layout_width="34dp"

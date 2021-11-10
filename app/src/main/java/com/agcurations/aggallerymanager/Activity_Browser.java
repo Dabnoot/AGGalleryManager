@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -14,9 +15,11 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -38,6 +41,8 @@ public class Activity_Browser extends AppCompatActivity {
     GlobalClass globalClass;
 
     WebPageTabDataServiceResponseReceiver webPageTabDataServiceResponseReceiver;
+
+    boolean bTabsLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +88,13 @@ public class Activity_Browser extends AppCompatActivity {
         tabLayout_WebTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                /*int iTabNumber = tab.getPosition() + 1;
-                Toast.makeText(getApplicationContext(), "tabID " + iTabNumber + " selected.", Toast.LENGTH_SHORT).show();*/
+                //Record the tab selected by the user so we can go back to that tab when the activity is restarted:
+                if(bTabsLoaded) {
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                    sharedPreferences.edit()
+                            .putInt(GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX, tab.getPosition())
+                            .apply();
+                }
             }
 
             @Override
@@ -119,7 +129,7 @@ public class Activity_Browser extends AppCompatActivity {
 
                 Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
 
-                viewPager2_WebPages.setCurrentItem(icwptd.iTabIndex);
+                viewPager2_WebPages.setCurrentItem(icwptd.iTabIndex, false);
             }
         });
 
@@ -132,6 +142,16 @@ public class Activity_Browser extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(webPageTabDataServiceResponseReceiver,filter);
 
         Service_WebPageTabs.startAction_GetWebPageTabData(this);
+
+        /*Button button_testBrowser = findViewById(R.id.button_testBrowser);
+        if(button_testBrowser != null){
+            button_testBrowser.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    viewPager2_WebPages.setCurrentItem(1,false);
+                }
+            });
+        }*/
 
     }
 
@@ -172,7 +192,19 @@ public class Activity_Browser extends AppCompatActivity {
             imageButton_Close.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    //Tab closing...
+
+                    //If the tab being closed is not the tab which has focus, make sure that the
+                    //  focus tab retains focus.
+                    int iFocusPosition = viewPager2_WebPages.getCurrentItem();
+                    //Make sure tab focus remains on the correct tab:
+                    if(iFocusPosition > iPosition){
+                        viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
+                    }
+
+                    //Perform operations to remove the tab:
                     viewPagerFragmentAdapter.removeItem(iPosition);
+
                     giFragmentCount--;
                     int iTabIndex = globalClass.gal_WebPages.get(iPosition).iTabIndex;
                     for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
@@ -186,6 +218,8 @@ public class Activity_Browser extends AppCompatActivity {
                     if(iTabIndex <= globalClass.gal_WebPages.size()) {
                         globalClass.gal_WebPages.remove(iTabIndex - 1);
                     } else {
+                        //If something wierd has happened and the index is beyond the array, remove
+                        //  only the end item.
                         globalClass.gal_WebPages.remove(globalClass.gal_WebPages.size() - 1);
                     }
 
@@ -346,10 +380,15 @@ public class Activity_Browser extends AppCompatActivity {
                         viewPagerFragmentAdapter.notifyDataSetChanged();
                         InitializeTabAppearance();
 
+                        //Go to the tab last having the user focus:
+                        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                        int iTabofLastFocus = sharedPreferences.getInt(GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX, 0);
+                        viewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
+
+                        bTabsLoaded = true;
 
                     } else if (sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TAB_CLOSED)){
-                        //InitializeTabAppearance();
-                        //updateAllTabNotches();
+
                     }
                 }
 

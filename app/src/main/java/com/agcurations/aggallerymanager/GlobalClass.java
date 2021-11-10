@@ -93,18 +93,7 @@ public class GlobalClass extends Application {
     public static final String gsNHComicCoverPageFilter = "^\\d{1,7}_Cover.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
     //public static final String gsNHComicPageFilter = "^\\d{1,7}_Page.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
 
-    public static final String[]  gsRestrictedTagsPreferenceNames = new String[]{
-            "multi_select_list_videos_restricted_tags",
-            "multi_select_list_images_restricted_tags",
-            "multi_select_list_comics_restricted_tags"};
 
-    private static final String[] gsCurrentMaxItemIDStoredPreference = new String[]{
-            "current_max_item_ID_videos",
-            "current_max_item_ID_images",
-            "current_max_item_ID_comics"
-    };
-
-    public static final String gsPinPreference = "preferences_pin";
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
 
@@ -1518,7 +1507,22 @@ public class GlobalClass extends Application {
 
 
     //==============================================================================================
-    //=========== Other Preferences ================================================================
+    //=========== Preferences ======================================================================
+
+    public static final String[]  gsRestrictedTagsPreferenceNames = new String[]{
+            "multi_select_list_videos_restricted_tags",
+            "multi_select_list_images_restricted_tags",
+            "multi_select_list_comics_restricted_tags"};
+
+    private static final String[] gsCurrentMaxItemIDStoredPreference = new String[]{
+            "current_max_item_ID_videos",
+            "current_max_item_ID_images",
+            "current_max_item_ID_comics"
+    };
+
+    public static final String gsPinPreference = "preferences_pin";
+
+    public static final String PREF_WEB_TAB_PREV_FOCUS_INDEX = "com.agcurations.aggallerymanager.preference.web_tab_prev_focus_index";
 
     public static String PREF_APPLICATION_LOG_PATH_FILENAME = "APPLICATION_LOG_PATH_FILENAME";
     public static String PREF_WRITE_APPLICATION_LOG_FILE = "WRITE_APPLICATION_LOG_FILE";
