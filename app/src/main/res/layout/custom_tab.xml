@@ -16,20 +16,21 @@
         android:layout_alignParentStart="true"/>
 
     <TextView
+        android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="34dp"
-        android:text="New tab"
-        android:id="@+id/text"
-        android:paddingTop= "6dp"
-        android:textColor="#BBC0C6"
-        android:paddingBottom="4dp"
-        android:textSize="14dp"
-        android:paddingRight="7dp"
-        android:layout_gravity= "center"
-        android:gravity= "start"
-        android:paddingLeft= "7dp"
+        android:layout_gravity="center"
+        android:layout_toStartOf="@id/imageButton_Close"
         android:layout_toEndOf="@id/imageView_WebPageIcon"
-        android:layout_toStartOf="@id/imageButton_Close"/>
+        android:gravity="start"
+        android:paddingLeft="7dp"
+        android:paddingTop="6dp"
+        android:paddingRight="7dp"
+        android:paddingBottom="4dp"
+        android:singleLine="true"
+        android:text="New tab"
+        android:textColor="#BBC0C6"
+        android:textSize="14dp" />
 
     <ImageButton
         android:layout_width="32dp"

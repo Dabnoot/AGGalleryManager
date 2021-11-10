@@ -248,9 +248,6 @@ public class Activity_Browser extends AppCompatActivity {
                     if (sTitle.equals("")) {
                         sTitle = "New Tab";
                     }
-                    if (sTitle.length() > 15) {
-                        sTitle = sTitle.substring(0, 15) + "...";
-                    }
                     textView_TabText.setText(sTitle);
                 }
             }
@@ -270,9 +267,6 @@ public class Activity_Browser extends AppCompatActivity {
                         String sTitle = icwptd.sTabTitle;
                         if (sTitle.equals("")) {
                             sTitle = "New Tab";
-                        }
-                        if (sTitle.length() > 15) {
-                            sTitle = sTitle.substring(0, 15) + "...";
                         }
                         textView_TabText.setText(sTitle);
                     }
