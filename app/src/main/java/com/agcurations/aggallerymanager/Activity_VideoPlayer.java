@@ -11,6 +11,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
@@ -67,6 +68,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_video_player);
+
+        //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
 
         mVisible = true;
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);

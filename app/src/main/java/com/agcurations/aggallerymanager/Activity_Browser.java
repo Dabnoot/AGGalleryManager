@@ -20,6 +20,7 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.webkit.WebIconDatabase;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -51,6 +52,10 @@ public class Activity_Browser extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_browser);
+
+        //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
 
         getSupportActionBar().hide();
 

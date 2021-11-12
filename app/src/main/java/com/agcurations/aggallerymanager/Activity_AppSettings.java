@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.WindowManager;
 import android.widget.EditText;
 
 import java.util.ArrayList;
@@ -42,6 +43,11 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_settings);
+
+        //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
+
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()

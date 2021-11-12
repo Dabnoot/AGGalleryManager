@@ -31,6 +31,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -123,6 +124,11 @@ public class Activity_Import extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_import);
+
+        //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
+
         setTitle("Import");
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -236,8 +242,10 @@ public class Activity_Import extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        mediaMetadataRetriever.release();
-        //unregisterReceiver(importDataServiceResponseReceiver);
+        if(mediaMetadataRetriever != null) {
+            mediaMetadataRetriever.release();
+        }
+
         LocalBroadcastManager.getInstance(this).unregisterReceiver(importDataServiceResponseReceiver);
         super.onDestroy();
     }

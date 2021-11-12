@@ -245,6 +245,33 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             }
         });
 
+        //Check to see if we got here because the user wants to import something that they found on the internal
+        // browser:
+        if (getContext() != null) {
+            ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clipData = clipboard.getPrimaryClip();
+            if (clipData != null) {
+                String sClipLabel = clipData.getDescription().getLabel().toString();
+                if (sClipLabel != null){
+                    if(sClipLabel.equals(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                        ClipData.Item clipItem = clipData.getItemAt(0);
+                        if(clipItem != null){
+                            if(clipItem.getText() != null){
+                                String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
+                                if( sWebAddress != null){
+                                    gEditText_WebAddress.setText(sWebAddress);
+                                    SetTextStatusMessage("Loading webpage...");
+                                    gWebView.loadUrl(sWebAddress);
+                                    clipboard.clearPrimaryClip();
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+
     } //End onViewCreated
 
     @Override
@@ -294,8 +321,10 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                 if (clipData != null) {
                     ClipData.Item clipData_Item = clipData.getItemAt(0);
                     if (clipData_Item != null) {
-                        String sClipString = clipData_Item.getText().toString();
-                        gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
+                        if(clipData_Item.getText() != null) {
+                            String sClipString = (String) clipData_Item.coerceToText(getActivity().getApplicationContext());
+                            gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
+                        }
                     }
                 }
             }

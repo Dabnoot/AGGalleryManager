@@ -160,6 +160,10 @@ public class Activity_ComicViewer extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comic_page_viewer);
 
+        //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
+
         globalClass = (GlobalClass) getApplicationContext();
 
         mVisible = true;

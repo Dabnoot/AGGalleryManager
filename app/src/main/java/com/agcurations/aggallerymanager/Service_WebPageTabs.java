@@ -38,6 +38,8 @@ public class Service_WebPageTabs extends IntentService {
     public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowsertest.result.WEB_PAGE_TAB_DATA_ACQUIRED";
     public static final String RESULT_TYPE_WEB_PAGE_TAB_CLOSED = "com.agcurations.webbrowsertest.result.WEB_PAGE_TAB_CLOSED";
 
+    public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
+
     public Service_WebPageTabs() {
         super("Service_WebPages");
     }

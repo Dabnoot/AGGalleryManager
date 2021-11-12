@@ -11,6 +11,7 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -68,6 +69,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         //Source: https://www.youtube.com/watch?v=fn5OlqQuOCk
         setContentView(R.layout.activity_import_file_preview);
+
+        //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
 
         if (savedInstanceState != null) {
             giFileItemIndex = savedInstanceState.getInt(IMAGE_PREVIEW_INDEX);

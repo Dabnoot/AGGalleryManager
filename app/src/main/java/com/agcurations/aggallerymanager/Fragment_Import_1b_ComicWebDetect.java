@@ -146,6 +146,32 @@ public class Fragment_Import_1b_ComicWebDetect extends Fragment {
             });
 
 
+            //Check to see if we got here because the user wants to import something that they found on the internal
+            // browser:
+            if (getContext() != null) {
+                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clipData = clipboard.getPrimaryClip();
+                if (clipData != null) {
+                    String sClipLabel = clipData.getDescription().getLabel().toString();
+                    if (sClipLabel != null){
+                        if(sClipLabel.equals(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                            ClipData.Item clipItem = clipData.getItemAt(0);
+                            if(clipItem != null){
+                                if(clipItem.getText() != null){
+                                    String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
+                                    if( sWebAddress != null){
+                                        editText_WebAddress.setText(sWebAddress);
+                                        clipboard.clearPrimaryClip();
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+
+
         }
 
     }

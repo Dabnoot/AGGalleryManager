@@ -1,8 +1,12 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.Image;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -22,6 +26,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -217,6 +222,35 @@ public class Fragment_WebPageTab extends Fragment {
         if(sLoadedAddress == null && !gsWebAddress.equals("")) {
             InitializeData();
         }
+
+        ImageButton imageButton_ClearText = getView().findViewById(R.id.imageButton_ClearText);
+        if(imageButton_ClearText != null){
+            imageButton_ClearText.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    gEditText_Address.setText("");
+                }
+            });
+        }
+
+        ImageButton imageButton_ImportContent = getView().findViewById(R.id.imageButton_ImportContent);
+        if(imageButton_ImportContent != null){
+            imageButton_ImportContent.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //Paste the current URL to the clipboard:
+                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clipData = ClipData.newPlainText(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
+                    clipboard.setPrimaryClip(clipData);
+
+                    //Send the user to the Import Activity:
+                    globalClass.giSelectedCatalogMediaCategory = -1; //Don't know the type of media selected.
+                    Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
+                    startActivity(intentImportGuided);
+                }
+            });
+        }
+
     }
 
     private void InitializeData(){
