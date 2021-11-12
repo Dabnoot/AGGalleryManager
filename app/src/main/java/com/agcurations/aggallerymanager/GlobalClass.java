@@ -69,6 +69,7 @@ public class GlobalClass extends Application {
     public File gfLogsFolder;
     public File gfJobFilesFolder;
     public File gfWebpageTabDataFile;
+    public File gfWebpageFaviconBitmapFolder;
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:

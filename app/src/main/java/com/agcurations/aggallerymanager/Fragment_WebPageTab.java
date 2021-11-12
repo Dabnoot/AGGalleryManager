@@ -14,6 +14,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -44,6 +48,8 @@ public class Fragment_WebPageTab extends Fragment {
 
     boolean gbInitialized = false;
 
+    ArrayList<String> gals_ResourceRequests;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +64,8 @@ public class Fragment_WebPageTab extends Fragment {
         if (getArguments() != null) {
             giWebPageIndex = getArguments().getInt(ARG_WEBPAGE_INDEX, -1);
         }
+
+        gals_ResourceRequests = new ArrayList<>();
     }
 
     @Override
@@ -83,62 +91,104 @@ public class Fragment_WebPageTab extends Fragment {
         gWebView.setBackgroundColor(Color.BLACK);
         WebSettings webSettings = gWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
 
         final Fragment fParent = this;
 
-        gWebView.setWebViewClient(new WebViewClient(){
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                String sTitle = view.getTitle();
-                for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
-                    int ihashCode = fParent.hashCode();
-                    if(ihashCode == icwptd.iTabFragmentHashID){
-                        icwptd.sTabTitle = sTitle;
-                        Activity_Browser activity_browser = (Activity_Browser) getActivity();
-                        if(activity_browser != null){
-                            activity_browser.updateSingleTabNotch(icwptd); //Update the tab label.
-                            Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
-                        }
-                        break;
-                    }
+        boolean bUseWebChromeClient = true;
+
+        if(bUseWebChromeClient){
+
+
+
+            gWebView.setWebChromeClient(new WebChromeClient() {
+                @Override
+                public void onReceivedIcon(WebView view, Bitmap icon) {
+                    super.onReceivedIcon(view, icon);
                 }
-            };
 
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                super.onPageStarted(view, url, favicon);
-                gEditText_Address.setText(url);
+                @Override
+                public void onReceivedTitle(WebView view, String title) {
+                    super.onReceivedTitle(view, title);
+                }
 
-                //Update the recorded webpage history for this tab:
-                //Find the associated WebPageTabData:
-                for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
-                    int ihashCode = fParent.hashCode();
-                    if(ihashCode == icwptd.iTabFragmentHashID){
-                        if(icwptd.alsAddressHistory == null) {
-                            icwptd.alsAddressHistory = new ArrayList<>();
-                        }
-                        //Add url to address history list for this tab, but first make sure that
-                        //  we are not merely re-loading the current address:
-                        int iAddressCount = icwptd.alsAddressHistory.size();
-                        boolean bSkipSet = false;
-                        if(iAddressCount > 0) {
-                            String sCurrentAddress = icwptd.alsAddressHistory.get(iAddressCount - 1);
-                            if (!url.equals(sCurrentAddress)) {
-                                icwptd.alsAddressHistory.add(url);
-                            } else {
-                                bSkipSet = true;
+                @Override
+                public void onProgressChanged(WebView view, int newProgress) {
+                    super.onProgressChanged(view, newProgress);
+                }
+
+                @Override
+                public void onPermissionRequest(PermissionRequest request) {
+                    super.onPermissionRequest(request);
+                }
+            });
+
+
+
+        //} else {
+
+            gWebView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    String sTitle = view.getTitle();
+                    for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                        int ihashCode = fParent.hashCode();
+                        if (ihashCode == icwptd.iTabFragmentHashID) {
+                            icwptd.sTabTitle = sTitle;
+                            Bitmap bitmap_favicon = gWebView.getFavicon();
+                            Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                            if (activity_browser != null) {
+                                activity_browser.updateSingleTabNotch(icwptd, bitmap_favicon); //Update the tab label.
+                                Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             }
-                        } else {
-                            icwptd.alsAddressHistory.add(url);
+                            break;
                         }
-                        if(!bSkipSet) {
-                            Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
+                    }
+                };
+
+                @Override
+                public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                    super.onPageStarted(view, url, favicon);
+                    gEditText_Address.setText(url);
+
+                    //Update the recorded webpage history for this tab:
+                    //Find the associated WebPageTabData:
+                    for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                        int ihashCode = fParent.hashCode();
+                        if (ihashCode == icwptd.iTabFragmentHashID) {
+                            if (icwptd.alsAddressHistory == null) {
+                                icwptd.alsAddressHistory = new ArrayList<>();
+                            }
+                            //Add url to address history list for this tab, but first make sure that
+                            //  we are not merely re-loading the current address:
+                            int iAddressCount = icwptd.alsAddressHistory.size();
+                            boolean bSkipSet = false;
+                            if (iAddressCount > 0) {
+                                String sCurrentAddress = icwptd.alsAddressHistory.get(iAddressCount - 1);
+                                if (!url.equals(sCurrentAddress)) {
+                                    icwptd.alsAddressHistory.add(url);
+                                } else {
+                                    bSkipSet = true;
+                                }
+                            } else {
+                                icwptd.alsAddressHistory.add(url);
+                            }
+                            if (!bSkipSet) {
+                                Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
-            }
-        });
+
+                @Nullable
+                @Override
+                public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                    gals_ResourceRequests.add(request.getUrl().toString());
+                    return super.shouldInterceptRequest(view, request);
+                }
+            });
+        }
 
         final View viewFragment = view;
         gEditText_Address.setOnEditorActionListener(new TextView.OnEditorActionListener() {

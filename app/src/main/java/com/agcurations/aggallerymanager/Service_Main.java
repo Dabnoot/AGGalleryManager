@@ -121,6 +121,14 @@ public class Service_Main extends IntentService {
             String sWebPageTabDataFilePath = globalClass.gfAppFolder + File.separator + "WebpageTabData.dat";
             globalClass.gfWebpageTabDataFile = new File(sWebPageTabDataFilePath);
 
+            //Create Webpage Favicon folder if it does not exist:
+            String sWebpageFaviconBitmapFolder = globalClass.gfAppFolder + File.separator + "TempFavicon";
+            globalClass.gfWebpageFaviconBitmapFolder = new File(sWebpageFaviconBitmapFolder);
+            if(!globalClass.gfWebpageFaviconBitmapFolder.exists()){
+                if(!globalClass.gfWebpageFaviconBitmapFolder.mkdir()){
+                    problemNotificationConfig("Could not create TempFavicon folder.");
+                }
+            }
 
             //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
             //  This can occur if Android closed the application, but saves the last Activity and the user returns.

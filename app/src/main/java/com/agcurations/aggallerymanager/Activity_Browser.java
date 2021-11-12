@@ -16,11 +16,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.WebIconDatabase;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -153,6 +156,7 @@ public class Activity_Browser extends AppCompatActivity {
             });
         }*/
 
+
     }
 
     //==============================================================================================
@@ -209,7 +213,17 @@ public class Activity_Browser extends AppCompatActivity {
                     int iTabIndex = globalClass.gal_WebPages.get(iPosition).iTabIndex;
                     for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
                         if(icwptd.iTabIndex == iTabIndex){
+
                             icwptd.iTabIndex = -1;
+
+                            //Delete the favicon file, if it was recorded:
+                            String sFaviconFilename = icwptd.sFaviconFilename;
+                            if(sFaviconFilename != null){
+                                if(!sFaviconFilename.equals("")){
+                                    Service_WebPageTabs.startAction_DeleteFaviconFile(getApplicationContext(), sFaviconFilename);
+                                }
+                            }
+
                         } else if(icwptd.iTabIndex > iTabIndex){
                             icwptd.iTabIndex--;
                         }
@@ -236,7 +250,7 @@ public class Activity_Browser extends AppCompatActivity {
         }
     }
 
-    public void updateSingleTabNotch(ItemClass_WebPageTabData itemClass_webPageTabData){
+    public void updateSingleTabNotch(ItemClass_WebPageTabData itemClass_webPageTabData, Bitmap bitmap_favicon){
 
         TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(itemClass_webPageTabData.iTabIndex - 1);
         if(tab != null) {
@@ -249,6 +263,11 @@ public class Activity_Browser extends AppCompatActivity {
                         sTitle = "New Tab";
                     }
                     textView_TabText.setText(sTitle);
+                }
+                ImageView imageView_WebPageIcon = view.findViewById(R.id.imageView_WebPageIcon);
+                if(imageView_WebPageIcon != null && bitmap_favicon != null){
+                    imageView_WebPageIcon.setImageResource(0);
+                    imageView_WebPageIcon.setImageBitmap(bitmap_favicon);
                 }
             }
         }

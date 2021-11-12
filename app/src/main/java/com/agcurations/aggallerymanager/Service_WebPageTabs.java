@@ -19,12 +19,13 @@ public class Service_WebPageTabs extends IntentService {
 
     private static final String ACTION_SET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.set_webpage_tab_data";
     private static final String ACTION_GET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.get_webpage_tab_data";
-    private static final String ACTION_GET_ALL_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.get_all_webpage_tab_data";
     private static final String ACTION_REMOVE_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.remove_webpage_tab_data";
+    private static final String ACTION_DELETE_FAVICON_FILE = "com.agcurations.webbrowsertest.action.delete_favicon_file";
 
     private static final String EXTRA_WEBPAGE_INDEX = "com.agcurations.webbrowsertest.extra.WEBPAGE_INDEX"; //Index is zero-based
     private static final String EXTRA_WEBPAGE_ADDRESS = "com.agcurations.webbrowsertest.extra.WEBPAGE_ADDRESS";
     private static final String EXTRA_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.extra.WEBPAGE_TAB_DATA";
+    private static final String EXTRA_FAVICON_FILENAME = "com.agcurations.webbrowsertest.extra.FAVICON_FILENAME";
 
     private static final String gsWebPageTabDataFileName = "WebPageTabData.dat";
 
@@ -61,6 +62,13 @@ public class Service_WebPageTabs extends IntentService {
         context.startService(intent);
     }
 
+    public static void startAction_DeleteFaviconFile(Context context, String sFaviconFilename) {
+        Intent intent = new Intent(context, Service_WebPageTabs.class);
+        intent.setAction(ACTION_DELETE_FAVICON_FILE);
+        intent.putExtra(EXTRA_FAVICON_FILENAME, sFaviconFilename);
+        context.startService(intent);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -73,6 +81,10 @@ public class Service_WebPageTabs extends IntentService {
                 handleActionGetWebPageTabData();
             } else if (ACTION_REMOVE_WEBPAGE_TAB_DATA.equals(action)) {
                 handleActionRemoveWebPageTabData();
+            } else if (ACTION_DELETE_FAVICON_FILE.equals(action)) {
+                final String sFaviconFilename = intent.getStringExtra(EXTRA_FAVICON_FILENAME);
+                if(sFaviconFilename == null) return;
+                handleActionDeleteFaviconFile(sFaviconFilename);
             }
         }
     }
@@ -228,6 +240,19 @@ public class Service_WebPageTabs extends IntentService {
 
     }
 
+    private void handleActionDeleteFaviconFile(String sFaviconFilename) {
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        String sFilePath = globalClass.gfWebpageFaviconBitmapFolder.getPath() + File.separator + sFaviconFilename;
+        File fFaviconFile = new File(sFilePath);
+        if(fFaviconFile.exists()){
+            if(!fFaviconFile.delete()){
+                //do nothing
+                //todo.
+            }
+        }
+
+    }
+
 
 //==================================================================================================
 //=========  UTILITIES  ============================================================================
@@ -238,10 +263,11 @@ public class Service_WebPageTabs extends IntentService {
     public final int giWebPageTabDataFileVersion = 1;
     public String getCatalogHeader(){
         String sHeader = "";
-        sHeader = sHeader + "ID";                       //Tab ID (unique)
-        sHeader = sHeader + "\t" + "Index";             //Tab index in the tab layout
-        sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title)
-        sHeader = sHeader + "\t" + "AddressHistory";    //Address history for the tab
+        sHeader = sHeader + "ID";                       //Tab ID (unique).
+        sHeader = sHeader + "\t" + "Index";             //Tab index in the tab layout.
+        sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
+        sHeader = sHeader + "\t" + "AddressHistory";    //Address history for the tab.
+        sHeader = sHeader + "\t" + "Favicon Filename";  //Filename of bitmap for tab icon.
         sHeader = sHeader + "\t" + "Version:" + giWebPageTabDataFileVersion;
 
         return sHeader;
@@ -262,6 +288,7 @@ public class Service_WebPageTabs extends IntentService {
             }
         }
         sRecord = sRecord + sb.toString() + "%%" + "}";
+        sRecord = sRecord + "\t" + wptd.sFaviconFilename;
 
         return sRecord;
     }
@@ -280,6 +307,11 @@ public class Service_WebPageTabs extends IntentService {
             sAddressHistory[i] = GlobalClass.JumbleStorageText(sAddressHistory[i]);
         }
         wptd.alsAddressHistory.addAll(Arrays.asList(sAddressHistory));
+        if(sRecord.length >= 5) {
+            //Favicon filename might be empty, and if it is the last item on the record,
+            //  it will not be split-out via the split operation.
+            wptd.sFaviconFilename = sRecord[4];
+        }
 
         return wptd;
     }
