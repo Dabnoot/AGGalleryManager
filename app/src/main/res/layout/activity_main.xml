@@ -154,7 +154,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:src="@drawable/daynight"
-        android:backgroundTint="@color/colorButton"/>
+        android:backgroundTint="@color/colorButton"
+        android:background="?android:selectableItemBackground"/>
 
     <ImageButton
         android:id="@+id/imageButton_Browser"
