@@ -44,7 +44,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private TreeMap<Integer, ItemClass_CatalogItem> treeMapRecyclerViewVideos;
     private Integer giKey;
 
-    private int giCurrentVideoPosition = 1;
+    private long glCurrentVideoPosition = 1;
     private final int VIDEO_PLAYBACK_STATE_PAUSED = 0;
     private final int VIDEO_PLAYBACK_STATE_PLAYING = 1;
     private int giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
@@ -108,7 +108,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }
 
         if (savedInstanceState != null) {
-            giCurrentVideoPosition = savedInstanceState.getInt(PLAYBACK_TIME);
+            glCurrentVideoPosition = savedInstanceState.getLong(PLAYBACK_TIME);
         }
 
         gMediaController = new MediaController(this);
@@ -368,8 +368,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     //  If that 'primary tag' needs to be deleted at the users request, then the file gets moved
                     //  to its next tag folder. If the user merely reassigns a first tag, thus reordering or removing all
                     //  assigned tags, the file does not get moved. Only on tag delete would a file be moved.
+                    //  Update 11/14/2021 - I'm not sure if the above is still true. Will need to test again. (todo).
                     initializePlayer();
-                    gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+                    gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
                     gVideoView_VideoPlayer.start();
                 }
             }
@@ -388,18 +389,58 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+            /*gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
             if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
                 gVideoView_VideoPlayer.start();
+            }*/
+
+            //Figure out which video player is active, and resume that object.
+            ItemClass_CatalogItem ci;
+            ci = treeMapRecyclerViewVideos.get(giKey);
+            if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+                gSimpleExoPlayer.seekTo(glCurrentVideoPosition);
+                if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                    gSimpleExoPlayer.play();
+                }
+                gSimpleExoPlayer.pause();
+            } else {
+                gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
+                if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                    gVideoView_VideoPlayer.start();
+                }
             }
+
+
+
         }
     }
 
     @Override
     protected void onPause() {
-        giCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+        /*glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
         if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            giCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+            if (gVideoView_VideoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gVideoView_VideoPlayer.pause();
+        }*/
+
+        //Figure out which video player is active, and pause that object.
+        ItemClass_CatalogItem ci;
+        ci = treeMapRecyclerViewVideos.get(giKey);
+        if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
+            if (gSimpleExoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gSimpleExoPlayer.pause();
+        } else {
+            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
             if (gVideoView_VideoPlayer.isPlaying()) {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
             } else {
@@ -407,23 +448,46 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
             gVideoView_VideoPlayer.pause();
         }
+
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+        /*if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            gVideoView_VideoPlayer.stopPlayback();
+        }*/
+
+        //Figure out which video player is active, and stop that object.
+        ItemClass_CatalogItem ci;
+        ci = treeMapRecyclerViewVideos.get(giKey);
+        if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+            gSimpleExoPlayer.stop();
+        } else {
             gVideoView_VideoPlayer.stopPlayback();
         }
+
         super.onStop();
     }
 
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+        /*if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
+        }*/
+
+        //Figure out which video player is active, and save the position.
+        ItemClass_CatalogItem ci;
+        ci = treeMapRecyclerViewVideos.get(giKey);
+        if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
+        } else {
+            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
         }
+
+        outState.putLong(PLAYBACK_TIME, glCurrentVideoPosition);
+
     }
 
     //==============================================================================================
@@ -512,10 +576,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
                     gVideoView_VideoPlayer.setVideoURI(gMediaUri);
 
-                    if(gVideoView_VideoPlayer.getDuration() > giCurrentVideoPosition){
-                        giCurrentVideoPosition = 1;
+                    if(gVideoView_VideoPlayer.getDuration() > glCurrentVideoPosition){
+                        glCurrentVideoPosition = 1;
                     }
-                    gVideoView_VideoPlayer.seekTo(giCurrentVideoPosition);
+                    gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
                     gVideoView_VideoPlayer.start();
                 }
 
