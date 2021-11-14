@@ -149,6 +149,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         gWebView.setBackgroundColor(Color.BLACK);
         WebSettings webSettings = gWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true); //Some items may not appear on some pages if this is not enabled.
         gWebView.addJavascriptInterface(new MyJavaScriptInterface(), "HtmlViewer");
 
         gWebView.setWebViewClient(new WebViewClient() {

@@ -357,6 +357,7 @@ public class Activity_Import extends AppCompatActivity {
             iNewImportMediaCatagory = GlobalClass.MEDIA_CATEGORY_COMICS;
         }
 
+        globalClass.giSelectedCatalogMediaCategory = iNewImportMediaCatagory;
         gotoMediaCategorySelectedFragment(iNewImportMediaCatagory);
 
     }
