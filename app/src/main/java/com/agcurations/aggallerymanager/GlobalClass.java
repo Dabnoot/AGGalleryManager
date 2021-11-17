@@ -68,6 +68,7 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogFolders = new File[3];
     public File gfLogsFolder;
     public File gfJobFilesFolder;
+    public File gfBrowserDataFolder;
     public File gfWebpageTabDataFile;
     public File gfWebpageFaviconBitmapFolder;
     public final File[] gfCatalogContentsFiles = new File[3];

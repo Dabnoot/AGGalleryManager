@@ -117,12 +117,21 @@ public class Service_Main extends IntentService {
                 }
             }*/
 
+            //Create folder to hold Browser data:
+            String sBrowserDataFolderName = globalClass.gfAppFolder.getPath() + File.separator + "BrowserData";
+            globalClass.gfBrowserDataFolder = new File(sBrowserDataFolderName);
+            if(!globalClass.gfBrowserDataFolder.exists()){
+                if(!globalClass.gfBrowserDataFolder.mkdir()){
+                    problemNotificationConfig("Could not create BrowserData folder.");
+                }
+            }
+
             //Get file to hold web page tab data:
-            String sWebPageTabDataFilePath = globalClass.gfAppFolder + File.separator + "WebpageTabData.dat";
+            String sWebPageTabDataFilePath = globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebpageTabData.dat";
             globalClass.gfWebpageTabDataFile = new File(sWebPageTabDataFilePath);
 
             //Create Webpage Favicon folder if it does not exist:
-            String sWebpageFaviconBitmapFolder = globalClass.gfAppFolder + File.separator + "TempFavicon";
+            String sWebpageFaviconBitmapFolder = globalClass.gfBrowserDataFolder + File.separator + "TempFavicon";
             globalClass.gfWebpageFaviconBitmapFolder = new File(sWebpageFaviconBitmapFolder);
             if(!globalClass.gfWebpageFaviconBitmapFolder.exists()){
                 if(!globalClass.gfWebpageFaviconBitmapFolder.mkdir()){

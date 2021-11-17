@@ -9,6 +9,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -22,17 +25,11 @@ public class Service_WebPageTabs extends IntentService {
     private static final String ACTION_REMOVE_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.remove_webpage_tab_data";
     private static final String ACTION_DELETE_FAVICON_FILE = "com.agcurations.webbrowsertest.action.delete_favicon_file";
 
-    private static final String EXTRA_WEBPAGE_INDEX = "com.agcurations.webbrowsertest.extra.WEBPAGE_INDEX"; //Index is zero-based
-    private static final String EXTRA_WEBPAGE_ADDRESS = "com.agcurations.webbrowsertest.extra.WEBPAGE_ADDRESS";
     private static final String EXTRA_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.extra.WEBPAGE_TAB_DATA";
     private static final String EXTRA_FAVICON_FILENAME = "com.agcurations.webbrowsertest.extra.FAVICON_FILENAME";
 
-    private static final String gsWebPageTabDataFileName = "WebPageTabData.dat";
-
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
-
-    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
 
     public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowsertest.extra.RESULT_TYPE";
     public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowsertest.result.WEB_PAGE_TAB_DATA_ACQUIRED";
@@ -151,6 +148,29 @@ public class Service_WebPageTabs extends IntentService {
         File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
         if(fWebPageTabDataFile == null) return;
         if(!fWebPageTabDataFile.exists()) return;
+
+
+        boolean bTestingCloseOfTabs = false;
+        if(bTestingCloseOfTabs){
+            boolean bFormReferenceTabFile = false;
+            File fReferenceFile = new File(globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebPageTabDataRef.dat");
+            if(bFormReferenceTabFile){
+                //Create a reference tab file:
+                try {
+                    Files.copy(fWebPageTabDataFile.toPath(), fReferenceFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e){
+                    String sMessage = e.getMessage();
+                }
+            }
+            //Copy the reference file of open tabs so that I don't have to keep opening them.
+            try {
+                Files.copy(fReferenceFile.toPath(), fWebPageTabDataFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e){
+                String sMessage = e.getMessage();
+            }
+
+        }
+
 
 
 

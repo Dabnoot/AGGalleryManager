@@ -4,15 +4,18 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.media.Image;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +32,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 
 
@@ -47,13 +52,20 @@ public class Fragment_WebPageTab extends Fragment {
         giWebPageIndex = iWebPageIndex;
     }
 
-    private static final String gsDefaultAddressString = "Search or type web address";
-
     public String gsWebAddress = "";
 
     boolean gbInitialized = false;
 
     ArrayList<String> gals_ResourceRequests;
+
+    boolean gbWriteApplicationLog = false;
+    String gsApplicationLogFilePath = "";
+
+    public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
+
+    public Fragment_WebPageTab() {
+        //Empty constructor
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,6 +76,15 @@ public class Fragment_WebPageTab extends Fragment {
             return;
         }
 
+        viewModel_browser = new ViewModelProvider(getActivity()).get(ViewModel_Browser.class);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
+        if(gbWriteApplicationLog){
+            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
+        }
+        ApplicationLogWriter("OnCreate Start, getting application context.");
+
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
         if (getArguments() != null) {
@@ -71,6 +92,7 @@ public class Fragment_WebPageTab extends Fragment {
         }
 
         gals_ResourceRequests = new ArrayList<>();
+        ApplicationLogWriter("OnCreate End.");
     }
 
     @Override
@@ -83,7 +105,7 @@ public class Fragment_WebPageTab extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        ApplicationLogWriter("OnViewCreated start.");
         if(getView() == null){
             //todo: write to log no view found.
             return;
@@ -149,7 +171,7 @@ public class Fragment_WebPageTab extends Fragment {
                             break;
                         }
                     }
-                };
+                }
 
                 @Override
                 public void onPageStarted(WebView view, String url, Bitmap favicon) {
@@ -250,10 +272,25 @@ public class Fragment_WebPageTab extends Fragment {
                 }
             });
         }
+        ApplicationLogWriter("OnViewCreated end.");
+    }
+
+    private void ApplicationLogWriter(String sMessage){
+        if(gbWriteApplicationLog){
+            try {
+                File fLog = new File(gsApplicationLogFilePath);
+                FileWriter fwLogFile = new FileWriter(fLog, true);
+                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + "Fragment_WebPageTab" + ", " + sMessage + "\n");
+                fwLogFile.close();
+            } catch (Exception e) {
+                Log.d("Log FileWriter", e.getMessage());
+            }
+        }
 
     }
 
     private void InitializeData(){
+        ApplicationLogWriter("InitializeData start.");
         //Find the associated WebPageTabData and enter that data into the view:
         for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
             int ihashCode = this.hashCode();
@@ -271,16 +308,18 @@ public class Fragment_WebPageTab extends Fragment {
             }
         }
         gbInitialized = true;
-
+        ApplicationLogWriter("InitializeData end.");
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        ApplicationLogWriter("onResume start.");
         String sLoadedAddress = gWebView.getUrl();
         if(sLoadedAddress == null && gsWebAddress.equals("")) {
             InitializeData();
         }
+        ApplicationLogWriter("onResume end.");
     }
 
 

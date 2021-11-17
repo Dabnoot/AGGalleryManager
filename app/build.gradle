@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "com.agcurations.aggallerymanager"
-        minSdkVersion 28
-        targetSdkVersion 29
+        minSdkVersion 30
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
 
@@ -53,7 +53,7 @@ dependencies {
     implementation 'me.gujun.android.taggroup:library:1.4@aar'
 
     //ViewPager:
-    implementation "androidx.viewpager2:viewpager2:1.0.0"
+    implementation "androidx.viewpager2:viewpager2:1.1.0-beta01"
 
     //GifDrawable:
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
