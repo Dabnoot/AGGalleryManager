@@ -8,51 +8,80 @@
     tools:context=".Activity_Browser"
     android:background="@android:color/background_dark">
 
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout_WebTabs"
+    <!-- View that will be hidden when video goes fullscreen -->
+    <RelativeLayout
+        android:id="@+id/nonVideoLayout"
         android:layout_width="match_parent"
-        android:layout_height="34dp"
-        app:tabGravity="start"
-        app:tabMode="scrollable"
-        android:layout_alignParentStart="true"
-        android:layout_toStartOf="@id/imageButton_AddTab"
-        app:tabIndicatorColor="#00FFFFFF"
-        app:tabMaxWidth="200dp"
-        app:tabPaddingStart="0dp"
-        app:tabPaddingEnd="0dp"
-        android:background="@color/colorBlack">
+        android:layout_height="match_parent" >
 
-        <com.google.android.material.tabs.TabItem
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabLayout_WebTabs"
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            app:tabGravity="start"
+            app:tabMode="scrollable"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@id/imageButton_AddTab"
+            app:tabIndicatorColor="#00FFFFFF"
+            app:tabMaxWidth="200dp"
+            app:tabPaddingStart="0dp"
+            app:tabPaddingEnd="0dp"
+            android:background="@color/colorBlack">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <!--<Button
+            android:id="@+id/button_testBrowser"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@id/imageButton_AddTab"
+            android:text="test"
+            />-->
 
-    </com.google.android.material.tabs.TabLayout>
+        <ImageButton
+            android:id="@+id/imageButton_AddTab"
+            android:layout_width="34dp"
+            android:layout_height="36dp"
+            app:srcCompat="@drawable/add_action"
+            android:layout_alignParentEnd="true"
+            android:backgroundTint="@color/colorBlack"/>
 
-    <!--<Button
-        android:id="@+id/button_testBrowser"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toStartOf="@id/imageButton_AddTab"
-        android:text="test"
-        />-->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager2_WebPages"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_below="@id/tabLayout_WebTabs"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true">
 
-    <ImageButton
-        android:id="@+id/imageButton_AddTab"
-        android:layout_width="34dp"
-        android:layout_height="36dp"
-        app:srcCompat="@drawable/add_action"
-        android:layout_alignParentEnd="true"
-        android:backgroundTint="@color/colorBlack"/>
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager2_WebPages"
+        </androidx.viewpager2.widget.ViewPager2>
+
+    </RelativeLayout>
+
+
+    <!-- View where the video will be shown when video goes fullscreen -->
+    <RelativeLayout
+        android:id="@+id/videoLayout"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_below="@id/tabLayout_WebTabs"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true">
+        android:layout_height="match_parent" >
 
+        <!-- View that will be shown while the fullscreen video loads. For example you could include
+        a "Loading..." message. However, in this particular example this view is actually defined in
+        view_loading_video.xml and inflated programmatically in ExampleActivity.java. The reason for
+        this is to keep the main layout (this file) cleaner. -->
+        <!-- <View
+            android:id="@+id/videoLoading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible" /> -->
 
-    </androidx.viewpager2.widget.ViewPager2>
+    </RelativeLayout>
+
 
 </RelativeLayout>

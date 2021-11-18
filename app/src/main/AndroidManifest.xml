@@ -10,8 +10,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
-        <activity android:name=".Activity_Browser"></activity>
+        android:theme="@style/AppTheme"
+        android:hardwareAccelerated="true">
+
+        <activity android:name=".Activity_Browser" />
         <activity android:name=".Activity_WorkerConsole" />
         <activity android:name=".Activity_LogViewer" />
         <activity android:name=".Activity_ComicDetailsEditor" />

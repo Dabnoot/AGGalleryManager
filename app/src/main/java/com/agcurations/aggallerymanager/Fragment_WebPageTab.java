@@ -20,6 +20,9 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -45,7 +48,9 @@ public class Fragment_WebPageTab extends Fragment {
 
     public int giWebPageIndex;
 
-    private WebView gWebView;
+    private VideoEnabledWebView gWebView;
+    private VideoEnabledWebChromeClient webChromeClient;
+
     private EditText gEditText_Address;
 
     public Fragment_WebPageTab(int iWebPageIndex) {
@@ -111,111 +116,138 @@ public class Fragment_WebPageTab extends Fragment {
             return;
         }
 
-        gWebView = getView().findViewById(R.id.webView_tabWebView);
+        gWebView = (VideoEnabledWebView) getView().findViewById(R.id.videoEnabledWebView_tabWebView);
         gEditText_Address = getView().findViewById(R.id.editText_Address);
+
+        // Initialize the VideoEnabledWebChromeClient and set event handlers
+        View nonVideoLayout = getActivity().findViewById(R.id.nonVideoLayout); // Your own view, read class comments
+        ViewGroup videoLayout = (ViewGroup) getActivity().findViewById(R.id.videoLayout); // Your own view, read class comments
+        //noinspection all
+        View loadingView = getLayoutInflater().inflate(R.layout.view_loading_video, null); // Your own view, read class comments
+        webChromeClient = new VideoEnabledWebChromeClient(nonVideoLayout, videoLayout, loadingView, gWebView) // See all available constructors...
+        {
+            // Subscribe to standard events, such as onProgressChanged()...
+            @Override
+            public void onProgressChanged(WebView view, int progress)
+            {
+                // Your code...
+            }
+        };
+        webChromeClient.setOnToggledFullscreen(new VideoEnabledWebChromeClient.ToggledFullscreenCallback()
+        {
+            @Override
+            public void toggledFullscreen(boolean fullscreen)
+            {
+                // Your code to handle the full-screen change, for example showing and hiding the title bar. Example:
+                WindowInsetsController insetsController = getActivity().getWindow().getInsetsController();
+                if(insetsController != null) {
+                    if (fullscreen) {
+
+                        /*WindowManager.LayoutParams attrs = getActivity().getWindow().getAttributes();
+                        attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+                        attrs.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+                        getActivity().getWindow().setAttributes(attrs);
+                        //noinspection all
+                        getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);*/
+
+                        insetsController.hide(WindowInsets.Type.systemBars());
+                        getActivity().getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+                    } else {
+                        /*WindowManager.LayoutParams attrs = getActivity().getWindow().getAttributes();
+                        attrs.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
+                        attrs.flags &= ~WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+                        getActivity().getWindow().setAttributes(attrs);
+                        //noinspection all
+                        getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);*/
+
+                        insetsController.show(WindowInsets.Type.systemBars());
+                        getActivity().getWindow().setNavigationBarColor(getResources().getColor(R.color.colorNavigationBar, getActivity().getTheme()));
+
+                    }
+                }
+
+            }
+        });
+
 
         //Configure the WebView:
         gWebView.setBackgroundColor(Color.BLACK);
-        WebSettings webSettings = gWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
+        //WebSettings webSettings = gWebView.getSettings(); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
+        //webSettings.setJavaScriptEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
+        //webSettings.setDomStorageEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
 
         final Fragment fParent = this;
 
-        boolean bUseWebChromeClient = true;
-
-        if(bUseWebChromeClient){
 
 
 
-            gWebView.setWebChromeClient(new WebChromeClient() {
-                @Override
-                public void onReceivedIcon(WebView view, Bitmap icon) {
-                    super.onReceivedIcon(view, icon);
-                }
 
-                @Override
-                public void onReceivedTitle(WebView view, String title) {
-                    super.onReceivedTitle(view, title);
-                }
-
-                @Override
-                public void onProgressChanged(WebView view, int newProgress) {
-                    super.onProgressChanged(view, newProgress);
-                }
-
-                @Override
-                public void onPermissionRequest(PermissionRequest request) {
-                    super.onPermissionRequest(request);
-                }
-            });
+        gWebView.setWebChromeClient(webChromeClient);
 
 
-
-        //} else {
-
-            gWebView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    String sTitle = view.getTitle();
-                    for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
-                        int ihashCode = fParent.hashCode();
-                        if (ihashCode == icwptd.iTabFragmentHashID) {
-                            icwptd.sTabTitle = sTitle;
-                            Bitmap bitmap_favicon = gWebView.getFavicon();
-                            Activity_Browser activity_browser = (Activity_Browser) getActivity();
-                            if (activity_browser != null) {
-                                activity_browser.updateSingleTabNotch(icwptd, bitmap_favicon); //Update the tab label.
-                                Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
-                            }
-                            break;
+        gWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                String sTitle = view.getTitle();
+                for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                    int ihashCode = fParent.hashCode();
+                    if (ihashCode == icwptd.iTabFragmentHashID) {
+                        icwptd.sTabTitle = sTitle;
+                        Bitmap bitmap_favicon = gWebView.getFavicon();
+                        Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                        if (activity_browser != null) {
+                            activity_browser.updateSingleTabNotch(icwptd, bitmap_favicon); //Update the tab label.
+                            Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                         }
+                        break;
                     }
                 }
+            }
 
-                @Override
-                public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                    super.onPageStarted(view, url, favicon);
-                    gEditText_Address.setText(url);
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                gEditText_Address.setText(url);
 
-                    //Update the recorded webpage history for this tab:
-                    //Find the associated WebPageTabData:
-                    for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
-                        int ihashCode = fParent.hashCode();
-                        if (ihashCode == icwptd.iTabFragmentHashID) {
-                            if (icwptd.alsAddressHistory == null) {
-                                icwptd.alsAddressHistory = new ArrayList<>();
-                            }
-                            //Add url to address history list for this tab, but first make sure that
-                            //  we are not merely re-loading the current address:
-                            int iAddressCount = icwptd.alsAddressHistory.size();
-                            boolean bSkipSet = false;
-                            if (iAddressCount > 0) {
-                                String sCurrentAddress = icwptd.alsAddressHistory.get(iAddressCount - 1);
-                                if (!url.equals(sCurrentAddress)) {
-                                    icwptd.alsAddressHistory.add(url);
-                                } else {
-                                    bSkipSet = true;
-                                }
-                            } else {
+                //Update the recorded webpage history for this tab:
+                //Find the associated WebPageTabData:
+                for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                    int ihashCode = fParent.hashCode();
+                    if (ihashCode == icwptd.iTabFragmentHashID) {
+                        if (icwptd.alsAddressHistory == null) {
+                            icwptd.alsAddressHistory = new ArrayList<>();
+                        }
+                        //Add url to address history list for this tab, but first make sure that
+                        //  we are not merely re-loading the current address:
+                        int iAddressCount = icwptd.alsAddressHistory.size();
+                        boolean bSkipSet = false;
+                        if (iAddressCount > 0) {
+                            String sCurrentAddress = icwptd.alsAddressHistory.get(iAddressCount - 1);
+                            if (!url.equals(sCurrentAddress)) {
                                 icwptd.alsAddressHistory.add(url);
+                            } else {
+                                bSkipSet = true;
                             }
-                            if (!bSkipSet) {
-                                Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
-                            }
-                            break;
+                        } else {
+                            icwptd.alsAddressHistory.add(url);
                         }
+                        if (!bSkipSet) {
+                            Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
+                        }
+                        break;
                     }
                 }
+            }
 
-                @Nullable
-                @Override
-                public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                    gals_ResourceRequests.add(request.getUrl().toString());
-                    return super.shouldInterceptRequest(view, request);
-                }
-            });
-        }
+            @Nullable
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                gals_ResourceRequests.add(request.getUrl().toString());
+                return super.shouldInterceptRequest(view, request);
+            }
+        });
+
 
         final View viewFragment = view;
         gEditText_Address.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -288,6 +320,8 @@ public class Fragment_WebPageTab extends Fragment {
         }
 
     }
+
+
 
     private void InitializeData(){
         ApplicationLogWriter("InitializeData start.");
