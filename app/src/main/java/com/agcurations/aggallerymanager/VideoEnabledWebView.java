@@ -12,10 +12,12 @@ import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
+import android.widget.PopupMenu;
 
 import java.util.Map;
 
@@ -37,6 +39,7 @@ import androidx.annotation.Nullable;
  */
 public class VideoEnabledWebView extends WebView
 {
+    WebView webView;
     public class JavascriptInterface
     {
         @android.webkit.JavascriptInterface @SuppressWarnings("unused")
@@ -66,6 +69,7 @@ public class VideoEnabledWebView extends WebView
     {
         super(context);
         addedJavascriptInterface = false;
+        webView = this;
     }
 
     @SuppressWarnings("unused")
@@ -73,6 +77,7 @@ public class VideoEnabledWebView extends WebView
     {
         super(context, attrs);
         addedJavascriptInterface = false;
+        webView = this;
     }
 
     @SuppressWarnings("unused")
@@ -80,6 +85,7 @@ public class VideoEnabledWebView extends WebView
     {
         super(context, attrs, defStyle);
         addedJavascriptInterface = false;
+        webView = this;
     }
 
     /**
@@ -171,13 +177,6 @@ public class VideoEnabledWebView extends WebView
 
     }
 
-    @Override
-    protected void onFocusChanged(boolean focused, int direction, Rect previouslyFocusedRect) {
-        super.onFocusChanged(focused, direction, previouslyFocusedRect);
-        saveNodeData();
-    }
-
-
 
     static class HREFHandler extends Handler{
         @Override
@@ -189,12 +188,18 @@ public class VideoEnabledWebView extends WebView
         }
     }
 
+
+
+
+
+
+
     final int ID_OPEN_LINK_NEW_TAB = 7421; //Numbers are arbitrary.
     final int ID_COPY_LINK_ADDRESS = 7422;
     final int ID_COPY_LINK_TEXT = 7423;
     final int ID_DOWNLOAD_IMAGE = 7424;
 
-    @Override
+    /*@Override
     protected void onCreateContextMenu(ContextMenu menu) {
         super.onCreateContextMenu(menu);
 
@@ -250,10 +255,95 @@ public class VideoEnabledWebView extends WebView
             menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
         }
 
+        *//*menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
+        menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+        menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
+        menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image").setOnMenuItemClickListener(handler);*//*
+
+
+    }*/
+
+    static ContextMenu cm;
+
+    class HREFHandler2 extends Handler{
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            gsNodeData_src = msg.getData().getString("src");
+            gsNodeData_title = msg.getData().getString("title");
+            gsNodeData_url = msg.getData().getString("url");
+
+            final HitTestResult result = getHitTestResult();
+
+            MenuItem.OnMenuItemClickListener handler = new MenuItem.OnMenuItemClickListener() {
+                public boolean onMenuItemClick(MenuItem item) {
+                    // do the menu action
+                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clipData;
+                    switch (item.getItemId()){
+                        case ID_OPEN_LINK_NEW_TAB:
+                            Message msg = new Message();
+                            Bundle bundle = new Bundle();
+                            bundle.putString("url", gsNodeData_url);
+                            msg.setData(bundle);
+                            OpenLinkInNewTabHandler.dispatchMessage(msg);
+                            break;
+                        case ID_COPY_LINK_ADDRESS:
+                            clipData = ClipData.newPlainText("", gsNodeData_url);
+                            clipboard.setPrimaryClip(clipData);
+                            break;
+                        case ID_COPY_LINK_TEXT:
+                            clipData = ClipData.newPlainText("", gsNodeData_title);
+                            clipboard.setPrimaryClip(clipData);
+                            break;
+                        default: //ID_DOWNLOAD_IMAGE.
+                            //Do nothing at this time.
+                    }
+                    return true;
+                }
+            };
+
+            String sTitle = gsNodeData_title;
+            if( sTitle == null){
+                sTitle = gsNodeData_url;
+            }
+            if( sTitle == null){
+                sTitle = gsNodeData_src;
+            }
+
+
+            PopupMenu popupMenu = new PopupMenu(getContext(), webView, Gravity.CENTER);
+
+            if (result.getType() == HitTestResult.IMAGE_TYPE ||
+                    result.getType() == HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+                // Menu options for an image.
+                popupMenu.getMenu().add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
+                popupMenu.getMenu().add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+
+            } else if (result.getType() == HitTestResult.SRC_ANCHOR_TYPE) {
+                // Menu options for a hyperlink.
+                popupMenu.getMenu().add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
+                popupMenu.getMenu().add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+                popupMenu.getMenu().add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
+            }
+
+            popupMenu.show();
         /*menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
         menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
         menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
         menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image").setOnMenuItemClickListener(handler);*/
+
+        }
+    }
+
+    @Override
+    protected void onCreateContextMenu(ContextMenu menu) {
+        super.onCreateContextMenu(menu);
+
+        cm = menu;
+        HREFHandler2 hrefHandler2 = new HREFHandler2();
+        Message msg = hrefHandler2.obtainMessage();
+        this.requestFocusNodeHref(msg); //It will take a moment for the msg to get processed.
 
 
     }
