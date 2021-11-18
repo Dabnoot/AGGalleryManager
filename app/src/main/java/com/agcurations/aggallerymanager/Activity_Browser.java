@@ -18,6 +18,8 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -140,21 +142,7 @@ public class Activity_Browser extends AppCompatActivity {
             imageButton_AddTab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    giFragmentCount++;
-                    ItemClass_WebPageTabData icwptd = new ItemClass_WebPageTabData();
-                    icwptd.iTabIndex = giFragmentCount;
-                    icwptd.sTabID = GlobalClass.GetTimeStampFileSafe();
-                    icwptd.alsAddressHistory = new ArrayList<>();
-                    globalClass.gal_WebPages.add(icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
-                    viewPagerFragmentAdapter.createFragment(giFragmentCount);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update
-                    //  globalClass.gal_Webpages, which will wipe the Hash code from memory.
-                    viewPagerFragmentAdapter.notifyDataSetChanged();
-                    InitializeTabAppearance();
-
-                    Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
-
-                    viewPager2_WebPages.setCurrentItem(icwptd.iTabIndex, false);
-
+                    CreateNewTab("");
                 }
             });
 
@@ -184,6 +172,40 @@ public class Activity_Browser extends AppCompatActivity {
             ApplicationLogWriter(e.getMessage());
         }
 
+    }
+
+    public void CreateNewTab(String sAddress){
+        giFragmentCount++;
+        ItemClass_WebPageTabData icwptd = new ItemClass_WebPageTabData();
+        icwptd.iTabIndex = giFragmentCount;
+        icwptd.sTabID = GlobalClass.GetTimeStampFileSafe();
+        icwptd.alsAddressHistory = new ArrayList<>();
+        if(sAddress != null){
+            if(!sAddress.equals("")) {
+                icwptd.alsAddressHistory.add(sAddress);
+            }
+        }
+        globalClass.gal_WebPages.add(icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
+        viewPagerFragmentAdapter.createFragment(giFragmentCount);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update
+        //  globalClass.gal_Webpages, which will wipe the Hash code from memory.
+        viewPagerFragmentAdapter.notifyDataSetChanged();
+        InitializeTabAppearance();
+
+        Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
+
+        viewPager2_WebPages.setCurrentItem(icwptd.iTabIndex, false);
+
+
+    }
+
+
+    class HandlerOpenLinkInNewTab extends Handler {
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            String sURL = msg.getData().getString("url");
+            CreateNewTab(sURL);
+        }
     }
 
     private void ApplicationLogWriter(String sMessage){
@@ -380,7 +402,7 @@ public class Activity_Browser extends AppCompatActivity {
     //======= Adapters ======================================================================
     //==============================================================================================
 
-    public static class FragmentViewPagerAdapter extends FragmentStateAdapter {
+    public class FragmentViewPagerAdapter extends FragmentStateAdapter {
 
         GlobalClass globalClass;
         ArrayList<Fragment_WebPageTab> alFragment_WebPages;
@@ -398,6 +420,9 @@ public class Activity_Browser extends AppCompatActivity {
             if(position > iFragmentCount){
 
                 Fragment_WebPageTab fwp = new Fragment_WebPageTab(iFragmentCount + 1);
+
+                fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab();
+
                 alFragment_WebPages.add(fwp);
 
                 //Add the hashCode of the new fragment to the WebPageTabData for tracking:
@@ -407,8 +432,13 @@ public class Activity_Browser extends AppCompatActivity {
                         break;
                     }
                 }
+
+
+
                 iFragmentCount++;   //Increment this last because we check to see if all of the fragments
                                     //  have been created in another routine before that routine moves on.
+
+
                 return fwp;
             } else {
                 return alFragment_WebPages.get(position);

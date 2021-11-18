@@ -15,6 +15,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -67,6 +69,8 @@ public class Fragment_WebPageTab extends Fragment {
     String gsApplicationLogFilePath = "";
 
     public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
+
+    Activity_Browser.HandlerOpenLinkInNewTab handlerOpenLinkInNewTab;
 
     public Fragment_WebPageTab() {
         //Empty constructor
@@ -132,6 +136,7 @@ public class Fragment_WebPageTab extends Fragment {
             {
                 // Your code...
             }
+
         };
         webChromeClient.setOnToggledFullscreen(new VideoEnabledWebChromeClient.ToggledFullscreenCallback()
         {
@@ -180,7 +185,7 @@ public class Fragment_WebPageTab extends Fragment {
         final Fragment fParent = this;
 
 
-
+        gWebView.setOpenLinkInNewTabHandler(handlerOpenLinkInNewTab);
 
 
         gWebView.setWebChromeClient(webChromeClient);
@@ -248,6 +253,7 @@ public class Fragment_WebPageTab extends Fragment {
             }
         });
 
+        getActivity().registerForContextMenu(gWebView); //Pop-up menu as result of long-press
 
         final View viewFragment = view;
         gEditText_Address.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -306,6 +312,14 @@ public class Fragment_WebPageTab extends Fragment {
         }
         ApplicationLogWriter("OnViewCreated end.");
     }
+
+    /*static class HREFHandler extends Handler{
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            String src = msg.getData().getString("src");
+        }
+    }*/
 
     private void ApplicationLogWriter(String sMessage){
         if(gbWriteApplicationLog){
