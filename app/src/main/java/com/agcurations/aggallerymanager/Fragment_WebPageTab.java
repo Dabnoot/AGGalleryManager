@@ -253,8 +253,6 @@ public class Fragment_WebPageTab extends Fragment {
             }
         });
 
-        getActivity().registerForContextMenu(gWebView); //Pop-up menu as result of long-press
-
         final View viewFragment = view;
         gEditText_Address.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override

@@ -13,6 +13,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.webkit.WebChromeClient;
@@ -160,22 +161,43 @@ public class VideoEnabledWebView extends WebView
     public static String gsNodeData_title;
     public static String gsNodeData_url;
 
+    double dLastx;
+    double dLasty;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        //The webview must have an html node selected in order for us to get the node data.
+        //  The touch even occurs before a node is selected, and the same for the long-press
+        //  event. So we must ensure that the user has committed ACTION_DOWN in the same area
+        //  at least twice before we get the node data and allow a context menu to appear related
+        //  to that data.
         if(event.getAction() == MotionEvent.ACTION_DOWN) {
-            //saveNodeData();
+            double dDeltaX = Math.abs(event.getX() - dLastx);
+            double dDeltaY = Math.abs(event.getY() - dLasty);
+            double dTranslation = Math.sqrt(dDeltaX*dDeltaX + dDeltaY*dDeltaY);
+            if(dTranslation > 50) {
+                //If we are far away from the last selected location, we must be selecting a new
+                //  node. Clear the node data so that we do not allow a context menu to appear.
+                //  This ACTION_DOWN will select a node item and we will call to get the data on
+                //  the next touch action.
+                //  I had to create a flow chart to understand how to create this logic.
+                gsNodeData_src = null;
+                gsNodeData_title = null;
+                gsNodeData_url = null;
+                dLastx = event.getX();
+                dLasty = event.getY();
+            } else {
+                //The user has committed ACTION_DOWN near a previously-touched location.
+                //  Initiate call to get data related to a selected node.
+                HREFHandler hrefHandler = new HREFHandler();
+                Message msg = hrefHandler.obtainMessage();
+                this.requestFocusNodeHref(msg); //It will take a moment for the msg to get processed.
+            }
         }
+
         return super.onTouchEvent(event);
     }
 
-    public void saveNodeData(){
-        //Called in advance to get ready for a potential long-press in which the user wants
-        //  to view the link behind the item they are clicking.
-        HREFHandler hrefHandler = new HREFHandler();
-        Message msg = hrefHandler.obtainMessage();
-        this.requestFocusNodeHref(msg); //It will take a moment for the msg to get processed.
-
-    }
 
 
     static class HREFHandler extends Handler{
@@ -190,18 +212,18 @@ public class VideoEnabledWebView extends WebView
 
 
 
-
-
-
-
     final int ID_OPEN_LINK_NEW_TAB = 7421; //Numbers are arbitrary.
     final int ID_COPY_LINK_ADDRESS = 7422;
     final int ID_COPY_LINK_TEXT = 7423;
     final int ID_DOWNLOAD_IMAGE = 7424;
 
-    /*@Override
+    @Override
     protected void onCreateContextMenu(ContextMenu menu) {
         super.onCreateContextMenu(menu);
+
+        if(gsNodeData_url == null){
+            return;
+        }
 
         final HitTestResult result = getHitTestResult();
 
@@ -231,7 +253,13 @@ public class VideoEnabledWebView extends WebView
                 }
                 return true;
             }
+
+
+
+
         };
+
+
 
         String sTitle = gsNodeData_title;
         if( sTitle == null){
@@ -255,15 +283,15 @@ public class VideoEnabledWebView extends WebView
             menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
         }
 
-        *//*menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
+        /*menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
         menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
         menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
-        menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image").setOnMenuItemClickListener(handler);*//*
+        menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image").setOnMenuItemClickListener(handler);*/
 
 
-    }*/
+    }
 
-    static ContextMenu cm;
+    /*static ContextMenu cm;
 
     class HREFHandler2 extends Handler{
         @Override
@@ -311,7 +339,6 @@ public class VideoEnabledWebView extends WebView
                 sTitle = gsNodeData_src;
             }
 
-
             PopupMenu popupMenu = new PopupMenu(getContext(), webView, Gravity.CENTER);
 
             if (result.getType() == HitTestResult.IMAGE_TYPE ||
@@ -328,10 +355,6 @@ public class VideoEnabledWebView extends WebView
             }
 
             popupMenu.show();
-        /*menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
-        menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
-        menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
-        menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image").setOnMenuItemClickListener(handler);*/
 
         }
     }
@@ -346,7 +369,8 @@ public class VideoEnabledWebView extends WebView
         this.requestFocusNodeHref(msg); //It will take a moment for the msg to get processed.
 
 
-    }
+    }*/
+
 
     Handler OpenLinkInNewTabHandler;
     public void setOpenLinkInNewTabHandler(Handler handler){
