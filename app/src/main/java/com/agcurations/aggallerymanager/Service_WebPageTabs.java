@@ -3,13 +3,11 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
-import android.os.Environment;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -91,7 +89,10 @@ public class Service_WebPageTabs extends IntentService {
 
 
     private void handleActionSetWebPageTabData(ItemClass_WebPageTabData icwptd_DataToSet) {
-
+        boolean b = false;
+        if(b){
+            return;
+        }
         //Update memory:
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
         boolean bDataFound = false;
@@ -302,15 +303,16 @@ public class Service_WebPageTabs extends IntentService {
         sRecord = sRecord + GlobalClass.JumbleStorageText(wptd.sTabID);
         sRecord = sRecord + "\t" + wptd.iTabIndex;
         sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sTabTitle);
-        sRecord = sRecord + "\t" + "{";
+        /*sRecord = sRecord + "\t" + "{";
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < wptd.alsAddressHistory.size(); i++){
-            sb.append(GlobalClass.JumbleStorageText(wptd.alsAddressHistory.get(i)));
-            if(i < (wptd.alsAddressHistory.size() - 1)){
+        for(int i = 0; i < wptd.sAddress.size(); i++){
+            sb.append(GlobalClass.JumbleStorageText(wptd.sAddress.get(i)));
+            if(i < (wptd.sAddress.size() - 1)){
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb.toString() + "%%" + "}";
+        sRecord = sRecord + sb.toString() + "%%" + "}";*/
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sAddress);
         sRecord = sRecord + "\t" + wptd.sFaviconFilename;
 
         return sRecord;
@@ -322,14 +324,17 @@ public class Service_WebPageTabs extends IntentService {
         wptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
         wptd.iTabIndex = Integer.parseInt(sRecord[1]);
         wptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[2]);
-        wptd.alsAddressHistory = new ArrayList<>();
+        /*wptd.sAddress = new ArrayList<>();
         String sAddresses = sRecord[3];
         sAddresses = sAddresses.substring(1, sAddresses.length() - 1); //Remove '{' and '}'.
         String[] sAddressHistory = sAddresses.split("%%");
         for(int i = 0; i < sAddressHistory.length; i++){
             sAddressHistory[i] = GlobalClass.JumbleStorageText(sAddressHistory[i]);
         }
-        wptd.alsAddressHistory.addAll(Arrays.asList(sAddressHistory));
+        wptd.sAddress.addAll(Arrays.asList(sAddressHistory));*/
+        wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[3]);
+
+
         if(sRecord.length >= 5) {
             //Favicon filename might be empty, and if it is the last item on the record,
             //  it will not be split-out via the split operation.

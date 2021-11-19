@@ -15,8 +15,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -24,13 +22,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -220,22 +214,32 @@ public class Fragment_WebPageTab extends Fragment {
                 for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
                     int ihashCode = fParent.hashCode();
                     if (ihashCode == icwptd.iTabFragmentHashID) {
-                        if (icwptd.alsAddressHistory == null) {
-                            icwptd.alsAddressHistory = new ArrayList<>();
+                        /*if (icwptd.sAddress == null) {
+                            icwptd.sAddress = new ArrayList<>();
                         }
                         //Add url to address history list for this tab, but first make sure that
                         //  we are not merely re-loading the current address:
-                        int iAddressCount = icwptd.alsAddressHistory.size();
+                        int iAddressCount = icwptd.sAddress.size();
                         boolean bSkipSet = false;
                         if (iAddressCount > 0) {
-                            String sCurrentAddress = icwptd.alsAddressHistory.get(iAddressCount - 1);
+                            String sCurrentAddress = icwptd.sAddress.get(iAddressCount - 1);
                             if (!url.equals(sCurrentAddress)) {
-                                icwptd.alsAddressHistory.add(url);
+                                icwptd.sAddress.add(url);
                             } else {
                                 bSkipSet = true;
                             }
                         } else {
-                            icwptd.alsAddressHistory.add(url);
+                            icwptd.sAddress.add(url);
+                        }*/
+                        boolean bSkipSet = false;
+                        if(icwptd.sAddress != null){
+                            if(!icwptd.sAddress.equals(url)){
+                                icwptd.sAddress = url;
+                            } else {
+                                bSkipSet = true;
+                            }
+                        } else {
+                            icwptd.sAddress = url;
                         }
                         if (!bSkipSet) {
                             Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
@@ -308,6 +312,34 @@ public class Fragment_WebPageTab extends Fragment {
                 }
             });
         }
+
+        ImageButton imageButton_Back = getView().findViewById(R.id.imageButton_Back);
+        if(imageButton_Back != null){
+            imageButton_Back.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(gWebView.canGoBack()){
+                        gWebView.goBack();
+                    }
+                }
+            });
+
+        }
+
+        ImageButton imageButton_Forward = getView().findViewById(R.id.imageButton_Forward);
+        if(imageButton_Forward != null){
+            imageButton_Forward.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(gWebView.canGoForward()){
+                        gWebView.goForward();
+                    }
+                }
+            });
+
+        }
+
+
         ApplicationLogWriter("OnViewCreated end.");
     }
 
@@ -341,13 +373,12 @@ public class Fragment_WebPageTab extends Fragment {
         for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
             int ihashCode = this.hashCode();
             if(ihashCode == icwptd.iTabFragmentHashID){
-                if(icwptd.alsAddressHistory != null){
-                    int iAddressCount = icwptd.alsAddressHistory.size();
-                    if(iAddressCount > 0){
-                        String sCurrentAddress = icwptd.alsAddressHistory.get(iAddressCount - 1);
-                        gEditText_Address.setText(sCurrentAddress);
-                        gsWebAddress = sCurrentAddress;
-                        gWebView.loadUrl(sCurrentAddress);
+                if(icwptd.sAddress != null){
+                    if(!icwptd.sAddress.equals("")) {
+                        String sAddress = icwptd.sAddress;
+                        gEditText_Address.setText(sAddress);
+                        gsWebAddress = sAddress;
+                        gWebView.loadUrl(sAddress);
                     }
                 }
                 break;

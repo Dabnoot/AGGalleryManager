@@ -179,10 +179,11 @@ public class Activity_Browser extends AppCompatActivity {
         ItemClass_WebPageTabData icwptd = new ItemClass_WebPageTabData();
         icwptd.iTabIndex = giFragmentCount;
         icwptd.sTabID = GlobalClass.GetTimeStampFileSafe();
-        icwptd.alsAddressHistory = new ArrayList<>();
+        //icwptd.sAddress = new ArrayList<>();
         if(sAddress != null){
             if(!sAddress.equals("")) {
-                icwptd.alsAddressHistory.add(sAddress);
+                //icwptd.sAddress.add(sAddress);
+                icwptd.sAddress = sAddress;
             }
         }
         globalClass.gal_WebPages.add(icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
