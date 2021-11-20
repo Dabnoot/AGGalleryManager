@@ -16,8 +16,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -29,6 +31,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.io.File;
@@ -256,6 +259,75 @@ public class Fragment_WebPageTab extends Fragment {
                 return super.shouldInterceptRequest(view, request);
             }
         });
+
+        final RelativeLayout relativeLayout_WebViewNavigation = getView().findViewById(R.id.relativeLayout_WebViewNavigation);
+
+        final GestureDetector gestureDetector_WebView = new GestureDetector(getActivity(), new GestureDetector.OnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return false;
+            }
+
+            @Override
+            public void onShowPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return false;
+            }
+
+            boolean bIgnoreMotionEvent = false;
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                if(bIgnoreMotionEvent){
+                    bIgnoreMotionEvent = false;
+                    return true;
+                }
+                float fCurrentTranslationY = relativeLayout_WebViewNavigation.getTranslationY();
+                int iWebViewNavigationHeight = relativeLayout_WebViewNavigation.getHeight();
+                float fNewTranslationY = 0;
+                if (distanceY > 0) { //User is scrolling down
+                    if (fCurrentTranslationY > -iWebViewNavigationHeight) {
+                        //Start hiding the tab navigation bar (address bar)
+                        fNewTranslationY = fCurrentTranslationY - distanceY;
+                        fNewTranslationY = Math.max(-iWebViewNavigationHeight, fNewTranslationY);
+                        relativeLayout_WebViewNavigation.setTranslationY(fNewTranslationY);
+                        gWebView.setTranslationY(fNewTranslationY);
+                        bIgnoreMotionEvent = true;
+                    }
+                } else if (distanceY < 0) { //User is scrolling up
+                    if (fCurrentTranslationY < 0) {
+                        fNewTranslationY = fCurrentTranslationY - distanceY;
+                        fNewTranslationY = Math.min(0, fNewTranslationY);
+                        relativeLayout_WebViewNavigation.setTranslationY(fNewTranslationY);
+                        gWebView.setTranslationY(fNewTranslationY);
+                        bIgnoreMotionEvent = true;
+                    }
+                }
+                Log.d("Scroll event:", "DistanceY = " + distanceY + "\tNewTranslationY = " + fNewTranslationY);
+                return false;
+            }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                return false;
+            }
+        });
+        View.OnTouchListener view_OnTouchListener = new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                v.performClick();
+                return gestureDetector_WebView.onTouchEvent(event);
+            }
+        };
+        gWebView.setOnTouchListener(view_OnTouchListener);
 
         final View viewFragment = view;
         gEditText_Address.setOnEditorActionListener(new TextView.OnEditorActionListener() {

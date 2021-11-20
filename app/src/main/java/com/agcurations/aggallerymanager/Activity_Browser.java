@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -173,6 +174,9 @@ public class Activity_Browser extends AppCompatActivity {
         }
 
     }
+
+
+
 
     public void CreateNewTab(String sAddress){
         giFragmentCount++;
