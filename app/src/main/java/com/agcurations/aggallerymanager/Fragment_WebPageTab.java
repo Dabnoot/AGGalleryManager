@@ -27,6 +27,7 @@ import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
@@ -175,9 +176,9 @@ public class Fragment_WebPageTab extends Fragment {
 
         //Configure the WebView:
         gWebView.setBackgroundColor(Color.BLACK);
-        //WebSettings webSettings = gWebView.getSettings(); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
+        WebSettings webSettings = gWebView.getSettings();
         //webSettings.setJavaScriptEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
-        //webSettings.setDomStorageEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
+        webSettings.setDomStorageEnabled(true); //Required to load all graphics on some webpages.
 
         final Fragment fParent = this;
 
