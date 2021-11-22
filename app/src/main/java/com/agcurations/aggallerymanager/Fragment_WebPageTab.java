@@ -11,7 +11,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
@@ -25,7 +24,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -149,25 +147,10 @@ public class Fragment_WebPageTab extends Fragment {
                 WindowInsetsController insetsController = getActivity().getWindow().getInsetsController();
                 if(insetsController != null) {
                     if (fullscreen) {
-
-                        /*WindowManager.LayoutParams attrs = getActivity().getWindow().getAttributes();
-                        attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
-                        attrs.flags |= WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-                        getActivity().getWindow().setAttributes(attrs);
-                        //noinspection all
-                        getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);*/
-
                         insetsController.hide(WindowInsets.Type.systemBars());
                         getActivity().getWindow().setNavigationBarColor(Color.TRANSPARENT);
 
                     } else {
-                        /*WindowManager.LayoutParams attrs = getActivity().getWindow().getAttributes();
-                        attrs.flags &= ~WindowManager.LayoutParams.FLAG_FULLSCREEN;
-                        attrs.flags &= ~WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-                        getActivity().getWindow().setAttributes(attrs);
-                        //noinspection all
-                        getActivity().getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);*/
-
                         insetsController.show(WindowInsets.Type.systemBars());
                         getActivity().getWindow().setNavigationBarColor(getResources().getColor(R.color.colorNavigationBar, getActivity().getTheme()));
 
@@ -291,7 +274,6 @@ public class Fragment_WebPageTab extends Fragment {
             }
 
             boolean bIgnoreMotionEvent = false;
-            boolean check_ScrollingUp = false;
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 if(bIgnoreMotionEvent){
