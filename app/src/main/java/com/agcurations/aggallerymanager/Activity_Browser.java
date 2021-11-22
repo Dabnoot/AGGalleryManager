@@ -17,6 +17,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -24,6 +25,8 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -40,7 +43,7 @@ import java.util.ArrayList;
 
 public class Activity_Browser extends AppCompatActivity {
 
-    TabLayout tabLayout_WebTabs;
+    public TabLayout tabLayout_WebTabs;
     ViewPager2 viewPager2_WebPages;
     FragmentViewPagerAdapter viewPagerFragmentAdapter;
 
@@ -57,6 +60,8 @@ public class Activity_Browser extends AppCompatActivity {
 
     public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
 
+    public int giTabBarHeight_Original;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,7 +74,12 @@ public class Activity_Browser extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE);
 
+        //Hide the Action Bar
         getSupportActionBar().hide();
+        //Hide the Status Bar
+        WindowInsetsController insetsController = getWindow().getInsetsController();
+        insetsController.hide(WindowInsets.Type.statusBars());
+        getWindow().setNavigationBarColor(Color.TRANSPARENT);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);

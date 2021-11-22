@@ -11,6 +11,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -108,6 +110,8 @@ public class Fragment_WebPageTab extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_web_page, container, false);
     }
+
+    int iWebViewNavigationHeight_Original;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -256,12 +260,19 @@ public class Fragment_WebPageTab extends Fragment {
             @Nullable
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                gals_ResourceRequests.add(request.getUrl().toString());
+                try {
+                    gals_ResourceRequests.add(request.getUrl().toString());
+                } catch (Exception e) {
+                    //Sometimes we get an ArrayIndexOutofBoundsException item here.
+                    //  Just ignore it. gals_ResourceRequests is just for searching through to find
+                    //  images loaded, videos played, etc.
+                }
                 return super.shouldInterceptRequest(view, request);
             }
         });
 
         final RelativeLayout relativeLayout_WebViewNavigation = getView().findViewById(R.id.relativeLayout_WebViewNavigation);
+
 
         final GestureDetector gestureDetector_WebView = new GestureDetector(getActivity(), new GestureDetector.OnGestureListener() {
             @Override
@@ -280,34 +291,67 @@ public class Fragment_WebPageTab extends Fragment {
             }
 
             boolean bIgnoreMotionEvent = false;
+            boolean check_ScrollingUp = false;
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 if(bIgnoreMotionEvent){
                     bIgnoreMotionEvent = false;
                     return true;
                 }
-                float fCurrentTranslationY = relativeLayout_WebViewNavigation.getTranslationY();
-                int iWebViewNavigationHeight = relativeLayout_WebViewNavigation.getHeight();
-                float fNewTranslationY = 0;
+                Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                int iTabBarHeight_Current = 0;
+                if(activity_browser != null) {
+                    if (activity_browser.giTabBarHeight_Original == 0) {
+                        activity_browser.giTabBarHeight_Original = activity_browser.tabLayout_WebTabs.getHeight();
+                    }
+                    iTabBarHeight_Current = activity_browser.tabLayout_WebTabs.getHeight();
+                }
+                if(iWebViewNavigationHeight_Original == 0){
+                    iWebViewNavigationHeight_Original = relativeLayout_WebViewNavigation.getHeight();
+                }
+
+                int iWebViewNavigationHeight_Current = relativeLayout_WebViewNavigation.getHeight();
+
+                int iWebViewNavigationHeight_New = 0;
+                int iTabBarHeight_New = 0;
                 if (distanceY > 0) { //User is scrolling down
-                    if (fCurrentTranslationY > -iWebViewNavigationHeight) {
-                        //Start hiding the tab navigation bar (address bar)
-                        fNewTranslationY = fCurrentTranslationY - distanceY;
-                        fNewTranslationY = Math.max(-iWebViewNavigationHeight, fNewTranslationY);
-                        relativeLayout_WebViewNavigation.setTranslationY(fNewTranslationY);
-                        gWebView.setTranslationY(fNewTranslationY);
+                    if ( iTabBarHeight_Current > 0){
+                        //Start hiding the tab bar:
+                        iTabBarHeight_New = iTabBarHeight_Current - (int)distanceY;
+                        iTabBarHeight_New = Math.max(0, iTabBarHeight_New);
+                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.tabLayout_WebTabs.getLayoutParams();
+                        rlp.height = iTabBarHeight_New;
+                        activity_browser.tabLayout_WebTabs.setLayoutParams(rlp);
+                        bIgnoreMotionEvent = true;
+                    } else if (iWebViewNavigationHeight_Current > 0) {
+                        //Start hiding the address bar
+                        iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int)distanceY;
+                        iWebViewNavigationHeight_New = Math.max(0, iWebViewNavigationHeight_New);
+                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) relativeLayout_WebViewNavigation.getLayoutParams();
+                        rlp.height = iWebViewNavigationHeight_New;
+                        relativeLayout_WebViewNavigation.setLayoutParams(rlp);
                         bIgnoreMotionEvent = true;
                     }
                 } else if (distanceY < 0) { //User is scrolling up
-                    if (fCurrentTranslationY < 0) {
-                        fNewTranslationY = fCurrentTranslationY - distanceY;
-                        fNewTranslationY = Math.min(0, fNewTranslationY);
-                        relativeLayout_WebViewNavigation.setTranslationY(fNewTranslationY);
-                        gWebView.setTranslationY(fNewTranslationY);
+
+                    if (iWebViewNavigationHeight_Current < iWebViewNavigationHeight_Original) {
+                        iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int)distanceY;
+                        iWebViewNavigationHeight_New = Math.min(iWebViewNavigationHeight_Original, iWebViewNavigationHeight_New);
+                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) relativeLayout_WebViewNavigation.getLayoutParams();
+                        rlp.height = iWebViewNavigationHeight_New;
+                        relativeLayout_WebViewNavigation.setLayoutParams(rlp);
+                        bIgnoreMotionEvent = true;
+                    } else if ( (activity_browser != null)  && (iTabBarHeight_Current < activity_browser.giTabBarHeight_Original)){
+                        //Start showing the tab bar:
+                        iTabBarHeight_New = iTabBarHeight_Current - (int)distanceY;
+                        iTabBarHeight_New = Math.min(activity_browser.giTabBarHeight_Original, iTabBarHeight_New);
+                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.tabLayout_WebTabs.getLayoutParams();
+                        rlp.height = iTabBarHeight_New;
+                        activity_browser.tabLayout_WebTabs.setLayoutParams(rlp);
                         bIgnoreMotionEvent = true;
                     }
                 }
-                Log.d("Scroll event:", "DistanceY = " + distanceY + "\tNewTranslationY = " + fNewTranslationY);
+
                 return false;
             }
 
@@ -465,6 +509,7 @@ public class Fragment_WebPageTab extends Fragment {
     public void onResume() {
         super.onResume();
         ApplicationLogWriter("onResume start.");
+
         String sLoadedAddress = gWebView.getUrl();
         if(sLoadedAddress == null && gsWebAddress.equals("")) {
             InitializeData();

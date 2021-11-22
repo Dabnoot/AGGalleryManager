@@ -7,8 +7,6 @@
     tools:context=".Fragment_WebPageTab"
     android:background="@color/tab_backcolor_unselected">
 
-
-
     <RelativeLayout
         android:id="@+id/relativeLayout_WebViewNavigation"
         android:layout_width="match_parent"
@@ -67,7 +65,7 @@
     <com.agcurations.aggallerymanager.VideoEnabledWebView
         android:id="@+id/videoEnabledWebView_tabWebView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_below="@id/relativeLayout_WebViewNavigation"
         android:layout_alignParentBottom="true"
         android:visibility="visible"/>
