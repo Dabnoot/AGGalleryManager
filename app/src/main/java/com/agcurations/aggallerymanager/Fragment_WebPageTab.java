@@ -297,7 +297,7 @@ public class Fragment_WebPageTab extends Fragment {
 
                 int iWebViewNavigationHeight_New = 0;
                 int iBrowserTopBarHeight_New = 0;
-                float fMovementMultiplier = 1f; //The bars don't appear to get out of the way fast
+                float fMovementMultiplier = 2.1f; //The bars don't appear to get out of the way fast
                                                 //  enough. Part of this is because of the inclusion
                                                 //  of 'bIgnoreMotionEvent' causing a skip of every
                                                 //  other event while scrolling.
