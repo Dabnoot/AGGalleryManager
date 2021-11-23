@@ -38,20 +38,30 @@
                 android:layout_marginEnd="5dp"
                 android:scaleType="center"
                 android:layout_gravity="bottom"/>
-            </LinearLayout>
+        </LinearLayout>
 
-        <EditText
-            android:id="@+id/editText_Address"
+        <LinearLayout
+            android:id="@+id/linearLayout_EditText"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
-            android:layout_marginEnd="10dp"
+
+            android:layout_alignParentBottom="true"
             android:layout_toStartOf="@id/linearLayout_EndButtons"
-            android:layout_toEndOf="@id/linearLayout_BackForward"
-            android:hint="Type web address"
-            android:text="www.google.com"
-            android:inputType="textWebEmailAddress"
-            android:imeOptions="actionGo"
-            android:layout_gravity="bottom"/>
+            android:layout_toEndOf="@id/linearLayout_BackForward">
+
+            <EditText
+                android:id="@+id/editText_Address"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginEnd="10dp"
+
+                android:hint="Type web address"
+                android:text="www.google.com"
+                android:inputType="textWebEmailAddress"
+                android:imeOptions="actionGo"
+                android:layout_gravity="bottom"/>
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/linearLayout_EndButtons"
