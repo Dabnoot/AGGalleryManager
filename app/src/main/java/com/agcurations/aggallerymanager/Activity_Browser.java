@@ -30,6 +30,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -402,10 +403,10 @@ public class Activity_Browser extends AppCompatActivity {
                     }
                     textView_TabText.setText(sTitle);
                 }
-                ImageView imageView_WebPageIcon = view.findViewById(R.id.imageView_WebPageIcon);
-                if(imageView_WebPageIcon != null && bitmap_favicon != null){
-                    imageView_WebPageIcon.setImageResource(0);
-                    imageView_WebPageIcon.setImageBitmap(bitmap_favicon);
+                ImageView imageView_Favicon = view.findViewById(R.id.imageView_Favicon);
+                if(imageView_Favicon != null && bitmap_favicon != null){
+                    imageView_Favicon.setImageResource(0);
+                    imageView_Favicon.setImageBitmap(bitmap_favicon);
                 }
             }
         }

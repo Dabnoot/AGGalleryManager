@@ -5,41 +5,63 @@
     android:layout_height= "34dp"
     android:background="@drawable/tabitem_bg_selector"
     android:orientation= "horizontal">
-
-    <ImageView
+    <!--Items wrapped in linear layouts in order to achieve good visual effect when scrolling
+          the contents away via WebView scroll down. -->
+    <LinearLayout
+        android:id="@+id/linearLayout_Favicon"
         android:layout_width="wrap_content"
-        android:layout_height= "34dp"
-        android:id= "@+id/imageView_WebPageIcon"
-        android:layout_marginStart="10dp"
-        android:layout_gravity="center"
-        android:src="@drawable/new_tab_icon"
-        android:layout_alignParentStart="true"/>
+        android:layout_height="match_parent">
+        <ImageView
+            android:id= "@+id/imageView_Favicon"
+            android:layout_width="wrap_content"
+            android:layout_height= "34dp"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/new_tab_icon"
+            android:scaleType="center"
+            android:layout_gravity="bottom"/>
+    </LinearLayout>
 
-    <TextView
-        android:id="@+id/text"
+    <LinearLayout
+        android:id="@+id/linearLayout_TabTitle"
         android:layout_width="wrap_content"
-        android:layout_height="34dp"
-        android:layout_gravity="center"
-        android:layout_toStartOf="@id/imageButton_Close"
-        android:layout_toEndOf="@id/imageView_WebPageIcon"
-        android:gravity="start"
-        android:paddingLeft="7dp"
-        android:paddingTop="6dp"
-        android:paddingRight="7dp"
-        android:paddingBottom="4dp"
-        android:singleLine="true"
-        android:text="New tab"
-        android:textColor="#BBC0C6"
-        android:textSize="14dp" />
+        android:layout_height="match_parent"
+        android:layout_toEndOf="@id/linearLayout_Favicon"
+        android:layout_toStartOf="@id/linearLayout_CloseAction">
 
-    <ImageButton
-        android:layout_width="32dp"
-        android:layout_height= "32dp"
-        android:id= "@+id/imageButton_Close"
-        android:layout_marginEnd="10dp"
-        android:layout_gravity="center"
-        android:src="@drawable/close_action"
-        android:layout_alignParentEnd="true"
-        android:backgroundTint="#00000000"/>
+        <TextView
+            android:id="@+id/text"
+            android:layout_width="match_parent"
+            android:layout_height="34dp"
+            android:gravity="start"
+            android:paddingStart="7dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="4dp"
+            android:singleLine="true"
+            android:text="New tab"
+            android:textColor="#BBC0C6"
+            android:textSize="14sp"
+            android:scaleType="center"
+            android:layout_gravity="bottom"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout_CloseAction"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentEnd="true">
+
+        <ImageButton
+            android:layout_width="32dp"
+            android:layout_height= "32dp"
+            android:id= "@+id/imageButton_Close"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/close_action"
+            android:layout_alignParentEnd="true"
+            android:backgroundTint="#00000000"
+            android:scaleType="center"
+            android:layout_gravity="bottom"/>
+
+    </LinearLayout>
 
 </RelativeLayout>
