@@ -14,47 +14,76 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" >
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabLayout_WebTabs"
+        <RelativeLayout
+            android:id="@+id/relativeLayout_BrowserTopBar"
             android:layout_width="match_parent"
             android:layout_height="34dp"
-            app:tabGravity="start"
-            app:tabMode="scrollable"
-            android:layout_alignParentStart="true"
-            android:layout_toStartOf="@id/imageButton_AddTab"
-            app:tabIndicatorColor="#00FFFFFF"
-            app:tabMaxWidth="200dp"
-            app:tabPaddingStart="0dp"
-            app:tabPaddingEnd="0dp"
-            android:background="@color/colorBlack">
+            android:layout_alignParentTop="true">
 
-            <com.google.android.material.tabs.TabItem
+            <!--Gravity bottom in the LinearLayouts below create the effect. Remove them for an
+                  interesting change. -->
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:gravity="bottom"
+                android:layout_toStartOf="@id/linearLayout_BrowserTopBarButtons">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tabLayout_WebTabs"
+                    android:layout_width="match_parent"
+                    android:layout_height="34dp"
+                    app:tabGravity="start"
+                    app:tabMode="scrollable"
+                    android:layout_alignParentStart="true"
+                    android:layout_toStartOf="@id/imageButton_AddTab"
+                    app:tabIndicatorColor="#00FFFFFF"
+                    app:tabMaxWidth="200dp"
+                    app:tabPaddingStart="0dp"
+                    app:tabPaddingEnd="0dp"
+                    android:background="@color/colorBlack">
+
+                    <com.google.android.material.tabs.TabItem
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                </com.google.android.material.tabs.TabLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/linearLayout_BrowserTopBarButtons"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"/>
+                android:layout_height="match_parent"
+                android:gravity="bottom"
+                android:layout_alignParentEnd="true">
 
-        </com.google.android.material.tabs.TabLayout>
+                <!--<Button
+                    android:id="@+id/button_testBrowser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toStartOf="@id/imageButton_AddTab"
+                    android:text="test"
+                    />-->
 
-        <!--<Button
-            android:id="@+id/button_testBrowser"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toStartOf="@id/imageButton_AddTab"
-            android:text="test"
-            />-->
+                <ImageButton
+                    android:id="@+id/imageButton_AddTab"
+                    android:layout_width="34dp"
+                    android:layout_height="36dp"
+                    app:srcCompat="@drawable/add_action"
+                    android:layout_alignParentEnd="true"
+                    android:backgroundTint="@color/colorBlack"/>
 
-        <ImageButton
-            android:id="@+id/imageButton_AddTab"
-            android:layout_width="34dp"
-            android:layout_height="36dp"
-            app:srcCompat="@drawable/add_action"
-            android:layout_alignParentEnd="true"
-            android:backgroundTint="@color/colorBlack"/>
+            </LinearLayout>
+
+        </RelativeLayout>
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewPager2_WebPages"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_below="@id/tabLayout_WebTabs"
+            android:layout_below="@id/relativeLayout_BrowserTopBar"
             android:layout_alignParentStart="true"
             android:layout_alignParentBottom="true">
 

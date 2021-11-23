@@ -273,7 +273,8 @@ public class Fragment_WebPageTab extends Fragment {
                 return false;
             }
 
-            boolean bIgnoreMotionEvent = false;
+            boolean bIgnoreMotionEvent = false; //Required because moving the views under the user's
+                                                //  finger triggers the onScroll event.
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
                 if(bIgnoreMotionEvent){
@@ -281,12 +282,12 @@ public class Fragment_WebPageTab extends Fragment {
                     return true;
                 }
                 Activity_Browser activity_browser = (Activity_Browser) getActivity();
-                int iTabBarHeight_Current = 0;
+                int iBrowserTopBarHeight_Current = 0;
                 if(activity_browser != null) {
-                    if (activity_browser.giTabBarHeight_Original == 0) {
-                        activity_browser.giTabBarHeight_Original = activity_browser.tabLayout_WebTabs.getHeight();
+                    if (activity_browser.giBrowserTopBarHeight_Original == 0) {
+                        activity_browser.giBrowserTopBarHeight_Original = activity_browser.relativeLayout_BrowserTopBar.getHeight();
                     }
-                    iTabBarHeight_Current = activity_browser.tabLayout_WebTabs.getHeight();
+                    iBrowserTopBarHeight_Current = activity_browser.relativeLayout_BrowserTopBar.getHeight();
                 }
                 if(iWebViewNavigationHeight_Original == 0){
                     iWebViewNavigationHeight_Original = relativeLayout_WebViewNavigation.getHeight();
@@ -295,19 +296,23 @@ public class Fragment_WebPageTab extends Fragment {
                 int iWebViewNavigationHeight_Current = relativeLayout_WebViewNavigation.getHeight();
 
                 int iWebViewNavigationHeight_New = 0;
-                int iTabBarHeight_New = 0;
+                int iBrowserTopBarHeight_New = 0;
+                float fMovementMultiplier = 1f; //The bars don't appear to get out of the way fast
+                                                //  enough. Part of this is because of the inclusion
+                                                //  of 'bIgnoreMotionEvent' causing a skip of every
+                                                //  other event while scrolling.
                 if (distanceY > 0) { //User is scrolling down
-                    if ( iTabBarHeight_Current > 0){
+                    if ( iBrowserTopBarHeight_Current > 0){
                         //Start hiding the tab bar:
-                        iTabBarHeight_New = iTabBarHeight_Current - (int)distanceY;
-                        iTabBarHeight_New = Math.max(0, iTabBarHeight_New);
-                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.tabLayout_WebTabs.getLayoutParams();
-                        rlp.height = iTabBarHeight_New;
-                        activity_browser.tabLayout_WebTabs.setLayoutParams(rlp);
+                        iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int)(distanceY * fMovementMultiplier);
+                        iBrowserTopBarHeight_New = Math.max(0, iBrowserTopBarHeight_New);
+                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
+                        rlp.height = iBrowserTopBarHeight_New;
+                        activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
                         bIgnoreMotionEvent = true;
                     } else if (iWebViewNavigationHeight_Current > 0) {
                         //Start hiding the address bar
-                        iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int)distanceY;
+                        iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int)(distanceY * fMovementMultiplier);
                         iWebViewNavigationHeight_New = Math.max(0, iWebViewNavigationHeight_New);
                         RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) relativeLayout_WebViewNavigation.getLayoutParams();
                         rlp.height = iWebViewNavigationHeight_New;
@@ -317,19 +322,19 @@ public class Fragment_WebPageTab extends Fragment {
                 } else if (distanceY < 0) { //User is scrolling up
 
                     if (iWebViewNavigationHeight_Current < iWebViewNavigationHeight_Original) {
-                        iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int)distanceY;
+                        iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int)(distanceY * fMovementMultiplier);
                         iWebViewNavigationHeight_New = Math.min(iWebViewNavigationHeight_Original, iWebViewNavigationHeight_New);
                         RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) relativeLayout_WebViewNavigation.getLayoutParams();
                         rlp.height = iWebViewNavigationHeight_New;
                         relativeLayout_WebViewNavigation.setLayoutParams(rlp);
                         bIgnoreMotionEvent = true;
-                    } else if ( (activity_browser != null)  && (iTabBarHeight_Current < activity_browser.giTabBarHeight_Original)){
+                    } else if ( (activity_browser != null)  && (iBrowserTopBarHeight_Current < activity_browser.giBrowserTopBarHeight_Original)){
                         //Start showing the tab bar:
-                        iTabBarHeight_New = iTabBarHeight_Current - (int)distanceY;
-                        iTabBarHeight_New = Math.min(activity_browser.giTabBarHeight_Original, iTabBarHeight_New);
-                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.tabLayout_WebTabs.getLayoutParams();
-                        rlp.height = iTabBarHeight_New;
-                        activity_browser.tabLayout_WebTabs.setLayoutParams(rlp);
+                        iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int)(distanceY * fMovementMultiplier);
+                        iBrowserTopBarHeight_New = Math.min(activity_browser.giBrowserTopBarHeight_Original, iBrowserTopBarHeight_New);
+                        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
+                        rlp.height = iBrowserTopBarHeight_New;
+                        activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
                         bIgnoreMotionEvent = true;
                     }
                 }

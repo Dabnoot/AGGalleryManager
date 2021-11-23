@@ -61,7 +61,8 @@ public class Activity_Browser extends AppCompatActivity {
 
     public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
 
-    public int giTabBarHeight_Original;
+    public int giBrowserTopBarHeight_Original;
+    public RelativeLayout relativeLayout_BrowserTopBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +109,8 @@ public class Activity_Browser extends AppCompatActivity {
             viewPager2_WebPages.setUserInputEnabled(false);
 
             tabLayout_WebTabs = findViewById(R.id.tabLayout_WebTabs);
+
+            relativeLayout_BrowserTopBar = findViewById(R.id.relativeLayout_BrowserTopBar); //Referenced for scrolling the TopBar out of view during WebView scrolldown.
 
             //Configure a TabLayoutMediator to synchronize the TabLayout and the ViewPager2.
             //AutoRefresh tells the system to recreate all the tabs of the tabLayout if notifyDataSetChanged is called to the viewPager adapter.
