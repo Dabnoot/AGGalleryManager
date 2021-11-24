@@ -209,6 +209,10 @@ public class Service_WebPageTabs extends IntentService {
             }
         }
 
+        //Go through the tab indexes and make sure all is ok. (There was a problem at least once)
+        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
+            globalClass.gal_WebPages.get(i).iTabIndex = i + 1;
+        }
 
 
 
