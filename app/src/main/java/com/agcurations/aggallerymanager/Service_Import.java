@@ -2479,46 +2479,49 @@ public class Service_Import extends IntentService {
             //Special behavior for this website.
             //Finding the mp4 contiguous (non-M3U8) video download data for this particular site requires significant
             //parsing.
+            try {
+                String sS = "qualityItems";
+                String sE = ";";
+                int iS = icWebDataLocator.sHTML.indexOf(sS);
+                int iE = icWebDataLocator.sHTML.indexOf(sE, iS);
+                String Sub1 = icWebDataLocator.sHTML.substring(iS, iE);
+                sS = "[{";
+                sE = "}]";
+                iS = Sub1.indexOf(sS);
+                iE = Sub1.indexOf(sE, iS);
+                String Sub2 = Sub1.substring(iS, iE);
+                String Sub3 = Sub2.replace("},{", ";");
+                Sub3 = Sub3.replace("[{", "");
+                String[] sVDOptions = Sub3.split(";");
 
-            String sS = "qualityItems";
-            String sE = ";";
-            int iS = icWebDataLocator.sHTML.indexOf(sS);
-            int iE = icWebDataLocator.sHTML.indexOf(sE, iS);
-            String Sub1 = icWebDataLocator.sHTML.substring(iS,iE);
-            sS = "[{";
-            sE = "}]";
-            iS = Sub1.indexOf(sS);
-            iE = Sub1.indexOf(sE, iS);
-            String Sub2 = Sub1.substring(iS,iE);
-            String Sub3 = Sub2.replace("},{", ";");
-            Sub3 = Sub3.replace("[{","");
-            String[] sVDOptions = Sub3.split(";");
+                int iRecordNumber = icWebDataLocator.alVideoDownloadSearchKeys.size();
+                for (String sVDORecords : sVDOptions) {
+                    String[] sTemp = sVDORecords.split(",");
+                    if (sTemp.length >= 5) {
+                        //0: "id":"quality240p"
+                        //1: "text":"240p"
+                        //2: "url":"https:\/\/ev.phncdn.com\/videos\/201812\/31\/199453331\/240P_400K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=MpIVLM9Yr5qK32YnDVbWG81%2Fhaw%3D"
+                        //3: "upgrade":0
+                        //4: "active":0
+                        int iHTTPLocation = sTemp[2].indexOf("http");
+                        if (iHTTPLocation >= 0) {
+                            String sURL = sTemp[2].substring(sTemp[2].indexOf("http"));
+                            sURL = sURL.replace("\"", "");
+                            sURL = sURL.replace("\\", "");
+                            icWebDataLocator.alVideoDownloadSearchKeys.add(
+                                    new ItemClass_VideoDownloadSearchKey(
+                                            ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
+                                            "", ""));
+                            icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).sSearchStringMatchContent = sURL;
+                            icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).bMatchFound = true; //Fake it.
 
-            int iRecordNumber = icWebDataLocator.alVideoDownloadSearchKeys.size();
-            for(String sVDORecords: sVDOptions){
-                String[] sTemp = sVDORecords.split(",");
-                if(sTemp.length >= 5){
-                    //0: "id":"quality240p"
-                    //1: "text":"240p"
-                    //2: "url":"https:\/\/ev.phncdn.com\/videos\/201812\/31\/199453331\/240P_400K_199453331.mp4?validfrom=1624843943&validto=1624851143&rate=500k&burst=1400k&ipa=71.179.233.44&hash=MpIVLM9Yr5qK32YnDVbWG81%2Fhaw%3D"
-                    //3: "upgrade":0
-                    //4: "active":0
-                    int iHTTPLocation = sTemp[2].indexOf("http");
-                    if(iHTTPLocation >= 0) {
-                        String sURL = sTemp[2].substring(sTemp[2].indexOf("http"));
-                        sURL = sURL.replace("\"", "");
-                        sURL = sURL.replace("\\", "");
-                        icWebDataLocator.alVideoDownloadSearchKeys.add(
-                                new ItemClass_VideoDownloadSearchKey(
-                                        ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK,
-                                        "", ""));
-                        icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).sSearchStringMatchContent = sURL;
-                        icWebDataLocator.alVideoDownloadSearchKeys.get(iRecordNumber).bMatchFound = true; //Fake it.
+                            iRecordNumber++;
+                        }
 
-                        iRecordNumber++;
                     }
-
                 }
+            } catch (Exception e){
+                //Catch crashes when substring location markers includes -1 because a string match was not found.
             }
 
         }
