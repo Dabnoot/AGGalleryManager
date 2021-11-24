@@ -4,7 +4,10 @@ import android.media.MediaPlayer;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.JsPromptResult;
+import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 
 /*
@@ -280,4 +283,21 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
         }
     }
 
+    @Override
+    public boolean onJsAlert(WebView view, String url, String message, JsResult result) {
+        result.cancel();
+        return super.onJsAlert(view, url, message, result);
+    }
+
+    @Override
+    public boolean onJsConfirm(WebView view, String url, String message, JsResult result) {
+        result.cancel();
+        return super.onJsConfirm(view, url, message, result);
+    }
+
+    @Override
+    public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
+        result.cancel();
+        return super.onJsPrompt(view, url, message, defaultValue, result);
+    }
 }
