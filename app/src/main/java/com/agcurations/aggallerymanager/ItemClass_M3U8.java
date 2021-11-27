@@ -10,11 +10,14 @@ public class ItemClass_M3U8 {
     //  are MPEG-2 video files, typically 10 seconds long.
 
     //String sTitle;
-    String sName;
-    String sFileName;
-    String sBandwidth;
-    String sResolution;
-    String sBaseURL;
+    String sName = "";
+    String sHost = "";
+    String sFileName = "";
+    String sBandwidth = "";
+    String sResolution = "";
+    String sBaseURL = "";
+    String sCODECs = "";
+    String sProgramID = "";
     float fDurationInSeconds;
 
     ArrayList<String> als_TSDownloads; //This item captures the TS file addresses for a given M3U8 entry.

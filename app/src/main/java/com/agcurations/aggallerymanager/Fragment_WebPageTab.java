@@ -226,6 +226,7 @@ public class Fragment_WebPageTab extends Fragment {
                         if(icwptd.sAddress != null){
                             if(!icwptd.sAddress.equals(url)){
                                 icwptd.sAddress = url;
+                                gsWebAddress = url;
                             } else {
                                 bSkipSet = true;
                             }

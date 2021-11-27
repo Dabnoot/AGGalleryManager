@@ -20,6 +20,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -150,12 +151,17 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         WebSettings webSettings = gWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true); //Some items may not appear on some pages if this is not enabled.
+        //Add a JavaScript interface to get the HTML from the WebView:
         gWebView.addJavascriptInterface(new MyJavaScriptInterface(), "HtmlViewer");
+        //Add a JavaScript interface to get the element upon which the user has clicked (for testing):
+        gWebView.addJavascriptInterface(new MyClickJsToAndroid(), "my");
 
         gWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+                gWebView.evaluateJavascript(addMyClickCallBackJs(),null);
                 gButton_Detect.setEnabled(true);
+                gEditText_WebAddress.setText(url);
                 SetTextStatusMessage("Click 'Detect'. If expected video does not appear in the results, try playing and pausing the video first.");
             }
 
@@ -166,32 +172,30 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                 //Check to see if the request is for an m3u8 file.
                 if(sURL.contains("m3u8")){
                     if(getActivity() != null) {
-                        String sNonExplicitAddress = "^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)"; //Don't allow b-o-t-s to easily find hard-coded addresses.
-                        String sNHRegexExpression = sNonExplicitAddress.replace("%", "");
-                        ItemClass_WebVideoDataLocator icWebDataLocator = null;
+
+
                         if (globalClass == null) {
                             globalClass = (GlobalClass) getActivity().getApplicationContext();
                         }
 
                         if (globalClass.galWebVideoDataLocators != null) {
-                            for (ItemClass_WebVideoDataLocator icWVDL : globalClass.galWebVideoDataLocators) {
-                                if (icWVDL.bHostNameMatchFound) {
-                                    icWebDataLocator = icWVDL;
+                            for(int i = 0; i < globalClass.galWebVideoDataLocators.size(); i++){
+                            //for (ItemClass_WebVideoDataLocator icWVDL : globalClass.galWebVideoDataLocators) {
+
+                                if (globalClass.galWebVideoDataLocators.get(i).bHostNameMatchFound) {
+
+                                    //Create a new VDSK, add this M3U8 "match", tell it that the match is found.
+                                    ItemClass_VideoDownloadSearchKey vdsk =
+                                            new ItemClass_VideoDownloadSearchKey(VIDEO_DOWNLOAD_M3U8, null);
+                                    vdsk.sSearchStringMatchContent = sURL;
+                                    vdsk.bMatchFound = true;
+                                    //Add the VDSK to the WebDataLocator instance:
+                                    globalClass.galWebVideoDataLocators.get(i).alVideoDownloadSearchKeys.add(vdsk);
+
                                     break;
                                 }
                             }
-                            if (icWebDataLocator != null) {
-                                if (icWebDataLocator.sHostnameRegEx.equals(sNHRegexExpression)) {
-                                    for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys) {
-                                        if (vdsk.sDataType.equals(VIDEO_DOWNLOAD_M3U8)) {
-                                            if(!vdsk.bMatchFound) { //There are multiple m3u8 files. Only record the first, master m3u8 file.
-                                                vdsk.bMatchFound = true;
-                                                vdsk.sSearchStringMatchContent = sURL;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+
                         }
                     }
                 }
@@ -410,6 +414,17 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         });
         globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
 
+        itemClass_webVideoDataLocator =
+                FormWebVideoDataLocator("^h%ttps:\\/\\/x%ham%ster\\.c%om\\/videos(.*)",
+                        new String[][]{
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE, "//h1/text()"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS, "//a[@class='categories-container__item']/text()"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL, "//div[@class='xp-preload-image']/@style"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8, "//link[@rel='preload'][@as='fetch']/@href"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8, null} //Allow listen for played video.
+                        });
+        globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+
         /*itemClass_webVideoDataLocator =
                 FormWebVideoDataLocator(,
                         new String[][]{
@@ -455,6 +470,9 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             gTextView_StatusInstructions.setText(sMessage);
         }
     }
+    //=========================================================================
+
+    //========== Class to get the html from the webview =======================
 
     class MyJavaScriptInterface {
 
@@ -464,10 +482,34 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         }
 
     }
+    //=========================================================================
+
+    //========== Routines to get the element clicked by the user ==============
 
 
-    //======================================================================
-    //========================= Receiver ===================================
+    class MyClickJsToAndroid extends Object{
+        @JavascriptInterface
+        public void myClick(String idOrClass) {
+            Log.d("WebViewClick", "myClick-> " + idOrClass);
+        }
+    }
+
+    public static String addMyClickCallBackJs() {
+        String js = "javascript:";
+        js += "function myClick(event){" +
+                "if(event.target.className == null){my.myClick(event.target.id)}" +
+                "else{my.myClick(event.target.className)}}";
+        js += "document.addEventListener(\"click\",myClick,true);";
+        return js;
+    }
+
+    //=========================================================================
+
+
+
+
+    //=========================================================================
+    //========================= Receiver ======================================
 
     @SuppressWarnings("unchecked")
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
