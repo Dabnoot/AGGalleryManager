@@ -41,7 +41,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private GlobalClass globalClass;
 
-    private TreeMap<Integer, ItemClass_CatalogItem> treeMapRecyclerViewVideos;
+    private TreeMap<Integer, ItemClass_CatalogItem> treeMapRecyclerViewCatItems;
     private Integer giKey;
 
     private long glCurrentVideoPosition = 1;
@@ -61,6 +61,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private PlayerControlView gPlayerControlView_ExoPlayerControls;
 
     private Fragment_ItemDetails gFragment_itemDetails;
+
+    private boolean gbPlayingM3U8;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -94,14 +96,14 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             return;
         }
         treeMapRecyclerViewVideos.putAll(hashMapTemp);*/
-        treeMapRecyclerViewVideos = globalClass.gtmCatalogViewerDisplayTreeMap;
+        treeMapRecyclerViewCatItems = globalClass.gtmCatalogViewerDisplayTreeMap;
 
         int iVideoID = intentVideoPlayer.getIntExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID,0);
 
         //Get the TreeMap key associated with the Video ID provided:
         giKey = 0;
         for (Map.Entry<Integer, ItemClass_CatalogItem>
-                entry : treeMapRecyclerViewVideos.entrySet()) {
+                entry : treeMapRecyclerViewCatItems.entrySet()) {
             if(entry.getValue().sItemID.equals(Integer.toString(iVideoID))) {
                 giKey = entry.getKey();
             }
@@ -136,7 +138,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             //Here is the method for double tap
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                gVideoView_VideoPlayer.pause();
+                PausePlayback();
                 ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
                 ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
                 Toast.makeText(getApplicationContext(), "Double tap detected. Obfuscating...", Toast.LENGTH_SHORT).show();
@@ -161,7 +163,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     delayedHide();
                 }
 
-                return true;
+                if(gbPlayingM3U8) {
+                    return false;
+                } else {
+                    return true; //The other player does not trigger onSingleTapConfirmed without
+                    // this item true.
+                }
             }
 
             @Override
@@ -193,11 +200,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         }
                     }
                     else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        /*if (diffY > 0) {
-                            onSwipeBottom();
+                        if (diffY > 0) {
+                            onSwipeUp();
                         } else {
-                            onSwipeTop();
-                        }*/
+                            onSwipeDown();
+                        }
                         result = true;
                     }
                 } catch (Exception exception) {
@@ -208,8 +215,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             public void onSwipeRight() {
                 int iTempKey = giKey - 1;
-                if(treeMapRecyclerViewVideos.containsKey(iTempKey)) {
-                    gVideoView_VideoPlayer.stopPlayback();
+                if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
+                    StopPlayback();
                     giKey--;
                     initializePlayer();
                 }
@@ -217,18 +224,34 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             public void onSwipeLeft() {
                 int iTempKey = giKey + 1;
-                if(treeMapRecyclerViewVideos.containsKey(iTempKey)) {
-                    gVideoView_VideoPlayer.stopPlayback();
+                if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
+                    StopPlayback();
                     giKey++;
                     initializePlayer();
                 }
             }
 
-//            public void onSwipeTop() {
-//            }
+            public void onSwipeUp() {
+                //The user is likely attempting to bring up the navigation bar.
+                // If the navigation bar is shown, hide it.
+                /*ActionBar actionBar = getSupportActionBar();
+                if (actionBar != null) {
+                    actionBar.show();
+                }
+                if(!bFileIsGif && (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
+                    //Figure out which video player is active, and hide its media controls:
+                    if (gbPlayingM3U8) {
+                        gPlayerControlView_ExoPlayerControls.hide();
+                    } else {
+                        gMediaController.hide();
+                    }
 
-            /*public void onSwipeBottom() {
-            }*/
+                }
+                mVisible = false;*/
+            }
+
+            public void onSwipeDown() {
+            }
 
         });
 
@@ -320,7 +343,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             public void onSwipeRight() {
                 int iTempKey = giKey - 1;
-                if(treeMapRecyclerViewVideos.containsKey(iTempKey)) {
+                if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     giKey--;
                     initializePlayer();
                 }
@@ -328,7 +351,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             public void onSwipeLeft() {
                 int iTempKey = giKey + 1;
-                if(treeMapRecyclerViewVideos.containsKey(iTempKey)) {
+                if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     giKey++;
                     initializePlayer();
                 }
@@ -370,8 +393,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     //  assigned tags, the file does not get moved. Only on tag delete would a file be moved.
                     //  Update 11/14/2021 - I'm not sure if the above is still true. Will need to test again. (todo).
                     initializePlayer();
-                    gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-                    gVideoView_VideoPlayer.start();
+                    if(gbPlayingM3U8){
+                        gSimpleExoPlayer.seekTo(glCurrentVideoPosition);
+                        gSimpleExoPlayer.play();
+                    } else {
+                        gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
+                        gVideoView_VideoPlayer.start();
+                    }
                 }
             }
         };
@@ -381,7 +409,56 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gplayerView_ExoVideoPlayer.setPlayer(gSimpleExoPlayer);
         gPlayerControlView_ExoPlayerControls.setPlayer(gSimpleExoPlayer);
 
+        gplayerView_ExoVideoPlayer.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+               return gdVideoView.onTouchEvent(event);
+            }
+        });
+
         initializePlayer();
+    }
+
+    private void PausePlayback(){
+
+        if(gbPlayingM3U8) {
+            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
+            if (gSimpleExoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gSimpleExoPlayer.pause();
+        } else {
+            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+            if (gVideoView_VideoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gVideoView_VideoPlayer.pause();
+        }
+    }
+
+    private void StopPlayback(){
+
+        if(gbPlayingM3U8) {
+            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
+            if (gSimpleExoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gSimpleExoPlayer.stop();
+        } else {
+            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+            if (gVideoView_VideoPlayer.isPlaying()) {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
+            } else {
+                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
+            }
+            gVideoView_VideoPlayer.stopPlayback();
+        }
     }
 
 
@@ -395,12 +472,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }*/
 
             //Figure out which video player is active, and resume that object.
-            ItemClass_CatalogItem ci;
-            ci = treeMapRecyclerViewVideos.get(giKey);
-            if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+            if(gbPlayingM3U8) {
                 gSimpleExoPlayer.seekTo(glCurrentVideoPosition);
                 if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
-                    gSimpleExoPlayer.play();
+                    gSimpleExoPlayer.setPlayWhenReady(true);
+                    //gSimpleExoPlayer.play();
                 }
                 gSimpleExoPlayer.pause();
             } else {
@@ -429,25 +505,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }*/
 
         //Figure out which video player is active, and pause that object.
-        ItemClass_CatalogItem ci;
-        ci = treeMapRecyclerViewVideos.get(giKey);
-        if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
-            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
-            if (gSimpleExoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gSimpleExoPlayer.pause();
-        } else {
-            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
-            if (gVideoView_VideoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gVideoView_VideoPlayer.pause();
-        }
+        PausePlayback();
 
         super.onPause();
     }
@@ -459,13 +517,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }*/
 
         //Figure out which video player is active, and stop that object.
-        ItemClass_CatalogItem ci;
-        ci = treeMapRecyclerViewVideos.get(giKey);
-        if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
-            gSimpleExoPlayer.stop();
-        } else {
-            gVideoView_VideoPlayer.stopPlayback();
-        }
+        StopPlayback();
+
 
         super.onStop();
     }
@@ -478,9 +531,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }*/
 
         //Figure out which video player is active, and save the position.
-        ItemClass_CatalogItem ci;
-        ci = treeMapRecyclerViewVideos.get(giKey);
-        if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+        if(gbPlayingM3U8) {
             glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
         } else {
             glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
@@ -500,9 +551,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         int iMediaCategory = globalClass.giSelectedCatalogMediaCategory;
         Uri gMediaUri = null;
-        if(treeMapRecyclerViewVideos.containsKey(giKey)) {
+        if(treeMapRecyclerViewCatItems.containsKey(giKey)) {
             ItemClass_CatalogItem ci;
-            ci = treeMapRecyclerViewVideos.get(giKey);
+            ci = treeMapRecyclerViewCatItems.get(giKey);
             if (ci != null) {
                 String sFileName = ci.sFilename;
                 String sFilePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
@@ -537,6 +588,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
                 if(bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)){
+                    gbPlayingM3U8 = false;
                     if(gMediaUri != null) {
                         if (gMediaUri.getPath() != null) {
                             File fGif = new File(gMediaUri.getPath());
@@ -551,6 +603,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
                     }
                 } else if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+                    gbPlayingM3U8 = true;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
@@ -564,12 +617,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         MediaItem mediaItem = MediaItem.fromUri(sVideoPath);
                         gSimpleExoPlayer.setMediaItem(mediaItem);
                         gSimpleExoPlayer.prepare();
-
-                        gSimpleExoPlayer.play();
+                        gSimpleExoPlayer.setPlayWhenReady(true);
+                        //gSimpleExoPlayer.play();
                     } else {
                         Toast.makeText(this, "Cannot find M3U8 file.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
+                    gbPlayingM3U8 = false;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
                     gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
@@ -652,7 +706,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 actionBar.show();
             }
             if(!bFileIsGif && (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
-                gMediaController.show();
+                if(gbPlayingM3U8){
+                    //gplayerView_ExoVideoPlayer.setUseController(true);
+                } else {
+                    gMediaController.show(); //This mediaController needs this merely for how the touches
+                    // are handled between the ExoPlayer and the VideoView.
+                }
             }
         }
     };
@@ -693,6 +752,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }
 
         mVisible = false;
+
+        if(gbPlayingM3U8){
+            //gplayerView_ExoVideoPlayer.setUseController(false);
+        }
 
         // Schedule a runnable to remove the status and navigation bar after a delay
         mHideHandler.removeCallbacks(mShowPart2Runnable);
