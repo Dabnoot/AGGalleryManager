@@ -2451,6 +2451,12 @@ public class Service_Import extends IntentService {
         //Perform textual search for data as specified by vdsks:
         for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
 
+            if(vdsk.bMatchFound){
+                //If the data was applied as a result of WebView ResourceRequest monitoring, skip
+                //  this loop.
+                continue;
+            }
+
             int iStart;
             int iEnd;
 
