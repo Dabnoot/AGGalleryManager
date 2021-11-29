@@ -62,7 +62,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
     private String gsUnknownAddress = "UNKNOWN_ADDRESS";
     private ArrayList<String> galsRequestedResources;
-    private boolean gbWebSiteCheck = false;
+    private final boolean gbWebSiteCheck = false;
 
     public Fragment_Import_1a_VideoWebDetect() {
         // Required empty public constructor
@@ -267,7 +267,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         sb.append(s).append("\n");
                     }
                     String s = sb.toString();
-                    //Set breakpoint at next line to check out requested resources.
+                    Log.d("Resources Requested", s);
                 }
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
