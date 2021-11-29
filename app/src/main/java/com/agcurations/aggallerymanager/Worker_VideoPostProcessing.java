@@ -151,7 +151,7 @@ public class Worker_VideoPostProcessing extends Worker {
             }
 
 
-            if (giDownloadTypeSingleOrM3U8 != DOWNLOAD_TYPE_SINGLE) {
+            //if (giDownloadTypeSingleOrM3U8 != DOWNLOAD_TYPE_SINGLE) {
                 String sFileSequenceFilePath = gsWorkingFolder +
                         File.separator + VIDEO_DLID_AND_SEQUENCE_FILE_NAME;
                 File fFileSequenceFile = new File(sFileSequenceFilePath);
@@ -219,9 +219,9 @@ public class Worker_VideoPostProcessing extends Worker {
                     fwLogFile.close();
                     return Result.failure(DataErrorMessage(sMessage));
                 }
-            } else {
-                giExpectedDownloadFileCount = 1;
-            }
+            //} else {
+            //    giExpectedDownloadFileCount = 1;
+            //}
 
             if (giExpectedDownloadFileCount == 0) {
                 sMessage = "No expected file download count provided.";
