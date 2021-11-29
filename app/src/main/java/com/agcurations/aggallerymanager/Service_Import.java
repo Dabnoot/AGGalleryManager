@@ -2858,6 +2858,7 @@ public class Service_Import extends IntentService {
                                     for (Object oVideoLink : objsVideoLink) {
                                         sURLM3U8VideoLink = oVideoLink.toString();
                                         if(!sURLM3U8VideoLink.equals("")){
+                                            sURLM3U8VideoLink = cleanHTMLCodedCharacters(sURLM3U8VideoLink);
                                             urlM3U8VideoLink = new URL(sURLM3U8VideoLink);
                                             break;
                                         }
