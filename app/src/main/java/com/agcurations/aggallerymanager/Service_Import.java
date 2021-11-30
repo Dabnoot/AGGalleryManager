@@ -2359,6 +2359,8 @@ public class Service_Import extends IntentService {
                         lDownloadIDs[i] = allDownloadIDs.get(i);
                     }
 
+                    //todo: mimic video downloadID logic. See video download routine.
+
                     //Build-out data to send to the worker:
                     Data dataComicDownloadPostProcessor = new Data.Builder()
                             .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sComicDownloadFolder)
@@ -3449,14 +3451,15 @@ public class Service_Import extends IntentService {
             DownloadManager downloadManager = null;
             downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
 
-            ArrayList<Long> allDownloadIDs = new ArrayList<>();
+            //ArrayList<Long> allDownloadIDs = new ArrayList<>();
 
             //Download the file(s):
             int FILE_DOWNLOAD_ADDRESS = 0;
             int FILE_NAME_AND_EXTENSION = 1;
+            int DOWNLOAD_ID = 0;
 
             String sVideoDownloadFolder = "";
-
+            ArrayList<String[]> alsDLIDsAndFileNames = new ArrayList<>();
             for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
                 String sNewFullPathFilename = fWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
                 //File name is not Jumbled for download as if it is a .ts file download of videos, FFMPEG will
@@ -3510,8 +3513,12 @@ public class Service_Import extends IntentService {
                             .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, fNewFile.getName());
 
                     long lDownloadID = downloadManager.enqueue(request);
-                    allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
-
+                    //todo: Check to make sure that the download is approved. Such as download source exists, and filename is
+                    //  valid and not already taken.
+                    //Record the download ID so that we can check to see if it is completed via the worker.
+                    alsDLIDsAndFileNames.add(new String[]{
+                            String.valueOf(lDownloadID),
+                            sURLAndFileName[FILE_NAME_AND_EXTENSION]});
 
                     lProgressNumerator++;
 
@@ -3608,10 +3615,10 @@ public class Service_Import extends IntentService {
             String sVideoFinalDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                     File.separator + ciNew.sFolder_Name;
             String sVideoWorkingFolder = sVideoFinalDestinationFolder + File.separator + ciNew.sItemID;
-            long[] lDownloadIDs = new long[allDownloadIDs.size()];
+            /*long[] lDownloadIDs = new long[allDownloadIDs.size()];
             for(int i = 0; i < allDownloadIDs.size(); i++){
                 lDownloadIDs[i] = allDownloadIDs.get(i);
-            }
+            }*/
             //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
             //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
             //int l = 0;
@@ -3621,8 +3628,12 @@ public class Service_Import extends IntentService {
             final File fDLIDFileSequenceFile = new File(sDLIDFileSequenceFilePath);
             FileWriter fwDLIDFileSequenceFile;
             fwDLIDFileSequenceFile = new FileWriter(fDLIDFileSequenceFile, true);
-            for(int l = 0; l < ciNew.alsDownloadURLsAndDestFileNames.size(); l++) {
+            /*for(int l = 0; l < lDownloadIDs.length; l++) { //DownloadIDs leads this loop. A download ID might not be available if there was a problem with its definition.
                 String sLine = lDownloadIDs[l] + "\t" + ciNew.alsDownloadURLsAndDestFileNames.get(l)[FILE_NAME_AND_EXTENSION] + "\n";
+                fwDLIDFileSequenceFile.write(sLine);
+            }*/
+            for(String[] sDLIDsAndFileNames: alsDLIDsAndFileNames){
+                String sLine = sDLIDsAndFileNames[DOWNLOAD_ID] + "\t" + sDLIDsAndFileNames[FILE_NAME_AND_EXTENSION] + "\n";
                 fwDLIDFileSequenceFile.write(sLine);
             }
             fwDLIDFileSequenceFile.flush();
