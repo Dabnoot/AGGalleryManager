@@ -411,15 +411,15 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_VideoSourceSelected(View v){
-        RadioButton radioButton_VideoSourceFolder = findViewById(R.id.radioButton_VideoSourceFolder);
-        //RadioButton radioButton_VideoSourceWebpage = findViewById(R.id.radioButton_VideoSourceWebpage);
+        RadioButton radioButton_VideoSourceWebpage = findViewById(R.id.radioButton_VideoSourceWebpage);
+        //RadioButton radioButton_VideoSourceFolder = findViewById(R.id.radioButton_VideoSourceFolder);
 
         int iNewVideoSource;
 
-        if (radioButton_VideoSourceFolder.isChecked()){
-            iNewVideoSource = ViewModel_ImportActivity.VIDEO_SOURCE_FOLDER;
-        } else {
+        if (radioButton_VideoSourceWebpage.isChecked()){
             iNewVideoSource = ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE;
+        } else {
+            iNewVideoSource = ViewModel_ImportActivity.VIDEO_SOURCE_FOLDER;
         }
 
         if(iNewVideoSource != viewModelImportActivity.iVideoImportSource){
