@@ -199,7 +199,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                         if (gtextView_ImportLog != null) {
                             gtextView_ImportLog.append(sLogLine);
                             if(gScrollView_ImportLog != null){
-                                gScrollView_ImportLog.scrollTo(0,gScrollView_ImportLog.getBottom()); //todo: does not work quite right.
+                                gScrollView_ImportLog.fullScroll(View.FOCUS_DOWN);
                             }
                         }
                         if (sLogLine.contains("Operation complete.")) {
