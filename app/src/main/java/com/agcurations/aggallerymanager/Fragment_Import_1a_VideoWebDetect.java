@@ -281,23 +281,21 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             ClipData clipData = clipboard.getPrimaryClip();
             if (clipData != null) {
                 String sClipLabel = clipData.getDescription().getLabel().toString();
-                if (sClipLabel != null){
-                    if(sClipLabel.equals(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
-                        ClipData.Item clipItem = clipData.getItemAt(0);
-                        if(clipItem != null){
-                            if(clipItem.getText() != null){
-                                String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
-                                if( sWebAddress != null){
-                                    gEditText_WebAddress.setText(sWebAddress);
-                                    SetTextStatusMessage("Loading webpage...");
-                                    galsRequestedResources = new ArrayList<>();
-                                    gWebView.loadUrl(sWebAddress);
-                                    clipboard.clearPrimaryClip();
-                                }
+                if(sClipLabel.equals(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                    ClipData.Item clipItem = clipData.getItemAt(0);
+                    if(clipItem != null){
+                        if(clipItem.getText() != null){
+                            String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
+                            if( sWebAddress != null){
+                                gEditText_WebAddress.setText(sWebAddress);
+                                SetTextStatusMessage("Loading webpage...");
+                                galsRequestedResources = new ArrayList<>();
+                                gWebView.loadUrl(sWebAddress);
+                                clipboard.clearPrimaryClip();
                             }
                         }
-
                     }
+
                 }
             }
         }
