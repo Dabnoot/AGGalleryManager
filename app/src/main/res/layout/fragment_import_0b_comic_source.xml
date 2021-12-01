@@ -38,7 +38,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
                 android:checked="true"
-                android:text="A web address (nhentai.net)"
+                android:text="A web address"
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
