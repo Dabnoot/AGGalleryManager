@@ -212,21 +212,19 @@ public class Activity_Browser extends AppCompatActivity {
             String sNewTabPostion = gsNewTabSequenceHelper[1];
             iNewTabPosition = Integer.parseInt(sNewTabPostion);
             globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
-            viewPagerFragmentAdapter.insertFragment(iNewTabPosition, icwptd.sAddress);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages.
+            viewPagerFragmentAdapter.insertFragment(iNewTabPosition, icwptd.sAddress);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
+            viewPagerFragmentAdapter.notifyDataSetChanged();
+            InitializeTabAppearance();
+            Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
             globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
-            viewPagerFragmentAdapter.createFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages.
+            viewPagerFragmentAdapter.createFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
+            viewPagerFragmentAdapter.notifyDataSetChanged();
+            InitializeTabAppearance();
+            Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
+            viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
         }
-
-        //  globalClass.gal_Webpages, which will wipe the Hash code from memory.
-        viewPagerFragmentAdapter.notifyDataSetChanged();
-        InitializeTabAppearance();
-
-        Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
-
-        //viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
-
 
     }
 
