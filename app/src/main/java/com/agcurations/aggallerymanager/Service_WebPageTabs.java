@@ -150,7 +150,7 @@ public class Service_WebPageTabs extends IntentService {
         if(fWebPageTabDataFile == null) return;
 
         //Debugging helper section:
-        boolean bTestingCloseOfTabs = true;
+        boolean bTestingCloseOfTabs = false;
         if(bTestingCloseOfTabs){
             boolean bFormReferenceTabFile = false;
             File fReferenceFile = new File(globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebPageTabDataRef.dat");

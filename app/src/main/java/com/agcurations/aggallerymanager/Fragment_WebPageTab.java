@@ -71,6 +71,10 @@ public class Fragment_WebPageTab extends Fragment {
         //Empty constructor
     }
 
+    public Fragment_WebPageTab(String sURL) {
+        gsWebAddress = sURL;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -184,7 +188,7 @@ public class Fragment_WebPageTab extends Fragment {
                         Bitmap bitmap_favicon = gWebView.getFavicon();
                         Activity_Browser activity_browser = (Activity_Browser) getActivity();
                         if (activity_browser != null) {
-                            activity_browser.updateActiveTabNotch(bitmap_favicon); //Update the tab label. //todo: race condition between tabs?
+                            activity_browser.updateSingleTabNotch(ihashCode, bitmap_favicon); //Update the tab label. //todo: race condition between tabs?
                             Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                         }
                         break;
@@ -383,7 +387,7 @@ public class Fragment_WebPageTab extends Fragment {
         });
 
         String sLoadedAddress = gWebView.getUrl();
-        if(sLoadedAddress == null && !gsWebAddress.equals("")) {
+        if(sLoadedAddress == null && !gsWebAddress.equals("")) {  //Logic for properly determining when to reload, such as due to screen rotation.
             InitializeData();
         }
 

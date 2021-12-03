@@ -96,9 +96,11 @@ public class Activity_Browser extends AppCompatActivity {
             globalClass.gal_WebPages = new ArrayList<>();
 
             viewPager2_WebPages = findViewById(R.id.viewPager2_WebPages);
+            viewPager2_WebPages.setOffscreenPageLimit(3);
 
             ApplicationLogWriter("Getting new FragmentViewPagerAdapter.");
             viewPagerFragmentAdapter = new FragmentViewPagerAdapter(getSupportFragmentManager(), getLifecycle(), getApplicationContext());
+
             // set Orientation in your ViewPager2
             viewPager2_WebPages.setOrientation(ViewPager2.ORIENTATION_HORIZONTAL);
 
@@ -210,7 +212,7 @@ public class Activity_Browser extends AppCompatActivity {
             String sNewTabPostion = gsNewTabSequenceHelper[1];
             iNewTabPosition = Integer.parseInt(sNewTabPostion);
             globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
-            viewPagerFragmentAdapter.insertFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages.
+            viewPagerFragmentAdapter.insertFragment(iNewTabPosition, icwptd.sAddress);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages.
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
             globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
@@ -399,9 +401,20 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("InitializeTabAppearance end.");
     }
 
-    public void updateActiveTabNotch(Bitmap bitmap_favicon){
+    public void updateSingleTabNotch(int iHashCode, Bitmap bitmap_favicon){
         ApplicationLogWriter("updateSingleTabNotch start.");
-        int iTabIndex = tabLayout_WebTabs.getSelectedTabPosition();
+        int iTabIndex = -1;
+        //Find the tab index matching the supplied HashCode.
+        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
+            if(iHashCode == globalClass.gal_WebPages.get(i).iTabFragmentHashID){
+                iTabIndex = i;
+                break;
+            }
+        }
+        if(iTabIndex == -1){
+            return;
+        }
+
         TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(iTabIndex);
         if(tab != null) {
             View view = tab.getCustomView();
@@ -465,8 +478,9 @@ public class Activity_Browser extends AppCompatActivity {
             }
         }
 
-        public void insertFragment(int index) {
-            Fragment_WebPageTab fwp = new Fragment_WebPageTab();
+        public void insertFragment(int index, String sURL) {
+            //InsertFragment is only used for inserting a new tab from a long-press on a hyperlink in the fragment's webView.
+            Fragment_WebPageTab fwp = new Fragment_WebPageTab(sURL);
             fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab();
             alFragment_WebPages.add(index, fwp);
             //Add the hashCode of the new fragment to the WebPageTabData for tracking.
