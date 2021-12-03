@@ -331,10 +331,10 @@ public class Service_WebPageTabs extends IntentService {
         wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
 
 
-        if(sRecord.length >= 5) {
+        if(sRecord.length >= 4) {
             //Favicon filename might be empty, and if it is the last item on the record,
             //  it will not be split-out via the split operation.
-            wptd.sFaviconFilename = sRecord[4];
+            wptd.sFaviconFilename = sRecord[3];
         }
 
         return wptd;
@@ -342,7 +342,19 @@ public class Service_WebPageTabs extends IntentService {
 
     public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String sRecord){
         String[] sRecord2 =  sRecord.split("\t");
-        return ConvertStringToWebPageTabData(sRecord2);
+        //Split will ignore empty data and not return a full-sized array.
+        //  Correcting array...
+        int iRequiredFieldCount = 3;
+        String[] sRecord3 = new String[iRequiredFieldCount];
+        for(int i = 0; i < iRequiredFieldCount; i++){
+            if(i < sRecord2.length){
+                sRecord3[i] = sRecord2[i];
+            } else {
+                sRecord3[i] = "";
+            }
+
+        }
+        return ConvertStringToWebPageTabData(sRecord3);
     }
 
     void problemNotificationConfig(String sMessage, String sIntentActionFilter){
