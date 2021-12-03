@@ -110,6 +110,13 @@ public class Activity_Browser extends AppCompatActivity {
             //Stop the user from swiping left and right on the ViewPager (control with Next button):
             viewPager2_WebPages.setUserInputEnabled(false);
 
+            viewPager2_WebPages.setPageTransformer(new ViewPager2.PageTransformer() {
+                @Override
+                public void transformPage(@NonNull View page, float position) {
+
+                }
+            });
+
             tabLayout_WebTabs = findViewById(R.id.tabLayout_WebTabs);
 
             relativeLayout_BrowserTopBar = findViewById(R.id.relativeLayout_BrowserTopBar); //Referenced for scrolling the TopBar out of view during WebView scrolldown.
