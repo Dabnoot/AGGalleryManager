@@ -46,15 +46,12 @@ public class Fragment_WebPageTab extends Fragment {
 
     public static final String ARG_WEBPAGE_INDEX = "WEBPAGE_INDEX";
 
-    public int giWebPageIndex;
-
     private VideoEnabledWebView gWebView;
     private VideoEnabledWebChromeClient webChromeClient;
 
     private EditText gEditText_Address;
 
     public Fragment_WebPageTab(int iWebPageIndex) {
-        giWebPageIndex = iWebPageIndex;
     }
 
     public String gsWebAddress = "";
@@ -94,9 +91,9 @@ public class Fragment_WebPageTab extends Fragment {
 
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
-        if (getArguments() != null) {
+        /*if (getArguments() != null) {
             giWebPageIndex = getArguments().getInt(ARG_WEBPAGE_INDEX, -1);
-        }
+        }*/
 
         gals_ResourceRequests = new ArrayList<>();
         ApplicationLogWriter("OnCreate End.");
@@ -187,7 +184,7 @@ public class Fragment_WebPageTab extends Fragment {
                         Bitmap bitmap_favicon = gWebView.getFavicon();
                         Activity_Browser activity_browser = (Activity_Browser) getActivity();
                         if (activity_browser != null) {
-                            activity_browser.updateSingleTabNotch(icwptd, bitmap_favicon); //Update the tab label.
+                            activity_browser.updateActiveTabNotch(bitmap_favicon); //Update the tab label. //todo: race condition between tabs?
                             Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                         }
                         break;
@@ -448,13 +445,6 @@ public class Fragment_WebPageTab extends Fragment {
         ApplicationLogWriter("OnViewCreated end.");
     }
 
-    /*static class HREFHandler extends Handler{
-        @Override
-        public void handleMessage(@NonNull Message msg) {
-            super.handleMessage(msg);
-            String src = msg.getData().getString("src");
-        }
-    }*/
 
     private void ApplicationLogWriter(String sMessage){
         if(gbWriteApplicationLog){
@@ -484,6 +474,7 @@ public class Fragment_WebPageTab extends Fragment {
                         gEditText_Address.setText(sAddress);
                         gsWebAddress = sAddress;
                         gWebView.loadUrl(sAddress);
+                        gWebView.gsTabID = icwptd.sTabID;
                     }
                 }
                 break;

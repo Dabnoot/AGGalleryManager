@@ -217,6 +217,8 @@ public class VideoEnabledWebView extends WebView
     final int ID_COPY_LINK_TEXT = 7423;
     final int ID_DOWNLOAD_IMAGE = 7424;
 
+    public String gsTabID = "";
+
     @Override
     protected void onCreateContextMenu(ContextMenu menu) {
         super.onCreateContextMenu(menu);
@@ -237,6 +239,7 @@ public class VideoEnabledWebView extends WebView
                         Message msg = new Message();
                         Bundle bundle = new Bundle();
                         bundle.putString("url", gsNodeData_url);
+                        bundle.putString("tabID", gsTabID);
                         msg.setData(bundle);
                         OpenLinkInNewTabHandler.dispatchMessage(msg);
                         break;

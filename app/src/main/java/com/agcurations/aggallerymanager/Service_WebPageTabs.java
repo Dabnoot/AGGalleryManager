@@ -143,16 +143,14 @@ public class Service_WebPageTabs extends IntentService {
 
     private void handleActionGetWebPageTabData() {
 
-        //Update memory:
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
-        //Update the webpage tab data file:
+        //Get the webpage tab data file path:
         File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
         if(fWebPageTabDataFile == null) return;
-        if(!fWebPageTabDataFile.exists()) return;
 
-
-        boolean bTestingCloseOfTabs = false;
+        //Debugging helper section:
+        boolean bTestingCloseOfTabs = true;
         if(bTestingCloseOfTabs){
             boolean bFormReferenceTabFile = false;
             File fReferenceFile = new File(globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebPageTabDataRef.dat");
@@ -173,9 +171,10 @@ public class Service_WebPageTabs extends IntentService {
 
         }
 
+        //If the file does not exist, return.
+        if(!fWebPageTabDataFile.exists()) return;
 
-
-
+        //Read the file into memory.
         try {
 
             BufferedReader brReader;
@@ -209,10 +208,6 @@ public class Service_WebPageTabs extends IntentService {
             }
         }
 
-        //Go through the tab indexes and make sure all is ok. (There was a problem at least once)
-        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
-            globalClass.gal_WebPages.get(i).iTabIndex = i + 1;
-        }
 
 
 
@@ -292,7 +287,6 @@ public class Service_WebPageTabs extends IntentService {
     public String getCatalogHeader(){
         String sHeader = "";
         sHeader = sHeader + "ID";                       //Tab ID (unique).
-        sHeader = sHeader + "\t" + "Index";             //Tab index in the tab layout.
         sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
         sHeader = sHeader + "\t" + "AddressHistory";    //Address history for the tab.
         sHeader = sHeader + "\t" + "Favicon Filename";  //Filename of bitmap for tab icon.
@@ -305,7 +299,6 @@ public class Service_WebPageTabs extends IntentService {
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + GlobalClass.JumbleStorageText(wptd.sTabID);
-        sRecord = sRecord + "\t" + wptd.iTabIndex;
         sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sTabTitle);
         /*sRecord = sRecord + "\t" + "{";
         StringBuilder sb = new StringBuilder();
@@ -326,8 +319,7 @@ public class Service_WebPageTabs extends IntentService {
         //Designed for interpreting a line as read from the WebPageTabData file.
         ItemClass_WebPageTabData wptd =  new ItemClass_WebPageTabData();
         wptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
-        wptd.iTabIndex = Integer.parseInt(sRecord[1]);
-        wptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[2]);
+        wptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[1]);
         /*wptd.sAddress = new ArrayList<>();
         String sAddresses = sRecord[3];
         sAddresses = sAddresses.substring(1, sAddresses.length() - 1); //Remove '{' and '}'.
@@ -336,7 +328,7 @@ public class Service_WebPageTabs extends IntentService {
             sAddressHistory[i] = GlobalClass.JumbleStorageText(sAddressHistory[i]);
         }
         wptd.sAddress.addAll(Arrays.asList(sAddressHistory));*/
-        wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[3]);
+        wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
 
 
         if(sRecord.length >= 5) {

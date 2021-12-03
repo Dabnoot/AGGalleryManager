@@ -48,8 +48,6 @@ public class Activity_Browser extends AppCompatActivity {
     ViewPager2 viewPager2_WebPages;
     FragmentViewPagerAdapter viewPagerFragmentAdapter;
 
-    int giFragmentCount = 0;
-
     GlobalClass globalClass;
 
     WebPageTabDataServiceResponseReceiver webPageTabDataServiceResponseReceiver;
@@ -63,6 +61,8 @@ public class Activity_Browser extends AppCompatActivity {
 
     public int giBrowserTopBarHeight_Original;
     public RelativeLayout relativeLayout_BrowserTopBar;
+
+    private String[] gsNewTabSequenceHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,12 +142,11 @@ public class Activity_Browser extends AppCompatActivity {
 
                 @Override
                 public void onTabUnselected(TabLayout.Tab tab) {
-
+                    gsNewTabSequenceHelper = null; //Clear the helper, new tab creation order reset.
                 }
 
                 @Override
                 public void onTabReselected(TabLayout.Tab tab) {
-
                 }
 
             });
@@ -157,6 +156,7 @@ public class Activity_Browser extends AppCompatActivity {
             imageButton_AddTab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    gsNewTabSequenceHelper = null; //Clear the helper, new tab creation order reset.
                     CreateNewTab("");
                 }
             });
@@ -193,10 +193,9 @@ public class Activity_Browser extends AppCompatActivity {
 
 
     public void CreateNewTab(String sAddress){
-        giFragmentCount++;
         ItemClass_WebPageTabData icwptd = new ItemClass_WebPageTabData();
-        icwptd.iTabIndex = giFragmentCount;
         icwptd.sTabID = GlobalClass.GetTimeStampFileSafe();
+
         //icwptd.sAddress = new ArrayList<>();
         if(sAddress != null){
             if(!sAddress.equals("")) {
@@ -204,15 +203,27 @@ public class Activity_Browser extends AppCompatActivity {
                 icwptd.sAddress = sAddress;
             }
         }
-        globalClass.gal_WebPages.add(icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
-        viewPagerFragmentAdapter.createFragment(giFragmentCount);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update
+        int iNewTabPosition;
+
+        //If a tab is to be inserted, not appended
+        if(gsNewTabSequenceHelper != null){
+            String sNewTabPostion = gsNewTabSequenceHelper[1];
+            iNewTabPosition = Integer.parseInt(sNewTabPostion);
+            globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
+            viewPagerFragmentAdapter.insertFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages.
+        } else {
+            iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
+            globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
+            viewPagerFragmentAdapter.createFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages.
+        }
+
         //  globalClass.gal_Webpages, which will wipe the Hash code from memory.
         viewPagerFragmentAdapter.notifyDataSetChanged();
         InitializeTabAppearance();
 
         Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
 
-        viewPager2_WebPages.setCurrentItem(icwptd.iTabIndex, false);
+        //viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
 
 
     }
@@ -223,6 +234,20 @@ public class Activity_Browser extends AppCompatActivity {
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
             String sURL = msg.getData().getString("url");
+            String sTabID = msg.getData().getString("tabID"); //The TabID for the tab calling for the opening of a link in a new tab.
+            //Open the new tab immediately after the current tab, or after a new prior tab.
+            int iNewTabPosition;
+            if(gsNewTabSequenceHelper != null){
+                String sLastNewTabPostion = gsNewTabSequenceHelper[1];
+                int iLastNewTabPosition = Integer.parseInt(sLastNewTabPostion);
+                iNewTabPosition = iLastNewTabPosition + 1;
+            } else {
+                //Determine current tab position:
+                int iCurrentTabPosition = tabLayout_WebTabs.getSelectedTabPosition();
+                iNewTabPosition = iCurrentTabPosition + 1;
+            }
+            String sNewTabPosition = String.valueOf(iNewTabPosition);
+            gsNewTabSequenceHelper = new String[]{sTabID, sNewTabPosition};  //Initialize helper with location for new tab.
             CreateNewTab(sURL);
         }
     }
@@ -350,33 +375,15 @@ public class Activity_Browser extends AppCompatActivity {
                     //Perform operations to remove the tab:
                     viewPagerFragmentAdapter.removeItem(iPosition);
 
-                    giFragmentCount--;
-                    int iTabIndex = globalClass.gal_WebPages.get(iPosition).iTabIndex;
-                    for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
-                        if(icwptd.iTabIndex == iTabIndex){
-
-                            icwptd.iTabIndex = -1;
-
-                            //Delete the favicon file, if it was recorded:
-                            String sFaviconFilename = icwptd.sFaviconFilename;
-                            if(sFaviconFilename != null){
-                                if(!sFaviconFilename.equals("")){
-                                    Service_WebPageTabs.startAction_DeleteFaviconFile(getApplicationContext(), sFaviconFilename);
-                                }
-                            }
-
-                        } else if(icwptd.iTabIndex > iTabIndex){
-                            icwptd.iTabIndex--;
+                    //Delete the favicon file, if it was recorded:
+                    String sFaviconFilename = globalClass.gal_WebPages.get(iPosition).sFaviconFilename;
+                    if(sFaviconFilename != null){
+                        if(!sFaviconFilename.equals("")){
+                            Service_WebPageTabs.startAction_DeleteFaviconFile(getApplicationContext(), sFaviconFilename);
                         }
                     }
 
-                    if(iTabIndex <= globalClass.gal_WebPages.size()) {
-                        globalClass.gal_WebPages.remove(iTabIndex - 1);
-                    } else {
-                        //If something wierd has happened and the index is beyond the array, remove
-                        //  only the end item.
-                        globalClass.gal_WebPages.remove(globalClass.gal_WebPages.size() - 1);
-                    }
+                    globalClass.gal_WebPages.remove(iPosition);
 
                     //Update the tab notch views:
                     InitializeTabAppearance();
@@ -392,15 +399,16 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("InitializeTabAppearance end.");
     }
 
-    public void updateSingleTabNotch(ItemClass_WebPageTabData itemClass_webPageTabData, Bitmap bitmap_favicon){
+    public void updateActiveTabNotch(Bitmap bitmap_favicon){
         ApplicationLogWriter("updateSingleTabNotch start.");
-        TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(itemClass_webPageTabData.iTabIndex - 1);
+        int iTabIndex = tabLayout_WebTabs.getSelectedTabPosition();
+        TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(iTabIndex);
         if(tab != null) {
             View view = tab.getCustomView();
             if(view != null) {
                 TextView textView_TabText = view.findViewById(R.id.text);
                 if (textView_TabText != null) {
-                    String sTitle = itemClass_webPageTabData.sTabTitle;
+                    String sTitle = globalClass.gal_WebPages.get(iTabIndex).sTabTitle;
                     if (sTitle.equals("")) {
                         sTitle = "New Tab";
                     }
@@ -425,7 +433,7 @@ public class Activity_Browser extends AppCompatActivity {
 
         GlobalClass globalClass;
         ArrayList<Fragment_WebPageTab> alFragment_WebPages;
-        int iFragmentCount = 0;
+        //int iFragmentCount = 0;
 
         public FragmentViewPagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle, Context applicationContext) {
             super(fragmentManager, lifecycle);
@@ -436,32 +444,34 @@ public class Activity_Browser extends AppCompatActivity {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            if(position > iFragmentCount){
+            //'position' is zero-based. The routine is called twice for each fragment. Once by the coder's code to create a fragment, again by the FragmentStateAdapter to load and run the fragment.
+            if(position > alFragment_WebPages.size() - 1){
 
-                Fragment_WebPageTab fwp = new Fragment_WebPageTab(iFragmentCount + 1);
+                Fragment_WebPageTab fwp = new Fragment_WebPageTab();
 
                 fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab();
 
                 alFragment_WebPages.add(fwp);
 
-                //Add the hashCode of the new fragment to the WebPageTabData for tracking:
-                for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
-                    if(icwptd.iTabIndex == position){
-                        icwptd.iTabFragmentHashID = fwp.hashCode();
-                        break;
-                    }
-                }
-
-
-
-                iFragmentCount++;   //Increment this last because we check to see if all of the fragments
-                                    //  have been created in another routine before that routine moves on.
-
+                //Add the hashCode of the new fragment to the WebPageTabData for tracking.
+                //  WebPageTabData must be added before this createFragment routine is called.
+                globalClass.gal_WebPages.get(position).iTabFragmentHashID = fwp.hashCode();
 
                 return fwp;
             } else {
+                //If the FragmentStateAdapter is calling for a recreation of an existing fragment,
+                //  return the fragment from the array:
                 return alFragment_WebPages.get(position);
             }
+        }
+
+        public void insertFragment(int index) {
+            Fragment_WebPageTab fwp = new Fragment_WebPageTab();
+            fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab();
+            alFragment_WebPages.add(index, fwp);
+            //Add the hashCode of the new fragment to the WebPageTabData for tracking.
+            //  WebPageTabData must be added before this createFragment routine is called.
+            globalClass.gal_WebPages.get(index).iTabFragmentHashID = fwp.hashCode();
         }
 
 
@@ -469,7 +479,7 @@ public class Activity_Browser extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return iFragmentCount;
+            return alFragment_WebPages.size();
         }
 
         @Override
@@ -500,7 +510,7 @@ public class Activity_Browser extends AppCompatActivity {
 
         public void removeItem(int iPosition){
             alFragment_WebPages.remove(iPosition);
-            iFragmentCount--;
+            //iFragmentCount--;
             notifyDataSetChanged();
         }
 
@@ -531,9 +541,8 @@ public class Activity_Browser extends AppCompatActivity {
                         //This should only run at Activity start.
                         //Initialize the tabs:
                         GlobalClass globalClass = (GlobalClass) getApplicationContext();
-                        for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages) {
-                            giFragmentCount++;
-                            viewPagerFragmentAdapter.createFragment(giFragmentCount);
+                        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
+                            viewPagerFragmentAdapter.createFragment(i);
                         }
 
                         viewPagerFragmentAdapter.notifyDataSetChanged();
