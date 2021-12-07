@@ -71,8 +71,11 @@ public class Fragment_WebPageTab extends Fragment {
         //Empty constructor
     }
 
+    boolean gPreloadWebPage = false;
+
     public Fragment_WebPageTab(String sURL) {
         gsWebAddress = sURL;
+        gPreloadWebPage = true;
     }
 
     @Override
@@ -100,6 +103,35 @@ public class Fragment_WebPageTab extends Fragment {
         }*/
 
         gals_ResourceRequests = new ArrayList<>();
+
+
+        if(gPreloadWebPage){
+            final Fragment fParent = this;
+            WebViewClient webViewClient = new WebViewClient(){
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    String sTitle = view.getTitle();
+                    for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                        int ihashCode = fParent.hashCode();
+                        if (ihashCode == icwptd.iTabFragmentHashID) {
+                            icwptd.sTabTitle = sTitle;
+                            Bitmap bitmap_favicon = gWebView.getFavicon();
+                            Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                            if (activity_browser != null) {
+                                activity_browser.updateSingleTabNotch(ihashCode, bitmap_favicon); //Update the tab label. //todo: race condition between tabs?
+                                Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
+                            }
+                            break;
+                        }
+                    }
+                }
+            };
+            WebView webView = new WebView(getActivity());
+            webView.setWebViewClient(webViewClient);
+            webView.loadUrl(gsWebAddress);
+        }
+
+
         ApplicationLogWriter("OnCreate End.");
     }
 
