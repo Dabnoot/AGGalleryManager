@@ -1,5 +1,7 @@
 package com.agcurations.aggallerymanager;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -9,5 +11,5 @@ public class ItemClass_WebPageTabData  implements Serializable {
     String sTabTitle = "";                  //Save the title so that the tab can be labeled.
     String sAddress = "";                        //Last used address for this tab. Enables reload.
     int iTabFragmentHashID;                 //Holds ID of tab related to this instance of ItemClass_WebPageTabData. Really needed when the view resets.
-    String sFaviconFilename = "";           //Holds filename of bitmap image for tab icon.
+    String sFaviconAddress = "";           //Holds address of favicon file for tab icon.
 }

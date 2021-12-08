@@ -39,7 +39,6 @@ import java.util.ArrayList;
 
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK;
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8;
-import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE;
 
 
 public class Fragment_Import_1a_VideoWebDetect extends Fragment {
@@ -156,9 +155,9 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true); //Some items may not appear on some pages if this is not enabled.
         //Add a JavaScript interface to get the HTML from the WebView:
-        gWebView.addJavascriptInterface(new MyJavaScriptInterface(), "HtmlViewer");
+        gWebView.addJavascriptInterface(new MyJavaScriptInterfaceGetHTML(), "HtmlViewer");
         //Add a JavaScript interface to get the element upon which the user has clicked (for testing):
-        gWebView.addJavascriptInterface(new MyClickJsToAndroid(), "my");
+        gWebView.addJavascriptInterface(new MyClickJsToAndroid(), "my"); //todo: clarify the coding. Who names a routine 'my'??
 
         gWebView.setWebViewClient(new WebViewClient() {
             @Override
@@ -515,7 +514,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
     //========== Class to get the html from the webview =======================
 
-    class MyJavaScriptInterface {
+    class MyJavaScriptInterfaceGetHTML {
 
         @JavascriptInterface
         public void showHTML(String html) {

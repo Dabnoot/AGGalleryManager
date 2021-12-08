@@ -35,6 +35,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -222,7 +223,8 @@ public class Activity_Browser extends AppCompatActivity {
             viewPagerFragmentAdapter.insertFragment(iNewTabPosition, icwptd.sAddress);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
             viewPagerFragmentAdapter.notifyDataSetChanged();
             InitializeTabAppearance();
-            Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
+            //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
+            Service_WebPageTabs.startAction_GetWebpageTitleFavicon(getApplicationContext(), icwptd); //This routine also calls the same routine as startAction_SetWebPageTabData.
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
             globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
@@ -361,6 +363,17 @@ public class Activity_Browser extends AppCompatActivity {
             RelativeLayout relativeLayout_custom_tab = (RelativeLayout)
                     LayoutInflater.from(getApplicationContext())
                             .inflate(R.layout.custom_tab, null);
+
+            ImageView imageView_Favicon = relativeLayout_custom_tab.findViewById(R.id.imageView_Favicon);
+            if(imageView_Favicon != null) {
+                String sFaviconAddress = globalClass.gal_WebPages.get(i).sFaviconAddress;
+                if(!sFaviconAddress.equals("")){
+                    Glide.with(this)
+                            .load(sFaviconAddress)
+                            .into(imageView_Favicon);
+                }
+            }
+
             TextView textView_TabText = relativeLayout_custom_tab.findViewById(R.id.text);
             textView_TabText.setText(sTitle);
 
@@ -382,14 +395,6 @@ public class Activity_Browser extends AppCompatActivity {
                     //Perform operations to remove the tab:
                     viewPagerFragmentAdapter.removeItem(iPosition);
 
-                    //Delete the favicon file, if it was recorded:
-                    String sFaviconFilename = globalClass.gal_WebPages.get(iPosition).sFaviconFilename;
-                    if(sFaviconFilename != null){
-                        if(!sFaviconFilename.equals("")){
-                            Service_WebPageTabs.startAction_DeleteFaviconFile(getApplicationContext(), sFaviconFilename);
-                        }
-                    }
-
                     globalClass.gal_WebPages.remove(iPosition);
 
                     //Update the tab notch views:
@@ -406,8 +411,9 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("InitializeTabAppearance end.");
     }
 
-    public void updateSingleTabNotch(int iHashCode, Bitmap bitmap_favicon){
-        ApplicationLogWriter("updateSingleTabNotch start.");
+    public void updateSingleTabNotchTitle(int iHashCode){
+        //Update tab title only.
+        ApplicationLogWriter("updateSingleTabNotchTitle start.");
         int iTabIndex = -1;
         //Find the tab index matching the supplied HashCode.
         for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
@@ -432,14 +438,57 @@ public class Activity_Browser extends AppCompatActivity {
                     }
                     textView_TabText.setText(sTitle);
                 }
+            }
+        }
+        ApplicationLogWriter("updateSingleTabNotchTitle end.");
+    }
+
+    public void updateSingleTabNotchFavicon(int iHashCode, Bitmap bitmap_favicon){ //Todo: Combine with updateSingleTabNotchTitle, but with a flag?
+        //Update tab title and favicon.
+        ApplicationLogWriter("updateSingleTabNotchFavicon start.");
+        int iTabIndex = -1;
+        //Find the tab index matching the supplied HashCode.
+        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
+            if(iHashCode == globalClass.gal_WebPages.get(i).iTabFragmentHashID){
+                iTabIndex = i;
+                break;
+            }
+        }
+        if(iTabIndex == -1){
+            return;
+        }
+
+        TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(iTabIndex);
+        if(tab != null) {
+            View view = tab.getCustomView();
+            if(view != null) {
+                TextView textView_TabText = view.findViewById(R.id.text);
+                if (textView_TabText != null) {
+                    String sTitle = globalClass.gal_WebPages.get(iTabIndex).sTabTitle;
+                    if (sTitle.equals("")) {
+                        sTitle = "New Tab";
+                    }
+                    textView_TabText.setText(sTitle);
+                }
+
                 ImageView imageView_Favicon = view.findViewById(R.id.imageView_Favicon);
-                if(imageView_Favicon != null && bitmap_favicon != null){
-                    imageView_Favicon.setImageResource(0);
-                    imageView_Favicon.setImageBitmap(bitmap_favicon);
+                if(imageView_Favicon != null) {
+                    if( bitmap_favicon != null) {
+                        imageView_Favicon.setImageResource(0);
+                        imageView_Favicon.setImageBitmap(bitmap_favicon);
+                    } else {
+                        String sFaviconAddress = globalClass.gal_WebPages.get(iTabIndex).sFaviconAddress;
+                        if(!sFaviconAddress.equals("")){
+                            Glide.with(this)
+                                    .load(sFaviconAddress)
+                                    .into(imageView_Favicon);
+                        }
+
+                    }
                 }
             }
         }
-        ApplicationLogWriter("updateSingleTabNotch end.");
+        ApplicationLogWriter("updateSingleTabNotchFavicon end.");
     }
 
 
@@ -561,7 +610,13 @@ public class Activity_Browser extends AppCompatActivity {
                         //Initialize the tabs:
                         GlobalClass globalClass = (GlobalClass) getApplicationContext();
                         for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
-                            viewPagerFragmentAdapter.createFragment(i);
+                            String sAddress = globalClass.gal_WebPages.get(i).sAddress;
+                            if(!sAddress.equals("")) {
+                                viewPagerFragmentAdapter.insertFragment(i, globalClass.gal_WebPages.get(i).sAddress);
+                            } else {
+                                viewPagerFragmentAdapter.createFragment(i);
+                            }
+
                         }
 
                         viewPagerFragmentAdapter.notifyDataSetChanged();
@@ -575,6 +630,23 @@ public class Activity_Browser extends AppCompatActivity {
                         bTabsLoaded = true;
 
                     } else if (sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TAB_CLOSED)){
+
+                    } else if (sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED)){
+                        String sTabID = intent.getStringExtra(Service_WebPageTabs.EXTRA_WEBPAGE_TAB_DATA_TABID);
+                        if(sTabID != null) {
+                            //Find the hash for the fragment with the matching tab ID:
+                            int iHashCode = 0;
+                            for (int i = 0; i < globalClass.gal_WebPages.size(); i++) {
+                                if (sTabID.equals(globalClass.gal_WebPages.get(i).sTabID)) {
+                                    iHashCode = globalClass.gal_WebPages.get(i).iTabFragmentHashID;
+                                    break;
+                                }
+                            }
+                            if(iHashCode != 0) {
+                                updateSingleTabNotchFavicon(iHashCode, null);
+                            }
+                        }
+
 
                     }
                 }

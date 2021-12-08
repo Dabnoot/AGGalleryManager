@@ -3,11 +3,22 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
+import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -18,23 +29,26 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class Service_WebPageTabs extends IntentService {
 
-    private static final String ACTION_SET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.set_webpage_tab_data";
-    private static final String ACTION_GET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.get_webpage_tab_data";
-    private static final String ACTION_REMOVE_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.action.remove_webpage_tab_data";
-    private static final String ACTION_DELETE_FAVICON_FILE = "com.agcurations.webbrowsertest.action.delete_favicon_file";
+    private static final String ACTION_SET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.action.set_webpage_tab_data";
+    private static final String ACTION_GET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.action.get_webpage_tab_data";
+    private static final String ACTION_REMOVE_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.action.remove_webpage_tab_data";
+    private static final String ACTION_GET_WEBPAGE_TITLE_FAVICON = "com.agcurations.webbrowser.action.get_webpage_title_favicon";
 
-    private static final String EXTRA_WEBPAGE_TAB_DATA = "com.agcurations.webbrowsertest.extra.WEBPAGE_TAB_DATA";
-    private static final String EXTRA_FAVICON_FILENAME = "com.agcurations.webbrowsertest.extra.FAVICON_FILENAME";
+    private static final String EXTRA_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA";
+    public static final String EXTRA_WEBPAGE_TAB_DATA_TABID = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_TABID";
 
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
 
-    public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowsertest.extra.RESULT_TYPE";
-    public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowsertest.result.WEB_PAGE_TAB_DATA_ACQUIRED";
-    public static final String RESULT_TYPE_WEB_PAGE_TAB_CLOSED = "com.agcurations.webbrowsertest.result.WEB_PAGE_TAB_CLOSED";
+    public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
+    public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TAB_DATA_ACQUIRED";
+    public static final String RESULT_TYPE_WEB_PAGE_TAB_CLOSED = "com.agcurations.webbrowser.result.WEB_PAGE_TAB_CLOSED";
+    public static final String RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED";
 
     public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
     public static final String OPEN_NEW_TAB_REQUEST = "com.agcurations.aggallerymanager.OPEN_NEW_TAB_REQUEST";
+
+
 
     public Service_WebPageTabs() {
         super("Service_WebPages");
@@ -60,10 +74,10 @@ public class Service_WebPageTabs extends IntentService {
         context.startService(intent);
     }
 
-    public static void startAction_DeleteFaviconFile(Context context, String sFaviconFilename) {
+    public static void startAction_GetWebpageTitleFavicon(Context context, ItemClass_WebPageTabData itemClass_webPageTabData){
         Intent intent = new Intent(context, Service_WebPageTabs.class);
-        intent.setAction(ACTION_DELETE_FAVICON_FILE);
-        intent.putExtra(EXTRA_FAVICON_FILENAME, sFaviconFilename);
+        intent.setAction(ACTION_GET_WEBPAGE_TITLE_FAVICON);
+        intent.putExtra(EXTRA_WEBPAGE_TAB_DATA, itemClass_webPageTabData);
         context.startService(intent);
     }
 
@@ -79,10 +93,10 @@ public class Service_WebPageTabs extends IntentService {
                 handleActionGetWebPageTabData();
             } else if (ACTION_REMOVE_WEBPAGE_TAB_DATA.equals(action)) {
                 handleActionRemoveWebPageTabData();
-            } else if (ACTION_DELETE_FAVICON_FILE.equals(action)) {
-                final String sFaviconFilename = intent.getStringExtra(EXTRA_FAVICON_FILENAME);
-                if(sFaviconFilename == null) return;
-                handleActionDeleteFaviconFile(sFaviconFilename);
+            } else if (ACTION_GET_WEBPAGE_TITLE_FAVICON.equals(action)){
+                final ItemClass_WebPageTabData itemClass_webPageTabData = (ItemClass_WebPageTabData) intent.getSerializableExtra(EXTRA_WEBPAGE_TAB_DATA);
+                if(itemClass_webPageTabData == null) return;
+                handleActionPreloadHTMLGetTitleFavicon(itemClass_webPageTabData);
             }
         }
     }
@@ -263,18 +277,106 @@ public class Service_WebPageTabs extends IntentService {
 
     }
 
-    private void handleActionDeleteFaviconFile(String sFaviconFilename) {
+    private void handleActionPreloadHTMLGetTitleFavicon(ItemClass_WebPageTabData icwptd_DataToSet){
+
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        String sFilePath = globalClass.gfWebpageFaviconBitmapFolder.getPath() + File.separator + sFaviconFilename;
-        File fFaviconFile = new File(sFilePath);
-        if(fFaviconFile.exists()){
-            if(!fFaviconFile.delete()){
-                //do nothing
-                //todo.
+
+        //Get the html from the webpage:
+        try {
+            URL google = new URL(icwptd_DataToSet.sAddress);
+            BufferedReader in = new BufferedReader(new InputStreamReader(google.openStream()));
+            String input;
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((input = in.readLine()) != null) {
+                stringBuilder.append(input);
             }
+            in.close();
+            String sHTML = stringBuilder.toString();
+
+            //Process the HTML so that it can be parsed:
+
+            //Note: DocumentBuilderFactory.newInstance().newDocumentBuilder().parse....
+            //  does not work well to parse this html. Modern html interpreters accommodate
+            //  certain "liberties" in the code. That parse routine is meant for tight XML.
+            //  HtmlCleaner does a good job processing the html in a manner similar to modern
+            //  browsers.
+            //Clean up the HTML:
+            HtmlCleaner pageParser = new HtmlCleaner();
+            CleanerProperties props = pageParser.getProperties();
+            props.setAllowHtmlInsideAttributes(true);
+            props.setAllowMultiWordAttributes(true);
+            props.setRecognizeUnicodeChars(true);
+            props.setOmitComments(true);
+            TagNode node = null;
+            try {
+                node = pageParser.clean(sHTML);
+            } catch (Exception e){
+                String sMessage = e.getMessage();
+                return;
+            }
+            //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
+            String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
+
+            //Attempt to locate the title and favicon address:
+
+            String sXPathExpressionTitleLocator = "//title/text()";
+            String sTitle = "";
+            String sXPathExpressionFaviconLocator = "//link[@rel='icon']/@href";
+            String sURLFaviconLink = "";
+            try {
+                //Use an xPathExpression (similar to RegEx) to look for the title in the html/xml:
+                Object[] objsTitleString = node.evaluateXPath(sXPathExpressionTitleLocator);
+                //Check to see if we found anything:
+                if (objsTitleString != null && objsTitleString.length > 0) {
+                    //If we found something, assign it to a string:
+                    for (Object oTitleString : objsTitleString) {
+                        sTitle = oTitleString.toString();
+                        if (!sTitle.equals("")) {
+                            break;
+                        }
+                    }
+                }
+                icwptd_DataToSet.sTabTitle = sTitle;
+
+                //Use an xPathExpression (similar to RegEx) to look for favicon in the html/xml:
+                Object[] objsFaviconLink = node.evaluateXPath(sXPathExpressionFaviconLocator);
+                //Check to see if we found anything:
+                if (objsFaviconLink != null && objsFaviconLink.length > 0) {
+                    //If we found something, assign it to a string:
+                    for (Object oFaviconLink : objsFaviconLink) {
+                        sURLFaviconLink = oFaviconLink.toString();
+                        if (!sURLFaviconLink.equals("")) {
+                            break;
+                        }
+                    }
+                }
+                icwptd_DataToSet.sFaviconAddress = sURLFaviconLink;
+
+            } catch (Exception e) {
+                String sMessage = e.getMessage();
+            }
+
+
+
+
+        } catch (Exception e){
+            String sMessage = e.getMessage();
+            return;
         }
 
+        handleActionSetWebPageTabData(icwptd_DataToSet);
+
+        //Broadcast a message to be picked-up by the WebPage Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent.putExtra(EXTRA_WEBPAGE_TAB_DATA_TABID, icwptd_DataToSet.sTabID);
+        broadcastIntent.putExtra(EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
     }
+
+
 
 
 //==================================================================================================
@@ -310,7 +412,7 @@ public class Service_WebPageTabs extends IntentService {
         }
         sRecord = sRecord + sb.toString() + "%%" + "}";*/
         sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sAddress);
-        sRecord = sRecord + "\t" + wptd.sFaviconFilename;
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sFaviconAddress);
 
         return sRecord;
     }
@@ -334,7 +436,7 @@ public class Service_WebPageTabs extends IntentService {
         if(sRecord.length >= 4) {
             //Favicon filename might be empty, and if it is the last item on the record,
             //  it will not be split-out via the split operation.
-            wptd.sFaviconFilename = sRecord[3];
+            wptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[3]);
         }
 
         return wptd;
@@ -344,7 +446,7 @@ public class Service_WebPageTabs extends IntentService {
         String[] sRecord2 =  sRecord.split("\t");
         //Split will ignore empty data and not return a full-sized array.
         //  Correcting array...
-        int iRequiredFieldCount = 3;
+        int iRequiredFieldCount = 4;
         String[] sRecord3 = new String[iRequiredFieldCount];
         for(int i = 0; i < iRequiredFieldCount; i++){
             if(i < sRecord2.length){

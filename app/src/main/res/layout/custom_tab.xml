@@ -13,12 +13,14 @@
         android:layout_height="match_parent">
         <ImageView
             android:id= "@+id/imageView_Favicon"
-            android:layout_width="wrap_content"
-            android:layout_height= "34dp"
-            android:layout_marginStart="10dp"
+            android:layout_width="16dp"
+            android:layout_height= "16dp"
+            android:layout_marginStart="13dp"
+            android:layout_marginBottom="9dp"
             android:src="@drawable/new_tab_icon"
-            android:scaleType="center"
-            android:layout_gravity="bottom"/>
+            android:layout_gravity="bottom"
+            android:scaleType="fitCenter"/>
+            <!--android:scaleType="center"/>-->
     </LinearLayout>
 
     <LinearLayout
