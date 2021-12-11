@@ -11,7 +11,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -74,6 +74,8 @@ public class Fragment_WebPageTab extends Fragment {
     Activity_Browser.HandlerOpenLinkInNewTab handlerOpenLinkInNewTab;
 
     private int giThisFragmentHashCode = 0;
+
+    public RelativeLayout gRelativeLayout_WebViewNavigation;
 
     public Fragment_WebPageTab() {
         //Empty constructor
@@ -195,6 +197,7 @@ public class Fragment_WebPageTab extends Fragment {
         gWebView.setWebViewClient(gWebViewClient);
         gWebView.addJavascriptInterface(new JavaScriptInterfaceGetHTML(), "HtmlViewer");
 
+        gRelativeLayout_WebViewNavigation = getView().findViewById(R.id.relativeLayout_WebViewNavigation);
         final RelativeLayout relativeLayout_WebViewNavigation = getView().findViewById(R.id.relativeLayout_WebViewNavigation);
 
 
@@ -216,10 +219,12 @@ public class Fragment_WebPageTab extends Fragment {
 
             boolean bIgnoreMotionEvent = false; //Required because moving the views under the user's
 
+
+
             //  finger triggers the onScroll event.
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                if (bIgnoreMotionEvent) {
+                /*if (bIgnoreMotionEvent) {
                     bIgnoreMotionEvent = false;
                     return true;
                 }
@@ -279,7 +284,7 @@ public class Fragment_WebPageTab extends Fragment {
                         activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
                         bIgnoreMotionEvent = true;
                     }
-                }
+                }*/
 
                 return false;
             }
@@ -295,11 +300,165 @@ public class Fragment_WebPageTab extends Fragment {
             }
         });
         View.OnTouchListener view_OnTouchListener = new View.OnTouchListener() {
+
+            private final float fInitialGarbage = -10000000;
+            float fLPY = fInitialGarbage;
+            float fLPDeltaY = fInitialGarbage;
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 v.performClick();
-                return gestureDetector_WebView.onTouchEvent(event);
+
+                int action = event.getActionMasked();
+                String[] sActionEnum = new String[]{
+                        "ACTION_DOWN",
+                        "ACTION_UP",
+                        "ACTION_MOVE",
+                        "ACTION_CANCEL",
+                        "ACTION_OUTSIDE",
+                        "ACTION_POINTER_DOWN",
+                        "ACTION_POINTER_UP",
+                        "ACTION_HOVER_MOVE",
+                        "ACTION_SCROLL",
+                        "ACTION_HOVER_ENTER",
+                        "ACTION_HOVER_EXIT",
+                        "ACTION_BUTTON_PRESS",
+                        "ACTION_BUTTON_RELEASE",
+                        "ACTION_UNKNOWN"
+                };
+                int[] p = {
+                        MotionEvent.ACTION_DOWN,
+                        MotionEvent.ACTION_UP,
+                        MotionEvent.ACTION_MOVE,
+                        MotionEvent.ACTION_CANCEL,
+                        MotionEvent.ACTION_OUTSIDE,
+                        MotionEvent.ACTION_POINTER_DOWN,
+                        MotionEvent.ACTION_POINTER_UP,
+                        MotionEvent.ACTION_HOVER_MOVE,
+                        MotionEvent.ACTION_SCROLL,
+                        MotionEvent.ACTION_HOVER_ENTER,
+                        MotionEvent.ACTION_HOVER_EXIT,
+                        MotionEvent.ACTION_BUTTON_PRESS,
+                        MotionEvent.ACTION_BUTTON_RELEASE
+                };
+
+                Log.d("onTouch:", sActionEnum[action]);
+
+
+
+                if( action == MotionEvent.ACTION_MOVE) {
+
+                    int iHistorySize = event.getHistorySize();
+                    float fDeltaY;
+                    if(iHistorySize == 0){
+                        if(fLPY != fInitialGarbage){
+                            fDeltaY = fLPY - event.getY();
+                        } else {
+                            fDeltaY = 0;
+                        }
+
+                    } else {
+                        fDeltaY = event.getHistoricalY(0, 0) - event.getY(0);
+
+                    }
+                    Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " fLPDeltaY: " + fLPDeltaY);
+                    /*if((Math.abs(Math.abs(fDeltaY) - Math.abs(fLPDeltaY)) > 4.0f) &&
+                            ((fDeltaY < 0 && fLPDeltaY > 0) || (fDeltaY > 0 && fLPDeltaY < 0))){
+                        //Abort jitter mode induced by the movement of the view produced by this code when the top bars are height-adjusted at slow speed.
+                        return true;
+                    }*/
+                    fLPY = event.getY();
+                    if(
+                            ((fDeltaY < 0 && fLPDeltaY > 0) || (fDeltaY > 0 && fLPDeltaY < 0))){
+                        //Abort jitter mode induced by the movement of the view produced by this code when the top bars are height-adjusted at slow speed.
+                        fLPDeltaY = fDeltaY;
+                        return true;
+                    }
+
+                    fLPDeltaY = fDeltaY;
+
+                    Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " History: " + event.getHistorySize() + " Y: " + event.getY());
+
+                    Activity_Browser activity_browser = (Activity_Browser) getActivity();
+                    int iBrowserTopBarHeight_Current = 0;
+                    if (activity_browser != null) {
+                        if (activity_browser.giBrowserTopBarHeight_Original == 0) {
+                            activity_browser.giBrowserTopBarHeight_Original = activity_browser.relativeLayout_BrowserTopBar.getHeight();
+                        }
+                        iBrowserTopBarHeight_Current = activity_browser.relativeLayout_BrowserTopBar.getHeight();
+                    }
+                    if (iWebViewNavigationHeight_Original == 0) {
+                        iWebViewNavigationHeight_Original = relativeLayout_WebViewNavigation.getHeight();
+                    }
+
+                    int iWebViewNavigationHeight_Current = relativeLayout_WebViewNavigation.getHeight();
+
+                    int iWebViewNavigationHeight_New;
+                    int iBrowserTopBarHeight_New;
+                    float fMovementMultiplier = 2.1f; //The bars don't appear to get out of
+                                                            // the way fast enough.
+
+
+                    if (fDeltaY > 0f) { //User is scrolling down
+                        if (iBrowserTopBarHeight_Current > 0) {
+                            //Start hiding the tab bar:
+                            iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int) (fDeltaY * fMovementMultiplier);
+                            iBrowserTopBarHeight_New = Math.max(0, iBrowserTopBarHeight_New);
+                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
+                            //Log.d("New height", "Current: " + iBrowserTopBarHeight_Current + " New: " + iBrowserTopBarHeight_New);
+                            rlp.height = iBrowserTopBarHeight_New;
+                            activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
+                            return true; //Do not pass this touch event to the lower-level views.
+                        } else if (iWebViewNavigationHeight_Current > 0f) {
+                            //Start hiding the address bar
+                            iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int) (fDeltaY * fMovementMultiplier);
+                            iWebViewNavigationHeight_New = Math.max(0, iWebViewNavigationHeight_New);
+                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) relativeLayout_WebViewNavigation.getLayoutParams();
+                            rlp.height = iWebViewNavigationHeight_New;
+                            relativeLayout_WebViewNavigation.setLayoutParams(rlp);
+                            return true; //Do not pass this touch event to the lower-level views.
+                        } else {
+                            //Max scroll reached - user is scrolling down and the top bar and address bar are fully hidden.
+                            return false;
+                        }
+                    } else if (fDeltaY < 0) { //User is scrolling up
+
+                        if (iWebViewNavigationHeight_Current < iWebViewNavigationHeight_Original) {
+                            iWebViewNavigationHeight_New = iWebViewNavigationHeight_Current - (int) (fDeltaY * fMovementMultiplier);
+                            iWebViewNavigationHeight_New = Math.min(iWebViewNavigationHeight_Original, iWebViewNavigationHeight_New);
+                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) relativeLayout_WebViewNavigation.getLayoutParams();
+                            rlp.height = iWebViewNavigationHeight_New;
+                            relativeLayout_WebViewNavigation.setLayoutParams(rlp);
+                            return true; //Do not pass this touch event to the lower-level views.
+                        } else if ((activity_browser != null) && (iBrowserTopBarHeight_Current < activity_browser.giBrowserTopBarHeight_Original)) {
+                            //Start showing the tab bar:
+                            iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int) (fDeltaY * fMovementMultiplier);
+                            iBrowserTopBarHeight_New = Math.min(activity_browser.giBrowserTopBarHeight_Original, iBrowserTopBarHeight_New);
+                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
+                            rlp.height = iBrowserTopBarHeight_New;
+                            activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
+                            return true; //Do not pass this touch event to the lower-level views.
+                        } else {
+                            //Max scroll reached - user is scrolling up and the top bar and address bar are fully visible.
+                            return false;
+                        }
+                    } else {
+                        return true;
+                    }
+
+
+                }
+
+
+
+
+
+                return false;  //return false to indicate that we have not handled the touch and to pass it on to child views, etc.
+
+
+
+                //return gestureDetector_WebView.onTouchEvent(event);
             }
+
         };
         gWebView.setOnTouchListener(view_OnTouchListener);
 
@@ -386,6 +545,7 @@ public class Fragment_WebPageTab extends Fragment {
         }
 
 
+
         ApplicationLogWriter("OnViewCreated end.");
     }
 
@@ -423,8 +583,17 @@ public class Fragment_WebPageTab extends Fragment {
                 break;
             }
         }
+
         gbInitialized = true;
         ApplicationLogWriter("InitializeData end.");
+    }
+
+    public int GetWebViewNavigationHeightOriginal(){
+        if (iWebViewNavigationHeight_Original == 0) {
+            RelativeLayout relativeLayout_WebViewNavigation = getView().findViewById(R.id.relativeLayout_WebViewNavigation);
+            iWebViewNavigationHeight_Original = relativeLayout_WebViewNavigation.getHeight();
+        }
+        return iWebViewNavigationHeight_Original;
     }
 
     @Override
