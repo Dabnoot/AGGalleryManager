@@ -22,7 +22,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowInsets;
@@ -30,7 +29,6 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -500,7 +498,6 @@ public class Activity_Browser extends AppCompatActivity {
 
         GlobalClass globalClass;
         ArrayList<Fragment_WebPageTab> alFragment_WebPages;
-        //int iFragmentCount = 0;
 
         public FragmentViewPagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle, Context applicationContext) {
             super(fragmentManager, lifecycle);
@@ -578,7 +575,6 @@ public class Activity_Browser extends AppCompatActivity {
 
         public void removeItem(int iPosition){
             alFragment_WebPages.remove(iPosition);
-            //iFragmentCount--;
             notifyDataSetChanged();
         }
 
