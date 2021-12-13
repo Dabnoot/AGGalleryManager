@@ -41,6 +41,9 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 
 
@@ -644,6 +647,47 @@ public class Fragment_WebPageTab extends Fragment {
 
                 } while (iFoundLinkLocationStart > 0 && !bFaviconAddressFound);
                 if(bFaviconAddressFound){
+
+                    //Handle the case where the favicon listed address is relative to the host, and not a full address:
+                    if(!sFaviconAddress.startsWith("http")) {
+                        try {
+                            URL url = new URL(gsWebAddress);
+                            String sHostPrefix = gsWebAddress.substring(0,gsWebAddress.indexOf("/"));
+                            String sHost = sHostPrefix + "//" + url.getHost();
+                            if(sFaviconAddress.startsWith("/")){
+                                sFaviconAddress = sHost + sFaviconAddress;
+                            } else {
+                                sFaviconAddress = sHost + "/" + sFaviconAddress;
+                            }
+                        } catch (MalformedURLException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
+                } else {
+                    //If the favicon was not found using the textual searches, try looking for it at the host level:
+                    try {
+                        URL url = new URL(gsWebAddress);
+                        String sHostPrefix = gsWebAddress.substring(0,gsWebAddress.indexOf("/"));
+                        String sHost = sHostPrefix + "//" + url.getHost();
+                        sFaviconAddress = sHost + "/favicon.ico";
+                        //Check to see if the resource is found at the URL:
+                        /*url = new URL(sFaviconAddress);
+                        HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+                        int iResponseCode = huc.getResponseCode();
+                        if(iResponseCode == HttpURLConnection.HTTP_OK){
+                            bFaviconAddressFound = true;
+                        }*/
+                        //Above code to check if the file exists cannot be executed on this thread
+                        // (NetworkOnMainThreadException). Address is to be passed to Glide, so
+                        // let Glide deal with it for now.
+                        bFaviconAddressFound = true;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if(bFaviconAddressFound){
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
                     if(activity_browser != null) {
                         //Update the favicon Address in the WebPageTabData:
@@ -658,6 +702,7 @@ public class Fragment_WebPageTab extends Fragment {
 
                     }
                 }
+
             }
         };
 

@@ -18,6 +18,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -283,8 +285,8 @@ public class Service_WebPageTabs extends IntentService {
 
         //Get the html from the webpage:
         try {
-            URL google = new URL(icwptd_DataToSet.sAddress);
-            BufferedReader in = new BufferedReader(new InputStreamReader(google.openStream()));
+            URL url = new URL(icwptd_DataToSet.sAddress);
+            BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
             String input;
             StringBuilder stringBuilder = new StringBuilder();
             while ((input = in.readLine()) != null) {
@@ -322,7 +324,7 @@ public class Service_WebPageTabs extends IntentService {
             String sXPathExpressionTitleLocator = "//title/text()";
             String sTitle = "";
             String sXPathExpressionFaviconLocator = "//link[@rel='icon']/@href";
-            String sURLFaviconLink = "";
+            String sFaviconAddress = "";
             try {
                 //Use an xPathExpression (similar to RegEx) to look for the title in the html/xml:
                 Object[] objsTitleString = node.evaluateXPath(sXPathExpressionTitleLocator);
@@ -338,19 +340,50 @@ public class Service_WebPageTabs extends IntentService {
                 }
                 icwptd_DataToSet.sTabTitle = sTitle;
 
+                boolean bFaviconAddressFound = false;
                 //Use an xPathExpression (similar to RegEx) to look for favicon in the html/xml:
                 Object[] objsFaviconLink = node.evaluateXPath(sXPathExpressionFaviconLocator);
                 //Check to see if we found anything:
                 if (objsFaviconLink != null && objsFaviconLink.length > 0) {
                     //If we found something, assign it to a string:
                     for (Object oFaviconLink : objsFaviconLink) {
-                        sURLFaviconLink = oFaviconLink.toString();
-                        if (!sURLFaviconLink.equals("")) {
+                        sFaviconAddress = oFaviconLink.toString();
+                        if (!sFaviconAddress.equals("")) {
+                            bFaviconAddressFound = true;
                             break;
                         }
                     }
                 }
-                icwptd_DataToSet.sFaviconAddress = sURLFaviconLink;
+
+                String sAddress = icwptd_DataToSet.sAddress;
+                if(bFaviconAddressFound) {
+                    if (!sFaviconAddress.startsWith("http")) {
+
+                        String sHostPrefix = sAddress.substring(0, sAddress.indexOf("/"));
+                        String sHost = sHostPrefix + "//" + url.getHost();
+                        if (sFaviconAddress.startsWith("/")) {
+                            sFaviconAddress = sHost + sFaviconAddress;
+                        } else {
+                            sFaviconAddress = sHost + "/" + sFaviconAddress;
+                        }
+                    }
+                } else {
+                    //If the favicon was not found using the xPath expression searche, try looking
+                    // for it at the host level:
+                    String sHostPrefix = sAddress.substring(0,sAddress.indexOf("/"));
+                    String sHost = sHostPrefix + "//" + url.getHost();
+                    sFaviconAddress = sHost + "/favicon.ico";
+                    //Check to see if the resource is found at the URL:
+                    url = new URL(sFaviconAddress);
+                    HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+                    int iResponseCode = huc.getResponseCode();
+                    if(iResponseCode == HttpURLConnection.HTTP_OK){
+                        bFaviconAddressFound = true;
+                    }
+                }
+                if(bFaviconAddressFound) {
+                    icwptd_DataToSet.sFaviconAddress = sFaviconAddress;
+                }
 
             } catch (Exception e) {
                 String sMessage = e.getMessage();
