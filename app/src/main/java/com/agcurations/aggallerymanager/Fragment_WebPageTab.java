@@ -397,6 +397,37 @@ public class Fragment_WebPageTab extends Fragment {
                 @Override
                 public void onClick(View view) {
                     gEditText_Address.setText("");
+
+                    //Check to see if there is a valid address on the clipboard. If so, check to see
+                    // if the page is on any of the other fragments. If not, enter it into
+                    //  the EditText, clear it from the clipboard, and navigate to the page.
+                    String sPossibleAddress = "";
+                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    if(getContext() != null) {
+                        ClipData clipData = clipboard.getPrimaryClip();
+                        if(clipData != null) {
+                            ClipData.Item clipData_Item = clipData.getItemAt(0);
+                            if (clipData_Item != null) {
+                                sPossibleAddress = clipData_Item.getText().toString();
+                            }
+                        }
+                    }
+                    if(sPossibleAddress.startsWith("http")){
+                        boolean bAddressInUse = false;
+                        for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
+                            if(sPossibleAddress.equals(icwptd.sAddress)){
+                                bAddressInUse = true;
+                                break;
+                            }
+                        }
+                        if(!bAddressInUse){
+                            clipboard.clearPrimaryClip();
+                            gEditText_Address.setText(sPossibleAddress);
+                            gsWebAddress = sPossibleAddress;
+                            gWebView.loadUrl(sPossibleAddress);
+                        }
+                    }
+
                 }
             });
         }
