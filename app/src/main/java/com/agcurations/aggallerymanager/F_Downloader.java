@@ -6,6 +6,19 @@ public class F_Downloader {
 
 /*
 Readme:
+Help by me:
+-Open a cmd window.
+-Navigate in cmd to the folder holding main.py.
+-Run python main.py.
+-There might be an error, such as "ChromeDriver only supports version xxxx". In that case,
+  go and download an updated Chrome Driver
+-When the program opens a Chrome window, type in username and password and login.
+  Complete any Captcha tasks.
+-Return to the command window and press enter to continue.
+-Wait for the script to process all of the addresses listed in urls.txt.
+-If there is an error right away, it may be due to modifications to the website layout,
+  - the html has changed. You will need to find the failing location in the python
+  code and correct it. Use -D, the debug switch, to assist with altering the code.
 
 # fakku-downloader
 
@@ -101,6 +114,8 @@ from downloader import (
     COOKIES_FILE,
     ROOT_MANGA_DIR,
     MAX,
+    URLS_FILE,
+    DEBUG_USE_STORED_HTML
 )
 
 
@@ -177,6 +192,15 @@ def main():
         default=MAX,
         help=f"Max number of volumes to download at once \
             Set this argument if you become blocked. By default -- No limit")
+    argparser.add_argument(
+        "-D",
+        "--debug_use_stored_html",
+        action="store_true",
+        default=DEBUG_USE_STORED_HTML,
+        help=f"Use stored HTML in folder. For editing python code to gather data. \
+            Run once without debug to save the HTML, then run with debug switch. \
+            HTML will be saved/recalled in accordance with the first record in \
+            urls.txt.")
     args = argparser.parse_args()
 
     file_urls = Path(args.file_urls)
@@ -188,9 +212,10 @@ def main():
             'Or run this again with the -z parameter with a collection_url to download urls first.')
         program_exit()
 
-    # Create empty done.text if it not exists
+    # Create empty done.text if it does not exist
     if not Path(args.done_file).is_file():
         Path(args.done_file).touch()
+
 
     loader = FDownloader(
         urls_file=args.file_urls,
@@ -202,15 +227,19 @@ def main():
         timeout=args.timeout,
         wait=args.wait,
         _max=args.max,
+        debug_use_stored_html=args.debug_use_stored_html
     )
 
-    if not Path(args.cookies_file).is_file():
-        print(f'Cookies file({args.cookies_file}) are not detected. Please, ' + \
-            'login in next step for generate cookie for next runs.')
-        loader.init_browser(headless=False)
-    else:
-        print(f'Using cookies file: {args.cookies_file}')
-        loader.init_browser(headless=False)
+
+
+    if not args.debug_use_stored_html:
+        if not Path(args.cookies_file).is_file():
+            print(f'Cookies file({args.cookies_file}) are not detected. Please, ' + \
+                'login in next step for generate cookie for next runs.')
+            loader.init_browser(headless=False)
+        else:
+            print(f'Using cookies file: {args.cookies_file}')
+            loader.init_browser(headless=False)
 
     if args.collection_url:
         loader.load_urls_from_collection(args.collection_url)
@@ -265,8 +294,12 @@ TIMEOUT = 5
 WAIT = 2
 # Max manga to download in one session (-1 == no limit)
 MAX = None
+# Flag to assist with debugging data-scraping codesets. Program must be run once without it to grab HTML to store in a file.
+DEBUG_USE_STORED_HTML = False
 # User agent for web browser
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9'
+
+
 
 def program_exit():
     print('Program exit.')
@@ -292,6 +325,7 @@ class FDownloader():
             login=None,
             password=None,
             _max=MAX,
+            debug_use_stored_html=DEBUG_USE_STORED_HTML
         ):
         """
         param: urls_file -- string name of .txt file with urls
@@ -328,6 +362,7 @@ class FDownloader():
         self.login = login
         self.password = password
         self.max = _max
+        self.debug_use_stored_html = debug_use_stored_html
 
     def init_browser(self, headless=False):
         """
@@ -428,7 +463,7 @@ class FDownloader():
         except Exception as ex:
             print(ex)
 
-        ready = input("Press Tab + Enter keys to continue after you login...\n\n")
+        ready = input("Press Enter key to continue after you login...\n\n")
         with open(self.cookies_file, 'wb') as f:
             pickle.dump(self.browser.get_cookies(), f)
 
@@ -440,7 +475,8 @@ class FDownloader():
         """
         Just main function which opening each page and save it in .png
         """
-        self.browser.set_window_size(*self.default_display)
+        if not self.debug_use_stored_html:
+            self.browser.set_window_size(*self.default_display)
         if not os.path.exists(self.root_manga_dir):
             os.mkdir(self.root_manga_dir)
 
@@ -451,28 +487,39 @@ class FDownloader():
                 manga_folder = os.sep.join([self.root_manga_dir, manga_name])
                 if not os.path.exists(manga_folder):
                    os.mkdir(manga_folder)
-                print(f'\nGetting url: {url}\n')
-                self.browser.get(url)
-                self.waiting_loading_page(is_reader_page=False)
+
+                sPage_Source = ""
+                if not self.debug_use_stored_html:
+                    print(f'\nGetting url: {url}\n')
+                    self.browser.get(url)
+                    self.waiting_loading_page(is_reader_page=False)
+                    sPage_Source = self.browser.page_source
+                    fHTMLFile = open(os.sep.join([manga_folder, f'ComicSource.html']), "w", encoding="utf-8")
+                    fHTMLFile.write(sPage_Source)
+                    fHTMLFile.close()
+                else:
+                    fHTMLFile = open(os.sep.join([manga_folder, f'ComicSource.html']), "r")
+                    sPage_Source = fHTMLFile.read()
+                    fHTMLFile.close()
 
                 print(f'Getting page count...')
-                page_count = self.__get_page_count(self.browser.page_source)
+                page_count = self.__get_page_count(sPage_Source)
                 print(f' Page count: {page_count}\n')
 
                 print(f'Getting comic title from html...')
-                comic_title = self.__get_title(self.browser.page_source)
+                comic_title = self.__get_title(sPage_Source)
                 print(f' Comic title: {comic_title}\n')
 
                 print(f'Getting comic artist from html...')
-                comic_artist = self.__get_comic_attr(self.browser.page_source, "Artist")
+                comic_artist = self.__get_comic_attr(sPage_Source, "Artist")
                 print(f' Comic artist: {comic_artist}\n')
 
                 print(f'Getting comic parody from html...')
-                comic_parody = self.__get_comic_attr(self.browser.page_source, "Parody")
+                comic_parody = self.__get_comic_attr(sPage_Source, "Parody")
                 print(f' Comic parody: {comic_parody}\n')
 
                 print(f'Getting comic tags...')
-                comic_tags = self.__get_tags(self.browser.page_source)
+                comic_tags = self.__get_tags(sPage_Source)
                 print(f' Tags: {comic_tags}\n')
 
                 """Create an xml file containing the comic details"""
@@ -527,7 +574,7 @@ class FDownloader():
                     self.browser.execute_script(f"document.getElementsByClassName('layer')[{n-1}].remove()")
                     self.browser.save_screenshot(destination_file)
                 print('>> manga done!')
-                done_file_obj.write(f'{url}\n')
+                if not self.debug_use_stored_html: done_file_obj.write(f'{url}\n')
                 urls_processed += 1
                 if self.max is not None and urls_processed >= self.max:
                     break
@@ -557,14 +604,41 @@ class FDownloader():
         return: int
             Number of manga pages
         """
+        debug = self.debug_use_stored_html
         soup = bs(page_source, 'html.parser')
         page_count = None
         if not page_count:
             try:
-                divs = soup.find_all('div', attrs={'class': 'row'})
-                page_count = int(next(x for x in divs if x(text="Pages"))
-                    .find('div', attrs={'class': 'row-right'}).text
-                    .split(' ')[0])
+                #divs = soup.find_all('div', class_='table-cell w-full align-top text-left space-y-2 link:text-blue-700 dark:link:text-white')
+                #for x in divs:
+                #    sDivText = x.text.strip()
+                #    if sDivText != "":
+                #        print(sDivText)
+                #        if "pages" in sDivText:
+                #            page_count = int(sDivText.split(' ')[0])
+                grid_tags = soup.find_all('div', class_='table text-sm w-full')
+                if debug: print("Grid_tags has size: " + str(len(grid_tags)))
+                page_count_found = False
+                for i in range(len(grid_tags)): #grid_tag in grid_tags:
+                    if debug: print("Item " + str(i) + ":")
+                    if debug: print(grid_tags[i])
+                    if debug: print("Content count: " + str(len(grid_tags[i].contents)))
+                    for j in range(len(grid_tags[i].contents)):
+                        if debug: print("Content " + str(j) + "(length " + str(len(grid_tags[i].contents[j])) + "):")
+                        if debug: print(grid_tags[i].contents[j])
+                        if grid_tags[i].contents[j].string == "Pages":
+                            if debug: print("FOUND PAGES!")
+                            page_str = grid_tags[i].contents[j+2].string
+                            if debug: print("Pages string: " + page_str)
+                            page_count = int(page_str.split(' ')[0])
+                            if type(page_count) is int:
+                                if debug: print("Page count: " + str(page_count))
+                                page_count_found = True
+                                break
+                    if debug: print("")
+                    if page_count_found:
+                        break
+
             except Exception as ex:
                 print(ex)
         return page_count
@@ -579,12 +653,18 @@ class FDownloader():
         return: string
             Title of comic
         """
+        debug = self.debug_use_stored_html
         soup = bs(page_source, 'html.parser')
         title = None
         if not title:
             try:
-                title = soup.find(attrs={'class': 'content-name'}).text
-                title = title.strip()
+                #title = soup.find(attrs={'class': 'content-name'}).text
+                #title = title.strip()
+
+                title = soup.find('h1')
+                if debug: print("Title: " + title.string)
+                title = title.string
+
             except Exception as ex:
                 print(ex)
         return title
@@ -598,13 +678,38 @@ class FDownloader():
         return: string
             Requested attribute of comic
         """
+        debug = self.debug_use_stored_html
         soup = bs(page_source, 'html.parser')
         attr_result = None
+        attr_found = False
         if not attr_result:
             try:
-                divs = soup.find_all('div', attrs={'class': 'row'})
-                attr_result = next(x for x in divs if x(text=attr)).find('div', attrs={'class': 'row-right'}).text
-                attr_result = attr_result.strip()
+                #divs = soup.find_all('div', attrs={'class': 'row'})
+                #attr_result = next(x for x in divs if x(text=attr)).find('div', attrs={'class': 'row-right'}).text
+                #attr_result = attr_result.strip()
+
+
+                grid_tags = soup.find_all('div', class_='table text-sm w-full')
+                if debug: print("Grid_tags has size: " + str(len(grid_tags)))
+                page_count_found = False
+                for i in range(len(grid_tags)): #grid_tag in grid_tags:
+                    if debug: print("Item " + str(i) + ":")
+                    if debug: print(grid_tags[i])
+                    if debug: print("Content count: " + str(len(grid_tags[i].contents)))
+                    for j in range(len(grid_tags[i].contents)):
+                        if debug: print("Content " + str(j) + "(length " + str(len(grid_tags[i].contents[j])) + "):")
+                        if debug: print(grid_tags[i].contents[j])
+                        if grid_tags[i].contents[j].string == attr:
+                            if debug: print("FOUND ATTRIBUTE: " + attr)
+                            attr_result = grid_tags[i].contents[j+2].string
+                            attr_result = attr_result.strip()
+                            if debug: print("Attribute value: " + attr_result)
+                            attr_found = True
+                            break
+                    if debug: print("")
+                    if attr_found:
+                        break
+
             except Exception as ex:
                 print(ex)
         return attr_result
@@ -618,27 +723,44 @@ class FDownloader():
         return: string[]
             Comic tags
         """
+        debug = self.debug_use_stored_html
         soup = bs(page_source, 'html.parser')
         tags = []
         try:
             #Find all links. Tags in FAKKU are contained in links.
             afind = soup.find_all('a')
             #Filter-down to links that have a particular parent class:
+            #for ana in afind:
+            #    #.parent.attrs returns a dictionary object.
+            #    dictAttrs = ana.parent.attrs
+            #    if isinstance(ana.parent.attrs, dict):
+            #        arrayAttrs = dictAttrs.get('class')
+            #        if isinstance(arrayAttrs, list):
+            #            if len(arrayAttrs) == 2:
+            #                if arrayAttrs[0]=='row-right' and arrayAttrs[1]=='tags':
+            #                    #Get the text
+            #                    sTagText = ana.get_text()
+            #                    sTagText = sTagText.strip()
+            #                    if not(sTagText == '+' or sTagText == 'unlimited') :
+            #                        #FAKKU includes the '+' symbol to recommend a tag.
+            #                        #'unlimited' is a subscription status tag classification for a comic.
+            #                        tags.append(sTagText)
+            if debug: print("====================TAG SEARCH=================")
             for ana in afind:
                 #.parent.attrs returns a dictionary object.
-                dictAttrs = ana.parent.attrs
-                if isinstance(ana.parent.attrs, dict):
-                    arrayAttrs = dictAttrs.get('class')
-                    if isinstance(arrayAttrs, list):
-                        if len(arrayAttrs) == 2:
-                            if arrayAttrs[0]=='row-right' and arrayAttrs[1]=='tags':
-                                #Get the text
-                                sTagText = ana.get_text()
-                                sTagText = sTagText.strip()
-                                if not(sTagText == '+' or sTagText == 'unlimited') :
-                                    #FAKKU includes the '+' symbol to recommend a tag.
-                                    #'unlimited' is a subscription status tag classification for a comic.
-                                    tags.append(sTagText)
+                #print(ana.get('href'))
+                link = ana.get('href')
+                #print("Type: " + str(type(link)))
+                if link is not None:
+                    if ana.get('href').startswith("/tags/"):
+                        if debug: print("Found a tag:" + ana.get('href'))
+                        #Get the text
+                        sTagText = ana.get_text()
+                        sTagText = sTagText.strip()
+                        if not(sTagText == '+' or sTagText == 'Unlimited') :
+                            #FAKKU includes the '+' symbol to recommend a tag.
+                            #'unlimited' is a subscription status tag classification for a comic.
+                            tags.append(sTagText)
 
         except Exception as ex:
             print(ex)
@@ -716,6 +838,7 @@ class FDownloader():
             print('\nError: timed out waiting for page to load. + \
                 You can try increase param -t for more delaying.')
             program_exit()
+
 
 
 */
