@@ -95,7 +95,10 @@ public class Activity_Browser extends AppCompatActivity {
             globalClass.gal_WebPages = new ArrayList<>();
 
             viewPager2_WebPages = findViewById(R.id.viewPager2_WebPages);
-            viewPager2_WebPages.setOffscreenPageLimit(3);
+            //Set the number of pages that should be retained to either side of the current page
+            // in the view hierarchy in an idle state. Pages beyond this limit will be recreated
+            // from the adapter when needed.:
+            viewPager2_WebPages.setOffscreenPageLimit(1);
 
             ApplicationLogWriter("Getting new FragmentViewPagerAdapter.");
             viewPagerFragmentAdapter = new FragmentViewPagerAdapter(getSupportFragmentManager(), getLifecycle(), getApplicationContext());
@@ -135,6 +138,8 @@ public class Activity_Browser extends AppCompatActivity {
                     }
             );
             tlm.attach();
+
+
 
             tabLayout_WebTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
@@ -223,6 +228,7 @@ public class Activity_Browser extends AppCompatActivity {
             InitializeTabAppearance();
             //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
             Service_WebPageTabs.startAction_GetWebpageTitleFavicon(getApplicationContext(), icwptd); //This routine also calls the same routine as startAction_SetWebPageTabData.
+
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
             globalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
@@ -231,6 +237,7 @@ public class Activity_Browser extends AppCompatActivity {
             InitializeTabAppearance();
             Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
             viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
+
         }
 
     }
@@ -295,7 +302,7 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("onStart.");
     }*/
 
-    /*@Override
+    @Override
     protected void onResume() {
         super.onResume();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -304,7 +311,7 @@ public class Activity_Browser extends AppCompatActivity {
             gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
         }
         ApplicationLogWriter("onResume.");
-    }*/
+    }
 
     /*@Override
     protected void onPause() {
@@ -317,7 +324,7 @@ public class Activity_Browser extends AppCompatActivity {
         super.onPause();
     }*/
 
-    /*@Override
+    @Override
     protected void onRestart() {
         super.onRestart();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -325,8 +332,11 @@ public class Activity_Browser extends AppCompatActivity {
         if(gbWriteApplicationLog){
             gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
         }
+        if(!bTabsLoaded) {
+            Service_WebPageTabs.startAction_GetWebPageTabData(this);
+        }
         ApplicationLogWriter("onRestart.");
-    }*/
+    }
 
 
 
@@ -344,19 +354,24 @@ public class Activity_Browser extends AppCompatActivity {
     //==============================================================================================
     //======= Other Functions ======================================================================
     //==============================================================================================
-
+    int giTabWidth = -1;
+    int giWindowWidth = -1;
     public void InitializeTabAppearance(){
         //This only updates the tab notch.
         ApplicationLogWriter("InitializeTabAppearance start.");
         for(int i =0; i<tabLayout_WebTabs.getTabCount(); i++)
         {
+            if(tabLayout_WebTabs.getTabCount() > globalClass.gal_WebPages.size()){
+                this.finish(); //Close this activity if the sizes are out-of-sync.
+                return;
+            }
             String sTitle = globalClass.gal_WebPages.get(i).sTabTitle;
             if(sTitle.equals("")){
                 sTitle = "New Tab";
             }
-            if(sTitle.length() > 15){
+            /*if(sTitle.length() > 15){
                 sTitle = sTitle.substring(0,15) + "...";
-            }
+            }*/
 
             RelativeLayout relativeLayout_custom_tab = (RelativeLayout)
                     LayoutInflater.from(getApplicationContext())
@@ -402,10 +417,22 @@ public class Activity_Browser extends AppCompatActivity {
                     Service_WebPageTabs.startAction_RemoveWebPageTabData(getApplicationContext());
                 }
             });
-
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
-
         }
+        //Scroll to center the selected tab:
+        int iSelectedTabPosition = tabLayout_WebTabs.getSelectedTabPosition();
+        if(giTabWidth < 0){
+            giTabWidth = (int) convertDpToPx(getApplicationContext(), 200); //200dp default
+        }
+        if(giWindowWidth < 0){
+            giWindowWidth = getResources().getDisplayMetrics().widthPixels;
+        }
+        int iScrollXMax = tabLayout_WebTabs.getTabCount() * giTabWidth - giWindowWidth;
+        iScrollXMax = Math.max(0, iScrollXMax); //Don't let the max scroll go negative.
+        int iDistanceToStartOfSelectedTab = giTabWidth * iSelectedTabPosition;
+        int iScrollXToCenterTabInWindow = iDistanceToStartOfSelectedTab + (giTabWidth / 2) - (giWindowWidth / 2);
+        int iScrollX = Math.min(Math.max(0, iScrollXToCenterTabInWindow), iScrollXMax);
+        tabLayout_WebTabs.setScrollX(iScrollX);
         ApplicationLogWriter("InitializeTabAppearance end.");
     }
 
@@ -652,6 +679,17 @@ public class Activity_Browser extends AppCompatActivity {
 
 
         }
+    }
+
+    /**
+     * This method converts dp unit to equivalent pixels, depending on device density.
+     *
+     * @param dp      A value in dp (density independent pixels) unit. Which we need to convert into pixels
+     * @param context Context to get resources and device specific display metrics
+     * @return A float value to represent px equivalent to dp depending on device density
+     */
+    public float convertDpToPx(Context context, float dp) {
+        return dp * context.getResources().getDisplayMetrics().density;
     }
 
 
