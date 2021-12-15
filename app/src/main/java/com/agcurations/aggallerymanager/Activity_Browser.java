@@ -420,6 +420,7 @@ public class Activity_Browser extends AppCompatActivity {
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
         }
         //Scroll to center the selected tab:
+        //todo: test with less than a window's width of tabs.
         int iSelectedTabPosition = tabLayout_WebTabs.getSelectedTabPosition();
         if(giTabWidth < 0){
             giTabWidth = (int) convertDpToPx(getApplicationContext(), 200); //200dp default
