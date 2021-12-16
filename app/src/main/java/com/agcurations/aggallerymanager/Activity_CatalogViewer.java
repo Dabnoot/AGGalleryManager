@@ -747,7 +747,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
                         String sDownloadedThumbnailPath = sVideoWorkingFolder + File.separator + ci.sThumbnail_File;
                         File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);
-                        if (fDownloadedThumbnail.exists()) {
+                        if (fDownloadedThumbnail.exists() && !fDownloadedThumbnail.isDirectory()) { //isDir if ci.sThum=="".
                             sThumbnailFilePath = sDownloadedThumbnailPath;
                         } else {
                             //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
@@ -762,8 +762,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                     while (sLine != null) {
                                         if (!sLine.startsWith("#") && sLine.contains(".st")) {
                                             sThumbnailFilePath = sLine;
-                                            bVideoFileFound = true;
-                                            break;
+                                            File fThumbnail = new File(sThumbnailFilePath);
+                                            if(fThumbnail.exists()) {
+                                                bVideoFileFound = true;
+                                                break;
+                                            }
                                         }
                                         // read next line
                                         sLine = brReader.readLine();
