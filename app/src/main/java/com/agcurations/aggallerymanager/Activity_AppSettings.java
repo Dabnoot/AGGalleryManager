@@ -1,11 +1,13 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,6 +18,7 @@ import java.util.TreeSet;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -128,6 +131,54 @@ public class Activity_AppSettings extends AppCompatActivity implements
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.general_preferences, rootKey);
+        }
+    }
+
+    public static class BrowserFragment extends PreferenceFragmentCompat {
+
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.browser_preferences, rootKey);
+
+            Preference preference_close_all_open_tabs = findPreference("browser_close_all_open_tabs");
+            preference_close_all_open_tabs.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+
+                    //Confirm with the user that they are doing what they want to do:
+                    String sConfirmationMessage = "Are you sure that you wish to close all open browser tabs?";
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
+                    builder.setTitle("AG Gallery Manager: Web Browser");
+                    builder.setMessage("Close all tabs?");
+
+                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+
+                            if(globalClass.gfWebpageTabDataFile.exists()){
+                                if(globalClass.gfWebpageTabDataFile.delete()){
+                                    Toast.makeText(getContext(), "Success deleting file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(getContext(), "Could not delete file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                        }
+                    });
+                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+                    AlertDialog adConfirmationDialog = builder.create();
+                    adConfirmationDialog.show();
+
+                    return false;
+                }
+            });
+
+
         }
     }
 
