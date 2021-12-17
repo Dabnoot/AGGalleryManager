@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.EditText;
 
@@ -29,17 +30,13 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
     private static final String TITLE_TAG = "AG Gallery Manager Preferences";
 
-    public static final String PREFERENCE_COMICS_TAGS_RESTRICTED = "com.agcurations.aggallerymanager.preferences.comics.tags.restricted";
-
-    private static TreeMap<Integer, String> gtmComicTags;
-    private static ArrayList<Integer> galiComicsRestrictedTags;
 
     static GlobalClass globalClass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
-        setTheme(R.style.AppTheme);
+        //setTheme(R.style.AppTheme);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_settings);
@@ -76,17 +73,22 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
         globalClass = (GlobalClass) getApplicationContext();
 
-
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        //gssSelectedTags = sharedPreferences.getStringSet("multi_select_list_restricted_tags", null);
-
-        //Get Comics' restricted tags:
-        /*String gsComicsRestrictedTags = sharedPreferences.getString(PREFERENCE_COMICS_TAGS_RESTRICTED, null);
-        galiComicsRestrictedTags = GlobalClass.getIntegerArrayFromString(gsComicsRestrictedTags, ",");*/
-
     }
 
-
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                int iBackStackEntryCount = getSupportFragmentManager().getBackStackEntryCount();
+                if (iBackStackEntryCount == 0) {
+                    this.finish();
+                } else {
+                    getSupportFragmentManager().popBackStack();
+                }
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
