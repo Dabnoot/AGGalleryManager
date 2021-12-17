@@ -218,10 +218,7 @@ public class Service_WebPageTabs extends IntentService {
 
 
         } catch (Exception e) {
-            problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage(), Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
-            if(fWebPageTabDataFile.exists()){
-                fWebPageTabDataFile.delete();
-            }
+            problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.", Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
         }
 
 
