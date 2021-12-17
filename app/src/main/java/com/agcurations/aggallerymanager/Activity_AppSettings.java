@@ -146,8 +146,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 public boolean onPreferenceClick(Preference preference) {
 
                     //Confirm with the user that they are doing what they want to do:
-                    String sConfirmationMessage = "Are you sure that you wish to close all open browser tabs?";
-
                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
                     builder.setTitle("AG Gallery Manager: Web Browser");
                     builder.setMessage("Close all tabs?");

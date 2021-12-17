@@ -6,6 +6,11 @@
         app:title="General" />
 
     <Preference
+        app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$BrowserFragment"
+        app:key="browser_header"
+        app:title="Browser" />
+
+    <Preference
         app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$ComicsFragment"
         app:key="comics_header"
         app:title="Comics" />

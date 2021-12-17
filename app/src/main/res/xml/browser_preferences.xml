@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:title="Close All Open Tabs"
+        android:key="browser_close_all_open_tabs"
+        android:summary="Close all tabs. Clears out all tabs quickly, or clear any pages causing the browser to crash on open."
+        />
+
+</PreferenceScreen>
