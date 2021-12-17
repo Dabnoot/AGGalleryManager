@@ -81,7 +81,7 @@ public class Fragment_WebPageTab extends Fragment {
 
     public Fragment_WebPageTab(String sURL) {
         gsWebAddress = sURL;
-        gPreloadWebPage = true;
+        gPreloadWebPage = false;
     }
 
     @Override
