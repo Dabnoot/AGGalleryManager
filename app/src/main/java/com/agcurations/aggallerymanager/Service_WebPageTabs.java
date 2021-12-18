@@ -25,6 +25,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Stack;
+import java.util.UUID;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -50,7 +54,8 @@ public class Service_WebPageTabs extends IntentService {
     public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
     public static final String OPEN_NEW_TAB_REQUEST = "com.agcurations.aggallerymanager.OPEN_NEW_TAB_REQUEST";
 
-
+    private static final Queue<String> queueFileWriteRequests = new LinkedList<>();
+    private static final int giMaxDelayForWriteRequestMS = 5000;
 
     public Service_WebPageTabs() {
         super("Service_WebPages");
@@ -109,10 +114,27 @@ public class Service_WebPageTabs extends IntentService {
         if(b){
             return;
         }
+
+        //Make sure it is this routine's turn to update data:
+        String thisHash = UUID.randomUUID().toString();
+        queueFileWriteRequests.add(thisHash);
+        int iLoopSleepMS = 20;
+        int iMaxLoops = giMaxDelayForWriteRequestMS / iLoopSleepMS;
+        int i = 0;
+        while (!queueFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops){
+            try {
+                Thread.sleep(iLoopSleepMS);
+            } catch (Exception e){
+
+            }
+            i++;
+        }
+
+
         //Update memory:
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
         boolean bDataFound = false;
-        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
+        for(i = 0; i < globalClass.gal_WebPages.size(); i++){
             if(globalClass.gal_WebPages.get(i).sTabID.equals(icwptd_DataToSet.sTabID)){
                 globalClass.gal_WebPages.set(i, icwptd_DataToSet);
                 bDataFound = true;
@@ -153,6 +175,8 @@ public class Service_WebPageTabs extends IntentService {
         } catch (Exception e) {
             problemNotificationConfig( e.getMessage(), Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
         }
+
+        queueFileWriteRequests.remove();
 
     }
 
@@ -238,6 +262,22 @@ public class Service_WebPageTabs extends IntentService {
     private void handleActionRemoveWebPageTabData() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
+        //Make sure it is this routine's turn to update data:
+        String thisHash = UUID.randomUUID().toString();
+        queueFileWriteRequests.add(thisHash);
+        int iLoopSleepMS = 20;
+        int iMaxLoops = giMaxDelayForWriteRequestMS / iLoopSleepMS;
+        int i = 0;
+        while (!queueFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops){
+            try {
+                Thread.sleep(iLoopSleepMS);
+            } catch (Exception e){
+
+            }
+            i++;
+        }
+
+
         //Update the webpage tab data file:
         File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
         if(fWebPageTabDataFile == null) return;
@@ -274,11 +314,10 @@ public class Service_WebPageTabs extends IntentService {
         broadcastIntent.putExtra(EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TAB_CLOSED);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
+        queueFileWriteRequests.remove();
     }
 
     private void handleActionPreloadHTMLGetTitleFavicon(ItemClass_WebPageTabData icwptd_DataToSet){
-
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
         //Get the html from the webpage:
         try {
