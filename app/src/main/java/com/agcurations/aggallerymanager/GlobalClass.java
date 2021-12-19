@@ -28,9 +28,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Queue;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -1088,10 +1090,11 @@ public class GlobalClass extends Application {
     //=========  BROWSER  ==============================================================================
     //==================================================================================================
 
+    public static final Queue<String> queueWebPageTabDataFileWriteRequests = new LinkedList<>();
+    public static final int giMaxDelayForWriteRequestMS = 5000;
 
-
-    public final int giWebPageTabDataFileVersion = 1;
-    public String getWebPageTabDataFileHeader(){
+    public static final int giWebPageTabDataFileVersion = 1;
+    public static String getWebPageTabDataFileHeader(){
         String sHeader = "";
         sHeader = sHeader + "ID";                       //Tab ID (unique).
         sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
@@ -1102,7 +1105,7 @@ public class GlobalClass extends Application {
         return sHeader;
     }
 
-    public String ConvertWebPageTabDataToString(ItemClass_WebPageTabData wptd){
+    public static String ConvertWebPageTabDataToString(ItemClass_WebPageTabData wptd){
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + GlobalClass.JumbleStorageText(wptd.sTabID);

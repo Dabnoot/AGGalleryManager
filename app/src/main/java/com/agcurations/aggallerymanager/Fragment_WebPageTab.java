@@ -549,13 +549,17 @@ public class Fragment_WebPageTab extends Fragment {
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
 
                 String sTitle = view.getTitle();
-                for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                for (int i = 0; i < globalClass.gal_WebPages.size(); i++) {
+                    ItemClass_WebPageTabData icwptd = globalClass.gal_WebPages.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                         icwptd.sTabTitle = sTitle;
                         Activity_Browser activity_browser = (Activity_Browser) getActivity();
                         if (activity_browser != null) {
                             //Update memory and page storage file.
-                            Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
+                            //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
+                            globalClass.gal_WebPages.set(i, icwptd);
+                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext());
+
                         }
                         break;
                     }
@@ -569,7 +573,8 @@ public class Fragment_WebPageTab extends Fragment {
 
                 //Update the recorded webpage history for this tab:
                 //Find the associated WebPageTabData:
-                for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                for (int i = 0; i < globalClass.gal_WebPages.size(); i++) {
+                    ItemClass_WebPageTabData icwptd = globalClass.gal_WebPages.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                             /*if (icwptd.sAddress == null) {
                                 icwptd.sAddress = new ArrayList<>();
@@ -603,7 +608,14 @@ public class Fragment_WebPageTab extends Fragment {
                             if(getActivity() == null){
                                 return;
                             }
-                            Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
+                            //Service_WebPageTabs.startAction_SetWebPageTabData(getActivity().getApplicationContext(), icwptd);
+
+                            //Update memory and page storage file.
+                            //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
+                            globalClass.gal_WebPages.set(i, icwptd);
+                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext());
+
+
                         }
                         break;
                     }
@@ -722,10 +734,15 @@ public class Fragment_WebPageTab extends Fragment {
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
                     if(activity_browser != null) {
                         //Update the favicon Address in the WebPageTabData:
-                        for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
+                        for (int i = 0; i < globalClass.gal_WebPages.size(); i++) {
+                            ItemClass_WebPageTabData icwptd = globalClass.gal_WebPages.get(i);
                             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                                 icwptd.sFaviconAddress = sFaviconAddress;
-                                Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
+                                //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
+                                globalClass.gal_WebPages.set(i, icwptd);
+                                Service_WebPageTabs.startAction_WriteWebPageTabData(getContext());
+
+
                                 break;
                             }
                         }

@@ -218,7 +218,7 @@ public class Activity_Browser extends AppCompatActivity {
         }
         int iNewTabPosition;
 
-        //If a tab is to be inserted, not appended
+        //If a tab is to be inserted, not appended (only case is context menu->open link in new tab):
         if(gsNewTabSequenceHelper != null){
             String sNewTabPostion = gsNewTabSequenceHelper[1];
             iNewTabPosition = Integer.parseInt(sNewTabPostion);
@@ -235,9 +235,10 @@ public class Activity_Browser extends AppCompatActivity {
             viewPagerFragmentAdapter.createFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
             viewPagerFragmentAdapter.notifyDataSetChanged();
             InitializeTabAppearance();
-            Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
+            //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
+            //Update stored data:
+            Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext());
             viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
-
         }
 
     }
@@ -414,7 +415,7 @@ public class Activity_Browser extends AppCompatActivity {
                     InitializeTabAppearance();
 
                     //Record the new web page tab lineup to the file:
-                    Service_WebPageTabs.startAction_RemoveWebPageTabData(getApplicationContext());
+                    Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext());
                 }
             });
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
@@ -652,8 +653,6 @@ public class Activity_Browser extends AppCompatActivity {
                         viewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
 
                         bTabsLoaded = true;
-
-                    } else if (sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TAB_CLOSED)){
 
                     } else if (sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED)){
                         String sTabID = intent.getStringExtra(Service_WebPageTabs.EXTRA_WEBPAGE_TAB_DATA_TABID);

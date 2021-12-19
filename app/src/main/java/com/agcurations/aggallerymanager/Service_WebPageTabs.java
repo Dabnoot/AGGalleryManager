@@ -10,14 +10,10 @@ import org.htmlcleaner.TagNode;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
@@ -46,42 +42,24 @@ public class Service_WebPageTabs extends IntentService {
     public static final String RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED";
 
     public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
-    public static final String OPEN_NEW_TAB_REQUEST = "com.agcurations.aggallerymanager.OPEN_NEW_TAB_REQUEST";
 
-    private static final Queue<String> queueFileWriteRequests = new LinkedList<>();
-    private static final int giMaxDelayForWriteRequestMS = 5000;
+
 
     public Service_WebPageTabs() {
         super("Service_WebPages");
     }
 
 
-    public static void startAction_SetWebPageTabData(Context context, ItemClass_WebPageTabData itemClass_webPageTabData) {
-        Intent intent = new Intent(context, Service_WebPageTabs.class);
-        intent.setAction(ACTION_SET_WEBPAGE_TAB_DATA);
-        intent.putExtra(EXTRA_WEBPAGE_TAB_DATA, itemClass_webPageTabData);
-        context.startService(intent);
-    }
-
     public static void startAction_GetWebPageTabData(Context context) {
-        /*Intent intent = new Intent(context, Service_WebPageTabs.class);
-        intent.setAction(ACTION_GET_WEBPAGE_TAB_DATA);
-        context.startService(intent);*/
-
-
         OneTimeWorkRequest otwrGetWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_GetWebPageTabData.class)
                 .build();
         WorkManager.getInstance(context).enqueue(otwrGetWebPageTabData);
-
-
-
-
     }
 
-    public static void startAction_RemoveWebPageTabData(Context context) {
-        Intent intent = new Intent(context, Service_WebPageTabs.class);
-        intent.setAction(ACTION_REMOVE_WEBPAGE_TAB_DATA);
-        context.startService(intent);
+    public static void startAction_WriteWebPageTabData(Context context) {
+        OneTimeWorkRequest otwrWriteWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_WriteWebPageTabData.class)
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrWriteWebPageTabData);
     }
 
     public static void startAction_GetWebpageTitleFavicon(Context context, ItemClass_WebPageTabData itemClass_webPageTabData){
@@ -95,13 +73,7 @@ public class Service_WebPageTabs extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
-            if (ACTION_SET_WEBPAGE_TAB_DATA.equals(action)) {
-                final ItemClass_WebPageTabData itemClass_webPageTabData = (ItemClass_WebPageTabData) intent.getSerializableExtra(EXTRA_WEBPAGE_TAB_DATA);
-                if(itemClass_webPageTabData == null) return;
-                handleActionSetWebPageTabData(itemClass_webPageTabData);
-            } else if (ACTION_REMOVE_WEBPAGE_TAB_DATA.equals(action)) {
-                handleActionRemoveWebPageTabData();
-            } else if (ACTION_GET_WEBPAGE_TITLE_FAVICON.equals(action)){
+            if (ACTION_GET_WEBPAGE_TITLE_FAVICON.equals(action)){
                 final ItemClass_WebPageTabData itemClass_webPageTabData = (ItemClass_WebPageTabData) intent.getSerializableExtra(EXTRA_WEBPAGE_TAB_DATA);
                 if(itemClass_webPageTabData == null) return;
                 handleActionPreloadHTMLGetTitleFavicon(itemClass_webPageTabData);
@@ -115,14 +87,14 @@ public class Service_WebPageTabs extends IntentService {
         if(b){
             return;
         }
-
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
         //Make sure it is this routine's turn to update data:
         String thisHash = UUID.randomUUID().toString();
-        queueFileWriteRequests.add(thisHash);
+        GlobalClass.queueWebPageTabDataFileWriteRequests.add(thisHash);
         int iLoopSleepMS = 20;
-        int iMaxLoops = giMaxDelayForWriteRequestMS / iLoopSleepMS;
+        int iMaxLoops = GlobalClass.giMaxDelayForWriteRequestMS / iLoopSleepMS;
         int i = 0;
-        while (!queueFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops){
+        while (!GlobalClass.queueWebPageTabDataFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops){
             try {
                 Thread.sleep(iLoopSleepMS);
             } catch (Exception e){
@@ -133,7 +105,6 @@ public class Service_WebPageTabs extends IntentService {
 
 
         //Update memory:
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
         boolean bDataFound = false;
         for(i = 0; i < globalClass.gal_WebPages.size(); i++){
             if(globalClass.gal_WebPages.get(i).sTabID.equals(icwptd_DataToSet.sTabID)){
@@ -157,13 +128,13 @@ public class Service_WebPageTabs extends IntentService {
         try {
 
             StringBuilder sbBuffer = new StringBuilder();
-            String sHeader = getWebPageTabDataFileHeader(); //Get updated header.
+            String sHeader = GlobalClass.getWebPageTabDataFileHeader(); //Get updated header.
             sbBuffer.append(sHeader);
             sbBuffer.append("\n");
 
             String sLine;
             for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
-                sLine = ConvertWebPageTabDataToString(icwptd) + "\n";
+                sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd) + "\n";
                 sbBuffer.append(sLine);
             }
 
@@ -177,67 +148,13 @@ public class Service_WebPageTabs extends IntentService {
             problemNotificationConfig( e.getMessage(), Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
         }
 
-        queueFileWriteRequests.remove();
+        GlobalClass.queueWebPageTabDataFileWriteRequests.remove();
 
     }
 
 
     private void handleActionRemoveWebPageTabData() {
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
-        //Make sure it is this routine's turn to update data:
-        String thisHash = UUID.randomUUID().toString();
-        queueFileWriteRequests.add(thisHash);
-        int iLoopSleepMS = 20;
-        int iMaxLoops = giMaxDelayForWriteRequestMS / iLoopSleepMS;
-        int i = 0;
-        while (!queueFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops){
-            try {
-                Thread.sleep(iLoopSleepMS);
-            } catch (Exception e){
-
-            }
-            i++;
-        }
-
-
-        //Update the webpage tab data file:
-        File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
-        if(fWebPageTabDataFile == null) return;
-
-        //Re-write the data file completely because all of the indexes have changed:
-        try {
-
-            StringBuilder sbBuffer = new StringBuilder();
-
-            String sHeader = getWebPageTabDataFileHeader(); //Get updated header.
-            sbBuffer.append(sHeader);
-            sbBuffer.append("\n");
-
-            for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
-                String sLine = ConvertWebPageTabDataToString(icwptd);
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
-            }
-
-            //Write the data to the file:
-            FileWriter fwNewWebPageStorageFile = new FileWriter(fWebPageTabDataFile, false);
-            fwNewWebPageStorageFile.write(sbBuffer.toString());
-            fwNewWebPageStorageFile.flush();
-            fwNewWebPageStorageFile.close();
-
-        } catch (Exception e) {
-            problemNotificationConfig( e.getMessage(), Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
-        }
-
-        //Broadcast a message to be picked-up by the WebPage Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TAB_CLOSED);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
-        queueFileWriteRequests.remove();
     }
 
     private void handleActionPreloadHTMLGetTitleFavicon(ItemClass_WebPageTabData icwptd_DataToSet){
@@ -377,79 +294,7 @@ public class Service_WebPageTabs extends IntentService {
 
 
 
-    public final int giWebPageTabDataFileVersion = 1;
-    public String getWebPageTabDataFileHeader(){
-        String sHeader = "";
-        sHeader = sHeader + "ID";                       //Tab ID (unique).
-        sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
-        sHeader = sHeader + "\t" + "AddressHistory";    //Address history for the tab.
-        sHeader = sHeader + "\t" + "Favicon Filename";  //Filename of bitmap for tab icon.
-        sHeader = sHeader + "\t" + "Version:" + giWebPageTabDataFileVersion;
 
-        return sHeader;
-    }
-
-    public String ConvertWebPageTabDataToString(ItemClass_WebPageTabData wptd){
-
-        String sRecord = "";  //To be used when writing the catalog file.
-        sRecord = sRecord + GlobalClass.JumbleStorageText(wptd.sTabID);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sTabTitle);
-        /*sRecord = sRecord + "\t" + "{";
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < wptd.sAddress.size(); i++){
-            sb.append(GlobalClass.JumbleStorageText(wptd.sAddress.get(i)));
-            if(i < (wptd.sAddress.size() - 1)){
-                sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
-            }
-        }
-        sRecord = sRecord + sb.toString() + "%%" + "}";*/
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sAddress);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sFaviconAddress);
-
-        return sRecord;
-    }
-
-    public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String[] sRecord){
-        //Designed for interpreting a line as read from the WebPageTabData file.
-        ItemClass_WebPageTabData wptd =  new ItemClass_WebPageTabData();
-        wptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
-        wptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[1]);
-        /*wptd.sAddress = new ArrayList<>();
-        String sAddresses = sRecord[3];
-        sAddresses = sAddresses.substring(1, sAddresses.length() - 1); //Remove '{' and '}'.
-        String[] sAddressHistory = sAddresses.split("%%");
-        for(int i = 0; i < sAddressHistory.length; i++){
-            sAddressHistory[i] = GlobalClass.JumbleStorageText(sAddressHistory[i]);
-        }
-        wptd.sAddress.addAll(Arrays.asList(sAddressHistory));*/
-        wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
-
-
-        if(sRecord.length >= 4) {
-            //Favicon filename might be empty, and if it is the last item on the record,
-            //  it will not be split-out via the split operation.
-            wptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[3]);
-        }
-
-        return wptd;
-    }
-
-    public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String sRecord){
-        String[] sRecord2 =  sRecord.split("\t");
-        //Split will ignore empty data and not return a full-sized array.
-        //  Correcting array...
-        int iRequiredFieldCount = 4;
-        String[] sRecord3 = new String[iRequiredFieldCount];
-        for(int i = 0; i < iRequiredFieldCount; i++){
-            if(i < sRecord2.length){
-                sRecord3[i] = sRecord2[i];
-            } else {
-                sRecord3[i] = "";
-            }
-
-        }
-        return ConvertStringToWebPageTabData(sRecord3);
-    }
 
     void problemNotificationConfig(String sMessage, String sIntentActionFilter){
         Intent broadcastIntent_Problem = new Intent();
