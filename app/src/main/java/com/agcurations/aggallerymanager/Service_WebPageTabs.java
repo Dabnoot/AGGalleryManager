@@ -3,34 +3,28 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Stack;
 import java.util.UUID;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 
 public class Service_WebPageTabs extends IntentService {
@@ -70,9 +64,18 @@ public class Service_WebPageTabs extends IntentService {
     }
 
     public static void startAction_GetWebPageTabData(Context context) {
-        Intent intent = new Intent(context, Service_WebPageTabs.class);
+        /*Intent intent = new Intent(context, Service_WebPageTabs.class);
         intent.setAction(ACTION_GET_WEBPAGE_TAB_DATA);
-        context.startService(intent);
+        context.startService(intent);*/
+
+
+        OneTimeWorkRequest otwrGetWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_GetWebPageTabData.class)
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrGetWebPageTabData);
+
+
+
+
     }
 
     public static void startAction_RemoveWebPageTabData(Context context) {
@@ -96,8 +99,6 @@ public class Service_WebPageTabs extends IntentService {
                 final ItemClass_WebPageTabData itemClass_webPageTabData = (ItemClass_WebPageTabData) intent.getSerializableExtra(EXTRA_WEBPAGE_TAB_DATA);
                 if(itemClass_webPageTabData == null) return;
                 handleActionSetWebPageTabData(itemClass_webPageTabData);
-            } else if (ACTION_GET_WEBPAGE_TAB_DATA.equals(action)) {
-                handleActionGetWebPageTabData();
             } else if (ACTION_REMOVE_WEBPAGE_TAB_DATA.equals(action)) {
                 handleActionRemoveWebPageTabData();
             } else if (ACTION_GET_WEBPAGE_TITLE_FAVICON.equals(action)){
@@ -156,7 +157,7 @@ public class Service_WebPageTabs extends IntentService {
         try {
 
             StringBuilder sbBuffer = new StringBuilder();
-            String sHeader = getCatalogHeader(); //Get updated header.
+            String sHeader = getWebPageTabDataFileHeader(); //Get updated header.
             sbBuffer.append(sHeader);
             sbBuffer.append("\n");
 
@@ -180,84 +181,6 @@ public class Service_WebPageTabs extends IntentService {
 
     }
 
-
-    private void handleActionGetWebPageTabData() {
-
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-
-        //Get the webpage tab data file path:
-        File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
-        if(fWebPageTabDataFile == null) return;
-
-        //Debugging helper section:
-        boolean bTestingCloseOfTabs = false;
-        if(bTestingCloseOfTabs){
-            boolean bFormReferenceTabFile = false;
-            File fReferenceFile = new File(globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebPageTabDataRef.dat");
-            if(bFormReferenceTabFile){
-                //Create a reference tab file:
-                try {
-                    Files.copy(fWebPageTabDataFile.toPath(), fReferenceFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e){
-                    String sMessage = e.getMessage();
-                }
-            }
-            //Copy the reference file of open tabs so that I don't have to keep opening them.
-            try {
-                Files.copy(fReferenceFile.toPath(), fWebPageTabDataFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e){
-                String sMessage = e.getMessage();
-            }
-
-        }
-
-        //If the file does not exist, return.
-        if(!fWebPageTabDataFile.exists()) return;
-
-        //Read the file into memory.
-        try {
-
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fWebPageTabDataFile.getAbsolutePath()));
-
-            brReader.readLine(); //Skip read of the file header.
-
-            if(globalClass.gal_WebPages == null){
-                globalClass.gal_WebPages = new ArrayList<>();
-            } else {
-                globalClass.gal_WebPages.clear();
-            }
-
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-
-                ItemClass_WebPageTabData icwptd_DataRecordFromFile;
-                icwptd_DataRecordFromFile = ConvertStringToWebPageTabData(sLine);
-                globalClass.gal_WebPages.add(icwptd_DataRecordFromFile);
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-
-        } catch (Exception e) {
-            problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.", Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
-        }
-
-
-
-
-        //Broadcast a message to be picked-up by the WebPage Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
-
-
-    }
 
     private void handleActionRemoveWebPageTabData() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
@@ -287,7 +210,7 @@ public class Service_WebPageTabs extends IntentService {
 
             StringBuilder sbBuffer = new StringBuilder();
 
-            String sHeader = getCatalogHeader(); //Get updated header.
+            String sHeader = getWebPageTabDataFileHeader(); //Get updated header.
             sbBuffer.append(sHeader);
             sbBuffer.append("\n");
 
@@ -455,7 +378,7 @@ public class Service_WebPageTabs extends IntentService {
 
 
     public final int giWebPageTabDataFileVersion = 1;
-    public String getCatalogHeader(){
+    public String getWebPageTabDataFileHeader(){
         String sHeader = "";
         sHeader = sHeader + "ID";                       //Tab ID (unique).
         sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).

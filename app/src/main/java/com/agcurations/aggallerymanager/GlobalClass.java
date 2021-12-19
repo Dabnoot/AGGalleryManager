@@ -1084,6 +1084,86 @@ public class GlobalClass extends Application {
     }
 
 
+    //==================================================================================================
+    //=========  BROWSER  ==============================================================================
+    //==================================================================================================
+
+
+
+    public final int giWebPageTabDataFileVersion = 1;
+    public String getWebPageTabDataFileHeader(){
+        String sHeader = "";
+        sHeader = sHeader + "ID";                       //Tab ID (unique).
+        sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
+        sHeader = sHeader + "\t" + "AddressHistory";    //Address history for the tab.
+        sHeader = sHeader + "\t" + "Favicon Filename";  //Filename of bitmap for tab icon.
+        sHeader = sHeader + "\t" + "Version:" + giWebPageTabDataFileVersion;
+
+        return sHeader;
+    }
+
+    public String ConvertWebPageTabDataToString(ItemClass_WebPageTabData wptd){
+
+        String sRecord = "";  //To be used when writing the catalog file.
+        sRecord = sRecord + GlobalClass.JumbleStorageText(wptd.sTabID);
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sTabTitle);
+        /*sRecord = sRecord + "\t" + "{";
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < wptd.sAddress.size(); i++){
+            sb.append(GlobalClass.JumbleStorageText(wptd.sAddress.get(i)));
+            if(i < (wptd.sAddress.size() - 1)){
+                sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
+            }
+        }
+        sRecord = sRecord + sb.toString() + "%%" + "}";*/
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sAddress);
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sFaviconAddress);
+
+        return sRecord;
+    }
+
+    public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String[] sRecord){
+        //Designed for interpreting a line as read from the WebPageTabData file.
+        ItemClass_WebPageTabData wptd =  new ItemClass_WebPageTabData();
+        wptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
+        wptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[1]);
+        /*wptd.sAddress = new ArrayList<>();
+        String sAddresses = sRecord[3];
+        sAddresses = sAddresses.substring(1, sAddresses.length() - 1); //Remove '{' and '}'.
+        String[] sAddressHistory = sAddresses.split("%%");
+        for(int i = 0; i < sAddressHistory.length; i++){
+            sAddressHistory[i] = GlobalClass.JumbleStorageText(sAddressHistory[i]);
+        }
+        wptd.sAddress.addAll(Arrays.asList(sAddressHistory));*/
+        wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
+
+
+        if(sRecord.length >= 4) {
+            //Favicon filename might be empty, and if it is the last item on the record,
+            //  it will not be split-out via the split operation.
+            wptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[3]);
+        }
+
+        return wptd;
+    }
+
+    public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String sRecord){
+        String[] sRecord2 =  sRecord.split("\t");
+        //Split will ignore empty data and not return a full-sized array.
+        //  Correcting array...
+        int iRequiredFieldCount = 4;
+        String[] sRecord3 = new String[iRequiredFieldCount];
+        for(int i = 0; i < iRequiredFieldCount; i++){
+            if(i < sRecord2.length){
+                sRecord3[i] = sRecord2[i];
+            } else {
+                sRecord3[i] = "";
+            }
+
+        }
+        return ConvertStringToWebPageTabData(sRecord3);
+    }
+
     //====================================================================================
     //===== Worker/Download Management ==========================================================
     //====================================================================================
@@ -1259,13 +1339,6 @@ public class GlobalClass extends Application {
         for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate) {
             CatalogDataFile_UpdateRecord(ci);
         }
-
-    }
-
-    public void restartStoppedWorkers(){
-
-
-
 
     }
 
