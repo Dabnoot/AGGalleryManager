@@ -558,7 +558,7 @@ public class Fragment_WebPageTab extends Fragment {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             globalClass.gal_WebPages.set(i, icwptd);
-                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext());
+                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageFinished()");
 
                         }
                         break;
@@ -613,7 +613,7 @@ public class Fragment_WebPageTab extends Fragment {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             globalClass.gal_WebPages.set(i, icwptd);
-                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext());
+                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageStarted()");
 
 
                         }
@@ -740,7 +740,7 @@ public class Fragment_WebPageTab extends Fragment {
                                 icwptd.sFaviconAddress = sFaviconAddress;
                                 //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                                 globalClass.gal_WebPages.set(i, icwptd);
-                                Service_WebPageTabs.startAction_WriteWebPageTabData(getContext());
+                                Service_WebPageTabs.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
 
 
                                 break;

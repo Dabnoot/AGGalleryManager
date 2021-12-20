@@ -237,7 +237,7 @@ public class Activity_Browser extends AppCompatActivity {
             InitializeTabAppearance();
             //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
             //Update stored data:
-            Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext());
+            Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: CreateNewTab()");
             viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
         }
 
@@ -415,7 +415,7 @@ public class Activity_Browser extends AppCompatActivity {
                     InitializeTabAppearance();
 
                     //Record the new web page tab lineup to the file:
-                    Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext());
+                    Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: imageButton_Close.onClick()");
                 }
             });
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);

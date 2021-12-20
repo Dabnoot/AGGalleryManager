@@ -1156,7 +1156,7 @@ public class Service_Import extends IntentService {
                 //Next add the data to the catalog file and memory:
 
                 //Create a timestamp to be used to create the data record:
-                Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
 
                 ciNew.iMediaCategory = iMediaCategory;
                 ciNew.sFilename = sFileName;
@@ -1355,7 +1355,7 @@ public class Service_Import extends IntentService {
             ciNewComic.iGrade = Integer.parseInt(tmEntryNHComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade. Either default or selected by user.
             ciNewComic.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
-            Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
             ciNewComic.dDatetime_Last_Viewed_by_User = dTimeStamp;
             ciNewComic.dDatetime_Import = dTimeStamp;
             ciNewComic.sSource = "https:/nhentai.net/g/" + tmEntryNHComic.getKey() + "/";
@@ -1635,7 +1635,7 @@ public class Service_Import extends IntentService {
             ciNewComic.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNewComic.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
-            Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
             ciNewComic.dDatetime_Last_Viewed_by_User = dTimeStamp;
             ciNewComic.dDatetime_Import = dTimeStamp;
             ciNewComic.sSource = tmEntryComic.getValue()[INDEX_COMIC_SOURCE];
@@ -2166,7 +2166,7 @@ public class Service_Import extends IntentService {
         }
 
         //Create a timestamp to be used to create the data record:
-        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         ci.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ci.dDatetime_Import = dTimeStamp;
 
@@ -3353,7 +3353,7 @@ public class Service_Import extends IntentService {
         }
         ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
         ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
-        Double dTimeStamp = GlobalClass.GetTimeStampFloat();
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ciNew.dDatetime_Import = dTimeStamp;
         ciNew.iGrade = icfDownloadItem.iGrade;

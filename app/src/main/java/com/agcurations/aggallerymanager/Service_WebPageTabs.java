@@ -19,15 +19,14 @@ import java.util.Queue;
 import java.util.UUID;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
+import androidx.work.WorkerParameters;
 
 
 public class Service_WebPageTabs extends IntentService {
 
-    private static final String ACTION_SET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.action.set_webpage_tab_data";
-    private static final String ACTION_GET_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.action.get_webpage_tab_data";
-    private static final String ACTION_REMOVE_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.action.remove_webpage_tab_data";
     private static final String ACTION_GET_WEBPAGE_TITLE_FAVICON = "com.agcurations.webbrowser.action.get_webpage_title_favicon";
 
     private static final String EXTRA_WEBPAGE_TAB_DATA = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA";
@@ -38,7 +37,6 @@ public class Service_WebPageTabs extends IntentService {
 
     public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
     public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TAB_DATA_ACQUIRED";
-    public static final String RESULT_TYPE_WEB_PAGE_TAB_CLOSED = "com.agcurations.webbrowser.result.WEB_PAGE_TAB_CLOSED";
     public static final String RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED";
 
     public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
@@ -56,9 +54,19 @@ public class Service_WebPageTabs extends IntentService {
         WorkManager.getInstance(context).enqueue(otwrGetWebPageTabData);
     }
 
-    public static void startAction_WriteWebPageTabData(Context context) {
-        OneTimeWorkRequest otwrWriteWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_WriteWebPageTabData.class)
+    public static void startAction_WriteWebPageTabData(Context context, String sCallerID) {
+
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+
+        Data dataBrowserWriteWebPageTabData = new Data.Builder()
+                .putString(Worker_Browser_WriteWebPageTabData.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(Worker_Browser_WriteWebPageTabData.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                 .build();
+        OneTimeWorkRequest otwrWriteWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_WriteWebPageTabData.class)
+                .setInputData(dataBrowserWriteWebPageTabData)
+                .addTag(Worker_Browser_WriteWebPageTabData.TAG_WORKER_BROWSER_WRITEWEBPAGETABDATA) //To allow finding the worker later.
+                .build();
+
         WorkManager.getInstance(context).enqueue(otwrWriteWebPageTabData);
     }
 
@@ -145,7 +153,9 @@ public class Service_WebPageTabs extends IntentService {
             fwNewWebPageStorageFile.close();
 
         } catch (Exception e) {
-            problemNotificationConfig( e.getMessage(), Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+            GlobalClass.problemNotificationConfig( e.getMessage(),
+                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE,
+                    getApplicationContext());
         }
 
         GlobalClass.queueWebPageTabDataFileWriteRequests.remove();
@@ -153,9 +163,6 @@ public class Service_WebPageTabs extends IntentService {
     }
 
 
-    private void handleActionRemoveWebPageTabData() {
-
-    }
 
     private void handleActionPreloadHTMLGetTitleFavicon(ItemClass_WebPageTabData icwptd_DataToSet){
 
@@ -285,25 +292,6 @@ public class Service_WebPageTabs extends IntentService {
 
     }
 
-
-
-
-//==================================================================================================
-//=========  UTILITIES  ============================================================================
-//==================================================================================================
-
-
-
-
-
-    void problemNotificationConfig(String sMessage, String sIntentActionFilter){
-        Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(sIntentActionFilter);
-        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
-    }
 
 
 

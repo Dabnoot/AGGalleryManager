@@ -1029,7 +1029,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     public void StartComicViewerActivity(ItemClass_CatalogItem ci){
 
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
-        ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampFloat();
+        ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampDouble();
 
         globalClass.CatalogDataFile_UpdateRecord(ci);
 

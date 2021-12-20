@@ -229,7 +229,7 @@ public class GlobalClass extends Application {
     static final String gsDatePatternNumSort = "yyyyMMdd.HHmmss";
     static DateTimeFormatter gdtfDateFormatter;
 
-    public static Double GetTimeStampFloat(){
+    public static Double GetTimeStampDouble(){
         //Get an easily-comparable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort);
         String sTimeStamp = gdtfDateFormatter.format(LocalDateTime.now());
