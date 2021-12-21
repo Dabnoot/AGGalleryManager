@@ -28,7 +28,6 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -58,8 +57,6 @@ public class Fragment_WebPageTab extends Fragment {
 
     public String gsWebAddress = "";
 
-    boolean gbInitialized = false;
-
     ArrayList<String> gals_ResourceRequests;
 
     boolean gbWriteApplicationLog = false;
@@ -77,11 +74,8 @@ public class Fragment_WebPageTab extends Fragment {
         //Empty constructor
     }
 
-    boolean gPreloadWebPage = false;
-
     public Fragment_WebPageTab(String sURL) {
         gsWebAddress = sURL;
-        gPreloadWebPage = false;
     }
 
     @Override
@@ -109,16 +103,6 @@ public class Fragment_WebPageTab extends Fragment {
         gals_ResourceRequests = new ArrayList<>();
 
         ConfigureHTMLWatcher();
-
-        if (gPreloadWebPage) { //Preload webpage to cache data for faster tab switching.
-            gWebView = new VideoEnabledWebView(getActivity());
-            gWebViewClient = getNewWebViewClient();
-            gWebView.setWebViewClient(gWebViewClient);
-            gWebView.addJavascriptInterface(new JavaScriptInterfaceGetHTML(), "HtmlViewer");
-            WebChromeClient webChromeClient = new WebChromeClient();
-            gWebView.setWebChromeClient(webChromeClient); //todo: is this still necessary?
-            gWebView.loadUrl(gsWebAddress);
-        }
 
         ApplicationLogWriter("OnCreate End.");
     }
@@ -205,6 +189,7 @@ public class Fragment_WebPageTab extends Fragment {
             private final float fInitialGarbage = -10000000;
             float fLPY = fInitialGarbage;
             float fLPDeltaY = fInitialGarbage;
+
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 v.performClick();
@@ -242,7 +227,8 @@ public class Fragment_WebPageTab extends Fragment {
                         MotionEvent.ACTION_BUTTON_RELEASE
                 };*/
 
-                Log.d("onTouch:", sActionEnum[action]);
+                boolean bDebugTopBarSlide = false;
+                if(bDebugTopBarSlide) Log.d("onTouch:", sActionEnum[action]);
 
 
 
@@ -261,12 +247,8 @@ public class Fragment_WebPageTab extends Fragment {
                         fDeltaY = event.getHistoricalY(0, 0) - event.getY(0);
 
                     }
-                    Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " fLPDeltaY: " + fLPDeltaY);
-                    /*if((Math.abs(Math.abs(fDeltaY) - Math.abs(fLPDeltaY)) > 4.0f) &&
-                            ((fDeltaY < 0 && fLPDeltaY > 0) || (fDeltaY > 0 && fLPDeltaY < 0))){
-                        //Abort jitter mode induced by the movement of the view produced by this code when the top bars are height-adjusted at slow speed.
-                        return true;
-                    }*/
+                    if(bDebugTopBarSlide) Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " fLPDeltaY: " + fLPDeltaY);
+
                     fLPY = event.getY();
                     if(
                             ((fDeltaY < 0 && fLPDeltaY > 0) || (fDeltaY > 0 && fLPDeltaY < 0))){
@@ -277,7 +259,7 @@ public class Fragment_WebPageTab extends Fragment {
 
                     fLPDeltaY = fDeltaY;
 
-                    Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " History: " + event.getHistorySize() + " Y: " + event.getY());
+                    if(bDebugTopBarSlide) Log.d("ACTION_MOVE", "DeltaY: " + fDeltaY + " History: " + event.getHistorySize() + " Y: " + event.getY());
 
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
                     int iBrowserTopBarHeight_Current = 0;
@@ -305,7 +287,6 @@ public class Fragment_WebPageTab extends Fragment {
                             iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int) (fDeltaY * fMovementMultiplier);
                             iBrowserTopBarHeight_New = Math.max(0, iBrowserTopBarHeight_New);
                             RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
-                            //Log.d("New height", "Current: " + iBrowserTopBarHeight_Current + " New: " + iBrowserTopBarHeight_New);
                             rlp.height = iBrowserTopBarHeight_New;
                             activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
                             return true; //Do not pass this touch event to the lower-level views.
@@ -349,15 +330,8 @@ public class Fragment_WebPageTab extends Fragment {
 
                 }
 
-
-
-
-
                 return false;  //return false to indicate that we have not handled the touch and to pass it on to child views, etc.
 
-
-
-                //return gestureDetector_WebView.onTouchEvent(event);
             }
 
         };
@@ -386,10 +360,6 @@ public class Fragment_WebPageTab extends Fragment {
             }
         });
 
-        String sLoadedAddress = gWebView.getUrl();
-        if (sLoadedAddress == null && !gsWebAddress.equals("")) {  //Logic for properly determining when to reload, such as due to screen rotation.
-            InitializeData();
-        }
 
         ImageButton imageButton_ClearText = getView().findViewById(R.id.imageButton_ClearText);
         if (imageButton_ClearText != null) {
@@ -505,8 +475,19 @@ public class Fragment_WebPageTab extends Fragment {
 
     private void InitializeData() {
         ApplicationLogWriter("InitializeData start.");
-        //Find the associated WebPageTabData and enter that data into the view:
+
+
+        //Find the associated WebPageTabData:
         giThisFragmentHashCode = this.hashCode();
+
+        //If the tab is not currently selected, don't load:
+        Activity_Browser activity_browser = (Activity_Browser) getActivity();
+        if(activity_browser == null) return;
+        int iSelectedTab = activity_browser.tabLayout_WebTabs.getSelectedTabPosition();
+        int iSelectedTabHashID = globalClass.gal_WebPages.get(iSelectedTab).iTabFragmentHashID;
+
+
+        //Load data and webpage:
         for (ItemClass_WebPageTabData icwptd : globalClass.gal_WebPages) {
             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                 if (icwptd.sAddress != null) {
@@ -514,15 +495,16 @@ public class Fragment_WebPageTab extends Fragment {
                         String sAddress = icwptd.sAddress;
                         gEditText_Address.setText(sAddress);
                         gsWebAddress = sAddress;
-                        gWebView.loadUrl(sAddress);
                         gWebView.gsTabID = icwptd.sTabID;
+                        if(iSelectedTabHashID == giThisFragmentHashCode){
+                            gWebView.loadUrl(sAddress);
+                        }
                     }
                 }
                 break;
             }
         }
 
-        gbInitialized = true;
         ApplicationLogWriter("InitializeData end.");
     }
 
@@ -533,7 +515,8 @@ public class Fragment_WebPageTab extends Fragment {
         ApplicationLogWriter("onResume start.");
 
         String sLoadedAddress = gWebView.getUrl();
-        if (sLoadedAddress == null && gsWebAddress.equals("")) {
+        if (sLoadedAddress == null && !gsWebAddress.equals("")) {
+            //The webview holds no url, but out internal string shows a url should be loaded.
             InitializeData();
         }
         ApplicationLogWriter("onResume end.");
