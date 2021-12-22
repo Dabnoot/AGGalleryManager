@@ -25,7 +25,7 @@ import androidx.work.WorkManager;
 import androidx.work.WorkerParameters;
 
 
-public class Service_WebPageTabs {
+public class Service_Browser {
 
     public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
 

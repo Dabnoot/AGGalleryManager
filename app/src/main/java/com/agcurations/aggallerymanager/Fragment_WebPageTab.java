@@ -412,7 +412,7 @@ public class Fragment_WebPageTab extends Fragment {
                         return;
                     }
                     ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clipData = ClipData.newPlainText(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
+                    ClipData clipData = ClipData.newPlainText(Service_Browser.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
                     clipboard.setPrimaryClip(clipData);
 
                     //Send the user to the Import Activity:
@@ -541,7 +541,7 @@ public class Fragment_WebPageTab extends Fragment {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             globalClass.gal_WebPages.set(i, icwptd);
-                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageFinished()");
+                            Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageFinished()");
 
                         }
                         break;
@@ -596,7 +596,7 @@ public class Fragment_WebPageTab extends Fragment {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             globalClass.gal_WebPages.set(i, icwptd);
-                            Service_WebPageTabs.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageStarted()");
+                            Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageStarted()");
 
 
                         }
@@ -723,7 +723,7 @@ public class Fragment_WebPageTab extends Fragment {
                                 icwptd.sFaviconAddress = sFaviconAddress;
                                 //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                                 globalClass.gal_WebPages.set(i, icwptd);
-                                Service_WebPageTabs.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
+                                Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
 
 
                                 break;

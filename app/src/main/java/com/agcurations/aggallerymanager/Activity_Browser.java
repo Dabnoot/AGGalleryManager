@@ -182,7 +182,7 @@ public class Activity_Browser extends AppCompatActivity {
             LocalBroadcastManager.getInstance(this).registerReceiver(webPageTabDataServiceResponseReceiver, filter);
 
 
-            Service_WebPageTabs.startAction_GetWebPageTabData(this);
+            Service_Browser.startAction_GetWebPageTabData(this);
 
 
             /*Button button_testBrowser = findViewById(R.id.button_testBrowser);
@@ -227,7 +227,7 @@ public class Activity_Browser extends AppCompatActivity {
             viewPagerFragmentAdapter.notifyDataSetChanged();
             InitializeTabAppearance();
             //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
-            Service_WebPageTabs.startAction_GetWebpageTitleFavicon(getApplicationContext(), icwptd); //This routine also calls the same routine as startAction_SetWebPageTabData.
+            Service_Browser.startAction_GetWebpageTitleFavicon(getApplicationContext(), icwptd); //This routine also calls the same routine as startAction_SetWebPageTabData.
 
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
@@ -237,7 +237,7 @@ public class Activity_Browser extends AppCompatActivity {
             InitializeTabAppearance();
             //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
             //Update stored data:
-            Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: CreateNewTab()");
+            Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: CreateNewTab()");
             viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
         }
 
@@ -334,7 +334,7 @@ public class Activity_Browser extends AppCompatActivity {
             gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
         }
         if(!bTabsLoaded) {
-            Service_WebPageTabs.startAction_GetWebPageTabData(this);
+            Service_Browser.startAction_GetWebPageTabData(this);
         }
         ApplicationLogWriter("onRestart.");
     }
@@ -415,7 +415,7 @@ public class Activity_Browser extends AppCompatActivity {
                     InitializeTabAppearance();
 
                     //Record the new web page tab lineup to the file:
-                    Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: imageButton_Close.onClick()");
+                    Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: imageButton_Close.onClick()");
                 }
             });
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
@@ -674,7 +674,7 @@ public class Activity_Browser extends AppCompatActivity {
                             globalClass.gal_WebPages.get(iTabID).sFaviconAddress = sFaviconAddress;
 
                             //Write data to storage file:
-                            Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: WebPageTabDataServiceResponseReceiver().TITLE_AND_FAVICON_ACQUIRED");
+                            Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: WebPageTabDataServiceResponseReceiver().TITLE_AND_FAVICON_ACQUIRED");
 
                             //Update views:
                             if(iHashCode != 0) {

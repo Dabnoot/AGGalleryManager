@@ -154,7 +154,7 @@ public class Fragment_Import_1b_ComicWebDetect extends Fragment {
                 if (clipData != null) {
                     String sClipLabel = clipData.getDescription().getLabel().toString();
                     if (sClipLabel != null){
-                        if(sClipLabel.equals(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                        if(sClipLabel.equals(Service_Browser.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
                             ClipData.Item clipItem = clipData.getItemAt(0);
                             if(clipItem != null){
                                 if(clipItem.getText() != null){

@@ -280,7 +280,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             ClipData clipData = clipboard.getPrimaryClip();
             if (clipData != null) {
                 String sClipLabel = clipData.getDescription().getLabel().toString();
-                if(sClipLabel.equals(Service_WebPageTabs.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                if(sClipLabel.equals(Service_Browser.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
                     ClipData.Item clipItem = clipData.getItemAt(0);
                     if(clipItem != null){
                         if(clipItem.getText() != null){
