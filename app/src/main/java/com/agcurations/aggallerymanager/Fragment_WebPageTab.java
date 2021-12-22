@@ -83,7 +83,6 @@ public class Fragment_WebPageTab extends Fragment {
         super.onCreate(savedInstanceState);
 
         if (getActivity() == null) {
-            //todo: write to log "[fragment] no activity object found".
             return;
         }
 
@@ -122,7 +121,6 @@ public class Fragment_WebPageTab extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         ApplicationLogWriter("OnViewCreated start.");
         if (getActivity() == null || getView() == null) {
-            //todo: write to log.
             return;
         }
 
@@ -265,9 +263,9 @@ public class Fragment_WebPageTab extends Fragment {
                     int iBrowserTopBarHeight_Current = 0;
                     if (activity_browser != null) {
                         if (activity_browser.giBrowserTopBarHeight_Original == 0) {
-                            activity_browser.giBrowserTopBarHeight_Original = activity_browser.relativeLayout_BrowserTopBar.getHeight();
+                            activity_browser.giBrowserTopBarHeight_Original = activity_browser.gRelativeLayout_BrowserTopBar.getHeight();
                         }
-                        iBrowserTopBarHeight_Current = activity_browser.relativeLayout_BrowserTopBar.getHeight();
+                        iBrowserTopBarHeight_Current = activity_browser.gRelativeLayout_BrowserTopBar.getHeight();
                     }
                     if (iWebViewNavigationHeight_Original == 0) {
                         iWebViewNavigationHeight_Original = gRelativeLayout_WebViewNavigation.getHeight();
@@ -286,9 +284,9 @@ public class Fragment_WebPageTab extends Fragment {
                             //Start hiding the tab bar:
                             iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int) (fDeltaY * fMovementMultiplier);
                             iBrowserTopBarHeight_New = Math.max(0, iBrowserTopBarHeight_New);
-                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
+                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.gRelativeLayout_BrowserTopBar.getLayoutParams();
                             rlp.height = iBrowserTopBarHeight_New;
-                            activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
+                            activity_browser.gRelativeLayout_BrowserTopBar.setLayoutParams(rlp);
                             return true; //Do not pass this touch event to the lower-level views.
                         } else if (iWebViewNavigationHeight_Current > 0f) {
                             //Start hiding the address bar
@@ -315,9 +313,9 @@ public class Fragment_WebPageTab extends Fragment {
                             //Start showing the tab bar:
                             iBrowserTopBarHeight_New = iBrowserTopBarHeight_Current - (int) (fDeltaY * fMovementMultiplier);
                             iBrowserTopBarHeight_New = Math.min(activity_browser.giBrowserTopBarHeight_Original, iBrowserTopBarHeight_New);
-                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.relativeLayout_BrowserTopBar.getLayoutParams();
+                            RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) activity_browser.gRelativeLayout_BrowserTopBar.getLayoutParams();
                             rlp.height = iBrowserTopBarHeight_New;
-                            activity_browser.relativeLayout_BrowserTopBar.setLayoutParams(rlp);
+                            activity_browser.gRelativeLayout_BrowserTopBar.setLayoutParams(rlp);
                             return true; //Do not pass this touch event to the lower-level views.
                         } else {
                             //Max scroll reached - user is scrolling up and the top bar and address bar are fully visible.
@@ -698,15 +696,7 @@ public class Fragment_WebPageTab extends Fragment {
                         String sHostPrefix = gsWebAddress.substring(0,gsWebAddress.indexOf("/"));
                         String sHost = sHostPrefix + "//" + url.getHost();
                         sFaviconAddress = sHost + "/favicon.ico";
-                        //Check to see if the resource is found at the URL:
-                        /*url = new URL(sFaviconAddress);
-                        HttpURLConnection huc = (HttpURLConnection) url.openConnection();
-                        int iResponseCode = huc.getResponseCode();
-                        if(iResponseCode == HttpURLConnection.HTTP_OK){
-                            bFaviconAddressFound = true;
-                        }*/
-                        //Above code to check if the file exists cannot be executed on this thread
-                        // (NetworkOnMainThreadException). Address is to be passed to Glide, so
+                        //Address is to be passed to Glide, so
                         // let Glide deal with it for now.
                         bFaviconAddressFound = true;
                     } catch (IOException e) {
@@ -721,15 +711,12 @@ public class Fragment_WebPageTab extends Fragment {
                             ItemClass_WebPageTabData icwptd = globalClass.gal_WebPages.get(i);
                             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                                 icwptd.sFaviconAddress = sFaviconAddress;
-                                //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                                 globalClass.gal_WebPages.set(i, icwptd);
                                 Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
-
-
                                 break;
                             }
                         }
-                        activity_browser.updateSingleTabNotchFavicon(giThisFragmentHashCode, null); //Update the tab label.
+                        activity_browser.updateSingleTabNotchFavicon(giThisFragmentHashCode); //Update the tab label.
 
                     }
                 }

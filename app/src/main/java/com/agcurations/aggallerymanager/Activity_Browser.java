@@ -16,10 +16,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,7 +59,7 @@ public class Activity_Browser extends AppCompatActivity {
     public static ViewModel_Browser viewModel_browser; //Used to transfer data between fragments.
 
     public int giBrowserTopBarHeight_Original;
-    public RelativeLayout relativeLayout_BrowserTopBar;
+    public RelativeLayout gRelativeLayout_BrowserTopBar;
 
     private String[] gsNewTabSequenceHelper;
 
@@ -121,7 +121,7 @@ public class Activity_Browser extends AppCompatActivity {
 
             tabLayout_WebTabs = findViewById(R.id.tabLayout_WebTabs);
 
-            relativeLayout_BrowserTopBar = findViewById(R.id.relativeLayout_BrowserTopBar); //Referenced for scrolling the TopBar out of view during WebView scrolldown.
+            gRelativeLayout_BrowserTopBar = findViewById(R.id.relativeLayout_BrowserTopBar); //Referenced for scrolling the TopBar out of view during WebView scrolldown.
 
             //Configure a TabLayoutMediator to synchronize the TabLayout and the ViewPager2.
             //AutoRefresh tells the system to recreate all the tabs of the tabLayout if notifyDataSetChanged is called to the viewPager adapter.
@@ -245,6 +245,10 @@ public class Activity_Browser extends AppCompatActivity {
 
 
     class HandlerOpenLinkInNewTab extends Handler {
+        public HandlerOpenLinkInNewTab(@NonNull Looper looper) {
+            super(looper);
+        }
+
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
@@ -370,13 +374,11 @@ public class Activity_Browser extends AppCompatActivity {
             if(sTitle.equals("")){
                 sTitle = "New Tab";
             }
-            /*if(sTitle.length() > 15){
-                sTitle = sTitle.substring(0,15) + "...";
-            }*/
 
             RelativeLayout relativeLayout_custom_tab = (RelativeLayout)
                     LayoutInflater.from(getApplicationContext())
-                            .inflate(R.layout.custom_tab, null);
+                            .inflate(R.layout.custom_tab, gRelativeLayout_BrowserTopBar, false);
+
 
             ImageView imageView_Favicon = relativeLayout_custom_tab.findViewById(R.id.imageView_Favicon);
             if(imageView_Favicon != null) {
@@ -421,7 +423,6 @@ public class Activity_Browser extends AppCompatActivity {
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
         }
         //Scroll to center the selected tab:
-        //todo: test with less than a window's width of tabs.
         int iSelectedTabPosition = tabLayout_WebTabs.getSelectedTabPosition();
         if(giTabWidth < 0){
             giTabWidth = (int) convertDpToPx(getApplicationContext(), 200); //200dp default
@@ -438,39 +439,7 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("InitializeTabAppearance end.");
     }
 
-    public void updateSingleTabNotchTitle(int iHashCode){
-        //Update tab title only.
-        ApplicationLogWriter("updateSingleTabNotchTitle start.");
-        int iTabIndex = -1;
-        //Find the tab index matching the supplied HashCode.
-        for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
-            if(iHashCode == globalClass.gal_WebPages.get(i).iTabFragmentHashID){
-                iTabIndex = i;
-                break;
-            }
-        }
-        if(iTabIndex == -1){
-            return;
-        }
-
-        TabLayout.Tab tab = tabLayout_WebTabs.getTabAt(iTabIndex);
-        if(tab != null) {
-            View view = tab.getCustomView();
-            if(view != null) {
-                TextView textView_TabText = view.findViewById(R.id.text);
-                if (textView_TabText != null) {
-                    String sTitle = globalClass.gal_WebPages.get(iTabIndex).sTabTitle;
-                    if (sTitle.equals("")) {
-                        sTitle = "New Tab";
-                    }
-                    textView_TabText.setText(sTitle);
-                }
-            }
-        }
-        ApplicationLogWriter("updateSingleTabNotchTitle end.");
-    }
-
-    public void updateSingleTabNotchFavicon(int iHashCode, Bitmap bitmap_favicon){ //Todo: Combine with updateSingleTabNotchTitle, but with a flag?
+    public void updateSingleTabNotchFavicon(int iHashCode){
         //Update tab title and favicon.
         ApplicationLogWriter("updateSingleTabNotchFavicon start.");
         int iTabIndex = -1;
@@ -500,17 +469,11 @@ public class Activity_Browser extends AppCompatActivity {
 
                 ImageView imageView_Favicon = view.findViewById(R.id.imageView_Favicon);
                 if(imageView_Favicon != null) {
-                    if( bitmap_favicon != null) {
-                        imageView_Favicon.setImageResource(0);
-                        imageView_Favicon.setImageBitmap(bitmap_favicon);
-                    } else {
-                        String sFaviconAddress = globalClass.gal_WebPages.get(iTabIndex).sFaviconAddress;
-                        if(!sFaviconAddress.equals("")){
-                            Glide.with(this)
-                                    .load(sFaviconAddress)
-                                    .into(imageView_Favicon);
-                        }
-
+                    String sFaviconAddress = globalClass.gal_WebPages.get(iTabIndex).sFaviconAddress;
+                    if(!sFaviconAddress.equals("")){
+                        Glide.with(this)
+                                .load(sFaviconAddress)
+                                .into(imageView_Favicon);
                     }
                 }
             }
@@ -542,7 +505,7 @@ public class Activity_Browser extends AppCompatActivity {
 
                 Fragment_WebPageTab fwp = new Fragment_WebPageTab();
 
-                fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab();
+                fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab(Looper.getMainLooper());
 
                 alFragment_WebPages.add(fwp);
 
@@ -561,7 +524,7 @@ public class Activity_Browser extends AppCompatActivity {
         public void insertFragment(int index, String sURL) {
             //InsertFragment is only used for inserting a new tab from a long-press on a hyperlink in the fragment's webView.
             Fragment_WebPageTab fwp = new Fragment_WebPageTab(sURL);
-            fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab();
+            fwp.handlerOpenLinkInNewTab = new HandlerOpenLinkInNewTab(Looper.getMainLooper());
             alFragment_WebPages.add(index, fwp);
             //Add the hashCode of the new fragment to the WebPageTabData for tracking.
             //  WebPageTabData must be added before this createFragment routine is called.
@@ -678,7 +641,7 @@ public class Activity_Browser extends AppCompatActivity {
 
                             //Update views:
                             if(iHashCode != 0) {
-                                updateSingleTabNotchFavicon(iHashCode, null);
+                                updateSingleTabNotchFavicon(iHashCode);
                             }
                         }
 
