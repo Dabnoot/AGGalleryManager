@@ -1,31 +1,16 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.IntentService;
-import android.content.Intent;
+
 import android.content.Context;
 
-import org.htmlcleaner.CleanerProperties;
-import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.TagNode;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.UUID;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
-import androidx.work.WorkerParameters;
 
 
 public class Service_Browser {
+    //This routine used to be devoted to an IntentService. IntentService was deprecated, and items
+    //  were converted to Workers.
 
     public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
 
@@ -63,12 +48,5 @@ public class Service_Browser {
                 .build();
         WorkManager.getInstance(context).enqueue(otwrGetWebPagePreview);
     }
-
-
-
-
-
-
-
 
 }
