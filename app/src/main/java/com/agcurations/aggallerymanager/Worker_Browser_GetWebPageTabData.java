@@ -15,10 +15,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import static com.agcurations.aggallerymanager.Service_WebPageTabs.EXTRA_RESULT_TYPE;
-import static com.agcurations.aggallerymanager.Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED;
-
 public class Worker_Browser_GetWebPageTabData extends Worker {
+
+    public static final String RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TAB_DATA_ACQUIRED";
 
     public Worker_Browser_GetWebPageTabData(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -97,7 +96,7 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent.putExtra(EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED);
+        broadcastIntent.putExtra(GlobalClass.EXTRA_RESULT_TYPE, RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
 

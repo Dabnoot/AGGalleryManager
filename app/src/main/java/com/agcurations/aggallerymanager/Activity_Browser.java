@@ -621,16 +621,16 @@ public class Activity_Browser extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
 
             //Get boolean indicating that an error may have occurred:
-            boolean bError = intent.getBooleanExtra(Service_WebPageTabs.EXTRA_BOOL_PROBLEM,false);
+            boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
 
             if (bError) {
-                String sMessage = intent.getStringExtra(Service_WebPageTabs.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
-                String sResultType = intent.getStringExtra(Service_WebPageTabs.EXTRA_RESULT_TYPE);
+                String sResultType = intent.getStringExtra(GlobalClass.EXTRA_RESULT_TYPE);
                 if(sResultType != null){
-                    if(sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED)){
+                    if(sResultType.equals(Worker_Browser_GetWebPageTabData.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED)){
                         //This should only run at Activity start.
                         //Initialize the tabs:
                         GlobalClass globalClass = (GlobalClass) getApplicationContext();
@@ -654,17 +654,29 @@ public class Activity_Browser extends AppCompatActivity {
 
                         bTabsLoaded = true;
 
-                    } else if (sResultType.equals(Service_WebPageTabs.RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED)){
-                        String sTabID = intent.getStringExtra(Service_WebPageTabs.EXTRA_WEBPAGE_TAB_DATA_TABID);
+                    } else if (sResultType.equals(Worker_Browser_GetWebPagePreview.RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED)){
+                        String sTabID = intent.getStringExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TABID);
                         if(sTabID != null) {
                             //Find the hash for the fragment with the matching tab ID:
                             int iHashCode = 0;
+                            int iTabID = -1;
                             for (int i = 0; i < globalClass.gal_WebPages.size(); i++) {
                                 if (sTabID.equals(globalClass.gal_WebPages.get(i).sTabID)) {
                                     iHashCode = globalClass.gal_WebPages.get(i).iTabFragmentHashID;
+                                    iTabID = i;
                                     break;
                                 }
                             }
+                            //Update memory:
+                            String sTitle = intent.getStringExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TITLE);
+                            String sFaviconAddress = intent.getStringExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS);
+                            globalClass.gal_WebPages.get(iTabID).sTabTitle = sTitle;
+                            globalClass.gal_WebPages.get(iTabID).sFaviconAddress = sFaviconAddress;
+
+                            //Write data to storage file:
+                            Service_WebPageTabs.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: WebPageTabDataServiceResponseReceiver().TITLE_AND_FAVICON_ACQUIRED");
+
+                            //Update views:
                             if(iHashCode != 0) {
                                 updateSingleTabNotchFavicon(iHashCode, null);
                             }

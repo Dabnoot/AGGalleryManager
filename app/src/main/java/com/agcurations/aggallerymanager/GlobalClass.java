@@ -161,6 +161,9 @@ public class GlobalClass extends Application {
 
     public static String gsApplicationLogName = "ApplicationLog.txt";
 
+    public static final String EXTRA_CALLER_ID = "com.agcurations.aggallermanager.string_caller_id";
+    public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
+
     //=====================================================================================
     //===== Network Monitoring ============================================================
     //=====================================================================================
@@ -1089,6 +1092,12 @@ public class GlobalClass extends Application {
     //==================================================================================================
     //=========  BROWSER  ==============================================================================
     //==================================================================================================
+
+    public static final String EXTRA_WEBPAGE_TAB_DATA_TABID = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_TABID";
+    public static final String EXTRA_WEBPAGE_TAB_DATA_ADDRESS = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_ADDRESS";
+    public static final String EXTRA_WEBPAGE_TAB_DATA_TITLE = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_TITLE";
+    public static final String EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_FAVICON_ADDRESS";
+    public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
 
     public static final Queue<String> queueWebPageTabDataFileWriteRequests = new LinkedList<>();
     public static final int giMaxDelayForWriteRequestMS = 5000;
