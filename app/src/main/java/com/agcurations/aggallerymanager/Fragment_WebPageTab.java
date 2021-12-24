@@ -6,12 +6,14 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -69,6 +71,9 @@ public class Fragment_WebPageTab extends Fragment {
     private int giThisFragmentHashCode = 0;
 
     public RelativeLayout gRelativeLayout_WebViewNavigation;
+
+    private ImageButton gImageButton_Back;
+    private ImageButton gImageButton_Forward;
 
     public Fragment_WebPageTab() {
         //Empty constructor
@@ -180,7 +185,6 @@ public class Fragment_WebPageTab extends Fragment {
         gWebView.addJavascriptInterface(new JavaScriptInterfaceGetHTML(), "HtmlViewer");
 
         gRelativeLayout_WebViewNavigation = getView().findViewById(R.id.relativeLayout_WebViewNavigation);
-
 
         View.OnTouchListener view_OnTouchListener = new View.OnTouchListener() {
 
@@ -421,26 +425,66 @@ public class Fragment_WebPageTab extends Fragment {
             });
         }
 
-        ImageButton imageButton_Back = getView().findViewById(R.id.imageButton_Back);
-        if (imageButton_Back != null) {
-            imageButton_Back.setOnClickListener(new View.OnClickListener() {
+        gImageButton_Back = getView().findViewById(R.id.imageButton_Back);
+        if (gImageButton_Back != null) {
+            gImageButton_Back.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (gWebView.canGoBack()) {
+                    /*if (gWebView.canGoBack()) {
                         gWebView.goBack();
+                    }*/
+                    int i = getWebPageTabDataIndex();
+                    if(i >= 0){
+                        int iStackBackHistorySize = globalClass.gal_WebPages.get(i).stackBackHistory.size();
+                        if(iStackBackHistorySize > 1) {
+                            //The top of the back stack should be equal to the currenly displayed webpage.
+                            String sCurrentAddress = globalClass.gal_WebPages.get(i).stackBackHistory.pop();
+                            globalClass.gal_WebPages.get(i).stackForwardHistory.push(sCurrentAddress);
+                            //Show the forward button as enabled:
+                            ForwardButtonEnable();
+                            if(iStackBackHistorySize == 2){
+                                //If we are now at the top of the stack, show the back button as disabled:
+                                BackButtonDisable();
+                            }
+                            String sBackURL = globalClass.gal_WebPages.get(i).stackBackHistory.peek();
+                            gWebView.loadUrl(sBackURL);
+                            //onPageStarted will handle setting sAddress variables.
+                            //don't worry about writing the updated back and finish stacks to the file here.
+                            // It will get written after the page finishes loading.
+                        } else {
+                            //Show the back button as disabled:
+                            BackButtonDisable();
+                        }
                     }
                 }
             });
 
         }
 
-        ImageButton imageButton_Forward = getView().findViewById(R.id.imageButton_Forward);
-        if (imageButton_Forward != null) {
-            imageButton_Forward.setOnClickListener(new View.OnClickListener() {
+        gImageButton_Forward = getView().findViewById(R.id.imageButton_Forward);
+        if (gImageButton_Forward != null) {
+            gImageButton_Forward.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (gWebView.canGoForward()) {
+                    /*if (gWebView.canGoForward()) {
                         gWebView.goForward();
+                    }*/
+                    int i = getWebPageTabDataIndex();
+                    if(i >= 0){
+                        if(globalClass.gal_WebPages.get(i).stackForwardHistory.size() > 0) {
+                            String sForwardURL = globalClass.gal_WebPages.get(i).stackForwardHistory.pop();
+                            globalClass.gal_WebPages.get(i).stackBackHistory.push(sForwardURL);
+                            //Show the back button as enabled:
+                            BackButtonEnable();
+
+                            gWebView.loadUrl(sForwardURL);
+                            //onPageStarted will handle setting sAddress variables.
+                        } else {
+                            //Show the forward button as disabled:
+                            ForwardButtonDisable();
+                        }
+                        //don't worry about writing the updated back and finish stacks to the file here.
+                        // It will get written after the page finishes loading.
                     }
                 }
             });
@@ -452,6 +496,18 @@ public class Fragment_WebPageTab extends Fragment {
         ApplicationLogWriter("OnViewCreated end.");
     }
 
+    private void BackButtonEnable(){
+        gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
+    }
+    private void BackButtonDisable(){
+        gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.tab_backcolor_selected, getActivity().getTheme())));
+    }
+    private void ForwardButtonEnable(){
+        gImageButton_Forward.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
+    }
+    private void ForwardButtonDisable(){
+        gImageButton_Forward.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.tab_backcolor_selected, getActivity().getTheme())));
+    }
 
     private void ApplicationLogWriter(String sMessage) {
         if (gbWriteApplicationLog) {
@@ -494,6 +550,14 @@ public class Fragment_WebPageTab extends Fragment {
                         gEditText_Address.setText(sAddress);
                         gsWebAddress = sAddress;
                         gWebView.gsTabID = icwptd.sTabID;
+
+                        if(icwptd.stackBackHistory.size() > 1){
+                            BackButtonEnable(); //The top of the stack is the current address.
+                        }
+                        if(icwptd.stackForwardHistory.size() > 0){
+                            ForwardButtonEnable();
+                        }
+
                         if(iSelectedTabHashID == giThisFragmentHashCode){
                             gWebView.loadUrl(sAddress);
                         }
@@ -504,6 +568,16 @@ public class Fragment_WebPageTab extends Fragment {
         }
 
         ApplicationLogWriter("InitializeData end.");
+    }
+
+    private int getWebPageTabDataIndex(){
+        for (int i = 0; i < globalClass.gal_WebPages.size(); i++) {
+            ItemClass_WebPageTabData icwptd = globalClass.gal_WebPages.get(i);
+            if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
+                return i;
+            }
+        }
+        return -1;
     }
 
 
@@ -534,6 +608,17 @@ public class Fragment_WebPageTab extends Fragment {
                     ItemClass_WebPageTabData icwptd = globalClass.gal_WebPages.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                         icwptd.sTabTitle = sTitle;
+                        if(icwptd.stackBackHistory.size() > 0){
+                            String sTopofBackStack = icwptd.stackBackHistory.peek();
+                            if(!sTopofBackStack.equals(url)){
+                                icwptd.stackBackHistory.push(url);
+                                //Show the back button as enabled:
+                                gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
+                            }
+                        } else {
+                            icwptd.stackBackHistory.push(url);
+                        }
+
                         Activity_Browser activity_browser = (Activity_Browser) getActivity();
                         if (activity_browser != null) {
                             //Update memory and page storage file.

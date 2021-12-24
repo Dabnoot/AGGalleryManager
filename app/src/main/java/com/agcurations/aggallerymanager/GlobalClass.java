@@ -27,6 +27,7 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -1107,63 +1108,96 @@ public class GlobalClass extends Application {
         String sHeader = "";
         sHeader = sHeader + "ID";                       //Tab ID (unique).
         sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
-        sHeader = sHeader + "\t" + "AddressHistory";    //Address history for the tab.
+        sHeader = sHeader + "\t" + "Address";           //Current address for the tab.
         sHeader = sHeader + "\t" + "Favicon Filename";  //Filename of bitmap for tab icon.
+        sHeader = sHeader + "\t" + "BackStack";         //Address back stack (history). Top item is the current address.
+        sHeader = sHeader + "\t" + "ForwardStack";      //Address forward stack (forward-history)
         sHeader = sHeader + "\t" + "Version:" + giWebPageTabDataFileVersion;
 
         return sHeader;
     }
 
-    public static String ConvertWebPageTabDataToString(ItemClass_WebPageTabData wptd){
+    public static String ConvertWebPageTabDataToString(ItemClass_WebPageTabData icwptd){
 
         String sRecord = "";  //To be used when writing the catalog file.
-        sRecord = sRecord + GlobalClass.JumbleStorageText(wptd.sTabID);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sTabTitle);
-        /*sRecord = sRecord + "\t" + "{";
+        sRecord = sRecord + GlobalClass.JumbleStorageText(icwptd.sTabID);
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sTabTitle);
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sAddress);
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sFaviconAddress);
+
+        //Append the back-stack to the record:
+        sRecord = sRecord + "\t" + "{";
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < wptd.sAddress.size(); i++){
-            sb.append(GlobalClass.JumbleStorageText(wptd.sAddress.get(i)));
-            if(i < (wptd.sAddress.size() - 1)){
+        int iBackStackSize = icwptd.stackBackHistory.size();
+        for(int i = 0; i < iBackStackSize; i++){
+            sb.append(GlobalClass.JumbleStorageText(icwptd.stackBackHistory.get(i)));
+            if(i < (iBackStackSize - 1)){
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb.toString() + "%%" + "}";*/
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sAddress);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(wptd.sFaviconAddress);
+        sRecord = sRecord + sb.toString() + "%%" + "}";
+
+        //Append the forward-stack to the record:
+        sRecord = sRecord + "\t" + "{";
+        sb = new StringBuilder();
+        int iForwardStackSize = icwptd.stackForwardHistory.size();
+        for(int i = 0; i < iForwardStackSize; i++){
+            sb.append(GlobalClass.JumbleStorageText(icwptd.stackForwardHistory.get(i)));
+            if(i < (iForwardStackSize - 1)){
+                sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
+            }
+        }
+        sRecord = sRecord + sb.toString() + "%%" + "}";
 
         return sRecord;
     }
 
     public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String[] sRecord){
         //Designed for interpreting a line as read from the WebPageTabData file.
-        ItemClass_WebPageTabData wptd =  new ItemClass_WebPageTabData();
-        wptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
-        wptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[1]);
-        /*wptd.sAddress = new ArrayList<>();
-        String sAddresses = sRecord[3];
-        sAddresses = sAddresses.substring(1, sAddresses.length() - 1); //Remove '{' and '}'.
-        String[] sAddressHistory = sAddresses.split("%%");
-        for(int i = 0; i < sAddressHistory.length; i++){
-            sAddressHistory[i] = GlobalClass.JumbleStorageText(sAddressHistory[i]);
-        }
-        wptd.sAddress.addAll(Arrays.asList(sAddressHistory));*/
-        wptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
+        ItemClass_WebPageTabData icwptd =  new ItemClass_WebPageTabData();
+        icwptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
+        icwptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[1]);
+        icwptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
 
 
-        if(sRecord.length >= 4) {
+        if(sRecord.length > 3) { //Length is 1-based
             //Favicon filename might be empty, and if it is the last item on the record,
             //  it will not be split-out via the split operation.
-            wptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[3]);
+            icwptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[3]); //Array index is 0-based.
         }
 
-        return wptd;
+        if(sRecord.length > 4) { //Length is 1-based
+            //Get the back-stack:
+            String sBackStackRaw = sRecord[4]; //Array index is 0-based.
+            sBackStackRaw = sBackStackRaw.substring(1, sBackStackRaw.length() - 1); //Remove '{' and '}'.
+            String[] sBackStackArray = sBackStackRaw.split("%%");
+            for (int i = 0; i < sBackStackArray.length; i++) {
+                sBackStackArray[i] = GlobalClass.JumbleStorageText(sBackStackArray[i]);
+            }
+            icwptd.stackBackHistory.addAll(Arrays.asList(sBackStackArray));
+        }
+
+        if(sRecord.length > 5) { //Length is 1-based
+            //Get the forward-stack:
+            String sForwardStackRaw = sRecord[5]; //Array index is 0-based.
+            sForwardStackRaw = sForwardStackRaw.substring(1, sForwardStackRaw.length() - 1); //Remove '{' and '}'.
+            String[] sForwardStackArray = sForwardStackRaw.split("%%");
+            for (int i = 0; i < sForwardStackArray.length; i++) {
+                sForwardStackArray[i] = GlobalClass.JumbleStorageText(sForwardStackArray[i]);
+            }
+            icwptd.stackForwardHistory.addAll(Arrays.asList(sForwardStackArray));
+        }
+
+
+
+        return icwptd;
     }
 
     public static ItemClass_WebPageTabData ConvertStringToWebPageTabData(String sRecord){
         String[] sRecord2 =  sRecord.split("\t");
         //Split will ignore empty data and not return a full-sized array.
         //  Correcting array...
-        int iRequiredFieldCount = 4;
+        int iRequiredFieldCount = 6;
         String[] sRecord3 = new String[iRequiredFieldCount];
         for(int i = 0; i < iRequiredFieldCount; i++){
             if(i < sRecord2.length){

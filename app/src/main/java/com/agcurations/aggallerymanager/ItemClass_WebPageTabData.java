@@ -1,9 +1,7 @@
 package com.agcurations.aggallerymanager;
 
-import android.graphics.Bitmap;
-
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Stack;
 
 public class ItemClass_WebPageTabData  implements Serializable {
 
@@ -12,4 +10,7 @@ public class ItemClass_WebPageTabData  implements Serializable {
     String sAddress = "";                        //Last used address for this tab. Enables reload.
     int iTabFragmentHashID;                 //Holds ID of tab related to this instance of ItemClass_WebPageTabData. Really needed when the view resets.
     String sFaviconAddress = "";           //Holds address of favicon file for tab icon.
+    Stack<String> stackBackHistory = new Stack<>();
+    Stack<String> stackForwardHistory = new Stack<>();
+
 }
