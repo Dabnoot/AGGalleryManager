@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
@@ -29,6 +31,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,6 +66,11 @@ public class Activity_Browser extends AppCompatActivity {
 
     private String[] gsNewTabSequenceHelper;
 
+    ProgressBar gProgressBar_Progress;
+    TextView gTextView_ProgressBarText;
+    Integer giProgressBarValue;
+    String gsProgressBarText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,6 +95,12 @@ public class Activity_Browser extends AppCompatActivity {
         if(gbWriteApplicationLog){
             gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
         }
+
+        gProgressBar_Progress = findViewById(R.id.progressBar_Progress);
+        gProgressBar_Progress.setMax(100);
+        gTextView_ProgressBarText = findViewById(R.id.textView_ProgressBarText);
+
+
         try {
             ApplicationLogWriter("OnCreate Start, getting application context.");
 
@@ -594,10 +608,13 @@ public class Activity_Browser extends AppCompatActivity {
                 String sResultType = intent.getStringExtra(GlobalClass.EXTRA_RESULT_TYPE);
                 if(sResultType != null){
                     if(sResultType.equals(Worker_Browser_GetWebPageTabData.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED)){
-                        //This should only run at Activity start.
+
                         //Initialize the tabs:
                         GlobalClass globalClass = (GlobalClass) getApplicationContext();
                         for(int i = 0; i < globalClass.gal_WebPages.size(); i++){
+                            //NO PROGRESS BAR TO BE IMPLEMENTED HERE.
+                            //  This onReceive blocks the UI thread, and so no progress bar drawing
+                            //  will occur.
                             String sAddress = globalClass.gal_WebPages.get(i).sAddress;
                             if(!sAddress.equals("")) {
                                 viewPagerFragmentAdapter.insertFragment(i, globalClass.gal_WebPages.get(i).sAddress);
@@ -614,6 +631,9 @@ public class Activity_Browser extends AppCompatActivity {
                         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                         int iTabofLastFocus = sharedPreferences.getInt(GlobalClass.PREF_WEB_TAB_PREV_FOCUS_INDEX, 0);
                         viewPager2_WebPages.setCurrentItem(iTabofLastFocus, false);
+
+                        gProgressBar_Progress.setVisibility(View.INVISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
 
                         bTabsLoaded = true;
 
