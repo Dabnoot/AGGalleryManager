@@ -418,8 +418,10 @@ public class Activity_Browser extends AppCompatActivity {
                     //  focus tab retains focus.
                     int iFocusPosition = viewPager2_WebPages.getCurrentItem();
                     //Make sure tab focus remains on the correct tab:
-                    if(iFocusPosition > iPosition){
+                    if(iFocusPosition != iPosition){
+
                         viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
+
                     }
 
                     //Perform operations to remove the tab:
@@ -427,11 +429,17 @@ public class Activity_Browser extends AppCompatActivity {
 
                     globalClass.gal_WebPages.remove(iPosition);
 
+
                     //Update the tab notch views:
                     InitializeTabAppearance();
 
                     //Record the new web page tab lineup to the file:
                     Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: imageButton_Close.onClick()");
+
+                    //Wake the newly-visible tab:
+                    int iSelectedTab = tabLayout_WebTabs.getSelectedTabPosition();
+                    viewPagerFragmentAdapter.alFragment_WebPages.get(iSelectedTab).onResume();
+
                 }
             });
             tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
