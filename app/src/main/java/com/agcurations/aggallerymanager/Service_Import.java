@@ -1645,12 +1645,12 @@ public class Service_Import extends IntentService {
             //Find comic files belonging to this comic and put them in a tree map for sorting.
             TreeMap<String, ItemClass_File> tmComicFiles = new TreeMap<>();
             for (ItemClass_File fileItem : alFileList) {
-                if (fileItem.sUriParent.matches(tmEntryComic.getKey())) {
+                if (fileItem.sUriParent.equals(tmEntryComic.getKey())) {
                     tmComicFiles.put(fileItem.sFileOrFolderName, fileItem);
                 }
             }
 
-
+            //Comic page import
             for (Map.Entry<String, ItemClass_File> entryComicFile : tmComicFiles.entrySet()) {
                 ItemClass_File fileItem = entryComicFile.getValue();
 
