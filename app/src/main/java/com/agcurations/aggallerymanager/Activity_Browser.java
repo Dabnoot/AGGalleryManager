@@ -417,18 +417,25 @@ public class Activity_Browser extends AppCompatActivity {
                     //If the tab being closed is not the tab which has focus, make sure that the
                     //  focus tab retains focus.
                     int iFocusPosition = viewPager2_WebPages.getCurrentItem();
+                    int iMaxPosition = viewPager2_WebPages.getAdapter().getItemCount() - 1;
                     //Make sure tab focus remains on the correct tab:
                     if(iFocusPosition != iPosition){
-
-                        viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
-
+                        if(iFocusPosition < iPosition){
+                            viewPager2_WebPages.setCurrentItem(iFocusPosition, false);
+                        } else {
+                            viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
+                        }
+                    } else {
+                        //Select the tab that was before the one being closed, if such a tab exists:
+                        if(iFocusPosition > 0 && iFocusPosition != iMaxPosition){
+                            viewPager2_WebPages.setCurrentItem(iFocusPosition - 1, false);
+                        }
                     }
 
                     //Perform operations to remove the tab:
                     viewPagerFragmentAdapter.removeItem(iPosition);
 
                     globalClass.gal_WebPages.remove(iPosition);
-
 
                     //Update the tab notch views:
                     InitializeTabAppearance();

@@ -393,7 +393,7 @@ public class Fragment_WebPageTab extends Fragment {
                             }
                         }
                         if(!bAddressInUse){
-                            clipboard.clearPrimaryClip();
+                            //clipboard.clearPrimaryClip();
                             gEditText_Address.setText(sPossibleAddress);
                             gsWebAddress = sPossibleAddress;
                             gWebView.loadUrl(sPossibleAddress);
