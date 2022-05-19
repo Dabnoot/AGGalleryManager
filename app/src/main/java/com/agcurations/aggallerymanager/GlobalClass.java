@@ -1090,6 +1090,7 @@ public class GlobalClass extends Application {
     }
 
 
+
     //==================================================================================================
     //=========  BROWSER  ==============================================================================
     //==================================================================================================
@@ -1582,6 +1583,119 @@ public class GlobalClass extends Application {
     public final float fCPV_VerticalPanScalar = 1.5f;
     public final float fCPV_HorizontalPanScalar = 1.5f;
 
+    //==================================================================================================
+    //=========  IMPORT  ==============================================================================
+    //==================================================================================================
+
+    static final String ACTION_GET_DIRECTORY_CONTENTS = "com.agcurations.aggallerymanager.action.GET_DIRECTORY_CONTENTS";
+    static final String ACTION_IMPORT_FILES = "com.agcurations.aggallerymanager.action.IMPORT_FILES";
+    static final String ACTION_IMPORT_NHCOMICS = "com.agcurations.aggallerymanager.action.IMPORT_COMICS";
+    static final String ACTION_GET_COMIC_DETAILS_ONLINE = "com.agcurations.aggallerymanager.action.GET_COMIC_DETAILS_ONLINE";
+    static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
+    static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
+    static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
+    static final String ACTION_IMPORT_VIDEO_WEB_FILES = "com.agcurations.aggallerymanager.action.ACTION_IMPORT_VIDEO_WEB_FILES";
+    static final String ACTION_DELETE_FILES = "com.agcurations.aggallerymanager.action.DELETE_FILES";
+
+    static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
+    static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
+    static final String EXTRA_FILES_OR_FOLDERS = "com.agcurations.aggallerymanager.extra.EXTRA_FILES_OR_FOLDERS";
+
+    static final String EXTRA_COMIC_IMPORT_SOURCE = "com.agcurations.aggallerymanager.extra.COMIC_IMPORT_SOURCE";
+
+    static final String EXTRA_IMPORT_FILES_MOVE_OR_COPY = "com.agcurations.aggallerymanager.extra.IMPORT_FILES_MOVE_OR_COPY";
+
+    public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener.
+    public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
+
+    public static final String EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //Used to flag in a listener.
+    public static final String EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //ArrayList of response data
+
+    public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
+    public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
+    public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
+
+    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
+
+    public static final String EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE = "com.agcurations.aggallerymanager.extra.URI_STRING_ARRAY_FILES_TO_DELETE";
+
+    public static final String EXTRA_CALLER_ACTION_RESPONSE_FILTER = "com.agcurations.aggallerymanager.extra.EXTRA_CALLER_ACTION_RESPONSE_FILTER";
+
+    public static final String FILE_DELETION_MESSAGE = "Deleting file: ";
+    public static final String FILE_DELETION_OP_COMPLETE_MESSAGE = "File deletion operation complete.";
+
+    public static final String STRING_COMIC_XML_FILENAME = "ComicData.xml";
+
+    public static final int FOLDERS_ONLY = 0;
+    public static final int FILES_ONLY = 1;
+
+    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
+    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
+    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
+    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
+    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
+    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
+    public static final String RECEIVER_STRING = "RECEIVER_STRING";
+
+    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
+                                  boolean bUpdatePercentComplete, int iAmountComplete,
+                                  boolean bUpdateProgressBarText, String sProgressBarText,
+                                  String sIntentActionFilter){
+
+        //Preserve the log for the event of a screen rotation, or activity looses focus:
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        globalClass.gsbImportExecutionLog.append(sLogLine);
+
+        if(sIntentActionFilter.equals(Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE)) {
+            if (bUpdatePercentComplete) {
+                globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
+            }
+            if (bUpdateProgressBarText) {
+                globalClass.gsImportExecutionProgressBarText = sProgressBarText;
+            }
+        }
+
+        if(sIntentActionFilter.equals(
+                Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE)) {
+            if(bUpdatePercentComplete) {
+                globalClass.giImportFolderAnalysisProgressBarPercent = iAmountComplete;
+            }
+            if(bUpdateProgressBarText){
+                globalClass.gsImportFolderAnalysisProgressBarText = sProgressBarText;
+            }
+        }
+
+        if(sIntentActionFilter.equals(
+                Fragment_Import_2b_SelectSingleWebComic.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
+            globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
+        }
+
+
+        //Broadcast a message to be picked-up by the Import Activity:
+        Intent broadcastIntent = new Intent();
+        broadcastIntent.setAction(sIntentActionFilter);
+        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+
+        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
+        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine);
+        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
+        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
+        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
+        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
+
+        //sendBroadcast(broadcastIntent);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+    }
+
+    void problemNotificationConfig(String sMessage, String sIntentActionFilter){
+        Intent broadcastIntent_Problem = new Intent();
+        broadcastIntent_Problem.setAction(sIntentActionFilter);
+        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
+        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
+    }
 
     //=====================================================================================
     //===== Import Options ================================================================

@@ -109,14 +109,33 @@ public class Service_Import extends IntentService {
 
 
     public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource) {
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_GET_DIRECTORY_CONTENTS);
         String sImportTreeUri = uriImportTreeUri.toString();
         intent.putExtra(EXTRA_IMPORT_TREE_URI, sImportTreeUri);
         intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
         intent.putExtra(EXTRA_FILES_OR_FOLDERS, iFilesOrFolders);
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_GetDirectoryContents(context, uriImportTreeUri, iMediaCategory, iFilesOrFolders, iComicImportSource, "Service_Import:startActionGetDirectoryContents()");
+    }
+
+    public static void startAction_GetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource, String sCallerID) {
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        String sImportTreeUri = uriImportTreeUri.toString();
+        Data dataGetDirectoryContents = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(GlobalClass.EXTRA_IMPORT_TREE_URI, sImportTreeUri)
+                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
+                .putInt(GlobalClass.EXTRA_FILES_OR_FOLDERS, iFilesOrFolders)
+                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource)
+                .build();
+        OneTimeWorkRequest otwrGetDirectoryContents = new OneTimeWorkRequest.Builder(Worker_Import_GetDirectoryContents.class)
+                .setInputData(dataGetDirectoryContents)
+                .addTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrGetDirectoryContents);
     }
 
     public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
