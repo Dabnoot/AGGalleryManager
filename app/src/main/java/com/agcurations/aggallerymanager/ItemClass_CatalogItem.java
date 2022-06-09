@@ -58,4 +58,9 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iSpecialFlag = FLAG_NO_CODE; //Used to tell the app to that file requires post-processing of some sort after an operation.
 
     public int iGrade = 3;                                //Rating (grade) of the item, 1-5. Default to 3.
+
+
+    //******* Any new variable must also be updated in the Copy_ItemClass_CatalogItem routine in GlobalClass.
+    //  A copy method cannot be added here due to the Serializable attribute.
+
 }
