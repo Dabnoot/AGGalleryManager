@@ -139,67 +139,196 @@ public class Service_Import extends IntentService {
     }
 
     public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_FILES);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_ImportFiles(context, iMoveOrCopy, iMediaCategory, "Service_Import:startActionImportFiles()");
+    }
+
+    public static void startAction_ImportFiles(Context context, int iMoveOrCopy, int iMediaCategory, String sCallerID) {
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataImportFiles = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy)
+                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
+                .build();
+        OneTimeWorkRequest otwrImportFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportFiles.class)
+                .setInputData(dataImportFiles)
+                .addTag(Worker_Import_ImportFiles.TAG_WORKER_IMPORT_IMPORTFILES) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrImportFiles);
     }
 
     public static void startActionImportNHComicsFiles(Context context, int iMoveOrCopy, int iComicImportSource) {
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_NHCOMICS);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_ImportNHComicsFiles(context, iMoveOrCopy, iComicImportSource, "Service_Import:startActionImportNHComicsFiles()");
+    }
+
+    public static void startAction_ImportNHComicsFiles(Context context, int iMoveOrCopy, int iComicImportSource, String sCallerID) {
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataImportNHComicsFiles = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy)
+                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource)
+                .build();
+        OneTimeWorkRequest otwrImportNHComicsFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportNHComicsFiles.class)
+                .setInputData(dataImportNHComicsFiles)
+                .addTag(Worker_Import_ImportNHComicsFiles.TAG_WORKER_IMPORT_IMPORTNHCOMICSFILES) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrImportNHComicsFiles);
     }
 
     public static void startActionImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource) {
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMIC_FOLDERS);
         intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
         intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_ImportComicFolders(context, iMoveOrCopy, iComicImportSource, "Service_Import:startActionImportComicFolders()");
+    }
+
+    public static void startAction_ImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource, String sCallerID) {
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataImportComicFolders = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy)
+                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource)
+                .build();
+        OneTimeWorkRequest otwrImportComicFolders = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicFolders.class)
+                .setInputData(dataImportComicFolders)
+                .addTag(Worker_Import_ImportComicFolders.TAG_WORKER_IMPORT_IMPORTCOMICFOLDERS) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrImportComicFolders);
     }
 
     public static void startActionAcquireNHComicsDetails(Context context, String sAddress, String sIntentActionFilter){
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_GET_COMIC_DETAILS_ONLINE);
         intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sAddress);
         intent.putExtra(EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_AcquireNHComicsDetails(context, sAddress, sIntentActionFilter, "Service_Import:startActionAcquireNHComicsDetails()");
+    }
+
+    public static void startAction_AcquireNHComicsDetails(Context context, String sAddress, String sIntentActionFilter, String sCallerID){
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataAcquireNHComicsDetails = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, sAddress)
+                .putString(GlobalClass.EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter)
+                .build();
+        OneTimeWorkRequest otwrAcquireNHComicsDetails = new OneTimeWorkRequest.Builder(Worker_Import_AcquireNHComicsDetails.class)
+                .setInputData(dataAcquireNHComicsDetails)
+                .addTag(Worker_Import_AcquireNHComicsDetails.TAG_WORKER_IMPORT_ACQUIRENHCOMICDETAILS) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrAcquireNHComicsDetails);
     }
 
     public static void startActionImportComicWebFiles(Context context, ItemClass_CatalogItem ci, String sIntentActionFilter){
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_COMIC_WEB_FILES);
         intent.putExtra(COMIC_CATALOG_ITEM, ci);
         intent.putExtra(EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_ImportComicWebFiles(context, ci, sIntentActionFilter, "Service_Import:startActionImportComicWebFiles()");
+    }
+
+    public static void startAction_ImportComicWebFiles(Context context, ItemClass_CatalogItem ci, String sIntentActionFilter, String sCallerID){
+        GlobalClass globalClass = (GlobalClass) context;
+        globalClass.catalogItem_ImportComicWebFiles = GlobalClass.Copy_ItemClass_CatalogItem(ci); //Copy over CatalogItem to be imported to be picked-up by the worker.
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataImportComicWebFiles = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(GlobalClass.EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter)
+                .build();
+        OneTimeWorkRequest otwrImportComicWebFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicWebFiles.class)
+                .setInputData(dataImportComicWebFiles)
+                .addTag(Worker_Import_ImportComicWebFiles.TAG_WORKER_IMPORT_IMPORTCOMICWEBFILES) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrImportComicWebFiles);
     }
 
     public static void startActionVideoAnalyzeHTML(Context context){
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_VideoAnalyzeHTML(context, "Service_Import:startActionVideoAnalyzeHTML()");
+    }
 
+    public static void startAction_VideoAnalyzeHTML(Context context, String sCallerID){
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataVideoAnalyzeHTML = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .build();
+        OneTimeWorkRequest otwrVideoAnalyzeHTML = new OneTimeWorkRequest.Builder(Worker_Import_VideoAnalyzeHTML.class)
+                .setInputData(dataVideoAnalyzeHTML)
+                .addTag(Worker_Import_VideoAnalyzeHTML.TAG_WORKER_IMPORT_VIDEOANALYZEHTML) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrVideoAnalyzeHTML);
     }
 
     public static void startActionVideoDownload(Context context, String sWebPageAddress){
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_IMPORT_VIDEO_WEB_FILES);
         intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sWebPageAddress);
-        context.startService(intent);
+        context.startService(intent);*/
+        startAction_VideoDownload(context, sWebPageAddress, "Service_Import:startActionVideoDownload()");
+    }
+
+    public static void startAction_VideoDownload(Context context, String sWebPageAddress, String sCallerID){
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataVideoDownload = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, sWebPageAddress)
+                .build();
+        OneTimeWorkRequest otwrVideoDownload = new OneTimeWorkRequest.Builder(Worker_Import_VideoDownload.class)
+                .setInputData(dataVideoDownload)
+                .addTag(Worker_Import_VideoDownload.TAG_WORKER_IMPORT_VIDEODOWNLOAD) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrVideoDownload);
     }
 
     public static void startActionDeleteFiles(Context context, ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter){
-        Intent intent = new Intent(context, Service_Import.class);
+        /*Intent intent = new Intent(context, Service_Import.class);
         intent.setAction(ACTION_DELETE_FILES);
-
         intent.putExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE, alsUriFilesToDelete);
         intent.putExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER, sCallerActionResponseFilter);
+        context.startService(intent);*/
+        startAction_DeleteFiles(context, alsUriFilesToDelete, sCallerActionResponseFilter, "Service_Import:startActionVideoDownload()");
+    }
 
-        context.startService(intent);
+    public static void startAction_DeleteFiles(Context context, ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter, String sCallerID){
+
+        //Create a copy of alsUriFilesToDelete in globalClass in order to pass the data without exceeding memory for the transfer.
+        //  Create a copy in case the user starts a new import and has more files to delete. The Worker should make yet another copy
+        //  of this file list in case the listing in globalClass is overwritten before operation completion.
+        GlobalClass globalClass = (GlobalClass) context;
+        globalClass.alsUriFilesToDelete = new ArrayList<>(alsUriFilesToDelete);
+
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataDeleteFiles = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(GlobalClass.EXTRA_CALLER_ACTION_RESPONSE_FILTER, sCallerActionResponseFilter)
+                .build();
+        OneTimeWorkRequest otwrDeleteFiles = new OneTimeWorkRequest.Builder(Worker_Import_DeleteFiles.class)
+                .setInputData(dataDeleteFiles)
+                .addTag(Worker_Import_DeleteFiles.TAG_WORKER_IMPORT_DELETEFILES) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrDeleteFiles);
     }
 
 
@@ -211,7 +340,7 @@ public class Service_Import extends IntentService {
 
             GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
-            if(ACTION_IMPORT_FILES.equals(action) ||
+            /*if(ACTION_IMPORT_FILES.equals(action) ||
                     ACTION_IMPORT_COMIC_FOLDERS.equals(action) ||
                     ACTION_IMPORT_NHCOMICS.equals(action) ||
                     ACTION_IMPORT_COMIC_WEB_FILES.equals(action) ||
@@ -225,10 +354,10 @@ public class Service_Import extends IntentService {
                         .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
                                 false)
                         .apply();
-            }
+            }*/
 
             if (ACTION_GET_DIRECTORY_CONTENTS.equals(action)) {
-                final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
+                /*final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
                 Uri uriImportTreeUri = Uri.parse(sImportTreeUri);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
                 final int iFilesOrFolders = intent.getIntExtra(EXTRA_FILES_OR_FOLDERS, FILES_ONLY);
@@ -240,30 +369,30 @@ public class Service_Import extends IntentService {
                 //} else {
                     //Only set "finished" to true if it was not stopped intentionally.
                     //globalClass.gbImportFolderAnalysisFinished = true;   ---Set at the end of the GetDirectoryContents routine before the last broadcast.
-                }
+                }*/
             } else if (ACTION_IMPORT_FILES.equals(action)) {
-                final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+                /*final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, -1);
                 handleAction_startActionImportFiles(iMoveOrCopy, iMediaCategory);
                 globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                globalClass.gbImportExecutionFinished = true;*/
             } else if (ACTION_IMPORT_NHCOMICS.equals(action)) {
-                final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+                /*final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 handleAction_startActionImportNHComics(iMoveOrCopy);
                 globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                globalClass.gbImportExecutionFinished = true;*/
             } else if (ACTION_IMPORT_COMIC_FOLDERS.equals(action)) {
-                final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
+                /*final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
                 handleAction_startActionImportComicFolders(iMoveOrCopy);
                 globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                globalClass.gbImportExecutionFinished = true;*/
             } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
-                final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
+                /*final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
                 handleAction_startActionGetComicDetailsOnline(sAddress, sIntentActionFilter);
                 globalClass.gbImportComicWebAnalysisRunning = false;
-                globalClass.gbImportComicWebAnalysisFinished = true;
+                globalClass.gbImportComicWebAnalysisFinished = true;*/
             } else if (ACTION_IMPORT_COMIC_WEB_FILES.equals(action)) {
-                final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
+                /*final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
                 if(ci == null) return;
                 try {
                     handleAction_startActionImportComicWebFiles(ci, sIntentActionFilter);
@@ -272,36 +401,36 @@ public class Service_Import extends IntentService {
                     problemNotificationConfig(e.getMessage(), sIntentActionFilter);  //todo: make sure that this is properly handled in Execute_Import.
                 }
                 globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                globalClass.gbImportExecutionFinished = true;*/
 
             } else if (ACTION_VIDEO_ANALYZE_HTML.equals(action)) {
-                try{
+                /*try{
                     handleAction_startActionVideoAnalyzeHTML();
                 } catch (Exception e) {
                     e.printStackTrace();
-                }
+                }*/
 
             } else if (ACTION_IMPORT_VIDEO_WEB_FILES.equals(action)) {
 
-                final String sWebAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
+                /*final String sWebAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
                 try{
                     handleAction_startActionVideoDownload(sWebAddress);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
+                globalClass.gbImportExecutionFinished = true;*/
 
             } else if (ACTION_DELETE_FILES.equals(action)){
 
-                ArrayList<String>  alsUriFTD = intent.getStringArrayListExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE);
+                /*ArrayList<String>  alsUriFTD = intent.getStringArrayListExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE);
                 final String sCallerActionResponseFilter = intent.getStringExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER);
 
                 if(alsUriFTD == null){
                     alsUriFTD = new ArrayList<>(); //This round-about method to get rid of a warning that "alsUriFilesToDelete might be null."
                 }
                 final ArrayList<String> alsUriFilesToDelete = alsUriFTD;
-                handleAction_startActionDeleteFiles(alsUriFilesToDelete, sCallerActionResponseFilter);
+                handleAction_startActionDeleteFiles(alsUriFilesToDelete, sCallerActionResponseFilter);*/
             }
         }
     }
@@ -2145,11 +2274,12 @@ public class Service_Import extends IntentService {
         boolean bUpdateExistingComic = false;
         //Create the comic folder.
         if(!ci.sItemID.equals("")) { //There is a case in which this routine is called to re-download comic files. In that case, don't recreate the item ID.
-            bUpdateExistingComic = true;
+            return; //Don't execute this anymore - I think it is no longer used.
+            /*bUpdateExistingComic = true;
             //If we are updating an existing comic, get the download file list:
             ArrayList<String[]> alsURLs;
             alsURLs = handleAction_startActionGetComicDetailsOnline(ci.sSource, sIntentActionFilter);
-            ci.alsDownloadURLsAndDestFileNames = alsURLs;
+            ci.alsDownloadURLsAndDestFileNames = alsURLs;*/
         }
 
         //Create the comic folder.
@@ -3845,7 +3975,7 @@ public class Service_Import extends IntentService {
         return false;
     }
 
-    public String cleanFileNameViaTrim(String sFilename){
+    public static String cleanFileNameViaTrim(String sFilename){
         //Use when expecting the begining of the filename to be ok, but trailing data may have illegal chars.
         //Useful when file is a download from a URL.
         //Example:

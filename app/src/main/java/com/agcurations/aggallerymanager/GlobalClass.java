@@ -14,6 +14,7 @@ import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.nfc.Tag;
+import android.text.Html;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -775,6 +776,55 @@ public class GlobalClass extends Application {
                 .apply();
 
         return String.valueOf(iNewCatalogRecordID);
+    }
+
+    public static ItemClass_CatalogItem Copy_ItemClass_CatalogItem(ItemClass_CatalogItem ciOriginal){
+        //This routine creates a copy of a ItemClass_CatalogItem so that the item is not passed
+        // via reference. The Class cannot have a "copy" method because it implements Serializable.
+        ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
+
+        ciNew.iMediaCategory                  = ciOriginal.iMediaCategory                 ;     //Video, image, or comic.
+        ciNew.sItemID                         = ciOriginal.sItemID                        ;     //Video, image, comic id
+        ciNew.sTags                           = ciOriginal.sTags                          ;     //Tags given to the video, image, or comic
+        ciNew.sFilename                       = ciOriginal.sFilename                      ;     //Video or image filename, comic thumbnail image filename
+        ciNew.sFolder_Name                    = ciOriginal.sFolder_Name                   ;     //Name of the folder holding the video, image, or comic pages
+        ciNew.sCast                           = ciOriginal.sCast                          ;     //For videos and images
+        ciNew.dDatetime_Import                = ciOriginal.dDatetime_Import               ;     //Date of import. Used for sorting if desired
+        ciNew.dDatetime_Last_Viewed_by_User   = ciOriginal.dDatetime_Last_Viewed_by_User  ;     //Date of last read by user. Used for sorting if desired
+        ciNew.iHeight                         = ciOriginal.iHeight                        ;     //Video or image dimension/resolution
+        ciNew.iWidth                          = ciOriginal.iWidth                         ;     //Video or image dimension/resolution
+        ciNew.lDuration_Milliseconds          = ciOriginal.lDuration_Milliseconds         ;     //Duration of video in milliseconds
+        ciNew.sDuration_Text                  = ciOriginal.sDuration_Text                 ;     //Duration of video text in 00:00:00 format
+        ciNew.sResolution                     = ciOriginal.sResolution                    ;     //Resolution for sorting at user request
+        ciNew.lSize                           = ciOriginal.lSize                          ;     //Size of video, image, or size of all files in the comic, in Bytes
+        ciNew.sThumbnail_File                 = ciOriginal.sThumbnail_File                ;     //Name of the file used as the thumbnail for a video (no longer for comic)
+
+        //Comic-related variables:
+        ciNew.sComicArtists                   = ciOriginal.sComicArtists                  ;     //Common comic tag category
+        ciNew.sComicCategories                = ciOriginal.sComicCategories               ;     //Common comic tag category
+        ciNew.sComicCharacters                = ciOriginal.sComicCharacters               ;     //Common comic tag category
+        ciNew.sComicGroups                    = ciOriginal.sComicGroups                   ;     //Common comic tag category
+        ciNew.sComicLanguages                 = ciOriginal.sComicLanguages                ;     //Language(s) found in the comic
+        ciNew.sComicParodies                  = ciOriginal.sComicParodies                 ;     //Common comic tag category
+        ciNew.sTitle                          = ciOriginal.sTitle                         ;     //Comic name or Video title
+        ciNew.iComicPages                     = ciOriginal.iComicPages                    ;     //Total number of pages as defined at the comic source
+        ciNew.iComic_Max_Page_ID              = ciOriginal.iComic_Max_Page_ID             ;     //Max comic page id extracted from file names
+        ciNew.sComic_Missing_Pages            = ciOriginal.sComic_Missing_Pages           ;     //String of comma-delimited missing page numbers
+        ciNew.iFile_Count                     = ciOriginal.iFile_Count                    ;     //Files included with the comic. Can be used for integrity check.
+                                                                                                //  Also used for post-processing of M3U8 video file download completion check for post-processing.
+        ciNew.bComic_Online_Data_Acquired     = ciOriginal.bComic_Online_Data_Acquired    ;     //Typically used to gather tag data from an online comic source, if automatic.
+        ciNew.sSource                         = ciOriginal.sSource                        ;     //Website, if relevant. Originally intended for comics.
+        ciNew.sVideoLink                      = ciOriginal.sVideoLink                     ;     //Link to the .mp4, .m3u8, etc, if it is a video download.
+
+        ciNew.sComicThumbnailURL              = ciOriginal.sComicThumbnailURL             ;     //Used specifically for NH Comic import preview.
+        ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>(ciOriginal.alsDownloadURLsAndDestFileNames);
+                                                                                                //Used to map downloads to a download file name for both comic page and video downloads.
+
+        ciNew.iSpecialFlag                    = ciOriginal.iSpecialFlag                   ;     //Used to tell the app to that file requires post-processing of some sort after an operation.
+
+        ciNew.iGrade                          = ciOriginal.iGrade                         ;     //Rating (grade) of the item, 1-5. Default to 3.
+
+        return ciNew;
     }
 
     //=====================================================================================
@@ -1636,6 +1686,16 @@ public class GlobalClass extends Application {
     public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
     public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
     public static final String RECEIVER_STRING = "RECEIVER_STRING";
+
+    public ArrayList<String> alsUriFilesToDelete;
+    public ItemClass_CatalogItem catalogItem_ImportComicWebFiles;
+
+    public static String cleanHTMLCodedCharacters(String sInput){
+
+        String sOutput = Html.fromHtml(sInput,0).toString();
+        return sOutput;
+
+    }
 
     public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
                                   boolean bUpdatePercentComplete, int iAmountComplete,
