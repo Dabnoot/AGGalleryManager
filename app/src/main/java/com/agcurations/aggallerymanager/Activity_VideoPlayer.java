@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -81,8 +82,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gDrawerLayout = findViewById(R.id.drawer_layout);
-
-
+        gDrawerLayout.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
+        gDrawerLayout.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
+            @Override
+            public void run() {
+                closeDrawer();
+            }
+        }, 2000);
 
         globalClass = (GlobalClass) getApplicationContext();
 
