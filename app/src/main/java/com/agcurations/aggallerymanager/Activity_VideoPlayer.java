@@ -218,6 +218,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     StopPlayback();
                     giKey--;
+                    glCurrentVideoPosition = 1; //If moving to another item, set play position to start.
                     initializePlayer();
                 }
             }
@@ -227,6 +228,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     StopPlayback();
                     giKey++;
+                    glCurrentVideoPosition = 1; //If moving to another item, set play position to start.
                     initializePlayer();
                 }
             }
@@ -345,6 +347,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 int iTempKey = giKey - 1;
                 if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     giKey--;
+                    glCurrentVideoPosition = 1; //If moving to another item, set play position to start.
                     initializePlayer();
                 }
             }
@@ -353,6 +356,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 int iTempKey = giKey + 1;
                 if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     giKey++;
+                    glCurrentVideoPosition = 1; //If moving to another item, set play position to start.
                     initializePlayer();
                 }
             }
