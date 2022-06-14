@@ -88,7 +88,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             public void run() {
                 closeDrawer();
             }
-        }, 2000);
+        }, 1500);
 
         globalClass = (GlobalClass) getApplicationContext();
 
