@@ -456,11 +456,37 @@ public class Activity_ComicViewer extends AppCompatActivity {
             }
 
             givImageViewer.setImageBitmap(myBitmap);
-            CenterComicPage();
+            setInitialZoom();
+
         }
     }
 
-    private void CenterComicPage(){
+    private void setInitialZoom(){
+        //Set the zoom level for the image.
+        int iInitialZoomOption;
+        if(giCurrentCatalogItemIndex == 0) {
+            iInitialZoomOption = globalClass.giOptionComicViewerCoverPageStartZoomConfiguration;
+        } else {
+            iInitialZoomOption = globalClass.giOptionComicViewerContentPageStartZoomConfiguration;
+        }
+        //Set start zoom for the first page (likely the cover page)
+        if(iInitialZoomOption == GlobalClass.COMIC_VIEWER_PAGE_FIT_SCREEN){
+            //If the user has set option to have the entire cover page to be fit into the screen
+            if(gpDisplaySize.x > gpDisplaySize.y) {
+                //Screen is landscape orientation
+                ComicPageZoomToMatchHeight();
+            } else {
+                //Screen is portrait orientation
+                ComicPageZoomToMatchWidth();
+            }
+        } else if (iInitialZoomOption == GlobalClass.COMIC_VIEWER_PAGE_MATCH_HEIGHT){
+            ComicPageZoomToMatchHeight();
+        } else if (iInitialZoomOption == GlobalClass.COMIC_VIEWER_PAGE_MATCH_WIDTH){
+            ComicPageZoomToMatchWidth();
+        }
+    }
+
+    private void ComicPageZoomToMatchHeight(){
         //This routine gets called after a page is loaded, and when an orientation change has
         //  been detected.
         //Get the dimensions of the image loaded into the ImageView:
@@ -493,6 +519,62 @@ public class Activity_ComicViewer extends AppCompatActivity {
         //Get the new translated X and Y coordinates.
         gfImageViewOriginX = values[Matrix.MTRANS_X];
         gfImageViewOriginY = values[Matrix.MTRANS_Y];
+
+        givImageViewer.setImageMatrix(matrix);
+    }
+
+    private void ComicPageZoomToMatchWidth(){
+        //This routine gets called after a page is loaded, and when an orientation change has
+        //  been detected.
+        //Get the dimensions of the image loaded into the ImageView:
+        Drawable d = givImageViewer.getDrawable();
+        if( d == null) return;
+
+        giImageWidth = d.getIntrinsicWidth();
+        giImageHeight = d.getIntrinsicHeight();
+
+        RectF imageRectF = new RectF(0, 0, giImageWidth, giImageHeight);
+        RectF viewRectF = new RectF(0, 0, gpDisplaySize.x, givImageViewer.getHeight());
+        matrix.setRectToRect(imageRectF, viewRectF, Matrix.ScaleToFit.CENTER);
+
+        //Get the values from the matrix:
+        float[] values = new float[9];
+        matrix.getValues(values);
+
+        //Calculate scaling reference points:
+        gfScaleWidthMatch = gpDisplaySize.x / (float) giImageWidth;
+        gfScaleHeightMatch = gpDisplaySize.y / (float) giImageHeight;
+        gfMinScale = Math.min(gfScaleHeightMatch, gfScaleWidthMatch);
+
+        //Depending on the dimensions of the image and the screen,
+        //  the jump direction could be horizontal or vertical. Either way, it
+        //  will be in the direction of the larger scaling point. Grab that
+        //  scale:
+        gfJumpOutAxisScale = Math.max(gfScaleHeightMatch, gfScaleWidthMatch);
+
+        gfScaleFactor = gfMinScale; //Track the current scale.
+        //Get the new translated X and Y coordinates.
+        gfImageViewOriginX = values[Matrix.MTRANS_X];
+        gfImageViewOriginY = values[Matrix.MTRANS_Y];
+
+
+
+
+
+        //Set the translated x-value to the left edge of the screen:
+        values[Matrix.MTRANS_X] = 0;
+        //Set the translated y-value to the top edge of the screen:
+        values[Matrix.MTRANS_Y] = 0;
+
+        //Set the zoom level to that required to match the width of the screen:
+        values[Matrix.MSCALE_X] = gfJumpOutAxisScale;
+        values[Matrix.MSCALE_Y] = gfJumpOutAxisScale;
+
+        //Place the values in the matrix:
+        matrix.setValues(values);
+
+
+
 
         givImageViewer.setImageMatrix(matrix);
     }
@@ -544,7 +626,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
                     gDisplay.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
                     if(gpDisplaySize.x != gpLastDisplaySize.x){
                         //Display has rotated!
-                        CenterComicPage();
+                        ComicPageZoomToMatchHeight();
                         gDisplay.getRealSize(gpLastDisplaySize);
                     }
                     if(gfScaleFactor == gfMinScale){
@@ -1031,7 +1113,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
                         }
                     } else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
                         if (diffY > 0) {
-                            onSwipeBottom();
+                            onSwipeBottom(velocityY);
                         } else {
                             onSwipeTop();
                         }
@@ -1048,7 +1130,10 @@ public class Activity_ComicViewer extends AppCompatActivity {
         public void onSwipeRight() {}
         public void onSwipeLeft() {}
         public void onSwipeTop() {}
-        public void onSwipeBottom() {}
+        public void onSwipeBottom(float velocityY) {
+
+
+        }
     }
 
 

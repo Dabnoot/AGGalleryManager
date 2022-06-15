@@ -1635,7 +1635,9 @@ public class GlobalClass extends Application {
 
     public static final int COMIC_VIEWER_PAGE_MATCH_HEIGHT = 0;
     public static final int COMIC_VIEWER_PAGE_MATCH_WIDTH = 1;
-    public int giOptionComicViewerPageStartZoomConfiguration = 0;
+    public static final int COMIC_VIEWER_PAGE_FIT_SCREEN = 2;
+    public int giOptionComicViewerCoverPageStartZoomConfiguration = 0;
+    public int giOptionComicViewerContentPageStartZoomConfiguration = 1;
 
     public boolean gbOptionComicViewerShowPageNumber = false;
 
