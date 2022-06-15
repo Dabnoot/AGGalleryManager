@@ -450,7 +450,9 @@ public class Activity_ComicViewer extends AppCompatActivity {
             } else {
                 myBitmap = BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
                 setTitle(gsActivityTitleString);
-                makeToast(tmImageFileNamesReadable.get(iPageIndex), Toast.LENGTH_SHORT);
+                if(globalClass.gbOptionComicViewerShowPageNumber) {
+                    makeToast(tmImageFileNamesReadable.get(iPageIndex), Toast.LENGTH_SHORT);
+                }
             }
 
             givImageViewer.setImageBitmap(myBitmap);

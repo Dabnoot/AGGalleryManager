@@ -1633,6 +1633,12 @@ public class GlobalClass extends Application {
     public final float fCPV_VerticalPanScalar = 1.5f;
     public final float fCPV_HorizontalPanScalar = 1.5f;
 
+    public static final int COMIC_VIEWER_PAGE_MATCH_HEIGHT = 0;
+    public static final int COMIC_VIEWER_PAGE_MATCH_WIDTH = 1;
+    public int giOptionComicViewerPageStartZoomConfiguration = 0;
+
+    public boolean gbOptionComicViewerShowPageNumber = false;
+
     //==================================================================================================
     //=========  IMPORT  ==============================================================================
     //==================================================================================================
