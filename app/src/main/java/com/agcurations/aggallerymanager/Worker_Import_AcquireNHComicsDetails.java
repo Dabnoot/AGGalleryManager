@@ -233,7 +233,7 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
             //Check to see if we found anything:
             String sImageAddressTemplate;
             String sGalleryID = "";
-            TreeMap<Integer, String> tmFileIndexImageExtention = new TreeMap<>();
+            TreeMap<Integer, String> tmFileIndexImageExtension = new TreeMap<>();
             if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
                 //Get the gallery ID. This is not the same as the NH comic ID.
                 // Example: "https://t.nhentai.net/galleries/645538/1t.png"
@@ -252,7 +252,7 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
                     if (sSplit.length == 2) {
                         try {
                             Integer iPageNumber = Integer.parseInt(sSplit[0]);
-                            tmFileIndexImageExtention.put(iPageNumber, sSplit[1]);
+                            tmFileIndexImageExtension.put(iPageNumber, sSplit[1]);
                         } catch (Exception ignored) {
                         }
                     }
@@ -265,7 +265,7 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
             long lProjectedComicSize;
 
             if (sGalleryID.length() > 0) {
-                for(Map.Entry<Integer, String> tmEntryPageNumImageExt: tmFileIndexImageExtention.entrySet()) {
+                for(Map.Entry<Integer, String> tmEntryPageNumImageExt: tmFileIndexImageExtension.entrySet()) {
                     //Build the suspected URL for the image:
                     String sNHImageDownloadAddress = "https://i.nhentai.net/galleries/" +
                             sGalleryID + "/" +
@@ -316,7 +316,9 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
             //sendBroadcast(broadcastIntent);
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
-            return null;
+            globalClass.gbImportComicWebAnalysisRunning = false;
+            globalClass.gbImportComicWebAnalysisFinished = true;
+            return Result.failure();
         }
 
 
