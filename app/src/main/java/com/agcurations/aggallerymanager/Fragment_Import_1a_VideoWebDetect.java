@@ -220,7 +220,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         });
 
 
-        //String sTestAddress = "https://www.xnxx.com/video-uzl4597/bangbros_-_18_year_old_cutie_vanessa_phoenix_taking_big_dick_in_her_small_pussy";
         //String sTestAddress = "";
         //gEditText_WebAddress.setText(sTestAddress);
 
