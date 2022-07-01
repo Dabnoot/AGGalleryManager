@@ -1132,6 +1132,9 @@ public class Activity_ComicViewer extends AppCompatActivity {
         public void onSwipeTop() {}
         public void onSwipeBottom(float velocityY) {
 
+            //givImageViewer.animate().y(velocityY / 10).setDuration(1000);
+
+
 
         }
     }
