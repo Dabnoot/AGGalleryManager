@@ -432,6 +432,9 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         icf.lSizeBytes = vdsk.lFileSize;
                         connection.disconnect();
 
+                        if(sTitle.equals("")){
+                            sTitle = icWebDataLocator.sWebPageTitle;
+                        }
                         icf.sTitle = sTitle;
                         icf.sURLThumbnail = sURLThumbnail;
                         icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
@@ -814,6 +817,9 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
                             icf.aliRecognizedTags = aliIdentifiedTags; //todo: redundant?
                             icf.aliProspectiveTags = aliIdentifiedTags;
+                            if(sTitle.equals("")){
+                                sTitle = icWebDataLocator.sWebPageTitle;
+                            }
                             icf.sTitle = sTitle;
                             alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
 

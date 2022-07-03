@@ -10,6 +10,7 @@ public class ItemClass_WebVideoDataLocator {
     public boolean bHostNameMatchFound = false; //This tells Service_Import that this is the particular item in use.
 
     public String sHTML;
+    public String sWebPageTitle; //For unrecognized pages such that a meaningful title might be found.
 
     //Data items can be located via either string search pattern or sXPathExpression.
 

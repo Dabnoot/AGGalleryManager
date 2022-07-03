@@ -320,9 +320,11 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                                             //  pre-loaded the editText with data, so onChanged for the editText
                                             //  never fires.
                     }
+                    String sTitle = gWebView.getTitle();
                     for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
                         if (icWVDL.bHostNameMatchFound) {
                             icWVDL.sHTML = sHTML;
+                            icWVDL.sWebPageTitle = sTitle;
                             break;
                         }
                     }
