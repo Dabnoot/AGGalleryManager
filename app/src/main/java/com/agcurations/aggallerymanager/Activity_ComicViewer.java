@@ -229,7 +229,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
         //Get the display size:
         WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        gDisplay = windowManager.getDefaultDisplay();
+        gDisplay = windowManager.getDefaultDisplay(); //Deprecated. Use GlobalClass.getScreenWidth(this); upon refactoring opportunity.
         gpDisplaySize = new Point();
         gpLastDisplaySize = new Point();
         gDisplay.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
