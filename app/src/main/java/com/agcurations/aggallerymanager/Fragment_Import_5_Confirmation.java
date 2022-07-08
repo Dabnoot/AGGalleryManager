@@ -179,8 +179,10 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             tvLine1.setText(alFileItemsDisplay.get(position).sFileOrFolderName);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
             String sLine2 = "";
-            if (!(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-                    && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)) {
+            if (!((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+                    || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2))) {
                 //If this is not a video download, display the datetime of the file:
                 sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
             }
@@ -268,8 +270,10 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
                 ivFileType.setImageResource(R.drawable.baseline_folder_white_18dp);
             } else {
-                if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-                        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+                if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+                    || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
                     //If this is a video download, get the thumbnail from the IRL and display it:
                     String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
                     if(!sURLThumbnail.equals("")) {

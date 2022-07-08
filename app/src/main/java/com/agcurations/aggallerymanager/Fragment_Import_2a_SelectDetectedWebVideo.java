@@ -1,6 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.Context;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -8,24 +7,12 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Parcelable;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
 
 
 public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
@@ -56,7 +43,7 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_2a_select_detected_web_video, container, false);
+        return inflater.inflate(R.layout.fragment_import_2a_select_detected_web_item, container, false);
     }
 
     Parcelable ListViewState;
@@ -71,7 +58,7 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
         ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
         if(ListViewState != null) {
-            ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_VideoDownloadItems);
+            ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_WebDownloadItems);
             listView_VideoDownloadItems.onRestoreInstanceState(ListViewState);
         }
 
@@ -87,7 +74,7 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
         if(getView() == null){
             return;
         }
-        ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_VideoDownloadItems);
+        ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_WebDownloadItems);
         ListViewState = listView_VideoDownloadItems.onSaveInstanceState();
 
         //Get any single selected item and assign it to the viewModel:
@@ -112,13 +99,13 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
             return;
         }
         //Set the contents of the ListView:
-        final ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_VideoDownloadItems);
-        if(listView_VideoDownloadItems != null) {
-            Activity_Import.SelectItemsListViewWidth = listView_VideoDownloadItems.getWidth();
+        final ListView listView_WebDownloadItems = getView().findViewById(R.id.listView_WebDownloadItems);
+        if(listView_WebDownloadItems != null) {
+            Activity_Import.SelectItemsListViewWidth = listView_WebDownloadItems.getWidth();
             if(getActivity()==null){
                 return;
             }
-            listView_VideoDownloadItems.setAdapter(((Activity_Import) getActivity()).videoDownloadListCustomAdapter);
+            listView_WebDownloadItems.setAdapter(((Activity_Import) getActivity()).videoDownloadListCustomAdapter);
         }
 
         ((Activity_Import) getActivity()).videoDownloadListCustomAdapter.recalcButtonNext();

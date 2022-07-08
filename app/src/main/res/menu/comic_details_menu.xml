@@ -2,13 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/menu_FlipView"
         android:title="@string/flip_view" />
-    <item android:id="@+id/menu_Refresh"
+    <!--<item android:id="@+id/menu_Refresh"
         android:title="Refresh" />
     <item android:id="@+id/menu_GetOnlineData"
         android:title="@string/sync_details_online" />
     <item android:id="@+id/menu_SaveDetails"
         android:title="@string/save_details"
-        android:enabled="false"/>
+        android:enabled="false"/>-->
     <item android:id="@+id/menu_DeleteComic"
         android:title="@string/delete_comic"/>
 </menu>

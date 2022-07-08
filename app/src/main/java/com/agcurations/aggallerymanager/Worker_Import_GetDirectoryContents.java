@@ -522,8 +522,8 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                     icf_ComicFolderItem.sTitle = sTitle;
                                     icf_ComicFolderItem.sURL = sURL;
                                     icf_ComicFolderItem.sPageCount = sPageCount;
-                                    icf_ComicFolderItem.sArtist = sArtist;
-                                    icf_ComicFolderItem.sParody = sParody;
+                                    icf_ComicFolderItem.sComicArtists = sArtist;
+                                    icf_ComicFolderItem.sComicParodies = sParody;
                                     icf_ComicFolderItem.aliRecognizedTags = aliRecognizedTags;
                                     icf_ComicFolderItem.aliProspectiveTags = new ArrayList<>(aliRecognizedTags); //Don't copy the pointer.
                                     icf_ComicFolderItem.alsUnidentifiedTags = alsUnidentifiedTags;

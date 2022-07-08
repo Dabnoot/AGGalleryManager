@@ -384,7 +384,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
         } else {
-            Glide.with(getApplicationContext()).load(galFileItems.get(giFileItemIndex).sUri).into(gImagePreview);
+            if( !galFileItems.get(giFileItemIndex).sUri.equals("")) {
+                Glide.with(getApplicationContext()).load(galFileItems.get(giFileItemIndex).sUri).into(gImagePreview);
+            } else {
+                Glide.with(getApplicationContext()).load(galFileItems.get(giFileItemIndex).sURL).into(gImagePreview);
+            }
         }
 
         final CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);

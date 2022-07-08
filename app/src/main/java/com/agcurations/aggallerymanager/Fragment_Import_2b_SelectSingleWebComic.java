@@ -162,6 +162,8 @@ public class Fragment_Import_2b_SelectSingleWebComic extends Fragment {
             imageView_Thumbnail = getView().findViewById(R.id.imageView_Thumbnail);
 
 
+            /*
+            Commented-out code below as this entire area is being superseded by Fragment_Import_2c_PreviewDetectedWebComic.
             if (globalClass.gbImportComicWebAnalysisFinished) {
                 textView_WebImportDetailsLog.setText("");
                 textView_WebImportDetailsLog.setVisibility(View.INVISIBLE);
@@ -237,7 +239,7 @@ public class Fragment_Import_2b_SelectSingleWebComic extends Fragment {
                 textView_WebImportDetails.setVisibility((View.INVISIBLE));
                 textView_WebImportDetailsLog.setVisibility(View.VISIBLE);
                 textView_WebImportDetailsLog.setText(globalClass.gsbImportComicWebAnalysisLog.toString());
-            }
+            }*/
         }
     }
 

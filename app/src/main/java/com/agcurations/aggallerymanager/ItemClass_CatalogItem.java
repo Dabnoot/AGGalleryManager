@@ -25,10 +25,10 @@ public class ItemClass_CatalogItem implements Serializable {
     public String sThumbnail_File = "";                   //Name of the file used as the thumbnail for a video (no longer for comic)
 
     //Comic-related variables:
-    public String sComicArtists = "";                     //Common comic tag category
-    public String sComicCategories = "";                  //Common comic tag category
-    public String sComicCharacters = "";                  //Common comic tag category
-    public String sComicGroups = "";                      //Common comic tag category
+    public String sComicArtists = "";                     //Comic artist(s).
+    public String sComicCategories = "";                  //A "category" field sometimes included by some websites.
+    public String sComicCharacters = "";                  //Comic characters, if relevant, particular to parodies.
+    public String sComicGroups = "";                      //A "group" field sometimes included by some websites.
     public String sComicLanguages = "";                   //Language(s) found in the comic
     public String sComicParodies = "";                    //Common comic tag category
     public String sTitle = "";                            //Comic name or Video title
@@ -39,10 +39,17 @@ public class ItemClass_CatalogItem implements Serializable {
                                                           //  Also used for post-processing of M3U8 video file download completion check for post-processing.
     public boolean bComic_Online_Data_Acquired = false;   //Typically used to gather tag data from an online comic source, if automatic.
     public String sSource = "";                           //Website, if relevant. Originally intended for comics.
+    //Todo: Above sSource, how is it being used? Can I rename it to a string holding a URL? ComicURL?
     public String sVideoLink = "";                        //Link to the .mp4, .m3u8, etc, if it is a video download.
 
-    public String sComicThumbnailURL = "";                //Used specifically for NH Comic import preview.
-    public ArrayList<String[]> alsDownloadURLsAndDestFileNames; //Used to map downloads to a download file name for both comic page and video downloads.
+    /*public String sComicThumbnailURL = "";                //Used specifically for Comic Import Preview.
+    public ArrayList<String[]> alsDownloadURLsAndDestFileNames; //Used to map downloads to a download file name for both comic page and video downloads. Includes thumbnail address for comics.
+    public final static int alsDownloadURLsAndDestFileNames_URL_INDEX = 0;
+    public final static int alsDownloadURLsAndDestFileNames_FILENAME_INDEX = 1;
+    public final static int alsDownloadURLsAndDestFileNames_THUMBNAIL_INDEX = 2;
+    public int iThumbnailURLImageHeight = -1; //Used specifically for Comic Import Preview.
+    public int iThumbnailURLImageWidth = -1;  //Used specifically for Comic Import Preview.*/
+
 
     public static final int FLAG_NO_CODE = 0;
     public static final int FLAG_PROCESSING_COMIC_DLM_MOVE = 1; //DownloadIdleService will delete files

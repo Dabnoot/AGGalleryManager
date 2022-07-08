@@ -222,7 +222,7 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
             if (objsTagNodeThumbnails != null && objsTagNodeThumbnails.length > 0) {
                 sThumbnailImageAddress = ((TagNode) objsTagNodeThumbnails[0]).getAttributeByName("data-src");
                 if (sThumbnailImageAddress.length() > 0) {
-                    ci.sComicThumbnailURL = sThumbnailImageAddress;
+                    //ci.sComicThumbnailURL = sThumbnailImageAddress;
                 }
             }
 
@@ -302,7 +302,7 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
             }
             if(alsImageNameData.size() > 0){
                 //If there are image addresses to attempt to download...
-                ci.alsDownloadURLsAndDestFileNames = alsImageNameData;
+                //ci.alsDownloadURLsAndDestFileNames = alsImageNameData;
             }
             BroadcastProgress_ComicDetails("Finished analyzing web data.\n", gsIntentActionFilter);
 
@@ -327,7 +327,7 @@ public class Worker_Import_AcquireNHComicsDetails extends Worker {
         if(ci.iComicPages > 0) {
             //Put potential catalog item in globalclass to handle reset of activity if user leaves
             //  activity or rotates the screen:
-            globalClass.gci_ImportComicWebItem = ci;
+            //globalClass.gci_ImportComicWebItem = ci;
 
             //Broadcast a message to be picked up by the Import fragment to refresh the views:
             broadcastIntent.putExtra(GlobalClass.COMIC_DETAILS_SUCCESS, true);

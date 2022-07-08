@@ -9,13 +9,17 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
+import android.graphics.Insets;
+import android.graphics.Point;
 import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.nfc.Tag;
+import android.os.Build;
 import android.text.Html;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.WindowInsets;
+import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
@@ -29,19 +33,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
@@ -149,7 +149,7 @@ public class GlobalClass extends Application {
     public boolean gbImportComicWebAnalysisRunning = false;
     public boolean gbImportComicWebAnalysisFinished = false;
     public StringBuilder gsbImportComicWebAnalysisLog = new StringBuilder();
-    public ItemClass_CatalogItem gci_ImportComicWebItem;  //To capture a potential import.
+    //public ItemClass_CatalogItem gci_ImportComicWebItem;  //To capture a potential import.
     public ItemClass_CatalogItem gci_ImportVideoWebItem;
 
     //The variable below is used to identify files that were acquired using the Android DownloadManager.
@@ -202,6 +202,23 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Utilities =====================================================================
     //=====================================================================================
+
+    public static Point getScreenWidth(@NonNull Activity activity) {
+        Point pReturn = new Point();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
+            Insets insets = windowMetrics.getWindowInsets()
+                    .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
+            pReturn.x = windowMetrics.getBounds().width();// - insets.left - insets.right;
+            pReturn.y = windowMetrics.getBounds().height();// - insets.top - insets.bottom;
+        } else {
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            pReturn.y = displayMetrics.heightPixels;
+            pReturn.x = displayMetrics.widthPixels;
+        }
+        return pReturn;
+    }
 
     public static void hideSoftKeyboard(Activity activity) {
         InputMethodManager inputMethodManager =
@@ -815,10 +832,6 @@ public class GlobalClass extends Application {
         ciNew.bComic_Online_Data_Acquired     = ciOriginal.bComic_Online_Data_Acquired    ;     //Typically used to gather tag data from an online comic source, if automatic.
         ciNew.sSource                         = ciOriginal.sSource                        ;     //Website, if relevant. Originally intended for comics.
         ciNew.sVideoLink                      = ciOriginal.sVideoLink                     ;     //Link to the .mp4, .m3u8, etc, if it is a video download.
-
-        ciNew.sComicThumbnailURL              = ciOriginal.sComicThumbnailURL             ;     //Used specifically for NH Comic import preview.
-        ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>(ciOriginal.alsDownloadURLsAndDestFileNames);
-                                                                                                //Used to map downloads to a download file name for both comic page and video downloads.
 
         ciNew.iSpecialFlag                    = ciOriginal.iSpecialFlag                   ;     //Used to tell the app to that file requires post-processing of some sort after an operation.
 
@@ -1669,6 +1682,9 @@ public class GlobalClass extends Application {
     public static final String EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //Used to flag in a listener.
     public static final String EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //ArrayList of response data
 
+    public static final String EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //Used to flag in a listener.
+    public static final String EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //ArrayList of response data
+
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
@@ -1806,6 +1822,9 @@ public class GlobalClass extends Application {
 
     //Create an array of keys that allow program to locate video links:
     ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;
+
+    //Create an array of keys that allow program to locate image links:
+    ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
 
     public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
 

@@ -47,8 +47,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private ItemClass_CatalogItem gciCatalogItem;
     private TreeMap<Integer, String> gtmComicPages;
 
-    private MenuItem gmiGetOnlineData;
-    private MenuItem gmiSaveDetails;
+    //private MenuItem gmiGetOnlineData;
+    //private MenuItem gmiSaveDetails;
 
     public static final String EXTRA_CATALOG_ITEM_ID = "com.agcurations.aggallerymanager.extra.CATALOG_ITEM_ID";
 
@@ -195,8 +195,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.comic_details_menu, menu);
-        gmiGetOnlineData = menu.findItem(R.id.menu_GetOnlineData);
-        gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);
+        /*gmiGetOnlineData = menu.findItem(R.id.menu_GetOnlineData);
+        gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);*/
 
         if(globalClass.bAutoDownloadOn && gciCatalogItem.sSource.contains("nhentai")) {
             if (!gciCatalogItem.bComic_Online_Data_Acquired) {
@@ -210,7 +210,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 SyncOnlineData();
             }
         } else {
-            gmiGetOnlineData.setEnabled(false); //Don't allow get online data for non-NH comics.
+            //gmiGetOnlineData.setEnabled(false); //Don't allow get online data for non-NH comics.
         }
 
         return true;
@@ -221,7 +221,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         if (item.getItemId() == R.id.menu_FlipView) {
             FlipObfuscation();
             return true;
-        } else if (item.getItemId() == R.id.menu_Refresh) {
+        /*} else if (item.getItemId() == R.id.menu_Refresh) {
             loadComicPageData();
             return true;
         } else if (item.getItemId() == R.id.menu_GetOnlineData) {
@@ -229,7 +229,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
             return true;
         } else if (item.getItemId() == R.id.menu_SaveDetails) {
             SaveDetails(gciCatalogItem);
-            return true;
+            return true;*/
         } else if (item.getItemId() == R.id.menu_DeleteComic) {
             DeleteComicPrompt();
             return true;
@@ -709,26 +709,19 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     public void SyncOnlineData(){
 
+        /*
+        //Below code no longer used as we download comics directly now.
         if(globalClass.isNetworkConnected) {
 
-            /*Intent intentGetComicDetails;
-
-            intentGetComicDetails = new Intent(this, Service_ComicDetails.class);
-            intentGetComicDetails.putExtra(Service_ComicDetails.COMIC_CATALOG_ITEM, gciCatalogItem);
-
-            gmiGetOnlineData.setEnabled(false);
-
-            startService(intentGetComicDetails);*/
             globalClass.gci_ImportComicWebItem = gciCatalogItem;
             Service_Import.startActionImportComicWebFiles(getApplicationContext(),
                     globalClass.gci_ImportComicWebItem, ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
 
             Toast.makeText(getApplicationContext(), "Getting online data...", Toast.LENGTH_LONG).show();
 
-
         } else {
             Toast.makeText(getApplicationContext(), "No network connected.", Toast.LENGTH_LONG).show();
-        }
+        }*/
     }
 
     public class ComicDetailsResponseReceiver extends BroadcastReceiver {
@@ -758,6 +751,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
                         gtextView_ComicDetailsLog.append(sLogLine);
 
+                        //Todo: Weed out all code used to "update" an NH folder import, imported via an old tool I created that
+                        //  downloaded NH files to a PC and gave the folder name the ID of a comic. No need to "Sync Data Online" anymore.
+                        /*
+                        //Below code no longer needed since we download files directly.
                         if (sLogLine.contains("Operation complete.")) {
                             gciCatalogItem = globalClass.gci_ImportComicWebItem;
                             loadComicPageData();
@@ -770,8 +767,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
                             // the post-processing code because this is done in Service_Import if required.
 
                             Toast.makeText(getApplicationContext(), "Files may be downloading in background. Refresh to view new files.", Toast.LENGTH_LONG).show();
-                        }
+                        }*/
                     }
+
                 }
 
 
@@ -787,7 +785,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         //Update the catalog file:
         globalClass.CatalogDataFile_UpdateRecord(ci);
 
-        gmiSaveDetails.setEnabled(false);
+        //gmiSaveDetails.setEnabled(false);
         Toast.makeText(getApplicationContext(), "Data saved.", Toast.LENGTH_LONG).show();
 
     }

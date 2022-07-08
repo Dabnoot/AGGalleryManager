@@ -86,12 +86,12 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     sSource = fileItem.sURL;
                 }
                 String sParody = "";
-                if(!fileItem.sParody.equals("")){
-                    sParody = fileItem.sParody;
+                if(!fileItem.sComicParodies.equals("")){
+                    sParody = fileItem.sComicParodies;
                 }
                 String sArtist = "";
-                if(!fileItem.sArtist.equals("")){
-                    sArtist = fileItem.sArtist;
+                if(!fileItem.sComicArtists.equals("")){
+                    sArtist = fileItem.sComicArtists;
                 }
                 String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 int iGrade = fileItem.iGrade;

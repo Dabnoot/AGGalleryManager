@@ -15,6 +15,7 @@ public class ViewModel_ImportActivity extends ViewModel {
     public static final int COMIC_SOURCE_NH_COMIC_DOWNLOADER = 0;
     public static final int COMIC_SOURCE_FOLDER = 1;
     public static final int COMIC_SOURCE_WEBPAGE = 2;
+    public static final int COMIC_SOURCE_WEBPAGE2 = 3;
     public int iComicImportSource = -1;  //Guides the import process for comics.
 
     public int iImportMethod;  //Move or copy.

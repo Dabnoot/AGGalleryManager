@@ -110,7 +110,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         //  not to import any new tags associated with this download. Downloads are always single
         //  videos or complete comics, so tags apply to one item.
         //Get the text of the tags and display:
-        if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+        /*if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
             ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags;
             ArrayList<ItemClass_Tag> alict = new ArrayList<>();
@@ -139,6 +139,21 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     textView_ImportTags.setText(sb.toString());
                 }
             }
+        }*/
+        //If the user is importing a single item, don't show the global tags listing line.
+        if (viewModelImportActivity.alfiConfirmedFileImports.size() < 2){
+            TextView textView_LabelImportTags = getView().findViewById(R.id.textView_LabelImportTags);
+            if (textView_LabelImportTags != null) {
+                textView_LabelImportTags.setVisibility(View.INVISIBLE);
+                textView_LabelImportTags.getLayoutParams().height = 0;
+                textView_LabelImportTags.requestLayout();
+            }
+            TextView textView_ImportTags = getView().findViewById(R.id.textView_ImportTags);
+            if (textView_ImportTags != null) {
+                textView_ImportTags.setVisibility(View.INVISIBLE);
+                textView_ImportTags.getLayoutParams().height = 0;
+                textView_ImportTags.requestLayout();
+            }
         }
 
         //Start the tag selection fragment:
@@ -146,14 +161,27 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         Fragment_SelectTags fst = new Fragment_SelectTags();
         Bundle args = new Bundle();
         args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory);
-        //If this is a video download import, seed the tag selection fragment with the tags from
-        // the video that also exist in the tags catalog:
-        if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+        //If this is a webo download import, seed the tag selection fragment with the tags from
+        // the web item that also exist in the tags catalog:
+        if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+                || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
             ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags;
             ArrayList<String> alsIgnoredNewTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).alsUnidentifiedTags;
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliPreSelectedTags);
+
+            //Also modify the subject line text:
+            TextView textView_Label_Subtext = getView().findViewById(R.id.textView_Label_Subtext);
+            if(textView_Label_Subtext != null){
+                textView_Label_Subtext.setText("Add or remove tags to be assigned to the imported item. Select next to continue.");
+
+                //todo: An imported item with tags pulled from the web could have restricted tags.
+                //  Determine the behavior on how to handle this. Currently the locked tags will
+                //  be carried-in with the import. Restricted tags have funny behavior here when the
+                //  user selects the "clear" icon on the tag selection bar.
             }
+        }
         fst.setArguments(args);
         ft.replace(R.id.child_fragment_tag_selector, fst);
         ft.commit();
@@ -221,6 +249,12 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     //If importing comics and importing folders as the source, filter on the cover pages:
                     alFileItemsDisplay = new ArrayList<>(); //initialize.
                     applyFilterByType(ItemClass_File.TYPE_FOLDER);
+                } else {
+                    //If importing a comic from the web, it should be a single comic. Show only the first page.
+                    alFileItemsDisplay = new ArrayList<>();
+                    if(alfi.size() > 0) {
+                        alFileItemsDisplay.add(alfi.get(0));
+                    }
                 }
             } else {
                 alFileItemsDisplay = new ArrayList<>(alfi);
@@ -257,6 +291,8 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //Get the title of the comic from the file name:
                     sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2) {
+                    sLine1 = alFileItemsDisplay.get(position).sTitle;
                 }
             }
             textView_Line1.setText(sLine1);
@@ -374,8 +410,10 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                     //  If we are here, I think there is an mistake in logic somewhere.
                     imageView_StorageItemIcon.setImageResource(R.drawable.baseline_folder_white_18dp);
                 }
-            } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-                    && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
+            } else if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+                    || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
                 String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
                 if(!sURLThumbnail.equals("")) {
                     Glide.with(getContext()).

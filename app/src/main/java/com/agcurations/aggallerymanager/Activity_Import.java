@@ -14,15 +14,19 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Point;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
@@ -46,8 +50,6 @@ import com.bumptech.glide.Glide;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,17 +73,19 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 3;
     public static final int FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT = 4;
     public static final int FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS = 5;
-    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 6;
-    public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 7;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 8;
-    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 9;
-    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 10;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 11;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 12;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 13;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 14;
+    public static final int FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT = 6;
+    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 7;
+    public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 8;
+    public static final int FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM = 9;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 10;
+    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 11;
+    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 12;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 13;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 14;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 15;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 16;
 
-    public static final int FRAGMENT_COUNT = 15;
+    public static final int FRAGMENT_COUNT = 17;
 
     //=================================================
     //User selection global variables:
@@ -93,6 +97,8 @@ public class Activity_Import extends AppCompatActivity {
     public static int SelectItemsListViewWidth = 1000;  //Expands the listView items to the width of the listview.
     public FileListCustomAdapter fileListCustomAdapter; //For the file selector.
     public VideoDownloadListCustomAdapter videoDownloadListCustomAdapter; //For the video download selector.
+    public RecyclerViewComicPreviewAdapter recyclerViewComicPreviewAdapter; //For comic download.
+
     public static final String PREVIEW_FILE_ITEMS = "PREVIEW_FILE_ITEMS";
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
@@ -118,6 +124,8 @@ public class Activity_Import extends AppCompatActivity {
 
     boolean gbWriteApplicationLog = false;
     String gsApplicationLogFilePath = "";
+
+    Point gpDisplayDims;
 
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
     @Override
@@ -258,25 +266,33 @@ public class Activity_Import extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
 
             //Get boolean indicating that an error may have occurred:
-            boolean bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
 
             if (bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
                 //Check to see if this is a response to request to get directory contents:
-                boolean bGetDirContentsResponse = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
+                boolean bGetDirContentsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
                 if (bGetDirContentsResponse) {
-                    ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
+                    ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
                     fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
                 }
 
                 //Check to see if this is a response to request to get video downloads from html:
-                boolean bGetVideoDownloadsResponse = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, false);
+                boolean bGetVideoDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE, false);
                 if (bGetVideoDownloadsResponse) {
-                    ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Service_Import.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE);
+                    ArrayList<ItemClass_File> alicf_VideoDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE);
                     videoDownloadListCustomAdapter = new VideoDownloadListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alicf_VideoDownloadFileItems);
+                }
+
+                //Check to see if this is a response to request to get comic downloads from html:
+                boolean bGetComicDownloadsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_WEB_COMIC_ANALYSIS_RESPONSE, false);
+                if (bGetComicDownloadsResponse) {
+                    ArrayList<ItemClass_File> alicf_ComicDownloadFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE);
+                    recyclerViewComicPreviewAdapter = new RecyclerViewComicPreviewAdapter(alicf_ComicDownloadFileItems);
+
                 }
 
             }
@@ -386,11 +402,16 @@ public class Activity_Import extends AppCompatActivity {
 
     public void buttonNextClick_ComicSourceSelected(View v){
         RadioButton radioButton_ComicSourceFolder = findViewById(R.id.radioButton_ComicSourceFolder);
+        RadioButton radioButton_ComicSourceWebpage2 = findViewById(R.id.radioButton_ComicSourceWebpage2);
 
         int iNewComicSource;
 
         if (radioButton_ComicSourceFolder.isChecked()){
             iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
+        } else if (radioButton_ComicSourceWebpage2.isChecked()) {
+            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2;
+            gpDisplayDims = GlobalClass.getScreenWidth(this); //For recycler grid imageview sizing.
+
         } else {
             iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
         }
@@ -402,10 +423,12 @@ public class Activity_Import extends AppCompatActivity {
 
 
         //Go to the import folder selection fragment:
-        if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
-        } else { //Allow user to import web address of a comic to import.
+        } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) { //Allow user to import web address of a comic to import.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS, false);
+        } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2) { //Allow user to import web address of a comic to import.
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT, false);
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
@@ -470,11 +493,19 @@ public class Activity_Import extends AppCompatActivity {
         }
     }
 
+    public void buttonNextClick_ComicWebDetect(View v){
+        //Go to the video download selection fragment:
+        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM, false);
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
     public void buttonNextClick_ItemSelectComplete(View v){
         if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-        && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
-        || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+            || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)
+            || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
             //If we are importing a video or comic from the web, allow the user to confirm import
             // of tags that don't already exist in the list of tags.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
@@ -491,9 +522,11 @@ public class Activity_Import extends AppCompatActivity {
 
     public void buttonNextClick_TagSelectComplete(View v){
 
-        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE){
-            //If we are importing a video from the web, go to import confirm.
+        if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+            || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
+            //If we are importing from the web, go to import confirm.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION, false);
         } else {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_4_ID_IMPORT_METHOD, false);
@@ -671,14 +704,14 @@ public class Activity_Import extends AppCompatActivity {
             //Get tag text to apply to list item if tags are assigned to the item:
             StringBuilder sbTags = new StringBuilder();
 
-            if(!alFileItemsDisplay.get(position).sParody.equals("")){
+            if(!alFileItemsDisplay.get(position).sComicParodies.equals("")){
                 sbTags.append("Parody: ");
-                sbTags.append(alFileItemsDisplay.get(position).sParody);
+                sbTags.append(alFileItemsDisplay.get(position).sComicParodies);
                 sbTags.append("\n");
             }
-            if(!alFileItemsDisplay.get(position).sArtist.equals("")){
+            if(!alFileItemsDisplay.get(position).sComicArtists.equals("")){
                 sbTags.append("Artist: ");
-                sbTags.append(alFileItemsDisplay.get(position).sArtist);
+                sbTags.append(alFileItemsDisplay.get(position).sComicArtists);
                 sbTags.append("\n");
             }
 
@@ -958,8 +991,8 @@ public class Activity_Import extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     //Start the preview popup activity:
-                    Intent intentPreviewPopup;
-                    intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
+                    Intent intentImportFilePreview;
+                    intentImportFilePreview = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
 
 
                     Bundle b = new Bundle();
@@ -1026,9 +1059,9 @@ public class Activity_Import extends AppCompatActivity {
 
                     globalClass.galPreviewFileList = alPreviewFileList;
 
-                    intentPreviewPopup.putExtras(b); //Just the int index for whichever item on display the user selected.
+                    intentImportFilePreview.putExtras(b);
 
-                    garlGetTagsForImportItems.launch(intentPreviewPopup);
+                    garlGetTagsForImportItems.launch(intentImportFilePreview);
 
                 }
             });
@@ -1762,6 +1795,406 @@ public class Activity_Import extends AppCompatActivity {
 
     }
 
+    public class ComicDownloadListCustomAdapter extends ArrayAdapter<ItemClass_File> {
+        //This class for displaying to user video files found in html.
+
+        final public ArrayList<ItemClass_File> alFileItems;
+        private ArrayList<ItemClass_File> alFileItemsDisplay;
+        Context contextFromCaller;
+
+        public ComicDownloadListCustomAdapter(Context context, int textViewResourceId, ArrayList<ItemClass_File> alfi) {
+            super(context, textViewResourceId, alfi);
+            contextFromCaller = context;
+            alFileItems = new ArrayList<>(alfi);
+            alFileItemsDisplay = new ArrayList<>();
+            /*if(alFileItems.size() > 0){
+                alFileItemsDisplay.add(alFileItems.get(0)); //Only show the first page in the list.
+            }*/
+            alFileItemsDisplay.addAll(alFileItems);
+        }
+
+        @Override
+        @NonNull
+        public View getView(final int position, View v, @NonNull ViewGroup parent) {
+            View row = v;
+            if (row == null) {
+                LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+                //My custom list item design is here
+                row = inflater.inflate(R.layout.listview_fileitem_selectable, parent, false);
+            }
+
+            CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
+            ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
+            TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
+            TextView tvLine2 = row.findViewById(R.id.textView_Line2);
+            TextView tvLine3 = row.findViewById(R.id.textView_Line3);
+
+            tvLine1.setText(alFileItemsDisplay.get(position).sFileOrFolderName);
+
+            String sLine2 = alFileItems.size() + " pages.";
+            tvLine2.setText(sLine2);
+
+            tvLine3.setVisibility(View.INVISIBLE);
+
+            //Display a thumbnail:
+            String sURLThumbnail = alFileItemsDisplay.get(position).sURL;
+            if(!sURLThumbnail.equals("")) {
+                Glide.with(getContext()).
+                        load(sURLThumbnail).
+                        into(ivFileType);
+            }
+
+
+
+            cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).bIsChecked);
+
+            //Expand the width of the listItem to the width of the ListView.
+            //  This makes it so that the listItem responds to the click even when
+            //  the click is off of the text.
+            row.setMinimumWidth(SelectItemsListViewWidth);
+
+            //Set the onClickListener for the row to toggle the checkbox:
+            row.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View view) {
+                    CheckBox checkBox_StorageItemSelect = view.findViewById(R.id.checkBox_StorageItemSelect);
+                    boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
+                    checkBox_StorageItemSelect.setChecked(bNewCheckedState);
+                    alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
+                    toggleItemChecked(position, bNewCheckedState);
+                }
+            });
+
+
+            //Set the onClickListener for the checkbox to toggle the checkbox:
+            CheckBox checkBox_StorageItemSelect = row.findViewById(R.id.checkBox_StorageItemSelect);
+            checkBox_StorageItemSelect.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View view) {
+                    CheckBox checkBox_StorageItemSelect = (CheckBox) view;
+                    boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
+                    alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
+                    toggleItemChecked(position, bNewCheckedState);
+
+                }
+            });
+
+
+            Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
+            button_MediaPreview.setVisibility(Button.VISIBLE);
+            button_MediaPreview.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View view) {
+                    //Start the preview popup activity:
+                    Intent intentImportFilePreview;
+                    intentImportFilePreview = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
+
+
+                    Bundle b = new Bundle();
+                    b.putInt(MEDIA_CATEGORY,
+                            viewModelImportActivity.iImportMediaCategory); //viewModel not intended
+                    // to be used between Activities. Therefore, pass media category via bundle in
+                    // intent.
+
+                    ArrayList<ItemClass_File> alPreviewFileList = new ArrayList<>();
+
+                    //Put the files into a standard array:
+                    for(ItemClass_File icf: alFileItems){
+                        icf.aliProspectiveTags = alFileItemsDisplay.get(0).aliProspectiveTags; //Make sure all pages have the same collective tags.
+                        alPreviewFileList.add(icf);
+                    }
+
+                    b.putInt(PREVIEW_FILE_ITEMS_POSITION, 0); //Start at the cover page (or whatever first page)
+                    globalClass.galPreviewFileList = alPreviewFileList;
+
+                    intentImportFilePreview.putExtras(b);
+
+                    garlGetTagsForImportItems.launch(intentImportFilePreview);
+
+                }
+            });
+
+            //Hide the delete button since this is a download (delete doesn't make sense):
+            Button button_Delete = row.findViewById(R.id.button_Delete);
+            if(button_Delete != null){
+                button_Delete.setVisibility(View.INVISIBLE);
+            }
+
+
+            return row;
+        }
+
+
+        private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
+
+            for(ItemClass_File icf: alFileItems){
+                icf.bIsChecked = false;  //Reset all items to not-checked state as only one item gets checked.
+            }
+
+            //Apply the checked-state to all items, as this online comic selector will only
+            // display one comic at a time as of 2022-07-03:
+            for (ItemClass_File icf : alFileItems) {
+                icf.bIsChecked = bNewCheckedState;
+                if(bNewCheckedState){
+                    icf.bMarkedForDeletion = false;
+                }
+            }
+
+            //Enable/disable next button:
+            recalcButtonNext();
+
+            notifyDataSetChanged(); //Update the checkboxes for all items.
+        }
+
+        public void recalcButtonNext(){
+            boolean bEnableNextButton = false;
+            for(ItemClass_File fi: alFileItems){
+                if(fi.bIsChecked){
+                    bEnableNextButton = true;
+                    break;
+                }
+            }
+            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+            if(button_ItemSelectComplete != null){
+                button_ItemSelectComplete.setEnabled(bEnableNextButton);
+            }
+
+        }
+
+
+
+
+        public void updateFileItemDetails(ArrayList<ItemClass_File> alicfIncomingFIs){
+            boolean bFoundAndUpdated = false;
+            //Find the items to apply individualized tags.
+            //This routine is not designed to apply the same tags to multiple items.
+
+
+            for(ItemClass_File icfIncoming: alicfIncomingFIs) {
+                if(icfIncoming.bDataUpdateFlag) {
+                    for (ItemClass_File icfUpdate : alFileItems) {
+                        if (icfUpdate.sUri.contentEquals(icfIncoming.sUri)) {
+                            icfUpdate.aliProspectiveTags = icfIncoming.aliProspectiveTags;
+                            icfUpdate.iGrade = icfIncoming.iGrade;
+                            icfUpdate.bIsChecked = true;
+                            bFoundAndUpdated = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                    //If we are importing comics from folders, update the comic parent item with the selected tags.
+                    if(alicfIncomingFIs.size() > 0) {
+                        String sParentComic = alicfIncomingFIs.get(0).sUriParent;
+                        for (ItemClass_File icfUpdate : alFileItems) {
+                            if (icfUpdate.sUri.equals(sParentComic)) {
+                                icfUpdate.aliProspectiveTags = alicfIncomingFIs.get(0).aliProspectiveTags;
+                                icfUpdate.iGrade = alicfIncomingFIs.get(0).iGrade;
+                                icfUpdate.bIsChecked = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            recalcButtonNext();
+
+            if (bFoundAndUpdated) {
+                notifyDataSetChanged();
+            }
+
+        }
+
+
+        //To prevent data resetting when scrolled
+        @Override
+        public int getCount() {
+            return alFileItemsDisplay.size();
+        }
+
+        @Override
+        public ItemClass_File getItem(int position) {
+            return alFileItemsDisplay.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+
+
+    }
+
+    public class RecyclerViewComicPreviewAdapter extends RecyclerView.Adapter<RecyclerViewComicPreviewAdapter.ViewHolder> {
+
+        public Activity activity;
+
+        final public ArrayList<ItemClass_File> alFileItems;
+
+        public int iFinalImageViewHeight = -1;
+
+        // Provide a reference to the views for each data item
+        // Complex data items may need more than one view per item, and
+        // you provide access to all the views for a data item in a view holder
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            // each data item is just a string in this case
+            public final ImageView imageView_Thumbnail;
+            public final CheckBox checkbox_Selected;
+            public final TextView textView_ThumbnailText;
+
+            public ViewHolder(View v) {
+                super(v);
+                imageView_Thumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                checkbox_Selected = v.findViewById(R.id.checkbox_Selected);
+                textView_ThumbnailText = v.findViewById(R.id.textView_ThumbnailText);
+            }
+        }
+
+        public RecyclerViewComicPreviewAdapter(ArrayList<ItemClass_File> alfi) {
+            alFileItems = alfi;
+        }
+
+        public int getCount() {
+            return alFileItems.size();
+        }
+
+        // Create new views (invoked by the layout manager)
+        @NonNull
+        @Override
+        public RecyclerViewComicPreviewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            // create a new view
+            View v;
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            v = inflater.inflate(R.layout.recycler_import_grid_comic_preview, parent, false);
+            return new RecyclerViewComicPreviewAdapter.ViewHolder(v);
+        }
+
+        // Replace the contents of a view (invoked by the layout manager)
+        @Override
+        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewComicPreviewAdapter.ViewHolder holder, final int position) {
+            // - get element from your data set at this position
+            // - replace the contents of the view with that element
+
+            String sImageURL;
+            if(!alFileItems.get(position).sURLThumbnail.equals("")){
+                sImageURL = alFileItems.get(position).sURLThumbnail;
+            } else {
+                sImageURL = alFileItems.get(position).sURL;
+            }
+
+
+
+            //Adjust the height of the grid item to minimize dead space between the grid items:
+            try {
+                int iGridHeight = holder.itemView.getHeight();
+                if(iFinalImageViewHeight < 0) {
+                    int iImageWidth = alFileItems.get(position).iThumbnailURLImageWidth;
+
+                    int iGridWidth = holder.itemView.getWidth();
+                    if (iImageWidth < iGridWidth) {
+                        float fThumbnailAspectRatio = alFileItems.get(position).iThumbnailURLImageHeight /
+                                (float) alFileItems.get(position).iThumbnailURLImageWidth;
+                        iFinalImageViewHeight = (int) (iGridWidth * fThumbnailAspectRatio);
+                    }
+                }
+                if(iFinalImageViewHeight > 0){
+                    holder.imageView_Thumbnail.getLayoutParams().height = iFinalImageViewHeight;
+                    holder.imageView_Thumbnail.requestLayout();
+                } else {
+                    //Approximate the required height.
+                    //Determine the likely width of the view:
+                    //Grid item marginstart and margin end is 5dp.
+                    float dip = 5f;
+                    Resources r = getResources();
+                    float px = TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            dip,
+                            r.getDisplayMetrics()
+                    );
+                    int iGridWidthCount = 4;
+                    int iMarginWidthPx = (int) (4 * 2 * px);
+                    int iGridWidth = (gpDisplayDims.x - iMarginWidthPx) / iGridWidthCount;
+
+                    int iImageWidth = alFileItems.get(position).iThumbnailURLImageWidth;
+                    if (iImageWidth < iGridWidth) {
+                        float fThumbnailAspectRatio = alFileItems.get(position).iThumbnailURLImageHeight /
+                                (float) alFileItems.get(position).iThumbnailURLImageWidth;
+                        int iFinalImageViewHeightTemp = (int) (iGridWidth * fThumbnailAspectRatio);
+                        holder.imageView_Thumbnail.getLayoutParams().height = iFinalImageViewHeightTemp;
+                        holder.imageView_Thumbnail.requestLayout();
+                    }
+                }
+
+
+            } catch (Exception e) {
+                String sMessage = e.getMessage();
+                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT);
+            }
+            /**/
+
+            Glide.with(getApplicationContext())
+                    .load(sImageURL)
+                    .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                    .into(holder.imageView_Thumbnail);
+
+            String sThumbnailText = alFileItems.get(position).sFileOrFolderName;
+
+            holder.textView_ThumbnailText.setText(sThumbnailText);
+
+
+
+
+            holder.imageView_Thumbnail.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
+                    if (false)
+                        Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
+
+                }
+            });
+
+            holder.imageView_Thumbnail.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    if (false)
+                        Toast.makeText(getApplicationContext(), "Long press detected", Toast.LENGTH_SHORT).show();
+                    return true;// returning true instead of false, works for me
+                }
+            });
+
+
+
+        }
+
+        // Return the size of the data set (invoked by the layout manager)
+        @Override
+        public int getItemCount() {
+            return alFileItems.size();
+        }
+
+        public void recalcButtonNext(){
+            boolean bEnableNextButton = false;
+            for(ItemClass_File fi: alFileItems){
+                if(fi.bIsChecked){
+                    bEnableNextButton = true;
+                    break;
+                }
+            }
+            Button button_ItemSelectComplete = findViewById(R.id.button_ItemSelectComplete);
+            if(button_ItemSelectComplete != null){
+                button_ItemSelectComplete.setEnabled(bEnableNextButton);
+            }
+
+        }
+
+    }
 
     public static class FragmentImportViewPagerAdapter extends FragmentStateAdapter {
 
@@ -1785,12 +2218,16 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_1a_VideoWebDetect();
                 case FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS:
                     return new Fragment_Import_1b_ComicWebDetect();
+                case FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT:
+                    return new Fragment_Import_1c_ComicWebDetect();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM:
                     return new Fragment_Import_2a_SelectDetectedWebVideo();
                 case FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC:
                     return new Fragment_Import_2b_SelectSingleWebComic();
+                case FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM:
+                    return new Fragment_Import_2c_PreviewDetectedWebComic();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:
                     return new Fragment_Import_3_SelectTags();
                 case FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT:

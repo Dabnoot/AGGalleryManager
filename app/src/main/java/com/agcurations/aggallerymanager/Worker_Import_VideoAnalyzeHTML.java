@@ -186,6 +186,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
         String sCleanHTML= "<" + node.getName() + ">" + pageParser.getInnerHtml(node) + "</" + node.getName() + ">";
 
+        pageParser = null;
 
         boolean bProblem = false;
 

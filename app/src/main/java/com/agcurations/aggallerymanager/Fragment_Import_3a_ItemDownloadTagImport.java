@@ -136,7 +136,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
 
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+        for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
             alsTags.add(entry.getValue().sTagText);
         }
 

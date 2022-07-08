@@ -37,23 +37,34 @@ public class ItemClass_File implements Serializable {
     public final static int COMIC_PAGE_ID_BLOCK_COUNT_SKIPS_PAGES = 2;
     public String sUriParent = "";       //Folder source for grouping comic pages during import.
     public String sUriThumbnailFile = ""; //For use by the comic folder ItemClass_File.
-    public String sURL = ""; //If file is an xml-file containing comic data.
-    public String sPageCount = ""; //If file is an xml-file containing comic data.
-    public String sArtist = ""; //If file is an xml-file containing comic data.
-    public String sParody = ""; //If file is an xml-file containing comic data.
+    public String sURL = "";              //For use during web-import.
+    public String sPageCount = "";
+    public String sComicArtists = "";
+    public String sComicParodies = "";                    //Common comic tag category
+    public String sComicCategories = "";                  //A "category" field sometimes included by some websites.
+    public String sComicCharacters = "";                  //Comic characters, if relevant, particular to parodies.
+    public String sComicGroups = "";                      //A "group" field sometimes included by some websites.
+    public String sComicLanguages = "";                   //Language(s) found in the comic
+    public int iComicPages = 0;
+    int iThumbnailURLImageHeight = -1; //Used specifically for Comic Import Preview.
+    int iThumbnailURLImageWidth = -1;  //Used specifically for Comic Import Preview.
+
 
     //Items for video download:
     public String sURLVideoLink = "";
-    public String sURLThumbnail = "";
+    public String sURLThumbnail = ""; //Used both my comics and videos
     public ArrayList<Integer> aliRecognizedTags;  //For tags assigned by the source and found in our tags catalog.
     public ArrayList<String> alsUnidentifiedTags; //For tags assigned by the source but not found in our tags catalog. User approval required.
     ItemClass_M3U8 ic_M3U8; //Captures a streaming download, which consists of a set of TS files.
     //A video download will have either sURLVideoLink, or in the case of a streaming download
     //  an entry for ic_M3U8 which will contain many files to be downloaded.
 
-    String sTitle = "";  //Particularly for facilitation of video title (could be, but is not used for comic title as of 6/29/2021 commit).
+    String sTitle = "";  //For facilitation of web download video and comic titles.
 
     public int iGrade = 3;  //Grade, to be specified by user.
+
+    //Items for comic download:
+    public ArrayList<String> alsImageURLs;
 
     public ItemClass_File(int _iTypeFileFolderURL,
                           String _FileOrFolderName)

@@ -152,7 +152,8 @@ public class Worker_Import_VideoDownload extends Worker {
         ciNew.iGrade = icfDownloadItem.iGrade;
         ciNew.sSource = gsAddress;
         ciNew.sTitle = icfDownloadItem.sTitle;
-        ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
+        //ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
+        ArrayList<String[]> alsDownloadURLsAndDestFileNames = new ArrayList<>();
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
             ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
@@ -189,7 +190,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
                     sThumbnailFileName = Service_Import.cleanFileNameViaTrim(sThumbnailFileName);
                     ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
-                    ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
+                    alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
                 } catch (Exception e){
                     globalClass.problemNotificationConfig("Could not get thumbnail image.", sIntentActionFilter);
                 }
@@ -208,7 +209,7 @@ public class Worker_Import_VideoDownload extends Worker {
             //If this is a single download file, only 1 file needs to be downloaded.
             String sDownloadAddress = icfDownloadItem.sURLVideoLink;
             String sFileName = icfDownloadItem.sFileOrFolderName;
-            ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sFileName});
+            alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sFileName});
         } else {
             //If this is an M3U8 download, a set of files must be downloaded.
             for(String sFileName: icfDownloadItem.ic_M3U8.als_TSDownloads){
@@ -227,7 +228,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     // jumble the .ts filenames:
                     sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
                 }
-                ciNew.alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
+                alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
             }
         }
 
@@ -253,7 +254,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
             String sVideoDownloadFolder = "";
             ArrayList<String[]> alsDLIDsAndFileNames = new ArrayList<>();
-            for(String[] sURLAndFileName: ciNew.alsDownloadURLsAndDestFileNames) {
+            for(String[] sURLAndFileName: alsDownloadURLsAndDestFileNames) {
                 String sNewFullPathFilename = fWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
                 //File name is not Jumbled for download as if it is a .ts file download of videos, FFMPEG will
                 //  not understand what to do with the files if the extension is unrecognized.
@@ -296,8 +297,8 @@ public class Worker_Import_VideoDownload extends Worker {
                             File.separator + ciNew.sItemID;
                     sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
                             sDownloadFolderRelativePath;
-                    request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
-                            .setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                    request.setTitle("AGGallery+ Download " + lProgressNumerator + "/" + lProgressDenominator + " VideoID " + ciNew.sItemID)
+                            //.setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                             //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
                             //Set to equivalent of binary file so that Android MediaStore will not try to index it,

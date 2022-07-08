@@ -29,13 +29,10 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
     public static final String TAG_WORKER_IMPORT_IMPORTCOMICWEBFILES = "com.agcurations.aggallermanager.tag_worker_import_importcomicwebfiles";
 
-    ItemClass_CatalogItem gci;
     String gsIntentActionFilter;
 
     public Worker_Import_ImportComicWebFiles(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        gci = GlobalClass.Copy_ItemClass_CatalogItem(globalClass.catalogItem_ImportComicWebFiles);
         gsIntentActionFilter = getInputData().getString(GlobalClass.EXTRA_STRING_INTENT_ACTION_FILTER);
 
     }
@@ -56,30 +53,23 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         //sIntentActionFilter is used to send out the broadcast responses.
 
+        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
+
         long lProgressNumerator = 0L;
-        long lProgressDenominator = gci.iComicPages;
+        long lProgressDenominator = alFileList.get(0).iComicPages;
         int iProgressBarValue = 0;
 
-        boolean bUpdateExistingComic = false;
-        //Create the comic folder.
-        if(!gci.sItemID.equals("")) { //There is a case in which this routine is called to re-download comic files. In that case, don't recreate the item ID.
-            return Result.failure(); //Don't execute this anymore - I think it is no longer used.
-            /*bUpdateExistingComic = true;
-            //If we are updating an existing comic, get the download file list:
-            ArrayList<String[]> alsURLs;
-            alsURLs = handleAction_startActionGetComicDetailsOnline(ci.sSource, sIntentActionFilter);
-            ci.alsDownloadURLsAndDestFileNames = alsURLs;*/
-        }
+        ItemClass_CatalogItem ci = new ItemClass_CatalogItem();
 
         //Create the comic folder.
-        if(!bUpdateExistingComic) {
-            gci.sItemID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
-            gci.sFolder_Name = gci.sItemID;
-        }
+        ci.sItemID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
+        ci.sFolder_Name = ci.sItemID;
+        ci.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
+
 
         File fDestination = new File(
                 globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
-                        gci.sFolder_Name);
+                        ci.sFolder_Name);
 
 
         if (!fDestination.exists()) {
@@ -105,53 +95,30 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         //Create a timestamp to be used to create the data record:
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-        gci.dDatetime_Last_Viewed_by_User = dTimeStamp;
-        gci.dDatetime_Import = dTimeStamp;
+        ci.dDatetime_Last_Viewed_by_User = dTimeStamp;
+        ci.dDatetime_Import = dTimeStamp;
 
-        if(!bUpdateExistingComic) { //If this is an update, don't update the tags and don't create a new catalog record.
-            //Convert textual tags to numeric tags:
-            //Form the tag integer array:
-            String[] sTags = gci.sTags.split(", ");
-            ArrayList<Integer> aliTags = new ArrayList<>();
-            for (String sTag : sTags) {
-                aliTags.add(globalClass.getTagIDFromText(sTag, GlobalClass.MEDIA_CATEGORY_COMICS));
-            }
-            //Look for any tags that could not be found:
-            ArrayList<String> alsNewTags = new ArrayList<>();
-            for(int i = 0; i < aliTags.size(); i++){
-                if(aliTags.get(i) == -1){
-                    //Prepare a list of strings representing the new tags that must be created:
-                    if(!sTags[i].equals("")) {
-                        alsNewTags.add(sTags[i]);
-                    }
-                }
-            }
-            if(alsNewTags.size() > 0) {
-                //Create the missing tags:
-                ArrayList<ItemClass_Tag> alictNewTags = globalClass.TagDataFile_CreateNewRecords(alsNewTags, GlobalClass.MEDIA_CATEGORY_COMICS);
-                //Insert the new tag IDs into aliTags:
-                int k = 0;
-                for (int i = 0; i < aliTags.size(); i++) {
-                    if (aliTags.get(i) == -1) {
-                        if (!sTags[i].equals("")) {
-                            if(k < alictNewTags.size()) {
-                                aliTags.set(i, alictNewTags.get(k).iTagID);
-                                k++;
-                            }
-                        }
-                    }
-                }
-            }
+        //Populate Catalog Item data fields:
+        ci.sSource            = alFileList.get(0).sURL;
+        ci.sTitle             = alFileList.get(0).sTitle;
+        ci.lSize              = alFileList.get(0).lSizeBytes;
+        ci.sComicParodies     = alFileList.get(0).sComicParodies;
+        ci.sComicCharacters   = alFileList.get(0).sComicCharacters;
+        ci.sComicArtists      = alFileList.get(0).sComicArtists;
+        ci.sComicGroups       = alFileList.get(0).sComicGroups;
+        ci.sComicLanguages    = alFileList.get(0).sComicLanguages;
+        ci.sComicCategories   = alFileList.get(0).sComicCategories;
+        ci.iComicPages        = alFileList.get(0).iComicPages;
+        ci.iComic_Max_Page_ID = alFileList.get(0).iComicPages;
+        ci.sTags = GlobalClass.formDelimitedString(alFileList.get(0).aliProspectiveTags, ",");
 
-            gci.sTags = GlobalClass.formDelimitedString(aliTags, ",");
+        //The below call should add the record to both the catalog contents file
+        //  and memory. Create the record in the system before downloading the files for the event that
+        //  the download is interrupted:
+        globalClass.CatalogDataFile_CreateNewRecord(ci);
 
-            //The below call should add the record to both the catalog contents file
-            //  and memory. Create the record in the system before downloading the files for the event that
-            //  the download is interrupted:
-            globalClass.CatalogDataFile_CreateNewRecord(gci);
-        }
 
-        if(gci.alsDownloadURLsAndDestFileNames.size() > 0){
+        if(alFileList.size() > 0){
             //If there are image addresses to attempt to download...
 
             //NOTE: Android has DownloadIdleService which is reponsible for cleaning up stale or orphan downloads.
@@ -170,20 +137,19 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 }
                 //Download the files:
                 int FILE_DOWNLOAD_ADDRESS = 0;
-                int FILE_NAME_AND_EXTENSION = 1;
-                for(String[] sURLAndFileName: gci.alsDownloadURLsAndDestFileNames) {
+                for(ItemClass_File icf: alFileList) {
 
-                    String sNewFilename = gci.sItemID + "_" + sURLAndFileName[FILE_NAME_AND_EXTENSION];
+                    String sNewFilename = ci.sItemID + "_" + icf.sFileOrFolderName;
                     //ci.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE; //Tell the app to move the files after download to avoid DLM-automated deletion.
                     //Above item no longer required as DownloadManager will not download to the final location on the SD Card, only to the emulated folder. However,
                     //  leave this item here in the even that testing without an SD Card reveals that we want to use this again.
                     String sJumbledNewFileName = GlobalClass.JumbleFileName(sNewFilename);
 
-                    if(gci.sFilename.equals("")){
-                        gci.sFilename = sJumbledNewFileName;
-                        gci.sThumbnail_File = sJumbledNewFileName;
+                    if(ci.sFilename.equals("")){ //On first loop, configure the coverpage by setting the catalog item file name:
+                        ci.sFilename = sJumbledNewFileName;
+                        ci.sThumbnail_File = sJumbledNewFileName;
                         //Update the catalog record with the filename and thumbnail image:
-                        globalClass.CatalogDataFile_UpdateRecord(gci);
+                        globalClass.CatalogDataFile_UpdateRecord(ci);
                     }
 
 
@@ -200,12 +166,12 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
                             byte[] data = new byte[1024];
 
-                            globalClass.BroadcastProgress(true, "Downloading: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
+                            globalClass.BroadcastProgress(true, "Downloading: " + icf.sURL + "...",
                                     false, iProgressBarValue,
                                     true, "Downloading files...",
                                     gsIntentActionFilter);
 
-                            URL url = new URL(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]);
+                            URL url = new URL(icf.sURL);
                             URLConnection connection = url.openConnection();
                             connection.connect();
 
@@ -239,13 +205,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
                         if(!fNewFile.exists()) {
 
-                            globalClass.BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
+                            globalClass.BroadcastProgress(true, "Initiating download of file: " + icf.sURL + "...",
                                     false, iProgressBarValue,
                                     true, "Submitting download requests...",
                                     gsIntentActionFilter);
 
                             //Use the download manager to download the file:
-                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
+                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(icf.sURL));
                             /*request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
                                     .setDescription("Comic ID " + ci.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                                     //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -258,11 +224,11 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
                             String sDownloadFolderRelativePath;
                             sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS] +
-                                    File.separator + gci.sFolder_Name;
+                                    File.separator + ci.sFolder_Name;
                             sComicDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
                                     sDownloadFolderRelativePath;
-                            request.setTitle("AG Gallery+ File Download: " + "Comic ID " + gci.sItemID)
-                                    .setDescription("Comic ID " + gci.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                            request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
+                                    .setDescription("Comic ID " + ci.sItemID + "; " + icf.sURL)
                                     //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                                     //Set to equivalent of binary file so that Android MediaStore will not try to index it,
@@ -304,7 +270,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                             .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sComicDownloadFolder)
                             .putString(Worker_ComicPostProcessing.KEY_ARG_WORKING_FOLDER, fDestination.getAbsolutePath())
                             .putLongArray(Worker_ComicPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
-                            .putString(Worker_ComicPostProcessing.KEY_ARG_ITEM_ID, gci.sItemID)
+                            .putString(Worker_ComicPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
                             .build();
                     OneTimeWorkRequest otwrComicDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_ComicPostProcessing.class)
                             .setInputData(dataComicDownloadPostProcessor)
@@ -349,13 +315,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         }
 
-        if(gci.iSpecialFlag != ItemClass_CatalogItem.FLAG_NO_CODE){
+        if(ci.iSpecialFlag != ItemClass_CatalogItem.FLAG_NO_CODE){
             //Update the catalog file to note the post-processing code:
-            globalClass.CatalogDataFile_UpdateRecord(gci);
+            globalClass.CatalogDataFile_UpdateRecord(ci);
         }
 
-        //Put processed catalog item in globalclass to allow easier pass-back of catalog item:
-        globalClass.gci_ImportComicWebItem = gci;
+        /*//Put processed catalog item in globalclass to allow easier pass-back of catalog item:
+        globalClass.gci_ImportComicWebItem = ci;*/
 
 
 

@@ -127,9 +127,11 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     Service_Import.startActionImportComicFolders(getContext(),
                             viewModelImportActivity.iImportMethod,
                             viewModelImportActivity.iComicImportSource);
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2) {
                     Service_Import.startActionImportComicWebFiles(getContext(),
-                            globalClass.gci_ImportComicWebItem, ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+
                 }
             } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                     && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
