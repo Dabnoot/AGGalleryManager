@@ -47,9 +47,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private ItemClass_CatalogItem gciCatalogItem;
     private TreeMap<Integer, String> gtmComicPages;
 
-    //private MenuItem gmiGetOnlineData;
-    //private MenuItem gmiSaveDetails;
-
     public static final String EXTRA_CATALOG_ITEM_ID = "com.agcurations.aggallerymanager.extra.CATALOG_ITEM_ID";
 
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
@@ -57,7 +54,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private RecyclerViewComicPagesAdapter gRecyclerViewComicPagesAdapter;
 
     private final boolean gbDebugTouch = false;
-    private boolean gbAutoAcquireData = false;
 
     TextView gtextView_ComicDetailsLog;
 
@@ -91,7 +87,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         gComicDetailsResponseReceiver = new Activity_ComicDetails.ComicDetailsResponseReceiver();
-        //registerReceiver(gComicDetailsResponseReceiver, filter);
 
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gComicDetailsResponseReceiver, filter);
 
@@ -147,8 +142,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
             if(tmSortByFileName.size() == 0) {
                 gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
                 String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + "\n";
-                sMessage = sMessage + "If this is a comic from NH, try 'Sync Details Online' from the menu." + "\n";
-                sMessage = sMessage  + "Source: " + gciCatalogItem.sSource + "\n";
+                sMessage = sMessage  + "Comic source: " + gciCatalogItem.sSource + "\n";
                 gtextView_ComicDetailsLog.setText(sMessage);
                 gtextView_ComicDetailsLog.bringToFront();
             } else {
@@ -195,23 +189,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.comic_details_menu, menu);
-        /*gmiGetOnlineData = menu.findItem(R.id.menu_GetOnlineData);
-        gmiSaveDetails = menu.findItem(R.id.menu_SaveDetails);*/
-
-        if(globalClass.bAutoDownloadOn && gciCatalogItem.sSource.contains("nhentai")) {
-            if (!gciCatalogItem.bComic_Online_Data_Acquired) {
-
-                //Refresh any missing catalog pages:
-                gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
-
-
-                //If there is no tag data, automatically go out and try to get it.
-                gbAutoAcquireData = true;
-                SyncOnlineData();
-            }
-        } else {
-            //gmiGetOnlineData.setEnabled(false); //Don't allow get online data for non-NH comics.
-        }
 
         return true;
     }
@@ -221,15 +198,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         if (item.getItemId() == R.id.menu_FlipView) {
             FlipObfuscation();
             return true;
-        /*} else if (item.getItemId() == R.id.menu_Refresh) {
-            loadComicPageData();
-            return true;
-        } else if (item.getItemId() == R.id.menu_GetOnlineData) {
-            SyncOnlineData();
-            return true;
-        } else if (item.getItemId() == R.id.menu_SaveDetails) {
-            SaveDetails(gciCatalogItem);
-            return true;*/
         } else if (item.getItemId() == R.id.menu_DeleteComic) {
             DeleteComicPrompt();
             return true;
@@ -706,24 +674,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     //===== Data Update Code =================================================================
     //=====================================================================================
 
-
-    public void SyncOnlineData(){
-
-        /*
-        //Below code no longer used as we download comics directly now.
-        if(globalClass.isNetworkConnected) {
-
-            globalClass.gci_ImportComicWebItem = gciCatalogItem;
-            Service_Import.startActionImportComicWebFiles(getApplicationContext(),
-                    globalClass.gci_ImportComicWebItem, ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
-
-            Toast.makeText(getApplicationContext(), "Getting online data...", Toast.LENGTH_LONG).show();
-
-        } else {
-            Toast.makeText(getApplicationContext(), "No network connected.", Toast.LENGTH_LONG).show();
-        }*/
-    }
-
     public class ComicDetailsResponseReceiver extends BroadcastReceiver {
         public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.COMIC_DETAILS_DATA_ACTION_RESPONSE";
 
@@ -732,42 +682,25 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             boolean bError;
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
                 //Check to see if this is a response to update log:
-                boolean 	bUpdateLog;
+                boolean bUpdateLog;
 
                 //Get booleans from the intent telling us what to update:
-                bUpdateLog = intent.getBooleanExtra(Service_Import.UPDATE_LOG_BOOLEAN,false);
+                bUpdateLog = intent.getBooleanExtra(GlobalClass.UPDATE_LOG_BOOLEAN,false);
 
                 if(bUpdateLog){
                     String sLogLine;
-                    sLogLine = intent.getStringExtra(Service_Import.LOG_LINE_STRING);
+                    sLogLine = intent.getStringExtra(GlobalClass.LOG_LINE_STRING);
                     if(sLogLine != null && gtextView_ComicDetailsLog != null) {
 
                         gtextView_ComicDetailsLog.append(sLogLine);
 
-                        //Todo: Weed out all code used to "update" an NH folder import, imported via an old tool I created that
-                        //  downloaded NH files to a PC and gave the folder name the ID of a comic. No need to "Sync Data Online" anymore.
-                        /*
-                        //Below code no longer needed since we download files directly.
-                        if (sLogLine.contains("Operation complete.")) {
-                            gciCatalogItem = globalClass.gci_ImportComicWebItem;
-                            loadComicPageData();
-                            //Tell Activity_CatalogViewer to refresh its view (thumbnail image may have changed):
-                            globalClass.gbCatalogViewerRefresh = true;
-                            if(gmiGetOnlineData != null) {
-                                gmiSaveDetails.setEnabled(true);
-                            }
-                            //No need to automatically save the comic item details in order to preserve
-                            // the post-processing code because this is done in Service_Import if required.
-
-                            Toast.makeText(getApplicationContext(), "Files may be downloading in background. Refresh to view new files.", Toast.LENGTH_LONG).show();
-                        }*/
                     }
 
                 }
@@ -778,17 +711,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }
     }
 
-
-    public void SaveDetails(ItemClass_CatalogItem ci){
-
-        
-        //Update the catalog file:
-        globalClass.CatalogDataFile_UpdateRecord(ci);
-
-        //gmiSaveDetails.setEnabled(false);
-        Toast.makeText(getApplicationContext(), "Data saved.", Toast.LENGTH_LONG).show();
-
-    }
 
 
     @Override
