@@ -74,23 +74,23 @@
             <ImageButton
                 android:id="@+id/imageButton_ClearText"
                 android:layout_width="wrap_content"
-                android:layout_height="20dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="12dp"
                 android:scaleType="center"
-                android:layout_gravity="bottom"/>
+                />
 
             <ImageButton
                 android:id="@+id/imageButton_ImportContent"
                 android:layout_width="wrap_content"
-                android:layout_height="25dp"
-                android:src="@drawable/download"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                android:scaleType="center"
+                android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
+                android:layout_marginEnd="10dp"
+                android:padding="10dp"
                 android:background="?android:selectableItemBackground"
-                />
+                android:scaleType="center"
+                android:src="@drawable/download" />
         </LinearLayout>
     </RelativeLayout>
 
