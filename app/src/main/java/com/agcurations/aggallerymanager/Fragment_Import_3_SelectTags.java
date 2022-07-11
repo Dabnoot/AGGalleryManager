@@ -140,8 +140,14 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 }
             }
         }*/
-        //If the user is importing a single item, don't show the global tags listing line.
-        if (viewModelImportActivity.alfiConfirmedFileImports.size() < 2){
+        //If the user is importing a single item or we are importing a video or comic from the web,
+        // don't show the global tags listing line. Video from web should satisfy the "<2" condition.
+        // Comics from the web will appear to have more than one item in the background.
+        if ((viewModelImportActivity.alfiConfirmedFileImports.size() < 2)
+            || ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
+                || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2))){
             TextView textView_LabelImportTags = getView().findViewById(R.id.textView_LabelImportTags);
             if (textView_LabelImportTags != null) {
                 textView_LabelImportTags.setVisibility(View.INVISIBLE);
@@ -168,7 +174,6 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
                 && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
             ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags;
-            ArrayList<String> alsIgnoredNewTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).alsUnidentifiedTags;
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliPreSelectedTags);
 
             //Also modify the subject line text:

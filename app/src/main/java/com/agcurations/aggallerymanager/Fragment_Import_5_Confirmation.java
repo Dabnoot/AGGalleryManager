@@ -171,8 +171,8 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                 row = inflater.inflate(R.layout.listview_fileitem, parent, false);
             }
 
-            ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
-            TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
+            ImageView ivFileType = row.findViewById(R.id.imageView_StorageItemIcon);
+            TextView tvLine1 = row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
 
@@ -238,24 +238,35 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
             tvLine2.setText(sLine2);
 
-            //Get tag text to apply to list item if tags are assigned to the item:
-            StringBuilder sbTags = new StringBuilder();
-            sbTags.append("Tags: ");
-            ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
+            String sLine3 = "";
+            if (!(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                    && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)) {
+                //Get tag text to apply to list item if tags are assigned to the item, but not if it is a web comic item.
+                //  A comic item would have tags for every single page because they are assigned when the html is analyzed.
+                //  This is done because the file items carry the tag data, and a future feature might have it such that
+                //  the user can choose not to import a "detected" page, or first page - such a page might actually
+                //  merely be a jpeg Advertisement not associated with the comic.
+                StringBuilder sbTags = new StringBuilder();
+                sbTags.append("Tags: ");
+                ArrayList<Integer> aliTagIDs = alFileItemsDisplay.get(position).aliProspectiveTags;
 
-            if(aliTagIDs != null){
-                if(aliTagIDs.size() > 0) {
-                    sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), viewModelImportActivity.iImportMediaCategory));
-                    for (int i = 1; i < aliTagIDs.size(); i++) {
-                        sbTags.append(", ");
-                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), viewModelImportActivity.iImportMediaCategory));
+                if (aliTagIDs != null) {
+                    if (aliTagIDs.size() > 0) {
+                        sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(0), viewModelImportActivity.iImportMediaCategory));
+                        for (int i = 1; i < aliTagIDs.size(); i++) {
+                            sbTags.append(", ");
+                            sbTags.append(globalClass.getTagTextFromID(aliTagIDs.get(i), viewModelImportActivity.iImportMediaCategory));
+                        }
                     }
                 }
+                sLine3 = sbTags.toString();
             }
 
-            String sLine3 = sbTags.toString();
-            sLine3 = sLine3 + "\n";
             if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                //Don't put the destination for each comic page because it is the same for every page.
+                if(!sLine3.equals("")) {
+                    sLine3 = sLine3 + "\n";
+                }
                 sLine3 = sLine3 + "Destination path: " +
                         globalClass.gfCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
                         File.separator +
@@ -265,6 +276,8 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                 sLine3 = "";
             }
             tvLine3.setText(sLine3);
+
+
 
             //set the image type if folder or file
             if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {

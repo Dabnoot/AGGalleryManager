@@ -147,7 +147,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         String sComicLanguages;
         String sComicCategories;
         int iComicPages = -1;
-        long lSize = 0;
+        long lAveragePageSize = 0;
         ArrayList<String[]> alsComicPageAndImageData = new ArrayList<>(); //This ArrayList contains page download address, Save-as filename, and thumbnail address.
         final int URL_INDEX = 0;       //For use with alsComicPageAndImageData String Array elements.
         final int FILENAME_INDEX = 1;  //For use with alsComicPageAndImageData String Array elements.
@@ -374,6 +374,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             long lProjectedComicSize;
 
             if (sGalleryID.length() > 0) {
+                long lSize = 0;
                 for(Map.Entry<Integer, String[]> tmEntryPageNumImageExt: tmFileIndexImageExtension.entrySet()) {
                     //Build the suspected URL for the image:
                     String sNHImageDownloadAddress = "https://i.nhentai.net/galleries/" +
@@ -397,16 +398,22 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         if(lSize == -1){
                             bGetOnlineSize = false;
                         }
-                        iFileSizeLoopCount++; //todo: what if there are <5?
+                        iFileSizeLoopCount++;
                         if(iFileSizeLoopCount == 5){  //Use a sample set of images to project the size of the comic.
-                            lProjectedComicSize = lSize / iFileSizeLoopCount;
-                            lProjectedComicSize *= iComicPages;
-                            lSize = lProjectedComicSize;
-                            BroadcastProgress_ComicDetails("Projecting size of comic to " + iComicPages + " pages... " + lSize + " bytes.", gsIntentActionFilter);
+
                             bGetOnlineSize = false;
                         }
                         connection.disconnect();
                     }
+                }
+                if(lSize > 0) {
+                    lAveragePageSize = lSize / iFileSizeLoopCount;
+                    lProjectedComicSize = lAveragePageSize * iComicPages;
+
+                    String sCleanedProjectedSize = GlobalClass.CleanStorageSize(lProjectedComicSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
+                    BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", gsIntentActionFilter);
+                } else {
+
                 }
             }
             if(alsComicPageAndImageData.size() > 0){
@@ -493,7 +500,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 icf.sTitle = sTitle;
                 icf.sURLThumbnail = sComicPageURLs[THUMBNAIL_INDEX];
                 icf.bIsChecked = true; //For tag import, tags are attached to an item, and the item must be selected. As of 2022-07-07, we use a catalog item in globalclass to import comics, not these file items.
-                icf.lSizeBytes = lSize;
+                icf.lSizeBytes = lAveragePageSize;
 
                 icf.alsUnidentifiedTags = alsNewTags;
                 icf.aliProspectiveTags = aliTagsPreExisting;
