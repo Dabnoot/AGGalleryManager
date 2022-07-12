@@ -484,7 +484,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
 
                     //Apply the new TreeMap to the RecyclerView:
-                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap, getApplicationContext());
+                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap);
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
                     gRecyclerViewCatalogAdapter.notifyDataSetChanged();
                     if(giRecyclerViewLastSelectedPosition > -1){
@@ -508,19 +508,19 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 boolean 	bUpdateProgressBarText;
 
                 //Get booleans from the intent telling us what to update:
-                bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
 
                 if(bUpdatePercentComplete){
                     int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
                     if(gProgressBar_CatalogSortProgress != null) {
                         gProgressBar_CatalogSortProgress.setProgress(iAmountComplete);
                     }
                 }
                 if(bUpdateProgressBarText){
                     String sProgressBarText;
-                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
                     if(gTextView_CatalogSortProgressBarText != null) {
                         gTextView_CatalogSortProgressBarText.setText(sProgressBarText);
                     }
@@ -588,7 +588,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
         private final Integer[] mapKeys;
-        private final Context context;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
@@ -615,10 +614,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
         }
 
-        public RecyclerViewCatalogAdapter(TreeMap<Integer, ItemClass_CatalogItem> data, Context _context) {
+        public RecyclerViewCatalogAdapter(TreeMap<Integer, ItemClass_CatalogItem> data) {
             this.treeMap = data;
             mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
-            context = _context;
         }
 
         public int getCount() {
@@ -990,10 +988,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     }
 
-    private int popCalls = 0;
     public void populate_RecyclerViewCatalogItems(){
 
-        popCalls++; //This line just to allow catch of the debugger here. Call after is optimized away.
         if(gProgressBar_CatalogSortProgress != null && gTextView_CatalogSortProgressBarText != null){
             gProgressBar_CatalogSortProgress.setVisibility(View.VISIBLE);
             gTextView_CatalogSortProgressBarText.setVisibility(View.VISIBLE);

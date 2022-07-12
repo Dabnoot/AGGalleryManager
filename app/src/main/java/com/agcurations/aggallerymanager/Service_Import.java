@@ -1,90 +1,20 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.DownloadManager;
-import android.app.IntentService;
-import android.content.ContentResolver;
-import android.content.Intent;
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
-import android.provider.DocumentsContract;
-import android.text.Html;
-import android.util.Log;
 
-import org.htmlcleaner.CleanerProperties;
-import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.TagNode;
-import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import androidx.documentfile.provider.DocumentFile;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS;
-import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL;
-import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE;
-import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_LINK;
-import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8;
+public class Service_Import {
 
-public class Service_Import extends IntentService {
-
-    private static final String ACTION_GET_DIRECTORY_CONTENTS = "com.agcurations.aggallerymanager.action.GET_DIRECTORY_CONTENTS";
-    private static final String ACTION_IMPORT_FILES = "com.agcurations.aggallerymanager.action.IMPORT_FILES";
-    private static final String ACTION_IMPORT_NHCOMICS = "com.agcurations.aggallerymanager.action.IMPORT_COMICS";
-    private static final String ACTION_GET_COMIC_DETAILS_ONLINE = "com.agcurations.aggallerymanager.action.GET_COMIC_DETAILS_ONLINE";
-    private static final String ACTION_IMPORT_COMIC_WEB_FILES = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_WEB_FILES";
-    private static final String ACTION_IMPORT_COMIC_FOLDERS = "com.agcurations.aggallerymanager.action.IMPORT_COMIC_FOLDERS";
-    private static final String ACTION_VIDEO_ANALYZE_HTML = "com.agcurations.aggallerymanager.action.ACTION_VIDEO_ANALYZE_HTML";
-    private static final String ACTION_IMPORT_VIDEO_WEB_FILES = "com.agcurations.aggallerymanager.action.ACTION_IMPORT_VIDEO_WEB_FILES";
-    private static final String ACTION_DELETE_FILES = "com.agcurations.aggallerymanager.action.DELETE_FILES";
 
     public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
     public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
 
-    public static final String EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_DIRECTORY_CONTENTS_RESPONSE"; //Used to flag in a listener.
-    public static final String EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_DIRECTORY_CONTENTS_RESPONSE"; //ArrayList of response data
-
-    public static final String EXTRA_BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //Used to flag in a listener.
-    public static final String EXTRA_AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_VIDEO_DOWNLOAD_LISTINGS_RESPONSE"; //ArrayList of response data
-
-    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
-
-    public Service_Import() {
-        super("ImportActivityDataService");
-    }
 
 
     public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource) {
@@ -329,118 +259,6 @@ public class Service_Import extends IntentService {
     }
 
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
-        if (intent != null) {
-            final String action = intent.getAction();
-            String sIntentActionFilter = intent.getStringExtra(EXTRA_STRING_INTENT_ACTION_FILTER); //used to send broadcasts to proper receivers.
-
-            GlobalClass globalClass = (GlobalClass) getApplicationContext();
-
-            /*if(ACTION_IMPORT_FILES.equals(action) ||
-                    ACTION_IMPORT_COMIC_FOLDERS.equals(action) ||
-                    ACTION_IMPORT_NHCOMICS.equals(action) ||
-                    ACTION_IMPORT_COMIC_WEB_FILES.equals(action) ||
-                    ACTION_IMPORT_VIDEO_WEB_FILES.equals(action)){
-
-                //Set the flags to tell the catalogViewer to view the imported files first:
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                sharedPreferences.edit()
-                        .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
-                                GlobalClass.SORT_BY_DATETIME_IMPORTED)
-                        .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
-                                false)
-                        .apply();
-            }*/
-
-            if (ACTION_GET_DIRECTORY_CONTENTS.equals(action)) {
-                /*final String sImportTreeUri = intent.getStringExtra(EXTRA_IMPORT_TREE_URI);
-                Uri uriImportTreeUri = Uri.parse(sImportTreeUri);
-                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY,-1);
-                final int iFilesOrFolders = intent.getIntExtra(EXTRA_FILES_OR_FOLDERS, FILES_ONLY);
-                final int iComicImportSource = intent.getIntExtra(EXTRA_COMIC_IMPORT_SOURCE, -1);
-                handleAction_GetDirectoryContents(uriImportTreeUri, iMediaCategory, iFilesOrFolders, iComicImportSource);
-                globalClass.gbImportFolderAnalysisRunning = false;
-                if(globalClass.gbImportFolderAnalysisStop) {
-                    globalClass.gbImportFolderAnalysisStop = false;
-                //} else {
-                    //Only set "finished" to true if it was not stopped intentionally.
-                    //globalClass.gbImportFolderAnalysisFinished = true;   ---Set at the end of the GetDirectoryContents routine before the last broadcast.
-                }*/
-            } else if (ACTION_IMPORT_FILES.equals(action)) {
-                /*final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
-                final int iMediaCategory = intent.getIntExtra(EXTRA_MEDIA_CATEGORY, -1);
-                handleAction_startActionImportFiles(iMoveOrCopy, iMediaCategory);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;*/
-            } else if (ACTION_IMPORT_NHCOMICS.equals(action)) {
-                /*final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
-                handleAction_startActionImportNHComics(iMoveOrCopy);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;*/
-            } else if (ACTION_IMPORT_COMIC_FOLDERS.equals(action)) {
-                /*final int iMoveOrCopy = intent.getIntExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
-                handleAction_startActionImportComicFolders(iMoveOrCopy);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;*/
-            } else if (ACTION_GET_COMIC_DETAILS_ONLINE.equals(action)) {
-                /*final String sAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
-                handleAction_startActionGetComicDetailsOnline(sAddress, sIntentActionFilter);
-                globalClass.gbImportComicWebAnalysisRunning = false;
-                globalClass.gbImportComicWebAnalysisFinished = true;*/
-            } else if (ACTION_IMPORT_COMIC_WEB_FILES.equals(action)) {
-                /*final ItemClass_CatalogItem ci = (ItemClass_CatalogItem) intent.getSerializableExtra(COMIC_CATALOG_ITEM);
-                if(ci == null) return;
-                try {
-                    handleAction_startActionImportComicWebFiles(ci, sIntentActionFilter);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    problemNotificationConfig(e.getMessage(), sIntentActionFilter);  //todo: make sure that this is properly handled in Execute_Import.
-                }
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;*/
-
-            } else if (ACTION_VIDEO_ANALYZE_HTML.equals(action)) {
-                /*try{
-                    handleAction_startActionVideoAnalyzeHTML();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }*/
-
-            } else if (ACTION_IMPORT_VIDEO_WEB_FILES.equals(action)) {
-
-                /*final String sWebAddress = intent.getStringExtra(EXTRA_STRING_WEB_ADDRESS);
-                try{
-                    handleAction_startActionVideoDownload(sWebAddress);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;*/
-
-            } else if (ACTION_DELETE_FILES.equals(action)){
-
-                /*ArrayList<String>  alsUriFTD = intent.getStringArrayListExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE);
-                final String sCallerActionResponseFilter = intent.getStringExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER);
-
-                if(alsUriFTD == null){
-                    alsUriFTD = new ArrayList<>(); //This round-about method to get rid of a warning that "alsUriFilesToDelete might be null."
-                }
-                final ArrayList<String> alsUriFilesToDelete = alsUriFTD;
-                handleAction_startActionDeleteFiles(alsUriFilesToDelete, sCallerActionResponseFilter);*/
-            }
-        }
-    }
-
-
-
-    //==============================================================================================
-    //===== Service Content ========================================================================
-    //==============================================================================================
-
-    public static final int FOLDERS_ONLY = 0;
-    public static final int FILES_ONLY = 1;
-
     //==============================================================================================
     //===== Import Utilities =======================================================================
     //==============================================================================================
@@ -510,74 +328,6 @@ public class Service_Import extends IntentService {
         }
 
         return sOutput;
-    }
-
-
-
-
-    //==============================================================================================
-    //===== Service Communication Utilities ========================================================
-    //==============================================================================================
-
-
-
-
-    public static final String UPDATE_LOG_BOOLEAN = "UPDATE_LOG_BOOLEAN";
-    public static final String LOG_LINE_STRING = "LOG_LINE_STRING";
-    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
-    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
-    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
-    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
-
-    public void BroadcastProgress(boolean bUpdateLog, String sLogLine,
-                                  boolean bUpdatePercentComplete, int iAmountComplete,
-                                  boolean bUpdateProgressBarText, String sProgressBarText,
-                                  String sIntentActionFilter){
-
-        //Preserve the log for the event of a screen rotation, or activity looses focus:
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        globalClass.gsbImportExecutionLog.append(sLogLine);
-        
-        if(sIntentActionFilter.equals(Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE)) {
-            if (bUpdatePercentComplete) {
-                globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
-            }
-            if (bUpdateProgressBarText) {
-                globalClass.gsImportExecutionProgressBarText = sProgressBarText;
-            }
-        }
-
-        if(sIntentActionFilter.equals(
-                Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE)) {
-            if(bUpdatePercentComplete) {
-                globalClass.giImportFolderAnalysisProgressBarPercent = iAmountComplete;
-            }
-            if(bUpdateProgressBarText){
-                globalClass.gsImportFolderAnalysisProgressBarText = sProgressBarText;
-            }
-        }
-
-        if(sIntentActionFilter.equals(
-                Fragment_Import_2b_SelectSingleWebComic.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
-            globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
-        }
-
-
-        //Broadcast a message to be picked-up by the Import Activity:
-        Intent broadcastIntent = new Intent();
-        broadcastIntent.setAction(sIntentActionFilter);
-        broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
-
-        broadcastIntent.putExtra(UPDATE_LOG_BOOLEAN, bUpdateLog);
-        broadcastIntent.putExtra(LOG_LINE_STRING, sLogLine);
-        broadcastIntent.putExtra(UPDATE_PERCENT_COMPLETE_BOOLEAN, bUpdatePercentComplete);
-        broadcastIntent.putExtra(PERCENT_COMPLETE_INT, iAmountComplete);
-        broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
-        broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
-
-        //sendBroadcast(broadcastIntent);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
     }
 
 

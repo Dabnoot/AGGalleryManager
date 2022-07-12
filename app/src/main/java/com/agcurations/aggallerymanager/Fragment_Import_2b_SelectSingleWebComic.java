@@ -126,7 +126,7 @@ public class Fragment_Import_2b_SelectSingleWebComic extends Fragment {
             boolean bError;
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM, false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM, false);
             if (bError) {
                 if(getView() != null) {
                     TextView textView_Title;
@@ -135,7 +135,7 @@ public class Fragment_Import_2b_SelectSingleWebComic extends Fragment {
                     textView_WebImportDetails = getView().findViewById(R.id.textView_WebImportDetails);
                     TextView textView_WebImportDetailsLog;
                     textView_WebImportDetailsLog = getView().findViewById(R.id.textView_WebImportDetailsLog);
-                    String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                    String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                     textView_Title.setVisibility(View.INVISIBLE);
                     textView_WebImportDetails.setVisibility((View.INVISIBLE));
                     textView_WebImportDetailsLog.setVisibility(View.VISIBLE);

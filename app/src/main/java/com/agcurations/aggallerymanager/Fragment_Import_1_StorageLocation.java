@@ -331,10 +331,10 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
                         linearLayout_ButtonBar.setLayoutParams(lp);
 
-                        int iFilesOrFolders = Service_Import.FILES_ONLY;
+                        int iFilesOrFolders = GlobalClass.FILES_ONLY;
                         if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
                                 viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
-                            iFilesOrFolders = Service_Import.FOLDERS_ONLY;
+                            iFilesOrFolders = GlobalClass.FOLDERS_ONLY;
                         }
 
                         globalClass.gbImportFolderAnalysisRunning = true;
@@ -360,9 +360,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             boolean bError;
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 if(getView() != null) {
                     TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
                     if (textView_FileAnalysisDebugLog != null) {
@@ -379,19 +379,19 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                 boolean 	bUpdateProgressBarText;
 
                 //Get booleans from the intent telling us what to update:
-                bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
 
                 if(bUpdatePercentComplete){
                     int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
                     if(gProgressBar_FileAnalysisProgress != null) {
                         gProgressBar_FileAnalysisProgress.setProgress(iAmountComplete);
                     }
                 }
                 if(bUpdateProgressBarText){
                     String sProgressBarText;
-                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
                     if(gTextView_FileAnalysisProgressBarText != null) {
                         gTextView_FileAnalysisProgressBarText.setText(sProgressBarText);
                     }

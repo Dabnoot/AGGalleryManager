@@ -218,7 +218,7 @@ public class Activity_TagEditor extends AppCompatActivity {
             //Get boolean indicating that an error may have occurred:
             bError = intent.getBooleanExtra(Service_TagEditor.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             }
 

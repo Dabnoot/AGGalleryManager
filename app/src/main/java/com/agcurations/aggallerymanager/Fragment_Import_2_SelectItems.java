@@ -325,9 +325,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
             boolean bError;
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 if(getView() != null) {
                     if (gtextView_FileDeletionDebugLog != null) {
                         gtextView_FileDeletionDebugLog.setVisibility(View.VISIBLE);
@@ -343,12 +343,12 @@ public class Fragment_Import_2_SelectItems extends Fragment {
                 boolean 	bUpdateProgressBarText;
 
                 //Get booleans from the intent telling us what to update:
-                bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
 
                 if(bUpdateProgressBarText){
                     String sProgressBarText;
-                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
                     if(gTextView_FileDeletionProgressBarText != null) {
                         gTextView_FileDeletionProgressBarText.setText(sProgressBarText);
                         gTextView_FileDeletionProgressBarText.setVisibility(View.VISIBLE);
@@ -357,7 +357,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
                 if(bUpdatePercentComplete){
                     int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
                     if(gProgressBar_FileDeletionProgress != null) {
                         gProgressBar_FileDeletionProgress.setProgress(iAmountComplete);
                         gProgressBar_FileDeletionProgress.setVisibility(View.VISIBLE);

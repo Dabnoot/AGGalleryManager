@@ -178,9 +178,9 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
 
             boolean bError;
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_Import.EXTRA_BOOL_PROBLEM,false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_Import.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
@@ -190,13 +190,13 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 boolean 	bUpdateProgressBarText;
 
                 //Get booleans from the intent telling us what to update:
-                bUpdateLog = intent.getBooleanExtra(Service_Import.UPDATE_LOG_BOOLEAN,false);
-                bUpdatePercentComplete = intent.getBooleanExtra(Service_Import.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-                bUpdateProgressBarText = intent.getBooleanExtra(Service_Import.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+                bUpdateLog = intent.getBooleanExtra(GlobalClass.UPDATE_LOG_BOOLEAN,false);
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
 
                 if(bUpdateLog){
                     String sLogLine;
-                    sLogLine = intent.getStringExtra(Service_Import.LOG_LINE_STRING);
+                    sLogLine = intent.getStringExtra(GlobalClass.LOG_LINE_STRING);
                     if(sLogLine != null) {
                         if (gtextView_ImportLog != null) {
                             gtextView_ImportLog.append(sLogLine);
@@ -220,14 +220,14 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 }
                 if(bUpdatePercentComplete){
                     int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(Service_Import.PERCENT_COMPLETE_INT, -1);
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
                     if(gProgressBar_ImportProgress != null) {
                         gProgressBar_ImportProgress.setProgress(iAmountComplete);
                     }
                 }
                 if(bUpdateProgressBarText){
                     String sProgressBarText;
-                    sProgressBarText = intent.getStringExtra(Service_Import.PROGRESS_BAR_TEXT_STRING);
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
                     if(gTextView_ImportProgressBarText != null) {
                         gTextView_ImportProgressBarText.setText(sProgressBarText);
                     }
