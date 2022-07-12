@@ -297,7 +297,7 @@ public class Worker_Import_VideoDownload extends Worker {
                             File.separator + ciNew.sItemID;
                     sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
                             sDownloadFolderRelativePath;
-                    request.setTitle("AGGallery+ Download " + lProgressNumerator + "/" + lProgressDenominator + " VideoID " + ciNew.sItemID)
+                    request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " VideoID " + ciNew.sItemID)
                             //.setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                             //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.

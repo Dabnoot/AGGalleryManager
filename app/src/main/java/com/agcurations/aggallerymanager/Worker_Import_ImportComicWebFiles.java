@@ -227,7 +227,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                                     File.separator + ci.sFolder_Name;
                             sComicDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
                                     sDownloadFolderRelativePath;
-                            request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
+                            request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ci.sItemID)
                                     .setDescription("Comic ID " + ci.sItemID + "; " + icf.sURL)
                                     //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
