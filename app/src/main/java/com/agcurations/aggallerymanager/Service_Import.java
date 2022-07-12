@@ -11,25 +11,9 @@ import androidx.work.WorkManager;
 
 public class Service_Import {
 
-
-    public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
-    public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
-
-
-
     public static void startActionGetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource) {
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_GET_DIRECTORY_CONTENTS);
-        String sImportTreeUri = uriImportTreeUri.toString();
-        intent.putExtra(EXTRA_IMPORT_TREE_URI, sImportTreeUri);
-        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
-        intent.putExtra(EXTRA_FILES_OR_FOLDERS, iFilesOrFolders);
-        intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
-        context.startService(intent);*/
-        startAction_GetDirectoryContents(context, uriImportTreeUri, iMediaCategory, iFilesOrFolders, iComicImportSource, "Service_Import:startActionGetDirectoryContents()");
-    }
 
-    public static void startAction_GetDirectoryContents(Context context, Uri uriImportTreeUri, int iMediaCategory, int iFilesOrFolders, int iComicImportSource, String sCallerID) {
+        String sCallerID = "Service_Import:startActionGetDirectoryContents()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         String sImportTreeUri = uriImportTreeUri.toString();
         Data dataGetDirectoryContents = new Data.Builder()
@@ -48,15 +32,8 @@ public class Service_Import {
     }
 
     public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_IMPORT_FILES);
-        intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
-        intent.putExtra(EXTRA_MEDIA_CATEGORY, iMediaCategory);
-        context.startService(intent);*/
-        startAction_ImportFiles(context, iMoveOrCopy, iMediaCategory, "Service_Import:startActionImportFiles()");
-    }
 
-    public static void startAction_ImportFiles(Context context, int iMoveOrCopy, int iMediaCategory, String sCallerID) {
+         String sCallerID = "Service_Import:startActionImportFiles()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataImportFiles = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -72,15 +49,8 @@ public class Service_Import {
     }
 
     public static void startActionImportNHComicsFiles(Context context, int iMoveOrCopy, int iComicImportSource) {
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_IMPORT_NHCOMICS);
-        intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
-        intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
-        context.startService(intent);*/
-        startAction_ImportNHComicsFiles(context, iMoveOrCopy, iComicImportSource, "Service_Import:startActionImportNHComicsFiles()");
-    }
 
-    public static void startAction_ImportNHComicsFiles(Context context, int iMoveOrCopy, int iComicImportSource, String sCallerID) {
+        String sCallerID = "Service_Import:startActionImportNHComicsFiles()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataImportNHComicsFiles = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -96,15 +66,8 @@ public class Service_Import {
     }
 
     public static void startActionImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource) {
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_IMPORT_COMIC_FOLDERS);
-        intent.putExtra(EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy);
-        intent.putExtra(EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource);
-        context.startService(intent);*/
-        startAction_ImportComicFolders(context, iMoveOrCopy, iComicImportSource, "Service_Import:startActionImportComicFolders()");
-    }
 
-    public static void startAction_ImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource, String sCallerID) {
+        String sCallerID = "Service_Import:startActionImportComicFolders()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataImportComicFolders = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -120,15 +83,7 @@ public class Service_Import {
     }
 
     public static void startActionAcquireNHComicsDetails(Context context, String sAddress, String sIntentActionFilter){
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_GET_COMIC_DETAILS_ONLINE);
-        intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sAddress);
-        intent.putExtra(EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter);
-        context.startService(intent);*/
-        startAction_AcquireNHComicsDetails(context, sAddress, sIntentActionFilter, "Service_Import:startActionAcquireNHComicsDetails()");
-    }
-
-    public static void startAction_AcquireNHComicsDetails(Context context, String sAddress, String sIntentActionFilter, String sCallerID){
+        String sCallerID = "Service_Import:startActionAcquireNHComicsDetails()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataAcquireNHComicsDetails = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -144,13 +99,7 @@ public class Service_Import {
     }
 
     public static void startActionComicAnalyzeHTML(Context context){
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
-        context.startService(intent);*/
-        startAction_ComicAnalyzeHTML(context, "Service_Import:startActionComicAnalyzeHTML()");
-    }
-
-    public static void startAction_ComicAnalyzeHTML(Context context, String sCallerID){
+        String sCallerID = "Service_Import:startActionComicAnalyzeHTML()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataComicAnalyzeHTML = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -164,15 +113,7 @@ public class Service_Import {
     }
 
     public static void startActionImportComicWebFiles(Context context, String sIntentActionFilter){
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_IMPORT_COMIC_WEB_FILES);
-        intent.putExtra(COMIC_CATALOG_ITEM, ci);
-        intent.putExtra(EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter);
-        context.startService(intent);*/
-        startAction_ImportComicWebFiles(context, sIntentActionFilter, "Service_Import:startActionImportComicWebFiles()");
-    }
-
-    public static void startAction_ImportComicWebFiles(Context context, String sIntentActionFilter, String sCallerID){
+        String sCallerID = "Service_Import:startActionImportComicWebFiles()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataImportComicWebFiles = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -187,13 +128,7 @@ public class Service_Import {
     }
 
     public static void startActionVideoAnalyzeHTML(Context context){
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_VIDEO_ANALYZE_HTML);
-        context.startService(intent);*/
-        startAction_VideoAnalyzeHTML(context, "Service_Import:startActionVideoAnalyzeHTML()");
-    }
-
-    public static void startAction_VideoAnalyzeHTML(Context context, String sCallerID){
+        String sCallerID = "Service_Import:startActionVideoAnalyzeHTML()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataVideoAnalyzeHTML = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -207,14 +142,7 @@ public class Service_Import {
     }
 
     public static void startActionVideoDownload(Context context, String sWebPageAddress){
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_IMPORT_VIDEO_WEB_FILES);
-        intent.putExtra(EXTRA_STRING_WEB_ADDRESS, sWebPageAddress);
-        context.startService(intent);*/
-        startAction_VideoDownload(context, sWebPageAddress, "Service_Import:startActionVideoDownload()");
-    }
-
-    public static void startAction_VideoDownload(Context context, String sWebPageAddress, String sCallerID){
+        String sCallerID = "Service_Import:startActionVideoDownload()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataVideoDownload = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
@@ -229,20 +157,12 @@ public class Service_Import {
     }
 
     public static void startActionDeleteFiles(Context context, ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter){
-        /*Intent intent = new Intent(context, Service_Import.class);
-        intent.setAction(ACTION_DELETE_FILES);
-        intent.putExtra(EXTRA_URI_STRING_ARRAY_FILES_TO_DELETE, alsUriFilesToDelete);
-        intent.putExtra(EXTRA_CALLER_ACTION_RESPONSE_FILTER, sCallerActionResponseFilter);
-        context.startService(intent);*/
-        startAction_DeleteFiles(context, alsUriFilesToDelete, sCallerActionResponseFilter, "Service_Import:startActionVideoDownload()");
-    }
 
-    public static void startAction_DeleteFiles(Context context, ArrayList<String> alsUriFilesToDelete, String sCallerActionResponseFilter, String sCallerID){
-
+        String sCallerID = "Service_Import:startActionVideoDownload()";
+        GlobalClass globalClass = (GlobalClass) context;
         //Create a copy of alsUriFilesToDelete in globalClass in order to pass the data without exceeding memory for the transfer.
         //  Create a copy in case the user starts a new import and has more files to delete. The Worker should make yet another copy
         //  of this file list in case the listing in globalClass is overwritten before operation completion.
-        GlobalClass globalClass = (GlobalClass) context;
         globalClass.alsUriFilesToDelete = new ArrayList<>(alsUriFilesToDelete);
 
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -257,6 +177,7 @@ public class Service_Import {
                 .build();
         WorkManager.getInstance(context).enqueue(otwrDeleteFiles);
     }
+
 
 
     //==============================================================================================
