@@ -65,22 +65,6 @@ public class Service_Import {
         WorkManager.getInstance(context).enqueue(otwrImportComicFolders);
     }
 
-    public static void startActionAcquireNHComicsDetails(Context context, String sAddress, String sIntentActionFilter){
-        String sCallerID = "Service_Import:startActionAcquireNHComicsDetails()";
-        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-        Data dataAcquireNHComicsDetails = new Data.Builder()
-                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
-                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, sAddress)
-                .putString(GlobalClass.EXTRA_STRING_INTENT_ACTION_FILTER, sIntentActionFilter)
-                .build();
-        OneTimeWorkRequest otwrAcquireNHComicsDetails = new OneTimeWorkRequest.Builder(Worker_Import_AcquireNHComicsDetails.class)
-                .setInputData(dataAcquireNHComicsDetails)
-                .addTag(Worker_Import_AcquireNHComicsDetails.TAG_WORKER_IMPORT_ACQUIRENHCOMICDETAILS) //To allow finding the worker later.
-                .build();
-        WorkManager.getInstance(context).enqueue(otwrAcquireNHComicsDetails);
-    }
-
     public static void startActionComicAnalyzeHTML(Context context){
         String sCallerID = "Service_Import:startActionComicAnalyzeHTML()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -166,43 +150,6 @@ public class Service_Import {
     //==============================================================================================
     //===== Import Utilities =======================================================================
     //==============================================================================================
-
-    public static String GetNHComicID(String sFileName){
-        boolean bIsValidComicPage = true;
-        int iComicIDDigitCount = 0;
-
-        if (sFileName.matches("^\\d{7}_(Cover|Page).+")){
-            iComicIDDigitCount = 7;
-        } else if (sFileName.matches("^\\d{6}_(Cover|Page).+")){
-            iComicIDDigitCount = 6;
-        } else if (sFileName.matches("^\\d{5}_(Cover|Page).+")) {
-            iComicIDDigitCount = 5;
-        } else if (sFileName.matches("^\\d{4}_(Cover|Page).+")) {
-            iComicIDDigitCount = 4;
-        } else if (sFileName.matches("^\\d{3}_(Cover|Page).+")) {
-            iComicIDDigitCount = 3;
-        } else if (sFileName.matches("^\\d{2}_(Cover|Page).+")) {
-            iComicIDDigitCount = 2;
-        } else if (sFileName.matches("^\\d_(Cover|Page).+")) {
-            iComicIDDigitCount = 1;
-        } else {
-            bIsValidComicPage = false;
-        }
-        String sComicID = "";
-        if(bIsValidComicPage) {
-            sComicID = sFileName.substring(0, iComicIDDigitCount);
-        }
-        return sComicID;
-    }
-
-    public static String GetNHComicNameFromCoverFile(String sFileName){
-        if (sFileName.matches(GlobalClass.gsNHComicCoverPageFilter)){
-            int iComicIDDigitCount = GetNHComicID(sFileName).length();
-            return sFileName.substring(7 + iComicIDDigitCount,sFileName.length()-4); //'7' for the word "_Cover".
-        }
-
-       return "";
-    }
 
     public static String cleanFileNameViaTrim(String sFilename){
         //Use when expecting the begining of the filename to be ok, but trailing data may have illegal chars.
