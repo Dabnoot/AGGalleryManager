@@ -48,23 +48,6 @@ public class Service_Import {
         WorkManager.getInstance(context).enqueue(otwrImportFiles);
     }
 
-    public static void startActionImportNHComicsFiles(Context context, int iMoveOrCopy, int iComicImportSource) {
-
-        String sCallerID = "Service_Import:startActionImportNHComicsFiles()";
-        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-        Data dataImportNHComicsFiles = new Data.Builder()
-                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
-                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy)
-                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource)
-                .build();
-        OneTimeWorkRequest otwrImportNHComicsFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportNHComicsFiles.class)
-                .setInputData(dataImportNHComicsFiles)
-                .addTag(Worker_Import_ImportNHComicsFiles.TAG_WORKER_IMPORT_IMPORTNHCOMICSFILES) //To allow finding the worker later.
-                .build();
-        WorkManager.getInstance(context).enqueue(otwrImportNHComicsFiles);
-    }
-
     public static void startActionImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource) {
 
         String sCallerID = "Service_Import:startActionImportComicFolders()";

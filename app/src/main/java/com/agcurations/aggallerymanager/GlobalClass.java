@@ -1749,12 +1749,6 @@ public class GlobalClass extends Application {
             }
         }
 
-        if(sIntentActionFilter.equals(
-                Fragment_Import_2b_SelectSingleWebComic.ImportDataServiceResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE)){
-            globalClass.gsbImportComicWebAnalysisLog.append(sLogLine);
-        }
-
-
         //Broadcast a message to be picked-up by the Import Activity:
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(sIntentActionFilter);

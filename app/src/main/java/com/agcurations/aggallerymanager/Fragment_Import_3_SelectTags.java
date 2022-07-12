@@ -147,7 +147,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             || ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
                 || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2))){
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE))){
             TextView textView_LabelImportTags = getView().findViewById(R.id.textView_LabelImportTags);
             if (textView_LabelImportTags != null) {
                 textView_LabelImportTags.setVisibility(View.INVISIBLE);
@@ -172,7 +172,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
                 || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
             ArrayList<Integer> aliPreSelectedTags = viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags;
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliPreSelectedTags);
 
@@ -246,11 +246,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             alFileItems = new ArrayList<>(alfi);
 
             if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
-                    alFileItemsDisplay = new ArrayList<>(); //initialize.
-                    applyFilter("^\\d{5,6}_Cover.+");
-                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //If importing comics and importing folders as the source, filter on the cover pages:
                     alFileItemsDisplay = new ArrayList<>(); //initialize.
                     applyFilterByType(ItemClass_File.TYPE_FOLDER);
@@ -290,13 +286,10 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
             } else {
                 //If import type is comic...
-                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    //Get the title of the comic from the file name:
-                    sLine1 = Service_Import.GetNHComicNameFromCoverFile(alFileItemsDisplay.get(position).sFileOrFolderName);
-                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //Get the title of the comic from the file name:
                     sLine1 = alFileItemsDisplay.get(position).sFileOrFolderName;
-                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2) {
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
                     sLine1 = alFileItemsDisplay.get(position).sTitle;
                 }
             }
@@ -355,14 +348,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 //If import type is comic...
                 //Get the file count for the comic:
                 String sComicPageCount = "";
-                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
-                    int iComicFileCount = getFilterMatchCount(sNHComicID + ".+");
-                    sComicPageCount = "File count: " + iComicFileCount + ".";
-                    long lCombinedSize = getFilterMatchCombinedSize(sNHComicID + ".+");
-                    sRequiredStorageSize = "Comic size: " + GlobalClass.CleanStorageSize(lCombinedSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE) + ".";
-
-                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     String sUriParent = alFileItemsDisplay.get(position).sUri;
                     int iComicFileCount = getParentUriChildCount(sUriParent);
                     sComicPageCount = "File count: " + iComicFileCount + ".";
@@ -418,7 +404,7 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             } else if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                         && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
                     || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
+                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
                 String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
                 if(!sURLThumbnail.equals("")) {
                     Glide.with(getContext()).

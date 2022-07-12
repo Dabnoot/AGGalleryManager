@@ -72,20 +72,19 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_0B_ID_COMIC_SOURCE = 2;
     public static final int FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION = 3;
     public static final int FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT = 4;
-    public static final int FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS = 5;
-    public static final int FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT = 6;
-    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 7;
-    public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 8;
-    public static final int FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM = 9;
-    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 10;
-    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 11;
-    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 12;
-    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 13;
-    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 14;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 15;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 16;
+    public static final int FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT = 5;
+    public static final int FRAGMENT_IMPORT_2_ID_SELECT_ITEMS = 6;
+    public static final int FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM = 7;
+    public static final int FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM = 8;
+    public static final int FRAGMENT_IMPORT_3_ID_SELECT_TAGS = 9;
+    public static final int FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT = 10;
+    public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 11;
+    public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 12;
+    public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 13;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 14;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 15;
 
-    public static final int FRAGMENT_COUNT = 17;
+    public static final int FRAGMENT_COUNT = 16;
 
     //=================================================
     //User selection global variables:
@@ -401,19 +400,15 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ComicSourceSelected(View v){
-        RadioButton radioButton_ComicSourceFolder = findViewById(R.id.radioButton_ComicSourceFolder);
-        RadioButton radioButton_ComicSourceWebpage2 = findViewById(R.id.radioButton_ComicSourceWebpage2);
+        RadioButton radioButton_ComicSourceWebpage = findViewById(R.id.radioButton_ComicSourceWebpage);
 
         int iNewComicSource;
 
-        if (radioButton_ComicSourceFolder.isChecked()){
-            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
-        } else if (radioButton_ComicSourceWebpage2.isChecked()) {
-            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2;
-            gpDisplayDims = GlobalClass.getScreenWidth(this); //For recycler grid imageview sizing.
-
-        } else {
+        if (radioButton_ComicSourceWebpage.isChecked()){
             iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+            gpDisplayDims = GlobalClass.getScreenWidth(this); //For recycler grid imageview sizing.
+        } else {
+            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
         }
 
         if(iNewComicSource != viewModelImportActivity.iComicImportSource){
@@ -425,17 +420,17 @@ public class Activity_Import extends AppCompatActivity {
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
+
         } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) { //Allow user to import web address of a comic to import.
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS, false);
-        } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2) { //Allow user to import web address of a comic to import.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT, false);
+
         }
+
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
     public void buttonNextClick_VideoSourceSelected(View v){
         RadioButton radioButton_VideoSourceWebpage = findViewById(R.id.radioButton_VideoSourceWebpage);
-        //RadioButton radioButton_VideoSourceFolder = findViewById(R.id.radioButton_VideoSourceFolder);
 
         int iNewVideoSource;
 
@@ -464,7 +459,7 @@ public class Activity_Import extends AppCompatActivity {
         if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
         } else {
-            if(viewModelImportActivity.iComicImportSource != ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+            if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                 ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
             }
         }
@@ -503,9 +498,7 @@ public class Activity_Import extends AppCompatActivity {
         if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
             || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)
-            || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
             //If we are importing a video or comic from the web, allow the user to confirm import
             // of tags that don't already exist in the list of tags.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
@@ -525,7 +518,7 @@ public class Activity_Import extends AppCompatActivity {
         if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
             || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
             //If we are importing from the web, go to import confirm.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5_ID_CONFIRMATION, false);
         } else {
@@ -603,16 +596,12 @@ public class Activity_Import extends AppCompatActivity {
             int iShowTagImportButtonHeightDP = 67 + 50;
             iShowTagImportButtonHeightPixels = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, iShowTagImportButtonHeightDP, getResources().getDisplayMetrics());
 
-            if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    //If importing comics and importing NHComicDownloader files as the source, filter on the cover pages:
-                    alFileItemsDisplay = new ArrayList<>(); //initialize.
-                    applyFilter(GlobalClass.gsNHComicCoverPageFilter);
-                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+            if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     //If importing comics and importing folder files as the source, filter on the folder items:
                     alFileItemsDisplay = new ArrayList<>(); //initialize.
                     applyFilterByType(ItemClass_File.TYPE_FOLDER);
-                }
+
 
             } else {
                 alFileItemsDisplay = new ArrayList<>(alfi);
@@ -896,68 +885,35 @@ public class Activity_Import extends AppCompatActivity {
                                 }
                                 alFileItemsDisplay.remove(position);
                                 notifyDataSetChanged();
-                            } else {
-                                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
+                            } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
 
-                                    String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
-                                    int iFailedDeletions = 0;
-                                    int iTotalDeletions = 0;
+                                String sComicParentUri = alFileItemsDisplay.get(position).sUri;
 
-                                    ItemClass_File fiSource;
-                                    for (int i = 0; i < alFileItems.size(); i++) {
-                                        fiSource = alFileItems.get(i);
-                                        if(fiSource.sFileOrFolderName.startsWith(sComicID)){
-                                            Uri uriSourceFile = Uri.parse(fiSource.sUri);
-                                            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-                                            if (dfSource != null) {
-                                                if (dfSource.delete()) {
-                                                    iTotalDeletions++;
-                                                } else {
-                                                    iFailedDeletions++;
-                                                }
-                                            }
-                                            alFileItems.remove(i);
-                                        }
+                                ArrayList<String> alsUriFilesToDelete = new ArrayList<>();
+                                ItemClass_File fiSource;
+
+                                //Mark comic page files for deletion, and remove from alFileItems:
+                                String sMessage;
+                                for (int i = 0; i < alFileItems.size(); i++) {
+                                    fiSource = alFileItems.get(i);
+                                    if(fiSource.sUriParent.equals(sComicParentUri)){
+                                        alsUriFilesToDelete.add(fiSource.sUri);
+                                        alFileItems.remove(i);
                                     }
-                                    String sMessage;
-                                    if(iFailedDeletions == 0) {
-                                        sMessage = "Comic deleted: " + alFileItemsDisplay.get(position).sFileOrFolderName;
-                                    } else {
-                                        sMessage = "Failed to delete " + iFailedDeletions + "/" + iTotalDeletions + " files belonging to the comic.";
-                                    }
-                                    alFileItemsDisplay.remove(position);
-                                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
-                                    notifyDataSetChanged();
-
-                                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-
-                                    String sComicParentUri = alFileItemsDisplay.get(position).sUri;
-
-                                    ArrayList<String> alsUriFilesToDelete = new ArrayList<>();
-                                    ItemClass_File fiSource;
-
-                                    //Mark comic page files for deletion, and remove from alFileItems:
-                                    String sMessage;
-                                    for (int i = 0; i < alFileItems.size(); i++) {
-                                        fiSource = alFileItems.get(i);
-                                        if(fiSource.sUriParent.equals(sComicParentUri)){
-                                            alsUriFilesToDelete.add(fiSource.sUri);
-                                            alFileItems.remove(i);
-                                        }
-                                    }
-
-                                    //Mark comic folder for deletion and remove from alFileItemsDisplay:
-                                    alsUriFilesToDelete.add(alFileItemsDisplay.get(position).sUri);
-                                    alFileItemsDisplay.remove(position);
-
-                                    //Refresh the listView:
-                                    notifyDataSetChanged();
-
-                                    //Start the file delete service:
-                                    Service_Import.startActionDeleteFiles(getApplicationContext(), alsUriFilesToDelete,
-                                            Fragment_Import_2_SelectItems.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
-
                                 }
+
+                                //Mark comic folder for deletion and remove from alFileItemsDisplay:
+                                alsUriFilesToDelete.add(alFileItemsDisplay.get(position).sUri);
+                                alFileItemsDisplay.remove(position);
+
+                                //Refresh the listView:
+                                notifyDataSetChanged();
+
+                                //Start the file delete service:
+                                Service_Import.startActionDeleteFiles(getApplicationContext(), alsUriFilesToDelete,
+                                        Fragment_Import_2_SelectItems.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
+
+
                             }
                         }
                     });
@@ -1010,50 +966,29 @@ public class Activity_Import extends AppCompatActivity {
                         alPreviewFileList = alFileItemsDisplay;
                         b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
 
-                    } else { //If comic...
+                    } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) { //If comic...
                         //If this is a comic, put together all of the page fileItems for the preview.
 
-                        if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-
-                            //Sort the files for this comic by putting them into a TreeMap:
-                            TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
-                            String sComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(position).sFileOrFolderName);
-                            String sComicIDCandidate;
-                            for (ItemClass_File icf : alFileItems) {
-                                sComicIDCandidate = Service_Import.GetNHComicID(icf.sFileOrFolderName);
-                                if (sComicIDCandidate.equals(sComicID)) {
-                                    tmFiles.put(icf.sFileOrFolderName, icf);
-                                }
+                        //Sort the files for this comic by putting them into a TreeMap:
+                        TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
+                        String sParentComic = alFileItemsDisplay.get(position).sUri;
+                        for (ItemClass_File icf : alFileItems) {
+                            if (icf.sUriParent.equals(sParentComic)) {
+                                tmFiles.put(icf.sFileOrFolderName, icf);
                             }
-
-                            for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
-                                alPreviewFileList.add(entry.getValue()); //todo: simplify?
-                            }
-
-
-                        } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-
-                            //Sort the files for this comic by putting them into a TreeMap:
-                            TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
-                            String sParentComic = alFileItemsDisplay.get(position).sUri;
-                            for (ItemClass_File icf : alFileItems) {
-                                if (icf.sUriParent.equals(sParentComic)) {
-                                    tmFiles.put(icf.sFileOrFolderName, icf);
-                                }
-                            }
-                            //Put the files into a standard array:
-                            for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
-                                alPreviewFileList.add(entry.getValue()); //todo: simplify?
-                            }
-                            //Put the tags into the first item in the file array. This is only
-                            // for comics. The item selected by the user is a "folder" item and is not
-                            // transferred to preview, but this is the item holding the tags.
-                            if(alPreviewFileList.size() > 0){
-                                alPreviewFileList.get(0).aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags; //todo: simplify?
-                            }
-
-
                         }
+                        //Put the files into a standard array:
+                        for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
+                            alPreviewFileList.add(entry.getValue()); //todo: simplify?
+                        }
+                        //Put the tags into the first item in the file array. This is only
+                        // for comics. The item selected by the user is a "folder" item and is not
+                        // transferred to preview, but this is the item holding the tags.
+                        if(alPreviewFileList.size() > 0){
+                            alPreviewFileList.get(0).aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags; //todo: simplify?
+                        }
+
+
 
                     }
 
@@ -1074,34 +1009,21 @@ public class Activity_Import extends AppCompatActivity {
         private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
 
 
-            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                 //If this is a comic, need to select all of the files that are part of that comic.
-                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    //If the user is importing comic pages downloaded by the NHComicDownloader, find
-                    // all files with the comic ID and apply the checked state:
-                    String sNHComicID = Service_Import.GetNHComicID(alFileItemsDisplay.get(iFileItemsDisplayPosition).sFileOrFolderName);
-                    String sNHComicFilter = sNHComicID + ".+";
-                    for (ItemClass_File icf : alFileItems) {
-                        if (icf.sFileOrFolderName.matches(sNHComicFilter)) {
-                            icf.bIsChecked = bNewCheckedState;
-                            if(bNewCheckedState){
-                                icf.bMarkedForDeletion = false;
-                            }
-                        }
-                    }
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                    //If the user is importing comic pages by folder, find
-                    // all files with the comic parent Uri assigned and apply the checked state:
-                    String sUriParent = alFileItemsDisplay.get(iFileItemsDisplayPosition).sUri;
-                    for (ItemClass_File icf : alFileItems) {
-                        if (icf.sUriParent.equals(sUriParent)) {
-                            icf.bIsChecked = bNewCheckedState;
-                            if(bNewCheckedState){
-                                icf.bMarkedForDeletion = false;
-                            }
+                //If the user is importing comic pages by folder, find
+                // all files with the comic parent Uri assigned and apply the checked state:
+                String sUriParent = alFileItemsDisplay.get(iFileItemsDisplayPosition).sUri;
+                for (ItemClass_File icf : alFileItems) {
+                    if (icf.sUriParent.equals(sUriParent)) {
+                        icf.bIsChecked = bNewCheckedState;
+                        if(bNewCheckedState){
+                            icf.bMarkedForDeletion = false;
                         }
                     }
                 }
+
             } else {
                 //Find the item that is checked/unchecked in alFileList and apply the property.
                 //  The user will have clicked an item in alFileListDisplay, not alFileList.
@@ -2216,16 +2138,12 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_1_StorageLocation();
                 case FRAGMENT_IMPORT_1A_ID_VIDEO_WEB_DETECT:
                     return new Fragment_Import_1a_VideoWebDetect();
-                case FRAGMENT_IMPORT_1B_ID_WEB_ADDRESS:
-                    return new Fragment_Import_1b_ComicWebDetect();
                 case FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT:
                     return new Fragment_Import_1c_ComicWebDetect();
                 case FRAGMENT_IMPORT_2_ID_SELECT_ITEMS:
                     return new Fragment_Import_2_SelectItems();
                 case FRAGMENT_IMPORT_2A_ID_SELECT_DETECTED_WEB_VIDEO_ITEM:
                     return new Fragment_Import_2a_SelectDetectedWebVideo();
-                case FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC:
-                    return new Fragment_Import_2b_SelectSingleWebComic();
                 case FRAGMENT_IMPORT_2C_ID_PREVIEW_DETECTED_WEB_COMIC_ITEM:
                     return new Fragment_Import_2c_PreviewDetectedWebComic();
                 case FRAGMENT_IMPORT_3_ID_SELECT_TAGS:

@@ -112,9 +112,6 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         //Display the file count:
         TextView textView_FileCount = getView().findViewById(R.id.textView_FileCount);
         String s = Integer.toString(confirmationFileListCustomAdapter.getCount());
-        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER){
-            s = s + " (Duplicate cover pages will be excluded from import)";
-        }
         textView_FileCount.setText(s);
 
 
@@ -182,7 +179,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
             if (!((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                         && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
                     || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2))) {
+                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE))) {
                 //If this is not a video download, display the datetime of the file:
                 sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
             }
@@ -240,7 +237,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
             String sLine3 = "";
             if (!(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                    && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)) {
+                    && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)) {
                 //Get tag text to apply to list item if tags are assigned to the item, but not if it is a web comic item.
                 //  A comic item would have tags for every single page because they are assigned when the html is analyzed.
                 //  This is done because the file items carry the tag data, and a future feature might have it such that
@@ -286,7 +283,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                 if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                         && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
                     || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2)){
+                        && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
                     //If this is a video download, get the thumbnail from the IRL and display it:
                     String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
                     if(!sURLThumbnail.equals("")) {

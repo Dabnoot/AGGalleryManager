@@ -39,7 +39,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
-    boolean gbTesting = true;
+    boolean gbTesting = false;
+    boolean gbAutoDetect = false;
 
     GlobalClass globalClass;
 
@@ -164,7 +165,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                 gButton_Detect.setEnabled(true);
                 gEditText_WebAddress.setText(url);
                 SetTextStatusMessage("Click 'Detect' once the comic summary page has loaded with all image thumbnails.");
-                if(gbTesting){
+                if(gbTesting || gbAutoDetect){
                     gButton_Detect.performClick();
                 }
             }
@@ -297,6 +298,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                                 galsRequestedResources = new ArrayList<>();
                                 gWebView.loadUrl(sWebAddress);
                                 clipboard.clearPrimaryClip();
+                                gbAutoDetect = true; //If we are here and pasting in an address automatically, go ahead and do the detect automatically.
                             }
                         }
                     }

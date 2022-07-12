@@ -4,16 +4,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.PreferenceManager;
 
-import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -119,15 +116,11 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             //Initiate the file import via ImportActivityDataService:
             globalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_NH_COMIC_DOWNLOADER) {
-                    Service_Import.startActionImportNHComicsFiles(getContext(),
-                            viewModelImportActivity.iImportMethod,
-                            viewModelImportActivity.iComicImportSource);
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     Service_Import.startActionImportComicFolders(getContext(),
                             viewModelImportActivity.iImportMethod,
                             viewModelImportActivity.iComicImportSource);
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE2) {
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
                     Service_Import.startActionImportComicWebFiles(getContext(),
                             ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
