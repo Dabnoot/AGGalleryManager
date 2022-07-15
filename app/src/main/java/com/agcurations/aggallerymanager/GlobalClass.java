@@ -1756,6 +1756,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
+    public static final String EXTRA_LONG_DOWNLOAD_ID = "com.agcurations.aggallerymanager.extra.LONG_DOWNLOAD_ID";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
     public static final String COMIC_CATALOG_ITEM = "COMIC_CATALOG_ITEM";
 

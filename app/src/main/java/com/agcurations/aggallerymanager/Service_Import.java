@@ -48,7 +48,7 @@ public class Service_Import {
 
     public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
 
-         String sCallerID = "Service_Import:startActionImportFiles()";
+        String sCallerID = "Service_Import:startActionImportFiles()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataImportFiles = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
