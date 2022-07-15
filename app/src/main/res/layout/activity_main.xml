@@ -168,5 +168,17 @@
         android:src="@drawable/icons8_globe_100_white"
         android:background="?android:selectableItemBackground"/>
 
+    <Button
+        android:id="@+id/button_Test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Test"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20dp"
+        android:visibility="invisible"
+        android:onClick="buttonTestClick_Test"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
