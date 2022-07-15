@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -490,7 +492,15 @@ public class Worker_LocalFileTransfer extends Worker {
                             .setProgress(0, 0,false); //Remove the progress bar from the notification.
         gNotification = gNotificationBuilder.build();
         globalClass.notificationManager.notify(giNotificationID, gNotification);
-        Toast.makeText(getApplicationContext(),"File transfer complete.", Toast.LENGTH_SHORT).show();
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                // Run your task here
+                Toast.makeText(getApplicationContext(), "File transfer complete.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private Data DataErrorMessage(String sMessage){
