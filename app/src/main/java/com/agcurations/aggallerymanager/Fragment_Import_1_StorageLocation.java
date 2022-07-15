@@ -38,17 +38,12 @@ import android.widget.Toast;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_1_StorageLocation#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class Fragment_Import_1_StorageLocation extends Fragment {
 
-    private static final int REQUEST_CODE_GET_IMPORT_FOLDER = 1000;
     public static final int MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE = 2002;
 
     GlobalClass globalClass;
@@ -86,7 +81,6 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
-        //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
         if(getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
@@ -95,7 +89,6 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
     @Override
     public void onDestroy() {
-        // unregister  like this
         if (getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(importDataServiceResponseReceiver);
         }
@@ -105,7 +98,6 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_import_1_storage_location, container, false);
     }
 
@@ -140,19 +132,20 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             }
         });
 
-        if(getView() != null) {
-            gProgressBar_FileAnalysisProgress = getView().findViewById(R.id.progressBar_FileAnalysisProgress);
-            gProgressBar_FileAnalysisProgress.setMax(1000);
-            gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
-            gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
 
-            gTextView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
-            if (gTextView_FileAnalysisDebugLog != null) {
-                gTextView_FileAnalysisDebugLog.setMovementMethod(new ScrollingMovementMethod());
-            }
+        gProgressBar_FileAnalysisProgress = getView().findViewById(R.id.progressBar_FileAnalysisProgress);
+        gProgressBar_FileAnalysisProgress.setMax(1000);
+        gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
+        gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+
+        gTextView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+        if (gTextView_FileAnalysisDebugLog != null) {
+            gTextView_FileAnalysisDebugLog.setMovementMethod(new ScrollingMovementMethod());
         }
-    }
 
+
+
+    }
 
     @Override
     public void onResume() {
@@ -164,76 +157,91 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         getActivity().setTitle("Import");
         ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
-        if(viewModelImportActivity.bImportCategoryChange){
-            //Reset all the stuff so that it looks like time to select a folder:
-            if(globalClass.gbImportFolderAnalysisRunning){
-                globalClass.gbImportFolderAnalysisStop = true;
-            }
-            globalClass.gbImportFolderAnalysisFinished = false;
+        if(!globalClass.gbImportHoldingFolderAnalysisAutoStart) {
 
-            viewModelImportActivity.bImportCategoryChange = false;
-            gProgressBar_FileAnalysisProgress.setProgress(0);
-            gTextView_FileAnalysisProgressBarText.setText("0/0");
+            if (viewModelImportActivity.bImportCategoryChange) {
+                //Reset all the stuff so that it looks like time to select a folder:
+                if (globalClass.gbImportFolderAnalysisRunning) {
+                    globalClass.gbImportFolderAnalysisStop = true;
+                }
+                globalClass.gbImportFolderAnalysisFinished = false;
 
-            TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
-            textView_Selected_Import_Folder.setText("");
-            TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
-            textView_Label_Selected_Folder.setVisibility(View.INVISIBLE);
-            textView_Selected_Import_Folder.setVisibility(View.INVISIBLE);
-            gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
-            gLinearLayout_Progress.setVisibility(View.INVISIBLE);
-
-            gbutton_FolderSelectComplete.setEnabled(false);
-
-            //Make less space to cover the hidden progress bar:
-            LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-            ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
-            lp.setMargins(0, 0, 0, 0); // left, top, right, bottom
-            linearLayout_ButtonBar.setLayoutParams(lp);
-
-            TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
-            if(textView_FileAnalysisDebugLog != null){
-                textView_FileAnalysisDebugLog.setText("");
-                textView_FileAnalysisDebugLog.setVisibility(View.INVISIBLE);
-            }
-
-        } else {
-            if(globalClass.gbImportFolderAnalysisRunning || globalClass.gbImportFolderAnalysisFinished){
-
-                //Make some more space to show the progress bar:
-                LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-                ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
-                lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
-                linearLayout_ButtonBar.setLayoutParams(lp);
-
-                TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
-                textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
-
-                gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
-                gLinearLayout_Progress.setVisibility(View.VISIBLE);
+                viewModelImportActivity.bImportCategoryChange = false;
+                gProgressBar_FileAnalysisProgress.setProgress(0);
+                gTextView_FileAnalysisProgressBarText.setText("0/0");
 
                 TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
-                textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
-                textView_Selected_Import_Folder.setText(globalClass.gsImportFolderAnalysisSelectedFolder);
+                textView_Selected_Import_Folder.setText("");
+                TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
+                textView_Label_Selected_Folder.setVisibility(View.INVISIBLE);
+                textView_Selected_Import_Folder.setVisibility(View.INVISIBLE);
+                gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
+                gLinearLayout_Progress.setVisibility(View.INVISIBLE);
 
-                gProgressBar_FileAnalysisProgress.setVisibility(View.VISIBLE);
-                gProgressBar_FileAnalysisProgress.setProgress(globalClass.giImportFolderAnalysisProgressBarPercent);
+                gbutton_FolderSelectComplete.setEnabled(false);
 
-                gTextView_FileAnalysisProgressBarText.setVisibility(View.VISIBLE);
-                gTextView_FileAnalysisProgressBarText.setText(globalClass.gsImportFolderAnalysisProgressBarText);
+                //Make less space to cover the hidden progress bar:
+                LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
+                ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
+                lp.setMargins(0, 0, 0, 0); // left, top, right, bottom
+                linearLayout_ButtonBar.setLayoutParams(lp);
 
-                gTextView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
-                gTextView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
-
-                if(globalClass.gbImportFolderAnalysisFinished){
-                    if(gbutton_FolderSelectComplete != null) {
-                        gbutton_FolderSelectComplete.setEnabled(true);
-                        viewModelImportActivity.bUpdateImportSelectList = true;
-                    }
+                TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
+                if (textView_FileAnalysisDebugLog != null) {
+                    textView_FileAnalysisDebugLog.setText("");
+                    textView_FileAnalysisDebugLog.setVisibility(View.INVISIBLE);
                 }
 
+            } else {
+                if (globalClass.gbImportFolderAnalysisRunning || globalClass.gbImportFolderAnalysisFinished) {
+
+                    //Make some more space to show the progress bar:
+                    LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
+                    ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
+                    lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
+                    linearLayout_ButtonBar.setLayoutParams(lp);
+
+                    TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
+                    textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
+
+                    gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
+                    gLinearLayout_Progress.setVisibility(View.VISIBLE);
+
+                    TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
+                    textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
+                    textView_Selected_Import_Folder.setText(globalClass.gsImportFolderAnalysisSelectedFolder);
+
+                    gProgressBar_FileAnalysisProgress.setVisibility(View.VISIBLE);
+                    gProgressBar_FileAnalysisProgress.setProgress(globalClass.giImportFolderAnalysisProgressBarPercent);
+
+                    gTextView_FileAnalysisProgressBarText.setVisibility(View.VISIBLE);
+                    gTextView_FileAnalysisProgressBarText.setText(globalClass.gsImportFolderAnalysisProgressBarText);
+
+                    gTextView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
+                    gTextView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
+
+                    if (globalClass.gbImportFolderAnalysisFinished) {
+                        if (gbutton_FolderSelectComplete != null) {
+                            gbutton_FolderSelectComplete.setEnabled(true);
+                            viewModelImportActivity.bUpdateImportSelectList = true;
+                        }
+                    }
+
+                }
             }
+        } else {
+            globalClass.gbImportHoldingFolderAnalysisAutoStart = false;
+            //If the user has selected to import from the holding folder, move forward with processing.
+            String sHoldingFolderPath = globalClass.gfImageDownloadHoldingFolder.getPath();
+            ShowFolderAnalysisViews(sHoldingFolderPath);
+
+            globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
+
+            Service_Import.startActionGetHoldingFolderDirectoryContents(getContext());
+
         }
+
+
     }
 
     ActivityResultLauncher<Intent> garlGetImportFolder = registerForActivityResult(
@@ -311,25 +319,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                             return;
                         }
                         String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
+                        ShowFolderAnalysisViews(sTreeUriSourceName);
 
-                        //Display the source name:
-                        if(getView() == null){
-                            return;
-                        }
-                        TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
-                        textView_Selected_Import_Folder.setText(sTreeUriSourceName);
-                        globalClass.gsImportFolderAnalysisSelectedFolder = sTreeUriSourceName;
-                        TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
-                        textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
-                        textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
-                        gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
-                        gLinearLayout_Progress.setVisibility(View.VISIBLE);
-
-                        //Make some more space to show the progress bar:
-                        LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-                        ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
-                        lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
-                        linearLayout_ButtonBar.setLayoutParams(lp);
 
                         int iFilesOrFolders = GlobalClass.FILES_ONLY;
                         if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
@@ -343,12 +334,34 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                                 Activity_Import.guriImportTreeURI,
                                 viewModelImportActivity.iImportMediaCategory,
                                 iFilesOrFolders,
-                                viewModelImportActivity.iComicImportSource);
+                                viewModelImportActivity.iComicImportSource); ////Flag used to indicate comic folder import.
 
 
                     }
                 }
             });
+
+
+    private void ShowFolderAnalysisViews(String sImportFolderName){
+        //Display the source name:
+        if(getView() == null){
+            return;
+        }
+        TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
+        textView_Selected_Import_Folder.setText(sImportFolderName);
+        globalClass.gsImportFolderAnalysisSelectedFolder = sImportFolderName;
+        TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
+        textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
+        textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
+        gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
+        gLinearLayout_Progress.setVisibility(View.VISIBLE);
+
+        //Make some more space to show the progress bar:
+        LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
+        ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
+        lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
+        linearLayout_ButtonBar.setLayoutParams(lp);
+    }
 
 
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {

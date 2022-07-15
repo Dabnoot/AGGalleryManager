@@ -5,15 +5,18 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -234,26 +237,58 @@ public class Worker_LocalFileTransfer extends Worker {
                                 //Check if source file exists:
                                 String sSourceFileUri = sTemp[SOURCE_FILE_URI_INDEX];
                                 Uri uriSourceFile = Uri.parse(sSourceFileUri);
-                                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-                                if (dfSource == null) {
+                                if(uriSourceFile == null){
                                     continue;
                                 }
-                                if (dfSource.getName() == null) {
-                                    continue;
+                                DocumentFile dfSource = null;
+                                File fSourceFile = null;
+                                boolean bUseFileRatherThanUri = false;
+                                boolean bTryAlternate = false;
+                                try {
+                                    dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                                    if (dfSource == null) {
+                                        continue;
+                                    }
+                                    if (dfSource.getName() == null) {
+                                        bTryAlternate = true;
+                                    }
+                                } catch (Exception e){
+                                    bTryAlternate = true;
+                                }
+                                if(bTryAlternate){
+                                    //If there was a problem here, then it might not be a Uri but rather a file address to the holding folder. Test.
+                                    fSourceFile = new File(Objects.requireNonNull(uriSourceFile.getPath()));
+                                    if(fSourceFile.exists()){
+                                        bUseFileRatherThanUri = true;
+                                    } else {
+                                        continue;
+                                    }
                                 }
 
                                 boolean bMarkedForDeletion = Boolean.parseBoolean(sTemp[SOURCE_FILE_DELETE_ONLY]);
 
                                 String sLogLine;
 
-                                String sFileName = dfSource.getName();
+                                String sFileName = "";
+                                if(bUseFileRatherThanUri){
+                                    sFileName = fSourceFile.getName();
+                                } else {
+                                    dfSource.getName();
+                                }
 
                                 if(bMarkedForDeletion) {
                                     //If this source item is marked for deletion (no move or copy op to be performed), delete the source file:
-                                    glProgressNumerator = glProgressNumerator + dfSource.length();
+                                    boolean bDeleteSuccess;
+                                    if(bUseFileRatherThanUri){
+                                        glProgressNumerator = glProgressNumerator + fSourceFile.length();
+                                        bDeleteSuccess = fSourceFile.delete();
+                                    } else {
+                                        glProgressNumerator = glProgressNumerator + dfSource.length();
+                                        bDeleteSuccess = dfSource.delete();
+                                    }
                                     UpdateProgressOutput();
 
-                                    if (!dfSource.delete()) {
+                                    if (!bDeleteSuccess) {
                                         sLogLine = "Could not delete file marked for deletion, " + sFileName + ".\n";
                                     } else {
                                         sLogLine = "Success deleting file marked for deletion, " + sFileName + ".\n";
@@ -274,7 +309,14 @@ public class Worker_LocalFileTransfer extends Worker {
                                     }
                                     //Destination folder exists or has been created successfully.
 
-                                    if (dfSource.exists()) {
+                                    boolean bFileExists;
+                                    if(bUseFileRatherThanUri){
+                                        bFileExists = fSourceFile.exists();
+                                    } else {
+                                        bFileExists = dfSource.exists();
+                                    }
+
+                                    if (bFileExists) {
                                         String sDestinationFileFullPath = sDestinationFolder + File.separator + sDestinationFileName;
                                         File fDestinationFile = new File(sDestinationFileFullPath);
                                         if (fDestinationFile.exists()) {
@@ -282,7 +324,14 @@ public class Worker_LocalFileTransfer extends Worker {
                                             //If the operation was a move operation, we are here only because the source file still
                                             //  exists. Attempt to delete the source file.
                                             if (iMoveOrCopy == GlobalClass.MOVE) {
-                                                if (!dfSource.delete()) {
+                                                boolean bDeleteSuccess;
+                                                if(bUseFileRatherThanUri){
+                                                    bDeleteSuccess = fSourceFile.delete();
+                                                } else {
+                                                    bDeleteSuccess = dfSource.delete();
+                                                }
+
+                                                if (!bDeleteSuccess) {
                                                     sMessage = "Source file copied, but could not delete source file, " + sFileName + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
                                                     gfwLogFile.write(sMessage + "\n");
                                                     bProblemWithFileTransfer = true;
@@ -295,11 +344,20 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                         // Execute the copy or move operation:
 
+
                                         sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
-                                                + " of file " + dfSource.getName() + " to " + fDestinationFile.getPath() + ".";
+                                                + " of file " + sFileName + " to " + fDestinationFile.getPath() + ".";
                                         gfwLogFile.write(sLogLine + "\n");
+
+
                                         ContentResolver contentResolver = getApplicationContext().getContentResolver();
-                                        InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
+                                        //InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
+                                        FileInputStream inputStream;
+                                        if(bUseFileRatherThanUri){
+                                            inputStream = new FileInputStream(fSourceFile);
+                                        } else {
+                                            inputStream = (FileInputStream) contentResolver.openInputStream(dfSource.getUri());
+                                        }
 
                                         OutputStream outputStream = new FileOutputStream(fDestinationFile.getPath());
                                         int iLoopCount = 0;
@@ -330,7 +388,13 @@ public class Worker_LocalFileTransfer extends Worker {
                                         gfwLogFile.write(sLogLine + "\n");
 
                                         if (iMoveOrCopy == GlobalClass.MOVE) {
-                                            if (!dfSource.delete()) {
+                                            boolean bDeleteSuccess;
+                                            if(bUseFileRatherThanUri){
+                                                bDeleteSuccess = fSourceFile.delete();
+                                            } else {
+                                                bDeleteSuccess = dfSource.delete();
+                                            }
+                                            if (!bDeleteSuccess) {
                                                 sLogLine = "Could not delete source file, " + sFileName + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
                                             } else {
                                                 sLogLine = "Success deleting source file, " + sFileName + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
@@ -426,6 +490,7 @@ public class Worker_LocalFileTransfer extends Worker {
                             .setProgress(0, 0,false); //Remove the progress bar from the notification.
         gNotification = gNotificationBuilder.build();
         globalClass.notificationManager.notify(giNotificationID, gNotification);
+        Toast.makeText(getApplicationContext(),"File transfer complete.", Toast.LENGTH_SHORT).show();
     }
 
     private Data DataErrorMessage(String sMessage){

@@ -41,10 +41,6 @@ public class Worker_VideoPostProcessing extends Worker {
     //Define string used to identify this worker type:
     public static final String WORKER_VIDEO_POST_PROCESSING_TAG = "WORKER_VIDEO_POST_PROCESSING_TAG";
 
-    //public static final String PROGRESS = "PROGRESS";
-    //public static final String FILENAME = "FILENAME";
-    public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
-
     public static final String VIDEO_DLID_AND_SEQUENCE_FILE_NAME = "DLID_And_Sequence.txt";
 
     DownloadManager downloadManager;
@@ -722,7 +718,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
     private Data DataErrorMessage(String sMessage){
         return new Data.Builder()
-                .putString(FAILURE_MESSAGE, sMessage)
+                .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
                 .build();
     }
 

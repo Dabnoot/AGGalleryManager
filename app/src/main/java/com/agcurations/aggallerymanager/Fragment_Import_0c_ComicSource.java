@@ -11,15 +11,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 
-public class Fragment_Import_0b_ComicSource extends Fragment {
+public class Fragment_Import_0c_ComicSource extends Fragment {
 
 
-    public Fragment_Import_0b_ComicSource() {
+    public Fragment_Import_0c_ComicSource() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_0b_ComicSource newInstance() {
-        return new Fragment_Import_0b_ComicSource();
+    public static Fragment_Import_0c_ComicSource newInstance() {
+        return new Fragment_Import_0c_ComicSource();
     }
 
     @Override
@@ -36,7 +36,7 @@ public class Fragment_Import_0b_ComicSource extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_0b_comic_source, container, false);
+        return inflater.inflate(R.layout.fragment_import_0c_comic_source, container, false);
     }
 
     @Override

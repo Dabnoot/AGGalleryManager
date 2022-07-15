@@ -9,6 +9,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.media.MediaMetadataRetriever;
@@ -18,6 +19,7 @@ import android.os.Build;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
@@ -76,6 +78,9 @@ public class GlobalClass extends Application {
     public File gfBrowserDataFolder;
     public File gfWebpageTabDataFile;
     public File gfWebpageFaviconBitmapFolder;
+    public File gfImageDownloadHoldingFolder; //Used to hold individual images downloaded by the user from the browser prior to import.
+    public File gfImageDownloadHoldingFolderTemp; //Used to hold download manager files temporarily, to be moved so that DLM can't find them for cleanup operations.
+    public String gsImageDownloadHoldingFolderTempRPath; //For coordinating file transfer from internal storage to SD card.
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
@@ -127,6 +132,7 @@ public class GlobalClass extends Application {
     // existing folder analysis operation is finished.
     //public boolean gbImportFolderAnalysisStarted = false; This item not needed for this fragment.
     public boolean gbImportFolderAnalysisRunning = false;
+    public boolean gbImportHoldingFolderAnalysisAutoStart = false;
     public boolean gbImportFolderAnalysisStop = false;
     public boolean gbImportFolderAnalysisFinished = false;
     public StringBuilder gsbImportFolderAnalysisLog = new StringBuilder();
@@ -218,6 +224,15 @@ public class GlobalClass extends Application {
             pReturn.x = displayMetrics.widthPixels;
         }
         return pReturn;
+    }
+
+    public int ConvertDPtoPX(int dp){
+        Resources r = getResources();
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                r.getDisplayMetrics()
+        );
     }
 
     public static void hideSoftKeyboard(Activity activity) {
@@ -1450,7 +1465,62 @@ public class GlobalClass extends Application {
             CatalogDataFile_UpdateRecord(ci);
         }
 
+
+        //todo: Look for left-behind downloaded video files:
+
+
+        //Look for image files downloaded from the browser into a temporary holding folder:
+        //CheckAndMoveDLHoldingTempImageFiles();
+
     }
+
+    public void CheckAndMoveDLHoldingTempImageFiles(){
+
+        if (gfImageDownloadHoldingFolderTemp.exists() && gfImageDownloadHoldingFolder.exists()) {
+            File[] fDLHoldingTempFiles = gfImageDownloadHoldingFolderTemp.listFiles();
+            File[] fDLHoldingFiles = gfImageDownloadHoldingFolder.listFiles();
+
+            if (fDLHoldingTempFiles != null) {
+                if (fDLHoldingTempFiles.length > 0) {
+                    //File(s) exist that need to be moved.
+                    //Attempt to move the files:
+
+                    //First create an array of unique file names:
+                    ArrayList<String> alsNewFileNames = new ArrayList<>();
+                    for(File fNew: fDLHoldingTempFiles){
+                        String sNew = fNew.getName();
+                        boolean bMatchFoundInExistingHoldingFiles;
+                        int iIterator = 0;
+                        do {
+                            bMatchFoundInExistingHoldingFiles = false;
+                            for (File fExisting : fDLHoldingFiles) {
+                                if(sNew.contentEquals(fExisting.getName())){
+                                    bMatchFoundInExistingHoldingFiles = true;
+                                    break;
+                                }
+                            }
+                            if(bMatchFoundInExistingHoldingFiles){
+                                iIterator += 1;
+                                sNew = fNew.getName() + "_" + String.format(Locale.getDefault(),"%04d", iIterator);
+                            }
+                        } while(bMatchFoundInExistingHoldingFiles);
+                        alsNewFileNames.add(sNew);
+                    }
+
+                    for (int i = 0; i < fDLHoldingTempFiles.length; i++) {
+                        String sFileName = alsNewFileNames.get(i);
+                        File fDestination = new File(gfImageDownloadHoldingFolder + File.separator + sFileName);
+                        if (!fDLHoldingTempFiles[i].renameTo(fDestination)) {
+                            Log.d("File move", "Cannot move file " + sFileName + " from " + fDLHoldingTempFiles[i].getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+
 
 
     //=====================================================================================
@@ -1710,6 +1780,8 @@ public class GlobalClass extends Application {
     public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
     public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
     public static final String RECEIVER_STRING = "RECEIVER_STRING";
+
+    public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
     public ArrayList<String> alsUriFilesToDelete;
     public ItemClass_CatalogItem catalogItem_ImportComicWebFiles;

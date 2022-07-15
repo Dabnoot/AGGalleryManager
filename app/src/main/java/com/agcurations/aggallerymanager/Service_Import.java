@@ -31,6 +31,21 @@ public class Service_Import {
         WorkManager.getInstance(context).enqueue(otwrGetDirectoryContents);
     }
 
+    public static void startActionGetHoldingFolderDirectoryContents(Context context) {
+
+        String sCallerID = "Service_Import:startActionGetHoldingFolderDirectoryContents()";
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataGetHoldingFolderDirectoryContents = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .build();
+        OneTimeWorkRequest otwrGetHoldingFolderDirectoryContents = new OneTimeWorkRequest.Builder(Worker_Import_GetHoldingFolderDirectoryContents.class)
+                .setInputData(dataGetHoldingFolderDirectoryContents)
+                .addTag(Worker_Import_GetHoldingFolderDirectoryContents.TAG_WORKER_IMPORT_GETHOLDINGFOLDERDIRECTORYCONTENTS) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrGetHoldingFolderDirectoryContents);
+    }
+
     public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
 
          String sCallerID = "Service_Import:startActionImportFiles()";

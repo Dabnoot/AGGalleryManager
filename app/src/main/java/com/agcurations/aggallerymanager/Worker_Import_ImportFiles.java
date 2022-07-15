@@ -79,40 +79,31 @@ public class Worker_Import_ImportFiles extends Worker {
 
             if(fileItem.bMarkedForDeletion){
 
-                Uri uriSourceFileToDelete;
-                uriSourceFileToDelete = Uri.parse(fileItem.sUri);
-                DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFileToDelete);
-
-                if(bCopyViaWorker){
-
-                    //Write next behavior to the screen log:
-                    sLogLine = "Preparing data for job file: Delete file " + fileItem.sFileOrFolderName + ".\n";
-                    lProgressNumerator++;
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, "File " + lProgressNumerator + "/" + lProgressDenominator,
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                    String sLine = dfSourceToDelete.getUri() + "\t"
-                            + fileItem.sDestinationFolder + "\t"
-                            + fileItem.sFileOrFolderName + "\t"
-                            + fileItem.lSizeBytes + "\t"
-                            + true + "\n";                 //Item marked for deletion?
-                    sbJobFileRecords.append(sLine);
-
+                String sFileSource = "";
+                if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
+                    Uri uriTemp = Uri.parse(fileItem.sUri);
+                    sFileSource = uriTemp.getPath();
                 } else {
-
-                    sLogLine = "Deleting file: " + dfSourceToDelete.getName();
-                    if (!dfSourceToDelete.delete()) {
-                        sLogLine = sLogLine + "\nCould not delete source file.\n";
-                    }
-                    lProgressNumerator += fileItem.lSizeBytes;
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(true, sLogLine,
-                            true, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    Uri uriSourceFileToDelete;
+                    uriSourceFileToDelete = Uri.parse(fileItem.sUri);
+                    DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFileToDelete);
+                    sFileSource = dfSourceToDelete.getUri().toString();
                 }
+                //Write next behavior to the screen log:
+                sLogLine = "Preparing data for job file: Delete file " + fileItem.sFileOrFolderName + ".\n";
+                lProgressNumerator++;
+                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                globalClass.BroadcastProgress(true, sLogLine,
+                        false, iProgressBarValue,
+                        true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                String sLine = sFileSource + "\t"
+                        + fileItem.sDestinationFolder + "\t"
+                        + fileItem.sFileOrFolderName + "\t"
+                        + fileItem.lSizeBytes + "\t"
+                        + true + "\n";                 //Item marked for deletion?
+                sbJobFileRecords.append(sLine);
+
                 continue; //jump to next item in import list.
             } //End if item is marked for deletion.
 
@@ -120,22 +111,34 @@ public class Worker_Import_ImportFiles extends Worker {
                 fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }
 
-            Uri uriSourceFile = Uri.parse(fileItem.sUri);
-            DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-            boolean bProblemWithSourceFile = false;
-            if (dfSource == null) {
-                bProblemWithSourceFile = true;
-            } else if (dfSource.getName() == null){
-                bProblemWithSourceFile = true;
+            String sFileName = "";
+            String sUriOrPath = "";
+            if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
+                Uri uriTemp = Uri.parse(fileItem.sUri);
+                File fSource = new File(uriTemp.getPath());
+                sFileName = fSource.getName();
+                sUriOrPath = fSource.getAbsolutePath();
+            } else {
+                Uri uriSourceFile = Uri.parse(fileItem.sUri);
+                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                boolean bProblemWithSourceFile = false;
+                if (dfSource == null) {
+                    bProblemWithSourceFile = true;
+                } else if (dfSource.getName() == null){
+                    bProblemWithSourceFile = true;
+                }
+                if(bProblemWithSourceFile){
+                    globalClass.BroadcastProgress(true, "Problem with source reference for " + fileItem.sFileOrFolderName + "\n",
+                            false, iProgressBarValue,
+                            false, "",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    lProgressNumerator += fileItem.lSizeBytes;
+                    continue;
+                }
+                sFileName = dfSource.getName();
+                sUriOrPath = dfSource.getUri().toString();
             }
-            if(bProblemWithSourceFile){
-                globalClass.BroadcastProgress(true, "Problem with source reference for " + fileItem.sFileOrFolderName + "\n",
-                        false, iProgressBarValue,
-                        false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                lProgressNumerator += fileItem.lSizeBytes;
-                continue;
-            }
+
 
             try {
 
@@ -144,111 +147,26 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.sItemID = globalClass.getNewCatalogRecordID(giMediaCategory);
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
-                String sTempFileName = ciNew.sItemID + "_" + dfSource.getName(); //Create unique filename. Using ID will allow database error checking.
-                String sFileName = GlobalClass.JumbleFileName(sTempFileName);
+                String sTempFileName = ciNew.sItemID + "_" + sFileName; //Create unique filename. Using ID will allow database error checking.
+                sFileName = GlobalClass.JumbleFileName(sTempFileName);
 
 
-                if(bCopyViaWorker){
+                //Write next behavior to the screen log:
+                sLogLine = "Preparing data for job file: Import " + fileItem.sFileOrFolderName + ".\n";
+                lProgressNumerator++;
+                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                globalClass.BroadcastProgress(true, sLogLine,
+                        false, iProgressBarValue,
+                        true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                    //Write next behavior to the screen log:
-                    sLogLine = "Preparing data for job file: Import " + fileItem.sFileOrFolderName + ".\n";
-                    lProgressNumerator++;
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, "File " + lProgressNumerator + "/" + lProgressDenominator,
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                String sLine = sUriOrPath + "\t"
+                        + fileItem.sDestinationFolder + "\t"
+                        + sFileName + "\t"
+                        + fileItem.lSizeBytes + "\t"
+                        + false + "\n";                 //Item marked for deletion?
+                sbJobFileRecords.append(sLine);
 
-                    String sLine = dfSource.getUri() + "\t"
-                            + fileItem.sDestinationFolder + "\t"
-                            + sFileName + "\t"
-                            + fileItem.lSizeBytes + "\t"
-                            + false + "\n";                 //Item marked for deletion?
-                    sbJobFileRecords.append(sLine);
-
-
-                } else {
-
-                    String sDestination = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator +
-                            fileItem.sDestinationFolder;
-                    File fDestination = new File(sDestination);
-
-                    if( !alsVerifiedDestinationFolders.contains(sDestination)) {
-                        if (!fDestination.exists()) {
-                            if (!fDestination.mkdir()) {
-                                //Unable to create directory
-                                globalClass.BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
-                                        false, iProgressBarValue,
-                                        true, "Operation halted.",
-                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                                return Result.failure();
-                            } else {
-                                alsVerifiedDestinationFolders.add(sDestination);
-                                globalClass.BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
-                                        false, iProgressBarValue,
-                                        false, "",
-                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                            }
-                        } else {
-                            alsVerifiedDestinationFolders.add(sDestination);
-                            globalClass.BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
-                                    true, iProgressBarValue,
-                                    false, "",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                        }
-                    }
-
-                    File fDestinationFile = new File(fDestination.getPath() + File.separator + sFileName);
-
-                    InputStream inputStream;
-                    OutputStream outputStream;
-
-                    //Write next behavior to the screen log:
-                    sLogLine = GlobalClass.gsMoveOrCopy[giMoveOrCopy];
-                    sLogLine = sLogLine + " file " + fileItem.sFileOrFolderName + " to destination...";
-                    globalClass.BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                    inputStream = contentResolver.openInputStream(dfSource.getUri());
-
-                    outputStream = new FileOutputStream(fDestinationFile.getPath());
-                    int iLoopCount = 0;
-                    byte[] buffer = new byte[100000];
-                    if (inputStream == null) continue;
-                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                        outputStream.write(buffer, 0, buffer.length);
-                        lProgressNumerator += lLoopBytesRead;
-                        iLoopCount++;
-                        if (iLoopCount % 10 == 0) {
-                            //Send update every 10 loops:
-                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                            globalClass.BroadcastProgress(false, "",
-                                    true, iProgressBarValue,
-                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                        }
-                    }
-                    outputStream.flush();
-                    outputStream.close();
-                    //This file has now been copied.
-
-                    sLogLine = "Success.\n";
-                    if (giMoveOrCopy == GlobalClass.MOVE) {
-                        if (!dfSource.delete()) {
-                            sLogLine = "\nCould not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                        }
-                    }
-
-                    //Update the progress bar for the file move/copy:
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                } //End else if copying via this routine (versus assigning to a worker).
 
                 //Next add the data to the catalog file and memory:
 
@@ -286,73 +204,69 @@ public class Worker_Import_ImportFiles extends Worker {
 
         } //End file processing loop.
 
-        if(bCopyViaWorker){
+        //Close the job file, written-to in the file loop above:
+        String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
+        String sJobFileName = "Job_" + sJobDateTime + ".txt";
 
-            //Close the job file, written-to in the file loop above:
-            String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
-            String sJobFileName = "Job_" + sJobDateTime + ".txt";
+        try {
 
-            try {
-
-                //Inform user of preparation of worker:
-                String sMoveOrCopy = GlobalClass.gsMoveOrCopy[giMoveOrCopy];
-                sLogLine = "Using background worker for file " + sMoveOrCopy.toLowerCase() + " operations.\n"
-                        + "Preparing job file.\n\n";
-                lProgressDenominator = alFileList.size();
-                globalClass.BroadcastProgress(true, sLogLine,
-                        false, iProgressBarValue,
-                        true, "File " + lProgressNumerator + "/" + lProgressDenominator,
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                //Create a file with a listing of the files to be copied/moved:
-                String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
-                        File.separator + sJobFileName;
-                File fJobFile = new File(sJobFilePath);
-
-                FileWriter fwJobFile = new FileWriter(fJobFile, true);
-                //Write the data header:
-                String sConfig = "MediaCategory:" + GlobalClass.gsCatalogFolderNames[giMediaCategory] + "\t"
-                        + "MoveOrCopy:" + sMoveOrCopy + "\t"
-                        + "TotalSize:" + lTotalImportSize + "\t"
-                        + "FileCount:" + alFileList.size() + "\n";
-                fwJobFile.write(sConfig);
-                fwJobFile.write(sbJobFileRecords.toString());
-                fwJobFile.flush();
-                fwJobFile.close();
-
-
-
-            } catch (Exception e){
-                globalClass.BroadcastProgress(true, "Problem with writing the job file.\n" + e.getMessage(),
-                        false, iProgressBarValue,
-                        false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-            }
-            //Write next behavior to the screen log:
-            sLogLine = "\nStarting worker to process job file.\n\n"
-                    + "Files will appear in the catalog as the worker progresses.\n"
-                    + "Refresh the catalog viewer (exit/re-enter, change sort direction) to view newly-added files.\n";
+            //Inform user of preparation of worker:
+            String sMoveOrCopy = GlobalClass.gsMoveOrCopy[giMoveOrCopy];
+            sLogLine = "Using background worker for file " + sMoveOrCopy.toLowerCase() + " operations.\n"
+                    + "Preparing job file.\n\n";
+            lProgressDenominator = alFileList.size();
             globalClass.BroadcastProgress(true, sLogLine,
                     false, iProgressBarValue,
-                    true, lProgressNumerator + "/" + lProgressDenominator + " files written to job file",
+                    true, "File " + lProgressNumerator + "/" + lProgressDenominator,
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-            //Build-out data to send to the worker:
-            Data dataLocalFileTransfer = new Data.Builder()
-                    .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
-                    .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
-                    //.putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
-                    //.putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
-                    //.putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, lTotalImportSize)
-                    .build();
-            OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
-                    .setInputData(dataLocalFileTransfer)
-                    .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
-                    .build();
-            UUID UUIDWorkID = otwrLocalFileTransfer.getId();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
+            //Create a file with a listing of the files to be copied/moved:
+            String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
+                    File.separator + sJobFileName;
+            File fJobFile = new File(sJobFilePath);
 
+            FileWriter fwJobFile = new FileWriter(fJobFile, true);
+            //Write the data header:
+            String sConfig = "MediaCategory:" + GlobalClass.gsCatalogFolderNames[giMediaCategory] + "\t"
+                    + "MoveOrCopy:" + sMoveOrCopy + "\t"
+                    + "TotalSize:" + lTotalImportSize + "\t"
+                    + "FileCount:" + alFileList.size() + "\n";
+            fwJobFile.write(sConfig);
+            fwJobFile.write(sbJobFileRecords.toString());
+            fwJobFile.flush();
+            fwJobFile.close();
+
+
+
+        } catch (Exception e){
+            globalClass.BroadcastProgress(true, "Problem with writing the job file.\n" + e.getMessage(),
+                    false, iProgressBarValue,
+                    false, "",
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         }
+        //Write next behavior to the screen log:
+        sLogLine = "\nStarting worker to process job file.\n\n"
+                + "Files will appear in the catalog as the worker progresses.\n"
+                + "Refresh the catalog viewer (exit/re-enter, change sort direction) to view newly-added files.\n";
+        globalClass.BroadcastProgress(true, sLogLine,
+                false, iProgressBarValue,
+                true, lProgressNumerator + "/" + lProgressDenominator + " files written to job file",
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+        //Build-out data to send to the worker:
+        Data dataLocalFileTransfer = new Data.Builder()
+                .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
+                .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
+                //.putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
+                //.putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
+                //.putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, lTotalImportSize)
+                .build();
+        OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
+                .setInputData(dataLocalFileTransfer)
+                .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
+                .build();
+        UUID UUIDWorkID = otwrLocalFileTransfer.getId();
+        WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
         globalClass.BroadcastProgress(true, "Operation complete.",
                 false, iProgressBarValue,

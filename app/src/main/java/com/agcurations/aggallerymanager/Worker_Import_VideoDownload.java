@@ -242,7 +242,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
         try {
 
-            DownloadManager downloadManager = null;
+            DownloadManager downloadManager;
             downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
 
             //ArrayList<Long> allDownloadIDs = new ArrayList<>();

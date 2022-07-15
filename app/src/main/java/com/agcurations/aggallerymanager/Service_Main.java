@@ -106,6 +106,31 @@ public class Service_Main extends IntentService {
                 }
             }
 
+            //Create image downloading temp holding folder if it does not exist:
+
+            globalClass.gsImageDownloadHoldingFolderTempRPath = File.separator +
+                    GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES] +
+                    File.separator + "HoldingTemp";
+            String sImageDownloadHoldingFolderTemp = globalClass.gfAppFolder +
+                    globalClass.gsImageDownloadHoldingFolderTempRPath;
+            globalClass.gfImageDownloadHoldingFolderTemp = new File(sImageDownloadHoldingFolderTemp);
+            if(!globalClass.gfImageDownloadHoldingFolderTemp.exists()){
+                if(!globalClass.gfImageDownloadHoldingFolderTemp.mkdir()){
+                    problemNotificationConfig("Could not create image download temp holding folder.");
+                }
+            }
+
+            //Create image downloading holding folder if it does not exist:
+            String sImageDownloadHoldingFolder = globalClass.gfAppFolder + File.separator +
+                    GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES] +
+                    File.separator + "Holding";
+            globalClass.gfImageDownloadHoldingFolder = new File(sImageDownloadHoldingFolder);
+            if(!globalClass.gfImageDownloadHoldingFolder.exists()){
+                if(!globalClass.gfImageDownloadHoldingFolder.mkdir()){
+                    problemNotificationConfig("Could not create image download holding folder.");
+                }
+            }
+
             /*File[] files = globalClass.gfAppFolder.listFiles();
             if(files != null) {
                 for (File f : files) {
