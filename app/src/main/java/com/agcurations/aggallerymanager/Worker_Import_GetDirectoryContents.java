@@ -664,7 +664,8 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                 } //End if "there are items in the folder that the user selected.
 
             }catch (Exception e){
-                //todo: This does not appear to make it to the import activity:
+                globalClass.gbImportFolderAnalysisRunning = false;
+                globalClass.gbImportFolderAnalysisFinished = true;
                 String sMessage = "Problem during handleAction_GetDirectoryContents: " + e.getMessage();
                 globalClass.gsbImportFolderAnalysisLog.append(sMessage);
                 globalClass.problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
