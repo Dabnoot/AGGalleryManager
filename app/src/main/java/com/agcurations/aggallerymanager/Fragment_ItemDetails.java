@@ -20,6 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -147,40 +149,7 @@ public class Fragment_ItemDetails extends Fragment {
 
 
         //React to changes in the selected tag data in the ViewModel:
-        final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = new Observer<ArrayList<ItemClass_Tag>>() {
-            @Override
-            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
-
-                //Get the text of the tags and display:
-                StringBuilder sb = new StringBuilder();
-                sb.append("Tags: ");
-                if(tagItems.size() > 0) {
-                    sb.append(tagItems.get(0).sTagText);
-                    for (int i = 1; i < tagItems.size(); i++) {
-                        sb.append(", ");
-                        sb.append(tagItems.get(i).sTagText);
-                    }
-                }
-                if(getView() != null) {
-                    TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
-                    if (textView_Tags != null) {
-                        textView_Tags.setText(sb.toString());
-                    }
-                }
-
-                //Get the tag IDs:
-                ArrayList<Integer> aliTagIDs = new ArrayList<>();
-                for(ItemClass_Tag ti : tagItems){
-                    aliTagIDs.add(ti.iTagID);
-                }
-
-                gsNewTagIDs = GlobalClass.formDelimitedString(aliTagIDs,",");
-                if(!gsNewTagIDs.equals(gsPreviousTagIDs)) {
-                    //Enable the Save button:
-                    enableSave();
-                }
-            }
-        };
+        final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = GetNewTagObserver();
 
         gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
 
@@ -237,6 +206,77 @@ public class Fragment_ItemDetails extends Fragment {
 
     }
 
+    private Observer<ArrayList<ItemClass_Tag>> GetNewTagObserver() {
+        return new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                //Get the text of the tags and display:
+                StringBuilder sb = new StringBuilder();
+                sb.append("Tags: ");
+                if (tagItems.size() > 0) {
+                    sb.append(tagItems.get(0).sTagText);
+                    for (int i = 1; i < tagItems.size(); i++) {
+                        sb.append(", ");
+                        sb.append(tagItems.get(i).sTagText);
+                    }
+                }
+                if (getView() != null) {
+                    TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+                    if (textView_Tags != null) {
+                        textView_Tags.setText(sb.toString());
+                    }
+                }
+
+                //Get the tag IDs:
+                ArrayList<Integer> aliTagIDs = new ArrayList<>();
+                for (ItemClass_Tag ti : tagItems) {
+                    aliTagIDs.add(ti.iTagID);
+                }
+
+                gsNewTagIDs = GlobalClass.formDelimitedString(aliTagIDs, ",");
+
+                //gsNewTagIDs will be sorted. Sort gsPreviousTagIDs so that a proper comparison can
+                //  be made.
+                String sPreviousTagIDsTemp = SortTagIDString(gsPreviousTagIDs);
+                String sNewTagIDsTemp = SortTagIDString(gsNewTagIDs);
+
+
+
+
+                if (!sNewTagIDsTemp.equals(sPreviousTagIDsTemp)) {
+                    //Enable the Save button:
+                    enableSave();
+                }
+            }
+        };
+    }
+
+    private String SortTagIDString(String sTagIDStringInput){
+        String sOutputTags = sTagIDStringInput;
+        String[] sInputTags = sTagIDStringInput.split(",");
+        if(sInputTags.length > 0){
+            TreeMap<Integer, Integer> tmSortInputTags = new TreeMap<>();
+            for(String sTagID: sInputTags){
+                Integer iTagID = Integer.parseInt(sTagID);
+                tmSortInputTags.put(iTagID, iTagID);
+            }
+            StringBuilder sbOutputTags = new StringBuilder();
+            for(Map.Entry<Integer, Integer> tmEntry: tmSortInputTags.entrySet()){
+                sbOutputTags.append(tmEntry.getKey());
+                sbOutputTags.append(",");
+            }
+            String sTempOutputTags = sbOutputTags.toString();
+            if(sTempOutputTags.length() > 0){
+                sTempOutputTags = sTempOutputTags.substring(0, sTempOutputTags.length() - 1);
+                sOutputTags = sTempOutputTags;
+            }
+        }
+        return sOutputTags;
+
+    }
+
+
     public void initData(ItemClass_CatalogItem ci){
 
         gciCatalogItem = ci;
@@ -270,6 +310,13 @@ public class Fragment_ItemDetails extends Fragment {
             gFragment_selectTags.resetTagListViewData(aliTags);
         }
 
+        //React to changes in the selected tag data in the ViewModel:
+        final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = GetNewTagObserver();
+
+        gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
+
+        Button button_Save = getView().findViewById(R.id.button_Save);
+        button_Save.setEnabled(false); //When init data, no reason to save.
 
     }
 
