@@ -354,15 +354,6 @@ public class Service_Main extends IntentService {
 
     }
 
-
-
-
-
-
-
-
-
-
     private void obtainFolderStructureItem(File file){
         if(!file.exists()){
             if(!file.mkdir()){
@@ -371,7 +362,6 @@ public class Service_Main extends IntentService {
             }
         }
     }
-
 
     private TreeMap<String, ItemClass_CatalogItem> readCatalogFileToCatalogItems(int iMediaCategory){
 
@@ -467,6 +457,15 @@ public class Service_Main extends IntentService {
         }
 
     }
+
+    /*private void VerifyVideoFilesIntegrity(){
+
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+            ItemClass_CatalogItem ci = tmEntry.getValue();
+
+        }
+    }*/
+
 
 
     void problemNotificationConfig(String sMessage){

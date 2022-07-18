@@ -204,10 +204,10 @@ public class Worker_VideoPostProcessing extends Worker {
                         return Result.failure(DataErrorMessage(sMessage));
                     }
 
-                    if(!fFileSequenceFile.delete()){
+                    /*if(!fFileSequenceFile.delete()){
                         sMessage = "Could not delete download ID and sequence file: " + sFileSequenceFilePath;
                         fwLogFile.write(sMessage + "\n");
-                    }
+                    }*/
 
                 } else {
                     sMessage = "File sequence file does not exist: " + sFileSequenceFilePath;
@@ -268,8 +268,8 @@ public class Worker_VideoPostProcessing extends Worker {
             String sDownloadFolderToClean = "";
 
             ArrayList<Long> alRemainingDownloadIDs = new ArrayList<>();
-            for(int i = 0; i < glDownloadIDs.length; i++){
-                alRemainingDownloadIDs.add(glDownloadIDs[i]);
+            for (long glDownloadID : glDownloadIDs) {
+                alRemainingDownloadIDs.add(glDownloadID);
             }
 
             sMessage = "Waiting for download(s) to complete, a maximum of " + (GlobalClass.DOWNLOAD_WAIT_TIMEOUT / 1000) + " seconds.";
@@ -380,8 +380,6 @@ public class Worker_VideoPostProcessing extends Worker {
 
                                 break;
                             case DownloadManager.STATUS_PENDING:
-                                //No action.
-                                break;
                             case DownloadManager.STATUS_RUNNING:
                                 //No action.
                                 break;
@@ -446,17 +444,21 @@ public class Worker_VideoPostProcessing extends Worker {
             } //End loop waiting for download completion.
             if (bFileDownloadsComplete) {
                 fwLogFile.write("\nAll downloads reported as completed." + "\n");
-                fwLogFile.flush();
             } else {
                 fwLogFile.write("\nA download may have failed." + "\n");
                 if (iElapsedWaitTime >= GlobalClass.DOWNLOAD_WAIT_TIMEOUT) {
                     sMessage = "Download elapsed time exceeds timeout of " + (GlobalClass.DOWNLOAD_WAIT_TIMEOUT / 1000) + " seconds.";
                     fwLogFile.write(sMessage + "\n");
                 }
-                fwLogFile.flush();
             }
+            fwLogFile.flush();
 
             //Downloads should be complete and moved out of the source folder.
+            if(!fFileSequenceFile.delete()){
+                sMessage = "Could not delete download ID and sequence file: " + sFileSequenceFilePath;
+                fwLogFile.write(sMessage + "\n");
+            }
+
 
             //Delete the download folder to which downloadManager downloaded the files:
             fwLogFile.write("Attempting delete of download folder:" + fThisDownloadFolder.getAbsolutePath() + "\n");

@@ -42,14 +42,6 @@ public class ItemClass_CatalogItem implements Serializable {
     //Todo: Above sSource, how is it being used? Can I rename it to a string holding a URL? ComicURL?
     public String sVideoLink = "";                        //Link to the .mp4, .m3u8, etc, if it is a video download.
 
-    /*public String sComicThumbnailURL = "";                //Used specifically for Comic Import Preview.
-    public ArrayList<String[]> alsDownloadURLsAndDestFileNames; //Used to map downloads to a download file name for both comic page and video downloads. Includes thumbnail address for comics.
-    public final static int alsDownloadURLsAndDestFileNames_URL_INDEX = 0;
-    public final static int alsDownloadURLsAndDestFileNames_FILENAME_INDEX = 1;
-    public final static int alsDownloadURLsAndDestFileNames_THUMBNAIL_INDEX = 2;
-    public int iThumbnailURLImageHeight = -1; //Used specifically for Comic Import Preview.
-    public int iThumbnailURLImageWidth = -1;  //Used specifically for Comic Import Preview.*/
-
 
     public static final int FLAG_NO_CODE = 0;
     public static final int FLAG_PROCESSING_COMIC_DLM_MOVE = 1; //DownloadIdleService will delete files
@@ -66,6 +58,10 @@ public class ItemClass_CatalogItem implements Serializable {
 
     public int iGrade = 3;                                //Rating (grade) of the item, 1-5. Default to 3.
 
+    /*public int iAllVideoSegmentFilesDetected = VIDEO_SEGMENT_FILES_UNDETERMINED; //Only used for m3u8 video downloads in which a video comprises many .tS files.
+    public static final int VIDEO_SEGMENT_FILES_UNDETERMINED = 0;     //Video segment files have not been checked for complete set.
+    public static final int VIDEO_SEGMENT_FILES_KNOWN_COMPLETE = 1;   //All video segment files detected and in-place.
+    public static final int VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE = 2; //Some video segment files are missing, don't attempt to process.*/
 
     //******* Any new variable must also be updated in the Copy_ItemClass_CatalogItem routine in GlobalClass.
     //  A copy method cannot be added here due to the Serializable attribute.
