@@ -44,12 +44,12 @@ public class ItemClass_CatalogItem implements Serializable {
 
 
     public static final int FLAG_NO_CODE = 0;
-    public static final int FLAG_PROCESSING_COMIC_DLM_MOVE = 1; //DownloadIdleService will delete files
+    public static final int FLAG_COMIC_DLM_MOVE = 1; //DownloadIdleService will delete files
                                             // that have been downloaded and not touched after about a week.
                                             //  these files must be moved so that DIS can't find them.
-    public static final int FLAG_PROCESSING_VIDEO_DLM_SINGLE = 2; //Move a single video file to avoid DIS deletion.
-    public static final int FLAG_PROCESSING_VIDEO_DLM_CONCAT = 3; //Concatenate multiple video files and move the result. Worker handles the concat.
-    public static final int FLAG_PROCESSING_M3U8_LOCAL = 4;  //Video item was downloaded and consists of
+    public static final int FLAG_VIDEO_DLM_SINGLE = 2; //Move a single video file to avoid DIS deletion.
+    public static final int FLAG_VIDEO_DLM_CONCAT = 3; //Concatenate multiple video files and move the result. Worker handles the concat.
+    public static final int FLAG_VIDEO_M3U8 = 4;  //Video item was downloaded and consists of
                                                             //  an m3u8 text file and multiple .ts files in
                                                             //  a folder. At some point in the future, a feature
                                                             //  may be devised to allow the user to abbreviate or trim
@@ -58,10 +58,10 @@ public class ItemClass_CatalogItem implements Serializable {
 
     public int iGrade = 3;                                //Rating (grade) of the item, 1-5. Default to 3.
 
-    /*public int iAllVideoSegmentFilesDetected = VIDEO_SEGMENT_FILES_UNDETERMINED; //Only used for m3u8 video downloads in which a video comprises many .tS files.
+    public int iAllVideoSegmentFilesDetected = VIDEO_SEGMENT_FILES_UNDETERMINED; //Only used for m3u8 video downloads in which a video comprises many .tS files.
     public static final int VIDEO_SEGMENT_FILES_UNDETERMINED = 0;     //Video segment files have not been checked for complete set.
     public static final int VIDEO_SEGMENT_FILES_KNOWN_COMPLETE = 1;   //All video segment files detected and in-place.
-    public static final int VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE = 2; //Some video segment files are missing, don't attempt to process.*/
+    public static final int VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE = 2; //Some video segment files are missing, don't attempt to process.
 
     //******* Any new variable must also be updated in the Copy_ItemClass_CatalogItem routine in GlobalClass.
     //  A copy method cannot be added here due to the Serializable attribute.

@@ -8,16 +8,13 @@ import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -111,7 +108,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         String sComicFolderPath;
         sComicFolderPath = sComicFolder_AbsolutePath + File.separator
                 + gciCatalogItem.sFolder_Name;
-        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE){
+        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
             //If this is a downloaded comic and the files from DownloadManager have not been moved as
             //  part of download post-processing, look in the [comic]\download folder for the files:
             sComicFolderPath = sComicFolder_AbsolutePath + File.separator
@@ -120,7 +117,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }
 
         //Load the full path to each comic page into tmComicPages:
-        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE){
+        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
             //If this is a downloaded comic and the files from DownloadManager have not been moved as
             //  part of download post-processing, look in the [comic]\download folder for the files:
             sComicFolderPath = sComicFolder_AbsolutePath + File.separator

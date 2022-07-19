@@ -155,14 +155,14 @@ public class Worker_Import_VideoDownload extends Worker {
         //ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
         ArrayList<String[]> alsDownloadURLsAndDestFileNames = new ArrayList<>();
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
-            ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE;
+            ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE;
             ciNew.iFile_Count = 1;
             ciNew.sVideoLink = icfDownloadItem.sURLVideoLink;
             ciNew.sFilename = GlobalClass.JumbleFileName(icfDownloadItem.sFileOrFolderName);
         } else {
             //M3U8. Mark post-processing to concat videos and move the result.
             if(globalClass.gbUseFFMPEGToMerge) {
-                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_CONCAT;
+                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT;
                 //Form a name for the concatenated video file:
                 String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
                 sTempFilename = Service_Import.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
@@ -176,7 +176,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
                 ciNew.iFile_Count = 1; //There will only be 1 file after concatenation.
             } else {
-                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL;
+                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_M3U8;
                 //Form a name for the M3U8 file:
                 String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
                 sTempFilename = Service_Import.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
@@ -223,7 +223,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     sFileName = sFileName.substring(sFileName.lastIndexOf("/") + 1);
                 }
                 String sNewFilename = ciNew.sItemID + "_" + Service_Import.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
-                if(ciNew.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL){
+                if(ciNew.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
                     //If we will be holding the .ts files in storage as part of a local M3U8 configuration,
                     // jumble the .ts filenames:
                     sNewFilename = GlobalClass.JumbleFileName(sNewFilename);

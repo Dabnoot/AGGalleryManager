@@ -686,7 +686,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         + ci.sFolder_Name + File.separator
                         + ci.sFilename;
                 if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
-                    ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE){
+                    ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
                     //If this is a comic, and the files from DownloadManager have not been moved as
                     //  part of download post-processing, look in the [comic]\download folder for the files:
                     sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
@@ -695,7 +695,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             + ci.sFilename;
                 }
                 if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_CONCAT) {
+                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
                         //If this is a video and the post-processing is incomplete...
                         //Every sort operation will attempt to relocate the file. However, we can
                         // look in the output folder for a result.
@@ -738,7 +738,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         }
 
 
-                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_M3U8_LOCAL) {
+                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                             //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
                         String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                                 File.separator + ci.sFolder_Name;
@@ -935,6 +935,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     String sAttentionNote = "Possible incomplete stream download.";
                     holder.textView_AttentionNote.setText(sAttentionNote);
                 }
+                if (ci.iAllVideoSegmentFilesDetected == ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE){
+                    holder.imageView_Attention.setVisibility(View.VISIBLE);
+                    holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    String sAttentionNote = "Incomplete stream download.";
+                    holder.textView_AttentionNote.setText(sAttentionNote);
+                }
+
             }
 
             if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){

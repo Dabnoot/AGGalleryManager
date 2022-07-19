@@ -8,18 +8,24 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Environment;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.google.android.exoplayer2.MediaItem;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.work.ListenableWorker;
 
 
 public class Service_Main extends IntentService {
@@ -260,6 +266,10 @@ public class Service_Main extends IntentService {
 
         globalClass.ExecuteDownloadManagerPostProcessing();
 
+        //globalClass.CatalogDataFile_AddNewField();
+
+        VerifyVideoFilesIntegrity();
+
     }
 
     private void handleActionCatalogBackup(){
@@ -458,13 +468,134 @@ public class Service_Main extends IntentService {
 
     }
 
-    /*private void VerifyVideoFilesIntegrity(){
-
+    private void VerifyVideoFilesIntegrity(){
+        boolean bUpdateVideoCatalogFile = false;
+        int iItemsWithIssuesCounter = 0;
+        FileWriter fwLogFile = null;
+        String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
+                File.separator + GlobalClass.GetTimeStampFileSafe() + "_VideoFilesCheck.txt";
+        File fLog = new File(sLogFilePath);
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmEntry.getValue();
+            if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8)
+                && ((ci.iAllVideoSegmentFilesDetected == ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_UNDETERMINED)
+                    || (ci.iAllVideoSegmentFilesDetected == ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE))){
+                //If this is an M3U8 file check to see if all of the segment files are in place.
+                String sMessage = "Examining M3U8 video ID " + tmEntry.getKey();
+                Log.d("VideoFilesCheck", sMessage);
+                String sM3U8FilePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                        File.separator + ci.sFolder_Name +
+                        File.separator + ci.sItemID +
+                        File.separator + ci.sFilename;
+                File fM3U8File = new File(sM3U8FilePath);
+                if(fM3U8File.exists()) {
+                    //Get data from file:
+                    BufferedReader brReader;
+                    try {
+                        brReader = new BufferedReader(new FileReader(fM3U8File.getAbsolutePath()));
+                        String sLine = brReader.readLine();
+                        ArrayList<String> alsVideoSequenceFilePaths = new ArrayList<>();
 
+                        while (sLine != null) {
+                            if (sLine.startsWith("/")) {
+                                alsVideoSequenceFilePaths.add(sLine);
+                            }
+                            sLine = brReader.readLine();
+                        }
+                        brReader.close();
+
+                        ArrayList<String> alsVideoFileSequenceFileNames = new ArrayList<>();
+                        for(String sFilePath: alsVideoSequenceFilePaths){
+                            int iLastIndexOfForwardSlash = sFilePath.lastIndexOf("/") + 1;
+                            if(iLastIndexOfForwardSlash > 0 && iLastIndexOfForwardSlash < sFilePath.length()) {
+                                String sFileNameListing = sFilePath.substring(sFilePath.lastIndexOf("/") + 1);
+                                alsVideoFileSequenceFileNames.add(sFileNameListing);
+                            }
+                        }
+
+
+
+                        //Get a listing of the files in the folder:
+                        String sM3U8FolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                                File.separator + ci.sFolder_Name +
+                                File.separator + ci.sItemID;
+                        File fM3U8Folder = new File(sM3U8FolderPath);
+                        //Compare file names to see if all files in the listing exist:
+                        boolean bAllFilesFound = false;
+                        if(alsVideoSequenceFilePaths.size() == 0){
+                            bAllFilesFound = true;
+                        } else {
+                            if (fM3U8Folder.exists()) {
+                                File[] fFiles = fM3U8Folder.listFiles();
+                                if (fFiles != null) {
+                                    if(fFiles.length > 0) {
+                                        ArrayList<String> alsFilesInFolder = new ArrayList<>();
+                                        for (File fFile : fFiles) {
+                                            alsFilesInFolder.add(fFile.getName());
+                                        }
+
+                                        bAllFilesFound = true;
+                                        for (String sM3U8ListedFile : alsVideoFileSequenceFileNames) {
+                                            if (!alsFilesInFolder.contains(sM3U8ListedFile)) {
+                                                bAllFilesFound = false;
+                                                if(fwLogFile == null){
+                                                    fwLogFile = new FileWriter(fLog, true);
+                                                }
+                                                sMessage = "Video ID " + tmEntry.getKey() + " is missing one or more video segment files.";
+                                                fwLogFile.write(sMessage + "\n");
+                                                fwLogFile.flush();
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if(bAllFilesFound){
+                            ci.iAllVideoSegmentFilesDetected = ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_COMPLETE;
+                            bUpdateVideoCatalogFile = true;
+                        } else {
+                            ci.iAllVideoSegmentFilesDetected = ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE;
+                            bUpdateVideoCatalogFile = true;
+                            iItemsWithIssuesCounter++;
+                        }
+
+                    } catch (IOException e) {
+                        sMessage = e.getMessage() + "";
+                        Log.d("VideoFilesCheck", sMessage);
+                    }
+
+                } else {
+                    sMessage = "Cannot find M3U8 file: " + sM3U8FilePath;
+                    Log.d("VideoFilesCheck", sMessage);
+                }
+
+
+
+
+            }
+
+        } //End for loop going through Catalog items.
+
+        if(bUpdateVideoCatalogFile){
+            globalClass.WriteCatalogDataFile(GlobalClass.MEDIA_CATEGORY_VIDEOS);
+            String sMessage = "Finished M3U8 video integrity check. " +
+                    iItemsWithIssuesCounter + " video items have missing files.";
+
+            //Toast.makeText(this, sMessage , Toast.LENGTH_SHORT).show();
+
+            try {
+                if (fwLogFile != null) {
+                    fwLogFile.write(sMessage + "\n");
+                    fwLogFile.flush();
+                }
+            } catch (Exception e){
+                sMessage = e.getMessage() + "";
+                Log.d("VideoFilesCheck", sMessage);
+            }
         }
-    }*/
+
+    }
 
 
 

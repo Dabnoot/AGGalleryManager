@@ -379,9 +379,10 @@ public class GlobalClass extends Application {
 
         sHeader = sHeader + "\t" + "Grade";                         //Grade of the item, set by the user
         sHeader = sHeader + "\t" + "PostProcessingCode";            //Code for required post-processing.
-        sHeader = sHeader + "\t" + "Video_Link";                    //For video download from web page or M3U8 stream. Web address of page is
+        /*sHeader = sHeader + "\t" + "Video_Link";                    //For video download from web page or M3U8 stream. Web address of page is
                                                                     //  stored in sAddress. There can be multiple video downloads and streams
-                                                                    //  per web page, hence this field.
+                                                                    //  per web page, hence this field.*/
+        sHeader = sHeader + "\t" + "M3U8IntegrityFlag";             //For verifying m3u8 segment-file-complex integrity.
         sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
 
         return sHeader;
@@ -459,19 +460,20 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicGroups);                    //Common comic tag category
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicLanguages);                 //Language(s) found in the comic
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicParodies);                  //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sTitle);                      //Comic name
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.sTitle);                          //Comic name
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComicPages);                     //Total number of pages as defined at the comic source
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_Max_Page_ID);              //Max comic page id extracted from file names
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sComic_Missing_Pages);            //Missing page numbers
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iFile_Count);                     //Files included with the comic. Can be used for integrity check. Also used
                                                                                           // for video M3U8 download completion check.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant. ended for comics.
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iSpecialFlag);             //Code for required post-processing.
-        sRecord = sRecord + "\t" + ci.sVideoLink;                                         //For video download from web page or M3U8 stream. Web address of page is
+        sRecord = sRecord + "\t" + JumbleStorageText(ci.iSpecialFlag);                    //Code for required post-processing.
+        //sRecord = sRecord + "\t" + ci.sVideoLink;                                       //For video download from web page or M3U8 stream. Web address of page is
                                                                                           //  stored in sAddress. There can be multiple video downloads and streams
                                                                                           //  per web page, hence this field.
+        sRecord = sRecord + "\t" + ci.iAllVideoSegmentFilesDetected;                      //For verifying m3u8 segment file complex integrity.
 
         return sRecord;
     }
@@ -516,11 +518,16 @@ public class GlobalClass extends Application {
         if(sRecord.length >= 30) {
             ci.iSpecialFlag = Integer.parseInt(JumbleStorageText(sRecord[29]));  //Code for required post-processing.
         }
-        if(sRecord.length >= 31) {
+        /*if(sRecord.length >= 31) {
             ci.sVideoLink = JumbleStorageText(sRecord[30]);                             //For video download from web page or M3U8 stream. Web address of page is
                                                                                         //  stored in sAddress. There can be multiple video downloads and streams
                                                                                         //  per web page, hence this field.
+        }*/
+        if(sRecord.length >= 31){
+            ci.iAllVideoSegmentFilesDetected = Integer.parseInt(JumbleStorageText(sRecord[30])); //For verifying m3u8 segment file complex integrity.
         }
+
+
         return ci;
     }
 
@@ -556,7 +563,6 @@ public class GlobalClass extends Application {
     }
 
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
-
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
 
@@ -599,6 +605,34 @@ public class GlobalClass extends Application {
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void WriteCatalogDataFile(int iMediaCategory) {
+
+        StringBuilder sbBuffer = new StringBuilder();
+        boolean bHeaderWritten = false;
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
+
+            if(!bHeaderWritten) {
+                sbBuffer.append(getCatalogHeader()); //Append the header.
+                sbBuffer.append("\n");
+                bHeaderWritten = true;
+            }
+
+            sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
+            sbBuffer.append("\n");
+        }
+
+        try {
+            //Write the catalog file:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[iMediaCategory], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -851,6 +885,8 @@ public class GlobalClass extends Application {
         ciNew.iSpecialFlag                    = ciOriginal.iSpecialFlag                   ;     //Used to tell the app to that file requires post-processing of some sort after an operation.
 
         ciNew.iGrade                          = ciOriginal.iGrade                         ;     //Rating (grade) of the item, 1-5. Default to 3.
+
+        ciNew.iAllVideoSegmentFilesDetected   = ciOriginal.iAllVideoSegmentFilesDetected  ;     //Used to verify download integrity of m3u8 complexes.
 
         return ciNew;
     }
@@ -1304,7 +1340,7 @@ public class GlobalClass extends Application {
         //  that case, DownloadManager will download to the final directory and those files will need to be moved.
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_COMIC_DLM_MOVE) {
+            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
                 //Check to see if all of the files have downloaded:
                 String sComicItemFolderPath =
                         gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath()
@@ -1346,8 +1382,8 @@ public class GlobalClass extends Application {
         //Look for video post-processing required:
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE) ||
-                    (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_CONCAT)) {
+            if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE) ||
+                    (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT)) {
                 //Check to see if the concatenation (or single video file download) operation is complete:
                 String sVideoDestinationFolder = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
                         File.separator + ci.sFolder_Name;

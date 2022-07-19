@@ -243,7 +243,7 @@ public class Service_CatalogViewer extends IntentService {
             //  item.
             if(ci.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES ||
                     (ci.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
-                            (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_NO_CODE || ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_PROCESSING_VIDEO_DLM_SINGLE))){
+                            (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_NO_CODE || ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE))){
                 if(bSingleFileDeleteAndFileNotFound){
 
                     bSuccess = deleteItemFromCatalogFile(ci);
