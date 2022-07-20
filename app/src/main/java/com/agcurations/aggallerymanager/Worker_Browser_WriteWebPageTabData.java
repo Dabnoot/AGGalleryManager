@@ -87,9 +87,8 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             fwNewWebPageStorageFile.close();
 
         } catch (Exception e) {
-            GlobalClass.problemNotificationConfig( e.getMessage(),
-                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE,
-                    getApplicationContext());
+            globalClass.problemNotificationConfig( e.getMessage(),
+                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
         }
 
         GlobalClass.queueWebPageTabDataFileWriteRequests.remove();

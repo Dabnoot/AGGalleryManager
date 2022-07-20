@@ -86,9 +86,8 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
 
 
         } catch (Exception e) {
-            GlobalClass.problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.",
-                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE,
-                    getApplicationContext());
+            globalClass.problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.",
+                    Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
         }
 
 

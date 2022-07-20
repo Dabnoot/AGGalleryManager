@@ -589,7 +589,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampDouble();
 
-                Service_CatalogViewer.startActionUpdateCatalogItem(this, ci);
+                Service_CatalogViewer.startActionUpdateCatalogItem(this, ci, "Activity_VideoPlayer:initializePlayer()");
 
                 gMediaUri = Uri.parse(sFilePath);
 

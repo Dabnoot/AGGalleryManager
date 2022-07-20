@@ -453,16 +453,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             boolean bError;
 
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_PROBLEM,false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_CatalogViewer.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
                 //Check to see if this is a response to request to delete an item:
-                boolean bIsDeleteItemResponse = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_DELETE_ITEM, false);
+                boolean bIsDeleteItemResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM, false);
                 if(bIsDeleteItemResponse) {
-                    boolean bDeleteItemResult = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
+                    boolean bDeleteItemResult = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
                     if (bDeleteItemResult) {
                         populate_RecyclerViewCatalogItems(); //Refresh the catalog recycler view.
                     } else {
@@ -471,7 +471,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
 
                 //Check to see if this is a response to request to SortAndFilterCatalogDisplay:
-                boolean bRefreshCatalogDisplay = intent.getBooleanExtra(Service_CatalogViewer.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
+                boolean bRefreshCatalogDisplay = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
                 if(bRefreshCatalogDisplay) {
                     //Catalog sort is complete.
 
@@ -969,7 +969,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
-                                Service_CatalogViewer.startActionDeleteCatalogItem(getApplicationContext(), ci_final);
+                                Service_CatalogViewer.startActionDeleteCatalogItem(
+                                        getApplicationContext(), ci_final,
+                                        "Activity_CatalogViewer:RecyclerViewCatalogAdapter.onBindViewHolder.btnDelete.OnClick",
+                                        Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
                             }
                         });
                         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -1001,7 +1004,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gProgressBar_CatalogSortProgress.setVisibility(View.VISIBLE);
             gTextView_CatalogSortProgressBarText.setVisibility(View.VISIBLE);
         }
-        Service_CatalogViewer.startActionSortAndFilterCatalogDisplay(this);
+        Service_CatalogViewer.startActionSortAndFilterCatalogDisplay(this, "Activity_CatalogViewer:populate_RecyclerViewCatalogItems()");
 
     }
 

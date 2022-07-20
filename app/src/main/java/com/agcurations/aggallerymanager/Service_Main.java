@@ -642,9 +642,8 @@ public class Service_Main extends IntentService {
 
 
     void problemNotificationConfig(String sMessage){
-        GlobalClass.problemNotificationConfig(sMessage,
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE,
-                getApplicationContext());
+        globalClass.problemNotificationConfig(sMessage,
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
     }
 
 

@@ -328,20 +328,16 @@ public class GlobalClass extends Application {
         return sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
     }
 
-    public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
-    public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
-    public static void problemNotificationConfig(String sMessage, String sAction, Context context){
-        Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(sAction);
-        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent_Problem);
-    }
+
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
+    public static final String EXTRA_BOOL_DELETE_ITEM = "com.agcurations.aggallerymanager.extra.delete_item";
+    public static final String EXTRA_BOOL_DELETE_ITEM_RESULT = "com.agcurations.aggallerymanager.extra.delete_item_result";
+    public static final String EXTRA_BOOL_REFRESH_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.extra.refresh_catalog_display";
+    public static final String EXTRA_CATALOG_ITEM = "com.agcurations.aggallerymanager.extra.catalog_item";
+
     public final int giCatalogFileVersion = 6;
     public String getCatalogHeader(){
         String sHeader = "";
@@ -434,7 +430,7 @@ public class GlobalClass extends Application {
         return sReadableData;
     }
 
-    public String getCatalogRecordString(ItemClass_CatalogItem ci){
+    public static String getCatalogRecordString(ItemClass_CatalogItem ci){
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + ci.iMediaCategory;                                            //Video, image, or comic.
@@ -634,6 +630,63 @@ public class GlobalClass extends Application {
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    public boolean deleteItemFromCatalogFile(ItemClass_CatalogItem ci, String sIntentActionFilter){
+        boolean bSuccess;
+        GlobalClass globalClass = (GlobalClass)getApplicationContext();
+        String sMessage;
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            BufferedReader brReader;
+            brReader = new BufferedReader(new FileReader(globalClass.gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
+            sbBuffer.append(brReader.readLine());
+            sbBuffer.append("\n");
+
+            String sLine = brReader.readLine();
+            bSuccess = false;
+            ItemClass_CatalogItem ciFromFile;
+            while (sLine != null) {
+                ciFromFile = GlobalClass.ConvertStringToCatalogItem(sLine);
+                if (!(ciFromFile.sItemID.equals(ci.sItemID))) {
+                    //If the line is not the comic we are trying to delete, transfer it over:
+                    sbBuffer.append(sLine);
+                    sbBuffer.append("\n");
+                } else {
+                    //Item record is located and we are skipping copying it into the buffer (thus deleting it).
+                    bSuccess = true;
+                }
+
+                // read next line
+                sLine = brReader.readLine();
+            }
+            brReader.close();
+
+            if(!bSuccess){
+                sMessage = "Could not locate item data record (ID: " +
+                        GlobalClass.JumbleStorageText(ci.sItemID) +
+                        ") in CatalogContents.dat.\n" +
+                        globalClass.gfCatalogContentsFiles[ci.iMediaCategory];
+                problemNotificationConfig(sMessage, sIntentActionFilter);
+
+            }
+
+            //Re-write the CatalogContentsFile without the deleted item's data record:
+            FileWriter fwNewCatalogContentsFile = new FileWriter(globalClass.gfCatalogContentsFiles[ci.iMediaCategory], false);
+            fwNewCatalogContentsFile.write(sbBuffer.toString());
+            fwNewCatalogContentsFile.flush();
+            fwNewCatalogContentsFile.close();
+
+
+            //Now update memory to no longer include the item:
+            globalClass.gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
+
+        } catch (Exception e) {
+            sMessage = "Problem updating CatalogContents.dat.\n" + e.getMessage();
+            problemNotificationConfig(sMessage, sIntentActionFilter);
+            bSuccess = false;
+        }
+        return bSuccess;
     }
 
     public boolean ComicCatalog_DeleteComic(ItemClass_CatalogItem ci) {
@@ -1655,7 +1708,16 @@ public class GlobalClass extends Application {
         return sDurationText;
     }
 
-
+    public static final String EXTRA_BOOL_PROBLEM = "com.agcurations.aggallerymanager.extra.BOOL_PROBLEM";
+    public static final String EXTRA_STRING_PROBLEM = "com.agcurations.aggallerymanager.extra.STRING_PROBLEM";
+    void problemNotificationConfig(String sMessage, String sIntentActionFilter){
+        Intent broadcastIntent_Problem = new Intent();
+        broadcastIntent_Problem.setAction(sIntentActionFilter);
+        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
+        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
+        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
+    }
 
     //=====================================================================================
     //===== Obfuscation Section ===========================================================
@@ -1785,7 +1847,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_LONG_DOWNLOAD_ID = "com.agcurations.aggallerymanager.extra.LONG_DOWNLOAD_ID";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
 
-    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER";
+    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER"; //todo: used for the same as EXTRA_CALLER_ACTION_RESPONSE_FILTER?
 
     public static final String EXTRA_CALLER_ACTION_RESPONSE_FILTER = "com.agcurations.aggallerymanager.extra.EXTRA_CALLER_ACTION_RESPONSE_FILTER";
 
@@ -1860,14 +1922,8 @@ public class GlobalClass extends Application {
 
     }
 
-    void problemNotificationConfig(String sMessage, String sIntentActionFilter){
-        Intent broadcastIntent_Problem = new Intent();
-        broadcastIntent_Problem.setAction(sIntentActionFilter);
-        broadcastIntent_Problem.addCategory(Intent.CATEGORY_DEFAULT);
-        broadcastIntent_Problem.putExtra(EXTRA_BOOL_PROBLEM, true);
-        broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
-        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
-    }
+
+
 
     //=====================================================================================
     //===== Import Options ================================================================
