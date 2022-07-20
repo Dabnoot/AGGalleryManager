@@ -62,9 +62,7 @@
         <service
             android:name=".Service_Main"
             android:exported="false" />
-        <service
-            android:name=".Service_ExportComics"
-            android:exported="false" />
+
 
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

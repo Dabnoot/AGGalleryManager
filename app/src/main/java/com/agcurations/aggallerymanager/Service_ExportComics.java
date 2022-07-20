@@ -3,7 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.app.IntentService;
 import android.content.Intent;
 
-public class Service_ExportComics extends IntentService {
+public class Service_ExportComics {
     /*public static final String ZIP_TOTAL_FILE_COUNT = "ZIP_TOTAL_FILE_COUNT";
     public static final String ZIP_LIST = "ZIP_LIST";
     public static final String ZIP_FILE = "ZIP_FILE";
@@ -19,12 +19,10 @@ public class Service_ExportComics extends IntentService {
 
     private GlobalClass globalClass;
     */
-    public Service_ExportComics() {
-        super("ExportComicsService");
-    }
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
+
+    public void ExportComics(){
+
         /*globalClass = (GlobalClass) getApplicationContext();
 
         //Get the list of files and folders to be zipped:
