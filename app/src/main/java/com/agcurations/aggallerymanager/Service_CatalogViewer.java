@@ -1,19 +1,7 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.IntentService;
-import android.content.Intent;
 import android.content.Context;
-import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
-
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -65,18 +53,5 @@ public class Service_CatalogViewer {
                 .build();
         WorkManager.getInstance(context).enqueue(otwrSortAndFilterCatalogDisplay);
     }
-
-
-
-
-
-
-    public static final String UPDATE_PERCENT_COMPLETE_BOOLEAN = "UPDATE_PERCENT_COMPLETE_BOOLEAN";
-    public static final String PERCENT_COMPLETE_INT = "PERCENT_COMPLETE_INT";
-    public static final String UPDATE_PROGRESS_BAR_TEXT_BOOLEAN = "UPDATE_PROGRESS_BAR_TEXT_BOOLEAN";
-    public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
-
-
-
 
 }
