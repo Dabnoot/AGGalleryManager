@@ -55,27 +55,17 @@
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_ImportFilePreview" />
 
-        <service
-            android:name=".Service_CatalogViewer"
-            android:exported="false" />
+
         <service
             android:name=".Service_TagEditor"
-            android:exported="false" />
-        <service
-            android:name=".Service_Import"
             android:exported="false" />
         <service
             android:name=".Service_Main"
             android:exported="false" />
         <service
-            android:name=".Service_ComicDetails"
-            android:exported="false" />
-        <service
             android:name=".Service_ExportComics"
             android:exported="false" />
-        <service
-            android:name=".Service_Browser"
-            android:exported="false" />
+
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
