@@ -18,7 +18,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -268,7 +274,9 @@ public class Service_Main extends IntentService {
 
         //globalClass.CatalogDataFile_AddNewField();
 
-        VerifyVideoFilesIntegrity();
+        //VerifyVideoFilesIntegrity();
+
+        LogFilesMaintenance();
 
     }
 
@@ -596,6 +604,40 @@ public class Service_Main extends IntentService {
         }
 
     }
+
+
+    private void LogFilesMaintenance(){
+        String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath();
+        File fLogsFile = new File(sLogFilePath);
+        if(fLogsFile.exists()){
+            File[] fLogsFiles = fLogsFile.listFiles();
+            if(fLogsFiles != null){
+                if (fLogsFiles.length > 0) {
+                    //Go through the logs files and automatically delete files that are there for a period greater than the
+                    //  "LogFilesHoldDuration".
+                    LocalDate ldNow = LocalDate.now();
+
+                    for(File fLogFile: fLogsFiles) {
+                        Date dModifiedDate = new Date(fLogFile.lastModified());
+                        LocalDate ldModifiedDate = dModifiedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                        long lDaysBetween = Period.between(ldModifiedDate, ldNow).getDays();
+                        //long lDaysBetween = Duration.between(ldModifiedDate, ldNow).toDays();
+                        if(lDaysBetween > GlobalClass.giLogFileKeepDurationInDays){
+                            if(!fLogFile.delete()){
+                                Log.d("Log File Maintenance", "Could not delete log file " + fLogFile.getName());
+                            }
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+
+
+    }
+
 
 
 
