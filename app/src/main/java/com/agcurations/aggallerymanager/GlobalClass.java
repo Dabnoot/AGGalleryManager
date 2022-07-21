@@ -55,6 +55,8 @@ public class GlobalClass extends Application {
 
     //Global Variables:
 
+    public static final String EXTRA_STRING_STATUS_MESSAGE = "com.agcurations.aggallerymanager.extra.String_Status_Message";
+
     NotificationChannel notificationChannel;
     NotificationManager notificationManager;
     public static final String NOTIFICATION_CHANNEL_ID = "com.agcurations.aggallerymanager.NOTICIFATION_CHANNEL";
