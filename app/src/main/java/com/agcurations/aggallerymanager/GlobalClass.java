@@ -949,6 +949,12 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Tag Subroutines Section ===================================================
     //=====================================================================================
+    public static final String EXTRA_TAG_TO_BE_DELETED = "com.agcurations.aggallerymanager.extra.TAG_TO_BE_DELETED";
+    public static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
+    public static final String EXTRA_TAG_DELETE_COMPLETE = "com.agcurations.aggallerymanager.extra.TAG_DELETE_COMPLETE";
+    public static final String EXTRA_ARRAYLIST_STRING_TAGS_TO_ADD = "com.agcurations.aggallerymanager.extra.TAGS_TO_ADD";
+    public static final String EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS = "com.agcurations.aggallerymanager.extra.ADDED_TAGS";
+
     public static final int giTagFileVersion = 1;
     public static String getTagFileHeader(){
         return "TagID" +
@@ -1148,7 +1154,7 @@ public class GlobalClass extends Application {
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public String getTagRecordString(ItemClass_Tag ict){
+    public static String getTagRecordString(ItemClass_Tag ict){
         //For writing tags to a tags file.
         String sTagRecord =
                 JumbleStorageText(ict.iTagID.toString()) + "\t" +
@@ -1829,7 +1835,6 @@ public class GlobalClass extends Application {
     //==================================================================================================
 
     static final String EXTRA_IMPORT_TREE_URI = "com.agcurations.aggallerymanager.extra.IMPORT_TREE_URI";
-    static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
     static final String EXTRA_FILES_OR_FOLDERS = "com.agcurations.aggallerymanager.extra.EXTRA_FILES_OR_FOLDERS";
 
     static final String EXTRA_COMIC_IMPORT_SOURCE = "com.agcurations.aggallerymanager.extra.COMIC_IMPORT_SOURCE";

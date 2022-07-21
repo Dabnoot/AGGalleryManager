@@ -214,7 +214,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         public void onReceive(Context context, Intent intent) {
             //Errors are checked for in Activity_TagEditor.
             //Check to see if this is a message indicating that a tag deletion is complete:
-            boolean bTagDeleteComplete = intent.getBooleanExtra(Service_TagEditor.EXTRA_TAG_DELETE_COMPLETE,false);
+            boolean bTagDeleteComplete = intent.getBooleanExtra(GlobalClass.EXTRA_TAG_DELETE_COMPLETE,false);
             if(bTagDeleteComplete){
                 RefreshTagListView();
                 Toast.makeText(context, "Tag deletion complete.", Toast.LENGTH_LONG).show();

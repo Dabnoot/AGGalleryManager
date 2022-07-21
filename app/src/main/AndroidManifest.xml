@@ -56,11 +56,6 @@
         <activity android:name=".Activity_ImportFilePreview" />
 
 
-        <service
-            android:name=".Service_TagEditor"
-            android:exported="false" />
-
-
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

@@ -343,16 +343,16 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
 
             boolean bError;
             //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(Service_TagEditor.EXTRA_BOOL_PROBLEM,false);
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
             if(bError) {
-                String sMessage = intent.getStringExtra(Service_TagEditor.EXTRA_STRING_PROBLEM);
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
                 Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
             } else {
 
                 //Check to see if this is a response to tag addition:
                 ArrayList<ItemClass_Tag> alictTags;
 
-                alictTags = (ArrayList<ItemClass_Tag>) intent.getSerializableExtra(Service_TagEditor.EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS);
+                alictTags = (ArrayList<ItemClass_Tag>) intent.getSerializableExtra(GlobalClass.EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS);
 
                 if(alictTags == null){
                     if(getActivity() != null) {
