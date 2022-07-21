@@ -59,9 +59,6 @@
         <service
             android:name=".Service_TagEditor"
             android:exported="false" />
-        <service
-            android:name=".Service_Main"
-            android:exported="false" />
 
 
     </application>
