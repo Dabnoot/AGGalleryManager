@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
@@ -47,6 +48,7 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
         double dTimeOut = 5.0 * dOneSecond;
         if(gdCallerTimeStamp < 0 ||
                 dTimeDiff > dTimeOut){
+            Log.d("BrowserGetPagePreview", "Worker timeout.");
             return Result.failure();
         }
 
@@ -84,7 +86,8 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
             try {
                 node = pageParser.clean(sHTML);
             } catch (Exception e){
-                String sMessage = e.getMessage();
+                String sMessage = e.getMessage() + "";
+                Log.d("BrowserGetPagePreview", sMessage);
                 return Result.failure();
             }
             //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
@@ -152,14 +155,16 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
                 }
 
             } catch (Exception e) {
-                String sMessage = e.getMessage();
+                String sMessage = e.getMessage() + "";
+                Log.d("BrowserGetPagePreview", sMessage);
             }
 
 
 
 
         } catch (Exception e){
-            String sMessage = e.getMessage();
+            String sMessage = e.getMessage() + "";
+            Log.d("BrowserGetPagePreview", sMessage);
             return Result.failure();
         }
 
