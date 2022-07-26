@@ -4,19 +4,20 @@ import android.content.Context;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+
+import com.google.android.material.slider.LabelFormatter;
+import com.google.android.material.slider.RangeSlider;
 
 import java.util.ArrayList;
-import java.util.Objects;
+import java.util.Locale;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -168,6 +169,29 @@ public class Fragment_CatalogSort extends Fragment {
                         }
                     });
                 }
+            }
+
+            if (getView() != null) {
+                RangeSlider rangeSlider_VideoDuration = getView().findViewById(R.id.rangeSlider_VideoDuration);
+                float fMaxSeconds = globalClass.glMaxVideoDurationMS / 1000.0f;
+                rangeSlider_VideoDuration.setValueTo(fMaxSeconds);
+                rangeSlider_VideoDuration.setValues(0.0F, fMaxSeconds);
+                rangeSlider_VideoDuration.setLabelFormatter(new LabelFormatter() {
+                    @NonNull
+                    @Override
+                    public String getFormattedValue(float value) {
+                        long lHours = TimeUnit.SECONDS.toHours((long) value);
+                        long lMinutes = TimeUnit.SECONDS.toMinutes((long) value) - lHours * 60;
+                        long lSeconds = (long) (value - lHours * 3600 - lMinutes * 60);
+                        String sTime;
+                        if(lHours == 0){
+                            sTime = String.format(Locale.getDefault(),"%d:%02d", lMinutes, lSeconds);
+                        } else {
+                            sTime = String.format(Locale.getDefault(),"%d:%02d:%02d", lHours, lMinutes, lSeconds);
+                        }
+                        return sTime;
+                    }
+                });
             }
         }
 

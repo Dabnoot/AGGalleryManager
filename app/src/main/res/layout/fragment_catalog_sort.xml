@@ -29,21 +29,59 @@
             android:id="@+id/textView_labelTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
+            android:layout_marginTop="5dp"
             android:text="Sort and Filter"
-            android:textSize="28sp"
-            android:layout_centerHorizontal="true"
-            />
+            android:textSize="24sp"
+            android:layout_centerHorizontal="true" />
+
+        <TextView
+            android:id="@+id/textView_labelSortBy"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:text="Sort by:"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:textSize="20sp"
+            android:layout_below="@+id/textView_labelTitle" />
+
+
+        <Spinner
+            android:id="@+id/spinner_SortBy"
+            android:layout_height="wrap_content"
+            android:layout_width="wrap_content"
+            android:layout_toEndOf="@id/textView_labelSortBy"
+            android:layout_alignBottom="@id/textView_labelSortBy"/>
+
+        <ImageButton
+            android:id="@+id/imageButton_SortOrder"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginEnd="10dp"
+            android:layout_alignParentEnd="true"
+            android:backgroundTint="@color/colorFragmentBackgroundHighlight"
+            android:src="@drawable/baseline_sort_ascending_white_18dp"
+            android:title="sort_order" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@color/colorTextColor"
+            android:layout_below="@id/imageButton_SortOrder"/>
+
 
         <TextView
             android:id="@+id/textView_labelKeyWords"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:text="Filter keywords:"
             android:textSize="20sp"
-            android:layout_below="@+id/textView_labelTitle" />
+            android:layout_below="@+id/textView_labelSortBy" />
 
         <EditText
             android:id="@+id/editText_Keywords"
@@ -65,110 +103,119 @@
             android:textSize="20sp"
             android:layout_below="@+id/editText_Keywords"/>
 
-        <RelativeLayout
-            android:id="@+id/relativeLayout_SearchFields"
+        <LinearLayout
+            android:id="@+id/linearLayout_SearchFields"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:layout_below="@+id/textView_labelFilterFields">
 
-            <RelativeLayout
-                android:id="@+id/relativeLayout_FilterBy1"
+            <LinearLayout
+                android:id="@+id/linearLayout_FilterBy1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
                 <CheckBox
                     android:id="@+id/checkBox_FilterTitle"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:text="Title"
                     android:textColor="@color/colorTextColor"/>
 
                 <CheckBox
                     android:id="@+id/checkBox_FilterArtist"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:text="Artist"
                     android:padding="0dp"
-                    android:layout_below="@+id/checkBox_FilterTitle"
                     android:textColor="@color/colorTextColor"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/relativeLayout_FilterBy2"
+
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/linearLayout_FilterBy2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:layout_toEndOf="@+id/relativeLayout_FilterBy1">
+                android:orientation="vertical">
+
                 <CheckBox
                     android:id="@+id/checkBox_FilterCharacters"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:text="Characters"
                     android:textColor="@color/colorTextColor"/>
 
                 <CheckBox
                     android:id="@+id/checkBox_FilterParodies"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:text="Parodies"
-                    android:padding="0dp"
-                    android:layout_below="@+id/checkBox_FilterCharacters"
                     android:textColor="@color/colorTextColor"/>
-            </RelativeLayout>
-            <RelativeLayout
-                android:id="@+id/relativeLayout_FilterBy3"
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/linearLayout_FilterBy3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:layout_toEndOf="@+id/relativeLayout_FilterBy2">
+                android:orientation="vertical">
+
                 <CheckBox
                     android:id="@+id/checkBox_FilterWebSource"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="30dp"
                     android:text="Web Source"
                     android:textColor="@color/colorTextColor"/>
 
                 <CheckBox
-                    android:id="@+id/checkBox_FilterFileNameItemID"
+                    android:id="@+id/checkBox_FilterFolderSource"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Filename or Item ID"
-                    android:padding="0dp"
-                    android:layout_below="@+id/checkBox_FilterWebSource"
+                    android:layout_height="30dp"
+                    android:text="Folder Source"
                     android:textColor="@color/colorTextColor"/>
-            </RelativeLayout>
 
-        </RelativeLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@color/colorTextColor"
+            android:layout_below="@id/linearLayout_SearchFields"/>
 
         <RelativeLayout
             android:id="@+id/relativeLayout_VideoFilters"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/relativeLayout_SearchFields">
+            android:layout_below="@id/linearLayout_SearchFields">
 
             <TextView
-                android:id="@+id/textView_labelVideoResolution"
+                android:id="@+id/textView_labelResolution"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:text="Video resolution:"
+                android:text="Resolution:"
                 android:textSize="20sp"/>
 
             <Spinner
-                android:id="@+id/spinner_VideoResolution"
+                android:id="@+id/spinner_Resolution"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/textView_labelVideoResolution"
-                android:layout_alignBottom="@+id/textView_labelVideoResolution" />
-
-
+                android:layout_toEndOf="@id/textView_labelResolution"
+                android:layout_alignBottom="@+id/textView_labelResolution" />
 
             <TextView
                 android:id="@+id/textView_labelVideoDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:layout_below="@id/textView_labelVideoResolution"
+                android:layout_below="@id/textView_labelResolution"
                 android:text="Video duration:"
                 android:textSize="20sp"/>
 

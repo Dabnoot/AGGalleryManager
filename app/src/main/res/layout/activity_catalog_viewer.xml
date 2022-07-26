@@ -76,7 +76,7 @@
 
     <FrameLayout
         android:id="@+id/fragment_Catalog_Sort"
-        android:layout_width="600dp"
+        android:layout_width="700dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:clickable="true"

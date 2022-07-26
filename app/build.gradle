@@ -71,4 +71,7 @@ dependencies {
     //For adding recently-used tags:
     implementation 'co.lujun:androidtagview:1.1.7'
 
+    //For slider on sort/filter fragment:
+    implementation 'com.google.android.material:material:1.2.0-alpha05'
+
 }

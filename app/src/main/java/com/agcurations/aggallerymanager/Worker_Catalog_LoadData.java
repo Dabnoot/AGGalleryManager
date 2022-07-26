@@ -334,6 +334,10 @@ public class Worker_Catalog_LoadData extends Worker {
                     ci = GlobalClass.ConvertStringToCatalogItem(sLine);
                     tmCatalogItems.put(ci.sItemID, ci);
 
+                    if(ci.lDuration_Milliseconds > globalClass.glMaxVideoDurationMS){
+                        globalClass.glMaxVideoDurationMS = ci.lDuration_Milliseconds; //For the filter range slider.
+                    }
+
                     // read next line
                     sLine = brReader.readLine();
                 }
