@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -62,8 +63,10 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //Apply a filter if requested - build a string out of the records contents, and if a
             //  filter is to be applied, check for a match. If no match, don't add the record to
             //  the TreeMap destined for the RecyclerView:
-            boolean bIsFilterMatch = true;
+            boolean bFilterMatchApplicable = false;
+            boolean bIsFilterMatch = false;
             if(!globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].equals("")) {
+                bFilterMatchApplicable = true;
                 String sFilterText_LowerCase = globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
                 String sKey_RecordText;
 
@@ -72,8 +75,20 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 sKey_RecordText = globalClass.getCatalogRecordSearchString(entry.getValue());
                 sKey_RecordText = sKey_RecordText.toLowerCase();
 
-                if (!sKey_RecordText.contains(sFilterText_LowerCase)) {
-                    bIsFilterMatch = false;
+                if (sKey_RecordText.contains(sFilterText_LowerCase)) {
+                    bIsFilterMatch = true;
+                }
+            }
+
+            boolean bTagMatchApplicable = false;
+            boolean bTagsMatch = false;
+            //Check to see if the user wants to filter by tag:
+            if(globalClass.galtsiCatalogViewerFilterTags != null){
+                bTagMatchApplicable = true;
+                if(globalClass.galtsiCatalogViewerFilterTags.get(globalClass.giSelectedCatalogMediaCategory).size() > 0){
+                    if(entry.getValue().aliTags.containsAll(globalClass.galtsiCatalogViewerFilterTags.get(globalClass.giSelectedCatalogMediaCategory))){
+                        bTagsMatch = true;
+                    }
                 }
             }
 
@@ -104,9 +119,25 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 }
             }
 
-            if(bIsFilterMatch && !bIsRestricted){
-                treeMapPreSort.put(sKey, entry.getValue());
+            if(!bIsRestricted){
+                boolean bIsMatch = false;
+                if(bFilterMatchApplicable && bTagMatchApplicable){
+                    if(bIsFilterMatch && bTagsMatch){
+                        bIsMatch = true;
+                    }
+                } else if (bFilterMatchApplicable && bIsFilterMatch){
+                    bIsMatch = true;
+                } else if (bTagMatchApplicable && bTagsMatch){
+                    bIsMatch = true;
+                } else if (!bFilterMatchApplicable && !bTagMatchApplicable){
+                    bIsMatch = true;
+                }
+                if(bIsMatch){
+                    treeMapPreSort.put(sKey, entry.getValue());
+                }
+
             }
+
 
             iProgressNumerator++;
 

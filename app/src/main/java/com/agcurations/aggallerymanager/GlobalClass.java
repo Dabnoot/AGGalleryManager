@@ -41,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
@@ -100,6 +101,7 @@ public class GlobalClass extends Application {
     public boolean[] gbCatalogViewerSortAscending = {true, true, true};
     public boolean[] gbCatalogViewerFiltered = {false, false, false};
     public String[] gsCatalogViewerFilterText = {"", "", ""};
+    public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     public boolean gbCatalogViewerTagsRestrictionsOn;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
     //End catalog viewer variables.
@@ -487,6 +489,7 @@ public class GlobalClass extends Application {
         ci.dDatetime_Import = Double.parseDouble(JumbleStorageText(sRecord[5]));                //Date of import. Used for sorting if desired
         ci.dDatetime_Last_Viewed_by_User = Double.parseDouble(JumbleStorageText(sRecord[6]));   //Date of last read by user. Used for sorting if desired
         ci.sTags = JumbleStorageText(sRecord[7]);                                       //Tags given to the video, image, or comic
+        ci.aliTags = getTagIDsFromTagIDString(JumbleStorageText(sRecord[7]));           //Should mirror sTags.
         ci.iHeight = Integer.parseInt(JumbleStorageText(sRecord[8]));                   //Video or image dimension/resolution
         ci.iWidth = Integer.parseInt(JumbleStorageText(sRecord[9]));                    //Video or image dimension/resolution
         ci.lDuration_Milliseconds = Long.parseLong(JumbleStorageText(sRecord[10]));     //Duration of video in milliseconds
@@ -1180,7 +1183,7 @@ public class GlobalClass extends Application {
         return sTagTexts;
     }
 
-    public String getTagTextFromID(Integer iTagID, Integer iMediaCategory){
+    public String getTagTextFromID(Integer iTagID, int iMediaCategory){
         String sTagText = "[Tag ID " + iTagID + " not found]";
 
         //todo: instead of looping through items, use TreeMap.getValue or TreeMap.getKey if it exists.
@@ -1194,6 +1197,22 @@ public class GlobalClass extends Application {
 
 
         return sTagText;
+    }
+
+    public static ArrayList<Integer> getTagIDsFromTagIDString(String sTagIDs){
+        ArrayList<Integer> aliTagIDs = new ArrayList<>();
+        String[] sTemp = sTagIDs.split(",");
+
+        if(sTemp.length == 1 && sTemp[0] == ""){
+            return aliTagIDs;
+        }
+
+        for(String sTag: sTemp){
+            int iTagID = Integer.parseInt(sTag);
+            aliTagIDs.add(iTagID);
+        }
+
+        return  aliTagIDs;
     }
 
     public boolean TagIDExists(Integer iTagID, int iMediaCategory){

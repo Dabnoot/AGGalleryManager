@@ -11,6 +11,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iMediaCategory = -1;                       //Video, image, or comic.
     public String sItemID = "";                           //Video, image, comic id
     public String sTags = "";                             //Tags given to the video, image, or comic
+    public ArrayList<Integer> aliTags;                    //Tags passed around as integer to increase filter speed. Todo: Look to replace sTags.
     public String sFilename = "";                         //Video or image filename, comic thumbnail image filename
     public String sFolder_Name = "";                      //Name of the folder holding the video, image, or comic pages
     public String sCast = "";                             //For videos and images

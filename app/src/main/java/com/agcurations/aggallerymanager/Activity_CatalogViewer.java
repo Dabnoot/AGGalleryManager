@@ -4,6 +4,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -45,6 +48,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.TreeMap;
 
 public class Activity_CatalogViewer extends AppCompatActivity {
@@ -70,6 +74,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     boolean gbWriteApplicationLog = false;
     String gsApplicationLogFilePath = "";
+
+    private DrawerLayout gDrawerLayout;
+    private Fragment_CatalogSort gFragment_CatalogSort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +153,28 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         gProgressBar_CatalogSortProgress = findViewById(R.id.progressBar_CatalogSortProgress);
         gTextView_CatalogSortProgressBarText = findViewById(R.id.textView_CatalogSortProgressBarText);
 
+
+        //Populate the CatalogSort fragment:
+        if(gFragment_CatalogSort == null) {
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            gFragment_CatalogSort = new Fragment_CatalogSort();
+
+            Bundle args = new Bundle();
+            args.putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, globalClass.giSelectedCatalogMediaCategory);
+            gFragment_CatalogSort.setArguments(args);
+            fragmentTransaction.replace(R.id.fragment_Catalog_Sort, gFragment_CatalogSort);
+            fragmentTransaction.commit();
+        }
+
+        gDrawerLayout = findViewById(R.id.drawer_layout);
+        gDrawerLayout.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
+        gDrawerLayout.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
+            @Override
+            public void run() {
+                closeDrawer();
+            }
+        }, 1500);
+
         ApplicationLogWriter("OnCreate End");
 
         //See additional initialization in onCreateOptionsMenu().
@@ -160,7 +189,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
                 fwLogFile.close();
             } catch (Exception e) {
-                Log.d("Log FileWriter", e.getMessage());
+                sMessage = e.getMessage() + "";
+                Log.d("Log FileWriter", sMessage);
             }
         }
 
@@ -176,14 +206,14 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     public void notifyZeroCatalogItemsIfApplicable(){
 
         //Update TextView to show 0 items if applicable:
-        TextView tvCatalogStatus = findViewById(R.id.textView_CatalogStatus);
+        TextView textView_CatalogStatus = findViewById(R.id.textView_CatalogStatus);
         try {
             if (globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).size() == 0) {
-                tvCatalogStatus.setVisibility(View.VISIBLE);
+                textView_CatalogStatus.setVisibility(View.VISIBLE);
                 String s = "Catalog contains 0 items.";
-                tvCatalogStatus.setText(s);
+                textView_CatalogStatus.setText(s);
             } else {
-                tvCatalogStatus.setVisibility(View.INVISIBLE);
+                textView_CatalogStatus.setVisibility(View.INVISIBLE);
             }
         }catch (Exception e){
             ApplicationLogWriter(e.getMessage());
@@ -656,6 +686,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             ItemClass_CatalogItem ci;
             ci = treeMap.get(mapKeys[position]);
             final ItemClass_CatalogItem ci_final = ci;
+            assert ci_final != null;
 
             String sItemName = "";
 
@@ -825,7 +856,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             }
                             //Assign the existing file to be the new thumbnail file:
                             if(tmSortByFileName.size() > 0) {
-                                ci.sFilename = GlobalClass.JumbleFileName(tmSortByFileName.firstEntry().getKey()); //re-jumble to get actual file name.
+                                ci.sFilename = GlobalClass.JumbleFileName(Objects.requireNonNull(tmSortByFileName.firstEntry()).getKey()); //re-jumble to get actual file name.
                                 bFoundMissingComicThumbnail = true;
                             }
                         }
@@ -853,10 +884,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         sItemName = GlobalClass.JumbleFileName(sTemp);
                         if(!ci.sTitle.equals("")){
                             sItemName = ci.sTitle;
-                            sThumbnailText = sItemName;
-                        } else {
-                            sThumbnailText = sItemName;
                         }
+                        sThumbnailText = sItemName;
                         if(!ci.sDuration_Text.equals("")){
                             sThumbnailText = sThumbnailText  + ", " + ci.sDuration_Text;
                         }
@@ -897,7 +926,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                     } else if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         StartComicViewerActivity(ci_final);
-
                     }
                 }
             });
@@ -944,13 +972,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             }
 
-            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                holder.btnDelete.setVisibility(View.INVISIBLE);
-            } else {
-                holder.btnDelete.setVisibility(View.VISIBLE);
-            }
-
             if(holder.btnDelete != null) {
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                    holder.btnDelete.setVisibility(View.INVISIBLE);
+                } else {
+                    holder.btnDelete.setVisibility(View.VISIBLE);
+                }
+
                 final String sItemNameToDelete = sItemName;
                 holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -1051,6 +1079,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         startActivity(intentComicViewer);
     }
 
+
+    public void closeDrawer(){
+        gDrawerLayout.closeDrawer(GravityCompat.START);
+    }
 
     //=====================================================================================
     //===== Obfuscation Code ==============================================================

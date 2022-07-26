@@ -90,6 +90,7 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 //Get tags and record to catalog item:
                 gciCatalogItem.sTags = gsNewTagIDs;
 
+
                 gciCatalogItem.sComicArtists = editText_Artists.getText().toString();
                 gciCatalogItem.sComicGroups = editText_Groups.getText().toString();
                 gciCatalogItem.sComicLanguages = editText_Languages.getText().toString();
