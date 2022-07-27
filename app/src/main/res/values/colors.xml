@@ -2,8 +2,7 @@
 <resources>
     <color name="colorPrimary">#9966ff</color>
     <color name="colorPrimaryDark">#9933ff</color>
-    <color name="colorAccent">#03DAC5</color>
-
+    <color name="colorAccent">#efefef</color>
 
     <color name="colorStatusBar">#282668</color>
     <color name="colorActionBar">#333087</color>
