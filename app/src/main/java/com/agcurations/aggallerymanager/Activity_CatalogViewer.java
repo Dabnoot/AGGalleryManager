@@ -240,100 +240,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
         }
 
-        // Initialise menu item search bar with id and take its object
-        //https://www.geeksforgeeks.org/android-searchview-with-example/
-        MenuItem searchViewItem = menu.findItem(R.id.search_bar);
-        final SearchView searchView = (SearchView) searchViewItem.getActionView();
-
-
-        if(!globalClass.ObfuscationOn) {
-            //If not obfuscated, and there is an active search filter, apply the text and show the filter:
-            if(globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory]){
-                searchView.setQuery(globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory], false);
-                searchView.setIconified(false);
-                searchView.clearFocus();
-            }
-        }
-
-
-
-        // attach setOnQueryTextListener to search view defined above
-        searchView.setOnQueryTextListener(
-                new SearchView.OnQueryTextListener() {
-                    // Override onQueryTextSubmit method
-                    @Override
-                    public boolean onQueryTextSubmit(String sQuery)
-                    {
-                        globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory] = sQuery;
-                        populate_RecyclerViewCatalogItems();
-                        globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory] = true;
-                        searchView.clearFocus();
-                        return false;
-                    }
-                    @Override
-                    public boolean onQueryTextChange(String sQuery) {
-                        return false;
-                    }
-                });
-        //Set a listener for the "cancel search" button:
-        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
-            @Override
-            public boolean onClose() {
-                globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory] = "";
-                globalClass.gbCatalogViewerFiltered[globalClass.giSelectedCatalogMediaCategory] = false;
-                populate_RecyclerViewCatalogItems();
-                return false;
-            }
-        });
-
-        //Configure the 'Sort by' selection spinner:
-        MenuItem miSpinnerSort = menu.findItem(R.id.spinner_sort);
-        gspSpinnerSort =(Spinner) miSpinnerSort.getActionView();
-        //wrap the items in the Adapter
-        ArrayAdapter<String> adapter=new ArrayAdapter<>(this, R.layout.catalog_action_bar_spinner_item, gsSpinnerItems);
-        //assign adapter to the Spinner
-        gspSpinnerSort.setAdapter(adapter);
-
-        //Initialize the spinner position:
-        //This is here because when onResume hits when the activity is first created,
-        //  the Spinner does not yet exist.
-        if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
-            gspSpinnerSort.setSelection(SPINNER_ITEM_IMPORT_DATE);
-        } else if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
-            gspSpinnerSort.setSelection(SPINNER_ITEM_LAST_VIEWED_DATE);
-        }
-
-        if(globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory]){
-            SetSortIconToAscending();
-        } else {
-            SetSortIconToDescending();
-        }
-
-        //Continue with configuring the spinner:
-        gspSpinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                if(position == SPINNER_ITEM_IMPORT_DATE) {
-                    //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
-                    globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-                } else if(position == SPINNER_ITEM_LAST_VIEWED_DATE) {
-                    //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
-                    globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_LAST_VIEWED;
-                }
-                //Record the user's selected sort item:
-                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                sharedPreferences.edit()
-                        .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
-                        globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory])
-                        .apply();
-
-                populate_RecyclerViewCatalogItems();
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-                // no need to code here
-            }
-        });
+        populate_RecyclerViewCatalogItems();
 
         return super.onCreateOptionsMenu(menu);
     }
@@ -438,24 +345,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 //Repopulate the catalog list:
                 populate_RecyclerViewCatalogItems();
             }
-
-        } else if(itemID == R.id.icon_sort_order){
-            if(globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory]) {
-                SetSortIconToDescending();
-            } else {
-                SetSortIconToAscending();
-            }
-            //Record the user's selected sort order in preferences:
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            sharedPreferences.edit()
-                    .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
-                            globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory])
-                    .apply();
-
-            populate_RecyclerViewCatalogItems();
-
-        } else if(itemID == R.id.menu_FlipView){
-            FlipObfuscation();
 
         } else {
             return super.onOptionsItemSelected(item);
@@ -570,18 +459,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     private void SetRestrictedIconToUnlock(){
         MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
         item.setIcon(R.drawable.baseline_lock_open_white_18dp);
-    }
-
-    private void SetSortIconToAscending(){
-        MenuItem item = ActivityMenu.findItem(R.id.icon_sort_order);
-        item.setIcon(R.drawable.baseline_sort_ascending_white_18dp);
-        globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] = true;
-    }
-
-    private void SetSortIconToDescending(){
-        MenuItem item = ActivityMenu.findItem(R.id.icon_sort_order);
-        item.setIcon(R.drawable.baseline_sort_descending_white_18dp);
-        globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory] = false;
     }
 
     //=====================================================================================

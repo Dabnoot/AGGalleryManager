@@ -10,40 +10,4 @@
         app:showAsAction="always"
         />
 
-    <item
-        android:id="@+id/label_spinner"
-        android:title="Sort by:"
-        android:actionLayout="@layout/catalog_action_bar_spinner_label"
-        android:orderInCategory="9"
-        app:showAsAction="always">
-    </item>
-
-    <item
-        android:id="@+id/spinner_sort"
-        android:title="Sort"
-        android:visible="true"
-        android:orderInCategory="10"
-        app:showAsAction="always"
-        app:actionViewClass="android.widget.Spinner" />
-
-    <item
-        android:id="@+id/icon_sort_order"
-        android:title="sort_order"
-        android:icon="@drawable/baseline_sort_ascending_white_18dp"
-        android:orderInCategory="15"
-        app:showAsAction="always"
-        />
-
-    <item
-        android:id="@+id/search_bar"
-        android:title="@string/search"
-        android:orderInCategory="20"
-        app:actionViewClass="androidx.appcompat.widget.SearchView"
-        app:showAsAction="always|withText"
-        />
-
-    <item android:id="@+id/menu_FlipView"
-        android:title="@string/flip_view" />
-
-
 </menu>

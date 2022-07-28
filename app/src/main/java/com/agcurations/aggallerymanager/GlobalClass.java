@@ -99,7 +99,22 @@ public class GlobalClass extends Application {
     public static final String[] gsCatalogViewerPreferenceNameSortBy = {"VIDEOS_SORT_BY", "IMAGES_SORT_BY", "COMICS_SORT_BY"};
     public static final String[] gsCatalogViewerPreferenceNameSortAscending = {"VIDEOS_SORT_ASCENDING", "IMAGES_SORT_ASCENDING", "COMICS_SORT_ASCENDING"};
     public boolean[] gbCatalogViewerSortAscending = {true, true, true};
-    public boolean[] gbCatalogViewerFiltered = {false, false, false};
+    //Search and Filter Variables:
+    public static final int SEARCH_IN_NO_SELECTION = 0;
+    public static final int SEARCH_IN_TITLE = 1;
+    public static final int SEARCH_IN_ARTIST = 2;
+    public static final int SEARCH_IN_CHARACTERS = 3;
+    public static final int SEARCH_IN_PARODIES = 4;
+    public static final int SEARCH_IN_ITEMID = 5;
+    public int[] giCatalogViewerSearchInSelection = {SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION};
+    public String[] gsCatalogViewerSearchInText = {"", "", ""};
+    public static final int FILTER_BY_NO_SELECTION = 0;
+    public static final int FILTER_BY_WEBSOURCE = 1;
+    public static final int FILTER_BY_FOLDERSOURCE = 2;
+    public static final int FILTER_BY_NOTAGS = 3;
+    public static final int FILTER_BY_ITEMPROBLEM = 4;
+    public int[] giCatalogViewerFilterBySelection = {SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION};
+    public boolean[] gbCatalogViewerFilter = {false, false, false};
     public String[] gsCatalogViewerFilterText = {"", "", ""};
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     public boolean gbCatalogViewerTagsRestrictionsOn;
@@ -175,7 +190,6 @@ public class GlobalClass extends Application {
 
     public static final String EXTRA_CALLER_ID = "com.agcurations.aggallermanager.string_caller_id";
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
-
 
     long glMaxVideoDurationMS = 0; //For the filter range slider.
 

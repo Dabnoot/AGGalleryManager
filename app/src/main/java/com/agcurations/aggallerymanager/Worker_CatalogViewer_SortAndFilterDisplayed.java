@@ -63,20 +63,37 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //Apply a filter if requested - build a string out of the records contents, and if a
             //  filter is to be applied, check for a match. If no match, don't add the record to
             //  the TreeMap destined for the RecyclerView:
-            boolean bFilterMatchApplicable = false;
-            boolean bIsFilterMatch = false;
-            if(!globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].equals("")) {
-                bFilterMatchApplicable = true;
-                String sFilterText_LowerCase = globalClass.gsCatalogViewerFilterText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
-                String sKey_RecordText;
+            boolean bSearchInMatchApplicable = false;
+            boolean bIsSearchInMatch = false;
+            if(globalClass.giCatalogViewerSearchInSelection[globalClass.giSelectedCatalogMediaCategory] != GlobalClass.SEARCH_IN_NO_SELECTION) {
+                bSearchInMatchApplicable = true;
+
+                String sSearchInText_LowerCase = globalClass.gsCatalogViewerSearchInText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
+                String sKey_RecordText = "";
+                switch (globalClass.giCatalogViewerSearchInSelection[globalClass.giSelectedCatalogMediaCategory]) {
+                    case GlobalClass.SEARCH_IN_TITLE:
+                        sKey_RecordText = entry.getValue().sTitle;
+                        break;
+                    case GlobalClass.SEARCH_IN_ARTIST:
+                        sKey_RecordText = entry.getValue().sComicArtists;
+                        break;
+                    case GlobalClass.SEARCH_IN_CHARACTERS:
+                        sKey_RecordText = entry.getValue().sComicCharacters;
+                        break;
+                    case GlobalClass.SEARCH_IN_PARODIES:
+                        sKey_RecordText = entry.getValue().sComicParodies;
+                        break;
+                    case GlobalClass.SEARCH_IN_ITEMID:
+                        sKey_RecordText = entry.getValue().sItemID;
+                        break;
+                }
+                sKey_RecordText = sKey_RecordText.toLowerCase();
 
                 //Append all of the field data and search the resulting
                 //  string for a filter match:
-                sKey_RecordText = globalClass.getCatalogRecordSearchString(entry.getValue());
-                sKey_RecordText = sKey_RecordText.toLowerCase();
 
-                if (sKey_RecordText.contains(sFilterText_LowerCase)) {
-                    bIsFilterMatch = true;
+                if (sKey_RecordText.contains(sSearchInText_LowerCase)) {
+                    bIsSearchInMatch = true;
                 }
             }
 
@@ -84,12 +101,13 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             boolean bTagsMatch = false;
             //Check to see if the user wants to filter by tag:
             if(globalClass.galtsiCatalogViewerFilterTags != null){
-                bTagMatchApplicable = true;
                 if(globalClass.galtsiCatalogViewerFilterTags.get(globalClass.giSelectedCatalogMediaCategory).size() > 0){
+                    bTagMatchApplicable = true;
                     if(entry.getValue().aliTags.containsAll(globalClass.galtsiCatalogViewerFilterTags.get(globalClass.giSelectedCatalogMediaCategory))){
                         bTagsMatch = true;
                     }
                 }
+
             }
 
             //Check to see if the record needs to be skipped due to restriction settings:
@@ -121,15 +139,15 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
             if(!bIsRestricted){
                 boolean bIsMatch = false;
-                if(bFilterMatchApplicable && bTagMatchApplicable){
-                    if(bIsFilterMatch && bTagsMatch){
+                if(bSearchInMatchApplicable && bTagMatchApplicable){
+                    if(bIsSearchInMatch && bTagsMatch){
                         bIsMatch = true;
                     }
-                } else if (bFilterMatchApplicable && bIsFilterMatch){
+                } else if (bSearchInMatchApplicable && bIsSearchInMatch){
                     bIsMatch = true;
                 } else if (bTagMatchApplicable && bTagsMatch){
                     bIsMatch = true;
-                } else if (!bFilterMatchApplicable && !bTagMatchApplicable){
+                } else if (!bSearchInMatchApplicable && !bTagMatchApplicable){
                     bIsMatch = true;
                 }
                 if(bIsMatch){
