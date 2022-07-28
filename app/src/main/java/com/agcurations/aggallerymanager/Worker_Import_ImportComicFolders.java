@@ -81,7 +81,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 if(!fileItem.sTitle.equals("")){
                     sComicName = fileItem.sTitle;
                 }
-                String sSource = "Folder Import";
+                String sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
                 if(!fileItem.sURL.equals("")){
                     sSource = fileItem.sURL;
                 }

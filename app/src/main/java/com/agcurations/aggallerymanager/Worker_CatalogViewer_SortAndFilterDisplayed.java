@@ -60,13 +60,13 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             sKey = sKey + entry.getValue().sItemID;
 
 
-            //Apply a filter if requested - build a string out of the records contents, and if a
-            //  filter is to be applied, check for a match. If no match, don't add the record to
+            //Apply a search if requested - build a string out of the records contents, and if a
+            //  search is to be applied, check for a match. If no match, don't add the record to
             //  the TreeMap destined for the RecyclerView:
-            boolean bSearchInMatchApplicable = false;
-            boolean bIsSearchInMatch = false;
+            boolean bSearchMatchApplicable = false;
+            boolean bSearchMatch = false;
             if(globalClass.giCatalogViewerSearchInSelection[globalClass.giSelectedCatalogMediaCategory] != GlobalClass.SEARCH_IN_NO_SELECTION) {
-                bSearchInMatchApplicable = true;
+                bSearchMatchApplicable = true;
 
                 String sSearchInText_LowerCase = globalClass.gsCatalogViewerSearchInText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
                 String sKey_RecordText = "";
@@ -93,8 +93,44 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 //  string for a filter match:
 
                 if (sKey_RecordText.contains(sSearchInText_LowerCase)) {
-                    bIsSearchInMatch = true;
+                    bSearchMatch = true;
                 }
+            }
+
+            //Apply a filter if requested, and if a
+            //  filter is to be applied, check for a match. If no match, don't add the record to
+            //  the TreeMap destined for the RecyclerView:
+            boolean bFilterByApplicable = false;
+            boolean bIsFilterByMatch = false;
+            if(globalClass.giCatalogViewerFilterBySelection[globalClass.giSelectedCatalogMediaCategory] != GlobalClass.FILTER_BY_NO_SELECTION) {
+                bFilterByApplicable = true;
+
+                switch (globalClass.giCatalogViewerFilterBySelection[globalClass.giSelectedCatalogMediaCategory]) {
+                    case GlobalClass.FILTER_BY_WEBSOURCE:
+                        if (entry.getValue().sSource.startsWith("http")) {
+                            bIsFilterByMatch = true;
+                        }
+                        break;
+                    case GlobalClass.FILTER_BY_FOLDERSOURCE:
+                        if (entry.getValue().sSource.equals("") ||
+                                entry.getValue().sSource.equals(ItemClass_CatalogItem.FOLDER_SOURCE)) {
+                            bIsFilterByMatch = true;
+                        }
+                        break;
+                    case GlobalClass.FILTER_BY_NOTAGS:
+                        if (entry.getValue().aliTags.size() == 0) {
+                            bIsFilterByMatch = true;
+                        }
+                        break;
+                    case GlobalClass.FILTER_BY_ITEMPROBLEM:
+                        if ((entry.getValue().iAllVideoSegmentFilesDetected == ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE)
+                            || (!entry.getValue().sComic_Missing_Pages.equals(""))) {
+                            bIsFilterByMatch = true;
+                        }
+                        break;
+
+                }
+
             }
 
             boolean bTagMatchApplicable = false;
@@ -138,18 +174,18 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             }
 
             if(!bIsRestricted){
-                boolean bIsMatch = false;
-                if(bSearchInMatchApplicable && bTagMatchApplicable){
-                    if(bIsSearchInMatch && bTagsMatch){
-                        bIsMatch = true;
-                    }
-                } else if (bSearchInMatchApplicable && bIsSearchInMatch){
-                    bIsMatch = true;
-                } else if (bTagMatchApplicable && bTagsMatch){
-                    bIsMatch = true;
-                } else if (!bSearchInMatchApplicable && !bTagMatchApplicable){
-                    bIsMatch = true;
+                boolean bIsMatch = true;
+
+                if(bSearchMatchApplicable){
+                    bIsMatch = bSearchMatch;
                 }
+                if(bFilterByApplicable){
+                    bIsMatch = bIsMatch && bIsFilterByMatch;
+                }
+                if(bTagMatchApplicable){
+                    bIsMatch = bIsMatch && bTagsMatch;
+                }
+
                 if(bIsMatch){
                     treeMapPreSort.put(sKey, entry.getValue());
                 }

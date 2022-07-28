@@ -53,10 +53,6 @@ public class Worker_Import_ImportFiles extends Worker {
         long lProgressDenominator;
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
-        long lLoopBytesRead;
-
-
-        ContentResolver contentResolver = getApplicationContext().getContentResolver();
 
         ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
 
@@ -68,11 +64,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
         String sLogLine;
 
-        boolean bCopyViaWorker = true;
-
         StringBuilder sbJobFileRecords = new StringBuilder();
-
-        ArrayList<String> alsVerifiedDestinationFolders = new ArrayList<>(); //Used to avoid re-confirm and additional messaging.
 
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
@@ -183,6 +175,7 @@ public class Worker_Import_ImportFiles extends Worker {
                     ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
                 }
                 ciNew.sFolder_Name = fileItem.sDestinationFolder;
+                ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;

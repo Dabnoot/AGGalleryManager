@@ -39,6 +39,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iFile_Count = 0;                           //Files included with the comic. Can be used for integrity check.
                                                           //  Also used for post-processing of M3U8 video file download completion check for post-processing.
     public boolean bComic_Online_Data_Acquired = false;   //Typically used to gather tag data from an online comic source, if automatic.
+    public static final String FOLDER_SOURCE = "Folder Import";
     public String sSource = "";                           //Website, if relevant. Originally intended for comics.
     //Todo: Above sSource, how is it being used? Can I rename it to a string holding a URL? ComicURL?
     public String sVideoLink = "";                        //Link to the .mp4, .m3u8, etc, if it is a video download.
