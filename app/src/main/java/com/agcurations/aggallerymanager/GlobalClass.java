@@ -114,8 +114,21 @@ public class GlobalClass extends Application {
     public static final int FILTER_BY_NOTAGS = 3;
     public static final int FILTER_BY_ITEMPROBLEM = 4;
     public int[] giCatalogViewerFilterBySelection = {SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION};
-    public boolean[] gbCatalogViewerFilter = {false, false, false};
-    public String[] gsCatalogViewerFilterText = {"", "", ""};
+    //Variables for the Sort & Filter resolution/pagecount RangeSlider:
+    public TreeMap<Integer, Integer> gtmVideoResolutions;
+    public int giMinVideoResolutionSelected = -1;
+    public int giMaxVideoResolutionSelected = -1;
+    public int giMinImageMegaPixels = -1;
+    public int giMaxImageMegaPixels; //todo: carry float here.
+    public int giMinImageMegaPixelsSelected = -1;//todo: carry float here.
+    public int giMaxImageMegaPixelsSelected = -1;//todo: carry float here.
+    public int giMinComicPageCount = -1;
+    public int giMaxComicPageCount;
+    public int giMinComicPageCountSelected = -1;
+    public int giMaxComicPageCountSelected = -1;
+    public long glMaxVideoDurationMS = -1; //For the filter range slider.
+    public long glMinVideoDurationMSSelected = -1;
+    public long glMaxVideoDurationMSSelected = -1;
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     public boolean gbCatalogViewerTagsRestrictionsOn;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
@@ -191,7 +204,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_CALLER_ID = "com.agcurations.aggallermanager.string_caller_id";
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
 
-    long glMaxVideoDurationMS = 0; //For the filter range slider.
+
 
 
     //=====================================================================================

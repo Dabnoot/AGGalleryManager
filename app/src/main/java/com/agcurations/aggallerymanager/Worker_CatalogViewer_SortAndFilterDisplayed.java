@@ -47,6 +47,74 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         int iProgressBarValue;
 
         String sKey;
+
+        //Prepare resolution or page count filter bounds if necessary:
+        //Do bounds calcs before the for loop to reduce undue burden.
+        boolean bResolutionOrPageCountFilterApplicable = false;
+        boolean bVideoDurationFilterApplicable = false;
+        Integer iResMin = null;
+        Integer iResMax = null;
+        int iPageMin = 0;
+        int iPageMax = globalClass.giMaxComicPageCount;
+        long lDurationMin = Math.max(0, globalClass.glMinVideoDurationMSSelected);
+        long lDurationMax = globalClass.glMaxVideoDurationMSSelected;
+        switch (globalClass.giSelectedCatalogMediaCategory){
+            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+
+                if(globalClass.glMinVideoDurationMSSelected > -1 || globalClass.glMaxVideoDurationMSSelected > -1){
+                    bVideoDurationFilterApplicable = true;
+                    if(lDurationMax == -1){
+                        lDurationMax = globalClass.glMaxVideoDurationMS;
+                    }
+                }
+
+                if(globalClass.giMinVideoResolutionSelected == -1 && globalClass.giMaxVideoResolutionSelected == -1){
+                    break;
+                } else {
+                    bResolutionOrPageCountFilterApplicable = true;
+                    iResMin = Math.max(0, globalClass.giMinVideoResolutionSelected);
+                    iResMax = globalClass.giMaxVideoResolutionSelected;
+                    if(iResMax == -1){
+                        iResMax = globalClass.gtmVideoResolutions.size() - 1;
+                    }
+                    iResMin = globalClass.gtmVideoResolutions.get(iResMin);
+                    iResMax = globalClass.gtmVideoResolutions.get(iResMax);
+                    if(iResMin == null || iResMax == null){
+                        bResolutionOrPageCountFilterApplicable = false;
+                        break;
+                    }
+                }
+                break;
+            case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                if(globalClass.giMinImageMegaPixelsSelected == -1 && globalClass.giMaxImageMegaPixelsSelected == -1){
+                    break;
+                } else {
+                    bResolutionOrPageCountFilterApplicable = true;
+                    iResMin = Math.max(0, globalClass.giMinImageMegaPixelsSelected);
+                    iResMax = globalClass.giMaxImageMegaPixelsSelected;
+                    if(iResMax == -1){
+                        iResMax = globalClass.giMaxImageMegaPixels;
+                    }
+                }
+                break;
+            case GlobalClass.MEDIA_CATEGORY_COMICS:
+                if(globalClass.giMinComicPageCountSelected == -1 && globalClass.giMaxComicPageCountSelected == -1){
+                    break;
+                } else {
+                    bResolutionOrPageCountFilterApplicable = true;
+                    iPageMin = Math.max(0, globalClass.giMinComicPageCountSelected);
+                    iPageMax = globalClass.giMaxComicPageCountSelected;
+                    if(iPageMax == -1){
+                        iPageMax = globalClass.giMaxComicPageCount;
+                    }
+                }
+                break;
+        }
+
+
+
+
+
         for (Map.Entry<String, ItemClass_CatalogItem>
                 entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
             sKey = "";
@@ -133,6 +201,54 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
             }
 
+            //Filter on resolution or page count, as applicable:
+            boolean bResolutionOrPageCountMatch = false;
+            if(bResolutionOrPageCountFilterApplicable) {
+                switch (globalClass.giSelectedCatalogMediaCategory) {
+                    case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                        if (iResMin == null || iResMax == null) {
+                            bResolutionOrPageCountMatch = true;
+                            break;
+                        }
+                        if ((entry.getValue().iHeight >= iResMin)
+                                && entry.getValue().iHeight <= iResMax) {
+                            bResolutionOrPageCountMatch = true;
+                        }
+                        break;
+                    case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                        if (iResMin == null || iResMax == null) {
+                            bResolutionOrPageCountMatch = true;
+                            break;
+                        }
+                        int iHeight = entry.getValue().iHeight;
+                        int iWidth = entry.getValue().iWidth;
+                        int iMegaPixels = (iHeight * iWidth) / 1000000; //todo: carry float here.
+                        if ((iMegaPixels >= iResMin)
+                                && iMegaPixels <= iResMax) {
+                            bResolutionOrPageCountMatch = true;
+                        }
+                        break;
+                    case GlobalClass.MEDIA_CATEGORY_COMICS:
+                        int iPageCount = entry.getValue().iComicPages;
+                        if ((iPageCount >= iPageMin)
+                                && iPageCount <= iPageMax) {
+                            bResolutionOrPageCountMatch = true;
+                        }
+                        break;
+                }
+            }
+
+            //Filter on video duration, as applicable:
+            boolean bVideoDurationMatch = false;
+            if(bVideoDurationFilterApplicable){
+                long lVideoDuration = entry.getValue().lDuration_Milliseconds;
+                if((lVideoDuration >= lDurationMin)
+                        && lVideoDuration <= lDurationMax){
+                    bVideoDurationMatch = true;
+                }
+            }
+
+
             boolean bTagMatchApplicable = false;
             boolean bTagsMatch = false;
             //Check to see if the user wants to filter by tag:
@@ -181,6 +297,12 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 }
                 if(bFilterByApplicable){
                     bIsMatch = bIsMatch && bIsFilterByMatch;
+                }
+                if(bResolutionOrPageCountFilterApplicable){
+                    bIsMatch = bIsMatch && bResolutionOrPageCountMatch;
+                }
+                if(bVideoDurationFilterApplicable){
+                    bIsMatch = bIsMatch && bVideoDurationMatch;
                 }
                 if(bTagMatchApplicable){
                     bIsMatch = bIsMatch && bTagsMatch;

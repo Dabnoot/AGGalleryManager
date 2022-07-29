@@ -18,7 +18,9 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -214,6 +216,17 @@ public class Worker_Catalog_LoadData extends Worker {
             }
         }
 
+        //Configure video resolution options:
+        //Prepare to list possible item resolutions:
+        globalClass.gtmVideoResolutions = new TreeMap<>();
+        globalClass.gtmVideoResolutions.put(0,  240);
+        globalClass.gtmVideoResolutions.put(1,  360);
+        globalClass.gtmVideoResolutions.put(2,  480);
+        globalClass.gtmVideoResolutions.put(3,  720);
+        globalClass.gtmVideoResolutions.put(4, 1080);
+        globalClass.gtmVideoResolutions.put(5, 2160);
+
+
         //Read the catalog list files into memory:
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
@@ -334,8 +347,32 @@ public class Worker_Catalog_LoadData extends Worker {
                     ci = GlobalClass.ConvertStringToCatalogItem(sLine);
                     tmCatalogItems.put(ci.sItemID, ci);
 
+                    //Calculate amounts for use in the Sort/Filter capabilities of the comic viewer:
                     if(ci.lDuration_Milliseconds > globalClass.glMaxVideoDurationMS){
                         globalClass.glMaxVideoDurationMS = ci.lDuration_Milliseconds; //For the filter range slider.
+                    }
+                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+                        int iMegaPixels = (ci.iHeight * ci.iWidth) / 1000000;
+                        if(globalClass.giMinImageMegaPixels == -1){
+                            globalClass.giMinImageMegaPixels = iMegaPixels;
+                        }
+                        if(iMegaPixels < globalClass.giMinImageMegaPixels){
+                            globalClass.giMinImageMegaPixels = iMegaPixels;
+                        }
+                        if(iMegaPixels > globalClass.giMaxImageMegaPixels){
+                            globalClass.giMaxImageMegaPixels = iMegaPixels;
+                        }
+                    } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                        int iPageCount = ci.iComicPages;
+                        if(globalClass.giMinComicPageCount == -1){
+                            globalClass.giMinComicPageCount = iPageCount;
+                        }
+                        if (iPageCount < globalClass.giMinComicPageCount){
+                            globalClass.giMinComicPageCount = iPageCount;
+                        }
+                        if(iPageCount > globalClass.giMaxComicPageCount){
+                            globalClass.giMaxComicPageCount = iPageCount;
+                        }
                     }
 
                     // read next line

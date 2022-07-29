@@ -162,12 +162,11 @@
             android:textSize="20sp"
             android:layout_below="@+id/view_FilterResolutionSeparator"/>
 
-        <Spinner
-            android:id="@+id/spinner_Resolution"
+        <com.google.android.material.slider.RangeSlider
+            android:id="@+id/rangeSlider_Resolution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/textView_labelResolution"
-            android:layout_alignBottom="@+id/textView_labelResolution" />
+            android:layout_alignBaseline="@id/textView_labelResolution" />
 
         <View
             android:id="@+id/view_ResolutionVideoDurationSeparator"
@@ -177,7 +176,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:background="@color/colorTextColor"
-            android:layout_below="@id/textView_labelResolution"/>
+            android:layout_below="@id/rangeSlider_Resolution"/>
 
         <RelativeLayout
             android:id="@+id/relativeLayout_VideoDuration"
@@ -212,9 +211,6 @@
                 android:layout_below="@id/rangeSlider_VideoDuration"/>
 
         </RelativeLayout>
-
-
-
 
         <TextView
             android:id="@+id/textView_labelTags"

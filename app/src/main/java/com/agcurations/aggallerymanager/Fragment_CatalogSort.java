@@ -16,11 +16,13 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.google.android.material.slider.LabelFormatter;
 import com.google.android.material.slider.RangeSlider;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +57,7 @@ public class Fragment_CatalogSort extends Fragment {
 
     int giSearchInSelections = GlobalClass.SEARCH_IN_NO_SELECTION;
     final String[] gsSpinnerSearchInItems = {
-            "<No Search>",
+            "",
             "Title",
             "Artist",
             "Characters",
@@ -64,7 +66,7 @@ public class Fragment_CatalogSort extends Fragment {
 
     int giFilterBySelections = GlobalClass.FILTER_BY_NO_SELECTION;
     final String[] gsSpinnerFilterByItems = {
-            "<No Filter>",
+            "",
             "Web sources only",
             "Folder sources only",
             "Items with no tags",
@@ -228,7 +230,7 @@ public class Fragment_CatalogSort extends Fragment {
             //assign adapter to the Spinner
             spinner_SearchIn.setAdapter(adapterSearchIn);
 
-            //Initialize the spinner position:
+            //Initialize the "SearchIn" spinner position:
             //This is here because when onResume hits when the activity is first created,
             //  the Spinner does not yet exist.
             int iSpinnerSelection = globalClass.giCatalogViewerSearchInSelection[globalClass.giSelectedCatalogMediaCategory];
@@ -256,7 +258,7 @@ public class Fragment_CatalogSort extends Fragment {
             //assign adapter to the Spinner
             spinner_FilterBy.setAdapter(adapterFilterBy);
 
-            //Initialize the spinner position:
+            //Initialize the "FilterBy" spinner position:
             //This is here because when onResume hits when the activity is first created,
             //  the Spinner does not yet exist.
             iSpinnerSelection = globalClass.giCatalogViewerFilterBySelection[globalClass.giSelectedCatalogMediaCategory];
@@ -277,9 +279,77 @@ public class Fragment_CatalogSort extends Fragment {
                 }
             }); //End config of spinner_FilterBy.
 
+            //Configure the resolution range slider:
+            if (getView() != null) {
+                RangeSlider rangeSlider_Resolution = getView().findViewById(R.id.rangeSlider_Resolution);
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    //Configure the rangeSlider to have discrete steps:
+                    float fMaxPositionCount = globalClass.gtmVideoResolutions.size() - 1;
+                    rangeSlider_Resolution.setValueTo(fMaxPositionCount);
+                    rangeSlider_Resolution.setValues(0.0F, fMaxPositionCount);
+                    rangeSlider_Resolution.setStepSize(1.0f);
+                    rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
+                        @NonNull
+                        @Override
+                        public String getFormattedValue(float value) {
+                            int iValue = (int) value;
+                            String sValue = globalClass.gtmVideoResolutions.get(iValue) + "p";
+                            return sValue;
+                        }
+                    });
+                    rangeSlider_Resolution.addOnChangeListener(new RangeSlider.OnChangeListener() {
+                        @Override
+                        public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
+                            enableApply();
+                        }
+                    });
+                } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                    rangeSlider_Resolution.setValueTo(globalClass.giMaxImageMegaPixels);
+                    rangeSlider_Resolution.setValues((float) globalClass.giMinImageMegaPixels,
+                            (float) globalClass.giMaxImageMegaPixels);
+                    rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
+                        @NonNull
+                        @Override
+                        public String getFormattedValue(float value) {
+                            String sValue = String.format(Locale.getDefault(), "%01.1fMP", value);
+                            return sValue;
+                        }
+                    });
+                    rangeSlider_Resolution.addOnChangeListener(new RangeSlider.OnChangeListener() {
+                        @Override
+                        public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
+                            enableApply();
+                        }
+                    });
+                } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    TextView textView_labelResolution = getView().findViewById(R.id.textView_labelResolution);
+                    if (textView_labelResolution != null) {
+                        textView_labelResolution.setText("Comic page count:");
+                    }
+                    rangeSlider_Resolution.setValueTo(globalClass.giMaxComicPageCount);
+                    rangeSlider_Resolution.setValues((float) globalClass.giMinComicPageCount,
+                            (float) globalClass.giMaxComicPageCount);
+                    rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
+                        @NonNull
+                        @Override
+                        public String getFormattedValue(float value) {
+                            int iValue = (int) value;
+                            String sValue = iValue + "";
+                            return sValue;
+                        }
+                    });
+                    rangeSlider_Resolution.addOnChangeListener(new RangeSlider.OnChangeListener() {
+                        @Override
+                        public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
+                            enableApply();
+                        }
+                    });
+                }
 
 
-            //Configure the range slider:
+            } //End config of the resolution RangeSlider
+
+            //Configure the video duration range slider:
             if (getView() != null) {
                 if(globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                     //Hide the video duration RangeSlider if we are not viewing videos:
@@ -291,16 +361,16 @@ public class Fragment_CatalogSort extends Fragment {
                 }
 
                 RangeSlider rangeSlider_VideoDuration = getView().findViewById(R.id.rangeSlider_VideoDuration);
-                float fMaxSeconds = globalClass.glMaxVideoDurationMS / 1000.0f;
-                rangeSlider_VideoDuration.setValueTo(fMaxSeconds);
-                rangeSlider_VideoDuration.setValues(0.0F, fMaxSeconds);
+                float fMaxMilliseconds = globalClass.glMaxVideoDurationMS;
+                rangeSlider_VideoDuration.setValueTo(fMaxMilliseconds);
+                rangeSlider_VideoDuration.setValues(0.0F, fMaxMilliseconds);
                 rangeSlider_VideoDuration.setLabelFormatter(new LabelFormatter() {
                     @NonNull
                     @Override
                     public String getFormattedValue(float value) {
-                        long lHours = TimeUnit.SECONDS.toHours((long) value);
-                        long lMinutes = TimeUnit.SECONDS.toMinutes((long) value) - lHours * 60;
-                        long lSeconds = (long) (value - lHours * 3600 - lMinutes * 60);
+                        long lHours = TimeUnit.MILLISECONDS.toHours((long) value);
+                        long lMinutes = TimeUnit.MILLISECONDS.toMinutes((long) value) - lHours * 60;
+                        long lSeconds = TimeUnit.MILLISECONDS.toSeconds((long) value) - lHours * 3600 - lMinutes * 60;
                         String sTime;
                         if(lHours == 0){
                             sTime = String.format(Locale.getDefault(),"%d:%02d", lMinutes, lSeconds);
@@ -316,7 +386,7 @@ public class Fragment_CatalogSort extends Fragment {
                         enableApply();
                     }
                 });
-            } //End config of the RangeSlider
+            } //End config of the video duration RangeSlider
 
             //Configure the APPLY button listener:
             final Button button_Apply = getView().findViewById(R.id.button_Apply);
@@ -384,7 +454,60 @@ public class Fragment_CatalogSort extends Fragment {
         globalClass.giCatalogViewerFilterBySelection[globalClass.giSelectedCatalogMediaCategory] = iSpinnerFilterByPosition;
 
 
+        //Read Resolution/PageCount RangeSlider:
+        RangeSlider rangeSlider_Resolution = getView().findViewById(R.id.rangeSlider_Resolution);
+        List<Float> lfRangeSliderSelectedMinMaxValues = rangeSlider_Resolution.getValues();
+        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            if(lfRangeSliderSelectedMinMaxValues.get(0) == 0) {
+                globalClass.giMinVideoResolutionSelected = -1;  //Mark as no value selected.
+            } else {
+                globalClass.giMinVideoResolutionSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
+            }
+            float fMaxPositionCount = globalClass.gtmVideoResolutions.size() - 1;
+            if(lfRangeSliderSelectedMinMaxValues.get(1) == fMaxPositionCount) {
+                globalClass.giMaxVideoResolutionSelected = -1;  //Mark as no value selected.
+            } else {
+                globalClass.giMaxVideoResolutionSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
+            }
+        } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+            if(lfRangeSliderSelectedMinMaxValues.get(0) == (float) globalClass.giMinImageMegaPixels) {
+                globalClass.giMinImageMegaPixelsSelected = -1;  //Mark as no value selected.
+            } else {
+                globalClass.giMinImageMegaPixelsSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
+            }
+            if(lfRangeSliderSelectedMinMaxValues.get(1) == (float) globalClass.giMaxImageMegaPixels) {
+                globalClass.giMaxImageMegaPixelsSelected = -1;  //Mark as no value selected.
+            } else {
+                globalClass.giMaxImageMegaPixelsSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
+            }
+        } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+            if(lfRangeSliderSelectedMinMaxValues.get(0) == (float) globalClass.giMinComicPageCount) {
+                globalClass.giMinComicPageCountSelected = -1;  //Mark as no value selected.
+            } else {
+                globalClass.giMinComicPageCountSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
+            }
+            if(lfRangeSliderSelectedMinMaxValues.get(1) == (float) globalClass.giMaxComicPageCount) {
+                globalClass.giMaxComicPageCountSelected = -1;  //Mark as no value selected.
+            } else {
+                globalClass.giMaxComicPageCountSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
+            }
+        }
 
+        //Read Duration RangeSlider:
+        RangeSlider rangeSlider_VideoDuration = getView().findViewById(R.id.rangeSlider_VideoDuration);
+        lfRangeSliderSelectedMinMaxValues = rangeSlider_VideoDuration.getValues();
+        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            if (lfRangeSliderSelectedMinMaxValues.get(0) == 0.0f) {
+                globalClass.glMinVideoDurationMSSelected = -1;
+            } else {
+                globalClass.glMinVideoDurationMSSelected = lfRangeSliderSelectedMinMaxValues.get(0).longValue();
+            }
+            if (lfRangeSliderSelectedMinMaxValues.get(1) == (float) globalClass.glMaxVideoDurationMS) {
+                globalClass.glMaxVideoDurationMSSelected = -1;
+            } else {
+                globalClass.glMaxVideoDurationMSSelected = lfRangeSliderSelectedMinMaxValues.get(1).longValue();
+            }
+        }
 
         //Apply any tag filters to the filter hold in globalClass:
         if (globalClass.galtsiCatalogViewerFilterTags == null) {
@@ -403,7 +526,6 @@ public class Fragment_CatalogSort extends Fragment {
 
         //Process the filter settings:
         ((Activity_CatalogViewer) requireActivity()).populate_RecyclerViewCatalogItems();
-        globalClass.gbCatalogViewerFilter[globalClass.giSelectedCatalogMediaCategory] = true;
 
         Button button_Apply = getView().findViewById(R.id.button_Apply);
         button_Apply.setEnabled(false);
