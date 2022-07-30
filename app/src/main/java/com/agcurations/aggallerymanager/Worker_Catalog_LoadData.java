@@ -195,6 +195,13 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
+        int iProgressDenominator = 9;
+        int iProgressNumerator = 0;
+        int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, "Reading Tags",
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogTagReferenceLists.add(globalClass.InitTagData(iMediaCategory));
@@ -214,6 +221,12 @@ public class Worker_Catalog_LoadData extends Worker {
                     }
                 }
             }
+            iProgressNumerator++;
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            globalClass.BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    false, "Reading Tags",
+                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         }
 
         //Configure video resolution options:
@@ -226,10 +239,21 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.gtmVideoResolutions.put(4, 1080);
         globalClass.gtmVideoResolutions.put(5, 2160);
 
-
+        iProgressNumerator++;
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, "Reading Catalogs",
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         //Read the catalog list files into memory:
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
+            iProgressNumerator++;
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            globalClass.BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    false, "Reading Catalogs",
+                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         }
 
         if(globalClass.connectivityManager == null){
@@ -252,9 +276,20 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.notificationManager = gContext.getSystemService(NotificationManager.class);
         globalClass.notificationManager.createNotificationChannel(globalClass.notificationChannel);
 
-
+        iProgressNumerator++;
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, "Post Processing",
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         globalClass.ExecuteDownloadManagerPostProcessing();
 
+        iProgressNumerator++;
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, "Data Load Complete",
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         //globalClass.CatalogDataFile_AddNewField();
 
         //VerifyVideoFilesIntegrity();

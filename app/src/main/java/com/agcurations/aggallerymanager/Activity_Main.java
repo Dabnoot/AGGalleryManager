@@ -79,6 +79,9 @@ public class Activity_Main extends AppCompatActivity {
     TextView textView_WorkerTest;
     Observer<WorkInfo> workInfoObserver_TrackingTest;
 
+    ProgressBar gProgressBar_CatalogReadProgress;
+    TextView gTextView_CatalogReadProgressBarText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
@@ -95,6 +98,9 @@ public class Activity_Main extends AppCompatActivity {
             //Remove obfuscation:
             RemoveObfuscation();
         }
+
+        gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);
+        gTextView_CatalogReadProgressBarText = findViewById(R.id.textView_CatalogReadProgressBarText);
 
         //Configure a response receiver to listen for updates from the Main Activity (MA) Data Service:
         //  This will load the tags files for videos, pictures, and comics.
@@ -137,8 +143,6 @@ public class Activity_Main extends AppCompatActivity {
                 startActivity(intentBrowser);
             }
         });
-
-
 
     }
 
@@ -213,7 +217,7 @@ public class Activity_Main extends AppCompatActivity {
 
 
 
-    public static class MainActivityDataServiceResponseReceiver extends BroadcastReceiver {
+    public class MainActivityDataServiceResponseReceiver extends BroadcastReceiver {
         //MADataService = Main Activity Data Service
         public static final String MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MAIN_ACTIVITY_DATA_SERVICE";
 
@@ -231,6 +235,39 @@ public class Activity_Main extends AppCompatActivity {
                 String sStatusMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE);
                 if(sStatusMessage != null){
                     Toast.makeText(context, sStatusMessage, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            //Check to see if this is a response to update log or progress bar:
+            boolean 	bUpdatePercentComplete;
+            boolean 	bUpdateProgressBarText;
+
+            //Get booleans from the intent telling us what to update:
+            bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+            bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+            if(gProgressBar_CatalogReadProgress != null && gTextView_CatalogReadProgressBarText != null) {
+                if (bUpdatePercentComplete) {
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if (gProgressBar_CatalogReadProgress != null) {
+                        gProgressBar_CatalogReadProgress.setProgress(iAmountComplete);
+                    }
+                    if (iAmountComplete == 100) {
+                        gProgressBar_CatalogReadProgress.setVisibility(View.INVISIBLE);
+                        gTextView_CatalogReadProgressBarText.setVisibility(View.INVISIBLE);
+                    } else {
+                        gProgressBar_CatalogReadProgress.setVisibility(View.VISIBLE);
+                        gTextView_CatalogReadProgressBarText.setVisibility(View.VISIBLE);
+                    }
+
+                }
+                if (bUpdateProgressBarText) {
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if (gTextView_CatalogReadProgressBarText != null) {
+                        gTextView_CatalogReadProgressBarText.setText(sProgressBarText);
+                    }
                 }
             }
 
