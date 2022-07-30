@@ -111,6 +111,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ci.iComicPages        = alFileList.get(0).iComicPages;
         ci.iComic_Max_Page_ID = alFileList.get(0).iComicPages;
         ci.sTags = GlobalClass.formDelimitedString(alFileList.get(0).aliProspectiveTags, ",");
+        //Inform program of a need to update the tags histogram:
+        globalClass.gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
 
         //The below call should add the record to both the catalog contents file
         //  and memory. Create the record in the system before downloading the files for the event that

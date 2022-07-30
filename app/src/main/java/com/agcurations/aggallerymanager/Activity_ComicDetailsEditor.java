@@ -88,7 +88,11 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 gciCatalogItem.sComicCharacters = editText_Characters.getText().toString();
 
                 //Get tags and record to catalog item:
-                gciCatalogItem.sTags = gsNewTagIDs;
+                if(!gciCatalogItem.sTags.equals(gsNewTagIDs)) {
+                    gciCatalogItem.sTags = gsNewTagIDs;
+                    //Inform program of a need to update the tags histogram:
+                    globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
+                }
 
 
                 gciCatalogItem.sComicArtists = editText_Artists.getText().toString();

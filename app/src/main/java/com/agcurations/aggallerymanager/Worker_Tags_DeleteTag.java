@@ -158,6 +158,8 @@ public class Worker_Tags_DeleteTag extends Worker {
 
         } //End for loop through catalog.
 
+        //Inform program of a need to update the tags histogram:
+        globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
 
         //If it was a video or image, now delete the tag folder (there should not be any more files in that folder:
         //(if the folder exists, as tag may have only been a secondary tag for items).

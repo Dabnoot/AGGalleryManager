@@ -239,6 +239,12 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.gtmVideoResolutions.put(4, 1080);
         globalClass.gtmVideoResolutions.put(5, 2160);
 
+        //Prep tag histograms:
+        globalClass.galtmTagHistogram = new ArrayList<>();
+        globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Videos
+        globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Images
+        globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Comics
+
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
@@ -410,6 +416,21 @@ public class Worker_Catalog_LoadData extends Worker {
                         }
                     }
 
+                    //Update the tags histogram. As of 7/29/2022, this is used to show the user
+                    //  how many tags are in use while they select tags to perform a tag filter.
+                    for(int iCatalogItemTagID: ci.aliTags){
+                        if(!globalClass.galtmTagHistogram.get(iMediaCategory).containsKey(iCatalogItemTagID)){
+                            globalClass.galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, 1);
+                        } else {
+                            Integer iTagCountofID = globalClass.galtmTagHistogram.get(iMediaCategory).get(iCatalogItemTagID);
+                            if(iTagCountofID != null) {
+                                iTagCountofID++;
+                                globalClass.galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, iTagCountofID);
+                            }
+                        }
+
+                    }
+
                     // read next line
                     sLine = brReader.readLine();
                 }
@@ -420,7 +441,7 @@ public class Worker_Catalog_LoadData extends Worker {
             }
 
 
-
+            globalClass.gbTagHistogramRequiresUpdate[iMediaCategory] = false;
 
 
             //Return the data read from the file:

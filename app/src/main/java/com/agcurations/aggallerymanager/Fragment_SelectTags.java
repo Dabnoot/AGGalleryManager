@@ -592,6 +592,11 @@ public class Fragment_SelectTags extends Fragment {
             final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
             // Populate the data into the template view using the data object
             String s = tagItem.sTagText;
+            //Attempt to get usage data for the tag:
+            Integer iTagUseCount = globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(tagItem.iTagID);
+            if(iTagUseCount != null) {
+                s = s + " (" + iTagUseCount + ")";
+            }
             checkedTextView_TagText.setText(s);
 
 

@@ -132,6 +132,8 @@ public class GlobalClass extends Application {
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     public boolean gbCatalogViewerTagsRestrictionsOn;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
+    public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;
+    public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
     public static final String gsNHComicCoverPageFilter = "^\\d{1,7}_Cover.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
@@ -572,6 +574,8 @@ public class GlobalClass extends Application {
 
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
 
+        gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
+
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
 
         try {
@@ -597,6 +601,8 @@ public class GlobalClass extends Application {
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
+
+        //gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true; DO NOT do this here, as this is called to update "last read date" on every item.
 
         try {
 
@@ -670,12 +676,14 @@ public class GlobalClass extends Application {
 
     public boolean deleteItemFromCatalogFile(ItemClass_CatalogItem ci, String sIntentActionFilter){
         boolean bSuccess;
-        GlobalClass globalClass = (GlobalClass)getApplicationContext();
+
+        gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
+
         String sMessage;
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(globalClass.gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
+            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -702,20 +710,20 @@ public class GlobalClass extends Application {
                 sMessage = "Could not locate item data record (ID: " +
                         GlobalClass.JumbleStorageText(ci.sItemID) +
                         ") in CatalogContents.dat.\n" +
-                        globalClass.gfCatalogContentsFiles[ci.iMediaCategory];
+                        gfCatalogContentsFiles[ci.iMediaCategory];
                 problemNotificationConfig(sMessage, sIntentActionFilter);
 
             }
 
             //Re-write the CatalogContentsFile without the deleted item's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(globalClass.gfCatalogContentsFiles[ci.iMediaCategory], false);
+            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[ci.iMediaCategory], false);
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
 
 
             //Now update memory to no longer include the item:
-            globalClass.gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
+            gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
 
         } catch (Exception e) {
             sMessage = "Problem updating CatalogContents.dat.\n" + e.getMessage();
@@ -728,6 +736,8 @@ public class GlobalClass extends Application {
     public boolean ComicCatalog_DeleteComic(ItemClass_CatalogItem ci) {
 
         //Delete the comic record from the CatalogContentsFile:
+
+        gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
 
         try {
 

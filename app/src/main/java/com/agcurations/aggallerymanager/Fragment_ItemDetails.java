@@ -184,7 +184,11 @@ public class Fragment_ItemDetails extends Fragment {
             button_Save.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    gciCatalogItem.sTags = gsNewTagIDs;
+                    if(!gciCatalogItem.sTags.equals(gsNewTagIDs)) {
+                        gciCatalogItem.sTags = gsNewTagIDs;
+                        //Inform program of a need to update the tags histogram:
+                        globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
+                    }
                     gciCatalogItem.iGrade = giNewGrade;
                     gsPreviousTagIDs = gsNewTagIDs;
                     giPreviousGrade = giNewGrade;
