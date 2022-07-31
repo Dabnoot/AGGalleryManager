@@ -32,6 +32,10 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
 
     public int iMediaCategory = -1;
 
+    public boolean bShowModeCompoundTagUse = false; //Set to true to show tags and frequencies that
+                                                    // are in-use alongside tags that the user is
+                                                    // selecting. For use with filtering.
+
     public final MutableLiveData<ArrayList<ItemClass_Tag>> altiTagSuggestions =
             new MutableLiveData<>(); //To popup recently used tags to simplify tagging by user.
 

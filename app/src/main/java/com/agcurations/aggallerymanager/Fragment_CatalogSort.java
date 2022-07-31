@@ -562,6 +562,28 @@ public class Fragment_CatalogSort extends Fragment {
                 }
                 gtsiSelectedTagIDs = new TreeSet<>(tsiNewTagIDs);
 
+                //Update the textual display of selected tags:
+                if(getView() != null){
+
+                    StringBuilder sb = new StringBuilder();
+                    if(tagItems.size() > 0) {
+                        sb.append(tagItems.get(0).sTagText);
+                        for (int i = 1; i < tagItems.size(); i++) {
+                            sb.append(", ");
+                            sb.append(tagItems.get(i).sTagText);
+                        }
+                    }
+                    //Display the tags:
+                    TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+                    if (textView_Tags != null) {
+                        textView_Tags.setText(sb.toString());
+                    }
+
+
+
+                }
+
+
             }
         };
     }
@@ -575,6 +597,8 @@ public class Fragment_CatalogSort extends Fragment {
             return;
         }
         gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+
+        gViewModel_fragment_selectTags.bShowModeCompoundTagUse = true; //When the user selects a tag to filter on, update counts of other tag items to reflect those which share the selected tag(s).
 
         gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
 

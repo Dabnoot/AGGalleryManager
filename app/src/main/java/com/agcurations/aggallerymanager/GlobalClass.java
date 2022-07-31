@@ -583,6 +583,9 @@ public class GlobalClass extends Application {
             //Add the details to the TreeMap:
             tmCatalogRecords.put(ci.sItemID, ci);
 
+            //Update the tags histogram:
+            updateTagHistogramsIfRequired();
+
             String sLine = getCatalogRecordString(ci);
             
             //Write the data to the file:
@@ -640,6 +643,9 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.write(sbBuffer.toString());
             fwNewCatalogContentsFile.flush();
             fwNewCatalogContentsFile.close();
+
+            //Update the tags histogram if required:
+            updateTagHistogramsIfRequired();
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -724,6 +730,9 @@ public class GlobalClass extends Application {
 
             //Now update memory to no longer include the item:
             gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
+
+            //Update the tags histogram:
+            updateTagHistogramsIfRequired();
 
         } catch (Exception e) {
             sMessage = "Problem updating CatalogContents.dat.\n" + e.getMessage();
@@ -810,6 +819,10 @@ public class GlobalClass extends Application {
 
             //Now update memory to no longer include the comic:
             gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(ci.sItemID);
+
+            //Update the tags histogram:
+            updateTagHistogramsIfRequired();
+
             Toast.makeText(this, "Comic ID " + ci.sItemID + " removed from catalog.",
                     Toast.LENGTH_LONG).show();
             return true;
@@ -1322,6 +1335,63 @@ public class GlobalClass extends Application {
             }
         }
         return iKey;
+    }
+
+    public void updateTagHistogramsIfRequired(){
+
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
+            if(gbTagHistogramRequiresUpdate[iMediaCategory]) {
+                galtmTagHistogram.get(iMediaCategory).clear();
+                for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
+                    ItemClass_CatalogItem ci = entry.getValue();
+                    //Update the tags histogram. As of 7/29/2022, this is used to show the user
+                    //  how many tags are in use while they select tags to perform a tag filter.
+                    for (int iCatalogItemTagID : ci.aliTags) {
+                        if (!galtmTagHistogram.get(iMediaCategory).containsKey(iCatalogItemTagID)) {
+                            galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, 1);
+                        } else {
+                            Integer iTagCountofID = galtmTagHistogram.get(iMediaCategory).get(iCatalogItemTagID);
+                            if (iTagCountofID != null) {
+                                iTagCountofID++;
+                                galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, iTagCountofID);
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
+    public TreeMap<Integer, Integer> getCompoundTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs){
+        //Get a histogram counting the tags that occur alongside tags found in aliTagIDs.
+        //  Suppose the user selects tag ID 7, and wants to know what other tag IDs are frequently
+        //  found alongside tag ID 7. This routine returns that list with frequency.
+
+        TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
+
+        //Go through each catalog item:
+        for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
+            ItemClass_CatalogItem ci = entry.getValue();
+            //Check to see if all of the tags to be checked are in this catalog item:
+            if(ci.aliTags.containsAll(aliTagIDs)){
+                //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
+                //  This includes counting the ones that are in aliTagIDs.
+                for (int iCatalogItemTagID : ci.aliTags) {
+                    if (!tmCompoundTagHistogram.containsKey(iCatalogItemTagID)) {
+                        tmCompoundTagHistogram.put(iCatalogItemTagID, 1);
+                    } else {
+                        Integer iTagCountofID = tmCompoundTagHistogram.get(iCatalogItemTagID);
+                        if (iTagCountofID != null) {
+                            iTagCountofID++;
+                            tmCompoundTagHistogram.put(iCatalogItemTagID, iTagCountofID);
+                        }
+                    }
+                }
+            }
+        }
+
+        return tmCompoundTagHistogram;
     }
 
 

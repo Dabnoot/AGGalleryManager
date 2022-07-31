@@ -558,14 +558,28 @@ public class Fragment_SelectTags extends Fragment {
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
         int iOrderIterator;
 
+        ArrayList<ItemClass_Tag> alictTagItems;
+        TreeMap<Integer, Integer> tmCompoundTagHistogram; //Used to tell the user frequency of use of tag combinations.
+        ArrayList<Integer> aliKeyList; //Used to tell order of items in tmCompoundTagHistogram.
+
         public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems, int iPreselectedCount) {
             super(context, 0, tagItems);
             iOrderIterator = iPreselectedCount;
+            alictTagItems = tagItems;
+            tmCompoundTagHistogram = new TreeMap<>();
+            aliKeyList = new ArrayList<>();
+            //Initialize the Compound Tag Treemap to include all tag items:
+            if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
+                for(ItemClass_Tag ict: alictTagItems){
+                    tmCompoundTagHistogram.put(ict.iTagID, globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(ict.iTagID));
+                    aliKeyList.add(ict.iTagID);
+                }
+            }
         }
 
         public void uncheckAll(){
-            for(int i = 0; i < getCount(); i++){
-                ItemClass_Tag tagItem = getItem(i);
+            for(int i = 0; i < alictTagItems.size(); i++){
+                ItemClass_Tag tagItem = alictTagItems.get(i);
                 tagItem.bIsChecked = false;
             }
             if(galiPreselectedTags != null){
@@ -574,13 +588,39 @@ public class Fragment_SelectTags extends Fragment {
             ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
             viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
+
+            //Initialize the Compound Tag Treemap to include all tag items:
+            if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
+                tmCompoundTagHistogram.clear();
+                for(ItemClass_Tag ict: alictTagItems){
+                    tmCompoundTagHistogram.put(ict.iTagID, globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(ict.iTagID));
+                    aliKeyList.add(ict.iTagID);
+                }
+            }
+
             notifyDataSetChanged();
         }
 
         @Override
         public View getView(int position, View v, ViewGroup parent) {
             // Get the data item for this position
-            final ItemClass_Tag tagItem = getItem(position);
+
+            ItemClass_Tag ictPreselect = alictTagItems.get(position);;
+            if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
+                //Get the ItemClass_Tag that corresponds with compound tag order.
+                Integer iTagID = aliKeyList.get(position);
+                for(ItemClass_Tag ict: alictTagItems){
+                    if(ict.iTagID.equals(iTagID)){
+                        ictPreselect = ict;
+                        break;
+                    }
+                }
+
+            }
+            final ItemClass_Tag tagItem = ictPreselect;
+
+
+
             if(tagItem == null){
                 return v;
             }
@@ -593,10 +633,17 @@ public class Fragment_SelectTags extends Fragment {
             // Populate the data into the template view using the data object
             String s = tagItem.sTagText;
             //Attempt to get usage data for the tag:
-            Integer iTagUseCount = globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(tagItem.iTagID);
+            Integer iTagUseCount;
+            if(!viewModel_fragment_selectTags.bShowModeCompoundTagUse) {
+                iTagUseCount = globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(tagItem.iTagID);
+            } else {
+                iTagUseCount = tmCompoundTagHistogram.get(tagItem.iTagID);
+            }
+
             if(iTagUseCount != null) {
                 s = s + " (" + iTagUseCount + ")";
             }
+
             checkedTextView_TagText.setText(s);
 
 
@@ -649,8 +696,8 @@ public class Fragment_SelectTags extends Fragment {
                     int iItemCount = getCount();
                     TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
                     for(int i=0; i< iItemCount; i++){
-                        if(getItem(i) != null){
-                            ItemClass_Tag tagItem1 = getItem(i);
+                        if(alictTagItems.get(i) != null){
+                            ItemClass_Tag tagItem1 = alictTagItems.get(i);
                             assert tagItem1 != null;
                             if(tagItem1.bIsChecked) {
                                 tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
@@ -669,6 +716,15 @@ public class Fragment_SelectTags extends Fragment {
                     }
 
                     viewModel_fragment_selectTags.setSelectedTags(alTagItems);
+
+                    if(viewModel_fragment_selectTags.bShowModeCompoundTagUse) {
+                        tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
+                        aliKeyList.clear();
+                        for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
+                            aliKeyList.add(entry.getKey());
+                        }
+                        notifyDataSetChanged();
+                    }
 
                 }
             });
@@ -702,8 +758,9 @@ public class Fragment_SelectTags extends Fragment {
 
             if(!bTagAlreadySelected){
                 //Find the tagItem in the list:
-                for(int i = 0; i < getCount(); i++) {
-                    ItemClass_Tag tagItem = getItem(i);
+                boolean bUpdateCompoundTagHistogram = false;
+                for(int i = 0; i < alictTagItems.size(); i++) {
+                    ItemClass_Tag tagItem = alictTagItems.get(i);
                     if(tagItem.iTagID == iTagIDIncoming){
                         //Select the tagItem:
                         iOrderIterator++;
@@ -713,8 +770,16 @@ public class Fragment_SelectTags extends Fragment {
                         }
                         galiPreselectedTags.add(tagItem.iTagID);
                         tagItem.bIsChecked = true;
+                        bUpdateCompoundTagHistogram = true;
                         notifyDataSetChanged();
                         break;
+                    }
+                }
+                if(bUpdateCompoundTagHistogram){
+                    tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
+                    aliKeyList.clear();
+                    for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
+                        aliKeyList.add(entry.getKey());
                     }
                 }
 
@@ -725,8 +790,8 @@ public class Fragment_SelectTags extends Fragment {
                 int iItemCount = getCount();
                 TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
                 for(int i=0; i< iItemCount; i++){
-                    if(getItem(i) != null){
-                        ItemClass_Tag tagItem1 = getItem(i);
+                    if(alictTagItems.get(i) != null){
+                        ItemClass_Tag tagItem1 = alictTagItems.get(i);
                         assert tagItem1 != null;
                         if(tagItem1.bIsChecked) {
                             tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
@@ -749,6 +814,14 @@ public class Fragment_SelectTags extends Fragment {
             }
         }
 
+        @Override
+        public int getCount() {
+            if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
+                return tmCompoundTagHistogram.size();
+            }
+
+            return super.getCount();
+        }
     }
 
 }
