@@ -515,7 +515,8 @@ public class Activity_ComicViewer extends AppCompatActivity {
         //  scale:
         gfJumpOutAxisScale = Math.max(gfScaleHeightMatch, gfScaleWidthMatch);
 
-        gfScaleFactor = gfMinScale; //Track the current scale.
+        gfScaleFactor = gfJumpOutAxisScale; //Track the current scale.
+
         //Get the new translated X and Y coordinates.
         gfImageViewOriginX = values[Matrix.MTRANS_X];
         gfImageViewOriginY = values[Matrix.MTRANS_Y];
@@ -552,7 +553,8 @@ public class Activity_ComicViewer extends AppCompatActivity {
         //  scale:
         gfJumpOutAxisScale = Math.max(gfScaleHeightMatch, gfScaleWidthMatch);
 
-        gfScaleFactor = gfMinScale; //Track the current scale.
+        gfScaleFactor = gfJumpOutAxisScale; //Track the current scale.
+
         //Get the new translated X and Y coordinates.
         gfImageViewOriginX = values[Matrix.MTRANS_X];
         gfImageViewOriginY = values[Matrix.MTRANS_Y];
