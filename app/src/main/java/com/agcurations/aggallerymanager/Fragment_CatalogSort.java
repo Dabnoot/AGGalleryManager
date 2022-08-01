@@ -516,12 +516,13 @@ public class Fragment_CatalogSort extends Fragment {
             globalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<Integer>()); //Images
             globalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<Integer>()); //Comics
         }
+        globalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).clear();
         if (gtsiSelectedTagIDs != null) {
-            for (Integer iTagID : gtsiSelectedTagIDs) {
-                globalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).add(iTagID);
+            if(gtsiSelectedTagIDs.size() > 0) {
+                for (Integer iTagID : gtsiSelectedTagIDs) {
+                    globalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).add(iTagID);
+                }
             }
-        } else {
-            globalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).clear();
         }
 
         //Process the filter settings:

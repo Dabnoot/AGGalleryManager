@@ -558,21 +558,21 @@ public class Fragment_SelectTags extends Fragment {
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
         int iOrderIterator;
 
-        ArrayList<ItemClass_Tag> alictTagItems;
+        ArrayList<ItemClass_Tag> alictTagItems; //Contains all tag items passed to the listviewTagsAdapter.
         TreeMap<Integer, Integer> tmCompoundTagHistogram; //Used to tell the user frequency of use of tag combinations.
-        ArrayList<Integer> aliKeyList; //Used to tell order of items in tmCompoundTagHistogram.
+        ArrayList<Integer> aliOrderedKeylistForHistogram; //Used to tell order of items in tmCompoundTagHistogram. Different from "selection order" Cannot execute a Treemap.get(position) method.
 
         public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems, int iPreselectedCount) {
             super(context, 0, tagItems);
             iOrderIterator = iPreselectedCount;
             alictTagItems = tagItems;
             tmCompoundTagHistogram = new TreeMap<>();
-            aliKeyList = new ArrayList<>();
+            aliOrderedKeylistForHistogram = new ArrayList<>();
             //Initialize the Compound Tag Treemap to include all tag items:
             if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
                 for(ItemClass_Tag ict: alictTagItems){
                     tmCompoundTagHistogram.put(ict.iTagID, globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(ict.iTagID));
-                    aliKeyList.add(ict.iTagID);
+                    aliOrderedKeylistForHistogram.add(ict.iTagID);
                 }
             }
         }
@@ -594,7 +594,7 @@ public class Fragment_SelectTags extends Fragment {
                 tmCompoundTagHistogram.clear();
                 for(ItemClass_Tag ict: alictTagItems){
                     tmCompoundTagHistogram.put(ict.iTagID, globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(ict.iTagID));
-                    aliKeyList.add(ict.iTagID);
+                    aliOrderedKeylistForHistogram.add(ict.iTagID);
                 }
             }
 
@@ -608,7 +608,7 @@ public class Fragment_SelectTags extends Fragment {
             ItemClass_Tag ictPreselect = alictTagItems.get(position);;
             if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
                 //Get the ItemClass_Tag that corresponds with compound tag order.
-                Integer iTagID = aliKeyList.get(position);
+                Integer iTagID = aliOrderedKeylistForHistogram.get(position);
                 for(ItemClass_Tag ict: alictTagItems){
                     if(ict.iTagID.equals(iTagID)){
                         ictPreselect = ict;
@@ -639,11 +639,9 @@ public class Fragment_SelectTags extends Fragment {
             } else {
                 iTagUseCount = tmCompoundTagHistogram.get(tagItem.iTagID);
             }
-
             if(iTagUseCount != null) {
                 s = s + " (" + iTagUseCount + ")";
             }
-
             checkedTextView_TagText.setText(s);
 
 
@@ -693,19 +691,12 @@ public class Fragment_SelectTags extends Fragment {
 
                     //Iterate through all of the items in this ArrayAdapter, gathering the items,
                     //  and using a TreeMap to automatically sort the items by selection order:
-                    int iItemCount = getCount();
                     TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
-                    for(int i=0; i< iItemCount; i++){
-                        if(alictTagItems.get(i) != null){
-                            ItemClass_Tag tagItem1 = alictTagItems.get(i);
-                            assert tagItem1 != null;
-                            if(tagItem1.bIsChecked) {
-                                tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
-                            }
+                    for(ItemClass_Tag tagItem: alictTagItems){
+                        if (tagItem.bIsChecked) {
+                            tmSelectedItems.put(tagItem.iSelectionOrder, tagItem);
                         }
                     }
-
-
 
                     //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
                     ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
@@ -718,11 +709,7 @@ public class Fragment_SelectTags extends Fragment {
                     viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
                     if(viewModel_fragment_selectTags.bShowModeCompoundTagUse) {
-                        tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
-                        aliKeyList.clear();
-                        for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
-                            aliKeyList.add(entry.getKey());
-                        }
+                        updateCompoundTagsHistogram();
                         notifyDataSetChanged();
                     }
 
@@ -776,10 +763,10 @@ public class Fragment_SelectTags extends Fragment {
                     }
                 }
                 if(bUpdateCompoundTagHistogram){
-                    tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
-                    aliKeyList.clear();
+                    tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, gbCatalogTagsRestrictionsOn);
+                    aliOrderedKeylistForHistogram.clear();
                     for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
-                        aliKeyList.add(entry.getKey());
+                        aliOrderedKeylistForHistogram.add(entry.getKey());
                     }
                 }
 
@@ -814,6 +801,31 @@ public class Fragment_SelectTags extends Fragment {
             }
         }
 
+
+        private void updateCompoundTagsHistogram(){
+            //recalc compound tag histogram with the newly checked/unchecked item:
+            tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, gbCatalogTagsRestrictionsOn);
+
+            //Sort items by tag name:
+            TreeMap<String, Integer> tmTagNameAndID = new TreeMap<>();
+            for(Map.Entry<Integer, Integer> entry: tmCompoundTagHistogram.entrySet()){
+                tmTagNameAndID.put(globalClass.getTagTextFromID(entry.getKey(), viewModel_fragment_selectTags.iMediaCategory), entry.getKey());
+            }
+            //Items are sorted by name. Repopulate histogram treemap.
+            TreeMap<Integer, Integer> tmTemp = new TreeMap<>();
+            for(Map.Entry<String, Integer> entry: tmTagNameAndID.entrySet()){
+                tmTemp.put(entry.getValue(), tmCompoundTagHistogram.get(entry.getValue()));
+            }
+            tmCompoundTagHistogram = tmTemp;
+
+            aliOrderedKeylistForHistogram.clear();
+            for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
+                aliOrderedKeylistForHistogram.add(entry.getKey());
+            }
+
+
+        }
+
         @Override
         public int getCount() {
             if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
@@ -823,5 +835,8 @@ public class Fragment_SelectTags extends Fragment {
             return super.getCount();
         }
     }
+
+
+
 
 }

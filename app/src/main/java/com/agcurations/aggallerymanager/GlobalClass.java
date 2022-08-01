@@ -35,6 +35,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -87,7 +88,7 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
-    public final List<TreeMap<String, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
+    public final List<TreeMap<String, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>(); //Use String as the key to avoid duplicates and provide sort.
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
@@ -1363,12 +1364,19 @@ public class GlobalClass extends Application {
         }
     }
 
-    public TreeMap<Integer, Integer> getCompoundTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs){
+    public TreeMap<Integer, Integer> getCompoundTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs, boolean bCatalogTagsRestrictionsOn){
         //Get a histogram counting the tags that occur alongside tags found in aliTagIDs.
         //  Suppose the user selects tag ID 7, and wants to know what other tag IDs are frequently
         //  found alongside tag ID 7. This routine returns that list with frequency.
 
         TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
+
+        ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
+        for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            if (entry.getValue().bIsRestricted) {
+                aliRestrictedTagIDs.add(entry.getValue().iTagID);
+            }
+        }
 
         //Go through each catalog item:
         for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
@@ -1377,6 +1385,12 @@ public class GlobalClass extends Application {
             if(ci.aliTags.containsAll(aliTagIDs)){
                 //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
                 //  This includes counting the ones that are in aliTagIDs.
+                //  But skip if this item contains a restricted tag and user is not approved to view restricted tags.
+                boolean bContainsRestrictedTag = Collections.disjoint(ci.aliTags, aliRestrictedTagIDs);
+                if(!(bCatalogTagsRestrictionsOn && !bContainsRestrictedTag)) {
+                    //Don't add the tag if TagRestrictions are on and this is a restricted tag.
+                    continue;
+                }
                 for (int iCatalogItemTagID : ci.aliTags) {
                     if (!tmCompoundTagHistogram.containsKey(iCatalogItemTagID)) {
                         tmCompoundTagHistogram.put(iCatalogItemTagID, 1);
