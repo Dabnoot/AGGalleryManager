@@ -82,6 +82,8 @@ public class Activity_Main extends AppCompatActivity {
     ProgressBar gProgressBar_CatalogReadProgress;
     TextView gTextView_CatalogReadProgressBarText;
 
+    boolean gbDataLoadComplete = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         //Return theme away from startup_screen
@@ -256,6 +258,7 @@ public class Activity_Main extends AppCompatActivity {
                     if (iAmountComplete == 100) {
                         gProgressBar_CatalogReadProgress.setVisibility(View.INVISIBLE);
                         gTextView_CatalogReadProgressBarText.setVisibility(View.INVISIBLE);
+                        gbDataLoadComplete = true;
                     } else {
                         gProgressBar_CatalogReadProgress.setVisibility(View.VISIBLE);
                         gTextView_CatalogReadProgressBarText.setVisibility(View.VISIBLE);
@@ -565,6 +568,10 @@ public class Activity_Main extends AppCompatActivity {
     //=====================================================================================
 
     public void startVideoCatalogActivity(View v){
+        if(!gbDataLoadComplete){
+            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
@@ -572,6 +579,10 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startPicturesCatalogActivity(View v){
+        if(!gbDataLoadComplete){
+            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_IMAGES);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
@@ -579,6 +590,10 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startComicsCatalogActivity(View v){
+        if(!gbDataLoadComplete){
+            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         /*Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
         startActivity(intentComicsCatalogActivity);*/
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
@@ -588,6 +603,10 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startImportVideos(View v){
+        if(!gbDataLoadComplete){
+            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS); //todo: Redundant
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
@@ -595,6 +614,10 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startImportImages(View v){
+        if(!gbDataLoadComplete){
+            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES); //todo: Redundant
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
@@ -602,6 +625,10 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startImportComics(View v){
+        if(!gbDataLoadComplete){
+            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS); //todo: Redundant
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
