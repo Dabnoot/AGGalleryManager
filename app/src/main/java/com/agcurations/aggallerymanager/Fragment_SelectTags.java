@@ -807,22 +807,18 @@ public class Fragment_SelectTags extends Fragment {
             tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, gbCatalogTagsRestrictionsOn);
 
             //Sort items by tag name:
-            TreeMap<String, Integer> tmTagNameAndID = new TreeMap<>();
+            TreeMap<String, Integer> tmTagNameAndID = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             for(Map.Entry<Integer, Integer> entry: tmCompoundTagHistogram.entrySet()){
                 tmTagNameAndID.put(globalClass.getTagTextFromID(entry.getKey(), viewModel_fragment_selectTags.iMediaCategory), entry.getKey());
             }
             //Items are sorted by name. Repopulate histogram treemap.
             TreeMap<Integer, Integer> tmTemp = new TreeMap<>();
+            aliOrderedKeylistForHistogram.clear();
             for(Map.Entry<String, Integer> entry: tmTagNameAndID.entrySet()){
                 tmTemp.put(entry.getValue(), tmCompoundTagHistogram.get(entry.getValue()));
+                aliOrderedKeylistForHistogram.add(entry.getValue());
             }
             tmCompoundTagHistogram = tmTemp;
-
-            aliOrderedKeylistForHistogram.clear();
-            for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
-                aliOrderedKeylistForHistogram.add(entry.getKey());
-            }
-
 
         }
 
