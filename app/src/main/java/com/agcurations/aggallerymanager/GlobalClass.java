@@ -1,7 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-
-
 import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
@@ -35,7 +33,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -1386,7 +1383,9 @@ public class GlobalClass extends Application {
                 //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
                 //  This includes counting the ones that are in aliTagIDs.
                 //  But skip if this item contains a restricted tag and user is not approved to view restricted tags.
-                boolean bContainsRestrictedTag = Collections.disjoint(ci.aliTags, aliRestrictedTagIDs);
+                ArrayList<Integer> aliRestrictedTest = new ArrayList<>(aliRestrictedTagIDs);
+                aliRestrictedTest.retainAll(ci.aliTags);
+                boolean bContainsRestrictedTag = aliRestrictedTest.size() > 0;
                 if(bCatalogTagsRestrictionsOn && bContainsRestrictedTag) {
                     //Don't add the tag if TagRestrictions are on and this catalog item contains a restricted tag.
                     continue;
@@ -1403,6 +1402,46 @@ public class GlobalClass extends Application {
                     }
                 }
             }
+        }
+
+        return tmCompoundTagHistogram;
+    }
+
+    public TreeMap<Integer, Integer> getInitTagHistogram(int iMediaCategory, boolean bCatalogTagsRestrictionsOn){
+        TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
+
+        ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
+        for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            if (entry.getValue().bIsRestricted) {
+                aliRestrictedTagIDs.add(entry.getValue().iTagID);
+            }
+        }
+
+        //Go through each catalog item:
+        for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
+            ItemClass_CatalogItem ci = entry.getValue();
+            //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
+            //  This includes counting the ones that are in aliTagIDs.
+            //  But skip if this item contains a restricted tag and user is not approved to view restricted tags.
+            ArrayList<Integer> aliRestrictedTest = new ArrayList<>(aliRestrictedTagIDs);
+            aliRestrictedTest.retainAll(ci.aliTags);
+            boolean bContainsRestrictedTag = aliRestrictedTest.size() > 0;
+            if(bCatalogTagsRestrictionsOn && bContainsRestrictedTag) {
+                //Don't add the tag if TagRestrictions are on and this catalog item contains a restricted tag.
+                continue;
+            }
+            for (int iCatalogItemTagID : ci.aliTags) {
+                if (!tmCompoundTagHistogram.containsKey(iCatalogItemTagID)) {
+                    tmCompoundTagHistogram.put(iCatalogItemTagID, 1);
+                } else {
+                    Integer iTagCountofID = tmCompoundTagHistogram.get(iCatalogItemTagID);
+                    if (iTagCountofID != null) {
+                        iTagCountofID++;
+                        tmCompoundTagHistogram.put(iCatalogItemTagID, iTagCountofID);
+                    }
+                }
+            }
+
         }
 
         return tmCompoundTagHistogram;

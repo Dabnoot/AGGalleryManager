@@ -570,10 +570,7 @@ public class Fragment_SelectTags extends Fragment {
             aliOrderedKeylistForHistogram = new ArrayList<>();
             //Initialize the Compound Tag Treemap to include all tag items:
             if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
-                for(ItemClass_Tag ict: alictTagItems){
-                    tmCompoundTagHistogram.put(ict.iTagID, globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(ict.iTagID));
-                    aliOrderedKeylistForHistogram.add(ict.iTagID);
-                }
+                initCompoundTagHistogram();
             }
         }
 
@@ -588,17 +585,26 @@ public class Fragment_SelectTags extends Fragment {
             ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
             viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
-
             //Initialize the Compound Tag Treemap to include all tag items:
             if(viewModel_fragment_selectTags.bShowModeCompoundTagUse){
-                tmCompoundTagHistogram.clear();
-                for(ItemClass_Tag ict: alictTagItems){
-                    tmCompoundTagHistogram.put(ict.iTagID, globalClass.galtmTagHistogram.get(viewModel_fragment_selectTags.iMediaCategory).get(ict.iTagID));
-                    aliOrderedKeylistForHistogram.add(ict.iTagID);
-                }
+                initCompoundTagHistogram();
             }
 
             notifyDataSetChanged();
+        }
+
+        private void initCompoundTagHistogram(){
+            tmCompoundTagHistogram.clear();
+            aliOrderedKeylistForHistogram.clear();
+            TreeMap<Integer, Integer> tmInitialTagHistogramRespectingRestricted = globalClass.getInitTagHistogram(viewModel_fragment_selectTags.iMediaCategory, gbCatalogTagsRestrictionsOn);
+            for(ItemClass_Tag ict: alictTagItems){
+                Integer iCount = tmInitialTagHistogramRespectingRestricted.get(ict.iTagID);
+                if(iCount != null) {
+                    //Add the tag to the histogram if there is a positive count for that tag.
+                    tmCompoundTagHistogram.put(ict.iTagID, iCount);
+                    aliOrderedKeylistForHistogram.add(ict.iTagID);
+                }
+            }
         }
 
         @Override
@@ -746,6 +752,7 @@ public class Fragment_SelectTags extends Fragment {
             if(!bTagAlreadySelected){
                 //Find the tagItem in the list:
                 boolean bUpdateCompoundTagHistogram = false;
+                boolean bNotifyDataSetChanged = false;
                 for(int i = 0; i < alictTagItems.size(); i++) {
                     ItemClass_Tag tagItem = alictTagItems.get(i);
                     if(tagItem.iTagID == iTagIDIncoming){
@@ -758,16 +765,12 @@ public class Fragment_SelectTags extends Fragment {
                         galiPreselectedTags.add(tagItem.iTagID);
                         tagItem.bIsChecked = true;
                         bUpdateCompoundTagHistogram = true;
-                        notifyDataSetChanged();
+                        bNotifyDataSetChanged = true;
                         break;
                     }
                 }
-                if(bUpdateCompoundTagHistogram){
-                    tmCompoundTagHistogram = globalClass.getCompoundTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, gbCatalogTagsRestrictionsOn);
-                    aliOrderedKeylistForHistogram.clear();
-                    for (Map.Entry<Integer, Integer> entry : tmCompoundTagHistogram.entrySet()) {
-                        aliOrderedKeylistForHistogram.add(entry.getKey());
-                    }
+                if(bUpdateCompoundTagHistogram && viewModel_fragment_selectTags.bShowModeCompoundTagUse){
+                    updateCompoundTagsHistogram();
                 }
 
                 //Reform the tags string listing all of the selected tags:
@@ -786,8 +789,6 @@ public class Fragment_SelectTags extends Fragment {
                     }
                 }
 
-
-
                 //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
                 ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
 
@@ -797,6 +798,10 @@ public class Fragment_SelectTags extends Fragment {
                 }
 
                 viewModel_fragment_selectTags.setSelectedTags(alTagItems);
+
+                if(bNotifyDataSetChanged){
+                    notifyDataSetChanged();
+                }
 
             }
         }
@@ -809,7 +814,11 @@ public class Fragment_SelectTags extends Fragment {
             //Sort items by tag name:
             TreeMap<String, Integer> tmTagNameAndID = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             for(Map.Entry<Integer, Integer> entry: tmCompoundTagHistogram.entrySet()){
-                tmTagNameAndID.put(globalClass.getTagTextFromID(entry.getKey(), viewModel_fragment_selectTags.iMediaCategory), entry.getKey());
+                String sTagText = globalClass.getTagTextFromID(entry.getKey(), viewModel_fragment_selectTags.iMediaCategory);
+                if(sTagText.contains("-1")){
+                    continue;
+                }
+                tmTagNameAndID.put(sTagText, entry.getKey());
             }
             //Items are sorted by name. Repopulate histogram treemap.
             TreeMap<Integer, Integer> tmTemp = new TreeMap<>();
