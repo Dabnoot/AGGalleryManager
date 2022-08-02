@@ -122,6 +122,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                             false, iProgressBarValue,
                             true, "Operation halted.",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 } else {
                     globalClass.BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
@@ -142,6 +144,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
             ciNewComic.sItemID = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
             ciNewComic.sTitle = tmEntryComic.getValue()[INDEX_COMIC_NAME]; //Get the name.
             ciNewComic.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
+            ciNewComic.aliTags = GlobalClass.getTagIDsFromTagIDString(ciNewComic.sTags);
             ciNewComic.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNewComic.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
@@ -151,6 +154,18 @@ public class Worker_Import_ImportComicFolders extends Worker {
             ciNewComic.sSource = tmEntryComic.getValue()[INDEX_COMIC_SOURCE];
             ciNewComic.sComicParodies = tmEntryComic.getValue()[INDEX_COMIC_PARODY];
             ciNewComic.sComicArtists = tmEntryComic.getValue()[INDEX_COMIC_ARTIST];
+
+            //The below call should add the record to both the catalog contents file
+            //  and memory. Do this before copying or moving files so that the files
+            //  don't become "lost" inside the program storage:
+            try {
+                globalClass.CatalogDataFile_CreateNewRecord(ciNewComic);
+            } catch (Exception e) {
+                e.printStackTrace();
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
+                return Result.failure();
+            }
 
             //Find comic files belonging to this comic and put them in a tree map for sorting.
             TreeMap<String, ItemClass_File> tmComicFiles = new TreeMap<>();
@@ -282,10 +297,9 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
             } //End comic page import Loop.
 
-            //Next add the data to the catalog file and memory:
-            //The below call should add the record to both the catalog contents file
-            //  and memory:
-            globalClass.CatalogDataFile_CreateNewRecord(ciNewComic);
+            //Update the record with the file count, size, etc:
+            globalClass.CatalogDataFile_UpdateRecord(ciNewComic);
+
 
             //Delete the comic folder from source directory if required:
             if (giMoveOrCopy == GlobalClass.MOVE) {

@@ -151,6 +151,7 @@ public class Worker_Tags_DeleteTag extends Worker {
                     }
                 }
                 tmEntryCatalogRecord.getValue().sTags = GlobalClass.formDelimitedString(aliNewTags, ",");
+                tmEntryCatalogRecord.getValue().aliTags = new ArrayList<>(aliNewTags);
                 //Update the record and the catalog file:
                 globalClass.CatalogDataFile_UpdateRecord(tmEntryCatalogRecord.getValue());
 

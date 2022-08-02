@@ -89,6 +89,11 @@ public class GlobalClass extends Application {
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
+    public int giLoadingState = LOADING_STATE_NOT_STARTED;
+    public static final int LOADING_STATE_NOT_STARTED = 0;
+    public static final int LOADING_STATE_STARTED = 1;
+    public static final int LOADING_STATE_FINISHED = 2;
+
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
     public TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
     public static final int SORT_BY_DATETIME_LAST_VIEWED = 0;
@@ -568,7 +573,7 @@ public class GlobalClass extends Application {
         return ConvertStringToCatalogItem(sRecord2);
     }
 
-    public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci){
+    public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci) throws Exception {
 
         File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
 
@@ -594,7 +599,28 @@ public class GlobalClass extends Application {
             fwNewCatalogContentsFile.close();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            String sMessage = "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage();
+
+            BroadcastProgress(true, sMessage,
+                    false, 0,
+                    false, "",
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+            FileWriter fwLogFile;
+            String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
+            String sLogFilePath = gfLogsFolder.getAbsolutePath() +
+                    File.separator + sJobDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_CatalogUpdate_ErrorLog.txt";
+            File fLog = new File(sLogFilePath);
+            try {
+                fwLogFile = new FileWriter(fLog, true);
+                fwLogFile.write(sMessage + "\n");
+                fwLogFile.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+
+            throw new Exception(sMessage);
+
         }
 
     }
@@ -962,6 +988,7 @@ public class GlobalClass extends Application {
         ciNew.iMediaCategory                  = ciOriginal.iMediaCategory                 ;     //Video, image, or comic.
         ciNew.sItemID                         = ciOriginal.sItemID                        ;     //Video, image, comic id
         ciNew.sTags                           = ciOriginal.sTags                          ;     //Tags given to the video, image, or comic
+        ciNew.aliTags                         = new ArrayList<>(ciOriginal.aliTags)       ;
         ciNew.sFilename                       = ciOriginal.sFilename                      ;     //Video or image filename, comic thumbnail image filename
         ciNew.sFolder_Name                    = ciOriginal.sFolder_Name                   ;     //Name of the folder holding the video, image, or comic pages
         ciNew.sCast                           = ciOriginal.sCast                          ;     //For videos and images
@@ -1344,6 +1371,9 @@ public class GlobalClass extends Application {
                     ItemClass_CatalogItem ci = entry.getValue();
                     //Update the tags histogram. As of 7/29/2022, this is used to show the user
                     //  how many tags are in use while they select tags to perform a tag filter.
+                    if(ci.aliTags == null){
+                        ci.aliTags = new ArrayList<>(); //Just in case.
+                    }
                     for (int iCatalogItemTagID : ci.aliTags) {
                         if (!galtmTagHistogram.get(iMediaCategory).containsKey(iCatalogItemTagID)) {
                             galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, 1);

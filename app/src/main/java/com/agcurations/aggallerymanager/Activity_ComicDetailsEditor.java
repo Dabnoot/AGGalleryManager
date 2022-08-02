@@ -90,6 +90,7 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 //Get tags and record to catalog item:
                 if(!gciCatalogItem.sTags.equals(gsNewTagIDs)) {
                     gciCatalogItem.sTags = gsNewTagIDs;
+                    gciCatalogItem.aliTags = GlobalClass.getTagIDsFromTagIDString(gsNewTagIDs);
                     //Inform program of a need to update the tags histogram:
                     globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                 }

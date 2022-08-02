@@ -91,7 +91,10 @@ public class Worker_LocalFileTransfer extends Worker {
 
         if(!globalClass.gfLogsFolder.exists()){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
+            globalClass.gbImportExecutionRunning = false;
+            globalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
+
         }
 
         //Put the log file in the logs folder:
@@ -108,6 +111,8 @@ public class Worker_LocalFileTransfer extends Worker {
                 sMessage = "No job file name provided. This is the file telling the worker what files to copy, and where to place them.";
                 gfwLogFile.write(sMessage + "\n");
                 gfwLogFile.close();
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
@@ -192,6 +197,8 @@ public class Worker_LocalFileTransfer extends Worker {
                         sMessage = e.getMessage();
                         gfwLogFile.write(sMessage + "\n");
                         gfwLogFile.close();
+                        globalClass.gbImportExecutionRunning = false;
+                        globalClass.gbImportExecutionFinished = true;
                         return Result.failure(DataErrorMessage(sMessage));
                     }
 
@@ -418,6 +425,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                 gfwLogFile.write(sMessage + "\n");
                                 gfwLogFile.close();
                                 CloseNotification();
+                                globalClass.gbImportExecutionRunning = false;
+                                globalClass.gbImportExecutionFinished = true;
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
                         }
@@ -430,6 +439,8 @@ public class Worker_LocalFileTransfer extends Worker {
                     sMessage = "Problem reading job file: " + sJobFilePath;
                     gfwLogFile.write(sMessage + "\n");
                     gfwLogFile.close();
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
                 }
 
@@ -445,11 +456,15 @@ public class Worker_LocalFileTransfer extends Worker {
                 sMessage = "Job file does not exist: " + sJobFilePath;
                 gfwLogFile.write(sMessage + "\n");
                 gfwLogFile.close();
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
             gfwLogFile.close();
 
+            globalClass.gbImportExecutionRunning = false;
+            globalClass.gbImportExecutionFinished = true;
             return Result.success(dataProgress);
 
         } catch (Exception e){
@@ -458,6 +473,8 @@ public class Worker_LocalFileTransfer extends Worker {
                 sMessage = "Null message";
             }
             Log.d("Job Worker", sMessage) ;
+            globalClass.gbImportExecutionRunning = false;
+            globalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
         }
 

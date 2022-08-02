@@ -51,6 +51,13 @@ public class Worker_Catalog_LoadData extends Worker {
     @Override
     public Result doWork() {
         globalClass = (GlobalClass) getApplicationContext();
+
+        if(globalClass.giLoadingState == GlobalClass.LOADING_STATE_STARTED
+            || globalClass.giLoadingState == GlobalClass.LOADING_STATE_FINISHED){
+            return Result.failure();
+        }
+        globalClass.giLoadingState = GlobalClass.LOADING_STATE_STARTED;
+
         String sExternalStorageState;
         sExternalStorageState = Environment.getExternalStorageState();
         if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ) {
@@ -301,6 +308,7 @@ public class Worker_Catalog_LoadData extends Worker {
         //VerifyVideoFilesIntegrity();
 
         LogFilesMaintenance();
+        globalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
         return Result.success();
     }
 

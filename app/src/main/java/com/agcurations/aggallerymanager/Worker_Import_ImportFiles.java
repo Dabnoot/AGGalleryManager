@@ -177,6 +177,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.sFolder_Name = fileItem.sDestinationFolder;
                 ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
+                ciNew.aliTags = new ArrayList<>(fileItem.aliProspectiveTags);
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;
                 ciNew.iGrade = fileItem.iGrade;
@@ -192,6 +193,9 @@ public class Worker_Import_ImportFiles extends Worker {
                         false, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
+                return Result.failure();
             }
 
 
@@ -236,6 +240,9 @@ public class Worker_Import_ImportFiles extends Worker {
                     false, iProgressBarValue,
                     false, "",
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+            globalClass.gbImportExecutionRunning = false;
+            globalClass.gbImportExecutionFinished = true;
+            return Result.failure();
         }
         //Write next behavior to the screen log:
         sLogLine = "\nStarting worker to process job file.\n\n"

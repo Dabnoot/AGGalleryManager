@@ -146,6 +146,7 @@ public class Worker_Import_VideoDownload extends Worker {
         }
         ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
         ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
+        ciNew.aliTags = new ArrayList<>(icfDownloadItem.aliProspectiveTags);
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ciNew.dDatetime_Import = dTimeStamp;
@@ -201,7 +202,11 @@ public class Worker_Import_VideoDownload extends Worker {
 
         }
 
-        globalClass.CatalogDataFile_CreateNewRecord(ciNew);
+        try {
+            globalClass.CatalogDataFile_CreateNewRecord(ciNew);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         //Map-out the files to be downloaded with destination file names:
 

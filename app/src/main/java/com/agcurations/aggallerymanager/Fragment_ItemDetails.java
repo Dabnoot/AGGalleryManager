@@ -186,6 +186,7 @@ public class Fragment_ItemDetails extends Fragment {
                 public void onClick(View view) {
                     if(!gciCatalogItem.sTags.equals(gsNewTagIDs)) {
                         gciCatalogItem.sTags = gsNewTagIDs;
+                        gciCatalogItem.aliTags = GlobalClass.getTagIDsFromTagIDString(gsNewTagIDs);
                         //Inform program of a need to update the tags histogram:
                         globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                     }
