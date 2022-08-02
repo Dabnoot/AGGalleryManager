@@ -1387,8 +1387,8 @@ public class GlobalClass extends Application {
                 //  This includes counting the ones that are in aliTagIDs.
                 //  But skip if this item contains a restricted tag and user is not approved to view restricted tags.
                 boolean bContainsRestrictedTag = Collections.disjoint(ci.aliTags, aliRestrictedTagIDs);
-                if(!(bCatalogTagsRestrictionsOn && !bContainsRestrictedTag)) {
-                    //Don't add the tag if TagRestrictions are on and this is a restricted tag.
+                if(bCatalogTagsRestrictionsOn && bContainsRestrictedTag) {
+                    //Don't add the tag if TagRestrictions are on and this catalog item contains a restricted tag.
                     continue;
                 }
                 for (int iCatalogItemTagID : ci.aliTags) {
