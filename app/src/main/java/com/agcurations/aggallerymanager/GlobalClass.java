@@ -153,7 +153,7 @@ public class GlobalClass extends Application {
 
     public static final int MOVE = 0;
     public static final int COPY = 1;
-    public static final String[] gsMoveOrCopy = {"Move", "Copy"};
+    public static final String[] gsMoveOrCopy = {"Move", "Copy", "Moving", "Copying"};
 
     public boolean gbIsDarkModeOn = false;
 

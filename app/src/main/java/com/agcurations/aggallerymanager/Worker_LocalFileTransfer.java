@@ -316,9 +316,9 @@ public class Worker_LocalFileTransfer extends Worker {
                                     UpdateProgressOutput();
 
                                     if (!bDeleteSuccess) {
-                                        sLogLine = "Could not delete file marked for deletion, " + sFileName + ".";
+                                        sLogLine = "Could not delete file marked for deletion: " + sFileName;
                                     } else {
-                                        sLogLine = "Success deleting file marked for deletion, " + sFileName + ".";
+                                        sLogLine = "Success deleting file marked for deletion: " + sFileName;
                                     }
                                     gfwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
@@ -332,7 +332,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                     File fDestinationFolder = new File(sDestinationFolder);
                                     if (!fDestinationFolder.exists()) {
                                         if (!fDestinationFolder.mkdir()) {
-                                            sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
+                                            sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \""
+                                                    + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
                                             gfwLogFile.write(sMessage + "\n");
                                             globalClass.BroadcastProgress(true, sMessage,
                                                     false, 0,
@@ -367,7 +368,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 }
 
                                                 if (!bDeleteSuccess) {
-                                                    sMessage = "Source file copied, but could not delete source file, " + sFileName + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
+                                                    sMessage = "Source file copied, but could not delete source file as part of a 'move' operation. File \""
+                                                            + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath + ".";
                                                     gfwLogFile.write(sMessage + "\n");
                                                     globalClass.BroadcastProgress(true, sMessage + "\n",
                                                             false, 0,
@@ -384,8 +386,8 @@ public class Worker_LocalFileTransfer extends Worker {
                                         // Execute the copy or move operation:
 
 
-                                        sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
-                                                + " of file " + sFileName + " to " + fDestinationFile.getPath() + ".";
+                                        sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 1]
+                                                + " file " + sFileName + " to " + fDestinationFile.getPath() + ".";
                                         gfwLogFile.write(sLogLine + "\n");
                                         globalClass.BroadcastProgress(true, sLogLine,
                                                 false, 0,
@@ -427,7 +429,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         outputStream.flush();
                                         outputStream.close();
 
-                                        sLogLine = " Success.\n";
+                                        sLogLine = " Success.";
                                         gfwLogFile.write(sLogLine + "\n");
                                         globalClass.BroadcastProgress(true, sLogLine + "\n",
                                                 false, 0,
@@ -442,9 +444,9 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 bDeleteSuccess = dfSource.delete();
                                             }
                                             if (!bDeleteSuccess) {
-                                                sLogLine = "Could not delete source file, " + sFileName + ", after copy.\n";
+                                                sLogLine = "Could not delete source file after copy: " + sFileName + "\n";
                                             } else {
-                                                sLogLine = "Success deleting source file, " + sFileName + ", after copy.\n";
+                                                sLogLine = "Success deleting source file after copy: " + sFileName + "\n";
                                             }
                                             gfwLogFile.write(sLogLine + "\n");
                                             globalClass.BroadcastProgress(true, sLogLine + "\n",
