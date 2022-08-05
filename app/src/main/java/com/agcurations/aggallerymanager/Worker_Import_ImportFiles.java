@@ -268,7 +268,7 @@ public class Worker_Import_ImportFiles extends Worker {
         UUID UUIDWorkID = otwrLocalFileTransfer.getId();
         WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
-        globalClass.BroadcastProgress(true, "Operation complete.",
+        globalClass.BroadcastProgress(true, "Operation complete.\n",
                 false, iProgressBarValue,
                 false, "",
                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
