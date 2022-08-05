@@ -18,6 +18,7 @@ import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
@@ -220,6 +221,19 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
                 @Override
                 public boolean onSingleTapConfirmed(MotionEvent e) {
+                    float fsx1 = gImagePreview.getX();
+                    float fsx2 = gImagePreview.getWidth();
+                    float fXMidPoint = fsx1 + (fsx2 / 2f);
+                    float fTouchDeadband = fsx2 * .10f;
+                    float fNavigateBackTapXLocation = fXMidPoint - fTouchDeadband;
+                    float fNavigateNextTapXLocation = fXMidPoint + fTouchDeadband;
+                    float fTapXLocation = e.getRawX();
+                    if(fTapXLocation < fNavigateBackTapXLocation){
+                        iterateToLesserIndexedItem();
+                    } else if (fTapXLocation > fNavigateNextTapXLocation){
+                        iterateToGreaterIndexedItem();
+                    }
+
                     return super.onSingleTapConfirmed(e);
                 }
 
