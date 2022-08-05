@@ -38,6 +38,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     private ArrayList<ItemClass_File> galFileItems;
     private int giFileItemIndex;
+    private int giFileItemLastIndex;    //Used to automatically move the user to the next item if they
+                                        //  hit the 'mark for deletion' checkbox.
     private int giMaxFileItemIndex;
     private static final String IMAGE_PREVIEW_INDEX = "image_preview_index";
 
@@ -76,6 +78,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         if (savedInstanceState != null) {
             giFileItemIndex = savedInstanceState.getInt(IMAGE_PREVIEW_INDEX);
+            giFileItemLastIndex = giFileItemIndex;
             giCurrentVideoPosition = savedInstanceState.getInt(PLAYBACK_TIME);
         }
 
@@ -157,6 +160,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             galFileItems = globalClass.galPreviewFileList;
             giMaxFileItemIndex = galFileItems.size() - 1;
             giFileItemIndex = b.getInt(Activity_Import.PREVIEW_FILE_ITEMS_POSITION, 0);
+            giFileItemLastIndex = giFileItemIndex;
             giMediaCategory = b.getInt(Activity_Import.MEDIA_CATEGORY, 0);
 
             //Start the tag selection fragment:
@@ -253,23 +257,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 }
 
                 public void onSwipeRight() {
-                    int iTempKey = giFileItemIndex - 1;
-
-                    iTempKey = Math.max(0, iTempKey);
-                    if(iTempKey != giFileItemIndex) {
-                        giFileItemIndex = iTempKey;
-                        initializeFile();
-                    }
+                    iterateToLesserIndexedItem();
                 }
 
                 public void onSwipeLeft() {
-                    int iTempKey = giFileItemIndex + 1;
-
-                    iTempKey = Math.min(giMaxFileItemIndex, iTempKey);
-                    if(iTempKey != giFileItemIndex) {
-                        giFileItemIndex = iTempKey;
-                        initializeFile();
-                    }
+                    iterateToGreaterIndexedItem();
                 }
 
             /*public void onSwipeTop() {
@@ -365,6 +357,27 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         initializeFile();
         displayGrade();
 
+    }
+
+    private void iterateToLesserIndexedItem(){
+        int iTempKey = giFileItemIndex - 1;
+
+        iTempKey = Math.max(0, iTempKey);
+        if(iTempKey != giFileItemIndex) {
+            giFileItemLastIndex = giFileItemIndex;
+            giFileItemIndex = iTempKey;
+            initializeFile();
+        }
+    }
+    private void iterateToGreaterIndexedItem(){
+        int iTempKey = giFileItemIndex + 1;
+
+        iTempKey = Math.min(giMaxFileItemIndex, iTempKey);
+        if(iTempKey != giFileItemIndex) {
+            giFileItemLastIndex = giFileItemIndex;
+            giFileItemIndex = iTempKey;
+            initializeFile();
+        }
     }
 
 
@@ -470,6 +483,15 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     CheckboxImportColorSwitch(false);
                 }
 
+                if(((CheckBox)view).isChecked()){
+                    //If the user has marked this item for deletion, move to the next item automatically.
+                    if(giFileItemIndex > giFileItemLastIndex){
+                        iterateToGreaterIndexedItem();
+                    } else if(giFileItemIndex < giFileItemLastIndex) {
+                        iterateToLesserIndexedItem();
+                    }
+                }
+
                 //Update result to send back to the calling activity (this is also done on tag change):
                 setResult(RESULT_OK);
             }
@@ -488,6 +510,15 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     galFileItems.get(giFileItemIndex).bIsChecked = false;
                     checkBox_ImportItem.setChecked(false);
                     CheckboxImportColorSwitch(false);
+                }
+
+                if(checkBox_MarkForDeletion.isChecked()){
+                    //If the user has marked this item for deletion, move to the next item automatically.
+                    if(giFileItemIndex > giFileItemLastIndex){
+                        iterateToGreaterIndexedItem();
+                    } else if(giFileItemIndex < giFileItemLastIndex) {
+                        iterateToLesserIndexedItem();
+                    }
                 }
 
                 //Update result to send back to the calling activity (this is also done on tag change):
