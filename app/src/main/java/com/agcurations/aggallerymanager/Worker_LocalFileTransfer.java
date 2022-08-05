@@ -111,6 +111,10 @@ public class Worker_LocalFileTransfer extends Worker {
                 sMessage = "No job file name provided. This is the file telling the worker what files to copy, and where to place them.";
                 gfwLogFile.write(sMessage + "\n");
                 gfwLogFile.close();
+                globalClass.BroadcastProgress(true, sMessage,
+                        false, 0,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
@@ -197,6 +201,10 @@ public class Worker_LocalFileTransfer extends Worker {
                         sMessage = e.getMessage();
                         gfwLogFile.write(sMessage + "\n");
                         gfwLogFile.close();
+                        globalClass.BroadcastProgress(true, sMessage,
+                                false, 0,
+                                false, "",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                         globalClass.gbImportExecutionRunning = false;
                         globalClass.gbImportExecutionFinished = true;
                         return Result.failure(DataErrorMessage(sMessage));
@@ -227,12 +235,22 @@ public class Worker_LocalFileTransfer extends Worker {
                             .build();
                     setProgressAsync(dataProgress);
 
+                    int iProgressBarValue = Math.round((glProgressNumerator / (float) glProgressDenominator) * 100);
+                    globalClass.BroadcastProgress(true, "Background working processing files...",
+                            true, iProgressBarValue,
+                            true, sNotificationText,
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
                     //Read the data records in the job file and move/copy files:
                     do {
                         String sLine = brReader.readLine();
                         if(sLine == null){
                             break;
                         }
+                        globalClass.BroadcastProgress(false, "",
+                                false, 0,
+                                true, giFilesProcessed + "/" + giFileCount,
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                         giFilesProcessed++;
                         if (!sLine.equals("")) {
@@ -282,7 +300,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                 if(bUseFileRatherThanUri){
                                     sFileName = fSourceFile.getName();
                                 } else {
-                                    dfSource.getName();
+                                    sFileName = dfSource.getName();
                                 }
 
                                 if(bMarkedForDeletion) {
@@ -298,11 +316,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                     UpdateProgressOutput();
 
                                     if (!bDeleteSuccess) {
-                                        sLogLine = "Could not delete file marked for deletion, " + sFileName + ".\n";
+                                        sLogLine = "Could not delete file marked for deletion, " + sFileName + ".";
                                     } else {
-                                        sLogLine = "Success deleting file marked for deletion, " + sFileName + ".\n";
+                                        sLogLine = "Success deleting file marked for deletion, " + sFileName + ".";
                                     }
                                     gfwLogFile.write(sLogLine + "\n");
+                                    globalClass.BroadcastProgress(true, sLogLine + "\n",
+                                            false, 0,
+                                            false, "",
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                                 } else {
                                     //If this item is not merely marked for deletion...
@@ -312,6 +334,10 @@ public class Worker_LocalFileTransfer extends Worker {
                                         if (!fDestinationFolder.mkdir()) {
                                             sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \"" + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
                                             gfwLogFile.write(sMessage + "\n");
+                                            globalClass.BroadcastProgress(true, sMessage,
+                                                    false, 0,
+                                                    false, "",
+                                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                             bProblemWithFileTransfer = true;
                                             continue; //Skip to the end of the loop and read the next line in the job file.
                                         }
@@ -343,6 +369,10 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 if (!bDeleteSuccess) {
                                                     sMessage = "Source file copied, but could not delete source file, " + sFileName + ", as part of a 'move' operation. File \"" + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath;
                                                     gfwLogFile.write(sMessage + "\n");
+                                                    globalClass.BroadcastProgress(true, sMessage + "\n",
+                                                            false, 0,
+                                                            false, "",
+                                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                                     bProblemWithFileTransfer = true;
                                                 }
                                             }
@@ -357,6 +387,10 @@ public class Worker_LocalFileTransfer extends Worker {
                                         sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[iMoveOrCopy].toLowerCase()
                                                 + " of file " + sFileName + " to " + fDestinationFile.getPath() + ".";
                                         gfwLogFile.write(sLogLine + "\n");
+                                        globalClass.BroadcastProgress(true, sLogLine,
+                                                false, 0,
+                                                false, "",
+                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
 
                                         ContentResolver contentResolver = getApplicationContext().getContentResolver();
@@ -395,6 +429,10 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                         sLogLine = " Success.\n";
                                         gfwLogFile.write(sLogLine + "\n");
+                                        globalClass.BroadcastProgress(true, sLogLine + "\n",
+                                                false, 0,
+                                                false, "",
+                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                                         if (iMoveOrCopy == GlobalClass.MOVE) {
                                             boolean bDeleteSuccess;
@@ -404,11 +442,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 bDeleteSuccess = dfSource.delete();
                                             }
                                             if (!bDeleteSuccess) {
-                                                sLogLine = "Could not delete source file, " + sFileName + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                                sLogLine = "Could not delete source file, " + sFileName + ", after copy.\n";
                                             } else {
-                                                sLogLine = "Success deleting source file, " + sFileName + ", after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                                                sLogLine = "Success deleting source file, " + sFileName + ", after copy.\n";
                                             }
                                             gfwLogFile.write(sLogLine + "\n");
+                                            globalClass.BroadcastProgress(true, sLogLine + "\n",
+                                                    false, 0,
+                                                    false, "",
+                                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                         }
 
                                     } else {
@@ -424,12 +466,21 @@ public class Worker_LocalFileTransfer extends Worker {
                                 sMessage = "Data missing while reading job file, line " + giFilesProcessed + ": " + sJobFilePath;
                                 gfwLogFile.write(sMessage + "\n");
                                 gfwLogFile.close();
+                                globalClass.BroadcastProgress(true, sMessage,
+                                        false, 0,
+                                        false, "",
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                 CloseNotification();
                                 globalClass.gbImportExecutionRunning = false;
                                 globalClass.gbImportExecutionFinished = true;
                                 return Result.failure(DataErrorMessage(sMessage));
                             }
                         }
+                        globalClass.BroadcastProgress(false, "",
+                                false, 0,
+                                true, giFilesProcessed + "/" + giFileCount,
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
                     } while (true);
                     brReader.close();
 
@@ -439,6 +490,10 @@ public class Worker_LocalFileTransfer extends Worker {
                     sMessage = "Problem reading job file: " + sJobFilePath;
                     gfwLogFile.write(sMessage + "\n");
                     gfwLogFile.close();
+                    globalClass.BroadcastProgress(true, sMessage,
+                            false, 0,
+                            false, "",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
@@ -449,6 +504,10 @@ public class Worker_LocalFileTransfer extends Worker {
                     if(!fJobFile.delete()){
                         sMessage = "Worker finished processing job but could not delete job file: " + sJobFilePath;
                         gfwLogFile.write(sMessage + "\n");
+                        globalClass.BroadcastProgress(true, sMessage + "\n",
+                                false, 0,
+                                false, "",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                     }
                 }
 
@@ -456,6 +515,10 @@ public class Worker_LocalFileTransfer extends Worker {
                 sMessage = "Job file does not exist: " + sJobFilePath;
                 gfwLogFile.write(sMessage + "\n");
                 gfwLogFile.close();
+                globalClass.BroadcastProgress(true, sMessage,
+                        false, 0,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
@@ -473,6 +536,10 @@ public class Worker_LocalFileTransfer extends Worker {
                 sMessage = "Null message";
             }
             Log.d("Job Worker", sMessage) ;
+            globalClass.BroadcastProgress(true, sMessage + "\n",
+                    false, 0,
+                    false, "",
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             globalClass.gbImportExecutionRunning = false;
             globalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
@@ -491,6 +558,11 @@ public class Worker_LocalFileTransfer extends Worker {
                             .setProgress(100, iProgressBarValue,false);
         gNotification = gNotificationBuilder.build();
         globalClass.notificationManager.notify(giNotificationID, gNotification);
+
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                false, "",
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
         //Update the progress data associated with this worker:
         Data dataProgress = new Data.Builder()
