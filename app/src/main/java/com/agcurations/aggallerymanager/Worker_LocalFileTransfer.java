@@ -444,9 +444,9 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 bDeleteSuccess = dfSource.delete();
                                             }
                                             if (!bDeleteSuccess) {
-                                                sLogLine = "Could not delete source file after copy: " + sFileName + "\n";
+                                                sLogLine = "Could not delete source file after copy: " + sFileName;
                                             } else {
-                                                sLogLine = "Success deleting source file after copy: " + sFileName + "\n";
+                                                sLogLine = "Success deleting source file after copy: " + sFileName;
                                             }
                                             gfwLogFile.write(sLogLine + "\n");
                                             globalClass.BroadcastProgress(true, sLogLine + "\n",

@@ -38,42 +38,53 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent">
 
-                <TextView
-                    android:id="@+id/textView_SelectedTags"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_height="match_parent"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:text="Tags:"
-                    android:textSize="16sp"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:layout_marginEnd="10dp"
-                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/textView_LabelImportItemNumberOfNumber"/>
-
-                <TextView
-                    android:id="@+id/textView_ImportItemNumberOfNumber"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0/0"
-                    android:textSize="26sp"
-                    android:layout_marginBottom="10dp"
-                    android:layout_marginEnd="10dp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
+                    android:layout_marginBottom="5dp">
 
-                <TextView
-                    android:id="@+id/textView_LabelImportItemNumberOfNumber"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Item: "
-                    android:textSize="26sp"
-                    android:layout_marginBottom="10dp"
-                    app:layout_constraintEnd_toStartOf="@id/textView_ImportItemNumberOfNumber"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"/>
+                    <TextView
+                        android:id="@+id/textView_SelectedTags"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Tags:"
+                        android:textSize="16sp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="5dp"
+                        android:layout_marginBottom="5dp"
+                        android:layout_marginEnd="10dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        />
+                    <!--app:layout_constraintEnd_toStartOf="@id/textView_LabelImportItemNumberOfNumber"-->
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/imageButton_PasteLastTags"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        app:layout_constraintEnd_toStartOf="@id/textView_LabelCopyLastTagSelection"
+                        app:layout_constraintTop_toTopOf="parent"
+                        android:src="@drawable/post_add"
+                        android:backgroundTint="@color/colorBlack" />
+
+                    <TextView
+                        android:id="@+id/textView_LabelCopyLastTagSelection"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:text="Paste last tag selection"
+                        android:textSize="16sp"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -93,6 +104,7 @@
                     android:layout_height="wrap_content"
                     android:text="File name: "
                     android:layout_marginStart="20dp"
+                    android:layout_marginTop="5dp"
                     android:textSize="16sp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"/>
@@ -120,6 +132,8 @@
                         android:id="@+id/checkBox_MarkForDeletion"
                         android:layout_width="35dp"
                         android:layout_height="20dp"
+
+                        android:layout_marginBottom="5dp"
                         android:buttonTint="@color/colorTextColor"/>
 
                     <TextView
@@ -127,6 +141,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="10dp"
+
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
                         android:text="Mark for deletion"
                         android:textSize="16sp"/>
                 </LinearLayout>
@@ -141,20 +158,42 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintBottom_toTopOf="@id/constraintLayout_MiddleLine">
 
+                <TextView
+                    android:id="@+id/textView_LabelImportItemNumberOfNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Item: "
+                    android:textSize="26sp"
+                    app:layout_constraintEnd_toStartOf="@id/textView_ImportItemNumberOfNumber"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
+                <TextView
+                    android:id="@+id/textView_ImportItemNumberOfNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0/0"
+                    android:textSize="26sp"
+
+                    android:layout_marginEnd="10dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"/>
+
                 <RelativeLayout
                     android:id="@+id/relativeLayout_ImportIndication"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="15dp"
                     android:layout_marginEnd="20dp"
+                    android:layout_marginTop="5dp"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/linearLayout_Grade"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <CheckBox
                         android:id="@+id/checkBox_ImportItem"
                         android:layout_width="40dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="25dp"
                         android:layout_alignParentStart="true"
                         android:buttonTint="@color/colorTextColor"
                         android:paddingTop="5dp" />
@@ -169,7 +208,7 @@
                         android:textSize="26sp" />
                 </RelativeLayout>
 
-                <LinearLayout
+                <!--<LinearLayout
                     android:id="@+id/linearLayout_Grade"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -224,7 +263,7 @@
 
                     </LinearLayout>
 
-                </LinearLayout>
+                </LinearLayout>-->
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

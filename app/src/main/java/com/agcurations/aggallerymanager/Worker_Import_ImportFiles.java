@@ -49,8 +49,10 @@ public class Worker_Import_ImportFiles extends Worker {
                         false)
                 .apply();
 
-        long lProgressNumerator = 0L;
-        long lProgressDenominator;
+        long lByteProgressNumerator = 0L;
+        long lByteProgressDenominator;
+        int iFileCountProgressNumerator = 0;
+        int iFileCountProgressDenominator;
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
 
@@ -60,7 +62,8 @@ public class Worker_Import_ImportFiles extends Worker {
         for(ItemClass_File fi: alFileList){
             lTotalImportSize = lTotalImportSize + fi.lSizeBytes;
         }
-        lProgressDenominator = lTotalImportSize;
+        lByteProgressDenominator = lTotalImportSize;
+        iFileCountProgressDenominator = alFileList.size();
 
         String sLogLine;
 
@@ -68,7 +71,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
-
+            //todo: update progress bar and progress bar text here rather than multiple places throughout.
             if(fileItem.bMarkedForDeletion){
 
                 String sFileSource = "";
@@ -83,11 +86,12 @@ public class Worker_Import_ImportFiles extends Worker {
                 }
                 //Write next behavior to the screen log:
                 sLogLine = "Preparing data for job file: Delete file " + fileItem.sFileOrFolderName + ".\n";
-                lProgressNumerator++;
-                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                iFileCountProgressNumerator++;
+                lByteProgressNumerator += fileItem.lSizeBytes;
+                iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
-                        true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                        true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 String sLine = sFileSource + "\t"
                         + fileItem.sDestinationFolder + "\t"
@@ -124,7 +128,7 @@ public class Worker_Import_ImportFiles extends Worker {
                             false, iProgressBarValue,
                             false, "",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                    lProgressNumerator += fileItem.lSizeBytes;
+                    lByteProgressNumerator += fileItem.lSizeBytes;
                     continue;
                 }
                 sFileName = dfSource.getName();
@@ -145,11 +149,11 @@ public class Worker_Import_ImportFiles extends Worker {
 
                 //Write next behavior to the screen log:
                 sLogLine = "Preparing data for job file: Import " + fileItem.sFileOrFolderName + ".\n";
-                lProgressNumerator++;
-                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                iFileCountProgressNumerator++;
+                iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
-                        true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                        true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                 String sLine = sUriOrPath + "\t"
@@ -211,10 +215,10 @@ public class Worker_Import_ImportFiles extends Worker {
             String sMoveOrCopy = GlobalClass.gsMoveOrCopy[giMoveOrCopy];
             sLogLine = "Using background worker for file " + sMoveOrCopy.toLowerCase() + " operations.\n"
                     + "Preparing job file.\n\n";
-            lProgressDenominator = alFileList.size();
+            lByteProgressDenominator = alFileList.size();
             globalClass.BroadcastProgress(true, sLogLine,
                     false, iProgressBarValue,
-                    true, "File " + lProgressNumerator + "/" + lProgressDenominator,
+                    true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
             //Create a file with a listing of the files to be copied/moved:
@@ -250,7 +254,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 + "Refresh the catalog viewer (exit/re-enter, change sort direction) to view newly-added files.\n";
         globalClass.BroadcastProgress(true, sLogLine,
                 false, iProgressBarValue,
-                true, lProgressNumerator + "/" + lProgressDenominator + " files written to job file",
+                true, iFileCountProgressNumerator + "/" + iFileCountProgressDenominator + " files written to job file",
                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
         //Build-out data to send to the worker:

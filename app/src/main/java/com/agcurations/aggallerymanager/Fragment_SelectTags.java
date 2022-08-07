@@ -806,6 +806,80 @@ public class Fragment_SelectTags extends Fragment {
             }
         }
 
+        public void selectTagsByIDs(ArrayList<Integer> aliTagsToSelect){
+            boolean bNotifyDataSetChanged = false;
+            boolean bUpdateCompoundTagHistogram = false;
+            for(Integer iIncomingTagID: aliTagsToSelect) {
+                //Go and look to make sure that the tag is not already selected:
+                boolean bTagAlreadySelected = false;
+                for (int iTagID : galiPreselectedTags) {
+                    if (iIncomingTagID == iTagID) {
+                        bTagAlreadySelected = true;
+                        break;
+                    }
+                }
+
+                if (!bTagAlreadySelected) {
+                    //Find the tagItem in the list:
+
+
+                    for (int i = 0; i < alictTagItems.size(); i++) {
+                        ItemClass_Tag tagItem = alictTagItems.get(i);
+                        if (tagItem.iTagID.equals(iIncomingTagID)) {
+                            //Select the tagItem:
+                            iOrderIterator++;
+                            tagItem.iSelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
+                            if (galiPreselectedTags == null) {
+                                galiPreselectedTags = new ArrayList<>();
+                            }
+                            tagItem.bIsChecked = true;
+                            galiPreselectedTags.add(tagItem.iTagID);
+                            bUpdateCompoundTagHistogram = true;
+                            bNotifyDataSetChanged = true;
+                            break;
+                        }
+                    }
+
+                }
+            }
+
+
+            if (bNotifyDataSetChanged) {
+                //Reform the tags string listing all of the selected tags:
+
+                //Iterate through all of the items in this ArrayAdapter, gathering the items,
+                //  and using a TreeMap to automatically sort the items by selection order:
+                int iItemCount = getCount();
+                TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
+                for (int i = 0; i < iItemCount; i++) {
+                    if (alictTagItems.get(i) != null) {
+                        ItemClass_Tag tagItem1 = alictTagItems.get(i);
+                        assert tagItem1 != null;
+                        if (tagItem1.bIsChecked) {
+                            tmSelectedItems.put(tagItem1.iSelectionOrder, tagItem1);
+                        }
+                    }
+                }
+
+                //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
+                ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+
+                for (Map.Entry<Integer, ItemClass_Tag>
+                        entry : tmSelectedItems.entrySet()) {
+                    alTagItems.add(entry.getValue());
+                }
+
+                viewModel_fragment_selectTags.setSelectedTags(alTagItems);
+
+                notifyDataSetChanged();
+
+                if (bUpdateCompoundTagHistogram && viewModel_fragment_selectTags.bShowModeCompoundTagUse) {
+                    updateCompoundTagsHistogram();
+                }
+
+
+            }
+        }
 
         private void updateCompoundTagsHistogram(){
             //recalc compound tag histogram with the newly checked/unchecked item:

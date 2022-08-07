@@ -6,6 +6,8 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PersistableBundle;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -13,12 +15,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
@@ -61,6 +63,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
     int[] giGradeImageViews;
 
+    ArrayList<Integer> galiLastAssignedTags;
+    boolean gbFreezeLastAssignedReset = false;
+    boolean gbPastingTags = false;
+
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -93,7 +99,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 //Get the text of the tags and display:
                 StringBuilder sb = new StringBuilder();
                 sb.append("Tags: ");
-                if(tagItems.size() > 0) {
+                if (tagItems.size() > 0) {
                     sb.append(tagItems.get(0).sTagText);
                     for (int i = 1; i < tagItems.size(); i++) {
                         sb.append(", ");
@@ -101,25 +107,25 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     }
                 }
                 TextView tv = findViewById(R.id.textView_SelectedTags);
-                if(tv != null){
+                if (tv != null) {
                     tv.setText(sb.toString());
                 }
 
                 //Get the tag IDs to pass back to the calling activity:
                 ArrayList<Integer> aliTagIDs = new ArrayList<>();
-                for(ItemClass_Tag ti : tagItems){
+                for (ItemClass_Tag ti : tagItems) {
                     aliTagIDs.add(ti.iTagID);
                 }
 
                 boolean bSetCheckedDisplay = false;
                 //If the media type is Comics, tags are applied to each
                 //  file item.
-                if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                     boolean bSetChecked = aliTagIDs.size() > galFileItems.get(0).aliProspectiveTags.size();
-                    for(ItemClass_File icf: galFileItems){
+                    for (ItemClass_File icf : galFileItems) {
                         icf.aliProspectiveTags = aliTagIDs;
                         icf.bDataUpdateFlag = true;
-                        if(bSetChecked) {
+                        if (bSetChecked) {
                             icf.bIsChecked = true;  //Only set if a tag has been added.
                             icf.bMarkedForDeletion = false;
                             bSetCheckedDisplay = true;
@@ -127,7 +133,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     }
 
                 } else {
-                    if(aliTagIDs.size() > galFileItems.get(giFileItemIndex).aliProspectiveTags.size()){
+                    if (aliTagIDs.size() > galFileItems.get(giFileItemIndex).aliProspectiveTags.size()) {
                         galFileItems.get(giFileItemIndex).bIsChecked = true; //Only set if a tag has been added.
                         galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
                         bSetCheckedDisplay = true;
@@ -135,15 +141,41 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     galFileItems.get(giFileItemIndex).aliProspectiveTags = aliTagIDs;
                     galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
 
+                    if (!gbFreezeLastAssignedReset) {
+                        galiLastAssignedTags = new ArrayList<>(aliTagIDs);
+                    } else {
+                        //Data protection in place due to initialization.
+                        gbFreezeLastAssignedReset = false; //Unfreeze data protection.
+                    }
+
                 }
 
-                if(bSetCheckedDisplay) {
+                if (bSetCheckedDisplay) {
                     CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
                     checkBox_ImportItem.setChecked(true);
                     CheckboxImportColorSwitch(true);
                     CheckBox checkBox_MarkForDeletion = findViewById(R.id.checkBox_MarkForDeletion);
                     checkBox_MarkForDeletion.setChecked(false);
                     CheckboxMarkForDeletionColorSwitch(false);
+                }
+
+                if (gbPastingTags) {
+                    gbPastingTags = false;
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            //If this is the result of a tag pasting operation, automatically move to the next/previous item.
+                            //Do this with a slight delay to allow the graphics to update so that the user can see
+                            //  that the tag selections were applied.
+                            if (giFileItemIndex > giFileItemLastIndex) {
+                                iterateToGreaterIndexedItem();
+                            } else if (giFileItemIndex < giFileItemLastIndex) {
+                                iterateToLesserIndexedItem();
+                            }
+                        }
+                    }, 500);
+
+
                 }
 
                 //Set a result to send back to the calling activity (this is also done on checkbox click):
@@ -348,7 +380,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         }
 
         //Set on-click listener for grade:
-        giGradeImageViews = new int[]{
+        /*giGradeImageViews = new int[]{
                 R.id.imageView_Grade1,
                 R.id.imageView_Grade2,
                 R.id.imageView_Grade3,
@@ -366,10 +398,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             for(int i = 0; i < giGradeImageViews.length; i++) {
                 imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
             }
-        }
+        }*/
 
         initializeFile();
-        displayGrade();
+        //displayGrade();
 
     }
 
@@ -600,17 +632,53 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
 
             if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
+                gbFreezeLastAssignedReset = true; //Don't let the data observer reset the "lastAssignedTags" arrayList.
                 fragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
             }
 
-            displayGrade(); //Update the displayed grade
+            //displayGrade(); //Update the displayed grade
 
             //Show the sequence number of this item:
             TextView textView_ImportItemNumberOfNumber = findViewById(R.id.textView_ImportItemNumberOfNumber);
             String sTemp = (giFileItemIndex + 1) + "/" + (giMaxFileItemIndex + 1);
             textView_ImportItemNumberOfNumber.setText(sTemp);
         }
+
+        ImageButton imageButton_PasteLastTags = findViewById(R.id.imageButton_PasteLastTags);
+        if (imageButton_PasteLastTags != null) {
+            imageButton_PasteLastTags.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    copyLastTagSelection();
+                }
+            });
+
+
+        }
+
+        TextView textView_LabelCopyLastTagSelection = findViewById(R.id.textView_LabelCopyLastTagSelection);
+        if(textView_LabelCopyLastTagSelection != null){
+            textView_LabelCopyLastTagSelection.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    copyLastTagSelection();
+                }
+            });
+        }
+
     }
+
+
+    private void copyLastTagSelection(){
+        if(galiLastAssignedTags != null){
+            //If the user is pasting tags, set a flag to move to the next item automatically.
+            gbPastingTags = true;
+            fragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(galiLastAssignedTags);
+        }
+
+    }
+
+
 
     private void CheckboxImportColorSwitch(boolean bChecked){
         RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
