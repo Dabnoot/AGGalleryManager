@@ -217,8 +217,10 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     gTextView_FileAnalysisProgressBarText.setVisibility(View.VISIBLE);
                     gTextView_FileAnalysisProgressBarText.setText(globalClass.gsImportFolderAnalysisProgressBarText);
 
-                    gTextView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
-                    gTextView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
+                    if(globalClass.gsbImportFolderAnalysisLog.length() > 0) {
+                        gTextView_FileAnalysisDebugLog.setVisibility(View.VISIBLE);
+                        gTextView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
+                    }
 
                     if (globalClass.gbImportFolderAnalysisFinished) {
                         if (gbutton_FolderSelectComplete != null) {
@@ -330,6 +332,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
                         globalClass.gbImportFolderAnalysisRunning = true;
                         globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
+                        globalClass.gbImportFolderAnalysisFinished = false;
                         Service_Import.startActionGetDirectoryContents(getContext(),
                                 Activity_Import.guriImportTreeURI,
                                 viewModelImportActivity.iImportMediaCategory,
@@ -413,6 +416,11 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     if(gbutton_FolderSelectComplete != null) {
                         gbutton_FolderSelectComplete.setEnabled(true);
                         viewModelImportActivity.bUpdateImportSelectList = true;
+                        int i = gTextView_FileAnalysisDebugLog.getVisibility();
+                        if(gTextView_FileAnalysisDebugLog.getVisibility() == View.INVISIBLE) {
+                            //Go ahead and move to the next fragment if there is no log data for the user.
+                            gbutton_FolderSelectComplete.performClick();
+                        }
                     }
                 }
 
