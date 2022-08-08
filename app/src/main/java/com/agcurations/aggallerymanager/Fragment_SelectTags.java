@@ -393,11 +393,6 @@ public class Fragment_SelectTags extends Fragment {
         //  The user specifies the new tags and we "check mark" the tags that apply.
         galiPreselectedTags = aliPreselectedTags;
 
-
-
-
-
-
         initListViewData();
     }
 
@@ -476,6 +471,8 @@ public class Fragment_SelectTags extends Fragment {
 
         //Reset the selected tags stored in the viewmodel:
         viewModel_fragment_selectTags.setSelectedTags(alict_SelectedTagsViewModelReset);
+
+        galNewTags = null; //Mark galNewTags as empty.
 
         // Create the adapter for the ListView, and set the ListView adapter:
         if(getActivity() == null){
@@ -741,15 +738,15 @@ public class Fragment_SelectTags extends Fragment {
                 }
             }
             //Go and look to make sure that the tag is not already selected:
-            boolean bTagAlreadySelected = false;
+            /*boolean bTagAlreadySelected = false;
             for(int iTagID: galiPreselectedTags){
                 if(iTagIDIncoming == iTagID){
                     bTagAlreadySelected = true;
                     break;
                 }
-            }
+            }*/
 
-            if(!bTagAlreadySelected){
+            //if(!bTagAlreadySelected){
                 //Find the tagItem in the list:
                 boolean bUpdateCompoundTagHistogram = false;
                 boolean bNotifyDataSetChanged = false;
@@ -803,7 +800,7 @@ public class Fragment_SelectTags extends Fragment {
                     notifyDataSetChanged();
                 }
 
-            }
+            //}
         }
 
         public void selectTagsByIDs(ArrayList<Integer> aliTagsToSelect){
