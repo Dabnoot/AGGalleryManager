@@ -139,9 +139,6 @@ public class GlobalClass extends Application {
     public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
-    public static final String gsNHComicCoverPageFilter = "^\\d{1,7}_Cover.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
-    //public static final String gsNHComicPageFilter = "^\\d{1,7}_Page.+"; //A regex filter for getting the cover file for a NHComicDownloader file set.
-
 
 
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
@@ -188,12 +185,8 @@ public class GlobalClass extends Application {
     //Variables to control starting of comic web address analysis:
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.
-    public boolean gbImportComicWebAnalysisStarted = false;
     public boolean gbImportComicWebAnalysisRunning = false;
     public boolean gbImportComicWebAnalysisFinished = false;
-    public StringBuilder gsbImportComicWebAnalysisLog = new StringBuilder();
-    //public ItemClass_CatalogItem gci_ImportComicWebItem;  //To capture a potential import.
-    public ItemClass_CatalogItem gci_ImportVideoWebItem;
 
     //The variable below is used to identify files that were acquired using the Android DownloadManager.
     //  The Android DownloadIdleService will automatically delete the files that this program downloads
@@ -239,10 +232,6 @@ public class GlobalClass extends Application {
             isNetworkConnected = false;
         }
     }
-
-    //User-set option:
-    public final boolean bAutoDownloadOn = true; //By default, auto-download details is on.
-      //This uses little network resource because we are just getting html data.
 
 
     //=====================================================================================
@@ -422,52 +411,6 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
 
         return sHeader;
-    }
-
-    public String getCatalogRecordSearchString(ItemClass_CatalogItem ci){
-
-        String sReadableData = ""; //To be used for textual searches
-        sReadableData = sReadableData + ci.iMediaCategory;                          //Video, image, or comic.
-        sReadableData = sReadableData + "\t" + ci.sItemID;                          //Video, image, comic id
-        sReadableData = sReadableData + "\t" + JumbleFileName(ci.sFilename);        //Video or image filename. Filename used by storage is obfuscated. De-jumble to make readable.
-        sReadableData = sReadableData + "\t" + ci.sFolder_Name;                     //Name of the folder holding the video, image, or comic pages
-        sReadableData = sReadableData + "\t" + JumbleFileName(ci.sThumbnail_File);  //Name of the file used as the thumbnail for a video or comic
-        sReadableData = sReadableData + "\t" + ci.dDatetime_Import;                 //Date of import. Used for sorting if desired
-        sReadableData = sReadableData + "\t" + ci.dDatetime_Last_Viewed_by_User;    //Date of last read by user. Used for sorting if desired
-
-        String sTags = getTagTextsFromIDs(getIntegerArrayFromString(ci.sTags, ","), ci.iMediaCategory).toString();
-        sReadableData = sReadableData + "\t" + sTags;                               //Tags given to the video, image, or comic
-
-        sReadableData = sReadableData + "\t" + ci.iHeight;                          //Video or image dimension/resolution
-        sReadableData = sReadableData + "\t" + ci.iWidth;                           //Video or image dimension/resolution
-        sReadableData = sReadableData + "\t" + ci.lDuration_Milliseconds;           //Duration of video in milliseconds
-        sReadableData = sReadableData + "\t" + ci.sDuration_Text;                   //Duration of video text in 00:00:00 format
-        sReadableData = sReadableData + "\t" + ci.sResolution;                      //Resolution for sorting at user request
-        sReadableData = sReadableData + "\t" + ci.lSize;                            //Size of video, image, or size of all files in the comic, in Bytes
-        sReadableData = sReadableData + "\t" + ci.sCast;                            //For videos and images
-
-        //Comic-related variables:
-        sReadableData = sReadableData + "\t" + ci.sComicArtists;                    //Common comic tag category
-        sReadableData = sReadableData + "\t" + ci.sComicCategories;                 //Common comic tag category
-        sReadableData = sReadableData + "\t" + ci.sComicCharacters;                 //Common comic tag category
-        sReadableData = sReadableData + "\t" + ci.sComicGroups;                     //Common comic tag category
-        sReadableData = sReadableData + "\t" + ci.sComicLanguages;                  //Language(s) found in the comic
-        sReadableData = sReadableData + "\t" + ci.sComicParodies;                   //Common comic tag category
-        sReadableData = sReadableData + "\t" + ci.sTitle;                       //Comic name
-        sReadableData = sReadableData + "\t" + ci.iComicPages;                      //Total number of pages as defined at the comic source
-        sReadableData = sReadableData + "\t" + ci.iComic_Max_Page_ID;               //Max comic page id extracted from file names
-        sReadableData = sReadableData + "\t" + ci.sComic_Missing_Pages;             //Missing page numbers
-        sReadableData = sReadableData + "\t" + ci.iFile_Count;                      //Files included with the comic. Can be used for integrity check. Also used
-                                                                                    // for video M3U8 download completion check.
-        sReadableData = sReadableData + "\t" + ci.bComic_Online_Data_Acquired;      //Typically used to gather tag data from an online comic source, if automatic.
-        sReadableData = sReadableData + "\t" + ci.sSource;                          //Website, if relevant. ended for comics.
-        sReadableData = sReadableData + "\t" + ci.iGrade;                           //Grade.
-        sReadableData = sReadableData + "\t" + ci.iSpecialFlag;              //Code for required post-processing.
-        sReadableData = sReadableData + "\t" + ci.sVideoLink;                       //For video download from web page or M3U8 stream. Web address of page is
-                                                                                    //  stored in sAddress. There can be multiple video downloads and streams
-                                                                                    //  per web page, hence this field.
-
-        return sReadableData;
     }
 
     public static String getCatalogRecordString(ItemClass_CatalogItem ci){
@@ -907,6 +850,8 @@ public class GlobalClass extends Application {
                     sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
                     Log.d("Comics", sMessage);
                 }
+            } else {
+                return null;
             }
 
             TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
@@ -978,54 +923,6 @@ public class GlobalClass extends Application {
                 .apply();
 
         return String.valueOf(iNewCatalogRecordID);
-    }
-
-    public static ItemClass_CatalogItem Copy_ItemClass_CatalogItem(ItemClass_CatalogItem ciOriginal){
-        //This routine creates a copy of a ItemClass_CatalogItem so that the item is not passed
-        // via reference. The Class cannot have a "copy" method because it implements Serializable.
-        ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
-
-        ciNew.iMediaCategory                  = ciOriginal.iMediaCategory                 ;     //Video, image, or comic.
-        ciNew.sItemID                         = ciOriginal.sItemID                        ;     //Video, image, comic id
-        ciNew.sTags                           = ciOriginal.sTags                          ;     //Tags given to the video, image, or comic
-        ciNew.aliTags                         = new ArrayList<>(ciOriginal.aliTags)       ;
-        ciNew.sFilename                       = ciOriginal.sFilename                      ;     //Video or image filename, comic thumbnail image filename
-        ciNew.sFolder_Name                    = ciOriginal.sFolder_Name                   ;     //Name of the folder holding the video, image, or comic pages
-        ciNew.sCast                           = ciOriginal.sCast                          ;     //For videos and images
-        ciNew.dDatetime_Import                = ciOriginal.dDatetime_Import               ;     //Date of import. Used for sorting if desired
-        ciNew.dDatetime_Last_Viewed_by_User   = ciOriginal.dDatetime_Last_Viewed_by_User  ;     //Date of last read by user. Used for sorting if desired
-        ciNew.iHeight                         = ciOriginal.iHeight                        ;     //Video or image dimension/resolution
-        ciNew.iWidth                          = ciOriginal.iWidth                         ;     //Video or image dimension/resolution
-        ciNew.lDuration_Milliseconds          = ciOriginal.lDuration_Milliseconds         ;     //Duration of video in milliseconds
-        ciNew.sDuration_Text                  = ciOriginal.sDuration_Text                 ;     //Duration of video text in 00:00:00 format
-        ciNew.sResolution                     = ciOriginal.sResolution                    ;     //Resolution for sorting at user request
-        ciNew.lSize                           = ciOriginal.lSize                          ;     //Size of video, image, or size of all files in the comic, in Bytes
-        ciNew.sThumbnail_File                 = ciOriginal.sThumbnail_File                ;     //Name of the file used as the thumbnail for a video (no longer for comic)
-
-        //Comic-related variables:
-        ciNew.sComicArtists                   = ciOriginal.sComicArtists                  ;     //Common comic tag category
-        ciNew.sComicCategories                = ciOriginal.sComicCategories               ;     //Common comic tag category
-        ciNew.sComicCharacters                = ciOriginal.sComicCharacters               ;     //Common comic tag category
-        ciNew.sComicGroups                    = ciOriginal.sComicGroups                   ;     //Common comic tag category
-        ciNew.sComicLanguages                 = ciOriginal.sComicLanguages                ;     //Language(s) found in the comic
-        ciNew.sComicParodies                  = ciOriginal.sComicParodies                 ;     //Common comic tag category
-        ciNew.sTitle                          = ciOriginal.sTitle                         ;     //Comic name or Video title
-        ciNew.iComicPages                     = ciOriginal.iComicPages                    ;     //Total number of pages as defined at the comic source
-        ciNew.iComic_Max_Page_ID              = ciOriginal.iComic_Max_Page_ID             ;     //Max comic page id extracted from file names
-        ciNew.sComic_Missing_Pages            = ciOriginal.sComic_Missing_Pages           ;     //String of comma-delimited missing page numbers
-        ciNew.iFile_Count                     = ciOriginal.iFile_Count                    ;     //Files included with the comic. Can be used for integrity check.
-                                                                                                //  Also used for post-processing of M3U8 video file download completion check for post-processing.
-        ciNew.bComic_Online_Data_Acquired     = ciOriginal.bComic_Online_Data_Acquired    ;     //Typically used to gather tag data from an online comic source, if automatic.
-        ciNew.sSource                         = ciOriginal.sSource                        ;     //Website, if relevant. Originally intended for comics.
-        ciNew.sVideoLink                      = ciOriginal.sVideoLink                     ;     //Link to the .mp4, .m3u8, etc, if it is a video download.
-
-        ciNew.iSpecialFlag                    = ciOriginal.iSpecialFlag                   ;     //Used to tell the app to that file requires post-processing of some sort after an operation.
-
-        ciNew.iGrade                          = ciOriginal.iGrade                         ;     //Rating (grade) of the item, 1-5. Default to 3.
-
-        ciNew.iAllVideoSegmentFilesDetected   = ciOriginal.iAllVideoSegmentFilesDetected  ;     //Used to verify download integrity of m3u8 complexes.
-
-        return ciNew;
     }
 
     //=====================================================================================
@@ -1124,7 +1021,7 @@ public class GlobalClass extends Application {
 
         //Create an ArrayList to store the new tags:
         ArrayList<ItemClass_Tag> ictNewTags = new ArrayList<>();
-        ItemClass_Tag ictNewTag = null;
+        ItemClass_Tag ictNewTag;
 
         //Find the greatest tag ID:
         if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
@@ -1282,7 +1179,7 @@ public class GlobalClass extends Application {
         ArrayList<Integer> aliTagIDs = new ArrayList<>();
         String[] sTemp = sTagIDs.split(",");
 
-        if(sTemp.length == 1 && sTemp[0] == ""){
+        if(sTemp.length == 1 && sTemp[0].equals("")){
             return aliTagIDs;
         }
 
@@ -1735,22 +1632,26 @@ public class GlobalClass extends Application {
                                     String sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
                                     String sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
                                     String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                                    long lDurationInMilliseconds = Long.parseLong(time);
-                                    ci.lSize = fOutputFileFinalDestination.length();
-                                    int iErrorSign = 1;
-                                    if(ci.lDuration_Milliseconds != 0){
-                                        double dPercentPredictedDuration = lDurationInMilliseconds / (float) ci.lDuration_Milliseconds;
-                                        if(dPercentPredictedDuration < .95){
-                                            //Duration of the converted video may indicate that an FFMPEG error occurred. Set the duration to
-                                            //  negative to allow flagging of this issue.
-                                            iErrorSign = -1;
+                                    if(time != null) {
+                                        long lDurationInMilliseconds = Long.parseLong(time);
+                                        ci.lSize = fOutputFileFinalDestination.length();
+                                        int iErrorSign = 1;
+                                        if (ci.lDuration_Milliseconds != 0) {
+                                            double dPercentPredictedDuration = lDurationInMilliseconds / (float) ci.lDuration_Milliseconds;
+                                            if (dPercentPredictedDuration < .95) {
+                                                //Duration of the converted video may indicate that an FFMPEG error occurred. Set the duration to
+                                                //  negative to allow flagging of this issue.
+                                                iErrorSign = -1;
+                                            }
                                         }
+                                        ci.lDuration_Milliseconds = lDurationInMilliseconds * iErrorSign;
+                                        ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
                                     }
-                                    ci.lDuration_Milliseconds = lDurationInMilliseconds * iErrorSign;
-                                    ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
-                                    if(!sWidth.equals("") && !sHeight.equals("")) {
-                                        ci.iWidth = Integer.parseInt(sWidth);
-                                        ci.iHeight = Integer.parseInt(sHeight);
+                                    if(sWidth != null && sHeight != null) {
+                                        if (!sWidth.equals("") && !sHeight.equals("")) {
+                                            ci.iWidth = Integer.parseInt(sWidth);
+                                            ci.iHeight = Integer.parseInt(sHeight);
+                                        }
                                     }
                                 } catch (Exception e) {
                                     Log.d("Video post-processing", "Unable to obtain video metadata for item ID " + ci.sItemID);
@@ -1784,51 +1685,6 @@ public class GlobalClass extends Application {
 
     }
 
-    public void CheckAndMoveDLHoldingTempImageFiles(){
-
-        if (gfImageDownloadHoldingFolderTemp.exists() && gfImageDownloadHoldingFolder.exists()) {
-            File[] fDLHoldingTempFiles = gfImageDownloadHoldingFolderTemp.listFiles();
-            File[] fDLHoldingFiles = gfImageDownloadHoldingFolder.listFiles();
-
-            if (fDLHoldingTempFiles != null) {
-                if (fDLHoldingTempFiles.length > 0) {
-                    //File(s) exist that need to be moved.
-                    //Attempt to move the files:
-
-                    //First create an array of unique file names:
-                    ArrayList<String> alsNewFileNames = new ArrayList<>();
-                    for(File fNew: fDLHoldingTempFiles){
-                        String sNew = fNew.getName();
-                        boolean bMatchFoundInExistingHoldingFiles;
-                        int iIterator = 0;
-                        do {
-                            bMatchFoundInExistingHoldingFiles = false;
-                            for (File fExisting : fDLHoldingFiles) {
-                                if(sNew.contentEquals(fExisting.getName())){
-                                    bMatchFoundInExistingHoldingFiles = true;
-                                    break;
-                                }
-                            }
-                            if(bMatchFoundInExistingHoldingFiles){
-                                iIterator += 1;
-                                sNew = fNew.getName() + "_" + String.format(Locale.getDefault(),"%04d", iIterator);
-                            }
-                        } while(bMatchFoundInExistingHoldingFiles);
-                        alsNewFileNames.add(sNew);
-                    }
-
-                    for (int i = 0; i < fDLHoldingTempFiles.length; i++) {
-                        String sFileName = alsNewFileNames.get(i);
-                        File fDestination = new File(gfImageDownloadHoldingFolder + File.separator + sFileName);
-                        if (!fDLHoldingTempFiles[i].renameTo(fDestination)) {
-                            Log.d("File move", "Cannot move file " + sFileName + " from " + fDLHoldingTempFiles[i].getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
-                        }
-                    }
-                }
-            }
-        }
-
-    }
 
 
 
@@ -2092,8 +1948,7 @@ public class GlobalClass extends Application {
 
     public static String cleanHTMLCodedCharacters(String sInput){
 
-        String sOutput = Html.fromHtml(sInput,0).toString();
-        return sOutput;
+        return Html.fromHtml(sInput,0).toString();
 
     }
 
