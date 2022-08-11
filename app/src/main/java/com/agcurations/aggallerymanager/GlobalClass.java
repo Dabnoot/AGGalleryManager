@@ -1322,11 +1322,13 @@ public class GlobalClass extends Application {
                     continue;
                 }
                 for (int iCatalogItemTagID : ci.aliTags) {
-                    if (!tmXrefTagHistogram.containsKey(iCatalogItemTagID)) {
-                        tmXrefTagHistogram.put(iCatalogItemTagID, gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID));
-                        Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount = 1;
-                    } else {
-                        Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount++;
+                    if(iCatalogItemTagID != -1) {
+                        if (!tmXrefTagHistogram.containsKey(iCatalogItemTagID)) {
+                            tmXrefTagHistogram.put(iCatalogItemTagID, gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID));
+                            Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount = 1;
+                        } else {
+                            Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount++;
+                        }
                     }
                 }
             }
@@ -1795,84 +1797,6 @@ public class GlobalClass extends Application {
         broadcastIntent_Problem.putExtra(EXTRA_STRING_PROBLEM, sMessage);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_Problem);
     }
-
-    //=====================================================================================
-    //===== Obfuscation Section ===========================================================
-    //=====================================================================================
-
-
-    public boolean ObfuscationOn = false;
-    public int iObfuscationIndex;
-    //public int OBFUSCATION_SUBJECT_VIDEOGAMES = 0;
-    public final int OBFUSCATION_SUBJECT_QUALITY = 1;
-    public final int iObfuscationSubjectSelection = OBFUSCATION_SUBJECT_QUALITY;
-
-    final int[][] iImageList = new int[][]{
-            {
-                    R.drawable.ovg_death_stranding,
-                    R.drawable.ovg_doom_eternal,
-                    R.drawable.ovg_fallout_new_vegas,
-                    R.drawable.ovg_horizon_zero_dawn,
-                    R.drawable.ovg_resident_evil_2
-            },
-            {
-                    R.drawable.oq_cost_of_poor_quality,
-                    R.drawable.oq_five_why,
-                    R.drawable.oq_ishikawa_diagram,
-                    R.drawable.oq_ishikawa_diagram2,
-                    R.drawable.oq_kanban_method_principles,
-                    R.drawable.oq_kanban_method,
-                    R.drawable.oq_mccalls_quality_factors
-            }
-    };
-    final String[][] sObfuscationCategoryNames = new String[][]{
-            {
-                    "Top 10 PS4 Games 2015",
-                    "Top 10 PS4 Games 2016",
-                    "Top 10 PS4 Games 2017",
-                    "Top 10 PS4 Games 2018",
-                    "Top 10 PS4 Games 2019"
-            },
-            {
-                    "Cost of Poor Quality",
-                    "Five Why Diagram",
-                    "Ishikawa Diagram 1",
-                    "Ishikawa Diagram 2",
-                    "Kanban Method Principles",
-                    "Kanban Method",
-                    "McCall's Quality Factors"
-            }
-    };
-    final String[] sObfuscatedProgramNames = new String[]{
-            "Top Titles",
-            "Quality Operations"
-    };
-    final String[] sNonObfuscatedProgramName = new String[]{"Videos Catalog", "Images Catalog", "Comics Catalog"};
-
-    public int getObfuscationImageCount(){
-        return iImageList[iObfuscationSubjectSelection].length;
-    }
-
-    public int getObfuscationImage(int index) {
-        if(index >= iImageList[iObfuscationSubjectSelection].length - 1){
-            index = 0;
-        }
-        return iImageList[iObfuscationSubjectSelection][index];
-    }
-
-    public String getObfuscationImageText(int index){
-        return sObfuscationCategoryNames[iObfuscationSubjectSelection][index];
-    }
-
-    public String getObfuscationCategoryName(){
-        return sObfuscationCategoryNames[iObfuscationSubjectSelection][iObfuscationIndex];
-    }
-
-    public String getObfuscatedProgramName() {
-        return sObfuscatedProgramNames[iObfuscationSubjectSelection];
-    }
-
-    //End obfuscation section.
 
     //=====================================================================================
     //===== Comic Page Viewer Activity Options =====================================================
