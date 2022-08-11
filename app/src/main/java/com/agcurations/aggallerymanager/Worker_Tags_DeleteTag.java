@@ -58,91 +58,9 @@ public class Worker_Tags_DeleteTag extends Worker {
             String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
 
-            if((tmEntryCatalogRecord.getValue().sFolder_Name.equals(String.valueOf(gict_TagToDelete.iTagID)))
-                    || (aliTags.contains(gict_TagToDelete.iTagID))){
-                //If this catalog item is in the folder of the tag to be deleted or if this catalog
-                // item contains the tag...
-
-                String sNewTagFolderDestination;
-
-                //Videos and images are sorted into folders based on their first tag.
-                //If their first tag is deleted, move the file to the new first tag folder.
-                if((giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
-                        giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)){
-
-                    if(tmEntryCatalogRecord.getValue().sFolder_Name.equals(String.valueOf(gict_TagToDelete.iTagID))) {
-                        //If this catalog item is currently stored in the tag folder, move the file
-                        // to it's next tag folder.
-
-                        String sSourcePath = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator +
-                                tmEntryCatalogRecord.getValue().sFolder_Name + File.separator +
-                                tmEntryCatalogRecord.getValue().sFilename;
-
-                        //Get a default folder for the move (to be used if there are no other tags
-                        //  assigned to this item):
-                        sNewTagFolderDestination = GlobalClass.gsUnsortedFolderName;
-
-                        //Get the tag ID of the first tag assigned to this item that is not the
-                        //  tag to be deleted (if such a tag exists for this item). We will use this
-                        //  as the item's new destination folder:
-                        for(int i = 0; i < aliTags.size(); i++) {
-                            if(!aliTags.get(i).equals(gict_TagToDelete.iTagID)) {
-                                sNewTagFolderDestination = aliTags.get(i).toString();
-                                break;
-                            }
-                        }
-
-                        String sDestinationPath = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator +
-                                sNewTagFolderDestination + File.separator +
-                                tmEntryCatalogRecord.getValue().sFilename;
-                        String sDestinationFolder = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator +
-                                sNewTagFolderDestination;
-
-                        File fInternalCatalogItem = new File(sSourcePath);
-                        if (fInternalCatalogItem.exists()) {
-
-                            File fDestinationFolder = new File(sDestinationFolder);
-                            boolean bFolderOk = false;
-                            if (!fDestinationFolder.exists()) {
-                                if (fDestinationFolder.mkdirs()) {
-                                    bFolderOk = true;
-                                }
-                            } else {
-                                bFolderOk = true;
-                            }
-
-                            if (bFolderOk) {
-                                //Move the file:
-                                try {
-                                    Path temp = Files.move(fInternalCatalogItem.toPath(), Paths.get(sDestinationPath));
-                                    if (temp == null) {
-                                        String sMessage = "Could not move file " + fInternalCatalogItem.toPath() + ".";
-                                        globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                                        return Result.failure();
-                                    } else {
-                                        tmEntryCatalogRecord.getValue().sFolder_Name = sNewTagFolderDestination;
-                                    }
-                                } catch (Exception e) {
-                                    String sMessage = "Could not move file " + fInternalCatalogItem.toPath() + ".\n" + e.getMessage();
-                                    globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                                    return Result.failure();
-                                }
-
-                            } else {
-                                String sMessage = "Could not create catalog data folder " + fDestinationFolder.getPath() + ".";
-                                globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                                return Result.failure();
-                            }
-                        } else {
-                            String sMessage = "File source not found: " + sDestinationPath;
-                            globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                            return Result.failure();
-                        }
-                    }
-
-                } //End move if catalog item is 'video or image' and tag to delete is first tag.
-
-                //Delete the tag from the record and move on.
+            if(aliTags.contains(gict_TagToDelete.iTagID)){
+                //If this catalog item contains the tag...
+                //Delete the tag from the record.
                 //Form the new Tag string:
                 ArrayList<Integer> aliNewTags = new ArrayList<>();
                 for (Integer iTagID : aliTags) {
@@ -161,36 +79,6 @@ public class Worker_Tags_DeleteTag extends Worker {
 
         //Inform program of a need to update the tags histogram:
         globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
-
-        //If it was a video or image, now delete the tag folder (there should not be any more files in that folder:
-        //(if the folder exists, as tag may have only been a secondary tag for items).
-        if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
-                giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-
-            File fTagFolderPath = new File(sTagFolderPath);
-            if(fTagFolderPath.exists()){
-                File[] fFileList = fTagFolderPath.listFiles();
-                if(fFileList != null) {
-                    if (fFileList.length == 0) {
-                        try {
-                            if (!fTagFolderPath.delete()) {
-                                String sMessage = "Could not delete tag folder:\n" + fTagFolderPath.getPath();
-                                globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                                return Result.failure();
-                            }
-                        } catch (Exception e) {
-                            String sMessage = "Could not delete tag folder:\n" + fTagFolderPath.getPath() + "\n" + e.getMessage();
-                            globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                            return Result.failure();
-                        }
-                    } else {
-                        String sMessage = "Tag delete aborted. Tag folder not empty. Could not delete tag folder:\n" + fTagFolderPath.getPath();
-                        globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                        return Result.failure();
-                    }
-                }
-            }
-        }
 
         //Remove tag from reference list:
         File fCatalogTagsFile = globalClass.gfCatalogTagsFiles[giMediaCategory];
