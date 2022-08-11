@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -220,7 +221,7 @@ public class Worker_Catalog_LoadData extends Worker {
             if(ssCatalogTagsRestricted != null) {
                 for (String sRestrictedTag : ssCatalogTagsRestricted) {
                     Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
-                    for (Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                         if (entry.getValue().iTagID.equals(iRestrictedTag)) {
                             //If the restricted tag has been found, mark it as restricted:
                             entry.getValue().bIsRestricted = true;
@@ -247,10 +248,10 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.gtmVideoResolutions.put(5, 2160);
 
         //Prep tag histograms:
-        globalClass.galtmTagHistogram = new ArrayList<>();
-        globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Videos
-        globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Images
-        globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Comics
+        //globalClass.galtmTagHistogram = new ArrayList<>();
+        //globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Videos
+        //globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Images
+        //globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Comics
 
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -427,16 +428,9 @@ public class Worker_Catalog_LoadData extends Worker {
                     //Update the tags histogram. As of 7/29/2022, this is used to show the user
                     //  how many tags are in use while they select tags to perform a tag filter.
                     for(int iCatalogItemTagID: ci.aliTags){
-                        if(!globalClass.galtmTagHistogram.get(iMediaCategory).containsKey(iCatalogItemTagID)){
-                            globalClass.galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, 1);
-                        } else {
-                            Integer iTagCountofID = globalClass.galtmTagHistogram.get(iMediaCategory).get(iCatalogItemTagID);
-                            if(iTagCountofID != null) {
-                                iTagCountofID++;
-                                globalClass.galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, iTagCountofID);
-                            }
+                        if(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                            Objects.requireNonNull(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
                         }
-
                     }
 
                     // read next line

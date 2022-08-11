@@ -37,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -85,7 +86,7 @@ public class GlobalClass extends Application {
     public final File[] gfCatalogContentsFiles = new File[3];
     public final File[] gfCatalogTagsFiles = new File[3];
     //Video tag variables:
-    public final List<TreeMap<String, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>(); //Use String as the key to avoid duplicates and provide sort.
+    public final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>(); //Use String as the key to avoid duplicates and provide sort.
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
@@ -135,7 +136,7 @@ public class GlobalClass extends Application {
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     public boolean gbCatalogViewerTagsRestrictionsOn;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
-    public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;
+    //public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;
     public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
@@ -957,8 +958,9 @@ public class GlobalClass extends Application {
         return ConvertFileLineToTagItem(sRecord2);
     }
 
-    public TreeMap<String, ItemClass_Tag> InitTagData(int iMediaCategory){
-        TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    public TreeMap<Integer, ItemClass_Tag> InitTagData(int iMediaCategory){
+        //TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        TreeMap<Integer, ItemClass_Tag> tmTags = new TreeMap<>();
 
         File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
 
@@ -974,7 +976,7 @@ public class GlobalClass extends Application {
                 while(sLine != null) {
 
                     ItemClass_Tag ict = ConvertFileLineToTagItem(sLine);
-                    tmTags.put(ict.sTagText, ict);
+                    tmTags.put(ict.iTagID, ict);
 
                     sLine = brReader.readLine();
                 }
@@ -1026,7 +1028,7 @@ public class GlobalClass extends Application {
         //Find the greatest tag ID:
         if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
             int iThisId;
-            for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                 iThisId = entry.getValue().iTagID;
                 if (iThisId >= iNextRecordId){
                     iNextRecordId = iThisId + 1;
@@ -1043,7 +1045,7 @@ public class GlobalClass extends Application {
             for(String sNewTagName: sNewTagNames) {
                 boolean bTagAlreadyExists = false;
                 if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-                    for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                    for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
                         if (entry.getValue().sTagText.toLowerCase().equals(sNewTagName.toLowerCase())) {
                             //If the tag already exists, abort adding this tag.
@@ -1058,7 +1060,7 @@ public class GlobalClass extends Application {
 
 
                 ictNewTag = new ItemClass_Tag(iNextRecordId, sNewTagName);
-                gtmCatalogTagReferenceLists.get(iMediaCategory).put(sNewTagName, ictNewTag);
+                gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewTag);
 
                 //Prep for return of new tag items to the caller:
                 ictNewTags.add(ictNewTag);
@@ -1106,8 +1108,8 @@ public class GlobalClass extends Application {
                     sLine = getTagRecordString(ictIncoming);
 
                     //Now update the record in the treeMap:
-                    gtmCatalogTagReferenceLists.get(iMediaCategory).remove(ictFromFile.sTagText);
-                    gtmCatalogTagReferenceLists.get(iMediaCategory).put(ictIncoming.sTagText, ictIncoming);
+                    gtmCatalogTagReferenceLists.get(iMediaCategory).remove(ictFromFile.iTagID);
+                    gtmCatalogTagReferenceLists.get(iMediaCategory).put(ictIncoming.iTagID, ictIncoming);
 
                 }
                 //Write the current record to the buffer:
@@ -1163,7 +1165,7 @@ public class GlobalClass extends Application {
         String sTagText = "[Tag ID " + iTagID + " not found]";
 
         //todo: instead of looping through items, use TreeMap.getValue or TreeMap.getKey if it exists.
-        for(Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             Integer iRefTag = entry.getValue().iTagID;
             if(iRefTag.equals(iTagID)){
                 sTagText = entry.getValue().sTagText;
@@ -1193,7 +1195,7 @@ public class GlobalClass extends Application {
 
     public boolean TagIDExists(Integer iTagID, int iMediaCategory){
 
-        for(Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             Integer iRefTag = entry.getValue().iTagID;
             if(iRefTag.equals(iTagID)){
                 return true;
@@ -1211,7 +1213,7 @@ public class GlobalClass extends Application {
 
         TreeMap<Integer, String> tmTagsSortedByID = new TreeMap<>();
 
-        for (Map.Entry<String, ItemClass_Tag> TagEntry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> TagEntry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             tmTagsSortedByID.put(TagEntry.getValue().iTagID, TagEntry.getValue().sTagText);
         }
 
@@ -1250,7 +1252,7 @@ public class GlobalClass extends Application {
 
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
         int iKey = -1;
-        for(Map.Entry<String, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             if(entry.getValue().sTagText.equalsIgnoreCase(sTagText)){
                 iKey = entry.getValue().iTagID;
                 break;
@@ -1263,7 +1265,13 @@ public class GlobalClass extends Application {
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
             if(gbTagHistogramRequiresUpdate[iMediaCategory]) {
-                galtmTagHistogram.get(iMediaCategory).clear();
+
+                //Reset all of the tag counts back to zero for this media category:
+                for(Map.Entry<Integer, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+                    entry.getValue().iHistogramCount = 0;
+                }
+
+                //Go through all items in the catalog and update tag counts:
                 for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
                     ItemClass_CatalogItem ci = entry.getValue();
                     //Update the tags histogram. As of 7/29/2022, this is used to show the user
@@ -1271,32 +1279,28 @@ public class GlobalClass extends Application {
                     if(ci.aliTags == null){
                         ci.aliTags = new ArrayList<>(); //Just in case.
                     }
-                    for (int iCatalogItemTagID : ci.aliTags) {
-                        if (!galtmTagHistogram.get(iMediaCategory).containsKey(iCatalogItemTagID)) {
-                            galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, 1);
-                        } else {
-                            Integer iTagCountofID = galtmTagHistogram.get(iMediaCategory).get(iCatalogItemTagID);
-                            if (iTagCountofID != null) {
-                                iTagCountofID++;
-                                galtmTagHistogram.get(iMediaCategory).put(iCatalogItemTagID, iTagCountofID);
-                            }
-                        }
 
+                    for (int iCatalogItemTagID : ci.aliTags) {
+                        if(gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                            Objects.requireNonNull(gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                        }
                     }
                 }
+
+
             }
         }
     }
 
-    public TreeMap<Integer, Integer> getCompoundTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs, boolean bCatalogTagsRestrictionsOn){
+    public TreeMap<Integer, ItemClass_Tag> getXrefTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs, boolean bCatalogTagsRestrictionsOn){
         //Get a histogram counting the tags that occur alongside tags found in aliTagIDs.
         //  Suppose the user selects tag ID 7, and wants to know what other tag IDs are frequently
         //  found alongside tag ID 7. This routine returns that list with frequency.
 
-        TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
+        TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram = new TreeMap<>();
 
         ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
-        for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             if (entry.getValue().bIsRestricted) {
                 aliRestrictedTagIDs.add(entry.getValue().iTagID);
             }
@@ -1318,27 +1322,24 @@ public class GlobalClass extends Application {
                     continue;
                 }
                 for (int iCatalogItemTagID : ci.aliTags) {
-                    if (!tmCompoundTagHistogram.containsKey(iCatalogItemTagID)) {
-                        tmCompoundTagHistogram.put(iCatalogItemTagID, 1);
+                    if (!tmXrefTagHistogram.containsKey(iCatalogItemTagID)) {
+                        tmXrefTagHistogram.put(iCatalogItemTagID, gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID));
+                        Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount = 1;
                     } else {
-                        Integer iTagCountofID = tmCompoundTagHistogram.get(iCatalogItemTagID);
-                        if (iTagCountofID != null) {
-                            iTagCountofID++;
-                            tmCompoundTagHistogram.put(iCatalogItemTagID, iTagCountofID);
-                        }
+                        Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount++;
                     }
                 }
             }
         }
 
-        return tmCompoundTagHistogram;
+        return tmXrefTagHistogram;
     }
 
     public TreeMap<Integer, Integer> getInitTagHistogram(int iMediaCategory, boolean bCatalogTagsRestrictionsOn){
         TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
 
         ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
-        for (Map.Entry<String, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             if (entry.getValue().bIsRestricted) {
                 aliRestrictedTagIDs.add(entry.getValue().iTagID);
             }
@@ -1348,7 +1349,6 @@ public class GlobalClass extends Application {
         for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
             ItemClass_CatalogItem ci = entry.getValue();
             //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
-            //  This includes counting the ones that are in aliTagIDs.
             //  But skip if this item contains a restricted tag and user is not approved to view restricted tags.
             ArrayList<Integer> aliRestrictedTest = new ArrayList<>(aliRestrictedTagIDs);
             aliRestrictedTest.retainAll(ci.aliTags);

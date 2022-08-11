@@ -16,6 +16,10 @@ public class ItemClass_Tag implements Serializable {
     //Used for Tag ListViews in selecting tags:
     public Boolean bIsChecked = false;
 
+    int iHistogramCount = 0;            //To count the number of times this tag is used.
+    int iHistogramCountXref = 0;        //Not for global use. Used to facilitate counting the
+                                        //  number of times this tag is used alongside other tags.
+
     public ItemClass_Tag(int _iTagID, String _sTagText) {
         this.iTagID = _iTagID;
         this.sTagText = _sTagText;

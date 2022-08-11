@@ -136,7 +136,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
 
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
             alsTags.add(entry.getValue().sTagText);
         }
 
@@ -186,8 +186,8 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         for(String sTag: alsProspectiveUnidentifiedTags){
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
-        for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
-                String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
+                String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                 if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
                     bTagFound = true;
                     break;

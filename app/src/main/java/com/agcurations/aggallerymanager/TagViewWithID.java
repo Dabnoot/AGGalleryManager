@@ -21,4 +21,12 @@ public class TagViewWithID extends TagView {
         mTagID = iTagID;
     }
 
+    public int getTagID(){
+        return mTagID;
+    }
+
+    @Override
+    public void setOnTagClickListener(OnTagClickListener listener) {
+        super.setOnTagClickListener(listener);
+    }
 }

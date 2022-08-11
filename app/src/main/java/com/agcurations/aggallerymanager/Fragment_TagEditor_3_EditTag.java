@@ -107,7 +107,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
 
         ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
             String sItemText = entry.getValue().sTagText + " (ID:" + entry.getValue().iTagID + ")";
             alsTags.add(sItemText);
         }
@@ -156,10 +156,13 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             return;
         }
 
-        if(globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).containsKey(sNewTagName)){
-            Toast.makeText(getActivity(), "Cannot rename - tag already exists.", Toast.LENGTH_SHORT).show();
-            return;
+        for(Map.Entry<Integer, ItemClass_Tag> entry: globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
+            if(entry.getValue().sTagText.equals(sNewTagName)){
+                Toast.makeText(getActivity(), "Cannot rename - tag already exists.", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
+
 
         TextView textView_TagID = getView().findViewById(R.id.textView_TagID);
         String sTagID = textView_TagID.getText().toString();

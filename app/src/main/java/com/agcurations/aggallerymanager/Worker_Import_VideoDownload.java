@@ -481,7 +481,7 @@ public class Worker_Import_VideoDownload extends Worker {
                         //sErrorMessage = e.getMessage();
                         continue;
                     }
-                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(globalClass.getTagTextFromID(iTagID, GlobalClass.MEDIA_CATEGORY_VIDEOS));
+                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(iTagID);
                     if (ict != null) {
                         if (ict.bIsRestricted) {
                             bRestrictedTagInUse = true;

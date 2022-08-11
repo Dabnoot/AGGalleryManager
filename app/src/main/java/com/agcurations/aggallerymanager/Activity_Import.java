@@ -1469,8 +1469,8 @@ public class Activity_Import extends AppCompatActivity {
                         for(String sTag: fi.alsUnidentifiedTags){
                             String sIncomingTagCleaned = sTag.toLowerCase().trim();
                             boolean bTagFound = false;
-                            for(Map.Entry<String, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
-                                String sExistingTagCleaned = TagEntry.getKey().toLowerCase().trim();
+                            for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+                                String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                                 if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
                                     bTagFound = true;
                                     fi.aliRecognizedTags.add(TagEntry.getValue().iTagID);

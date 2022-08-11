@@ -77,7 +77,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         for(int i = 0; i < 3; i++){
             StringBuilder sbBuffer = new StringBuilder();
             boolean bHeaderWritten = false;
-            for(Map.Entry<String, ItemClass_Tag> tmEntry: globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()){
+            for(Map.Entry<Integer, ItemClass_Tag> tmEntry: globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()){
 
                 if(!bHeaderWritten) {
                     sbBuffer.append(GlobalClass.getTagFileHeader()); //Append the header.

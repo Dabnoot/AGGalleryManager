@@ -152,7 +152,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         ArrayList<ItemClass_Tag> alict_TagItems = new ArrayList<>();
 
         //Go through the tags treeMap and put the ListView together:
-        for (Map.Entry<String, ItemClass_Tag> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             alict_TagItems.add(tmEntryTagReferenceItem.getValue());
         }
 

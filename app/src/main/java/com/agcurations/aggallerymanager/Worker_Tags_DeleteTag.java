@@ -229,8 +229,8 @@ public class Worker_Tags_DeleteTag extends Worker {
         }
 
         //Remove the tag from memory:
-        globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.sTagText);
-        if(globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.sTagText)){
+        globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
+        if(globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.iTagID)){
             String sMessage = "Unable to find tag in memory.";
             globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
             return Result.failure();

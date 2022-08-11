@@ -278,7 +278,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                             //sErrorMessage = e.getMessage();
                             continue;
                         }
-                        ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(globalClass.getTagTextFromID(iTagID, globalClass.giSelectedCatalogMediaCategory));
+                        ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(iTagID);
                         if (ict != null) {
                             if (ict.bIsRestricted) {
                                 bIsRestricted = true;

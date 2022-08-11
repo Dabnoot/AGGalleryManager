@@ -40,7 +40,8 @@
         android:drawableLeft="@drawable/outline_unpublished_white_24"
         style="?android:attr/borderlessButtonStyle"/>
 
-    <co.lujun.androidtagview.TagContainerLayout
+    <!--<co.lujun.androidtagview.TagContainerLayout-->
+    <com.agcurations.aggallerymanager.TagContainerLayoutWithID
         android:id="@+id/tagContainerLayout_SuggestedTags"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
