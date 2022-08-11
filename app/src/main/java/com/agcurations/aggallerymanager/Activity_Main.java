@@ -96,11 +96,6 @@ public class Activity_Main extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        if(!globalClass.ObfuscationOn) {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }
-
         gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);
         gTextView_CatalogReadProgressBarText = findViewById(R.id.textView_CatalogReadProgressBarText);
 
@@ -320,10 +315,7 @@ public class Activity_Main extends AppCompatActivity {
         Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
 
 
-        if(item.getItemId() == R.id.menu_FlipView) {
-            FlipObfuscation();
-            return true;
-        } else if(item.getItemId() == R.id.menu_import) {
+        if(item.getItemId() == R.id.menu_import) {
             Intent intentImportGuided = new Intent(this, Activity_Import.class);
             startActivity(intentImportGuided);
             return true;
@@ -441,14 +433,6 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     public void onResume(){
         super.onResume();
-        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }
-
 
         //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
         workInfoObserver_TrackingTest = new Observer<WorkInfo>() {
@@ -504,63 +488,6 @@ public class Activity_Main extends AppCompatActivity {
 
 
 
-    }
-
-    public void FlipObfuscation() {
-        //This routine primarily accessed via the toggle option on the menu.
-        globalClass.ObfuscationOn = !globalClass.ObfuscationOn;
-        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-       }
-
-    }
-
-    public void Obfuscate() {
-        //This routine is separate because it can be activated
-        // by either a long-press or the toggle option on the menu.
-        if(!globalClass.ObfuscationOn) {
-            globalClass.ObfuscationOn = true;
-        }
-
-        ImageView ivVideos = findViewById(R.id.imageView_Video);
-        ImageView ivPictures = findViewById(R.id.imageView_Images);
-        ImageView ivComics = findViewById(R.id.imageView_Comics);
-
-        ivVideos.setImageResource(R.drawable.ob_productivity_tools);
-        ivPictures.setImageResource(R.drawable.ob_data_management);
-        ivComics.setImageResource(R.drawable.ob_quality_analysis);
-
-        TextView tvVideos = findViewById(R.id.textView_Videos);
-        TextView tvPictures = findViewById(R.id.textView_Pictures);
-        TextView tvComics = findViewById(R.id.textView_Comics);
-
-        tvVideos.setText(R.string.productivity_tools);
-        tvPictures.setText(R.string.data_management);
-        tvComics.setText(R.string.quality_analysis);
-
-    }
-
-    public void RemoveObfuscation() {
-        //Remove obfuscation:
-        ImageView ivVideos = findViewById(R.id.imageView_Video);
-        ImageView ivPictures = findViewById(R.id.imageView_Images);
-        ImageView ivComics = findViewById(R.id.imageView_Comics);
-
-        ivVideos.setImageResource(R.drawable.nob_videos);
-        ivPictures.setImageResource(R.drawable.nob_pictures);
-        ivComics.setImageResource(R.drawable.nob_comics);
-
-        TextView tvVideos = findViewById(R.id.textView_Videos);
-        TextView tvPictures = findViewById(R.id.textView_Pictures);
-        TextView tvComics = findViewById(R.id.textView_Comics);
-
-        tvVideos.setText(R.string.videos);
-        tvPictures.setText(R.string.Images);
-        tvComics.setText(R.string.comics);
     }
 
     //=====================================================================================

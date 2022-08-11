@@ -47,15 +47,6 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"/>
 
-        <ImageButton
-            android:id="@+id/ImageButton_ObfuscationImage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/ovg_horizon_zero_dawn"
-            android:background="@color/colorBlack"
-            android:visibility="invisible"
-            android:onClick="HideObfuscationImageButton"/>
-
     </RelativeLayout>
 
     <!--android:id="@+id/fragment_tag_selector"-->

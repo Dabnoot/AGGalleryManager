@@ -436,23 +436,10 @@ public class Activity_ComicViewer extends AppCompatActivity {
             //todo: REFACTOR USING createImageThumbnail ONCE API LEVEL 29 IS COMMON
 
             Bitmap myBitmap;
-
-            if(globalClass.ObfuscationOn) {
-
-                //Get the obfuscation image index:
-                int i = (giCurrentCatalogItemIndex % globalClass.getObfuscationImageCount());
-                //Get the obfuscation image resource ID:
-                int iObfuscatorResourceID = globalClass.getObfuscationImage(i);
-                myBitmap = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
-
-                //Set the title of the activity:
-                setTitle(globalClass.getObfuscationCategoryName());
-            } else {
-                myBitmap = BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
-                setTitle(gsActivityTitleString);
-                if(globalClass.gbOptionComicViewerShowPageNumber) {
-                    makeToast(tmImageFileNamesReadable.get(iPageIndex), Toast.LENGTH_SHORT);
-                }
+            myBitmap = BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
+            setTitle(gsActivityTitleString);
+            if(globalClass.gbOptionComicViewerShowPageNumber) {
+                makeToast(tmImageFileNamesReadable.get(iPageIndex), Toast.LENGTH_SHORT);
             }
 
             givImageViewer.setImageBitmap(myBitmap);
@@ -1082,14 +1069,6 @@ public class Activity_ComicViewer extends AppCompatActivity {
             }
 
             @Override
-            public void onLongPress(MotionEvent e) {
-                Obfuscate();
-                if(gbDebugSwiping){
-                    makeToast("Long Press Detected", Toast.LENGTH_SHORT);
-                }
-            }
-
-            @Override
             public boolean onDoubleTap(MotionEvent e) {
                 if(gbDebugSwiping){
                     makeToast("Double Tap Detected", Toast.LENGTH_SHORT);
@@ -1141,41 +1120,6 @@ public class Activity_ComicViewer extends AppCompatActivity {
         }
     }
 
-
-    //=====================================================================================
-    //===== Obfuscation Code =================================================================
-    //=====================================================================================
-
-    public void FlipObfuscation() {
-        globalClass.ObfuscationOn = !globalClass.ObfuscationOn;
-        //LoadComicPage will automatically load the obfuscated/non-obfuscated image as required:
-        LoadComicPage(giCurrentCatalogItemIndex);
-    }
-
-    public void Obfuscate() {
-        //This routine is separate because it can be activated
-        // by either a long-press or the toggle option on the menu.
-        if(!globalClass.ObfuscationOn) {
-            globalClass.ObfuscationOn = true;
-            LoadComicPage(giCurrentCatalogItemIndex);
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.comic_viewer_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        //Display a message showing the name of the item selected.
-        if (item.getItemId() == R.id.menu_FlipView) {
-            FlipObfuscation();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     Toast toastLastToastMessage;
     private void makeToast(String sMessage, int iLength){

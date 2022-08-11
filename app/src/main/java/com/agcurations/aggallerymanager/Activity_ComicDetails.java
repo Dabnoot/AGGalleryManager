@@ -173,11 +173,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         populate_RecyclerViewComicPages();
 
-        if(globalClass.ObfuscationOn) {
-            Obfuscate();
-        } else {
-            RemoveObfuscation();
-        }
+
 
 
 
@@ -192,10 +188,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.menu_FlipView) {
-            FlipObfuscation();
-            return true;
-        } else if (item.getItemId() == R.id.menu_DeleteComic) {
+        if (item.getItemId() == R.id.menu_DeleteComic) {
             DeleteComicPrompt();
             return true;
         } else {
@@ -441,132 +434,86 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             String sThumbnailText;
 
-            if (globalClass.ObfuscationOn) {
+            if (isHeader(position)) {
 
-                if (isHeader(position)) {
-                    holder.tvThumbnailText.setVisibility(View.INVISIBLE);
-                    holder.tvComicSource.setVisibility(View.INVISIBLE);
-                    holder.tvParodies.setVisibility(View.INVISIBLE);
-                    holder.tvCharacters.setVisibility(View.INVISIBLE);
-                    holder.tvTags.setVisibility(View.INVISIBLE);
-                    holder.tvArtists.setVisibility(View.INVISIBLE);
-                    holder.tvGroups.setVisibility(View.INVISIBLE);
-                    holder.tvLanguages.setVisibility(View.INVISIBLE);
-                    holder.tvCategories.setVisibility(View.INVISIBLE);
-                    holder.tvPages.setVisibility(View.INVISIBLE);
-                    holder.textView_FileCount.setVisibility(View.INVISIBLE);
-                    holder.textView_MissingPages.setVisibility(View.INVISIBLE);
-                    holder.tvComicID.setVisibility(View.INVISIBLE);
-
-                    holder.tvLabelComicSource.setVisibility(View.INVISIBLE);
-                    holder.tvLabelParodies.setVisibility(View.INVISIBLE);
-                    holder.tvLabelCharacters.setVisibility(View.INVISIBLE);
-                    holder.tvLabelTags.setVisibility(View.INVISIBLE);
-                    holder.tvLabelArtists.setVisibility(View.INVISIBLE);
-                    holder.tvLabelGroups.setVisibility(View.INVISIBLE);
-                    holder.tvLabelLanguages.setVisibility(View.INVISIBLE);
-                    holder.tvLabelCategories.setVisibility(View.INVISIBLE);
-                    holder.tvLabelPages.setVisibility(View.INVISIBLE);
-                    holder.textView_LabelFileCount.setVisibility(View.INVISIBLE);
-                    holder.textView_LabelMissingPages.setVisibility(View.INVISIBLE);
-                    holder.tvLabelComicID.setVisibility(View.INVISIBLE);
-
-                    holder.imageView_EditComicDetails.setVisibility(View.INVISIBLE);
+                holder.tvThumbnailText.setVisibility(View.VISIBLE);
+                holder.tvComicSource.setVisibility(View.VISIBLE);
+                holder.tvParodies.setVisibility(View.VISIBLE);
+                holder.tvTags.setVisibility(View.VISIBLE);
+                holder.tvArtists.setVisibility(View.VISIBLE);
+                holder.tvLanguages.setVisibility(View.VISIBLE);
+                holder.tvCategories.setVisibility(View.VISIBLE);
+                holder.tvPages.setVisibility(View.VISIBLE);
+                holder.textView_FileCount.setVisibility(View.VISIBLE);
+                if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                    holder.textView_MissingPages.setVisibility(View.VISIBLE);
                 }
+                holder.tvComicID.setVisibility(View.VISIBLE);
 
+                holder.tvLabelComicSource.setVisibility(View.VISIBLE);
+                holder.tvLabelParodies .setVisibility(View.VISIBLE);
+                holder.tvLabelTags.setVisibility(View.VISIBLE);
+                holder.tvLabelArtists.setVisibility(View.VISIBLE);
+                holder.tvLabelLanguages.setVisibility(View.VISIBLE);
+                holder.tvLabelCategories.setVisibility(View.VISIBLE);
+                holder.tvLabelPages.setVisibility(View.VISIBLE);
+                holder.textView_LabelFileCount.setVisibility(View.VISIBLE);
+                if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                    holder.textView_LabelMissingPages.setVisibility(View.VISIBLE);
+                }
+                holder.tvLabelComicID.setVisibility(View.VISIBLE);
 
-                //Get the obfuscation image index:
-                int i = (position % globalClass.getObfuscationImageCount());
-                //Get the obfuscation image resource ID:
-                int iObfuscatorResourceID = globalClass.getObfuscationImage(i);
+                holder.imageView_EditComicDetails.setVisibility(View.VISIBLE);
 
-                Bitmap bmObfuscator = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
-                holder.ivThumbnail.setImageBitmap(bmObfuscator);
-                sThumbnailText = globalClass.getObfuscationImageText(i);
+                sThumbnailText = gciCatalogItem.sTitle;
+                holder.tvComicSource.setText(gciCatalogItem.sSource);
+                holder.tvParodies.setText(gciCatalogItem.sComicParodies);
+                holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
+
+                String sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
+                holder.tvTags.setText(sTagText);
+
+                holder.tvArtists.setText(gciCatalogItem.sComicArtists);
+                holder.tvGroups.setText(gciCatalogItem.sComicGroups);
+                holder.tvLanguages.setText(gciCatalogItem.sComicLanguages);
+                holder.tvCategories.setText(gciCatalogItem.sComicCategories);
+                String sPages = "" + gciCatalogItem.iComicPages;
+                holder.tvPages.setText(sPages);
+                String sFileCount = "" + gciCatalogItem.iFile_Count;
+                holder.textView_FileCount.setText(sFileCount);
+                if(!gciCatalogItem.sComic_Missing_Pages.equals("")){
+                    String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
+                    if(sMissingPages.length() > 10){
+                        sMissingPages = sMissingPages.substring(0,10) + "...";
+                    }
+                    holder.textView_MissingPages.setText(sMissingPages);
+                }
+                holder.tvComicID.setText(gciCatalogItem.sItemID);
+
+                holder.imageView_EditComicDetails.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intentComicDetailsEditor = new Intent(getApplicationContext(), Activity_ComicDetailsEditor.class);
+                        intentComicDetailsEditor.putExtra(Activity_ComicDetailsEditor.EXTRA_COMIC_CATALOG_ITEM, gciCatalogItem);
+                        startActivity(intentComicDetailsEditor);
+
+                    }
+                });
+
             } else {
-
-                //Load the non-obfuscated data into the RecyclerView ViewHolder:
-
-                if (isHeader(position)) {
-
-                    holder.tvThumbnailText.setVisibility(View.VISIBLE);
-                    holder.tvComicSource.setVisibility(View.VISIBLE);
-                    holder.tvParodies.setVisibility(View.VISIBLE);
-                    holder.tvTags.setVisibility(View.VISIBLE);
-                    holder.tvArtists.setVisibility(View.VISIBLE);
-                    holder.tvLanguages.setVisibility(View.VISIBLE);
-                    holder.tvCategories.setVisibility(View.VISIBLE);
-                    holder.tvPages.setVisibility(View.VISIBLE);
-                    holder.textView_FileCount.setVisibility(View.VISIBLE);
-                    if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
-                        holder.textView_MissingPages.setVisibility(View.VISIBLE);
-                    }
-                    holder.tvComicID.setVisibility(View.VISIBLE);
-
-                    holder.tvLabelComicSource.setVisibility(View.VISIBLE);
-                    holder.tvLabelParodies .setVisibility(View.VISIBLE);
-                    holder.tvLabelTags.setVisibility(View.VISIBLE);
-                    holder.tvLabelArtists.setVisibility(View.VISIBLE);
-                    holder.tvLabelLanguages.setVisibility(View.VISIBLE);
-                    holder.tvLabelCategories.setVisibility(View.VISIBLE);
-                    holder.tvLabelPages.setVisibility(View.VISIBLE);
-                    holder.textView_LabelFileCount.setVisibility(View.VISIBLE);
-                    if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
-                        holder.textView_LabelMissingPages.setVisibility(View.VISIBLE);
-                    }
-                    holder.tvLabelComicID.setVisibility(View.VISIBLE);
-
-                    holder.imageView_EditComicDetails.setVisibility(View.VISIBLE);
-
-                    sThumbnailText = gciCatalogItem.sTitle;
-                    holder.tvComicSource.setText(gciCatalogItem.sSource);
-                    holder.tvParodies.setText(gciCatalogItem.sComicParodies);
-                    holder.tvCharacters.setText(gciCatalogItem.sComicCharacters);
-
-                    String sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
-                    holder.tvTags.setText(sTagText);
-
-                    holder.tvArtists.setText(gciCatalogItem.sComicArtists);
-                    holder.tvGroups.setText(gciCatalogItem.sComicGroups);
-                    holder.tvLanguages.setText(gciCatalogItem.sComicLanguages);
-                    holder.tvCategories.setText(gciCatalogItem.sComicCategories);
-                    String sPages = "" + gciCatalogItem.iComicPages;
-                    holder.tvPages.setText(sPages);
-                    String sFileCount = "" + gciCatalogItem.iFile_Count;
-                    holder.textView_FileCount.setText(sFileCount);
-                    if(!gciCatalogItem.sComic_Missing_Pages.equals("")){
-                        String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
-                        if(sMissingPages.length() > 10){
-                            sMissingPages = sMissingPages.substring(0,10) + "...";
-                        }
-                        holder.textView_MissingPages.setText(sMissingPages);
-                    }
-                    holder.tvComicID.setText(gciCatalogItem.sItemID);
-
-                    holder.imageView_EditComicDetails.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Intent intentComicDetailsEditor = new Intent(getApplicationContext(), Activity_ComicDetailsEditor.class);
-                            intentComicDetailsEditor.putExtra(Activity_ComicDetailsEditor.EXTRA_COMIC_CATALOG_ITEM, gciCatalogItem);
-                            startActivity(intentComicDetailsEditor);
-
-                        }
-                    });
-
-                } else {
-                    sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
-                }
-
-
-                String sThumbnailFilePath = gtmComicPages.get(position);
-                if (sThumbnailFilePath != null) {
-                    File fThumbnail = new File(sThumbnailFilePath);
-                    if (fThumbnail.exists()) {
-                        Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
-                    }
-                }
-
+                sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
             }
+
+
+            String sThumbnailFilePath = gtmComicPages.get(position);
+            if (sThumbnailFilePath != null) {
+                File fThumbnail = new File(sThumbnailFilePath);
+                if (fThumbnail.exists()) {
+                    Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
+                }
+            }
+
+
 
             holder.tvThumbnailText.setText(sThumbnailText);
 
@@ -577,16 +524,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     if (gbDebugTouch)
                         Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
                     StartComicViewerActivity(position);
-                }
-            });
-
-            holder.ivThumbnail.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    if (gbDebugTouch)
-                        Toast.makeText(getApplicationContext(), "Long press detected", Toast.LENGTH_SHORT).show();
-                    Obfuscate();
-                    return true;// returning true instead of false, works for me
                 }
             });
 
@@ -633,38 +570,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }*/
 
 
-    }
-
-    public void FlipObfuscation() {
-        //This routine primarily accessed via the toggle option on the menu.
-        globalClass.ObfuscationOn = !globalClass.ObfuscationOn;
-        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }
-    }
-
-    public void Obfuscate() {
-        //This routine is separate because it can be activated
-        // by either a long-press or the toggle option on the menu.
-        if(!globalClass.ObfuscationOn) {
-            globalClass.ObfuscationOn = true;
-        }
-        setTitle(globalClass.getObfuscationCategoryName());
-
-        //Update the RecyclerView:
-        gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
-    }
-
-    public void RemoveObfuscation(){
-        //Remove obfuscation:
-        setTitle(gciCatalogItem.sTitle);
-
-        //Update the RecyclerView:
-        gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
     }
 
     //=====================================================================================

@@ -28,8 +28,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.4"
-        app:srcCompat="@drawable/ob_productivity_tools"
-        android:contentDescription="@string/productivity_tools"
+        app:srcCompat="@drawable/nob_videos"
+        android:contentDescription="Videos"
         android:onClick="startVideoCatalogActivity"/>
 
     <ImageView
@@ -52,8 +52,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imageView_Video"
         app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/ob_data_management"
-        android:contentDescription="@string/data_management" />
+        app:srcCompat="@drawable/nob_pictures"
+        android:contentDescription="Pictures" />
 
     <ImageView
         android:id="@+id/imageView_ImportImages"
@@ -74,14 +74,14 @@
         app:layout_constraintStart_toEndOf="@+id/imageView_Images"
         app:layout_constraintTop_toTopOf="@+id/imageView_Video"
         app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/ob_quality_analysis"
-        android:contentDescription="@string/quality_analysis" />
+        app:srcCompat="@drawable/nob_comics"
+        android:contentDescription="Comics" />
 
     <TextView
         android:id="@+id/textView_Videos"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/productivity_tools"
+        android:text="Videos"
         android:textSize="28sp"
         style="@style/BusyBackgroundOverlayText"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -103,7 +103,7 @@
         android:id="@+id/textView_Pictures"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/data_management"
+        android:text="Pictures"
         android:textSize="28sp"
         style="@style/BusyBackgroundOverlayText"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -117,7 +117,7 @@
         android:id="@+id/textView_Comics"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/quality_analysis"
+        android:text="Comics"
         android:textSize="28sp"
         style="@style/BusyBackgroundOverlayText"
         app:layout_constraintBottom_toBottomOf="parent"

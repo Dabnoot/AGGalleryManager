@@ -143,10 +143,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             //Here is the method for double tap
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                PausePlayback();
-                ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
-                ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
-                Toast.makeText(getApplicationContext(), "Double tap detected. Obfuscating...", Toast.LENGTH_SHORT).show();
                 return true;
             }
 
@@ -285,9 +281,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             //Here is the method for double tap
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                ImageButton ImageButton_ObfuscationImage = findViewById(R.id.ImageButton_ObfuscationImage);
-                ImageButton_ObfuscationImage.setVisibility(View.VISIBLE);
-                Toast.makeText(getApplicationContext(), "Double tap detected. Obfuscating...", Toast.LENGTH_SHORT).show();
                 return true;
             }
 

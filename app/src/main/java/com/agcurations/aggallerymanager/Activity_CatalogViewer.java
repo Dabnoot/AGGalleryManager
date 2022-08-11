@@ -108,16 +108,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         ApplicationLogWriter("OnCreate Start");
 
-        //Intent intent = getIntent();
-        //giMediaCategory = intent.getIntExtra("MEDIA_CATEGORY", -1);
-
-        ApplicationLogWriter("Adjusting for obfuscation condition");
-        if(globalClass.ObfuscationOn) {
-            setTitle(globalClass.getObfuscatedProgramName());
-        } else {
-            setTitle(globalClass.sNonObfuscatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
-        }
-
         ApplicationLogWriter("Notifying zero catalog items if applicable");
         //Update TextView to show 0 catalog items if applicable:
         notifyZeroCatalogItemsIfApplicable();
@@ -271,13 +261,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         }
 
-        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }
     }
 
     @Override
@@ -567,73 +550,101 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             String sItemName = "";
 
-            if (globalClass.ObfuscationOn) {
 
-                //Get the obfuscation image index:
-                int i = (position % globalClass.getObfuscationImageCount());
-                //Get the obfuscation image resource ID:
-                int iObfuscatorResourceID = globalClass.getObfuscationImage(i);
 
-                Bitmap bmObfuscator = BitmapFactory.decodeResource(getResources(), iObfuscatorResourceID);
-                holder.ivThumbnail.setImageBitmap(bmObfuscator);
-                holder.tvThumbnailText.setText(globalClass.getObfuscationImageText(i));
-
-                if (holder.btnDelete != null) {
-                    //Don't allow delete during obfuscation.
-                    holder.btnDelete.setVisibility(View.INVISIBLE);
-                }
-
-                if(holder.textView_CatalogItemNotification != null){
-                    holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
-                }
-
-            } else {
-
-                //Load the non-obfuscated image into the RecyclerView ViewHolder:
-                String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
+            //Load the non-obfuscated image into the RecyclerView ViewHolder:
+            String sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
+                    + ci.sFolder_Name + File.separator
+                    + ci.sFilename;
+            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
+                ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
+                //If this is a comic, and the files from DownloadManager have not been moved as
+                //  part of download post-processing, look in the [comic]\download folder for the files:
+                sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
                         + ci.sFolder_Name + File.separator
+                        + GlobalClass.gsDLTempFolderName + File.separator
                         + ci.sFilename;
-                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
-                    ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
-                    //If this is a comic, and the files from DownloadManager have not been moved as
-                    //  part of download post-processing, look in the [comic]\download folder for the files:
-                    sThumbnailFilePath = globalClass.gfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].getAbsolutePath() + File.separator
-                            + ci.sFolder_Name + File.separator
-                            + GlobalClass.gsDLTempFolderName + File.separator
-                            + ci.sFilename;
-                }
-                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
-                        //If this is a video and the post-processing is incomplete...
-                        //Every sort operation will attempt to relocate the file. However, we can
-                        // look in the output folder for a result.
-                        boolean bVideoFileFound = false;
-                        String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
-                                File.separator + ci.sFolder_Name;
-                        String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                        File fVideoWorkingFolder = new File(sVideoWorkingFolder);
-                        if (fVideoWorkingFolder.exists()) {
-                            File[] fVideoDownloadFolderListing = fVideoWorkingFolder.listFiles();
-                            ArrayList<File> alfOutputFolders = new ArrayList<>();
-                            if (fVideoDownloadFolderListing != null) {
-                                for (File f : fVideoDownloadFolderListing) {
-                                    //Locate the output folder
-                                    if (f.isDirectory()) {
-                                        alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
-                                    }
+            }
+            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
+                    //If this is a video and the post-processing is incomplete...
+                    //Every sort operation will attempt to relocate the file. However, we can
+                    // look in the output folder for a result.
+                    boolean bVideoFileFound = false;
+                    String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                            File.separator + ci.sFolder_Name;
+                    String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                    File fVideoWorkingFolder = new File(sVideoWorkingFolder);
+                    if (fVideoWorkingFolder.exists()) {
+                        File[] fVideoDownloadFolderListing = fVideoWorkingFolder.listFiles();
+                        ArrayList<File> alfOutputFolders = new ArrayList<>();
+                        if (fVideoDownloadFolderListing != null) {
+                            for (File f : fVideoDownloadFolderListing) {
+                                //Locate the output folder
+                                if (f.isDirectory()) {
+                                    alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
                                 }
-                                //Attempt to locate the output file of a concatenation operation:
-                                for (File f : alfOutputFolders) {
-                                    String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
-                                    File fOutputFile = new File(sOutputFileAbsolutePath);
-                                    if (fOutputFile.exists()) {
-                                        //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
-                                        sThumbnailFilePath = fOutputFile.getAbsolutePath();
-                                        bVideoFileFound = true;
-                                        break; //Don't go through any more "output" folders in this temp download directory.
-                                    }
+                            }
+                            //Attempt to locate the output file of a concatenation operation:
+                            for (File f : alfOutputFolders) {
+                                String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
+                                File fOutputFile = new File(sOutputFileAbsolutePath);
+                                if (fOutputFile.exists()) {
+                                    //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
+                                    sThumbnailFilePath = fOutputFile.getAbsolutePath();
+                                    bVideoFileFound = true;
+                                    break; //Don't go through any more "output" folders in this temp download directory.
                                 }
+                            }
 
+                        }
+                    }
+                    if (!bVideoFileFound) {
+                        if (holder.textView_CatalogItemNotification != null) {
+                            //Notify the user that post-processing is incomplete:
+                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                            String sMessage = "Item pending post-processing...";
+                            holder.textView_CatalogItemNotification.setText(sMessage);
+                        }
+                    }
+
+
+                } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                        //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
+                    String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
+                            File.separator + ci.sFolder_Name;
+                    String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
+                    String sDownloadedThumbnailPath = sVideoWorkingFolder + File.separator + ci.sThumbnail_File;
+                    File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);
+                    if (fDownloadedThumbnail.exists() && !fDownloadedThumbnail.isDirectory()) { //isDir if ci.sThum=="".
+                        sThumbnailFilePath = sDownloadedThumbnailPath;
+                    } else {
+                        //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                        boolean bVideoFileFound = false;
+                        String sM3U8File = sVideoWorkingFolder + File.separator + ci.sFilename;
+                        File fM3U8File = new File(sM3U8File);
+                        if(fM3U8File.exists()) {
+                            try {
+                                BufferedReader brReader;
+                                brReader = new BufferedReader(new FileReader(sM3U8File));
+                                String sLine = brReader.readLine();
+                                while (sLine != null) {
+                                    if (!sLine.startsWith("#") && sLine.contains(".st")) {
+                                        sThumbnailFilePath = sLine;
+                                        File fThumbnail = new File(sThumbnailFilePath);
+                                        if(fThumbnail.exists()) {
+                                            bVideoFileFound = true;
+                                            break;
+                                        }
+                                    }
+                                    // read next line
+                                    sLine = brReader.readLine();
+                                }
+                                brReader.close();
+
+                            } catch (Exception e){
+                                //Probably a file IO exception.
+                                bVideoFileFound = false; //redundant, but don't want special behavior.
                             }
                         }
                         if (!bVideoFileFound) {
@@ -645,144 +656,95 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             }
                         }
 
-
-                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                            //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
-                        String sVideoDestinationFolder = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
-                                File.separator + ci.sFolder_Name;
-                        String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                        String sDownloadedThumbnailPath = sVideoWorkingFolder + File.separator + ci.sThumbnail_File;
-                        File fDownloadedThumbnail = new File(sDownloadedThumbnailPath);
-                        if (fDownloadedThumbnail.exists() && !fDownloadedThumbnail.isDirectory()) { //isDir if ci.sThum=="".
-                            sThumbnailFilePath = sDownloadedThumbnailPath;
-                        } else {
-                            //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
-                            boolean bVideoFileFound = false;
-                            String sM3U8File = sVideoWorkingFolder + File.separator + ci.sFilename;
-                            File fM3U8File = new File(sM3U8File);
-                            if(fM3U8File.exists()) {
-                                try {
-                                    BufferedReader brReader;
-                                    brReader = new BufferedReader(new FileReader(sM3U8File));
-                                    String sLine = brReader.readLine();
-                                    while (sLine != null) {
-                                        if (!sLine.startsWith("#") && sLine.contains(".st")) {
-                                            sThumbnailFilePath = sLine;
-                                            File fThumbnail = new File(sThumbnailFilePath);
-                                            if(fThumbnail.exists()) {
-                                                bVideoFileFound = true;
-                                                break;
-                                            }
-                                        }
-                                        // read next line
-                                        sLine = brReader.readLine();
-                                    }
-                                    brReader.close();
-
-                                } catch (Exception e){
-                                    //Probably a file IO exception.
-                                    bVideoFileFound = false; //redundant, but don't want special behavior.
-                                }
-                            }
-                            if (!bVideoFileFound) {
-                                if (holder.textView_CatalogItemNotification != null) {
-                                    //Notify the user that post-processing is incomplete:
-                                    holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
-                                    String sMessage = "Item pending post-processing...";
-                                    holder.textView_CatalogItemNotification.setText(sMessage);
-                                }
-                            }
-
-                        }
-                    }
-                } else {
-                    if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
-                        holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
                     }
                 }
+            } else {
+                if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
+                    holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
+                }
+            }
 
 
-                File fThumbnail = new File(sThumbnailFilePath);
+            File fThumbnail = new File(sThumbnailFilePath);
 
-                if(fThumbnail.exists()) {
+            if(fThumbnail.exists()) {
+                Glide.with(getApplicationContext())
+                        .load(fThumbnail)
+                        .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                        .into(holder.ivThumbnail);
+            } else {
+                //Special behavior if this is a comic.
+                boolean bFoundMissingComicThumbnail = false;
+                if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                    //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
+                    String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
+                    String sComicFolderPath;
+                    sComicFolderPath = sComicFolder_AbsolutePath + File.separator
+                            + ci.sFolder_Name;
+
+                    //Load the full path to each comic page into tmComicPages (sorts files):
+                    File fComicFolder = new File(sComicFolderPath);
+                    TreeMap<String, String> tmSortByFileName = new TreeMap<>();
+                    if(fComicFolder.exists()){
+                        File[] fComicPages = fComicFolder.listFiles();
+                        if(fComicPages != null) {
+                            for (File fComicPage : fComicPages) {
+                                if(fComicPage.isFile()) {
+                                    tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath()); //de-jumble to get proper alphabetization.
+                                }
+                            }
+                        }
+                        //Assign the existing file to be the new thumbnail file:
+                        if(tmSortByFileName.size() > 0) {
+                            ci.sFilename = GlobalClass.JumbleFileName(Objects.requireNonNull(tmSortByFileName.firstEntry()).getKey()); //re-jumble to get actual file name.
+                            bFoundMissingComicThumbnail = true;
+                        }
+                    }
+
+                }
+
+                if(bFoundMissingComicThumbnail){
                     Glide.with(getApplicationContext())
                             .load(fThumbnail)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                             .into(holder.ivThumbnail);
+                    globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
                 } else {
-                    //Special behavior if this is a comic.
-                    boolean bFoundMissingComicThumbnail = false;
-                    if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                        //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
-                        String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
-                        String sComicFolderPath;
-                        sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                                + ci.sFolder_Name;
-
-                        //Load the full path to each comic page into tmComicPages (sorts files):
-                        File fComicFolder = new File(sComicFolderPath);
-                        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
-                        if(fComicFolder.exists()){
-                            File[] fComicPages = fComicFolder.listFiles();
-                            if(fComicPages != null) {
-                                for (File fComicPage : fComicPages) {
-                                    if(fComicPage.isFile()) {
-                                        tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath()); //de-jumble to get proper alphabetization.
-                                    }
-                                }
-                            }
-                            //Assign the existing file to be the new thumbnail file:
-                            if(tmSortByFileName.size() > 0) {
-                                ci.sFilename = GlobalClass.JumbleFileName(Objects.requireNonNull(tmSortByFileName.firstEntry()).getKey()); //re-jumble to get actual file name.
-                                bFoundMissingComicThumbnail = true;
-                            }
-                        }
-
-                    }
-
-                    if(bFoundMissingComicThumbnail){
-                        Glide.with(getApplicationContext())
-                                .load(fThumbnail)
-                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                                .into(holder.ivThumbnail);
-                        globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
-                    } else {
-                        Glide.with(getApplicationContext())
-                                .load(R.drawable.baseline_image_white_18dp_wpagepad)
-                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                                .into(holder.ivThumbnail);
-                    }
+                    Glide.with(getApplicationContext())
+                            .load(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.ivThumbnail);
                 }
+            }
 
-                String sThumbnailText = "";
-                switch (globalClass.giSelectedCatalogMediaCategory) {
-                    case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                        String sTemp = ci.sFilename;
-                        sItemName = GlobalClass.JumbleFileName(sTemp);
-                        if(!ci.sTitle.equals("")){
-                            sItemName = ci.sTitle;
-                        }
-                        sThumbnailText = sItemName;
-                        if(!ci.sDuration_Text.equals("")){
-                            sThumbnailText = sThumbnailText  + ", " + ci.sDuration_Text;
-                        }
-                        sThumbnailText = ci.sItemID + " " + sThumbnailText; //For debugging.
-                        break;
-                    case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                        sItemName = GlobalClass.JumbleFileName(ci.sFilename);
-                        sThumbnailText = sItemName;
-                        break;
-                    case GlobalClass.MEDIA_CATEGORY_COMICS:
+            String sThumbnailText = "";
+            switch (globalClass.giSelectedCatalogMediaCategory) {
+                case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                    String sTemp = ci.sFilename;
+                    sItemName = GlobalClass.JumbleFileName(sTemp);
+                    if(!ci.sTitle.equals("")){
                         sItemName = ci.sTitle;
-                        sThumbnailText = sItemName;
-                        break;
-                }
+                    }
+                    sThumbnailText = sItemName;
+                    if(!ci.sDuration_Text.equals("")){
+                        sThumbnailText = sThumbnailText  + ", " + ci.sDuration_Text;
+                    }
+                    sThumbnailText = ci.sItemID + " " + sThumbnailText; //For debugging.
+                    break;
+                case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                    sItemName = GlobalClass.JumbleFileName(ci.sFilename);
+                    sThumbnailText = sItemName;
+                    break;
+                case GlobalClass.MEDIA_CATEGORY_COMICS:
+                    sItemName = ci.sTitle;
+                    sThumbnailText = sItemName;
+                    break;
+            }
 
-                holder.tvThumbnailText.setText(sThumbnailText);
+            holder.tvThumbnailText.setText(sThumbnailText);
 
-                if (holder.btnDelete != null) {
-                    holder.btnDelete.setVisibility(View.VISIBLE);
-                }
+            if (holder.btnDelete != null) {
+                holder.btnDelete.setVisibility(View.VISIBLE);
             }
 
 
@@ -806,17 +768,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                 }
             });
-
-            holder.ivThumbnail.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    if (gbDebugTouch)
-                        Toast.makeText(getApplicationContext(), "Long press detected", Toast.LENGTH_SHORT).show();
-                    Obfuscate();
-                    return true;// returning true instead of false, works for me
-                }
-            });
-
 
             if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if (ci.sComic_Missing_Pages.equals("")) {
@@ -960,42 +911,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     public void closeDrawer(){
         gDrawerLayout.closeDrawer(GravityCompat.START);
     }
-
-    //=====================================================================================
-    //===== Obfuscation Code ==============================================================
-    //=====================================================================================
-
-
-    public void FlipObfuscation() {
-        //This routine primarily accessed via the toggle option on the menu.
-        globalClass.ObfuscationOn = !globalClass.ObfuscationOn;
-        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }
-    }
-
-    public void Obfuscate() {
-        //This routine is separate because it can be activated
-        // by either a long-press or the toggle option on the menu.
-        if(!globalClass.ObfuscationOn) {
-            globalClass.ObfuscationOn = true;
-        }
-        setTitle(globalClass.getObfuscatedProgramName());
-        //Update the RecyclerView:
-        gRecyclerViewCatalogAdapter.notifyDataSetChanged();
-    }
-
-    public void RemoveObfuscation(){
-        //Remove obfuscation:
-        setTitle(globalClass.sNonObfuscatedProgramName[globalClass.giSelectedCatalogMediaCategory]);
-        //Update the RecyclerView:
-        //gRecyclerViewCatalogAdapter.notifyDataSetChanged();
-    }
-
 
 
 }
