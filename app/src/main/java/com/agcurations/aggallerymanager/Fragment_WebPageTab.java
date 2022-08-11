@@ -13,7 +13,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -111,9 +110,12 @@ public class Fragment_WebPageTab extends Fragment {
         ApplicationLogWriter("OnCreate End.");
     }
 
+    ViewGroup gVGContainer;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        gVGContainer = container;
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_web_page, container, false);
     }
@@ -129,12 +131,12 @@ public class Fragment_WebPageTab extends Fragment {
             return;
         }
 
-        gWebView = (VideoEnabledWebView) getView().findViewById(R.id.videoEnabledWebView_tabWebView);
+        gWebView = getView().findViewById(R.id.videoEnabledWebView_tabWebView);
         gEditText_Address = getView().findViewById(R.id.editText_Address);
 
         // Initialize the VideoEnabledWebChromeClient and set event handlers
         View nonVideoLayout = getActivity().findViewById(R.id.nonVideoLayout); // Your own view, read class comments
-        ViewGroup videoLayout = (ViewGroup) getActivity().findViewById(R.id.videoLayout); // Your own view, read class comments
+        ViewGroup videoLayout = getActivity().findViewById(R.id.videoLayout); // Your own view, read class comments
         //noinspection all
         View loadingView = getLayoutInflater().inflate(R.layout.view_loading_video, null); // Your own view, read class comments
 
@@ -594,6 +596,39 @@ public class Fragment_WebPageTab extends Fragment {
         ApplicationLogWriter("onResume end.");
     }
 
+    @Override
+    public void onDestroy() {
+        destroyWebView();
+        super.onDestroy();
+    }
+
+    public void destroyWebView() {
+        //This routine added because Activity_Browser was crashing.
+        //  Partially taken from https://stackoverflow.com/questions/17418503/destroy-webview-in-android.
+
+        // Make sure you remove the WebView from its parent view before doing anything.
+        if(gVGContainer != null) {
+            gVGContainer.removeAllViews();
+        }
+
+        gWebView.clearHistory();
+
+        // NOTE: clears RAM cache, if you pass true, it will also clear the disk cache.
+        // Probably not a great idea to pass true if you have other WebViews still alive.
+        gWebView.clearCache(true); //todo: Is this preventing recall of login between tabs?
+
+        // Loading a blank page is optional, but will ensure that the WebView isn't doing anything when you destroy it.
+        gWebView.loadUrl("about:blank");
+
+        gWebView.onPause();
+        gWebView.removeAllViews();
+
+        // NOTE: This can occasionally cause a segfault below API 17 (4.2)
+        gWebView.destroy();
+
+        // Null out the reference so that you don't end up re-using it.
+        gWebView = null;
+    }
 
     private WebViewClient getNewWebViewClient(){
         return new WebViewClient() {
