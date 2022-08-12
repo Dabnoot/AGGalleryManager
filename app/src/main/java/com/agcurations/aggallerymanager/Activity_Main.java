@@ -4,29 +4,26 @@ package com.agcurations.aggallerymanager;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
-import androidx.work.Worker;
 
-import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
-import android.net.Uri;
+import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -36,37 +33,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 public class Activity_Main extends AppCompatActivity {
 
@@ -106,6 +81,11 @@ public class Activity_Main extends AppCompatActivity {
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
         //registerReceiver(mainActivityDataServiceResponseReceiver, filter);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mainActivityDataServiceResponseReceiver, filter);
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        globalClass.gbGuestMode = sharedPreferences.getBoolean("hide_restricted_tags", false);
+
+
         //Call the MA Data Service, which will create a call to a service:
         Service_Main.startActionLoadData(this);
 
@@ -282,12 +262,39 @@ public class Activity_Main extends AppCompatActivity {
     //=====================================================================================
     //===== Menu Code =================================================================
     //=====================================================================================
-
+    Menu optionsMenu;
     public boolean onCreateOptionsMenu(Menu menu) {
+        optionsMenu = menu;
+        globalClass.USER_COLOR_ADMIN = ContextCompat.getColor(getApplicationContext(), R.color.colorStatusBar);
+        globalClass.USER_COLOR_GUEST = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_menu, menu);
 
+        if(!globalClass.gbGuestMode){
+            MenuItem menuItemLogin = menu.findItem(R.id.icon_login);
+            if(menuItemLogin != null){
+                setUserColor(menuItemLogin, globalClass.USER_COLOR_ADMIN);
+            }
+        }
+
         return true;
+    }
+
+    private Intent getMenuIntent(MenuItem item){
+        if(item.getItemId() == R.id.menu_Settings) {
+            return new Intent(getApplicationContext(), Activity_AppSettings.class);
+        } else if(item.getItemId() == R.id.menu_TagEditor) {
+            return new Intent(getApplicationContext(), Activity_TagEditor.class);
+        }
+        return null;
+    }
+
+
+    private void setUserColor(MenuItem item, int iColor){
+        Drawable drawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login).mutate();
+        drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
+        item.setIcon(drawable);
     }
 
     @Override
@@ -314,85 +321,87 @@ public class Activity_Main extends AppCompatActivity {
         //Code action for the OK button:
         Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
 
+        if((item.getItemId() == R.id.menu_Settings)
+            || (item.getItemId() == R.id.menu_TagEditor)
+            || (item.getItemId() == R.id.icon_login)){
 
-        if(item.getItemId() == R.id.menu_import) {
-            Intent intentImportGuided = new Intent(this, Activity_Import.class);
-            startActivity(intentImportGuided);
-            return true;
-        } else  if(item.getItemId() == R.id.menu_Settings) {
-            //Ask for pin code in order to allow access to Settings:
-
-            button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    adConfirmationDialog.dismiss();
-                }
-            });
-
-            //Code action for the OK button:
-            button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                    String sPinEntered = editText_DialogInput.getText().toString();
-
-                    if (sPinEntered.equals(globalClass.gsPin)) {
-                        Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
-                        startActivity(intentSettings);
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+            //Ask for pin code in order to allow access to feature if not admin:
+            if(globalClass.gbGuestMode && !globalClass.gsPin.equals("")) {
+                button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        adConfirmationDialog.dismiss();
                     }
+                });
 
-                    adConfirmationDialog.dismiss();
-                }
-            });
+                //Code action for the OK button:
+                final MenuItem menuItem = item;
+                button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                        String sPinEntered = editText_DialogInput.getText().toString();
 
-            adConfirmationDialog.show();
+                        if (sPinEntered.equals(globalClass.gsPin)) {
+                            globalClass.gbGuestMode = false;
+                            setUserColor(menuItem, globalClass.USER_COLOR_ADMIN);
+                            if(menuItem.getItemId() == R.id.icon_login) {
+                                //if this is a "user login" button press
+                                Toast.makeText(getApplicationContext(),"Admin access granted.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Intent intent = getMenuIntent(menuItem);
+                                if (intent != null) {
+                                    startActivity(intent);
+                                }
+                            }
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                        }
 
-            return true;
-        } else if(item.getItemId() == R.id.menu_TagEditor) {
-
-            //Ask for pin code in order to allow access to the Tag Editor:
-
-            button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                    String sPinEntered = editText_DialogInput.getText().toString();
-
-                    if (sPinEntered.equals(globalClass.gsPin)) {
-                        Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
-                        startActivity(intentTagEditor);
-                    } else {
-                        Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                        adConfirmationDialog.dismiss();
                     }
+                });
 
-                    adConfirmationDialog.dismiss();
+                adConfirmationDialog.show();
+
+                return true;
+
+
+            } else {
+                if(item.getItemId() == R.id.icon_login){
+                    //if this is a "user login" button press and we are in admin mode already...
+                    globalClass.gbGuestMode = true;
+                    setUserColor(item, globalClass.USER_COLOR_GUEST);
+                    Toast.makeText(getApplicationContext(),"Logging out of admin access.", Toast.LENGTH_SHORT).show();
+                } else {
+                    //Start whatever activity without asking for admin pin:
+                    Intent intent = getMenuIntent(item);
+                    if (intent != null) {
+                        startActivity(intent);
+                    }
                 }
-            });
 
-            adConfirmationDialog.show();
+            }
 
-            return true;
-        } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
 
+        }
+
+        if(item.getItemId() == R.id.menu_DatabaseBackup) {
             //Backup the database files (CatalogContents.dat):
             Service_Main.startActionCatalogBackup(this);
-
             return true;
         } else if(item.getItemId() == R.id.menu_WorkerConsole){
             Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
             startActivity(intentWorkerConsoleActivity);
             return true;
-        } else if(item.getItemId() == R.id.menu_LogViewer){
+        } else if(item.getItemId() == R.id.menu_LogViewer) {
             Intent intentLogViewerActivity = new Intent(this, Activity_LogViewer.class);
             startActivity(intentLogViewerActivity);
             return true;
-        } else if(item.getItemId() == R.id.menu_About) {
 
-
-            return true;
-        } else if(item.getItemId() == R.id.menu_Test) {
+        /*} else if(item.getItemId() == R.id.menu_About) {
+            return true;*/
+        /*} else if(item.getItemId() == R.id.menu_Test) {
 
             //Testing WorkManager for video concatenation:
             //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
@@ -417,7 +426,7 @@ public class Activity_Main extends AppCompatActivity {
 
             //Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();
 
-            return true; //End Test Options item.
+            return true; //End Test Options item.*/
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -426,13 +435,20 @@ public class Activity_Main extends AppCompatActivity {
     }
 
 
-    //=====================================================================================
-    //===== Obfuscation Code =================================================================
-    //=====================================================================================
 
     @Override
     public void onResume(){
         super.onResume();
+        if(optionsMenu != null) {
+            MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
+            if (menuItemLogin != null) {
+                if (!globalClass.gbGuestMode) {
+                    setUserColor(menuItemLogin, globalClass.USER_COLOR_ADMIN);
+                } else {
+                    setUserColor(menuItemLogin, globalClass.USER_COLOR_GUEST);
+                }
+            }
+        }
 
         //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
         workInfoObserver_TrackingTest = new Observer<WorkInfo>() {

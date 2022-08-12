@@ -5,6 +5,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -12,13 +13,14 @@ import androidx.lifecycle.ViewModelProvider;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.preference.PreferenceManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,8 +52,6 @@ public class Fragment_SelectTags extends Fragment {
     private ArrayList<Integer> galiPreselectedTags;
 
     ListViewTagsAdapter gListViewTagsAdapter;
-
-    private boolean gbCatalogTagsRestrictionsOn;
 
     ArrayList<ItemClass_Tag> galNewTags; //Used in conjunction with the TagEditor.
     // If the user creates new tags from this fragment, select those tags in the list upon return.
@@ -102,20 +102,12 @@ public class Fragment_SelectTags extends Fragment {
             return;
         }
 
-        //Process button_tags_restricted:
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        gbCatalogTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
-        Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
-        //Set locked/unlocked icon:
-        if(gbCatalogTagsRestrictionsOn){
-            button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
-        } else {
-            button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
-        }
-        button_tags_restricted.setOnClickListener(new View.OnClickListener() {
+        //Process button_login:
+        Button button_login = getView().findViewById(R.id.button_login);
+        button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(gbCatalogTagsRestrictionsOn){
+                if(globalClass.gbGuestMode){
                     //If restrictions are on, ask for pin code before unlocking.
 
                     if(getActivity() == null){
@@ -148,13 +140,12 @@ public class Fragment_SelectTags extends Fragment {
 
                             if(sPinEntered.equals(globalClass.gsPin)){
                                 //Show catalog items with restricted tags.
-                                gbCatalogTagsRestrictionsOn = false;
+                                globalClass.gbGuestMode = false;
+                                globalClass.gbCatalogViewerRefresh = true;
+                                triggerParentActivityUserCheck();
+                                setUserColor(globalClass.USER_COLOR_ADMIN);
+
                                 initListViewData();
-                                //Change the lock icon to 'unlocked':
-                                if(getView() != null) {
-                                    Button button_tags_restricted = getView().findViewById(R.id.button_tags_restricted);
-                                    button_tags_restricted.setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_open_white_18dp, 0, 0, 0);
-                                }
                                 Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
                             } else {
                                 Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
@@ -170,13 +161,16 @@ public class Fragment_SelectTags extends Fragment {
                 } else {
                     //If restrictions are off...
                     //Turn on restrictions, hide items, set icon to show lock symbol
-                    gbCatalogTagsRestrictionsOn = true;
+                    globalClass.gbGuestMode = true;
+                    globalClass.gbCatalogViewerRefresh = true;
+                    triggerParentActivityUserCheck();
+                    setUserColor(globalClass.USER_COLOR_GUEST);
                     initListViewData();
-                    ((Button)view).setCompoundDrawablesWithIntrinsicBounds(R.drawable.baseline_lock_white_18dp, 0, 0, 0);
                     Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+        recalcUserColor();
 
         Button button_UncheckTags = getView().findViewById(R.id.button_UncheckTags);
         button_UncheckTags.setOnClickListener(new View.OnClickListener() {
@@ -227,6 +221,11 @@ public class Fragment_SelectTags extends Fragment {
                         String sPinEntered = editText_DialogInput.getText().toString();
 
                         if(sPinEntered.equals(globalClass.gsPin)){
+                            globalClass.gbGuestMode = false;
+                            globalClass.gbCatalogViewerRefresh = true;
+                            triggerParentActivityUserCheck();
+                            setUserColor(globalClass.USER_COLOR_ADMIN);
+
                             Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
                             intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
                             garlGetResultFromTagEditor.launch(intentTagEditor);
@@ -326,9 +325,30 @@ public class Fragment_SelectTags extends Fragment {
         };
         viewModel_fragment_selectTags.altiTagSuggestions.observe(getActivity(), suggestedTagsObserver);
 
+    }
 
+    private void setUserColor(int iColor){
+        Drawable drawable = AppCompatResources.getDrawable(getActivity().getApplicationContext(), R.drawable.login).mutate();
+        drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
+        Button button_login = getView().findViewById(R.id.button_login);
+        button_login.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
+    }
 
+    public void recalcUserColor(){
+        if (!globalClass.gbGuestMode) {
+            setUserColor(globalClass.USER_COLOR_ADMIN);
+        } else {
+            setUserColor(globalClass.USER_COLOR_GUEST);
+        }
+    }
 
+    private void triggerParentActivityUserCheck(){
+        Integer iUserChangedToggle = viewModel_fragment_selectTags.mldiUserChangedToggle.getValue();
+        if(iUserChangedToggle == null){
+            iUserChangedToggle = 0;
+        }
+        iUserChangedToggle++;
+        viewModel_fragment_selectTags.mldiUserChangedToggle.setValue(iUserChangedToggle);
     }
 
     private void updateSuggestedTagDisplay(ArrayList<ItemClass_Tag> alTagSuggestions){
@@ -391,9 +411,11 @@ public class Fragment_SelectTags extends Fragment {
 
 
 
+
     @Override
     public void onResume() {
         super.onResume();
+        recalcUserColor();
         initListViewData();
     }
 
@@ -469,7 +491,7 @@ public class Fragment_SelectTags extends Fragment {
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
             ictNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
 
-            if(!(gbCatalogTagsRestrictionsOn && ictNew.bIsRestricted)) {
+            if(!(globalClass.gbGuestMode && ictNew.bIsRestricted)) {
                 //Don't add the tag if TagRestrictions are on and this is a restricted tag.
                 viewModel_fragment_selectTags.alTagsAll.add(ictNew);
                 if(ictNew.bIsChecked){
@@ -614,13 +636,11 @@ public class Fragment_SelectTags extends Fragment {
             notifyDataSetChanged();
         }
 
+        @NonNull
         @Override
-        public View getView(int position, View v, ViewGroup parent) {
+        public View getView(int position, View v, @NonNull ViewGroup parent) {
             // Get the data item for this position
 
-            if(viewModel_fragment_selectTags.bShowModeXrefTagUse){
-
-            }
             String sCompoundID = tmTagItemsDisplaySequence.get(position);
             final ItemClass_Tag tagItem = tmTagItemsDisplay.get(sCompoundID);
 
@@ -757,7 +777,6 @@ public class Fragment_SelectTags extends Fragment {
 
                 //Iterate through all of the items in this ArrayAdapter, gathering the items,
                 //  and using a TreeMap to automatically sort the items by selection order:
-                int iItemCount = getCount();
                 TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
 
                 for (Map.Entry<String, ItemClass_Tag> entry: tmTagItemsDisplay.entrySet()){
@@ -788,7 +807,7 @@ public class Fragment_SelectTags extends Fragment {
         private void updateXrefTagsHistogram(){
             //recalc cross-referenced tag histogram with the newly checked/unchecked item:
             TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram =
-                    globalClass.getXrefTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, gbCatalogTagsRestrictionsOn);
+                    globalClass.getXrefTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, globalClass.gbGuestMode);
 
             //Mark tags selected as appropriate:
             for(int iTagID: galiPreselectedTags){

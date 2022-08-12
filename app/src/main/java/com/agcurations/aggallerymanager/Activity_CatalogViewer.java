@@ -3,10 +3,12 @@ package com.agcurations.aggallerymanager;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -20,8 +22,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -31,13 +34,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,19 +56,14 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     //Global Variables:
     private GlobalClass globalClass;
-    private RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     int giRecyclerViewLastSelectedPosition = -1;
-
-    Spinner gspSpinnerSort;
 
     Toast toastLastToastMessage;
 
     ProgressBar gProgressBar_CatalogSortProgress;
     TextView gTextView_CatalogSortProgressBarText;
-
-    private Menu ActivityMenu;
 
     private CatalogViewerServiceResponseReceiver catalogViewerServiceResponseReceiver;
 
@@ -113,8 +108,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         notifyZeroCatalogItemsIfApplicable();
 
         ApplicationLogWriter("Obtaining preferences");
-
-        globalClass.gbCatalogViewerTagsRestrictionsOn = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
         //Pull sort-by and sort-order from preferences (recall user's last selection). Note that this item is modified by the import process so that the user can
         //  see the item that they last imported.
@@ -167,6 +160,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         ApplicationLogWriter("OnCreate End");
 
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
+        //React to changes in the selected tag data in the ViewModel:
+        final Observer<Integer> userChangeToggleObserver = new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer iUserChangedToggle) {
+                recalcUserColor();
+                populate_RecyclerViewCatalogItems();
+            }
+        };
+        viewModel_fragment_selectTags.mldiUserChangedToggle.observe(this, userChangeToggleObserver);
+
         //See additional initialization in onCreateOptionsMenu().
     }
 
@@ -188,7 +193,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        //unregisterReceiver(importDataServiceResponseReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(catalogViewerServiceResponseReceiver);
         super.onDestroy();
     }
@@ -211,28 +215,35 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     }
 
-    public static final int SPINNER_ITEM_IMPORT_DATE = 0;
-    public static final int SPINNER_ITEM_LAST_VIEWED_DATE = 1;
-    final String[] gsSpinnerItems={"Import Date","Last Read Date"};
+    Menu optionsMenu;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
-        ActivityMenu = menu;
-
+        optionsMenu = menu;
         getMenuInflater().inflate(R.menu.catalog_action_bar, menu);
 
-        //Set the restricted tags lock icon as appropriate:
-        MenuItem restrictedItem = menu.findItem(R.id.icon_tags_restricted);
-        if(globalClass.gbCatalogViewerTagsRestrictionsOn){
-            restrictedItem.setIcon(R.drawable.baseline_lock_white_18dp);
-        } else {
-            restrictedItem.setIcon(R.drawable.baseline_lock_open_white_18dp);
-        }
+        recalcUserColor();
 
         populate_RecyclerViewCatalogItems();
 
         return super.onCreateOptionsMenu(menu);
+    }
+
+    public void recalcUserColor(){
+        if(optionsMenu != null) {
+            MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
+            if (!globalClass.gbGuestMode) {
+                setUserColor(menuItemLogin, globalClass.USER_COLOR_ADMIN);
+            } else {
+                setUserColor(menuItemLogin, globalClass.USER_COLOR_GUEST);
+            }
+        }
+    }
+
+    private void setUserColor(MenuItem item, int iColor){
+        Drawable drawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login).mutate();
+        drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
+        item.setIcon(drawable);
     }
 
     private Parcelable recyclerViewState;
@@ -249,6 +260,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     @Override
     public void onResume(){
         super.onResume();
+
+        recalcUserColor();
+
         //Attempt to restore the state, ie scroll position, of the recyclerView:
         if(gRecyclerView.getLayoutManager() != null) {
             gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
@@ -257,19 +271,17 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(globalClass.gbCatalogViewerRefresh){
             //Typically enter here if data has been edited.
             populate_RecyclerViewCatalogItems();
-            globalClass.gbCatalogViewerRefresh = false;
-
         }
 
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(final MenuItem item) {
         //Display a message showing the name of the item selected.
         int itemID = item.getItemId();
 
-        if(itemID == R.id.icon_tags_restricted){
-            if(globalClass.gbCatalogViewerTagsRestrictionsOn){
+        if(itemID == R.id.icon_login){
+            if(globalClass.gbGuestMode){
                 //If restrictions are on, ask for pin code before unlocking.
                 //Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
                 //startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
@@ -302,6 +314,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             String sPinEntered = editText_DialogInput.getText().toString();
 
                             if(sPinEntered.equals(globalClass.gsPin)){
+                                setUserColor(item, globalClass.USER_COLOR_ADMIN);
                                 unlockRestrictedTags();
                             } else {
                                 Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
@@ -315,6 +328,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 } else {
                     //If the user has NOT specified a pin in the settings...
                     //Go ahead and reveal the restricted tags.
+                    setUserColor(item, globalClass.USER_COLOR_ADMIN);
                     unlockRestrictedTags();
                 }
 
@@ -323,8 +337,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             } else {
                 //If restrictions are off...
                 //Turn on restrictions, hide items, set icon to show lock symbol
-                globalClass.gbCatalogViewerTagsRestrictionsOn = true;
-                SetRestrictedIconToLock();
+                globalClass.gbGuestMode = true;
+                setUserColor(item, globalClass.USER_COLOR_GUEST);
+                gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
                 //Repopulate the catalog list:
                 populate_RecyclerViewCatalogItems();
             }
@@ -337,10 +352,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     private void unlockRestrictedTags(){
         //Show catalog items with restricted tags.
-        //Change the lock icon to 'unlocked':
-        SetRestrictedIconToUnlock();
         //Set the flag:
-        globalClass.gbCatalogViewerTagsRestrictionsOn = false;
+        globalClass.gbGuestMode = false;
+        gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
         //Repopulate the catalog list:
         populate_RecyclerViewCatalogItems();
     }
@@ -386,7 +400,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
 
                     //Apply the new TreeMap to the RecyclerView:
-                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap);
+                    RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap);
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
                     gRecyclerViewCatalogAdapter.notifyDataSetChanged();
                     if(giRecyclerViewLastSelectedPosition > -1){
@@ -433,16 +447,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         } //End onReceive.
 
     } //End CatalogViewerServiceResponseReceiver.
-
-    private void SetRestrictedIconToLock(){
-        MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
-        item.setIcon(R.drawable.baseline_lock_white_18dp);
-    }
-
-    private void SetRestrictedIconToUnlock(){
-        MenuItem item = ActivityMenu.findItem(R.id.icon_tags_restricted);
-        item.setIcon(R.drawable.baseline_lock_open_white_18dp);
-    }
 
     //=====================================================================================
     //===== RecyclerView Code =================================================================
@@ -855,7 +859,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     }
 
     public void populate_RecyclerViewCatalogItems(){
-
+        globalClass.gbCatalogViewerRefresh = false;
         if(gProgressBar_CatalogSortProgress != null && gTextView_CatalogSortProgressBarText != null){
             gProgressBar_CatalogSortProgress.setVisibility(View.VISIBLE);
             gTextView_CatalogSortProgressBarText.setVisibility(View.VISIBLE);

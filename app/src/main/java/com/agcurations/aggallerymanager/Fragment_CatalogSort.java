@@ -46,7 +46,7 @@ public class Fragment_CatalogSort extends Fragment {
 
     ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
-    private Fragment_SelectTags gFragment_selectTags;
+    public Fragment_SelectTags gFragment_selectTags;
 
 
     final int SPINNER_SORTBY_ITEM_IMPORT_DATE = 0;

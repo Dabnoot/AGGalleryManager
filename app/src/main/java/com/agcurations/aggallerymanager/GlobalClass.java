@@ -134,7 +134,7 @@ public class GlobalClass extends Application {
     public long glMinVideoDurationMSSelected = -1;
     public long glMaxVideoDurationMSSelected = -1;
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
-    public boolean gbCatalogViewerTagsRestrictionsOn;
+    public boolean gbGuestMode;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
     //public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;
     public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
@@ -156,6 +156,9 @@ public class GlobalClass extends Application {
     public boolean gbIsDarkModeOn = false;
 
     ArrayList<ItemClass_WebPageTabData> gal_WebPages;
+
+    public int USER_COLOR_ADMIN;
+    public int USER_COLOR_GUEST;
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================

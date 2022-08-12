@@ -39,6 +39,10 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
     public final MutableLiveData<ArrayList<ItemClass_Tag>> altiTagSuggestions =
             new MutableLiveData<>(); //To popup recently used tags to simplify tagging by user.
 
+    public final MutableLiveData<Integer> mldiUserChangedToggle = new MutableLiveData<>();
+        //This variable used merely to allow the fragment to notify a parent that the user has
+        //  changed via user action. The parent will observe this item.
+
     public void setSelectedTags(ArrayList<ItemClass_Tag> altiNewListOfSelectedTags){
 
         //Find which tag has been added or removed, and set tiTagItemRemoved or tiTagItemAdded:

@@ -3,7 +3,6 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -264,7 +263,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
             //Check to see if the record needs to be skipped due to restriction settings:
             boolean bIsRestricted = false;
-            if(globalClass.gbCatalogViewerTagsRestrictionsOn) {
+            if(globalClass.gbGuestMode) {
                 String sRecordTags = entry.getValue().sTags;
                 if(sRecordTags.length() > 0) {
                     String[] saRecordTags = sRecordTags.split(",");
