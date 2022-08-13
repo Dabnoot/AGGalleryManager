@@ -100,6 +100,9 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         return inflater.inflate(R.layout.fragment_import_1a_video_web_detect, container, false);
     }
 
+    private int iVideoStreamSenseCount = 0;
+    private int iMP4SenseCount = 0;
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -180,7 +183,33 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     //Record requested resources for review later if requested during development.
                     galsRequestedResources.add(sURL);
                 }
-                if(sURL.contains("m3u8") || sURL.contains("mp4")){
+                if((sURL.contains("m3u8") || sURL.contains("mp4")) && !globalClass.gbWorkerVideoAnalysisInProgress
+                        && !(globalClass.gbOptionSilenceActiveStreamListening && sURL.contains(".ts"))){
+
+                    //Enter here if we detect a valid file
+                    // but not if we are currently processing detected items
+                    // and not if the user has selected to not listed for video segments.
+
+
+                    String sAnnounce = "";
+                    if(sURL.contains(".ts")){
+                        // ".ts" is likely just the m3u8 downloading segments to a video player.
+                        sAnnounce = "Possible video segment address intercepted. ";
+                    }
+
+                    if(sURL.contains("m3u8")){
+                        iVideoStreamSenseCount++;
+                        sAnnounce = sAnnounce + "Possible video stream (" + iVideoStreamSenseCount + ") address intercepted. ";
+                    }
+                    if(sURL.contains("mp4")){
+                        iMP4SenseCount++;
+                        sAnnounce = sAnnounce + "Possible video mp4 (" + iMP4SenseCount + ") address intercepted.";
+                    }
+                    if(!sAnnounce.equals("")) {
+                        SetTextStatusMessage(sAnnounce);
+                    }
+
+
                     if(getActivity() != null) {
                         if (globalClass == null) {
                             globalClass = (GlobalClass) getActivity().getApplicationContext();
@@ -259,6 +288,10 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         gButton_Detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                globalClass.gbWorkerVideoAnalysisInProgress = false;
+                    //If this were true, we override
+                    // and force false to allow another worker to start.
+
                 if(gbWebSiteCheck) {
                     StringBuilder sb = new StringBuilder();
                     for (String s : galsRequestedResources) {
@@ -267,6 +300,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     String s = sb.toString();
                     Log.d("Resources Requested", s);
                 }
+
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
             }
@@ -330,6 +364,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     }
 
                     SetTextStatusMessage("Analyzing HTML...");
+                    globalClass.gbWorkerVideoAnalysisInProgress = false; //Force capability to start
+                                                    // analysis (even if a worker is in progress).
                     Service_Import.startActionVideoAnalyzeHTML(getContext());
 
                 }

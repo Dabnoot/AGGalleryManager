@@ -35,6 +35,8 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
 
     public static final String TAG_WORKER_IMPORT_VIDEOANALYZEHTML = "com.agcurations.aggallermanager.tag_worker_import_videoanalyzehtml";
 
+    boolean bDebug = true;
+
     public Worker_Import_VideoAnalyzeHTML(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
@@ -43,6 +45,15 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
     @Override
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+        /*if(globalClass.gbWorkerVideoAnalysisInProgress){
+            String sMessage = "Concurrent Worker_Import_VideoAnalyzeHTML worker detected. Stopping new worker with SUCCESS.";
+            Data data = new Data.Builder()
+                        .putString("MESSAGE", sMessage)
+                        .build();
+            return Result.success(data);
+        }*/
+        globalClass.gbWorkerVideoAnalysisInProgress = true;
 
         String sIntentActionFilter = Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT;
 
@@ -63,6 +74,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     false, 0,
                     false, "",
                     sIntentActionFilter);
+            globalClass.gbWorkerVideoAnalysisInProgress = false;
             return Result.failure();
         }
 
@@ -175,12 +187,13 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
         props.setAllowMultiWordAttributes(true);
         props.setRecognizeUnicodeChars(true);
         props.setOmitComments(true);
-        TagNode node = null;
+        TagNode node;
         try {
             node = pageParser.clean(icWebDataLocator.sHTML);
         } catch (Exception e){
             String sMessage = "Problem with HTML parser. Try again?\n" + e.getMessage();
             globalClass.problemNotificationConfig(sMessage, sIntentActionFilter);
+            globalClass.gbWorkerVideoAnalysisInProgress = false;
             return Result.failure();
         }
         //For acquiring clean html for use with xPathExpression testing tool at https://www.freeformatter.com/xpath-tester.html:
@@ -207,9 +220,10 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
 
         //Analyze data based on the Video Download Search Keys (VDSKs). Each VDSK can be either a
         // textual search key or an XPath Expression, similar to RegEx, but for XML/HTML.
-
+        int j = 0;
         for (ItemClass_VideoDownloadSearchKey vdsk : icWebDataLocator.alVideoDownloadSearchKeys){
-
+            if(bDebug) Log.d("vdsk","loop " + j + ": DataType " + vdsk.sDataType);
+            j++;
             switch (vdsk.sDataType) {
 
                 case VIDEO_DOWNLOAD_TITLE:
@@ -223,7 +237,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     }
 
                     //If not found via textual search, attempt to get the video title from the webpage via XPath:
-                    String sXPathExpressionTitleLocator = null;
+                    String sXPathExpressionTitleLocator;
                     if(vdsk.sSXPathExpression != null){
                         sXPathExpressionTitleLocator = vdsk.sSXPathExpression;
                     } else {
@@ -269,7 +283,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     }
 
                     //If the thumbnail was not found via textual search, attempt XPath expression:
-                    String sXPathExpressionThumbnailLocator = null;
+                    String sXPathExpressionThumbnailLocator;
                     if(vdsk.sSXPathExpression != null) {
                         sXPathExpressionThumbnailLocator = vdsk.sSXPathExpression;
                     } else {
@@ -429,6 +443,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
 
                         HttpURLConnection connection = (HttpURLConnection) urlVideoLink.openConnection();
                         connection.setRequestProperty("Accept-Encoding", "identity");
+                        if(bDebug) Log.d("vdsk","loop " + j + ": DataType " + vdsk.sDataType + ": Writing file size to vdsk.");
                         vdsk.lFileSize = connection.getContentLength(); //Returns -1 if content size is not in the header.
                         icf.lSizeBytes = vdsk.lFileSize;
                         connection.disconnect();
@@ -445,6 +460,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         alicf_VideoDownloadFileItems.add(icf);
 
                     } catch (Exception e) {
+                        if(bDebug) Log.d("vdsk","loop " + j + ": DataType " + vdsk.sDataType + ": Writing error data to vdsk.");
                         vdsk.bErrorWithLink = true;
                         vdsk.sErrorMessage = e.getMessage();
                     }
@@ -722,7 +738,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                             float fTemp = Float.parseFloat(sData2);
                                             fDurationInSeconds = fDurationInSeconds + fTemp;
                                         } catch (Exception e){
-                                            Log.d("M3U8", "String to float conversion error. Cannot convert: " + sData2);
+                                            if(bDebug) Log.d("M3U8", "String to float conversion error. Cannot convert: " + sData2);
                                         }
                                     }
                                 }
@@ -779,7 +795,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             for (String sTSDownloadAddress : icM3U8_entry.als_TSDownloads) {
 
 
-                                String sFilename = icM3U8_entry.sBaseURL + "/" + icM3U8_entry.sFileName;
+                                String sFilename;
                                 if(icM3U8_entry.sFileName.startsWith("/")){
                                     sFilename = icM3U8_entry.sHost + icM3U8_entry.sFileName;
                                 } else {
@@ -828,6 +844,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         //Finished obtaining sizes of the TS file sets.
 
                     } catch (Exception e) {
+                        if(bDebug) Log.d("vdsk","loop " + j + ": DataType " + vdsk.sDataType + ": Writing error data to vdsk.");
                         vdsk.bErrorWithLink = true;
                         vdsk.sErrorMessage = e.getMessage();
                         if(vdsk.sErrorMessage.startsWith("http")){
@@ -842,8 +859,9 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     break;
             }
 
-
         } //End loop searching for data within the HTML
+
+        node = null;
 
         //Broadcast a message to be picked-up by the VideoWebDetect fragment:
         /*Intent broadcastIntent = new Intent();
@@ -873,7 +891,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
             LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
         }
 
-
+        globalClass.gbWorkerVideoAnalysisInProgress = false;
         return Result.success();
     }
 

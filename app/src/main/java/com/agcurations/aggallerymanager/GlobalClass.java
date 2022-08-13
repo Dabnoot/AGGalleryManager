@@ -157,8 +157,10 @@ public class GlobalClass extends Application {
 
     ArrayList<ItemClass_WebPageTabData> gal_WebPages;
 
-    public int USER_COLOR_ADMIN;
+    public int USER_COLOR_ADMIN; //Used to set color of login/user icon used throughout the app.
     public int USER_COLOR_GUEST;
+
+    public boolean gbWorkerVideoAnalysisInProgress = false;
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
@@ -1963,6 +1965,12 @@ public class GlobalClass extends Application {
 
     boolean gbLogM3U8Files = false;     //Writes M3U8 files as they are read and analyzed as part of an
                                         //  import interpretive analysis.
+
+    public final boolean gbOptionSilenceActiveStreamListening = true;
+        //This option for video import from web source. During detection, if the user plays the
+        //  the video a stream may continually request .ts files. This attempts to filter them out.
+        //  However, it may block content that the user wants. Thus, allow it to be an option.
+
     boolean gbUseFFMPEGToMerge = true;
     boolean gbUseFFMPEGConvertToMP4 = true;
 
