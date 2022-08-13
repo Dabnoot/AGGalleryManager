@@ -261,20 +261,22 @@ public class Fragment_ItemDetails extends Fragment {
         String sOutputTags = sTagIDStringInput;
         String[] sInputTags = sTagIDStringInput.split(",");
         if(sInputTags.length > 0){
-            TreeMap<Integer, Integer> tmSortInputTags = new TreeMap<>();
-            for(String sTagID: sInputTags){
-                Integer iTagID = Integer.parseInt(sTagID);
-                tmSortInputTags.put(iTagID, iTagID);
-            }
-            StringBuilder sbOutputTags = new StringBuilder();
-            for(Map.Entry<Integer, Integer> tmEntry: tmSortInputTags.entrySet()){
-                sbOutputTags.append(tmEntry.getKey());
-                sbOutputTags.append(",");
-            }
-            String sTempOutputTags = sbOutputTags.toString();
-            if(sTempOutputTags.length() > 0){
-                sTempOutputTags = sTempOutputTags.substring(0, sTempOutputTags.length() - 1);
-                sOutputTags = sTempOutputTags;
+            if(!(sInputTags.length == 1 && sInputTags[0].equals(""))) {
+                TreeMap<Integer, Integer> tmSortInputTags = new TreeMap<>();
+                for (String sTagID : sInputTags) {
+                    Integer iTagID = Integer.parseInt(sTagID);
+                    tmSortInputTags.put(iTagID, iTagID);
+                }
+                StringBuilder sbOutputTags = new StringBuilder();
+                for (Map.Entry<Integer, Integer> tmEntry : tmSortInputTags.entrySet()) {
+                    sbOutputTags.append(tmEntry.getKey());
+                    sbOutputTags.append(",");
+                }
+                String sTempOutputTags = sbOutputTags.toString();
+                if (sTempOutputTags.length() > 0) {
+                    sTempOutputTags = sTempOutputTags.substring(0, sTempOutputTags.length() - 1);
+                    sOutputTags = sTempOutputTags;
+                }
             }
         }
         return sOutputTags;
