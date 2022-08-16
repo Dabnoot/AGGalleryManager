@@ -22,7 +22,6 @@ public class ItemClass_VideoDownloadSearchKey {
 
     public boolean bMatchFound = false;
     public String sSearchStringMatchContent = "";
-    public ArrayList<String> alsM3U8Lines;
 
     public long lFileSize = 0; //Used if download link.
     public boolean bErrorWithLink = false; //Used if download link.
