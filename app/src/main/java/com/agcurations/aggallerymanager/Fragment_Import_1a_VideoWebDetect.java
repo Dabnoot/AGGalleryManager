@@ -43,6 +43,8 @@ import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.
 
 public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
+    boolean bDebug = true;
+
     GlobalClass globalClass;
 
     private EditText gEditText_WebAddress;
@@ -59,7 +61,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
     private ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
 
-    private String gsUnknownAddress = "UNKNOWN_ADDRESS";
+    private final String gsUnknownAddress = "UNKNOWN_ADDRESS";
     private ArrayList<String> galsRequestedResources;
     private final boolean gbWebSiteCheck = false;
 
@@ -167,14 +169,30 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             public void onPageFinished(WebView view, String url) {
                 gWebView.evaluateJavascript(addMyClickCallBackJs(),null);
                 gButton_Detect.setEnabled(true);
-                gEditText_WebAddress.setText(url);
+                String sCurrentWebAddressText = gEditText_WebAddress.getText().toString();
+                if(!sCurrentWebAddressText.equals(url)) {
+                    //Had to put this if statement in because some of the pages request the m3u8 BEFORE the
+                    //  page even finishes loading. Thus the change of the text triggers a rest of the
+                    //  vdsk structures and that m3u8 capture is lost.
+                    gEditText_WebAddress.setText(url);
+                }
                 SetTextStatusMessage("Click 'Detect'. If expected video does not appear in the results, try playing and pausing the video first.");
             }
+
+            boolean bMyTurn = true;
 
             @Nullable
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
 
+                if(!bMyTurn){
+                    try{
+                        Thread.sleep(20);
+                    } catch (Exception e){
+                        if(bDebug) Log.d("shouldInterceptRequest", "Problem sleeping.");
+                    }
+                }
+                bMyTurn = false;
 
 
                 String sURL = request.getUrl().toString();
@@ -183,6 +201,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     //Record requested resources for review later if requested during development.
                     galsRequestedResources.add(sURL);
                 }
+                //if(bDebug) Log.d("shouldInterceptRequest", "Resource request: " + sURL);
                 if((sURL.contains("m3u8") || sURL.contains("mp4")) && !globalClass.gbWorkerVideoAnalysisInProgress
                         && !(globalClass.gbOptionSilenceActiveStreamListening && sURL.contains(".ts"))){
 
@@ -197,16 +216,29 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         sAnnounce = "Possible video segment address intercepted. ";
                     }
 
+
+
                     if(sURL.contains("m3u8")){
                         iVideoStreamSenseCount++;
                         sAnnounce = sAnnounce + "Possible video stream (" + iVideoStreamSenseCount + ") address intercepted. ";
+                        //Make a call to set textbox color indicator (since we are not on the UI thread):
+                        Intent broadcastIntent_VideoWebDetectResponse = new Intent();
+                        broadcastIntent_VideoWebDetectResponse.putExtra("M3U8_DETECTED", true);
+                        broadcastIntent_VideoWebDetectResponse.setAction(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
+                        broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
+                        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
                     }
                     if(sURL.contains("mp4")){
                         iMP4SenseCount++;
                         sAnnounce = sAnnounce + "Possible video mp4 (" + iMP4SenseCount + ") address intercepted.";
                     }
                     if(!sAnnounce.equals("")) {
-                        SetTextStatusMessage(sAnnounce);
+                        Intent broadcastIntent_VideoWebDetectResponse = new Intent();
+                        broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.UPDATE_LOG_BOOLEAN, true);
+                        broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.LOG_LINE_STRING, sAnnounce);
+                        broadcastIntent_VideoWebDetectResponse.setAction(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
+                        broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
+                        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
                     }
 
 
@@ -220,19 +252,53 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                                 if (globalClass.galWebVideoDataLocators.get(i).bHostNameMatchFound) {
                                     //Create a new VDSK, add this M3U8 or MP4 "match", tell it that the match is found.
                                     ItemClass_VideoDownloadSearchKey vdsk;
-                                    if(sURL.contains("m3u8")) {
+                                    boolean bIsM3U8 = false;
+                                    boolean bIsMP4 = false;
+                                    if(sURL.contains(".m3u8") && sURL.contains(".mp4")) {
+                                        //It could be a URL with both mp4 and m3U8 in the file name.
+                                        //Inconclusive case.
+                                        Log.d("shouldInterceptRequest", "Found both .m3u8 and .mp4 in same URL.");
+                                        int iFirstBound = sURL.lastIndexOf("/") + 1;
+                                        if(iFirstBound > 0){
+                                            String sSub = sURL.substring(iFirstBound);
+                                            int iQuestionMarkLoc = sSub.lastIndexOf("?");
+                                            int iM3U8Loc = -1;
+                                            int iMP4Loc = -1;
+                                            if (iQuestionMarkLoc > 0) {
+                                                //Solution cannot be past a question mark, if it exists. Generally stuff after that is not related to a file location.
+                                                sSub = sSub.substring(0, iQuestionMarkLoc);
+                                            }
+                                            iM3U8Loc = sSub.lastIndexOf(".m3u8");
+                                            iMP4Loc = sSub.lastIndexOf(".mp4");
+                                            if(iM3U8Loc > iMP4Loc){
+                                                bIsM3U8 = true;
+                                                Log.d("shouldInterceptRequest", "Believed to be M3U8.");
+                                            } else if(iMP4Loc > iM3U8Loc){
+                                                bIsMP4 = true;
+                                                Log.d("shouldInterceptRequest", "Believed to be MP4.");
+                                            } else {
+                                                Log.d("shouldInterceptRequest", "Could not determine if M3U8 or MP4.");
+                                            }
+
+                                        }
+                                    } else if(sURL.contains("m3u8")) {
+                                        bIsM3U8 = true;
+                                    } else if(sURL.contains(".mp4")) {
+                                        //Contains MP4.
+                                        bIsMP4 = true;
+                                    }
+                                    if(bIsM3U8){
                                         vdsk = new ItemClass_VideoDownloadSearchKey(VIDEO_DOWNLOAD_M3U8, null);
                                         vdsk.sSearchStringMatchContent = sURL;
                                         vdsk.bMatchFound = true;
                                         //Add the VDSK to the WebDataLocator instance:
                                         globalClass.galWebVideoDataLocators.get(i).alVideoDownloadSearchKeys.add(vdsk);
-                                    }
-                                    if(sURL.contains("mp4")) {
-                                        //Contains MP4. It could be a URL with both mp4 and m3U8 in the file name, so include both for investigation if that is the case.
+                                    } else if(bIsMP4){
                                         vdsk = new ItemClass_VideoDownloadSearchKey(VIDEO_DOWNLOAD_LINK, "", "");
                                         vdsk.sSearchStringMatchContent = sURL;
                                         vdsk.bMatchFound = true;
                                         //Add the VDSK to the WebDataLocator instance:
+                                        if(bDebug) Log.d("shouldInterceptRequest", "Created item as VIDEO_DOWNLOAD_LINK at index " + globalClass.galWebVideoDataLocators.get(i).alVideoDownloadSearchKeys.size());
                                         globalClass.galWebVideoDataLocators.get(i).alVideoDownloadSearchKeys.add(vdsk);
                                     }
 
@@ -242,6 +308,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         }
                     }
                 }
+                bMyTurn = true;
                 return super.shouldInterceptRequest(view, request);
 
 
@@ -288,17 +355,11 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         gButton_Detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                globalClass.gbWorkerVideoAnalysisInProgress = false;
-                    //If this were true, we override
-                    // and force false to allow another worker to start.
-
                 if(gbWebSiteCheck) {
                     StringBuilder sb = new StringBuilder();
                     for (String s : galsRequestedResources) {
                         sb.append(s).append("\n");
                     }
-                    String s = sb.toString();
-                    Log.d("Resources Requested", s);
                 }
 
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
@@ -317,7 +378,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     ClipData.Item clipItem = clipData.getItemAt(0);
                     if(clipItem != null){
                         if(clipItem.getText() != null){
-                            String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
+                            String sWebAddress = clipItem.coerceToText(getActivity().getApplicationContext()).toString();
                             if( sWebAddress != null){
                                 gEditText_WebAddress.setText(sWebAddress);
                                 SetTextStatusMessage("Loading webpage...");
@@ -386,8 +447,12 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     ClipData.Item clipData_Item = clipData.getItemAt(0);
                     if (clipData_Item != null) {
                         if(clipData_Item.getText() != null) {
-                            String sClipString = (String) clipData_Item.coerceToText(getActivity().getApplicationContext());
-                            gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
+                            try {
+                                String sClipString = (String) clipData_Item.coerceToText(getActivity().getApplicationContext());
+                                gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
+                            } catch (Exception e){
+                                Log.d("Problem", e.getMessage());
+                            }
                         }
                     }
                 }
@@ -567,7 +632,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     class MyClickJsToAndroid extends Object{
         @JavascriptInterface
         public void myClick(String idOrClass) {
-            Log.d("WebViewClick", "myClick-> " + idOrClass);
+            if(bDebug) Log.d("WebViewClick", "myClick-> " + idOrClass);
         }
     }
 
@@ -632,6 +697,10 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
 
 
+            boolean bUpdateStatusColor = intent.getBooleanExtra("M3U8_DETECTED",false);
+            if(bUpdateStatusColor){
+                gTextView_StatusInstructions.setBackgroundColor(0xAA00AA00);
+            }
 
 
 

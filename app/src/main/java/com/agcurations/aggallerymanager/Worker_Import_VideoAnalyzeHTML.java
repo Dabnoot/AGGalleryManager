@@ -53,7 +53,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         .build();
             return Result.success(data);
         }*/
-        globalClass.gbWorkerVideoAnalysisInProgress = true;
+        //globalClass.gbWorkerVideoAnalysisInProgress = true;
 
         String sIntentActionFilter = Fragment_Import_1a_VideoWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT;
 
@@ -69,6 +69,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                 break;
             }
         }
+
         if(icWebDataLocator == null){
             globalClass.BroadcastProgress(true, "This webpage is incompatible at this time.",
                     false, 0,
@@ -76,6 +77,16 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     sIntentActionFilter);
             globalClass.gbWorkerVideoAnalysisInProgress = false;
             return Result.failure();
+        } else {
+            //Create a copy of icWebDataLocator since it has been behaving as though it has been
+            String s = icWebDataLocator.sHostnameRegEx;
+            ItemClass_WebVideoDataLocator icWDL_new = new ItemClass_WebVideoDataLocator(s);
+            icWDL_new.bHostNameMatchFound = icWebDataLocator.bHostNameMatchFound;
+            icWDL_new.sHTML = icWebDataLocator.sHTML;
+            icWDL_new.sWebPageTitle = icWebDataLocator.sWebPageTitle;
+            icWDL_new.alVideoDownloadSearchKeys = new ArrayList<>(icWebDataLocator.alVideoDownloadSearchKeys);
+            icWebDataLocator = icWDL_new;
+
         }
 
 
@@ -644,6 +655,23 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                     icM3U8.sFileName = sLine;
                                     al_M3U8.add(icM3U8);
                                 }
+                            } else if (sLine.startsWith("#EXTINF")){
+                                //This is a lower-level M3U8 file not listing several M3U8 files of various resolutions
+                                // but rather naming .ts files to play in a sequence.
+                                icM3U8 = new ItemClass_M3U8();
+                                icM3U8.sBaseURL = sURLM3U8VideoLink.substring(0, sURLM3U8VideoLink.lastIndexOf("/"));
+                                icM3U8.sProgramID = "";
+                                icM3U8.sBandwidth = "";
+                                icM3U8.sResolution = "";
+                                icM3U8.sCODECs = "";
+                                int iFileNameStart = sURLM3U8VideoLink.lastIndexOf("/") + 1;
+                                int iFileNameEnd = sURLM3U8VideoLink.lastIndexOf(".m3u8") + 5;
+                                if(iFileNameStart > 0 && iFileNameEnd > 0 && iFileNameEnd > iFileNameStart) {
+                                    icM3U8.sFileName = sURLM3U8VideoLink.substring(iFileNameStart, iFileNameEnd);
+                                    icM3U8.sName = icM3U8.sFileName;
+                                }
+                                al_M3U8.add(icM3U8);
+                                break;
                             }
                         }
 
