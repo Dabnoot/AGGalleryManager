@@ -45,11 +45,13 @@ import android.widget.RadioButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.lang.annotation.Target;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -1526,11 +1528,11 @@ public class Activity_Import extends AppCompatActivity {
             if (row == null) {
                 LayoutInflater inflater = LayoutInflater.from(parent.getContext());
                 //My custom list item design is here
-                row = inflater.inflate(R.layout.listview_fileitem_selectable, parent, false);
+                row = inflater.inflate(R.layout.listview_fileitem_selectable_video, parent, false);
             }
 
             CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
-            ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
+            final VideoView vvPreview =  row.findViewById(R.id.videoView_Preview);
             TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
@@ -1557,11 +1559,15 @@ public class Activity_Import extends AppCompatActivity {
             tvLine3.setVisibility(View.INVISIBLE);
 
             //Display a thumbnail:
-            String sURLThumbnail = alFileItems.get(position).sURLThumbnail;
-            if(!sURLThumbnail.equals("")) {
-                Glide.with(getContext()).
-                        load(sURLThumbnail).
-                        into(ivFileType);
+
+            String sURLVideoLink = alFileItems.get(position).sURLVideoLink;
+            if(!sURLVideoLink.equals("")) {
+                vvPreview.setVideoPath(sURLVideoLink);
+                //vvPreview.start();
+            } else {
+                sURLVideoLink = alFileItems.get(position).ic_M3U8.sBaseURL + "/" + alFileItems.get(position).ic_M3U8.sFileName;
+                vvPreview.setVideoPath(sURLVideoLink);
+                vvPreview.pause();
             }
 
 
@@ -1609,40 +1615,17 @@ public class Activity_Import extends AppCompatActivity {
                     (alFileItems.get(position).sMimeType.equals("application/octet-stream") &&
                             alFileItems.get(position).sExtension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
 
-            button_MediaPreview.setVisibility(View.INVISIBLE); //For now, disable preview of web-detected video.
+            //button_MediaPreview.setVisibility(View.INVISIBLE); //For now, disable preview of web-detected video.
 
             //button_MediaPreview.setVisibility(Button.VISIBLE);
             button_MediaPreview.setOnClickListener(new View.OnClickListener(){
                 @Override
                 public void onClick(View view) {
-                    //Start the preview popup activity:
-                    Intent intentPreviewPopup;
-                    intentPreviewPopup = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
-
-
-                    Bundle b = new Bundle();
-                    b.putInt(MEDIA_CATEGORY,
-                            viewModelImportActivity.iImportMediaCategory); //viewModel not intended
-                    // to be used between Activities. Therefore, pass media category via bundle in
-                    // intent.
-
-                    ItemClass_File[] fileItems;
-
-
-                    //Send all of the video and image file items that are shown to the preview, and tell position.
-                    //  That way the user can swipe to the next video or image and apply tags to that one as well.
-                    ItemClass_File[] icf = new ItemClass_File[alFileItems.size()];
-                    int i = 0;
-                    for(ItemClass_File icfSource: alFileItems){
-                        icf[i] = icfSource;
-                        i++;
+                    if(vvPreview.isPlaying()){
+                        vvPreview.pause();
+                    } else {
+                        vvPreview.start();
                     }
-                    fileItems = icf;
-
-                    b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
-                    b.putSerializable(PREVIEW_FILE_ITEMS, fileItems);
-                    intentPreviewPopup.putExtras(b);
-                    garlGetTagsForImportItems.launch(intentPreviewPopup);
 
                 }
             });

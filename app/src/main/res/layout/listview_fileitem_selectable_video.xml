@@ -1,0 +1,102 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="6dip">
+
+    <CheckBox
+        android:id="@+id/checkBox_StorageItemSelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@null"
+        android:buttonTint="@color/colorTextColor"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_alignBottom="@id/linearLayout_TextHolder"/>
+
+    <VideoView
+        android:id="@+id/videoView_Preview"
+        android:layout_width="160dp"
+        android:layout_height="90dp"
+        android:contentDescription="Thumbnail icon"
+        android:src="@drawable/baseline_file_white_18dp"
+        android:layout_toEndOf="@id/checkBox_StorageItemSelect"
+        android:layout_centerVertical="true"/>
+
+    <LinearLayout
+        android:id="@+id/linearLayout_TextHolder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:layout_toEndOf="@id/videoView_Preview"
+        android:layout_toStartOf="@id/relativeLayout_AdaptiveButtons"
+        android:layout_centerVertical="true">
+
+        <TextView
+            android:id="@+id/textView_Line1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:text="Line1"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/textView_Line2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:text="Line2"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/textView_Line3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:text="Line3"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout_AdaptiveButtons"
+        android:layout_width="wrap_content"
+        android:layout_height="67dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_toStartOf="@id/button_Delete"
+        android:layout_centerVertical="true">
+
+        <Button
+            android:id="@+id/button_MediaPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="67dp"
+            android:text="Preview"
+            android:textSize="16sp"
+            android:backgroundTint="@color/colorButton"
+            android:layout_alignStart="@id/button_TagImport"
+            android:layout_alignEnd="@id/button_TagImport"/>
+
+        <Button
+            android:id="@+id/button_TagImport"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:text="Tag Import"
+            android:textSize="16sp"
+            android:backgroundTint="@color/colorButton"
+            android:layout_below="@id/button_MediaPreview"/>
+
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/button_Delete"
+        android:layout_width="70dp"
+        android:layout_height="67dp"
+        android:layout_marginEnd="30dp"
+        android:drawableLeft="@drawable/baseline_delete_white_18dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"/>
+
+</RelativeLayout>
