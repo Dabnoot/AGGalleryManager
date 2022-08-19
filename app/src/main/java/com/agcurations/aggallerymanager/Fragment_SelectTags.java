@@ -195,50 +195,57 @@ public class Fragment_SelectTags extends Fragment {
                 if (getActivity() == null) {
                     return;
                 }
-                final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
 
-                // set the custom layout
-                final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-                builder.setView(customLayout);
+                if(globalClass.gbGuestMode) {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
 
-                final AlertDialog adConfirmationDialog = builder.create();
+                    // set the custom layout
+                    final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+                    builder.setView(customLayout);
 
-                //Code action for the Cancel button:
-                Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-                button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        adConfirmationDialog.dismiss();
-                    }
-                });
+                    final AlertDialog adConfirmationDialog = builder.create();
 
-                //Code action for the OK button:
-                Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
-                button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
-                    @Override
-                    public void onClick(View view) {
-                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                        String sPinEntered = editText_DialogInput.getText().toString();
-
-                        if(sPinEntered.equals(globalClass.gsPin)){
-                            globalClass.gbGuestMode = false;
-                            globalClass.gbCatalogViewerRefresh = true;
-                            triggerParentActivityUserCheck();
-                            setUserColor(globalClass.USER_COLOR_ADMIN);
-
-                            Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                            intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
-                            garlGetResultFromTagEditor.launch(intentTagEditor);
-                        } else {
-                            Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                    //Code action for the Cancel button:
+                    Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            adConfirmationDialog.dismiss();
                         }
+                    });
 
-                        adConfirmationDialog.dismiss();
-                    }
-                });
+                    //Code action for the OK button:
+                    Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+                    button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                            String sPinEntered = editText_DialogInput.getText().toString();
 
-                adConfirmationDialog.show();
+                            if (sPinEntered.equals(globalClass.gsPin)) {
+                                globalClass.gbGuestMode = false;
+                                globalClass.gbCatalogViewerRefresh = true;
+                                triggerParentActivityUserCheck();
+                                setUserColor(globalClass.USER_COLOR_ADMIN);
 
+                                Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
+                                garlGetResultFromTagEditor.launch(intentTagEditor);
+                            } else {
+                                Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                            }
+
+                            adConfirmationDialog.dismiss();
+                        }
+                    });
+
+                    adConfirmationDialog.show();
+                } else {
+                    //If we are in Admin mode:
+                    Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                    intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
+                    garlGetResultFromTagEditor.launch(intentTagEditor);
+                }
             }
         });
 
