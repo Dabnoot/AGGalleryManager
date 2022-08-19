@@ -162,6 +162,38 @@ public class GlobalClass extends Application {
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
+    //================================
+    //==== TAG RATING SYSTEM VARS ====
+    //================================
+    //Both tags and individual catalog items can get ratings.
+
+    //Adapted from ESRB Ratings
+    public final static int TAG_AGE_RATING_EC = 0;
+    public final static int TAG_AGE_RATING_E = 1;
+    public final static int TAG_AGE_RATING_E10 = 2;
+    public final static int TAG_AGE_RATING_T = 3;
+    public final static int TAG_AGE_RATING_M = 4;
+    public final static int TAG_AGE_RATING_AO = 5;
+    public final static int TAG_AGE_RATING_RP = 6;
+    public final static int TAG_AGE_RATING_IB = 7;
+    public final static int TAG_AGE_RATING_HE = 8;
+    public final static int TAG_AGE_RATING_UR = 9;
+
+    public final static int TAG_AGE_RATING_CODE_INDEX = 0;
+    public final static int TAG_AGE_RATING_DESCRIPTION_INDEX = 1;
+    public final static String[][] TAG_AGE_RATINGS = {
+            {"EC",  "Suitable for children aged 3 or older; there will be no inappropriate content. E.g., Dora the Explorer, Dragon Tales."},
+            {"E",   "Suitable for all age groups. The game should not contain any sounds or images likely to scare young children. No bad language should be used. E.g., Just Dance, FIFA.",},
+            {"E10+","Suitable for those aged 10 or above. There could be mild forms of violence, and some scenes might be frightening for children. E.g., Minecraft Dungeons, Plants vs Zombies.",},
+            {"T",	"Suitable for those aged 13 or above. The game could feature more realistic and graphic scenes of violence. E.g., Fortnite, Sims 4.",},
+            {"M",	"Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
+            {"AO",	"Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
+            {"RP",  "Rating Pending. Titles with the RP rating have not yet been assigned a final ESRB rating."},
+            {"IB",  "Implicit Bias - Tag associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some N.S.F.W. content."},
+            {"HE",  "Highly Eschewed - Tag associated with items highly eschewed by mainstream society, such as p.o.r.n, or some topics in certain countries, religions, or cultures. All content should be considered N.S.F.W.."},
+            {"UR",  "User-restricted - Items only available for viewing by the assigned user(s)."}
+    };
+
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
     //=====================================================================================
@@ -945,6 +977,7 @@ public class GlobalClass extends Application {
         return "TagID" +
                 "\t" + "TagText" +
                 "\t" + "TagDescription" +
+                "\t" + "TagAgeRating" +
                 "\t" + "Version:" + giTagFileVersion;
     }
 
@@ -952,9 +985,14 @@ public class GlobalClass extends Application {
         //Designed for interpretting a line as read from a tags file.
         ItemClass_Tag ict;
         ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
-        if(sRecord.length > 2) {
-            ict.sTagDescription = JumbleStorageText(sRecord[2]);
+        ict.sTagDescription = JumbleStorageText(sRecord[2]);
+        try {
+            ict.iTagAgeRating = Integer.parseInt(sRecord[3]);
+        } catch (Exception e){
+            ict.iTagAgeRating = TAG_AGE_RATING_HE; //Default to highest restricted age rating.
+            ict.sTagText = "00TagFault_" + ict.sTagText;
         }
+
         return ict;
     }
 
@@ -1144,8 +1182,9 @@ public class GlobalClass extends Application {
         //For writing tags to a tags file.
         String sTagRecord =
                 JumbleStorageText(ict.iTagID.toString()) + "\t" +
-                JumbleStorageText(ict.sTagText) + "\t" +
-                JumbleStorageText(ict.sTagDescription);
+                        JumbleStorageText(ict.sTagText) + "\t" +
+                        JumbleStorageText(ict.sTagDescription) + "\t" +
+                        ict.iTagAgeRating;
         return sTagRecord;
     }
 
@@ -1210,39 +1249,65 @@ public class GlobalClass extends Application {
         return false;
     }
 
-    public void ReWriteTagFile(int iMediaCategory){
-        //Used during development.
+    public void TagDataFileAddNewField(){
+        //Execute these steps to add a new field to the tags files.
+        //  .1. Create a backup of the tags files.
+        //  .2. Verify that the backup was successful by confirming the files exist and are not empty.
+        //  .3. Update ItemClass_Tag.java to include the new data item, perhaps with an initial value.
+        //  .3. Update "getTagFileHeader" to include the name of the new field.
+        //  .4. Update "getTagRecordString" to include the new field data in the write operation.
+        //  .5. Run this routine from Worker_Catalog_LoadData.java.
+        //  .6. Verify the new field exists in the tags data files.
+        //  .7. Comment-out code that ran this routine from Worker_Catalog_LoadData.java.
+        //  .8. Update "ConvertFileLineToTagItem(String[] sRecord)" to interpret the new field in the data record and write to ItemClass_Tag.
+        //  .9. Consider removing any initial value that was applied to the field in ItemClass_Tag.
+        //  .10. Rebuild and install the app on the test device.
+        //  11. Verify all is well and commit code.
 
-        File fTagsFile = new File(gfAppFolder + File.separator
-                + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat");
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
 
-        TreeMap<Integer, String> tmTagsSortedByID = new TreeMap<>();
+            File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
 
-        for (Map.Entry<Integer, ItemClass_Tag> TagEntry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-            tmTagsSortedByID.put(TagEntry.getValue().iTagID, TagEntry.getValue().sTagText);
-        }
+            try {
+                BufferedReader brReader;
+                brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
 
-        try {
-            FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
+                StringBuilder sbBuffer = new StringBuilder();
+                sbBuffer.append(getTagFileHeader());
+                sbBuffer.append("\n");
 
-            //Write the header record:
-            fwTagsFile.write(getTagFileHeader());
-            fwTagsFile.write("\n");
+                //Read a data record from the tags file:
+                String sLine = brReader.readLine();
+                if(sLine != null) {
+                    sLine = brReader.readLine(); //Skip the first line - it's the header.
+                }
+                while (sLine != null) {
 
-            for (Map.Entry<Integer, String> TagEntry: tmTagsSortedByID.entrySet()) {
-                String sTagRecord =
-                        JumbleStorageText(TagEntry.getKey()) + "\t" +
-                                JumbleStorageText(TagEntry.getValue()) + "\t" +
-                                "";
-                fwTagsFile.write(sTagRecord + "\n");
+                    //Convert the tag data record to a tag class item:
+                    ItemClass_Tag ictFromFile = ConvertFileLineToTagItem(sLine);
+
+                    //Convert the tag class item back to a data record with the new field:
+                    sLine = getTagRecordString(ictFromFile);
+
+                    //Write the current record to the buffer:
+                    sbBuffer.append(sLine);
+                    sbBuffer.append("\n");
+
+                    // read next data record from the tags file:
+                    sLine = brReader.readLine();
+                }
+                brReader.close();
+
+                //Write the data to the file:
+                FileWriter fwNewCatalogContentsFile = new FileWriter(fTagsFile, false);
+                fwNewCatalogContentsFile.write(sbBuffer.toString());
+                fwNewCatalogContentsFile.flush();
+                fwNewCatalogContentsFile.close();
+
+            } catch (Exception e) {
+                String sMessage =  "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n" + e.getMessage();
+                Log.d("TagDataFileAddNewField", sMessage);
             }
-
-            //Close the tags file:
-            fwTagsFile.flush();
-            fwTagsFile.close();
-
-        } catch (IOException e) {
-            Toast.makeText(this, "Trouble writing file at\n" + fTagsFile.getAbsolutePath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
     }

@@ -203,7 +203,7 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
-        int iProgressDenominator = 9;
+        int iProgressDenominator = 10;
         int iProgressNumerator = 0;
         int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
@@ -299,6 +299,14 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.ExecuteDownloadManagerPostProcessing();
 
         iProgressNumerator++;
+        /*iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, "Updating tags files",
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+        globalClass.TagDataFileAddNewField();*/
+
+        iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
@@ -307,6 +315,8 @@ public class Worker_Catalog_LoadData extends Worker {
         //globalClass.CatalogDataFile_AddNewField();
 
         //VerifyVideoFilesIntegrity();
+
+
 
         LogFilesMaintenance();
         globalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
