@@ -9,7 +9,7 @@ public class ItemClass_Tag implements Serializable {
     public String sTagText;
     public String sTagDescription = "";
     public Boolean bIsRestricted = false;
-    public int iTagAgeRating = GlobalClass.TAG_AGE_RATING_AO;
+    public int iTagAgeRating = GlobalClass.TAG_AGE_RATING_RP;
 
     //Create a variable to be used to preserve the order in which items are selected.
     //  This is needed because the first tag may be used for special purposes.

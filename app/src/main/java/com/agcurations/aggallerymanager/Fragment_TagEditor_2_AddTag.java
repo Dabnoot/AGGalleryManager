@@ -1,7 +1,10 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -13,9 +16,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,15 +84,22 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
 
         if (getView() != null) {
+
+            Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_AgeRating);
+            ArrayList<String[]> alsTemp = new ArrayList<>();
+            for(String[] sESRBRating: GlobalClass.TAG_AGE_RATINGS){
+                alsTemp.add(sESRBRating);
+            }
+            adapterTagAgeRatings atarSpinnerAdapter = new adapterTagAgeRatings(getContext(), R.layout.spinner_item_age_rating, alsTemp);
+            spinner_AgeRating.setAdapter(atarSpinnerAdapter);
+
             Button button_AddTag = getView().findViewById(R.id.button_AddTag);
             button_AddTag.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     button_AddTag_Click(v);
                 }
             });
-        }
 
-        if (getView() != null) {
             Button button_Finish = getView().findViewById(R.id.button_Finish);
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -123,8 +136,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
         listView_TagViewer.setAdapter(aasTags);
 
-        EditText etNewTagName = getView().findViewById(R.id.editText_NewTagText);
-        etNewTagName.setText("");
+        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
+        editText_TagText.setText("");
     }
 
 
@@ -133,22 +146,28 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         if(getView() == null){
             return;
         }
-        EditText etNewTagName = getView().findViewById(R.id.editText_NewTagText);
 
-        String sTagName = etNewTagName.getText().toString();
-
+        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
+        String sTagName = editText_TagText.getText().toString();
         if(sTagName.equals("")){
             Toast.makeText(getActivity(), "Tag text cannot be blank.", Toast.LENGTH_SHORT).show();
             return;
         }
+        ItemClass_Tag ictNewTag = new ItemClass_Tag(-1, sTagName);
 
-        ArrayList<String> alsTagNames = new ArrayList<>();
-        alsTagNames.add(sTagName);
+        //Get the user-entered tag description:
+        EditText editText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
+        ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
 
-        ArrayList<ItemClass_Tag> alictNewTagItem = globalClass.TagDataFile_CreateNewRecords(alsTagNames, viewModelTagEditor.iTagEditorMediaCategory);
-        if(alictNewTagItem != null){
+        //Get the selected Age Rating:
+        Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_AgeRating);
+        ictNewTag.iTagAgeRating = spinner_AgeRating.getSelectedItemPosition();
+
+        //Attempt to add the new record:
+        ictNewTag = globalClass.TagDataFile_CreateNewRecord(ictNewTag, viewModelTagEditor.iTagEditorMediaCategory);
+        if(ictNewTag != null){
             RefreshTagListView();
-            galNewTags.add(alictNewTagItem.get(0));
+            galNewTags.add(ictNewTag);
             viewModelTagEditor.alNewTags = galNewTags; //To allow new tags to be sent back to a possible calling activity.
             viewModelTagEditor.bTagAdded = true;
             Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();
@@ -180,6 +199,45 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             }
         }
     }
+
+    public class adapterTagAgeRatings extends ArrayAdapter<String[]>{
+
+        public adapterTagAgeRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects) {
+            super(context, resource, objects);
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return initView(position, convertView, parent);
+        }
+
+
+        @Override
+        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            return initView(position, convertView, parent);
+        }
+
+        private View initView(int position, View convertView,
+                              ViewGroup parent)
+        {
+            if (convertView == null) {
+                convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item_age_rating, parent, false);
+            }
+
+            String[] sAgeRatingData = getItem(position);
+
+            TextView textView_AgeRatingCode = convertView.findViewById(R.id.textView_AgeRatingCode);
+            textView_AgeRatingCode.setText(sAgeRatingData[GlobalClass.TAG_AGE_RATING_CODE_INDEX]);
+
+            TextView textView_AgeRatingDescription = convertView.findViewById(R.id.textView_AgeRatingDescription);
+            textView_AgeRatingDescription.setText(sAgeRatingData[GlobalClass.TAG_AGE_RATING_DESCRIPTION_INDEX]);
+
+            return convertView;
+        }
+
+    }
+
 
 
 }

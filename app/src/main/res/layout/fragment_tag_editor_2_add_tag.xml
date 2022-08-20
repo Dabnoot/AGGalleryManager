@@ -43,30 +43,68 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Enter new tag details below."
-                    android:textSize="20sp"
+                    android:textSize="24sp"
                     android:layout_alignParentStart="true"
                     android:layout_below="@+id/textView_NewTagTitle"/>
 
                 <TextView
-                    android:id="@+id/textView_NewTagText"
+                    android:id="@+id/textView_labelTagText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="40dp"
+                    android:layout_marginTop="30dp"
                     android:layout_marginBottom="20dp"
                     android:text="Tag text:"
-                    android:textSize="30sp"
+                    android:textSize="22sp"
                     android:layout_alignParentStart="true"
                     android:layout_below="@+id/textView_NewTagSubText"/>
 
                 <EditText
-                    android:id="@+id/editText_NewTagText"
+                    android:id="@+id/editText_TagText"
                     android:layout_width="wrap_content"
                     android:minWidth="200dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:textSize="30sp"
-                    android:layout_alignBaseline="@+id/textView_NewTagText"
-                    android:layout_toEndOf="@+id/textView_NewTagText"/>
+                    android:layout_marginStart="10dp"
+                    android:textSize="22sp"
+                    android:layout_alignBaseline="@+id/textView_labelTagText"
+                    android:layout_toEndOf="@+id/textView_labelTagText"/>
+
+                <TextView
+                    android:id="@+id/textView_labelTagDescription"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Tag description:"
+                    android:textSize="22sp"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/editText_TagText"/>
+
+                <EditText
+                    android:id="@+id/editText_TagDescription"
+                    android:layout_width="wrap_content"
+                    android:minWidth="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:textSize="22sp"
+                    android:layout_below="@+id/textView_labelTagDescription"/>
+
+                <TextView
+                    android:id="@+id/textView_labelAgeRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Age rating:"
+                    android:textSize="22sp"
+                    android:layout_alignParentStart="true"
+                    android:layout_below="@+id/editText_TagDescription"/>
+
+                <Spinner
+                    android:id="@+id/spinner_AgeRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_below="@+id/textView_labelAgeRating"
+                    />
 
             </RelativeLayout>
 

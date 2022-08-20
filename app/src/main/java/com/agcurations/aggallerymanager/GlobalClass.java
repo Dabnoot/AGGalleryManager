@@ -182,16 +182,16 @@ public class GlobalClass extends Application {
     public final static int TAG_AGE_RATING_CODE_INDEX = 0;
     public final static int TAG_AGE_RATING_DESCRIPTION_INDEX = 1;
     public final static String[][] TAG_AGE_RATINGS = {
-            {"EC",  "Suitable for children aged 3 or older; there will be no inappropriate content. E.g., Dora the Explorer, Dragon Tales."},
-            {"E",   "Suitable for all age groups. The game should not contain any sounds or images likely to scare young children. No bad language should be used. E.g., Just Dance, FIFA.",},
-            {"E10+","Suitable for those aged 10 or above. There could be mild forms of violence, and some scenes might be frightening for children. E.g., Minecraft Dungeons, Plants vs Zombies.",},
-            {"T",	"Suitable for those aged 13 or above. The game could feature more realistic and graphic scenes of violence. E.g., Fortnite, Sims 4.",},
-            {"M",	"Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
-            {"AO",	"Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
-            {"RP",  "Rating Pending. Titles with the RP rating have not yet been assigned a final ESRB rating."},
+            {"EC",  "Early Childhood - Suitable for children aged 3 or older; there will be no inappropriate content. E.g., Dora the Explorer, Dragon Tales."},
+            {"E",   "Everyone - Suitable for all age groups. The game should not contain any sounds or images likely to scare young children. No bad language should be used. E.g., Just Dance, FIFA.",},
+            {"E10+","Everyone 10 and Older - Suitable for those aged 10 or above. There could be mild forms of violence, and some scenes might be frightening for children. E.g., Minecraft Dungeons, Plants vs Zombies.",},
+            {"T",	"Teen - Suitable for those aged 13 or above. The game could feature more realistic and graphic scenes of violence. E.g., Fortnite, Sims 4.",},
+            {"M",	"Mature - Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
+            {"AO",	"Adults Only - Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
+            {"RP",  "Rating Pending - Titles with the RP rating have not yet been assigned a final ESRB rating."},
             {"IB",  "Implicit Bias - Tag associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some N.S.F.W. content."},
             {"HE",  "Highly Eschewed - Tag associated with items highly eschewed by mainstream society, such as p.o.r.n, or some topics in certain countries, religions, or cultures. All content should be considered N.S.F.W.."},
-            {"UR",  "User-restricted - Items only available for viewing by the assigned user(s)."}
+            {"UR",  "User Restricted - Items only available for viewing by the assigned user(s)."}
     };
 
     //=====================================================================================
@@ -1123,6 +1123,69 @@ public class GlobalClass extends Application {
         }
 
         return ictNewTags;
+
+    }
+
+    public ItemClass_Tag TagDataFile_CreateNewRecord(ItemClass_Tag ictNewTag, int iMediaCategory){
+
+        //Get the tags file:
+        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+
+        int iNextRecordId = -1;
+
+        //Find the greatest tag ID:
+        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+            int iThisId;
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                iThisId = entry.getValue().iTagID;
+                if (iThisId >= iNextRecordId){
+                    iNextRecordId = iThisId + 1;
+                }
+            }
+        } else {
+            iNextRecordId = 0;
+        }
+
+        try {
+            //Open the tags file write-mode append:
+            FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
+
+            boolean bTagAlreadyExists = false;
+            if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+                for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+
+                    if (entry.getValue().sTagText.toLowerCase().equals(ictNewTag.sTagText.toLowerCase())) {
+                        //If the tag already exists, abort adding this tag.
+                        bTagAlreadyExists = true;
+                        break;
+                    }
+                }
+            }
+
+            if(!bTagAlreadyExists) {
+                //Add the tag to memory
+                ItemClass_Tag ictNewNewTag = new ItemClass_Tag(iNextRecordId, ictNewTag.sTagText); //Tag ID in the tag item is final. Must update here with "newnew" item.
+                ictNewNewTag.sTagDescription = ictNewTag.sTagDescription;
+                ictNewNewTag.iTagAgeRating = ictNewTag.iTagAgeRating;
+
+                gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
+
+                //Add the new record to the catalog file:
+                String sLine = getTagRecordString(ictNewTag);
+                fwNewTagsFile.write(sLine);
+                fwNewTagsFile.write("\n");
+            } else {
+                ictNewTag = null;
+            }
+
+            fwNewTagsFile.flush();
+            fwNewTagsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+
+        return ictNewTag;
 
     }
 

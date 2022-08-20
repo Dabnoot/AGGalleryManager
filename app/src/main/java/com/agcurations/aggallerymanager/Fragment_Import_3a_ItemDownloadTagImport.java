@@ -101,6 +101,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
                                     }
                                 }
                                 //Call the service to add the tags:
+                                //todo: prompt user for tag age rating before import
                                 Service_TagEditor.startActionAddTags(getActivity().getApplicationContext(), alsNewTagTexts, viewModelImportActivity.iImportMediaCategory);
                             }
                         }
