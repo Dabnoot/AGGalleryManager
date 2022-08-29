@@ -74,4 +74,7 @@ dependencies {
     //For slider on sort/filter fragment:
     implementation 'com.google.android.material:material:1.2.0-alpha05'
 
+    //For Color Picker:
+    implementation 'com.thebluealliance:spectrum:0.7.1'
+
 }

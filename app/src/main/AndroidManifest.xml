@@ -5,14 +5,14 @@
     <application
         android:name=".GlobalClass"
         android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:icon="@mipmap/app_book"
         android:installLocation="preferExternal"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:hardwareAccelerated="true">
-
+        android:theme="@style/AppTheme">
+        <activity android:name=".Activity_UserManagement"></activity>
         <activity android:name=".Activity_Browser" />
         <activity android:name=".Activity_WorkerConsole" />
         <activity android:name=".Activity_LogViewer" />
@@ -54,13 +54,11 @@
             android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_ImportFilePreview" />
-
-
     </application>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

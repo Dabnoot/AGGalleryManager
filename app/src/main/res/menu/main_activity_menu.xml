@@ -12,8 +12,10 @@
         android:iconTint="@color/colorButton"
         />
 
+    <item android:id="@+id/menu_UserManagement"
+        android:title="User Management" />
     <item android:id="@+id/menu_Settings"
-        android:title="@string/settings" />
+        android:title="Settings" />
     <item android:id="@+id/menu_TagEditor"
         android:title="Tag Editor" />
     <item android:id="@+id/menu_DatabaseBackup"

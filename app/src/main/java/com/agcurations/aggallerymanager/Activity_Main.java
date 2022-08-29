@@ -282,7 +282,9 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     private Intent getMenuIntent(MenuItem item){
-        if(item.getItemId() == R.id.menu_Settings) {
+        if(item.getItemId() == R.id.menu_UserManagement) {
+            return new Intent(getApplicationContext(), Activity_UserManagement.class);
+        } else if(item.getItemId() == R.id.menu_Settings) {
             return new Intent(getApplicationContext(), Activity_AppSettings.class);
         } else if(item.getItemId() == R.id.menu_TagEditor) {
             return new Intent(getApplicationContext(), Activity_TagEditor.class);
@@ -321,7 +323,8 @@ public class Activity_Main extends AppCompatActivity {
         //Code action for the OK button:
         Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
 
-        if((item.getItemId() == R.id.menu_Settings)
+        if((item.getItemId() == R.id.menu_UserManagement)
+            || (item.getItemId() == R.id.menu_Settings)
             || (item.getItemId() == R.id.menu_TagEditor)
             || (item.getItemId() == R.id.icon_login)){
 

@@ -39,7 +39,7 @@
                     android:layout_alignParentTop="true"/>
 
                 <TextView
-                    android:id="@+id/textView_NewTagSubText"
+                    android:id="@+id/textView_AddUserSubText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Enter new tag details below."
@@ -48,7 +48,7 @@
                     android:layout_below="@+id/textView_NewTagTitle"/>
 
                 <TextView
-                    android:id="@+id/textView_labelTagText"
+                    android:id="@+id/textView_labelUserName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="30dp"
@@ -56,37 +56,37 @@
                     android:text="Tag text:"
                     android:textSize="22sp"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_NewTagSubText"/>
+                    android:layout_below="@+id/textView_AddUserSubText"/>
 
                 <EditText
-                    android:id="@+id/editText_TagText"
+                    android:id="@+id/editText_UserName"
                     android:layout_width="wrap_content"
                     android:minWidth="200dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:textSize="22sp"
-                    android:layout_alignBaseline="@+id/textView_labelTagText"
-                    android:layout_toEndOf="@+id/textView_labelTagText"/>
+                    android:layout_alignBaseline="@+id/textView_labelUserName"
+                    android:layout_toEndOf="@+id/textView_labelUserName"/>
 
                 <TextView
-                    android:id="@+id/textView_labelTagDescription"
+                    android:id="@+id/textView_labelAccessPinNumber"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:text="Tag description:"
                     android:textSize="22sp"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/editText_TagText"/>
+                    android:layout_below="@+id/editText_UserName"/>
 
                 <EditText
-                    android:id="@+id/editText_TagDescription"
+                    android:id="@+id/editText_AccessPinNumber"
                     android:layout_width="wrap_content"
                     android:minWidth="200dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="10dp"
                     android:textSize="22sp"
-                    android:layout_below="@+id/textView_labelTagDescription"/>
+                    android:layout_below="@+id/textView_labelAccessPinNumber"/>
 
                 <TextView
                     android:id="@+id/textView_labelAgeRating"
@@ -96,7 +96,7 @@
                     android:text="Age rating:"
                     android:textSize="22sp"
                     android:layout_alignParentStart="true"
-                    android:layout_below="@+id/editText_TagDescription"/>
+                    android:layout_below="@+id/editText_AccessPinNumber"/>
 
                 <Spinner
                     android:id="@+id/spinner_AgeRating"

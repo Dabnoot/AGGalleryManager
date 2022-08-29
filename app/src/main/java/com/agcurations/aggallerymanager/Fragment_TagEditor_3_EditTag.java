@@ -1,7 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -120,7 +118,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
         listView_TagViewer.setAdapter(aasTags);
 
-        final EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
+        final EditText editText_TagText = getView().findViewById(R.id.editText_UserName);
         final TextView textView_TagID = getView().findViewById(R.id.textView_TagID);
         editText_TagText.setText("");
         textView_TagID.setText("");
@@ -148,7 +146,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         if(getView() == null){
             return;
         }
-        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
+        EditText editText_TagText = getView().findViewById(R.id.editText_UserName);
         String sNewTagName = editText_TagText.getText().toString();
 
         if(sNewTagName.equals("")){

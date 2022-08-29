@@ -136,7 +136,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
         listView_TagViewer.setAdapter(aasTags);
 
-        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
+        EditText editText_TagText = getView().findViewById(R.id.editText_UserName);
         editText_TagText.setText("");
     }
 
@@ -147,7 +147,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             return;
         }
 
-        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
+        EditText editText_TagText = getView().findViewById(R.id.editText_UserName);
         String sTagName = editText_TagText.getText().toString();
         if(sTagName.equals("")){
             Toast.makeText(getActivity(), "Tag text cannot be blank.", Toast.LENGTH_SHORT).show();
@@ -156,7 +156,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ItemClass_Tag ictNewTag = new ItemClass_Tag(-1, sTagName);
 
         //Get the user-entered tag description:
-        EditText editText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
+        EditText editText_TagDescription = getView().findViewById(R.id.editText_AccessPinNumber);
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
 
         //Get the selected Age Rating:

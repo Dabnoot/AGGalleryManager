@@ -81,7 +81,7 @@
                     android:layout_below="@+id/textView_TagID"/>
 
                 <EditText
-                    android:id="@+id/editText_TagText"
+                    android:id="@+id/editText_UserName"
                     android:layout_width="wrap_content"
                     android:minWidth="200dp"
                     android:layout_height="wrap_content"
