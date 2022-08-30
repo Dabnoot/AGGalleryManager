@@ -365,6 +365,8 @@ public class Activity_Main extends AppCompatActivity {
                     }
                 });
 
+                EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                editText_DialogInput.requestFocus();
                 adConfirmationDialog.show();
 
                 return true;
