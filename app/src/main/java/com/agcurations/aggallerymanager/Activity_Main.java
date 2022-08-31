@@ -39,6 +39,7 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -85,6 +86,8 @@ public class Activity_Main extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         globalClass.gbGuestMode = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
+
+        globalClass.galicu_Users = new ArrayList<>();
 
         //Call the MA Data Service, which will create a call to a service:
         Service_Main.startActionLoadData(this);

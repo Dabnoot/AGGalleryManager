@@ -6,7 +6,9 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:weightSum="100"
-    android:baselineAligned="false">
+    android:baselineAligned="false"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".Activity_UserManagement">
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -35,8 +37,8 @@
                     android:layout_height="wrap_content"
                     android:text="Add User"
                     android:textSize="40sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"/>
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"/>
 
                 <TextView
                     android:id="@+id/textView_AddUserSubText"
@@ -44,166 +46,88 @@
                     android:layout_height="wrap_content"
                     android:text="Enter new user details below."
                     android:textSize="24sp"
-                    android:layout_alignParentStart="true"
+                    android:layout_centerHorizontal="true"
                     android:layout_below="@+id/textView_AddUser"/>
 
-
-
-                <TextView
-                    android:id="@+id/textView_labelUserName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="20dp"
-                    android:text="User name:"
-                    android:textSize="22sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_AddUserSubText"/>
-
-                <EditText
-                    android:id="@+id/editText_UserName"
-                    android:layout_width="wrap_content"
-                    android:minWidth="200dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:textSize="22sp"
-                    android:layout_alignBaseline="@+id/textView_labelUserName"
-                    android:layout_toEndOf="@+id/textView_labelUserName"/>
-
-                <TextView
-                    android:id="@+id/textView_labelAccessPinNumber"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginStart="30dp"
-                    android:text="Access pin:"
-                    android:textSize="22sp"
-                    android:layout_toEndOf="@+id/editText_UserName"
-                    android:layout_alignBottom="@+id/textView_labelUserName"/>
-
-                <EditText
-                    android:id="@+id/editText_AccessPinNumber"
-                    android:layout_width="wrap_content"
-                    android:minWidth="200dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginTop="10dp"
-                    android:textSize="22sp"
-                    android:layout_toEndOf="@+id/textView_labelAccessPinNumber"
-                    android:layout_alignBaseline="@id/textView_labelAccessPinNumber"/>
-
                 <LinearLayout
-                    android:id="@+id/linearLayout_UserColorPicker"
-                    android:layout_width="match_parent"
+                    android:id="@+id/linearLayout_LabelsAndData"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_below="@+id/textView_AddUserSubText"
                     android:layout_marginTop="10dp"
-                    android:layout_below="@+id/editText_AccessPinNumber"
-                    android:orientation="horizontal">
+                    android:layout_centerHorizontal="true">
 
-                    <TextView
-                        android:id="@+id/textView_labelUserIconColor"
+                    <!--Labels-->
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="User icon color:"
-                        android:layout_gravity="center_vertical"
-                        android:textSize="22sp"
-                        />
+                        android:orientation="vertical">
 
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/imageView_UserIcon"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginStart="10dp"
-                        android:src="@drawable/login"/>
+                        <TextView
+                            android:id="@+id/textView_labelUserName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="User name:"
+                            android:textSize="22sp"
+                            android:layout_gravity="end"/>
 
-                    <!--<RelativeLayout
-                        android:layout_width="match_parent"
+                        <TextView
+                            android:id="@+id/textView_labelAccessPinNumber"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="Access pin:"
+                            android:textSize="22sp"
+                            android:layout_gravity="end"/>
+
+                        <TextView
+                            android:id="@+id/textView_labelUserIconColor"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="User icon color:"
+                            android:textSize="22sp"
+                            android:layout_marginTop="10dp"
+                            android:layout_gravity="end"/>
+
+                    </LinearLayout>
+
+                    <!--Data Entry-->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="20dp">
+                        android:orientation="vertical">
 
-                        &lt;!&ndash;Color Alpha&ndash;&gt;
-
-                        <TextView
-                            android:id="@+id/textView_labelColorAlpha"
+                        <EditText
+                            android:id="@+id/editText_UserName"
                             android:layout_width="wrap_content"
+                            android:minWidth="200dp"
                             android:layout_height="wrap_content"
-                            android:textSize="22sp"
-                            android:text="Alpha:"
-                            android:layout_alignTop="@+id/rangeSlider_ColorAlpha"
-                            android:layout_toStartOf="@+id/rangeSlider_ColorAlpha"
-                            android:paddingTop="8dp"/>
-
-                        <com.google.android.material.slider.RangeSlider
-                            android:id="@+id/rangeSlider_ColorAlpha"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_toEndOf="@+id/textView_labelColorGreen"
                             android:layout_marginStart="10dp"
-                            app:tickColor="@color/colorTextColor"/>
-
-                        &lt;!&ndash;Color Red&ndash;&gt;
-
-                        <TextView
-                            android:id="@+id/textView_labelColorRed"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
                             android:textSize="22sp"
-                            android:text="Red:"
-                            android:layout_alignTop="@+id/rangeSlider_ColorRed"
-                            android:layout_toStartOf="@+id/rangeSlider_ColorRed"
-                            android:paddingTop="8dp"/>
+                            android:background="@color/colorBlack"/>
 
-                        <com.google.android.material.slider.RangeSlider
-                            android:id="@+id/rangeSlider_ColorRed"
+                        <EditText
+                            android:id="@+id/editText_AccessPinNumber"
                             android:layout_width="wrap_content"
+                            android:minWidth="200dp"
                             android:layout_height="wrap_content"
-                            android:layout_toEndOf="@+id/textView_labelColorGreen"
-                            android:layout_below="@+id/rangeSlider_ColorAlpha"
-                            android:layout_marginStart="10dp"/>
-
-                        &lt;!&ndash;Color Green&ndash;&gt;
-
-                        <TextView
-                            android:id="@+id/textView_labelColorGreen"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
                             android:textSize="22sp"
-                            android:text="Green:"
-                            android:layout_alignTop="@+id/rangeSlider_ColorGreen"
-                            android:paddingTop="8dp"/>
+                            android:background="@color/colorBlack"/>
 
-                        <com.google.android.material.slider.RangeSlider
-                            android:id="@+id/rangeSlider_ColorGreen"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_toEndOf="@+id/textView_labelColorGreen"
-                            android:layout_below="@+id/rangeSlider_ColorRed"
-                            android:layout_marginStart="10dp"/>
-
-                        &lt;!&ndash;Color Blue&ndash;&gt;
-
-                        <TextView
-                            android:id="@+id/textView_labelColorBlue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textSize="22sp"
-                            android:text="Blue:"
-                            android:layout_alignTop="@+id/rangeSlider_ColorBlue"
-                            android:layout_toStartOf="@+id/rangeSlider_ColorBlue"
-                            android:paddingTop="8dp"/>
-
-                        <com.google.android.material.slider.RangeSlider
-                            android:id="@+id/rangeSlider_ColorBlue"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_toEndOf="@+id/textView_labelColorGreen"
-                            android:layout_below="@+id/rangeSlider_ColorGreen"
-                            android:layout_marginStart="10dp"/>
-
-                    </RelativeLayout>-->
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/imageView_UserIcon"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_marginStart="10dp"
+                            android:src="@drawable/login"
+                            android:layout_marginTop="10dp"/>
 
 
-
+                    </LinearLayout>
                 </LinearLayout>
 
                 <TextView
@@ -213,16 +137,17 @@
                     android:layout_marginTop="10dp"
                     android:text="Age rating:"
                     android:textSize="22sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/linearLayout_UserColorPicker"/>
+                    android:layout_below="@+id/linearLayout_LabelsAndData"
+                    android:layout_alignParentStart="true"/>
 
                 <Spinner
                     android:id="@+id/spinner_AgeRating"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_below="@+id/textView_labelAgeRating"
-                    />
+                    android:dropDownWidth="400dp"
+                    android:layout_alignTop="@+id/textView_labelAgeRating"
+                    android:layout_toEndOf="@id/textView_labelAgeRating"
+                    android:layout_marginStart="10dp"/>
 
             </RelativeLayout>
 
@@ -247,6 +172,7 @@
                     android:layout_marginStart="20dp"
                     android:text="Finish"
                     android:textSize="24sp"
+                    android:onClick="buttonClick_Cancel"
                     app:backgroundTint="@color/colorButton" />
 
             </LinearLayout>

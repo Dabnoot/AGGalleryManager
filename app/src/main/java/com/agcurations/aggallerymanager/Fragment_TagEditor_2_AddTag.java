@@ -87,7 +87,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
             Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_AgeRating);
             ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: GlobalClass.TAG_AGE_RATINGS){
+            for(String[] sESRBRating: adapterTagAgeRatings.TAG_AGE_RATINGS){
                 alsTemp.add(sESRBRating);
             }
             adapterTagAgeRatings atarSpinnerAdapter = new adapterTagAgeRatings(getContext(), R.layout.spinner_item_age_rating, alsTemp);
@@ -200,43 +200,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         }
     }
 
-    public class adapterTagAgeRatings extends ArrayAdapter<String[]>{
 
-        public adapterTagAgeRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects) {
-            super(context, resource, objects);
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            return initView(position, convertView, parent);
-        }
-
-
-        @Override
-        public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            return initView(position, convertView, parent);
-        }
-
-        private View initView(int position, View convertView,
-                              ViewGroup parent)
-        {
-            if (convertView == null) {
-                convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item_age_rating, parent, false);
-            }
-
-            String[] sAgeRatingData = getItem(position);
-
-            TextView textView_AgeRatingCode = convertView.findViewById(R.id.textView_AgeRatingCode);
-            textView_AgeRatingCode.setText(sAgeRatingData[GlobalClass.TAG_AGE_RATING_CODE_INDEX]);
-
-            TextView textView_AgeRatingDescription = convertView.findViewById(R.id.textView_AgeRatingDescription);
-            textView_AgeRatingDescription.setText(sAgeRatingData[GlobalClass.TAG_AGE_RATING_DESCRIPTION_INDEX]);
-
-            return convertView;
-        }
-
-    }
 
 
 
