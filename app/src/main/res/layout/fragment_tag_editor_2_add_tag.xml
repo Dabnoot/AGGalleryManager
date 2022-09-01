@@ -89,7 +89,7 @@
                     android:layout_below="@+id/textView_labelAccessPinNumber"/>
 
                 <TextView
-                    android:id="@+id/textView_labelAgeRating"
+                    android:id="@+id/textView_labelPermissions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -103,7 +103,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:layout_below="@+id/textView_labelAgeRating"
+                    android:layout_below="@+id/textView_labelPermissions"
                     />
 
             </RelativeLayout>

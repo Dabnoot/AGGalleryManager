@@ -9,6 +9,7 @@ public class ItemClass_User implements Serializable {
     public String sUserName = "";
     public int iPin = -1;
     public int iUserIconColor;
+    public boolean bAdmin = false;
 
     public ItemClass_User() {
     }

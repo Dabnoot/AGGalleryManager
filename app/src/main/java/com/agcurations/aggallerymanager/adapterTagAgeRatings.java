@@ -37,8 +37,8 @@ public class adapterTagAgeRatings extends ArrayAdapter<String[]> {
             {"M",	"Mature - Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
             {"AO",	"Adults Only - Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
             {"RP",  "Rating Pending - Titles with the RP rating have not yet been assigned a final ESRB rating."},
-            {"IB",  "Implicit Bias - Tag associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some N.S.F.W. content."},
-            {"HE",  "Highly Eschewed - Tag associated with items highly eschewed by mainstream society, such as p.o.r.n, or some topics in certain countries, religions, or cultures. All content should be considered N.S.F.W.."},
+            {"IB",  "Implicit Bias - Tag associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW. content."},
+            {"HE",  "Highly Eschewed - Tag associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
             {"UR",  "User Restricted - Items only available for viewing by the assigned user(s)."}
     };
 
@@ -65,11 +65,15 @@ public class adapterTagAgeRatings extends ArrayAdapter<String[]> {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item_age_rating, parent, false);
         }
 
+        String[] sItemData = getItem(position);
+
         TextView textView_AgeRatingCode = convertView.findViewById(R.id.textView_AgeRatingCode);
-        textView_AgeRatingCode.setText(TAG_AGE_RATINGS[position][TAG_AGE_RATING_CODE_INDEX]);
+        //textView_AgeRatingCode.setText(TAG_AGE_RATINGS[position][TAG_AGE_RATING_CODE_INDEX]);
+        textView_AgeRatingCode.setText(sItemData[TAG_AGE_RATING_CODE_INDEX]);
 
         TextView textView_AgeRatingDescription = convertView.findViewById(R.id.textView_AgeRatingDescription);
-        textView_AgeRatingDescription.setText(TAG_AGE_RATINGS[position][TAG_AGE_RATING_DESCRIPTION_INDEX]);
+        //textView_AgeRatingDescription.setText(TAG_AGE_RATINGS[position][TAG_AGE_RATING_DESCRIPTION_INDEX]);
+        textView_AgeRatingDescription.setText(sItemData[TAG_AGE_RATING_DESCRIPTION_INDEX]);
 
         return convertView;
     }

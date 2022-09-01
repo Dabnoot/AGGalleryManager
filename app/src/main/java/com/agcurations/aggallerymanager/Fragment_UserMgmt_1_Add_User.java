@@ -130,7 +130,13 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             final Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_AgeRating);
             ArrayList<String[]> alsTemp = new ArrayList<>();
             for(String[] sESRBRating: adapterTagAgeRatings.TAG_AGE_RATINGS){
-                alsTemp.add(sESRBRating);
+                if(!(sESRBRating[adapterTagAgeRatings.TAG_AGE_RATING_CODE_INDEX].equals(
+                        adapterTagAgeRatings.TAG_AGE_RATINGS[adapterTagAgeRatings.TAG_AGE_RATING_RP][adapterTagAgeRatings.TAG_AGE_RATING_CODE_INDEX])
+                || sESRBRating[adapterTagAgeRatings.TAG_AGE_RATING_CODE_INDEX].equals(
+                        adapterTagAgeRatings.TAG_AGE_RATINGS[adapterTagAgeRatings.TAG_AGE_RATING_UR][adapterTagAgeRatings.TAG_AGE_RATING_CODE_INDEX]))) {
+                    //Don't add "rating pending" or "user restricted" ratings to the drop-down. Those are for tags only.
+                    alsTemp.add(sESRBRating);
+                }
             }
             adapterTagAgeRatings atarSpinnerAdapter = new adapterTagAgeRatings(getContext(), R.layout.spinner_item_age_rating, alsTemp);
             spinner_AgeRating.setAdapter(atarSpinnerAdapter);

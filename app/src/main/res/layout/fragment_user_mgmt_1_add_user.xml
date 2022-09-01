@@ -82,12 +82,21 @@
                             android:layout_gravity="end"/>
 
                         <TextView
+                            android:id="@+id/textView_labelAdmin"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="15dp"
+                            android:text="Admin user:"
+                            android:textSize="22sp"
+                            android:layout_gravity="end"/>
+
+                        <TextView
                             android:id="@+id/textView_labelUserIconColor"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="User icon color:"
                             android:textSize="22sp"
-                            android:layout_marginTop="10dp"
+                            android:layout_marginTop="20dp"
                             android:layout_gravity="end"/>
 
                     </LinearLayout>
@@ -118,6 +127,14 @@
                             android:textSize="22sp"
                             android:background="@color/colorBlack"/>
 
+                        <CheckBox
+                            android:id="@+id/checkBox_AdminUser"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:buttonTint="@color/colorTextColor"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="9dp"/>
+
                         <androidx.appcompat.widget.AppCompatImageView
                             android:id="@+id/imageView_UserIcon"
                             android:layout_width="50dp"
@@ -131,11 +148,11 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/textView_labelAgeRating"
+                    android:id="@+id/textView_labelPermissions"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Age rating:"
+                    android:text="Permissions:"
                     android:textSize="22sp"
                     android:layout_below="@+id/linearLayout_LabelsAndData"
                     android:layout_alignParentStart="true"/>
@@ -145,8 +162,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:dropDownWidth="400dp"
-                    android:layout_alignTop="@+id/textView_labelAgeRating"
-                    android:layout_toEndOf="@id/textView_labelAgeRating"
+                    android:layout_alignTop="@+id/textView_labelPermissions"
+                    android:layout_toEndOf="@id/textView_labelPermissions"
                     android:layout_marginStart="10dp"/>
 
             </RelativeLayout>
