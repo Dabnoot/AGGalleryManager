@@ -1067,7 +1067,7 @@ public class GlobalClass extends Application {
                     for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
                         if (entry.getValue().sTagText.toLowerCase().equals(sNewTagName.toLowerCase())) {
-                            //If the tag already exists, abort adding this tag.
+                            //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
                             bTagAlreadyExists = true;
                             break;
                         }
@@ -1131,7 +1131,7 @@ public class GlobalClass extends Application {
                 for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
                     if (entry.getValue().sTagText.toLowerCase().equals(ictNewTag.sTagText.toLowerCase())) {
-                        //If the tag already exists, abort adding this tag.
+                        //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
                         bTagAlreadyExists = true;
                         break;
                     }
@@ -1147,7 +1147,7 @@ public class GlobalClass extends Application {
                 gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
 
                 //Add the new record to the catalog file:
-                String sLine = getTagRecordString(ictNewTag);
+                String sLine = getTagRecordString(ictNewNewTag);
                 fwNewTagsFile.write(sLine);
                 fwNewTagsFile.write("\n");
             } else {
@@ -1418,6 +1418,7 @@ public class GlobalClass extends Application {
         //Go through each catalog item:
         for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
             ItemClass_CatalogItem ci = entry.getValue();
+            Log.d("getXrefTagHistogram","Investigating item: " + ci.sItemID); //Todo: Remove log after debug complete.
             //Check to see if all of the tags to be checked are in this catalog item:
             if(ci.aliTags.containsAll(aliTagIDs)){
                 //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
@@ -1433,8 +1434,13 @@ public class GlobalClass extends Application {
                 for (int iCatalogItemTagID : ci.aliTags) {
                     if(iCatalogItemTagID != -1) {
                         if (!tmXrefTagHistogram.containsKey(iCatalogItemTagID)) {
-                            tmXrefTagHistogram.put(iCatalogItemTagID, gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID));
-                            Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount = 1;
+                            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID);
+                            if(ict != null){
+                                ict.iHistogramCount = 1;
+                                tmXrefTagHistogram.put(iCatalogItemTagID, ict);
+                            } else {
+                                Log.d("getXrefTagHistogram","ICT is null."); //Todo: Remove log after debug complete.
+                            }
                         } else {
                             Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount++;
                         }
