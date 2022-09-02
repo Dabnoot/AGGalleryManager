@@ -25,105 +25,117 @@
         android:layout_toEndOf="@id/child_fragment_tag_selector"
         android:layout_alignParentEnd="true">
 
-        <RelativeLayout
-            android:id="@+id/relativeLayout_Grade"
-            android:layout_width="wrap_content"
+        <ScrollView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true">
+            android:layout_above="@+id/button_Save">
 
-            <TextView
-                android:id="@+id/textView_LabelRating"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rating: "
-                android:layout_marginEnd="15dp"
-                android:textSize="26dp"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"/>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_alignBottom="@id/textView_LabelRating"
-                android:layout_toEndOf="@id/textView_LabelRating">
-
-                <ImageView
-                    android:id="@+id/imageView_Grade1"
+                <RelativeLayout
+                    android:id="@+id/relativeLayout_Grade"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/outline_grade_white_18dp"/>
+                    android:layout_marginTop="20dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true">
 
-                <ImageView
-                    android:id="@+id/imageView_Grade2"
+                    <TextView
+                        android:id="@+id/textView_LabelRating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Rating: "
+                        android:layout_marginEnd="15dp"
+                        android:textSize="26dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_alignBottom="@id/textView_LabelRating"
+                        android:layout_toEndOf="@id/textView_LabelRating">
+
+                        <ImageView
+                            android:id="@+id/imageView_Grade1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/outline_grade_white_18dp"/>
+
+                        <ImageView
+                            android:id="@+id/imageView_Grade2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/outline_grade_white_18dp"/>
+
+                        <ImageView
+                            android:id="@+id/imageView_Grade3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/outline_grade_white_18dp"/>
+
+                        <ImageView
+                            android:id="@+id/imageView_Grade4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/outline_grade_white_18dp"/>
+
+                        <ImageView
+                            android:id="@+id/imageView_Grade5"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:src="@drawable/outline_grade_white_18dp"/>
+
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <TextView
+                    android:id="@+id/textView_Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/outline_grade_white_18dp"/>
+                    android:text="Title: "
+                    android:layout_marginStart="15dp"
+                    android:layout_marginTop="30dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/relativeLayout_Grade"/>
 
-                <ImageView
-                    android:id="@+id/imageView_Grade3"
+                <TextView
+                    android:id="@+id/textView_FileName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/outline_grade_white_18dp"/>
+                    android:text="File name: "
+                    android:layout_marginTop="20dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_Title"
+                    android:layout_alignStart="@id/textView_Title"/>
 
-                <ImageView
-                    android:id="@+id/imageView_Grade4"
+                <TextView
+                    android:id="@+id/textView_Source"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/outline_grade_white_18dp"/>
+                    android:text="Source: "
+                    android:layout_marginTop="20dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_FileName"
+                    android:layout_alignStart="@id/textView_FileName"
+                    android:textIsSelectable="true"/>
 
-                <ImageView
-                    android:id="@+id/imageView_Grade5"
+                <TextView
+                    android:id="@+id/textView_Tags"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/outline_grade_white_18dp"/>
+                    android:text="Tags:"
+                    android:layout_marginTop="20dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_Source"
+                    android:layout_alignStart="@id/textView_Source"/>
 
-            </LinearLayout>
-        </RelativeLayout>
-
-        <TextView
-            android:id="@+id/textView_Title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Title: "
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="30dp"
-            android:textSize="20sp"
-            android:layout_below="@id/relativeLayout_Grade"/>
-
-        <TextView
-            android:id="@+id/textView_FileName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="File name: "
-            android:layout_marginTop="20dp"
-            android:textSize="20sp"
-            android:layout_below="@id/textView_Title"
-            android:layout_alignStart="@id/textView_Title"/>
-
-        <TextView
-            android:id="@+id/textView_Source"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Source: "
-            android:layout_marginTop="20dp"
-            android:textSize="20sp"
-            android:layout_below="@id/textView_FileName"
-            android:layout_alignStart="@id/textView_FileName"
-            android:textIsSelectable="true"/>
-
-        <TextView
-            android:id="@+id/textView_Tags"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Tags:"
-            android:layout_marginTop="20dp"
-            android:textSize="20sp"
-            android:layout_below="@id/textView_Source"
-            android:layout_alignStart="@id/textView_Source"/>
-
+            </RelativeLayout>
+        </ScrollView>
         <Button
             android:id="@+id/button_Save"
             android:layout_width="180dp"
