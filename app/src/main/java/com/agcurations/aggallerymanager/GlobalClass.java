@@ -1418,7 +1418,7 @@ public class GlobalClass extends Application {
         //Go through each catalog item:
         for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
             ItemClass_CatalogItem ci = entry.getValue();
-            Log.d("getXrefTagHistogram","Investigating item: " + ci.sItemID); //Todo: Remove log after debug complete.
+
             //Check to see if all of the tags to be checked are in this catalog item:
             if(ci.aliTags.containsAll(aliTagIDs)){
                 //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
@@ -1439,7 +1439,7 @@ public class GlobalClass extends Application {
                                 ict.iHistogramCount = 1;
                                 tmXrefTagHistogram.put(iCatalogItemTagID, ict);
                             } else {
-                                Log.d("getXrefTagHistogram","ICT is null."); //Todo: Remove log after debug complete.
+                                Log.d("getXrefTagHistogram","ICT is null.");
                             }
                         } else {
                             Objects.requireNonNull(tmXrefTagHistogram.get(iCatalogItemTagID)).iHistogramCount++;
