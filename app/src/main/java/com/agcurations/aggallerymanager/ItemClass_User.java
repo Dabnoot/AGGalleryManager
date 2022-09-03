@@ -10,6 +10,7 @@ public class ItemClass_User implements Serializable {
     public int iPin = -1;
     public int iUserIconColor;
     public boolean bAdmin = false;
+    public int iMaturityLevel = 0;
 
     public ItemClass_User() {
     }

@@ -18,14 +18,9 @@ import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -49,7 +44,6 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
@@ -965,7 +959,7 @@ public class GlobalClass extends Application {
         try {
             ict.iTagAgeRating = Integer.parseInt(sRecord[3]);
         } catch (Exception e){
-            ict.iTagAgeRating = adapterTagAgeRatings.TAG_AGE_RATING_HE; //Default to highest restricted age rating.
+            ict.iTagAgeRating = adapterTagMaturityRatings.TAG_AGE_RATING_HE; //Default to highest restricted age rating.
             ict.sTagText = "00TagFault_" + ict.sTagText;
         }
 
@@ -1491,6 +1485,30 @@ public class GlobalClass extends Application {
         return tmCompoundTagHistogram;
     }
 
+    //==================================================================================================
+    //=========  USER ACCOUNT DATA STORAGE  ============================================================
+    //==================================================================================================
+
+
+    public static String getUserAccountRecordString(ItemClass_User icu){
+        String sUserRecord =
+                        JumbleStorageText(icu.sUserName) + "\t" +
+                        JumbleStorageText(icu.iPin) + "\t" +
+                        JumbleStorageText(icu.iUserIconColor) + "\t" +
+                        JumbleStorageText(icu.bAdmin);
+        return sUserRecord;
+    }
+
+    public static ItemClass_User ConvertRecordStringToUserItem(String sRecord){
+        ItemClass_User icu;
+        icu = new ItemClass_User();
+        String[] sRecordSplit =  sRecord.split("\t");
+        icu.sUserName = JumbleStorageText(sRecordSplit[0]);
+        icu.iPin = Integer.parseInt(JumbleStorageText(sRecordSplit[1]));
+        icu.iUserIconColor = Integer.parseInt(JumbleStorageText(sRecordSplit[2]));
+        icu.bAdmin = Boolean.parseBoolean(JumbleStorageText(sRecordSplit[3]));
+        return icu;
+    }
 
 
     //==================================================================================================
@@ -2100,6 +2118,8 @@ public class GlobalClass extends Application {
 
     //==============================================================================================
     //=========== Preferences ======================================================================
+
+    public static final String gsPreferenceName_UserAccountData = "com.agcurations.aggallerymanager.preferences.UserAccountData";
 
     public static final String[]  gsRestrictedTagsPreferenceNames = new String[]{
             "multi_select_list_videos_restricted_tags",

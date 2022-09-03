@@ -120,12 +120,13 @@
                         <EditText
                             android:id="@+id/editText_AccessPinNumber"
                             android:layout_width="wrap_content"
-                            android:minWidth="200dp"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="10dp"
                             android:layout_marginTop="10dp"
-                            android:textSize="22sp"
-                            android:background="@color/colorBlack"/>
+                            android:background="@color/colorBlack"
+                            android:inputType="numberPassword"
+                            android:minWidth="200dp"
+                            android:textSize="22sp" />
 
                         <CheckBox
                             android:id="@+id/checkBox_AdminUser"
@@ -148,22 +149,22 @@
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/textView_labelPermissions"
+                    android:id="@+id/textView_labelContentMaturity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="Permissions:"
+                    android:text="Content Maturity:"
                     android:textSize="22sp"
                     android:layout_below="@+id/linearLayout_LabelsAndData"
                     android:layout_alignParentStart="true"/>
 
                 <Spinner
-                    android:id="@+id/spinner_AgeRating"
+                    android:id="@+id/spinner_ContentMaturity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:dropDownWidth="400dp"
-                    android:layout_alignTop="@+id/textView_labelPermissions"
-                    android:layout_toEndOf="@id/textView_labelPermissions"
+                    android:layout_alignTop="@+id/textView_labelContentMaturity"
+                    android:layout_toEndOf="@id/textView_labelContentMaturity"
                     android:layout_marginStart="10dp"/>
 
             </RelativeLayout>

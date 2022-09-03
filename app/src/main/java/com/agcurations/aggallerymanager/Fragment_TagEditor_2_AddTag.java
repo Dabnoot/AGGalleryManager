@@ -1,10 +1,7 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.Context;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -17,11 +14,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -85,12 +80,12 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         if (getView() != null) {
 
-            Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_AgeRating);
+            Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
             ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: adapterTagAgeRatings.TAG_AGE_RATINGS){
+            for(String[] sESRBRating: adapterTagMaturityRatings.TAG_AGE_RATINGS){
                 alsTemp.add(sESRBRating);
             }
-            adapterTagAgeRatings atarSpinnerAdapter = new adapterTagAgeRatings(getContext(), R.layout.spinner_item_age_rating, alsTemp);
+            adapterTagMaturityRatings atarSpinnerAdapter = new adapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
             spinner_AgeRating.setAdapter(atarSpinnerAdapter);
 
             Button button_AddTag = getView().findViewById(R.id.button_AddTag);
@@ -160,7 +155,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
 
         //Get the selected Age Rating:
-        Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_AgeRating);
+        Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
         ictNewTag.iTagAgeRating = spinner_AgeRating.getSelectedItemPosition();
 
         //Attempt to add the new record:

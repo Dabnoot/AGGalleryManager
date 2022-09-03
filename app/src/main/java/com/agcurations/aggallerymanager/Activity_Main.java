@@ -40,7 +40,9 @@ import android.widget.Toast;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -84,10 +86,30 @@ public class Activity_Main extends AppCompatActivity {
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mainActivityDataServiceResponseReceiver, filter);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        //Get user listing right away:
+        globalClass.galicu_Users = new ArrayList<>();
+        Set<String> ssUserAccountData = sharedPreferences.getStringSet(GlobalClass.gsPreferenceName_UserAccountData, null);
+
+        if(ssUserAccountData != null){
+            if(ssUserAccountData.size() > 0) {
+                //If user account data is ok, populate:
+                for (String sUserAccountDataRecord : ssUserAccountData) {
+                    ItemClass_User icu = GlobalClass.ConvertRecordStringToUserItem(sUserAccountDataRecord);
+                    globalClass.galicu_Users.add(icu);
+                }
+            }
+        }
+
+
+
+
+
+
         globalClass.gbGuestMode = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
 
-        globalClass.galicu_Users = new ArrayList<>();
+
 
         //Call the MA Data Service, which will create a call to a service:
         Service_Main.startActionLoadData(this);

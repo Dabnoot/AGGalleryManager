@@ -7,29 +7,34 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class adapterTagAgeRatings extends ArrayAdapter<String[]> {
+public class adapterTagMaturityRatings extends ArrayAdapter<String[]> {
+
+    //Don't change the ratings IDs or levels unless user data is also updated.
+    //  Doing so may expose users to content not intended for their maturity level.
+    //  You must update tags, catalog items, and user accounts if you wish to modify.
 
     //Adapted from ESRB Ratings
-    public final static int TAG_AGE_RATING_EC = 0;
-    public final static int TAG_AGE_RATING_E = 1;
-    public final static int TAG_AGE_RATING_E10 = 2;
-    public final static int TAG_AGE_RATING_T = 3;
-    public final static int TAG_AGE_RATING_M = 4;
-    public final static int TAG_AGE_RATING_AO = 5;
-    public final static int TAG_AGE_RATING_RP = 6;
-    public final static int TAG_AGE_RATING_IB = 7;
-    public final static int TAG_AGE_RATING_HE = 8;
-    public final static int TAG_AGE_RATING_UR = 9;
+    public final static int TAG_AGE_RATING_EC = 0;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_E = 1;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_E10 = 2;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_T = 3;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_M = 4;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_AO = 5;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_RP = 6;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_IB = 7;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_HE = 8;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+    public final static int TAG_AGE_RATING_UR = 9;  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+
+    public final static int RATINGS_COUNT = 10;
 
     public final static int TAG_AGE_RATING_CODE_INDEX = 0;
     public final static int TAG_AGE_RATING_DESCRIPTION_INDEX = 1;
-    public final static String[][] TAG_AGE_RATINGS = {
+    public final static String[][] TAG_AGE_RATINGS = {  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
             {"EC",  "Early Childhood - Suitable for children aged 3 or older; there will be no inappropriate content. E.g., Dora the Explorer, Dragon Tales."},
             {"E",   "Everyone - Suitable for all age groups. The game should not contain any sounds or images likely to scare young children. No bad language should be used. E.g., Just Dance, FIFA.",},
             {"E10+","Everyone 10 and Older - Suitable for those aged 10 or above. There could be mild forms of violence, and some scenes might be frightening for children. E.g., Minecraft Dungeons, Plants vs Zombies.",},
@@ -39,11 +44,11 @@ public class adapterTagAgeRatings extends ArrayAdapter<String[]> {
             {"RP",  "Rating Pending - Titles with the RP rating have not yet been assigned a final ESRB rating."},
             {"IB",  "Implicit Bias - Tag associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW. content."},
             {"HE",  "Highly Eschewed - Tag associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
-            {"UR",  "User Restricted - Items only available for viewing by the assigned user(s)."}
+            {"UR",  "User Restricted - Items only available for viewing by the assigned user(s)."}  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
     };
 
 
-    public adapterTagAgeRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects ) {
+    public adapterTagMaturityRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects ) {
         super(context, resource, objects);
     }
 
@@ -62,7 +67,7 @@ public class adapterTagAgeRatings extends ArrayAdapter<String[]> {
                           ViewGroup parent)
     {
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item_age_rating, parent, false);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item_maturity_rating, parent, false);
         }
 
         String[] sItemData = getItem(position);

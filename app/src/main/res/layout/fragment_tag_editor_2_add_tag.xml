@@ -89,7 +89,7 @@
                     android:layout_below="@+id/textView_labelAccessPinNumber"/>
 
                 <TextView
-                    android:id="@+id/textView_labelPermissions"
+                    android:id="@+id/textView_labelContentMaturity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
@@ -99,11 +99,11 @@
                     android:layout_below="@+id/editText_AccessPinNumber"/>
 
                 <Spinner
-                    android:id="@+id/spinner_AgeRating"
+                    android:id="@+id/spinner_ContentMaturity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:layout_below="@+id/textView_labelPermissions"
+                    android:layout_below="@+id/textView_labelContentMaturity"
                     />
 
             </RelativeLayout>
