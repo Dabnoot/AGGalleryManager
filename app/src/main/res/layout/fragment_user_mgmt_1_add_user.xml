@@ -200,7 +200,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ListView
-        android:id="@+id/listView_ExistingUsers"
+        android:id="@+id/listView_UserList"
         android:layout_width="200dp"
         android:layout_height="match_parent"
         android:scrollbarSize="20dp"

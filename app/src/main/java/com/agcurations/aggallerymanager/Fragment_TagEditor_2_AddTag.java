@@ -82,10 +82,10 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
             Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
             ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: adapterTagMaturityRatings.TAG_AGE_RATINGS){
+            for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
                 alsTemp.add(sESRBRating);
             }
-            adapterTagMaturityRatings atarSpinnerAdapter = new adapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
+            AdapterTagMaturityRatings atarSpinnerAdapter = new AdapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
             spinner_AgeRating.setAdapter(atarSpinnerAdapter);
 
             Button button_AddTag = getView().findViewById(R.id.button_AddTag);

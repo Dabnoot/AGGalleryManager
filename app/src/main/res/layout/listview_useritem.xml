@@ -1,0 +1,45 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="6dip">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/imageView_UserIcon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="10dp"
+        android:src="@drawable/login"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/textView_UserName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="UserName"
+        android:textSize="22sp"
+        android:layout_toEndOf="@id/imageView_UserIcon"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="15dp"/>
+
+    <TextView
+        android:id="@+id/textView_Maturity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(E10+)"
+        android:textSize="16sp"
+        android:layout_toEndOf="@id/textView_UserName"
+        android:layout_marginStart="5dp"
+        android:layout_alignTop="@id/textView_UserName"/>
+
+    <TextView
+        android:id="@+id/textView_Admin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(A)"
+        android:textSize="16sp"
+        android:layout_toEndOf="@id/textView_Maturity"
+        android:layout_marginStart="5dp"
+        android:layout_alignTop="@id/textView_Maturity"/>
+
+</RelativeLayout>

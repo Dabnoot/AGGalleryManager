@@ -12,7 +12,7 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-public class adapterTagMaturityRatings extends ArrayAdapter<String[]> {
+public class AdapterTagMaturityRatings extends ArrayAdapter<String[]> {
 
     //Don't change the ratings IDs or levels unless user data is also updated.
     //  Doing so may expose users to content not intended for their maturity level.
@@ -48,7 +48,7 @@ public class adapterTagMaturityRatings extends ArrayAdapter<String[]> {
     };
 
 
-    public adapterTagMaturityRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects ) {
+    public AdapterTagMaturityRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects ) {
         super(context, resource, objects);
     }
 

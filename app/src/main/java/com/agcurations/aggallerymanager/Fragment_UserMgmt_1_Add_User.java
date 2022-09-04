@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -18,13 +19,18 @@ import androidx.preference.PreferenceManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowMetrics;
+import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +44,8 @@ import java.util.Set;
 
 
 public class Fragment_UserMgmt_1_Add_User extends Fragment {
+
+    GlobalClass globalClass;
 
     public final MutableLiveData<Integer> mldiSelectedUserColor =
             new MutableLiveData<>();
@@ -54,6 +62,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        globalClass = (GlobalClass) requireActivity().getApplicationContext();
     }
 
     @Override
@@ -154,16 +163,16 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
             final Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
             ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: adapterTagMaturityRatings.TAG_AGE_RATINGS){
-                if(!(sESRBRating[adapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
-                        adapterTagMaturityRatings.TAG_AGE_RATINGS[adapterTagMaturityRatings.TAG_AGE_RATING_RP][adapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX])
-                || sESRBRating[adapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
-                        adapterTagMaturityRatings.TAG_AGE_RATINGS[adapterTagMaturityRatings.TAG_AGE_RATING_UR][adapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX]))) {
+            for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
+                if(!(sESRBRating[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
+                        AdapterTagMaturityRatings.TAG_AGE_RATINGS[AdapterTagMaturityRatings.TAG_AGE_RATING_RP][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX])
+                || sESRBRating[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
+                        AdapterTagMaturityRatings.TAG_AGE_RATINGS[AdapterTagMaturityRatings.TAG_AGE_RATING_UR][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX]))) {
                     //Don't add "rating pending" or "user restricted" ratings to the drop-down. Those are for tags only.
                     alsTemp.add(sESRBRating);
                 }
             }
-            adapterTagMaturityRatings atarSpinnerAdapter = new adapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
+            AdapterTagMaturityRatings atarSpinnerAdapter = new AdapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
             spinner_ContentMaturity.setAdapter(atarSpinnerAdapter);
 
             spinner_ContentMaturity.setOnTouchListener(new View.OnTouchListener() {
@@ -196,14 +205,57 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 }
             });
 
+            initUserList();
+
         }
 
+    }
+
+    private void initUserList(){
+        //Initialize the displayed list of users:
+        ListView listView_UserList = getView().findViewById(R.id.listView_UserList);
+        AdapterUserList adapterUserList = new AdapterUserList(
+                        requireActivity().getApplicationContext(), R.layout.listview_useritem, globalClass.galicu_Users);
+        listView_UserList.setAdapter(adapterUserList);
+        int iWidthWidestUserItemView = (int)(getWidestView(requireActivity().getApplicationContext(), adapterUserList) * 1.05);
+
+
+        WindowMetrics windowMetrics = requireActivity().getWindowManager().getCurrentWindowMetrics();
+        int iWidthScreen = windowMetrics.getBounds().width();
+        int iMaxWidthToBeAllowed = (int)(iWidthScreen * 0.25); //Only allow the listview to take up a quarter of the screen.
+        int iDesiredListViewWidth = Math.min(iMaxWidthToBeAllowed, iWidthWidestUserItemView);
+
+        listView_UserList.getLayoutParams().width = (int) (iDesiredListViewWidth);
+
+    }
+
+    /**
+     * https://stackoverflow.com/questions/6547154/wrap-content-for-a-listviews-width
+     * Computes the widest view in an adapter, best used when you need to wrap_content on a ListView, please be careful
+     * and don't use it on an adapter that is extremely numerous in items or it will take a long time.
+     *
+     * @param context Some context
+     * @param adapter The adapter to process
+     * @return The pixel width of the widest View
+     */
+    public static int getWidestView(Context context, Adapter adapter) {
+        int maxWidth = 0;
+        View view = null;
+        FrameLayout fakeParent = new FrameLayout(context);
+        for (int i=0, count=adapter.getCount(); i<count; i++) {
+            view = adapter.getView(i, view, fakeParent);
+            view.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            int width = view.getMeasuredWidth();
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        }
+        return maxWidth;
     }
 
     private int initColorIcon(){
         int[] iColorsArray = getResources().getIntArray(R.array.colors_user_icon);
         ArrayList<Integer> aliColorOptions = new ArrayList<>();
-        GlobalClass globalClass = (GlobalClass) requireActivity().getApplicationContext();
         for(int iColor: iColorsArray){
             boolean bColorIsTaken = false;
             for(ItemClass_User icuUser: globalClass.galicu_Users){
@@ -269,9 +321,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 if(tv != null){
                     sMaturityCode = tv.getText().toString();
                     //Maturity code lookup
-                    for(int i = 0; i < adapterTagMaturityRatings.RATINGS_COUNT; i++){
-                        String[] sMaturityRecord = adapterTagMaturityRatings.TAG_AGE_RATINGS[i];
-                        if(sMaturityCode.equals(sMaturityRecord[adapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX])){
+                    for(int i = 0; i < AdapterTagMaturityRatings.RATINGS_COUNT; i++){
+                        String[] sMaturityRecord = AdapterTagMaturityRatings.TAG_AGE_RATINGS[i];
+                        if(sMaturityCode.equals(sMaturityRecord[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX])){
                             iMaturityLevel = i;
                             break;
                         }
@@ -296,6 +348,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             Set<String> ssUserAccountData = sharedPreferences.getStringSet(GlobalClass.gsPreferenceName_UserAccountData, null);
             if(ssUserAccountData == null){
                 ssUserAccountData = new HashSet<>();
+            } else {
+                ssUserAccountData = new HashSet<>(ssUserAccountData); //https://stackoverflow.com/questions/51001328/shared-preferences-not-saving-stringset-when-application-is-killed-its-a-featu
+                //It is said that we must not modify the StringSet returned by getStringSet. Consistency is not guaranteed.
             }
 
             ItemClass_User icu = new ItemClass_User();
@@ -311,14 +366,16 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             //Add data to preferences:
             String sUserRecord = GlobalClass.getUserAccountRecordString(icu);
             ssUserAccountData.add(sUserRecord);
-            SharedPreferences.Editor SPE = sharedPreferences.edit();
-            SPE.putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountData);
-            SPE.apply();
+            sharedPreferences.edit()
+                    .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountData)
+                    .apply();
+
 
             //Add data to file storage so that it can be picked-up by a new device if the data is moved:
             //todo.
 
             Toast.makeText(requireContext(), "User added successfully.", Toast.LENGTH_SHORT).show();
+
 
             //Reset text entries:
             editText_UserName.setText("");
@@ -331,7 +388,8 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             //Reset maturity selection:
             spinner_ContentMaturity.setSelection(0);
 
-            //Todo: update listview of users.
+            //Update listview of users:
+            initUserList();
 
         }
     }

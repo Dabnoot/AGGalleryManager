@@ -959,7 +959,7 @@ public class GlobalClass extends Application {
         try {
             ict.iTagAgeRating = Integer.parseInt(sRecord[3]);
         } catch (Exception e){
-            ict.iTagAgeRating = adapterTagMaturityRatings.TAG_AGE_RATING_HE; //Default to highest restricted age rating.
+            ict.iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_HE; //Default to highest restricted age rating.
             ict.sTagText = "00TagFault_" + ict.sTagText;
         }
 
