@@ -217,39 +217,28 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     }
 
 
-
-                    if(sURL.contains("m3u8")){
-                        iVideoStreamSenseCount++;
-                        sAnnounce = sAnnounce + "Possible video stream (" + iVideoStreamSenseCount + ") address intercepted. ";
-                        //Make a call to set textbox color indicator (since we are not on the UI thread):
-                        Intent broadcastIntent_VideoWebDetectResponse = new Intent();
-                        broadcastIntent_VideoWebDetectResponse.putExtra("M3U8_DETECTED", true);
-                        broadcastIntent_VideoWebDetectResponse.setAction(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
-                        broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
-                        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
-                    }
-                    if(sURL.contains("mp4")){
-                        iMP4SenseCount++;
-                        sAnnounce = sAnnounce + "Possible video mp4 (" + iMP4SenseCount + ") address intercepted.";
-                    }
-                    if(!sAnnounce.equals("")) {
-                        Intent broadcastIntent_VideoWebDetectResponse = new Intent();
-                        broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.UPDATE_LOG_BOOLEAN, true);
-                        broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.LOG_LINE_STRING, sAnnounce);
-                        broadcastIntent_VideoWebDetectResponse.setAction(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
-                        broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
-                        LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
-                    }
-
-
                     if(getActivity() != null) {
                         if (globalClass == null) {
                             globalClass = (GlobalClass) getActivity().getApplicationContext();
                         }
 
+                        boolean bLinkIsUnique = true;
+
                         if (globalClass.galWebVideoDataLocators != null) {
                             for (int i = 0; i < globalClass.galWebVideoDataLocators.size(); i++) {
                                 if (globalClass.galWebVideoDataLocators.get(i).bHostNameMatchFound) {
+
+                                    //Make sure this link is not a duplicate:
+                                    for(ItemClass_VideoDownloadSearchKey icvdsk: globalClass.galWebVideoDataLocators.get(i).alVideoDownloadSearchKeys){
+                                        if(icvdsk.sSearchStringMatchContent.equals(sURL)){
+                                            bLinkIsUnique = false;
+                                            break;
+                                        }
+                                    }
+                                    if(!bLinkIsUnique){
+                                        break;
+                                    }
+
                                     //Create a new VDSK, add this M3U8 or MP4 "match", tell it that the match is found.
                                     ItemClass_VideoDownloadSearchKey vdsk;
                                     boolean bIsM3U8 = false;
@@ -304,6 +293,31 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                                     break;
                                 }
+                            }
+                        }
+
+                        if(bLinkIsUnique) {
+                            if (sURL.contains("m3u8")) {
+                                iVideoStreamSenseCount++;
+                                sAnnounce = sAnnounce + "Possible video stream (" + iVideoStreamSenseCount + ") address intercepted. ";
+                                //Make a call to set textbox color indicator (since we are not on the UI thread):
+                                Intent broadcastIntent_VideoWebDetectResponse = new Intent();
+                                broadcastIntent_VideoWebDetectResponse.putExtra("M3U8_DETECTED", true);
+                                broadcastIntent_VideoWebDetectResponse.setAction(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
+                                broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
+                                LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
+                            }
+                            if (sURL.contains("mp4")) {
+                                iMP4SenseCount++;
+                                sAnnounce = sAnnounce + "Possible video mp4 (" + iMP4SenseCount + ") address intercepted.";
+                            }
+                            if (!sAnnounce.equals("")) {
+                                Intent broadcastIntent_VideoWebDetectResponse = new Intent();
+                                broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.UPDATE_LOG_BOOLEAN, true);
+                                broadcastIntent_VideoWebDetectResponse.putExtra(GlobalClass.LOG_LINE_STRING, sAnnounce);
+                                broadcastIntent_VideoWebDetectResponse.setAction(ImportDataServiceResponseReceiver.IMPORT_RESPONSE_VIDEO_WEB_DETECT);
+                                broadcastIntent_VideoWebDetectResponse.addCategory(Intent.CATEGORY_DEFAULT);
+                                LocalBroadcastManager.getInstance(getActivity()).sendBroadcast(broadcastIntent_VideoWebDetectResponse);
                             }
                         }
                     }
