@@ -745,6 +745,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     break;
             }
 
+            if(sThumbnailText.length() > 100){
+                sThumbnailText = sThumbnailText.substring(0, 100) + "...";
+            }
+
             holder.tvThumbnailText.setText(sThumbnailText);
 
             if (holder.btnDelete != null) {
