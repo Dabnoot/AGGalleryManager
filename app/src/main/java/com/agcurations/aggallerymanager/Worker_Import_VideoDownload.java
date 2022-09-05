@@ -214,7 +214,18 @@ public class Worker_Import_VideoDownload extends Worker {
             //If this is a single download file, only 1 file needs to be downloaded.
             String sDownloadAddress = icfDownloadItem.sURLVideoLink;
             String sFileName = icfDownloadItem.sFileOrFolderName;
+
+            if(sFileName.length() > 50){
+                //Limit the length of the filename:
+                String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sFileName);
+                if(sBaseAndExtension.length == 2) {
+                    sFileName = sBaseAndExtension[0].substring(0, 50 - sBaseAndExtension[1].length());
+                    sFileName = sFileName + "." + sBaseAndExtension[1];
+                }
+            }
+
             alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sFileName});
+
         } else {
             //If this is an M3U8 download, a set of files must be downloaded.
             for(String sFileName: icfDownloadItem.ic_M3U8.als_TSDownloads){
@@ -228,6 +239,16 @@ public class Worker_Import_VideoDownload extends Worker {
                     sFileName = sFileName.substring(sFileName.lastIndexOf("/") + 1);
                 }
                 String sNewFilename = ciNew.sItemID + "_" + Service_Import.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
+
+                if(sNewFilename.length() > 50){
+                    //Limit the length of the filename:
+                    String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sNewFilename);
+                    if(sBaseAndExtension.length == 2) {
+                        sNewFilename = sBaseAndExtension[0].substring(0, 50 - sBaseAndExtension[1].length());
+                        sNewFilename = sNewFilename + "." + sBaseAndExtension[1];
+                    }
+                }
+
                 if(ciNew.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
                     //If we will be holding the .ts files in storage as part of a local M3U8 configuration,
                     // jumble the .ts filenames:

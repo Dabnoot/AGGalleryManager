@@ -202,6 +202,16 @@ public class Worker_Browser_ImageDownloadToHoldingFolder extends Worker {
                                     if(fDLHoldingFiles != null) {
                                         if(fDLHoldingFiles.length > 0) {
                                             String sNew = sFileName;
+                                            if(sNew.length() > 50){
+                                                //Limit the length of the filename:
+                                                String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sNew);
+                                                if(sBaseAndExtension.length == 2) {
+                                                    sNew = sBaseAndExtension[0].substring(0, 50 - sBaseAndExtension[1].length());
+                                                    sNew = sNew + "." + sBaseAndExtension[1];
+                                                }
+                                            }
+
+
                                             boolean bMatchFoundInExistingHoldingFiles;
                                             int iIterator = 0;
                                             do {
@@ -214,13 +224,10 @@ public class Worker_Browser_ImageDownloadToHoldingFolder extends Worker {
                                                 }
                                                 if (bMatchFoundInExistingHoldingFiles) {
                                                     iIterator += 1;
-                                                    //https://stackoverflow.com/questions/4545937/java-splitting-the-filename-into-a-base-and-extension
-                                                    String[] tokens = sFileName.split("\\.(?=[^\\.]+$)");
-                                                    if(tokens.length == 2) {
-                                                        sNew = tokens[0] + "_"  + String.format(Locale.getDefault(), "%04d", iIterator);
-                                                        sNew = sNew + "." + tokens[1];
-                                                    } else {
-                                                        sNew = tokens[0];
+                                                    String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sFileName);
+                                                    sNew = sBaseAndExtension[0] + "_"  + String.format(Locale.getDefault(), "%04d", iIterator);
+                                                    if(sBaseAndExtension.length == 2) {
+                                                        sNew = sNew + "." + sBaseAndExtension[1];
                                                     }
                                                 }
                                             } while (bMatchFoundInExistingHoldingFiles);

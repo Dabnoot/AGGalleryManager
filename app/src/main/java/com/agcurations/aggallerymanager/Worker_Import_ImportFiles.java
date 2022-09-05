@@ -144,6 +144,14 @@ public class Worker_Import_ImportFiles extends Worker {
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 String sTempFileName = ciNew.sItemID + "_" + sFileName; //Create unique filename. Using ID will allow database error checking.
+                if(sTempFileName.length() > 50){
+                    //Limit the length of the filename:
+                    String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sTempFileName);
+                    if(sBaseAndExtension.length == 2) {
+                        sTempFileName = sBaseAndExtension[0].substring(0, 50 - sBaseAndExtension[1].length());
+                        sTempFileName = sTempFileName + "." + sBaseAndExtension[1];
+                    }
+                }
                 sFileName = GlobalClass.JumbleFileName(sTempFileName);
 
 

@@ -365,7 +365,10 @@ public class GlobalClass extends Application {
         return sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
     }
 
-
+    public static String[] SplitFileNameIntoBaseAndExtension(String sFileName){
+        String[] tokens = sFileName.split("\\.(?=[^\\.]+$)");
+        return tokens;
+    }
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
