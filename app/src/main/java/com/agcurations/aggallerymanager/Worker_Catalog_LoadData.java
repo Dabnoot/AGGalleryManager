@@ -316,7 +316,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //VerifyVideoFilesIntegrity();
 
-
+        //investigateLongFileNames();
 
         LogFilesMaintenance();
         globalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
@@ -624,6 +624,48 @@ public class Worker_Catalog_LoadData extends Worker {
 
     }
 
+    private void investigateLongFileNames(){
+        //Some items stored with long filenames due to using data from web source as file name.
+        //  Some file names are so long that they are incompatible with the PC-based OS.
+        int iLongestReasonablePath = 0;
+        TreeMap<Integer, Integer> tmLengthHistogram = new TreeMap<>();
+        for(int i = 0; i < 261; i++){
+            tmLengthHistogram.put(i, 0);
+        }
+
+
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+
+            for(Map.Entry<String, ItemClass_CatalogItem> entry: globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
+                //Determine the full path to the file:
+                ItemClass_CatalogItem ci = entry.getValue();
+                String sFilePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator
+                        + ci.sFolder_Name + File.separator
+                        + ci.sFilename;
+
+                if(ci.sFilename.equals("")){
+                    continue;
+                }
+
+                if(sFilePath.length() >= 260){
+                    continue;
+                }
+
+                if(sFilePath.length() > iLongestReasonablePath){
+                    iLongestReasonablePath = sFilePath.length();
+                }
+
+                Integer iValue = tmLengthHistogram.get(sFilePath.length());
+                iValue++;
+                tmLengthHistogram.put(sFilePath.length(), iValue);
+
+            }
+
+        }
+
+        String sMessage = "" + iLongestReasonablePath;
+
+    }
 
     void problemNotificationConfig(String sMessage){
         globalClass.problemNotificationConfig(sMessage,
