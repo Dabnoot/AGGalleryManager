@@ -251,8 +251,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                                         if(iFirstBound > 0){
                                             String sSub = sURL.substring(iFirstBound);
                                             int iQuestionMarkLoc = sSub.lastIndexOf("?");
-                                            int iM3U8Loc = -1;
-                                            int iMP4Loc = -1;
+                                            int iM3U8Loc;
+                                            int iMP4Loc;
                                             if (iQuestionMarkLoc > 0) {
                                                 //Solution cannot be past a question mark, if it exists. Generally stuff after that is not related to a file location.
                                                 sSub = sSub.substring(0, iQuestionMarkLoc);
