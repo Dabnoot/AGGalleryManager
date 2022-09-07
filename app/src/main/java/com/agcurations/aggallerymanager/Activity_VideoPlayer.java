@@ -64,6 +64,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private boolean gbPlayingM3U8;
 
+    static boolean active = false; //Used to keep a runnable from doing stuff after the activity closes.
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -463,6 +465,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        active = true;
+    }
 
     @Override
     protected void onResume() {
@@ -508,7 +515,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         //Figure out which video player is active, and pause that object.
         PausePlayback();
-
         super.onPause();
     }
 
@@ -521,6 +527,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //Figure out which video player is active, and stop that object.
         StopPlayback();
 
+        active = false;
 
         super.onStop();
     }
@@ -711,8 +718,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 if(gbPlayingM3U8){
                     //gplayerView_ExoVideoPlayer.setUseController(true);
                 } else {
-                    gMediaController.show(); //This mediaController needs this merely for how the touches
-                    // are handled between the ExoPlayer and the VideoView.
+                    if(active) {
+                        gMediaController.show(); //This mediaController needs this merely for how the touches
+                        // are handled between the ExoPlayer and the VideoView.
+                    }
                 }
             }
         }
@@ -721,7 +730,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private final Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
-            hide();
+            if(active) {
+                hide();
+            }
         }
     };
 
