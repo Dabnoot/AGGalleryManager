@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -133,21 +134,40 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         if(getView() == null || getActivity() == null){
             return;
         }
-        final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
+        /*final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
 
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-        ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
-            alsTags.add(entry.getValue().sTagText);
-        }
 
-        String[] sTemp = new String[alsTags.size()];
+        //Build a sorted list of tags to give the user an idea of which tags exist under current maturity rating:
+        TreeMap<String, String> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
+            String sTagName = entry.getValue().sTagText;
+            tmTags.put(sTagName, sTagName);
+        }
+        ArrayList<String> alsTags = new ArrayList<>();
+        for(Map.Entry<String, String> entry: tmTags.entrySet()){
+            alsTags.add(entry.getValue());
+        }
+        String[] sTemp = new String[tmTags.size()];
         sTemp = alsTags.toArray(sTemp);
         if(getActivity() == null){
             return;
         }
+
         ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
-        listView_TagViewer.setAdapter(aasTags);
+        listView_TagViewer.setAdapter(aasTags);*/
+
+        //Start the tag selection fragment:
+        FragmentTransaction ft = getChildFragmentManager().beginTransaction();
+        Fragment_SelectTags fst = new Fragment_SelectTags();
+        fst.bOptionViewOnly = true;
+        Bundle args = new Bundle();
+        args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory);
+        fst.setArguments(args);
+        ft.replace(R.id.child_fragment_tag_selector, fst);
+        ft.commit();
+
+
 
     }
 

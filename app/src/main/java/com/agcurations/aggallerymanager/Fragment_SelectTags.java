@@ -30,6 +30,7 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -57,6 +58,8 @@ public class Fragment_SelectTags extends Fragment {
     // If the user creates new tags from this fragment, select those tags in the list upon return.
 
     TagContainerLayoutWithID gTagContainerLayout_SuggestedTags;
+
+    boolean bOptionViewOnly = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -173,12 +176,7 @@ public class Fragment_SelectTags extends Fragment {
         recalcUserColor();
 
         Button button_UncheckTags = getView().findViewById(R.id.button_UncheckTags);
-        button_UncheckTags.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                gListViewTagsAdapter.uncheckAll();
-            }
-        });
+
 
 
         //Configure the button to start the tag editor:
@@ -186,151 +184,174 @@ public class Fragment_SelectTags extends Fragment {
             return;
         }
         Button button_TagEditor = getView().findViewById(R.id.button_TagEditor);
-        button_TagEditor.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Ask for pin code in order to allow access to the Tag Editor:
+
+        if(bOptionViewOnly) {
+            //Hide the UncheckTags button:
+            button_UncheckTags.setVisibility(View.INVISIBLE);
+
+            //Shrink down the TagEditor button space allocation since it is not to be used in this mode:
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) button_TagEditor.getLayoutParams();
+            layoutParams.height = 0;
+            layoutParams.setMargins(0, 0, 0, 0);
+            button_TagEditor.setLayoutParams(layoutParams);
+
+        } else {
+            button_UncheckTags.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    gListViewTagsAdapter.uncheckAll();
+                    }
+            });
+
+            button_TagEditor.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //Ask for pin code in order to allow access to the Tag Editor:
 
 
-                if (getActivity() == null) {
-                    return;
-                }
+                    if (getActivity() == null) {
+                        return;
+                    }
 
-                if(globalClass.gbGuestMode) {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
+                    if (globalClass.gbGuestMode) {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
 
-                    // set the custom layout
-                    final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-                    builder.setView(customLayout);
+                        // set the custom layout
+                        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
+                        builder.setView(customLayout);
 
-                    final AlertDialog adConfirmationDialog = builder.create();
+                        final AlertDialog adConfirmationDialog = builder.create();
 
-                    //Code action for the Cancel button:
-                    Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            adConfirmationDialog.dismiss();
-                        }
-                    });
-
-                    //Code action for the OK button:
-                    Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
-                    button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                            String sPinEntered = editText_DialogInput.getText().toString();
-
-                            if (sPinEntered.equals(globalClass.gsPin)) {
-                                globalClass.gbGuestMode = false;
-                                globalClass.gbCatalogViewerRefresh = true;
-                                triggerParentActivityUserCheck();
-                                setUserColor(globalClass.USER_COLOR_ADMIN);
-
-                                Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
-                                garlGetResultFromTagEditor.launch(intentTagEditor);
-                            } else {
-                                Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                        //Code action for the Cancel button:
+                        Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+                        button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                adConfirmationDialog.dismiss();
                             }
+                        });
 
-                            adConfirmationDialog.dismiss();
+                        //Code action for the OK button:
+                        Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+                        button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                                String sPinEntered = editText_DialogInput.getText().toString();
+
+                                if (sPinEntered.equals(globalClass.gsPin)) {
+                                    globalClass.gbGuestMode = false;
+                                    globalClass.gbCatalogViewerRefresh = true;
+                                    triggerParentActivityUserCheck();
+                                    setUserColor(globalClass.USER_COLOR_ADMIN);
+
+                                    Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                                    intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
+                                    garlGetResultFromTagEditor.launch(intentTagEditor);
+                                } else {
+                                    Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                                }
+
+                                adConfirmationDialog.dismiss();
+                            }
+                        });
+
+                        adConfirmationDialog.show();
+                    } else {
+                        //If we are in Admin mode:
+                        Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                        intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
+                        garlGetResultFromTagEditor.launch(intentTagEditor);
+                    }
+                }
+            });
+
+
+            //Create adapations for "suggested tags":
+            //Update a maintained list of suggested tags:
+            //React to changes in the selected tag data in the ViewModel:
+            final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserverForTagSuggestions = new Observer<ArrayList<ItemClass_Tag>>() {
+                @Override
+                public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                    //Update the suggested tags list in the viewmodel:
+                    ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    if (alictSuggestions == null) {
+                        alictSuggestions = new ArrayList<>();
+                        alictNewSuggestions = new ArrayList<>();
+                    }
+                    for (ItemClass_Tag ict : tagItems) {
+                        boolean bNotInList = true;
+                        for (ItemClass_Tag ictSuggestion : alictSuggestions) {
+                            if (ict.iTagID.equals(ictSuggestion.iTagID)) {
+                                bNotInList = false;
+                                break;
+                            }
                         }
-                    });
-
-                    adConfirmationDialog.show();
-                } else {
-                    //If we are in Admin mode:
-                    Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                    intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
-                    garlGetResultFromTagEditor.launch(intentTagEditor);
-                }
-            }
-        });
-
-
-        //Create adapations for "suggested tags":
-        //Update a maintained list of suggested tags:
-        //React to changes in the selected tag data in the ViewModel:
-        final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserverForTagSuggestions = new Observer<ArrayList<ItemClass_Tag>>() {
-            @Override
-            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
-
-                //Update the suggested tags list in the viewmodel:
-                ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                ArrayList<ItemClass_Tag> alictNewSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                if(alictSuggestions == null){
-                    alictSuggestions = new ArrayList<>();
-                    alictNewSuggestions = new ArrayList<>();
-                }
-                for(ItemClass_Tag ict: tagItems){
-                    boolean bNotInList = true;
-                    for(ItemClass_Tag ictSuggestion: alictSuggestions){
-                        if(ict.iTagID.equals(ictSuggestion.iTagID)){
-                            bNotInList = false;
-                            break;
+                        if (bNotInList) {
+                            alictNewSuggestions.add(ict);
                         }
                     }
-                    if(bNotInList){
-                        alictNewSuggestions.add(ict);
-                    }
+                    viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
+
                 }
-                viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
+            };
+            viewModel_fragment_selectTags.altiTagsSelected.observe(getActivity(), selectedTagsObserverForTagSuggestions);
 
-            }
-        };
-        viewModel_fragment_selectTags.altiTagsSelected.observe(getActivity(), selectedTagsObserverForTagSuggestions);
+            //Maintain the display of suggested tags:
+            gTagContainerLayout_SuggestedTags = getView().findViewById(R.id.tagContainerLayout_SuggestedTags);
+            gTagContainerLayout_SuggestedTags.setOnTagClickListener(new TagViewWithID.OnTagClickListener() {
+                @Override
+                public void onTagClick(int position, String text) {
 
-        //Maintain the display of suggested tags:
-        gTagContainerLayout_SuggestedTags = getView().findViewById(R.id.tagContainerLayout_SuggestedTags);
-        gTagContainerLayout_SuggestedTags.setOnTagClickListener(new TagViewWithID.OnTagClickListener() {
-            @Override
-            public void onTagClick(int position, String text) {
+                    ItemClass_Tag ict = gTagContainerLayout_SuggestedTags.getTagItem(position);
+                    //gListViewTagsAdapter.selectTagByName(text);
+                    ArrayList<Integer> aliTagIDs = new ArrayList<>();
+                    aliTagIDs.add(ict.iTagID);
+                    gListViewTagsAdapter.selectTagsByIDs(aliTagIDs);
+                 }
 
-                ItemClass_Tag ict = gTagContainerLayout_SuggestedTags.getTagItem(position);
-                //gListViewTagsAdapter.selectTagByName(text);
-                ArrayList<Integer> aliTagIDs = new ArrayList<>();
-                aliTagIDs.add(ict.iTagID);
-                gListViewTagsAdapter.selectTagsByIDs(aliTagIDs);
-             }
+                @Override
+                public void onTagLongClick(int position, String text) {
 
-            @Override
-            public void onTagLongClick(int position, String text) {
-
-            }
-
-            @Override
-            public void onSelectedTagDrag(int position, String text) {
-
-            }
-
-            @Override
-            public void onTagCrossClick(int position) {
-                //Remove the item from suggested tags:
-                //String sTagText = gTagContainerLayout_SuggestedTags.getTagText(position);
-                ItemClass_Tag ictTagToRemove = gTagContainerLayout_SuggestedTags.getTagItem(position);
-                //Update the suggested tags list in the viewmodel:
-                ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
-                ArrayList<ItemClass_Tag> alictNewSuggestions = new ArrayList<>();
-                for(ItemClass_Tag ict: alictSuggestions){
-                    if(!ict.iTagID.equals(ictTagToRemove.iTagID)){
-                        alictNewSuggestions.add(ict);
-                    }
                 }
-                viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
 
-            }
-        });
+                @Override
+                public void onSelectedTagDrag(int position, String text) {
 
-        //Watch for changes in suggested tags:
-        final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
-            @Override
-            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
-                updateSuggestedTagDisplay(tagItems);
-            }
-        };
-        viewModel_fragment_selectTags.altiTagSuggestions.observe(getActivity(), suggestedTagsObserver);
+                }
+
+                @Override
+                public void onTagCrossClick(int position) {
+                    //Remove the item from suggested tags:
+                    //String sTagText = gTagContainerLayout_SuggestedTags.getTagText(position);
+                    ItemClass_Tag ictTagToRemove = gTagContainerLayout_SuggestedTags.getTagItem(position);
+                    //Update the suggested tags list in the viewmodel:
+                    ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
+                    ArrayList<ItemClass_Tag> alictNewSuggestions = new ArrayList<>();
+                    for(ItemClass_Tag ict: alictSuggestions){
+                        if(!ict.iTagID.equals(ictTagToRemove.iTagID)){
+                            alictNewSuggestions.add(ict);
+                        }
+                    }
+                    viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
+
+                }
+            });
+
+            //Watch for changes in suggested tags:
+            final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
+                @Override
+                public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+                    updateSuggestedTagDisplay(tagItems);
+                }
+            };
+            viewModel_fragment_selectTags.altiTagSuggestions.observe(getActivity(), suggestedTagsObserver);
+        }
+
+
+
 
     }
 

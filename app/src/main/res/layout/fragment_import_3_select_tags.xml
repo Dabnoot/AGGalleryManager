@@ -115,7 +115,7 @@
 
     <FrameLayout
         android:id="@+id/child_fragment_tag_selector"
-        android:layout_width="200dp"
+        android:layout_width="300dp"
         android:layout_height="match_parent"
         android:scrollbarSize="20dp"
         android:defaultValue="@array/empty_array"

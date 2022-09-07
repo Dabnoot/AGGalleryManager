@@ -95,11 +95,18 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ListView
+    <!--<ListView
         android:id="@+id/listView_TagViewer"
         android:layout_width="200dp"
         android:layout_height="match_parent"
         android:scrollbarSize="20dp"
+        android:layout_weight="1"/>-->
+    <FrameLayout
+        android:id="@+id/child_fragment_tag_selector"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:scrollbarSize="20dp"
+        android:defaultValue="@array/empty_array"
         android:layout_weight="1"/>
 
 
