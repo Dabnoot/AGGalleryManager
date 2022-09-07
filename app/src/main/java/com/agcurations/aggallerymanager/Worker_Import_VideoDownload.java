@@ -398,7 +398,7 @@ public class Worker_Import_VideoDownload extends Worker {
                         String sTSShortFileName = ciNew.sItemID + "_" + Service_Import.cleanFileNameViaTrim(sLine);
                         String sJumbledTSShortFileName = GlobalClass.JumbleFileName(sTSShortFileName);
                         String sFullPathToTSFile = fWorkingFolder.getAbsolutePath() + File.separator + sJumbledTSShortFileName;
-                        fwM3U8File.write(sFullPathToTSFile + "\n");
+                        fwM3U8File.write(sJumbledTSShortFileName + "\n");
                     } else if (sLine.contains("ENDLIST")) {
                         fwM3U8File.write(sLine + "\n");
                         break;
