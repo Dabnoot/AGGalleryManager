@@ -605,15 +605,14 @@ public class Fragment_SelectTags extends Fragment {
             tmTagItemsDisplay = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             tmTagItemsDisplaySequence = new TreeMap<>();
 
-            for (ItemClass_Tag ict : alictTagItems) {
-                //todo: this appears to take a long time to run. Can it be moved elsewhere?
-                String sCompoundID = ict.sTagText.toLowerCase() + ":" + ict.iTagID;
-                if (viewModel_fragment_selectTags.bShowModeXrefTagUse) {
-                    //When bShowModeXrefTagUse is activated, we are using Fragment_SelectTags
-                    //  for filtering. In this case, only show tags which are used, that is,
-                    //  has a frequency count greater than zero.
-                    updateXrefTagsHistogram();
-                } else {
+            if (viewModel_fragment_selectTags.bShowModeXrefTagUse) {
+                //When bShowModeXrefTagUse is activated, we are using Fragment_SelectTags
+                //  for filtering. In this case, only show tags which are used, that is,
+                //  has a frequency count greater than zero.
+                updateXrefTagsHistogram();
+            } else {
+                for (ItemClass_Tag ict : alictTagItems) {
+                    String sCompoundID = ict.sTagText.toLowerCase() + ":" + ict.iTagID;
                     tmTagItemsDisplay.put(sCompoundID, ict);
                 }
             }
