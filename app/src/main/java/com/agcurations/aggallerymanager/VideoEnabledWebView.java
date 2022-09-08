@@ -326,6 +326,23 @@ public class VideoEnabledWebView extends WebView
                                 .build();
                         WorkManager.getInstance(getContext()).enqueue(otwrMoveDownloadedFile);
 
+                        //Write a text file of the same file name to record details of the origin of the file. This
+                        //  text data file is to be used during the import process to add a bit of metadata.
+                        String sImageMetadataFilePath = globalClass.gfImageDownloadHoldingFolder.getPath() +
+                                File.separator + sFileName + ".txt"; //The file will have two extensions.
+                        File fImageMetadataFile = new File(sImageMetadataFilePath);
+                        try {
+                            FileWriter fwImageMetadata = new FileWriter(fImageMetadataFile, true);
+                            String sWebPageURL = webView.getUrl();
+                            fwImageMetadata.write(sWebPageURL);
+                            fwImageMetadata.close();
+                        } catch (Exception e) {
+                            String sMessage = "" + e.getMessage();
+                            Log.d("VideoEnabledWebView", sMessage);
+                        }
+
+
+
                         break;
 
 

@@ -108,11 +108,14 @@ public class Worker_Import_ImportFiles extends Worker {
             }
 
             String sFileName = "";
+            String sImageMetadataFilePath = "";
             String sUriOrPath = "";
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
                 Uri uriTemp = Uri.parse(fileItem.sUri);
                 File fSource = new File(uriTemp.getPath());
                 sFileName = fSource.getName();
+                sImageMetadataFilePath = globalClass.gfImageDownloadHoldingFolder.getPath() +
+                        File.separator + sFileName + ".txt"; //The file will have two extensions.
                 sUriOrPath = fSource.getAbsolutePath();
             } else {
                 Uri uriSourceFile = Uri.parse(fileItem.sUri);
@@ -193,6 +196,18 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;
                 ciNew.iGrade = fileItem.iGrade;
+                if(!fileItem.sURL.equals("")){
+                    ciNew.sSource = fileItem.sURL;
+                    //Prepare to delete any metadata file that might exist associated with this file:
+                    if(!sImageMetadataFilePath.equals("")) {
+                        sLine = sImageMetadataFilePath + "\t"
+                                + fileItem.sDestinationFolder + "\t"
+                                + fileItem.sFileOrFolderName + "\t"
+                                + 100 + "\t"                     //Size should be quite small.
+                                + true + "\n";                 //Item marked for deletion?
+                        sbJobFileRecords.append(sLine);
+                    }
+                }
 
                 //The below call should add the record to both the catalog contents file
                 //  and memory:

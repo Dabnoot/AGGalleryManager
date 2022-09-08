@@ -8,13 +8,17 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.DocumentsContract;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -128,7 +132,9 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 }
 
                 //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
-                if (mimeType.startsWith("video") || fileExtension.equals(".gif") ||
+                if (mimeType.startsWith("video") ||
+                        fileExtension.equals(".gif") ||
+                        fileExtension.equals(".txt") ||
                         (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                     //If video...
                     continue; //If requesting images and mimeType is video or the file a gif, go to next loop.
@@ -159,7 +165,21 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 icfFileItem.sHeight = sHeight;
                 icfFileItem.sUri = Uri.fromFile(fImport).toString();// fImport.getAbsolutePath();
                 icfFileItem.sMimeType = mimeType;
-
+                //Get the URL data from the associated metadata file, if it exists:
+                String sImageMetadataFilePath = globalClass.gfImageDownloadHoldingFolder.getPath() +
+                        File.separator + docName + ".txt"; //The file will have two extensions.
+                File fImageMetadataFile = new File(sImageMetadataFilePath);
+                if(fImageMetadataFile.exists()) {
+                    try {
+                        BufferedReader brReader;
+                        brReader = new BufferedReader(new FileReader(fImageMetadataFile.getAbsolutePath()));
+                        icfFileItem.sURL = brReader.readLine();
+                        brReader.close();
+                    } catch (Exception e) {
+                        String sMessage = "" + e.getMessage();
+                        Log.d("VideoEnabledWebView", sMessage);
+                    }
+                }
                 //Add the ItemClass_File to the ArrayList:
                 alFileList.add(icfFileItem);
 
