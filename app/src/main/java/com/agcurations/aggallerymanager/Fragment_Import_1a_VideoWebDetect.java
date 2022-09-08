@@ -43,7 +43,7 @@ import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.
 
 public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
-    boolean bDebug = true;
+    boolean bDebug = false;
 
     GlobalClass globalClass;
 
@@ -374,6 +374,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     for (String s : galsRequestedResources) {
                         sb.append(s).append("\n");
                     }
+                    Log.d("Fragment_Import_1a_VideoWebDetect", sb.toString());
                 }
 
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
