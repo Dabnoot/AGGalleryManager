@@ -406,6 +406,18 @@ public class Fragment_SelectTags extends Fragment {
                 alictValidSuggestions.add(ictSuggestion);
             }
         }
+
+        //Sort the valid suggestions:
+        TreeMap<String, ItemClass_Tag> tmValidSuggestions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for(ItemClass_Tag ictSuggestion: alictValidSuggestions){
+            tmValidSuggestions.put(ictSuggestion.sTagText, ictSuggestion);
+        }
+        //Copy over:
+        alictValidSuggestions.clear();
+        for(Map.Entry<String, ItemClass_Tag> entry: tmValidSuggestions.entrySet()){
+            alictValidSuggestions.add(entry.getValue());
+        }
+
         gTagContainerLayout_SuggestedTags.setTags(alictValidSuggestions);
 
 
