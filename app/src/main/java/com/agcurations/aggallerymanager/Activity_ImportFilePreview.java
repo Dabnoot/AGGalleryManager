@@ -106,9 +106,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                         sb.append(tagItems.get(i).sTagText);
                     }
                 }
-                TextView tv = findViewById(R.id.textView_SelectedTags);
-                if (tv != null) {
-                    tv.setText(sb.toString());
+                TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
+                if (textView_SelectedTags != null) {
+                    textView_SelectedTags.setText(sb.toString());
                 }
 
                 //Get the tag IDs to pass back to the calling activity:
@@ -218,9 +218,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                         sb.append(", ");
                         sb.append(globalClass.getTagTextFromID(galFileItems.get(giFileItemIndex).aliProspectiveTags.get(i), GlobalClass.MEDIA_CATEGORY_VIDEOS));
                     }
-                    TextView textView_VideoPopupSelectedTags = findViewById(R.id.textView_SelectedTags);
-                    if (textView_VideoPopupSelectedTags != null) {
-                        textView_VideoPopupSelectedTags.setText(sb.toString());
+                    TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
+                    if (textView_SelectedTags != null) {
+                        textView_SelectedTags.setText(sb.toString());
                     }
                 }
             }
@@ -231,7 +231,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             //Prepare a touch listener accept swipe to go to next or previous file:
             final GestureDetector gestureDetector_SwipeForNextFile = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener(){
 
-                @Override
+
                 public boolean onDoubleTap(MotionEvent e) {
                     return true;
                 }
@@ -490,8 +490,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 setResult(RESULT_OK);
             }
         });
-        RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
-        relativeLayout_ImportIndication.setOnClickListener(new View.OnClickListener() {
+        LinearLayout linearLayout_ImportIndication = findViewById(R.id.linearLayout_ImportIndication);
+        linearLayout_ImportIndication.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //Check/uncheck the checkbox.
@@ -578,7 +578,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         TextView textView_FileName = findViewById(R.id.textView_FileName);
         String sFileNameTextLine = galFileItems.get(giFileItemIndex).sFileOrFolderName;
         if(!galFileItems.get(giFileItemIndex).sHeight.equals("")){ //Add resolution data to display if available:
-            sFileNameTextLine = sFileNameTextLine + " " + galFileItems.get(giFileItemIndex).sWidth + "x" + galFileItems.get(giFileItemIndex).sHeight;
+            sFileNameTextLine = sFileNameTextLine + "\n" + galFileItems.get(giFileItemIndex).sWidth + "x" + galFileItems.get(giFileItemIndex).sHeight;
         }
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
             //If category is images, include megapixels.
@@ -681,11 +681,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
     private void CheckboxImportColorSwitch(boolean bChecked){
-        RelativeLayout relativeLayout_ImportIndication = findViewById(R.id.relativeLayout_ImportIndication);
+        LinearLayout linearLayout_ImportIndication = findViewById(R.id.linearLayout_ImportIndication);
         if(bChecked) {
-            relativeLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorActionBar));
+            linearLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorActionBar));
         } else {
-            relativeLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorBlack));
+            linearLayout_ImportIndication.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorBlack));
         }
 
     }
