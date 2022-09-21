@@ -24,6 +24,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -39,8 +40,8 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -145,6 +146,18 @@ public class Activity_Main extends AppCompatActivity {
                 startActivity(intentBrowser);
             }
         });
+
+
+        if(!GlobalClass.gbOptionUserAutoLogin){
+            //If the user has not set the option to auto-login a user, then show the user selection
+            //  activity:
+
+            Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
+            startActivity(intentUserSelection);
+
+        }
+
+
 
     }
 
@@ -327,7 +340,7 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        //Configure the AlertDialog that will gather the pin code if necessary to begina particular behavior:
+        //Configure the AlertDialog that will gather the pin code if necessary to begin a particular behavior:
         final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
 
         // set the custom layout
@@ -410,10 +423,7 @@ public class Activity_Main extends AppCompatActivity {
                         startActivity(intent);
                     }
                 }
-
             }
-
-
         }
 
         if(item.getItemId() == R.id.menu_DatabaseBackup) {
@@ -429,34 +439,6 @@ public class Activity_Main extends AppCompatActivity {
             startActivity(intentLogViewerActivity);
             return true;
 
-        /*} else if(item.getItemId() == R.id.menu_About) {
-            return true;*/
-        /*} else if(item.getItemId() == R.id.menu_Test) {
-
-            //Testing WorkManager for video concatenation:
-            //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
-            String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
-            Data dataTrackingTest = new Data.Builder()
-                    .putString(Worker_TrackingTest.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
-                    .build();
-            OneTimeWorkRequest otwrWorkerTrackingTest = new OneTimeWorkRequest.Builder(Worker_TrackingTest.class)
-                    .setInputData(dataTrackingTest)
-                    .addTag(Worker_TrackingTest.WORKER_TRACKING_TEST_TAG) //To allow finding the worker later.
-                    .build();
-            UUID UUIDWorkID = otwrWorkerTrackingTest.getId();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrWorkerTrackingTest);
-
-            //Next: configure worker to write progressbar on ActivityMain.
-
-            WorkManager wm = WorkManager.getInstance(getApplicationContext());
-            LiveData<WorkInfo> ldWorkInfo = wm.getWorkInfoByIdLiveData(UUIDWorkID);
-            ldWorkInfo.observe(this, workInfoObserver_TrackingTest);
-
-            Toast.makeText(getApplicationContext(), "Worker started with job datetime " + sJobDateTime, Toast.LENGTH_SHORT).show();
-
-            //Toast.makeText(getApplicationContext(), "No developer test item configured.", Toast.LENGTH_SHORT).show();
-
-            return true; //End Test Options item.*/
         } else {
             return super.onOptionsItemSelected(item);
         }
@@ -479,6 +461,7 @@ public class Activity_Main extends AppCompatActivity {
                 }
             }
         }
+
 
         //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
         workInfoObserver_TrackingTest = new Observer<WorkInfo>() {
@@ -557,7 +540,6 @@ public class Activity_Main extends AppCompatActivity {
             return;
         }
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
-        //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_IMAGES);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentCatalogActivity);
     }
@@ -567,10 +549,8 @@ public class Activity_Main extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
             return;
         }
-        /*Intent intentComicsCatalogActivity = new Intent(this, ComicsCatalogActivity.class);
-        startActivity(intentComicsCatalogActivity);*/
+
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
-        //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_COMICS);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentCatalogActivity);
     }

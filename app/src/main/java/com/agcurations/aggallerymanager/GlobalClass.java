@@ -8,8 +8,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Insets;
 import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -18,6 +21,7 @@ import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
@@ -162,7 +166,7 @@ public class GlobalClass extends Application {
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
-
+    public ItemClass_User gicuCurrentUser;
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
@@ -270,6 +274,37 @@ public class GlobalClass extends Application {
                 dp,
                 r.getDisplayMetrics()
         );
+    }
+
+    /**
+     * Creates a bitmap from the supplied view.
+     *
+     * @param view The view to get the bitmap.
+     * @param width The width for the bitmap. Pass 0 to use view dimensions.
+     * @param height The height for the bitmap. Pass 0 to use view dimensions.
+     *
+     * @return The bitmap from the supplied drawable.
+     */
+    public @NonNull Bitmap createBitmapFromView(@NonNull View view, int width, int height) {
+        //https://dev.to/pranavpandey/android-create-bitmap-from-a-view-3lck
+        //Pass 0 for height or width to use the current view dimensions.
+        if (width > 0 && height > 0) {
+            view.measure(View.MeasureSpec.makeMeasureSpec(ConvertDPtoPX(width), View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(ConvertDPtoPX(height), View.MeasureSpec.EXACTLY));
+        }
+        view.layout(0, 0, view.getMeasuredWidth(), view.getMeasuredHeight());
+
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(),
+                view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Drawable background = view.getBackground();
+
+        if (background != null) {
+            background.draw(canvas);
+        }
+        view.draw(canvas);
+
+        return bitmap;
     }
 
     public static void hideSoftKeyboard(Activity activity) {
@@ -1496,7 +1531,7 @@ public class GlobalClass extends Application {
     public static String getUserAccountRecordString(ItemClass_User icu){
         String sUserRecord =
                         JumbleStorageText(icu.sUserName) + "\t" +
-                        JumbleStorageText(icu.iPin) + "\t" +
+                        JumbleStorageText(icu.sPin) + "\t" +
                         JumbleStorageText(icu.iUserIconColor) + "\t" +
                         JumbleStorageText(icu.bAdmin);
         return sUserRecord;
@@ -1507,7 +1542,7 @@ public class GlobalClass extends Application {
         icu = new ItemClass_User();
         String[] sRecordSplit =  sRecord.split("\t");
         icu.sUserName = JumbleStorageText(sRecordSplit[0]);
-        icu.iPin = Integer.parseInt(JumbleStorageText(sRecordSplit[1]));
+        icu.sPin = JumbleStorageText(sRecordSplit[1]);
         icu.iUserIconColor = Integer.parseInt(JumbleStorageText(sRecordSplit[2]));
         icu.bAdmin = Boolean.parseBoolean(JumbleStorageText(sRecordSplit[3]));
         return icu;
@@ -2117,6 +2152,9 @@ public class GlobalClass extends Application {
     //=========== Other Options ====================================================================
 
     public static int giLogFileKeepDurationInDays = 30;
+
+    public static boolean gbOptionUserAutoLogin = false;
+
 
 
     //==============================================================================================

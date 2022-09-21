@@ -355,7 +355,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
             ItemClass_User icu = new ItemClass_User();
             icu.sUserName = sUserName;
-            icu.iPin = Integer.parseInt(sPin);
+            icu.sPin = sPin;
             icu.bAdmin = bAdmin;
             icu.iUserIconColor = iColorSelection;
             icu.iMaturityLevel = iMaturityLevel;

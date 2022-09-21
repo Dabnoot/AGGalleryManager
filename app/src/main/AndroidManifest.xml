@@ -12,7 +12,9 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activity_UserManagement"></activity>
+        <activity android:name=".Activity_UserSelection"
+            android:theme="@style/Theme.AppCompat.Dialog"/>
+        <activity android:name=".Activity_UserManagement" />
         <activity android:name=".Activity_Browser" />
         <activity android:name=".Activity_WorkerConsole" />
         <activity android:name=".Activity_LogViewer" />
@@ -55,10 +57,10 @@
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_ImportFilePreview" />
     </application>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -8,18 +9,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
 
 public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
 
-
+    public boolean gbSimplifiedView = false;
 
     public AdapterUserList(@NonNull Context context, int resource, @NonNull List<ItemClass_User> objects) {
         super(context, resource, objects);
@@ -37,7 +42,7 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
         }
 
         //Get user data for this row:
-        ItemClass_User icu = getItem(position);
+        final ItemClass_User icu = getItem(position);
 
         //Set the icon color:
         AppCompatImageView imageView_UserIcon = row.findViewById(R.id.imageView_UserIcon);
@@ -51,17 +56,23 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
 
         //Set the maturity rating code text for the readout:
         TextView textView_Maturity = row.findViewById(R.id.textView_Maturity);
-        String sMaturityCode = AdapterTagMaturityRatings.TAG_AGE_RATINGS[icu.iMaturityLevel][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX];
-        sMaturityCode = "(" + sMaturityCode + ")";
-        textView_Maturity.setText(sMaturityCode);
+        if(!gbSimplifiedView) {
+            String sMaturityCode = AdapterTagMaturityRatings.TAG_AGE_RATINGS[icu.iMaturityLevel][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX];
+            sMaturityCode = "(" + sMaturityCode + ")";
+            textView_Maturity.setText(sMaturityCode);
+        } else {
+            textView_Maturity.setVisibility(View.INVISIBLE);
+        }
 
         //Set text to indicate user is an admin (text does not change, only the visibility):
         TextView textView_Admin = row.findViewById(R.id.textView_Admin);
-        if(icu.bAdmin){
+        if(icu.bAdmin && !gbSimplifiedView){
             textView_Admin.setVisibility(View.VISIBLE);
         } else {
             textView_Admin.setVisibility(View.INVISIBLE);
         }
+
+
 
         //return super.getView(position, convertView, parent);
         return row;

@@ -7,7 +7,7 @@ import java.io.Serializable;
 public class ItemClass_User implements Serializable {
 
     public String sUserName = "";
-    public int iPin = -1;
+    public String sPin = ""; //Pin is a String, not an integer, because we do not perform math with a pin.
     public int iUserIconColor;
     public boolean bAdmin = false;
     public int iMaturityLevel = 0;

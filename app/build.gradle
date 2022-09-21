@@ -77,4 +77,7 @@ dependencies {
     //For Color Picker:
     implementation 'com.thebluealliance:spectrum:0.7.1'
 
+    //For image blurring, specifically to blur background for user selection popup:
+    implementation 'jp.wasabeef:blurry:4.0.1'
+
 }
