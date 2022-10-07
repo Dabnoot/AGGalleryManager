@@ -256,7 +256,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     float fsx1 = gImagePreview.getX();
                     float fsx2 = gImagePreview.getWidth();
                     float fXMidPoint = fsx1 + (fsx2 / 2f);
-                    float fTouchDeadband = fsx2 * .10f;
+                    float fTouchDeadband = fsx2 * .50f;
                     float fNavigateBackTapXLocation = fXMidPoint - fTouchDeadband;
                     float fNavigateNextTapXLocation = fXMidPoint + fTouchDeadband;
                     float fTapXLocation = e.getRawX();
