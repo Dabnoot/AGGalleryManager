@@ -220,7 +220,7 @@ public class Worker_LocalFileTransfer extends Worker {
                             .setContentText(sNotificationText)
                             .setPriority(NotificationCompat.PRIORITY_LOW)
                             .setOnlyAlertOnce(true) //Alert once and then update the notification silently.
-                            .setOngoing(true) //Prevents the user from swiping it off the notification area.
+                            .setOngoing(false) //Prevents the user from swiping it off the notification area.
                             .setProgress(100, 0, false);
                     giNotificationID = globalClass.iNotificationID;
                     globalClass.iNotificationID++;
@@ -414,17 +414,11 @@ public class Worker_LocalFileTransfer extends Worker {
                                             outputStream.write(buffer, 0, buffer.length);
                                             glProgressNumerator += lLoopBytesRead;
                                             iLoopCount++;
-                                            /*Thread.currentThread();
-                                            Thread.sleep(50);*/
-                                            if (giFileCount == 1) {
-                                                //Only update progress of single transfer if we are working with a single file.
-                                                //  Otherwise, the update frequency break between files causes the notification
-                                                //  to become an alerting notification, which may be jarring to the user.
-                                                if (iLoopCount % 10 == 0) {
-                                                    //Send update every 10 loops:
-                                                    UpdateProgressOutput(); //todo: Investigate. Large files make progressbar appear frozen.
-                                                }
+                                            if (iLoopCount % 10 == 0) {
+                                                //Send update every 10 loops:
+                                                UpdateProgressOutput();
                                             }
+
                                         }
                                         outputStream.flush();
                                         outputStream.close();
@@ -552,14 +546,18 @@ public class Worker_LocalFileTransfer extends Worker {
     }
 
     private Data UpdateProgressOutput(){
-        //Update the notification on the notification bar:
+
         int iProgressBarValue = Math.round((glProgressNumerator / (float) glProgressDenominator) * 100);
+
+
+        //Update the notification on the notification bar:
         //String sNotificationText = giFilesProcessed + "/" + giFileCount + " files " + gsMoveCopyPastTense + ".";
         String sNotificationText = giFilesProcessed + "/" + giFileCount + " files processed.";
         gNotificationBuilder.setContentText(sNotificationText)
-                            .setProgress(100, iProgressBarValue,false);
+                .setProgress(100, iProgressBarValue, false);
         gNotification = gNotificationBuilder.build();
         globalClass.notificationManager.notify(giNotificationID, gNotification);
+
 
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
