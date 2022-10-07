@@ -104,6 +104,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
     private int iVideoStreamSenseCount = 0;
     private int iMP4SenseCount = 0;
+    private int iWebmSenseCount = 0;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -202,7 +203,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     galsRequestedResources.add(sURL);
                 }
                 //if(bDebug) Log.d("shouldInterceptRequest", "Resource request: " + sURL);
-                if((sURL.contains("m3u8") || sURL.contains("mp4")) && !globalClass.gbWorkerVideoAnalysisInProgress
+                if((sURL.contains("m3u8") || sURL.contains("mp4") || sURL.contains("webm")) && !globalClass.gbWorkerVideoAnalysisInProgress
                         && !(globalClass.gbOptionSilenceActiveStreamListening && sURL.contains(".ts"))){
 
                     //Enter here if we detect a valid file
@@ -243,6 +244,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                                     ItemClass_VideoDownloadSearchKey vdsk;
                                     boolean bIsM3U8 = false;
                                     boolean bIsMP4 = false;
+                                    boolean bIsWebm = false;
                                     if(sURL.contains(".m3u8") && sURL.contains(".mp4")) {
                                         //It could be a URL with both mp4 and m3U8 in the file name.
                                         //Inconclusive case.
@@ -275,6 +277,8 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                                     } else if(sURL.contains(".mp4")) {
                                         //Contains MP4.
                                         bIsMP4 = true;
+                                    } else if(sURL.contains("webm")){
+                                        bIsWebm = true;
                                     }
                                     if(bIsM3U8){
                                         vdsk = new ItemClass_VideoDownloadSearchKey(VIDEO_DOWNLOAD_M3U8, null);
@@ -282,7 +286,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                                         vdsk.bMatchFound = true;
                                         //Add the VDSK to the WebDataLocator instance:
                                         globalClass.galWebVideoDataLocators.get(i).alVideoDownloadSearchKeys.add(vdsk);
-                                    } else if(bIsMP4){
+                                    } else if(bIsMP4 || bIsWebm){
                                         vdsk = new ItemClass_VideoDownloadSearchKey(VIDEO_DOWNLOAD_LINK, "", "");
                                         vdsk.sSearchStringMatchContent = sURL;
                                         vdsk.bMatchFound = true;
@@ -310,6 +314,10 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                             if (sURL.contains("mp4")) {
                                 iMP4SenseCount++;
                                 sAnnounce = sAnnounce + "Possible video mp4 (" + iMP4SenseCount + ") address intercepted.";
+                            }
+                            if (sURL.contains("webm")) {
+                                iWebmSenseCount++;
+                                sAnnounce = sAnnounce + "Possible video webm (" + iWebmSenseCount + ") address intercepted.";
                             }
                             if (!sAnnounce.equals("")) {
                                 Intent broadcastIntent_VideoWebDetectResponse = new Intent();
