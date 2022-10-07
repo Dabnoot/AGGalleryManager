@@ -230,12 +230,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     }
 
     public void recalcUserColor(){
-        if(optionsMenu != null) {
-            MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
-            if (!globalClass.gbGuestMode) {
-                setUserColor(menuItemLogin, globalClass.USER_COLOR_ADMIN);
-            } else {
-                setUserColor(menuItemLogin, globalClass.USER_COLOR_GUEST);
+        if(globalClass.gicuCurrentUser != null) {
+            if (optionsMenu != null) {
+                MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
+                setUserColor(menuItemLogin, globalClass.gicuCurrentUser.iUserIconColor);
             }
         }
     }
@@ -278,86 +276,31 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         //Display a message showing the name of the item selected.
-        int itemID = item.getItemId();
+        /*int itemID = item.getItemId();
 
         if(itemID == R.id.icon_login){
-            if(globalClass.gbGuestMode){
-                //If restrictions are on, ask for pin code before unlocking.
-                //Intent intentPinCodeAccessSettings = new Intent(this, Activity_PinCodePopup.class);
-                //startActivityForResult(intentPinCodeAccessSettings, Activity_PinCodePopup.START_ACTIVITY_FOR_RESULT_UNLOCK_RESTRICTED_TAGS);
 
-                if(!globalClass.gsPin.equals("")) { //If the user has specified a pin in the settings...
-                    //Ask for the pin before revealing restricted tags.
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
-
-                    // set the custom layout
-                    final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-                    builder.setView(customLayout);
-
-                    final AlertDialog adConfirmationDialog = builder.create();
-
-                    //Code action for the Cancel button:
-                    Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-                        @Override
-                        public void onClick(View view) {
-                            adConfirmationDialog.dismiss();
-                        }
-                    });
-
-                    //Code action for the OK button:
-                    Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
-                    button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
-                        @Override
-                        public void onClick(View view) {
-                            EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                            String sPinEntered = editText_DialogInput.getText().toString();
-
-                            if(sPinEntered.equals(globalClass.gsPin)){
-                                setUserColor(item, globalClass.USER_COLOR_ADMIN);
-                                unlockRestrictedTags();
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                            }
-
-                            adConfirmationDialog.dismiss();
-                        }
-                    });
-
-                    adConfirmationDialog.show();
-                } else {
-                    //If the user has NOT specified a pin in the settings...
-                    //Go ahead and reveal the restricted tags.
-                    setUserColor(item, globalClass.USER_COLOR_ADMIN);
-                    unlockRestrictedTags();
-                }
-
-
-
-            } else {
-                //If restrictions are off...
-                //Turn on restrictions, hide items, set icon to show lock symbol
-                globalClass.gbGuestMode = true;
-                setUserColor(item, globalClass.USER_COLOR_GUEST);
-                gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
-                //Repopulate the catalog list:
-                populate_RecyclerViewCatalogItems();
-            }
+            Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
+            startActivity(intentUserSelection); //todo: start activity for result.
+            setUserColor(item, globalClass.USER_COLOR_GUEST);
+            unlockRestrictedTags();
+            gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
+            populate_RecyclerViewCatalogItems();
 
         } else {
             return super.onOptionsItemSelected(item);
-        }
+        }*/
         return true;
     }
 
-    private void unlockRestrictedTags(){
+    /*private void unlockRestrictedTags(){
         //Show catalog items with restricted tags.
         //Set the flag:
         globalClass.gbGuestMode = false;
         gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
         //Repopulate the catalog list:
         populate_RecyclerViewCatalogItems();
-    }
+    }*/
 
 
     public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {

@@ -262,24 +262,33 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             }
 
             //Check to see if the record needs to be skipped due to restriction settings:
+            //todo: If SortAndFilter takes a long time, consider saving the minimum maturity tag rating
+            //      with the catalog item so that it doesn't have to be reprocessed every sort. Of course,
+            //      the item rating will have to be recalculated if the user changes the rating of a tag.
             boolean bIsRestricted = false;
-            if(globalClass.gbGuestMode) {
-                String sRecordTags = entry.getValue().sTags;
-                if(sRecordTags.length() > 0) {
-                    String[] saRecordTags = sRecordTags.split(",");
-                    for (String s : saRecordTags) {
-                        //if list of restricted tags contains this particular record tag, mark as restricted item:
-                        int iTagID;
-                        //String sErrorMessage;
-                        try {
-                            iTagID = Integer.parseInt(s);
-                        } catch (Exception e){
-                            //sErrorMessage = e.getMessage();
-                            continue;
-                        }
-                        ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(iTagID);
-                        if (ict != null) {
-                            if (ict.bIsRestricted) {
+
+            String sRecordTags = entry.getValue().sTags;
+            if(sRecordTags.length() > 0) {
+                String[] saRecordTags = sRecordTags.split(",");
+                for (String s : saRecordTags) {
+                    //if list of restricted tags contains this particular record tag, mark as restricted item:
+                    int iTagID;
+                    //String sErrorMessage;
+                    try {
+                        iTagID = Integer.parseInt(s);
+                    } catch (Exception e){
+                        //sErrorMessage = e.getMessage();
+                        continue;
+                    }
+                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(iTagID);
+                    if (ict != null) {
+                        if (globalClass.gicuCurrentUser != null) {
+                            if (ict.iTagAgeRating > globalClass.gicuCurrentUser.iMaturityLevel) {
+                                bIsRestricted = true;
+                                break;
+                            }
+                        } else {
+                            if (ict.iTagAgeRating > globalClass.giDefaultUserMaturityRating) {
                                 bIsRestricted = true;
                                 break;
                             }
@@ -287,6 +296,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                     }
                 }
             }
+
 
             if(!bIsRestricted){
                 boolean bIsMatch = true;

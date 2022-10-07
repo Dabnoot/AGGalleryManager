@@ -138,7 +138,7 @@ public class GlobalClass extends Application {
     public long glMinVideoDurationMSSelected = -1;
     public long glMaxVideoDurationMSSelected = -1;
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
-    public boolean gbGuestMode;
+    //public boolean gbGuestMode;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
     //public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;
     public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
@@ -161,12 +161,13 @@ public class GlobalClass extends Application {
 
     ArrayList<ItemClass_WebPageTabData> gal_WebPages;
 
-    public int USER_COLOR_ADMIN; //Used to set color of login/user icon used throughout the app.
-    public int USER_COLOR_GUEST;
+    /*public int USER_COLOR_ADMIN; //Used to set color of login/user icon used throughout the app.
+    public int USER_COLOR_GUEST;*/
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
-    public ItemClass_User gicuCurrentUser;
+    public ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
+    public int giDefaultUserMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_M; //todo: Setting - add to settings
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
@@ -997,7 +998,7 @@ public class GlobalClass extends Application {
         try {
             ict.iTagAgeRating = Integer.parseInt(sRecord[3]);
         } catch (Exception e){
-            ict.iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_HE; //Default to highest restricted age rating.
+            ict.iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_X; //Default to highest restricted age rating.
             ict.sTagText = "00TagFault_" + ict.sTagText;
         }
 
@@ -1433,7 +1434,7 @@ public class GlobalClass extends Application {
         }
     }
 
-    public TreeMap<Integer, ItemClass_Tag> getXrefTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs, boolean bCatalogTagsRestrictionsOn){
+    public TreeMap<Integer, ItemClass_Tag> getXrefTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs){
         //Get a histogram counting the tags that occur alongside tags found in aliTagIDs.
         //  Suppose the user selects tag ID 7, and wants to know what other tag IDs are frequently
         //  found alongside tag ID 7. This routine returns that list with frequency.
@@ -1442,8 +1443,15 @@ public class GlobalClass extends Application {
 
         ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
         for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-            if (entry.getValue().bIsRestricted) {
-                aliRestrictedTagIDs.add(entry.getValue().iTagID);
+            //if (entry.getValue().bIsRestricted) {
+            if(gicuCurrentUser != null) {
+                if (gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
+                    aliRestrictedTagIDs.add(entry.getValue().iTagID);
+                }
+            } else {
+                if (entry.getValue().iTagAgeRating > giDefaultUserMaturityRating) {
+
+                }
             }
         }
 
@@ -1459,8 +1467,8 @@ public class GlobalClass extends Application {
                 ArrayList<Integer> aliRestrictedTest = new ArrayList<>(aliRestrictedTagIDs);
                 aliRestrictedTest.retainAll(ci.aliTags);
                 boolean bContainsRestrictedTag = aliRestrictedTest.size() > 0;
-                if(bCatalogTagsRestrictionsOn && bContainsRestrictedTag) {
-                    //Don't add the tag if TagRestrictions are on and this catalog item contains a restricted tag.
+                if(bContainsRestrictedTag) {
+                    //Don't add the tag if this catalog item contains a tag restricted from this user.
                     continue;
                 }
                 for (int iCatalogItemTagID : ci.aliTags) {
@@ -1533,7 +1541,8 @@ public class GlobalClass extends Application {
                         JumbleStorageText(icu.sUserName) + "\t" +
                         JumbleStorageText(icu.sPin) + "\t" +
                         JumbleStorageText(icu.iUserIconColor) + "\t" +
-                        JumbleStorageText(icu.bAdmin);
+                        JumbleStorageText(icu.bAdmin) + "\t" +
+                        JumbleStorageText(icu.iMaturityLevel);
         return sUserRecord;
     }
 
@@ -1545,6 +1554,7 @@ public class GlobalClass extends Application {
         icu.sPin = JumbleStorageText(sRecordSplit[1]);
         icu.iUserIconColor = Integer.parseInt(JumbleStorageText(sRecordSplit[2]));
         icu.bAdmin = Boolean.parseBoolean(JumbleStorageText(sRecordSplit[3]));
+        icu.iMaturityLevel = Integer.parseInt(JumbleStorageText(sRecordSplit[4]));
         return icu;
     }
 

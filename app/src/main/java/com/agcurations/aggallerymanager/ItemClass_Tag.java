@@ -11,6 +11,11 @@ public class ItemClass_Tag implements Serializable {
     public Boolean bIsRestricted = false;
     public int iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_RP;
 
+    public String sTagPrivateToUser = "";   //If given a user name, this tag can only be seen by the user that created it.
+                                            // Security flaw - if the user is deleted and re-added,
+                                            // the individual recreating the user will be able to see the tags.
+                                            //todo.
+
     //Create a variable to be used to preserve the order in which items are selected.
     //  This is needed because the first tag may be used for special purposes.
     public int iSelectionOrder;

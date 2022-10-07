@@ -422,7 +422,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 //  to become an alerting notification, which may be jarring to the user.
                                                 if (iLoopCount % 10 == 0) {
                                                     //Send update every 10 loops:
-                                                    UpdateProgressOutput();
+                                                    UpdateProgressOutput(); //todo: Investigate. Large files make progressbar appear frozen.
                                                 }
                                             }
                                         }

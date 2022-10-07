@@ -165,10 +165,8 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             ArrayList<String[]> alsTemp = new ArrayList<>();
             for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
                 if(!(sESRBRating[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
-                        AdapterTagMaturityRatings.TAG_AGE_RATINGS[AdapterTagMaturityRatings.TAG_AGE_RATING_RP][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX])
-                || sESRBRating[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
-                        AdapterTagMaturityRatings.TAG_AGE_RATINGS[AdapterTagMaturityRatings.TAG_AGE_RATING_UR][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX]))) {
-                    //Don't add "rating pending" or "user restricted" ratings to the drop-down. Those are for tags only.
+                        AdapterTagMaturityRatings.TAG_AGE_RATINGS[AdapterTagMaturityRatings.TAG_AGE_RATING_RP][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX]))) {
+                    //Don't add "rating pending" to the drop-down. Those are for tags only.
                     alsTemp.add(sESRBRating);
                 }
             }

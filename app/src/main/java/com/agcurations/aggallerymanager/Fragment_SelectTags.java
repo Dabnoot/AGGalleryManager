@@ -110,70 +110,21 @@ public class Fragment_SelectTags extends Fragment {
         button_login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(globalClass.gbGuestMode){
-                    //If restrictions are on, ask for pin code before unlocking.
 
-                    if(getActivity() == null){
-                        return;
-                    }
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
+                /*Intent intentUserSelection = new Intent(getActivity().getApplicationContext(), Activity_UserSelection.class);
+                startActivity(intentUserSelection); //todo: start activity for result.
+                globalClass.gbCatalogViewerRefresh = true;
+                triggerParentActivityUserCheck();
+                setUserColor(globalClass.USER_COLOR_ADMIN);
+                initListViewData();
+                Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();*/
 
-                    // set the custom layout
-                    final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-                    builder.setView(customLayout);
-
-                    final AlertDialog adConfirmationDialog = builder.create();
-
-                    //Code action for the Cancel button:
-                    Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-                        @Override
-                        public void onClick(View view) {
-                            adConfirmationDialog.dismiss();
-                        }
-                    });
-
-                    //Code action for the OK button:
-                    Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
-                    button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
-                        @Override
-                        public void onClick(View view) {
-                            EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                            String sPinEntered = editText_DialogInput.getText().toString();
-
-                            if(sPinEntered.equals(globalClass.gsPin)){
-                                //Show catalog items with restricted tags.
-                                globalClass.gbGuestMode = false;
-                                globalClass.gbCatalogViewerRefresh = true;
-                                triggerParentActivityUserCheck();
-                                setUserColor(globalClass.USER_COLOR_ADMIN);
-
-                                initListViewData();
-                                Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                            }
-
-                            adConfirmationDialog.dismiss();
-                        }
-                    });
-
-                    adConfirmationDialog.show();
-
-
-                } else {
-                    //If restrictions are off...
-                    //Turn on restrictions, hide items, set icon to show lock symbol
-                    globalClass.gbGuestMode = true;
-                    globalClass.gbCatalogViewerRefresh = true;
-                    triggerParentActivityUserCheck();
-                    setUserColor(globalClass.USER_COLOR_GUEST);
-                    initListViewData();
-                    Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();
-                }
             }
         });
+
+
         recalcUserColor();
+
 
         Button button_UncheckTags = getView().findViewById(R.id.button_UncheckTags);
 
@@ -213,8 +164,9 @@ public class Fragment_SelectTags extends Fragment {
                         return;
                     }
 
-                    if (globalClass.gbGuestMode) {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
+                    if (!globalClass.gicuCurrentUser.bAdmin) {
+                        Toast.makeText(getActivity().getApplicationContext(), "Action requires admin credentials", Toast.LENGTH_SHORT).show();
+                        /*final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
 
                         // set the custom layout
                         final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
@@ -256,7 +208,7 @@ public class Fragment_SelectTags extends Fragment {
                             }
                         });
 
-                        adConfirmationDialog.show();
+                        adConfirmationDialog.show();*/
                     } else {
                         //If we are in Admin mode:
                         Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
@@ -363,10 +315,9 @@ public class Fragment_SelectTags extends Fragment {
     }
 
     public void recalcUserColor(){
-        if (!globalClass.gbGuestMode) {
-            setUserColor(globalClass.USER_COLOR_ADMIN);
-        } else {
-            setUserColor(globalClass.USER_COLOR_GUEST);
+        if(globalClass.gicuCurrentUser != null) {
+            //todo: re-evaluate this call. The user should be set at start and not change.
+            setUserColor(globalClass.gicuCurrentUser.iUserIconColor);
         }
     }
 
@@ -531,11 +482,22 @@ public class Fragment_SelectTags extends Fragment {
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
             ictNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
 
-            if(!(globalClass.gbGuestMode && ictNew.bIsRestricted)) {
-                //Don't add the tag if TagRestrictions are on and this is a restricted tag.
-                viewModel_fragment_selectTags.alTagsAll.add(ictNew);
-                if(ictNew.bIsChecked){
-                    alict_SelectedTagsViewModelReset.add(ictNew);
+            //if(!(globalClass.gbGuestMode && ictNew.bIsRestricted)) {
+            if(globalClass.gicuCurrentUser != null) {
+                if (globalClass.gicuCurrentUser.iMaturityLevel >= globalClass.giDefaultUserMaturityRating) {
+                    //Don't add the tag if the tag maturity rating is above the user's rating.
+                    viewModel_fragment_selectTags.alTagsAll.add(ictNew);
+                    if (ictNew.bIsChecked) {
+                        alict_SelectedTagsViewModelReset.add(ictNew);
+                    }
+                }
+            } else {
+                if (ictNew.iTagAgeRating > globalClass.giDefaultUserMaturityRating) {
+                    //Don't add the tag if the tag maturity rating is above a default rating.
+                    viewModel_fragment_selectTags.alTagsAll.add(ictNew);
+                    if (ictNew.bIsChecked) {
+                        alict_SelectedTagsViewModelReset.add(ictNew);
+                    }
                 }
             }
 
@@ -847,7 +809,7 @@ public class Fragment_SelectTags extends Fragment {
         private void updateXrefTagsHistogram(){
             //recalc cross-referenced tag histogram with the newly checked/unchecked item:
             TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram =
-                    globalClass.getXrefTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags, globalClass.gbGuestMode);
+                    globalClass.getXrefTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
 
             //Mark tags selected as appropriate:
             for(int iTagID: galiPreselectedTags){

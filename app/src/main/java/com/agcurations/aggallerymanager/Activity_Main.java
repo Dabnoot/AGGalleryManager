@@ -5,7 +5,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -24,7 +23,6 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -40,8 +38,8 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -62,6 +60,8 @@ public class Activity_Main extends AppCompatActivity {
     TextView gTextView_CatalogReadProgressBarText;
 
     boolean gbDataLoadComplete = false;
+
+    boolean bSingleUserInUse = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +89,14 @@ public class Activity_Main extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         //Get user listing right away:
+        //Clear the data:
+        /*{
+            Set<String> ssUserAccountData = new HashSet<>();
+            sharedPreferences.edit()
+                    .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountData)
+                    .apply();
+        }*/
+
         globalClass.galicu_Users = new ArrayList<>();
         Set<String> ssUserAccountData = sharedPreferences.getStringSet(GlobalClass.gsPreferenceName_UserAccountData, null);
 
@@ -99,7 +107,18 @@ public class Activity_Main extends AppCompatActivity {
                     ItemClass_User icu = GlobalClass.ConvertRecordStringToUserItem(sUserAccountDataRecord);
                     globalClass.galicu_Users.add(icu);
                 }
+                bSingleUserInUse = globalClass.galicu_Users.size() == 1;
+                if(bSingleUserInUse && globalClass.galicu_Users.get(0).sPin.equals("")){
+                    //If there is only one user and the pin is not set, log that user in.
+                    globalClass.gicuCurrentUser = globalClass.galicu_Users.get(0);
+                } else if(bSingleUserInUse && !globalClass.galicu_Users.get(0).sPin.equals("")){
+                    Toast.makeText(this, "Welcome guest", Toast.LENGTH_SHORT);
+                }
+            } else {
+                AddDefaultAdminUser(sharedPreferences);
             }
+        } else {
+            AddDefaultAdminUser(sharedPreferences);
         }
 
 
@@ -107,7 +126,7 @@ public class Activity_Main extends AppCompatActivity {
 
 
 
-        globalClass.gbGuestMode = sharedPreferences.getBoolean("hide_restricted_tags", false);
+        //globalClass.gbGuestMode = sharedPreferences.getBoolean("hide_restricted_tags", false);
 
 
 
@@ -148,7 +167,7 @@ public class Activity_Main extends AppCompatActivity {
         });
 
 
-        if(!GlobalClass.gbOptionUserAutoLogin){
+        if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
             //If the user has not set the option to auto-login a user, then show the user selection
             //  activity:
 
@@ -159,6 +178,26 @@ public class Activity_Main extends AppCompatActivity {
 
 
 
+    }
+
+    private void AddDefaultAdminUser(SharedPreferences sharedPreferences){
+        ItemClass_User icu_DefaultUser = new ItemClass_User();
+        icu_DefaultUser.sUserName = "Admin";
+        icu_DefaultUser.sPin = "";
+        icu_DefaultUser.bAdmin = true;
+        icu_DefaultUser.iUserIconColor = R.color.colorStatusBar;
+        icu_DefaultUser.iMaturityLevel = AdapterTagMaturityRatings.TAG_AGE_RATING_X;
+        globalClass.galicu_Users.add(icu_DefaultUser);
+        globalClass.gicuCurrentUser = icu_DefaultUser;
+        bSingleUserInUse = true;
+
+        //Add data to preferences:
+        String sUserRecord = GlobalClass.getUserAccountRecordString(icu_DefaultUser);
+        Set<String> ssUserAccountDataDefault = new HashSet<>();
+        ssUserAccountDataDefault.add(sUserRecord);
+        sharedPreferences.edit()
+                .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountDataDefault)
+                .apply();
     }
 
     private void AlertDialogTest2(){
@@ -303,16 +342,16 @@ public class Activity_Main extends AppCompatActivity {
     Menu optionsMenu;
     public boolean onCreateOptionsMenu(Menu menu) {
         optionsMenu = menu;
-        globalClass.USER_COLOR_ADMIN = ContextCompat.getColor(getApplicationContext(), R.color.colorStatusBar);
-        globalClass.USER_COLOR_GUEST = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+        /*globalClass.USER_COLOR_ADMIN = ContextCompat.getColor(getApplicationContext(), R.color.colorStatusBar);
+        globalClass.USER_COLOR_GUEST = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);*/
 
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_menu, menu);
 
-        if(!globalClass.gbGuestMode){
+        if(globalClass.gicuCurrentUser != null){
             MenuItem menuItemLogin = menu.findItem(R.id.icon_login);
             if(menuItemLogin != null){
-                setUserColor(menuItemLogin, globalClass.USER_COLOR_ADMIN);
+                setUserColor(menuItemLogin, globalClass.gicuCurrentUser.iUserIconColor);
             }
         }
 
@@ -340,7 +379,7 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        //Configure the AlertDialog that will gather the pin code if necessary to begin a particular behavior:
+        /*//Configure the AlertDialog that will gather the pin code if necessary to begin a particular behavior:
         final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
 
         // set the custom layout
@@ -357,9 +396,9 @@ public class Activity_Main extends AppCompatActivity {
                 adConfirmationDialog.dismiss();
             }
         });
-
         //Code action for the OK button:
-        Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+        */
+
 
         if((item.getItemId() == R.id.menu_UserManagement)
             || (item.getItemId() == R.id.menu_Settings)
@@ -367,7 +406,26 @@ public class Activity_Main extends AppCompatActivity {
             || (item.getItemId() == R.id.icon_login)){
 
             //Ask for pin code in order to allow access to feature if not admin:
-            if(globalClass.gbGuestMode && !globalClass.gsPin.equals("")) {
+            if (globalClass.gicuCurrentUser != null) {
+                if (!globalClass.gicuCurrentUser.bAdmin) {
+                    Toast.makeText(getApplicationContext(), "Feature requires admin credentials", Toast.LENGTH_SHORT).show();
+                } else {
+                    Intent intent = getMenuIntent(item);
+                    if (intent != null) {
+                        startActivity(intent);
+                    }
+                }
+            } else {
+                if(item.getItemId() == R.id.icon_login){
+                    //If the user has clicked the login icon, display the login screen:
+                    Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
+                    startActivity(intentUserSelection);
+                } else {
+                    Toast.makeText(getApplicationContext(), "Feature requires admin credentials", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            /*if(globalClass.gbGuestMode && !globalClass.gsPin.equals("")) {
                 button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -423,7 +481,7 @@ public class Activity_Main extends AppCompatActivity {
                         startActivity(intent);
                     }
                 }
-            }
+            }*/
         }
 
         if(item.getItemId() == R.id.menu_DatabaseBackup) {
@@ -454,10 +512,8 @@ public class Activity_Main extends AppCompatActivity {
         if(optionsMenu != null) {
             MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
             if (menuItemLogin != null) {
-                if (!globalClass.gbGuestMode) {
-                    setUserColor(menuItemLogin, globalClass.USER_COLOR_ADMIN);
-                } else {
-                    setUserColor(menuItemLogin, globalClass.USER_COLOR_GUEST);
+                if (globalClass.gicuCurrentUser != null) {
+                    setUserColor(menuItemLogin, globalClass.gicuCurrentUser.iUserIconColor);
                 }
             }
         }
