@@ -105,46 +105,20 @@ public class Fragment_SelectTags extends Fragment {
             return;
         }
 
-        //Process button_login:
-        Button button_login = getView().findViewById(R.id.button_login);
-        button_login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                /*Intent intentUserSelection = new Intent(getActivity().getApplicationContext(), Activity_UserSelection.class);
-                startActivity(intentUserSelection); //todo: start activity for result.
-                globalClass.gbCatalogViewerRefresh = true;
-                triggerParentActivityUserCheck();
-                setUserColor(globalClass.USER_COLOR_ADMIN);
-                initListViewData();
-                Toast.makeText(getActivity(), "Showing " + gListViewTagsAdapter.getCount() + " tags.", Toast.LENGTH_SHORT).show();*/
-
-            }
-        });
-
-
-        recalcUserColor();
-
-
         Button button_UncheckTags = getView().findViewById(R.id.button_UncheckTags);
-
-
 
         //Configure the button to start the tag editor:
         if (getView() == null) {
             return;
         }
-        Button button_TagEditor = getView().findViewById(R.id.button_TagEditor);
+        Button button_TagEdit = getView().findViewById(R.id.button_TagEdit);
 
         if(bOptionViewOnly) {
             //Hide the UncheckTags button:
             button_UncheckTags.setVisibility(View.INVISIBLE);
 
-            //Shrink down the TagEditor button space allocation since it is not to be used in this mode:
-            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) button_TagEditor.getLayoutParams();
-            layoutParams.height = 0;
-            layoutParams.setMargins(0, 0, 0, 0);
-            button_TagEditor.setLayoutParams(layoutParams);
+            //Hide the TagEditor button:
+            button_TagEdit.setVisibility(View.INVISIBLE);
 
         } else {
             button_UncheckTags.setOnClickListener(new View.OnClickListener() {
@@ -154,7 +128,7 @@ public class Fragment_SelectTags extends Fragment {
                     }
             });
 
-            button_TagEditor.setOnClickListener(new View.OnClickListener() {
+            button_TagEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     //Ask for pin code in order to allow access to the Tag Editor:
@@ -166,49 +140,7 @@ public class Fragment_SelectTags extends Fragment {
 
                     if (!globalClass.gicuCurrentUser.bAdmin) {
                         Toast.makeText(getActivity().getApplicationContext(), "Action requires admin credentials", Toast.LENGTH_SHORT).show();
-                        /*final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
 
-                        // set the custom layout
-                        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-                        builder.setView(customLayout);
-
-                        final AlertDialog adConfirmationDialog = builder.create();
-
-                        //Code action for the Cancel button:
-                        Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-                        button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                adConfirmationDialog.dismiss();
-                            }
-                        });
-
-                        //Code action for the OK button:
-                        Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
-                        button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                                String sPinEntered = editText_DialogInput.getText().toString();
-
-                                if (sPinEntered.equals(globalClass.gsPin)) {
-                                    globalClass.gbGuestMode = false;
-                                    globalClass.gbCatalogViewerRefresh = true;
-                                    triggerParentActivityUserCheck();
-                                    setUserColor(globalClass.USER_COLOR_ADMIN);
-
-                                    Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                                    intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
-                                    garlGetResultFromTagEditor.launch(intentTagEditor);
-                                } else {
-                                    Toast.makeText(getActivity(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                                }
-
-                                adConfirmationDialog.dismiss();
-                            }
-                        });
-
-                        adConfirmationDialog.show();*/
                     } else {
                         //If we are in Admin mode:
                         Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
@@ -307,28 +239,6 @@ public class Fragment_SelectTags extends Fragment {
 
     }
 
-    private void setUserColor(int iColor){
-        Drawable drawable = AppCompatResources.getDrawable(getActivity().getApplicationContext(), R.drawable.login).mutate();
-        drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
-        Button button_login = getView().findViewById(R.id.button_login);
-        button_login.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
-    }
-
-    public void recalcUserColor(){
-        if(globalClass.gicuCurrentUser != null) {
-            //todo: re-evaluate this call. The user should be set at start and not change.
-            setUserColor(globalClass.gicuCurrentUser.iUserIconColor);
-        }
-    }
-
-    private void triggerParentActivityUserCheck(){
-        Integer iUserChangedToggle = viewModel_fragment_selectTags.mldiUserChangedToggle.getValue();
-        if(iUserChangedToggle == null){
-            iUserChangedToggle = 0;
-        }
-        iUserChangedToggle++;
-        viewModel_fragment_selectTags.mldiUserChangedToggle.setValue(iUserChangedToggle);
-    }
 
     private void updateSuggestedTagDisplay(ArrayList<ItemClass_Tag> alTagSuggestions){
         //Get the text of the tags and display tag suggestions:
@@ -406,7 +316,7 @@ public class Fragment_SelectTags extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        recalcUserColor();
+        //recalcUserColor();
         initListViewData();
     }
 
