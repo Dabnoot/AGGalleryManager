@@ -285,8 +285,8 @@ public class Fragment_CatalogSort extends Fragment {
                 if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                     //Configure the rangeSlider to have discrete steps:
                     float fMaxPositionCount = globalClass.gtmVideoResolutions.size() - 1;
-                    rangeSlider_Resolution.setValueTo(fMaxPositionCount);
-                    rangeSlider_Resolution.setValues(0.0F, fMaxPositionCount);
+                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, fMaxPositionCount));
+                    rangeSlider_Resolution.setValues(0.0F, Math.max(1.0F, fMaxPositionCount));
                     rangeSlider_Resolution.setStepSize(1.0f);
                     rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
                         @NonNull
@@ -304,9 +304,9 @@ public class Fragment_CatalogSort extends Fragment {
                         }
                     });
                 } else if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                    rangeSlider_Resolution.setValueTo(globalClass.giMaxImageMegaPixels);
-                    rangeSlider_Resolution.setValues((float) globalClass.giMinImageMegaPixels,
-                            (float) globalClass.giMaxImageMegaPixels);
+                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, (float) globalClass.giMaxImageMegaPixels));
+                    rangeSlider_Resolution.setValues(Math.max(0.0F, (float) globalClass.giMinImageMegaPixels),
+                            Math.max(1.0F, (float) globalClass.giMaxImageMegaPixels));
                     rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
                         @NonNull
                         @Override
@@ -326,9 +326,9 @@ public class Fragment_CatalogSort extends Fragment {
                     if (textView_labelResolution != null) {
                         textView_labelResolution.setText("Comic page count:");
                     }
-                    rangeSlider_Resolution.setValueTo(globalClass.giMaxComicPageCount);
-                    rangeSlider_Resolution.setValues((float) globalClass.giMinComicPageCount,
-                            (float) globalClass.giMaxComicPageCount);
+                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, (float) globalClass.giMaxComicPageCount));
+                    rangeSlider_Resolution.setValues(Math.max(0.0F, (float) globalClass.giMinComicPageCount),
+                            Math.max(1.0F, (float) globalClass.giMaxComicPageCount));
                     rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
                         @NonNull
                         @Override
@@ -362,8 +362,8 @@ public class Fragment_CatalogSort extends Fragment {
 
                 RangeSlider rangeSlider_VideoDuration = getView().findViewById(R.id.rangeSlider_VideoDuration);
                 float fMaxMilliseconds = globalClass.glMaxVideoDurationMS;
-                rangeSlider_VideoDuration.setValueTo(fMaxMilliseconds);
-                rangeSlider_VideoDuration.setValues(0.0F, fMaxMilliseconds);
+                rangeSlider_VideoDuration.setValueTo(Math.max(1.0F, fMaxMilliseconds));
+                rangeSlider_VideoDuration.setValues(0.0F, Math.max(1.0F, fMaxMilliseconds));
                 rangeSlider_VideoDuration.setLabelFormatter(new LabelFormatter() {
                     @NonNull
                     @Override
@@ -532,7 +532,7 @@ public class Fragment_CatalogSort extends Fragment {
         button_Apply.setEnabled(false);
 
         if (getActivity() != null) {
-            ((Activity_CatalogViewer) getActivity()).closeDrawer();
+            ((Activity_CatalogViewer) getActivity()).CloseSortDrawer();
         }
     }
 
