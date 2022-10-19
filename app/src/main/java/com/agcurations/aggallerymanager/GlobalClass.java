@@ -134,7 +134,7 @@ public class GlobalClass extends Application {
     public int giMaxComicPageCount;
     public int giMinComicPageCountSelected = -1;
     public int giMaxComicPageCountSelected = -1;
-    public long glMaxVideoDurationMS = -1; //For the filter range slider.
+    public long glMaxVideoDurationMS = 1; //For the filter range slider.
     public long glMinVideoDurationMSSelected = -1;
     public long glMaxVideoDurationMSSelected = -1;
     public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
