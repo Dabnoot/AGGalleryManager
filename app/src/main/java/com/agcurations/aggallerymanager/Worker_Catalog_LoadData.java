@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Environment;
 import android.util.Log;
@@ -18,16 +17,13 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -98,6 +94,19 @@ public class Worker_Catalog_LoadData extends Worker {
                 }
             }
 
+            //Catalog Folder Structure:
+            for(int i = 0; i < 3; i++){
+                globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
+                obtainFolderStructureItem(globalClass.gfCatalogFolders[i]);
+                //Identify the CatalogContents.dat file:
+                globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfAppFolder + File.separator
+                        + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat");
+
+                //Identify the tags file for the catalog:
+                globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfAppFolder + File.separator
+                        + GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat");
+            }
+
             //Create image downloading temp holding folder if it does not exist:
 
             globalClass.gsImageDownloadHoldingFolderTempRPath = File.separator +
@@ -163,34 +172,6 @@ public class Worker_Catalog_LoadData extends Worker {
             sharedPreferences.edit()
                     .putString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, sLogsFolderPath + File.separator + GlobalClass.gsApplicationLogName)
                     .apply();
-
-            //Catalog Folder Structure:
-            for(int i = 0; i < 3; i++){
-                globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
-                obtainFolderStructureItem(globalClass.gfCatalogFolders[i]);
-                //Identify the CatalogContents.dat file:
-                /*globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "CatalogContents.dat");*/
-                globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfAppFolder + File.separator
-                        + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat");
-
-
-                //Identify the Logs folder for the catalog:
-                /*globalClass.gfCatalogLogsFolders[i] = new File(globalClass.gfCatalogFolders[i]
-                        + File.separator + "Logs");*/
-
-
-                //obtainFolderStructureItem(globalClass.gfCatalogLogsFolders[i]);
-
-                //Identify the tags file for the catalog:
-                /*globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "Tags.dat");*/
-                globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfAppFolder + File.separator
-                        + GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat");
-            }
-
-            //Attempt to read a pin number set by the user:
-            globalClass.gsPin = sharedPreferences.getString(GlobalClass.gsPinPreference, "");
 
         }
 
