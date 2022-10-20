@@ -70,8 +70,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     boolean gbWriteApplicationLog = false;
     String gsApplicationLogFilePath = "";
 
-    private DrawerLayout gDrawerLayout;
     private Fragment_CatalogSort gFragment_CatalogSort;
+    private Fragment_CatalogDataEditor gFragment_CatalogDataEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -149,30 +149,41 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             fragmentTransaction.commit();
         }
 
-        gDrawerLayout = findViewById(R.id.drawer_layout);
-        gDrawerLayout.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
-        gDrawerLayout.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
+        final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
+        drawer_layout_sort.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
+        drawer_layout_sort.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
             @Override
             public void run() {
-                closeDrawer();
+                drawer_layout_sort.closeDrawer(GravityCompat.START);
             }
         }, 1500);
 
-        ApplicationLogWriter("OnCreate End");
+        //Populate the CatalogDataEditor fragment:
+        if(gFragment_CatalogDataEditor == null) {
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            gFragment_CatalogDataEditor = new Fragment_CatalogDataEditor();
 
-        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
-        ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
-        //React to changes in the selected tag data in the ViewModel:
-        final Observer<Integer> userChangeToggleObserver = new Observer<Integer>() {
+            Bundle args = new Bundle();
+            args.putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, globalClass.giSelectedCatalogMediaCategory);
+            gFragment_CatalogDataEditor.setArguments(args);
+            fragmentTransaction.replace(R.id.fragment_Catalog_Data_Editor, gFragment_CatalogDataEditor);
+            fragmentTransaction.commit();
+        }
+
+        final DrawerLayout drawer_layout_data = findViewById(R.id.drawer_layout_data);
+        drawer_layout_data.openDrawer(GravityCompat.END); //Start the drawer open so that the user knows it's there.
+        drawer_layout_data.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
             @Override
-            public void onChanged(Integer iUserChangedToggle) {
-                recalcUserColor();
-                populate_RecyclerViewCatalogItems();
+            public void run() {
+                drawer_layout_data.closeDrawer(GravityCompat.END);
             }
-        };
-        viewModel_fragment_selectTags.mldiUserChangedToggle.observe(this, userChangeToggleObserver);
+        }, 1500);
 
-        //See additional initialization in onCreateOptionsMenu().
+        populate_RecyclerViewCatalogItems();
+
+
+    ApplicationLogWriter("OnCreate End");
+
     }
 
 
@@ -215,34 +226,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     }
 
-    Menu optionsMenu;
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        optionsMenu = menu;
-        getMenuInflater().inflate(R.menu.catalog_action_bar, menu);
-
-        recalcUserColor();
-
-        populate_RecyclerViewCatalogItems();
-
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    public void recalcUserColor(){
-        if(globalClass.gicuCurrentUser != null) {
-            if (optionsMenu != null) {
-                MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
-                setUserColor(menuItemLogin, globalClass.gicuCurrentUser.iUserIconColor);
-            }
-        }
-    }
-
-    private void setUserColor(MenuItem item, int iColor){
-        Drawable drawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login).mutate();
-        drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
-        item.setIcon(drawable);
-    }
 
     private Parcelable recyclerViewState;
     @Override
@@ -251,15 +235,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(gRecyclerView.getLayoutManager() != null) {
             recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
         }
-
         super.onPause();
     }
 
     @Override
     public void onResume(){
         super.onResume();
-
-        recalcUserColor();
 
         //Attempt to restore the state, ie scroll position, of the recyclerView:
         if(gRecyclerView.getLayoutManager() != null) {
@@ -276,31 +257,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(final MenuItem item) {
         //Display a message showing the name of the item selected.
-        /*int itemID = item.getItemId();
-
-        if(itemID == R.id.icon_login){
-
-            Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
-            startActivity(intentUserSelection); //todo: start activity for result.
-            setUserColor(item, globalClass.USER_COLOR_GUEST);
-            unlockRestrictedTags();
-            gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
-            populate_RecyclerViewCatalogItems();
-
-        } else {
-            return super.onOptionsItemSelected(item);
-        }*/
-        return true;
+        return super.onOptionsItemSelected(item);
     }
 
-    /*private void unlockRestrictedTags(){
-        //Show catalog items with restricted tags.
-        //Set the flag:
-        globalClass.gbGuestMode = false;
-        gFragment_CatalogSort.gFragment_selectTags.recalcUserColor();
-        //Repopulate the catalog list:
-        populate_RecyclerViewCatalogItems();
-    }*/
+    public void CloseSortDrawer(){
+        final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
+        drawer_layout_sort.closeDrawer(GravityCompat.START);
+    }
 
 
     public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {
@@ -859,9 +822,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     }
 
 
-    public void closeDrawer(){
-        gDrawerLayout.closeDrawer(GravityCompat.START);
-    }
+
 
 
 }
