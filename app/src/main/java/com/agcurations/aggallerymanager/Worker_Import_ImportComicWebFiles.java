@@ -6,18 +6,15 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Log;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -67,15 +64,18 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ci.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
 
 
-        File fDestination = new File(
-                globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
-                        ci.sFolder_Name);
+        DocumentFile dfDestinationFolder =
+                globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(ci.sFolder_Name);
 
 
-        if (!fDestination.exists()) {
-            if (!fDestination.mkdir()) {
+        if (dfDestinationFolder == null) {
+            dfDestinationFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].createDirectory(ci.sFolder_Name);
+
+            if (dfDestinationFolder == null) {
                 //Unable to create directory
-                globalClass.BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                String sMessage = "Unable to create destination folder " +  ci.sFolder_Name + " at: "
+                        + globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getUri() + "\n";
+                globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         gsIntentActionFilter);
@@ -83,13 +83,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder created: " + dfDestinationFolder.getUri() + "\n",
                         false, iProgressBarValue,
                         false, "",
                         gsIntentActionFilter);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + dfDestinationFolder.getUri() + "\n",
                     true, iProgressBarValue,
                     false, "",
                     gsIntentActionFilter);
@@ -141,7 +141,6 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
             OutputStream output = null;
             try {
 
-                String sComicDownloadFolder = "";
                 ArrayList<Long> allDownloadIDs = new ArrayList<>();
                 DownloadManager downloadManager = null;
                 if(globalClass.gbUseDownloadManager){
@@ -149,6 +148,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 }
                 //Download the files:
                 int FILE_DOWNLOAD_ADDRESS = 0;
+                String sDownloadManagerDownloadFolder = "";
                 for(ItemClass_File icf: alFileList) {
 
                     String sNewFilename = ci.sItemID + "_" + icf.sFileOrFolderName;
@@ -165,95 +165,48 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                     }
 
 
-                    if(!globalClass.gbUseDownloadManager) {
-                        String sNewFullPathFilename = fDestination.getPath() +
-                                File.separator + GlobalClass.gsDLTempFolderName + File.separator + //Use DL folder name to allow move to a different folder after download.
-                                sJumbledNewFileName;
-                        File fNewFile = new File(sNewFullPathFilename);
 
-                        if(!fNewFile.exists()) {
+                    DocumentFile dfNewFile = dfDestinationFolder.findFile(sJumbledNewFileName);
 
-                            // Output stream
-                            output = new FileOutputStream(fNewFile.getPath());
+                    if(dfNewFile == null) {
 
-                            byte[] data = new byte[1024];
+                        globalClass.BroadcastProgress(true, "Initiating download of file: " + icf.sURL + "...",
+                                false, iProgressBarValue,
+                                true, "Submitting download requests...",
+                                gsIntentActionFilter);
 
-                            globalClass.BroadcastProgress(true, "Downloading: " + icf.sURL + "...",
-                                    false, iProgressBarValue,
-                                    true, "Downloading files...",
-                                    gsIntentActionFilter);
+                        //Use the download manager to download the file:
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(icf.sURL));
+                        /*request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
+                                .setDescription("Comic ID " + ci.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                                //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                                //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                                //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                                .setMimeType("application/octet-stream")
+                                .setDestinationUri(Uri.fromFile(fNewFile));*/
+                        //The above method no longer works as of Android 11 API level 30, One UI version 3.1.
 
-                            URL url = new URL(icf.sURL);
-                            URLConnection connection = url.openConnection();
-                            connection.connect();
+                        String sDownloadFolderRelativePath;
+                        sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS] +
+                                File.separator + ci.sFolder_Name;
+                        sDownloadManagerDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                                sDownloadFolderRelativePath;
+                        request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ci.sItemID)
+                                .setDescription("Comic ID " + ci.sItemID + "; " + icf.sURL)
+                                //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                                //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                                //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                                .setMimeType("application/octet-stream")
+                                .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, sJumbledNewFileName);
 
-                            // download the file
-                            input = new BufferedInputStream(url.openStream(), 8192);
+                        long lDownloadID = downloadManager.enqueue(request);
+                        allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
 
-                            int count;
-                            while ((count = input.read(data)) != -1) {
-
-                                // writing data to file
-                                output.write(data, 0, count);
-                            }
-
-                            // flushing output
-                            output.flush();
-
-                            // closing streams
-                            output.close();
-                            input.close();
-
-                        }
-
-
+                    }
 
 
-                    } else { //If bUseDownloadManager....
-
-                        String sNewFullPathFilename = fDestination.getPath() + File.separator +
-                                sJumbledNewFileName;
-                        File fNewFile = new File(sNewFullPathFilename);
-
-                        if(!fNewFile.exists()) {
-
-                            globalClass.BroadcastProgress(true, "Initiating download of file: " + icf.sURL + "...",
-                                    false, iProgressBarValue,
-                                    true, "Submitting download requests...",
-                                    gsIntentActionFilter);
-
-                            //Use the download manager to download the file:
-                            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(icf.sURL));
-                            /*request.setTitle("AG Gallery+ File Download: " + "Comic ID " + ci.sItemID)
-                                    .setDescription("Comic ID " + ci.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
-                                    //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-                                    //Set to equivalent of binary file so that Android MediaStore will not try to index it,
-                                    //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
-                                    .setMimeType("application/octet-stream")
-                                    .setDestinationUri(Uri.fromFile(fNewFile));*/
-                            //The above method no longer works as of Android 11 API level 30, One UI version 3.1.
-
-                            String sDownloadFolderRelativePath;
-                            sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS] +
-                                    File.separator + ci.sFolder_Name;
-                            sComicDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                                    sDownloadFolderRelativePath;
-                            request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ci.sItemID)
-                                    .setDescription("Comic ID " + ci.sItemID + "; " + icf.sURL)
-                                    //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-                                    //Set to equivalent of binary file so that Android MediaStore will not try to index it,
-                                    //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
-                                    .setMimeType("application/octet-stream")
-                                    .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, sJumbledNewFileName);
-
-                            long lDownloadID = downloadManager.enqueue(request);
-                            allDownloadIDs.add(lDownloadID); //Record the download ID so that we can check to see if it is completed via the worker.
-
-                        }
-
-                    } //End if bUseDownloadManager.
 
                     lProgressNumerator++;
 
@@ -278,9 +231,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                     //todo: mimic video downloadID logic. See video download routine.
 
                     //Build-out data to send to the worker:
+                    String sCallerID = "Worker_Import_ImportComicWebFiles:doWork()";
                     Data dataComicDownloadPostProcessor = new Data.Builder()
-                            .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sComicDownloadFolder)
-                            .putString(Worker_ComicPostProcessing.KEY_ARG_WORKING_FOLDER, fDestination.getAbsolutePath())
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
+                            .putString(Worker_ComicPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, dfDestinationFolder.getName())
+                            .putInt(Worker_ComicPostProcessing.KEY_ARG_MEDIA_CATEGORY, ci.iMediaCategory)
                             .putLongArray(Worker_ComicPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                             .putString(Worker_ComicPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
                             .build();

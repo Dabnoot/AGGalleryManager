@@ -1,11 +1,11 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -19,8 +19,6 @@ import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.File;
 
 
 public class Fragment_LogViewer_0_FileList extends Fragment {
@@ -77,10 +75,10 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
                     }
 
                     if(logListCustomAdapter != null) {
-                        for (int i = 0; i < logListCustomAdapter.fLogFiles.length; i++) {
+                        for (int i = 0; i < logListCustomAdapter.dfLogFiles.length; i++) {
                             if (logListCustomAdapter.bRowSelected[i]) {
-                                if (!logListCustomAdapter.fLogFiles[i].delete()) {
-                                    Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + logListCustomAdapter.fLogFiles[i].getName(), Toast.LENGTH_SHORT).show();
+                                if (!logListCustomAdapter.dfLogFiles[i].delete()) {
+                                    Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + logListCustomAdapter.dfLogFiles[i].getName(), Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }
@@ -99,7 +97,7 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
                     return;
                 }
                 if(logListCustomAdapter != null) {
-                    for (int i = 0; i < logListCustomAdapter.fLogFiles.length; i++) {
+                    for (int i = 0; i < logListCustomAdapter.dfLogFiles.length; i++) {
                         logListCustomAdapter.bRowSelected[i] = ((CheckBox) view).isChecked();
                     }
                     logListCustomAdapter.notifyDataSetChanged();
@@ -115,49 +113,49 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             return;
         }
 
-        File[] fLogFiles = globalClass.gfLogsFolder.listFiles();
-        if(fLogFiles != null) {
-            logListCustomAdapter = new LogListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, fLogFiles);
-            ListView listView_LogFiles = getView().findViewById(R.id.listView_LogFiles);
-            listView_LogFiles.setAdapter(logListCustomAdapter);
+        DocumentFile[] dfLogFiles = globalClass.gdfLogsFolder.listFiles();
 
-            TextView textView_NotificationNoLogFiles = getView().findViewById(R.id.textView_NotificationNoLogFiles);
-            if(textView_NotificationNoLogFiles != null) {
-                if (fLogFiles.length > 0) {
-                    textView_NotificationNoLogFiles.setVisibility(View.INVISIBLE);
-                } else {
-                    textView_NotificationNoLogFiles.setVisibility(View.VISIBLE);
-                    if (bItemsDeletedFlag){
-                        //If items were just deleted and now the list of files is empty, wait a moment
-                        // and then end this activity.
-                        Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(getActivity() instanceof Activity_LogViewer) {
-                                    getActivity().finish();
-                                }
+        logListCustomAdapter = new LogListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, dfLogFiles);
+        ListView listView_LogFiles = getView().findViewById(R.id.listView_LogFiles);
+        listView_LogFiles.setAdapter(logListCustomAdapter);
+
+        TextView textView_NotificationNoLogFiles = getView().findViewById(R.id.textView_NotificationNoLogFiles);
+        if(textView_NotificationNoLogFiles != null) {
+            if (dfLogFiles.length > 0) {
+                textView_NotificationNoLogFiles.setVisibility(View.INVISIBLE);
+            } else {
+                textView_NotificationNoLogFiles.setVisibility(View.VISIBLE);
+                if (bItemsDeletedFlag){
+                    //If items were just deleted and now the list of files is empty, wait a moment
+                    // and then end this activity.
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(getActivity() instanceof Activity_LogViewer) {
+                                getActivity().finish();
                             }
-                        }, 2000);
-                    }
-
+                        }
+                    }, 2000);
                 }
-            }
 
+            }
         }
+
+
         bItemsDeletedFlag = false;
     }
 
 
 
-    public class LogListCustomAdapter extends ArrayAdapter<File> {
+    public class LogListCustomAdapter extends ArrayAdapter<DocumentFile> {
 
-        File[] fLogFiles;
+        DocumentFile[] dfLogFiles;
         boolean[] bRowSelected;
 
-        public LogListCustomAdapter(@NonNull Context context, int resource, @NonNull File[] objects) {
+        public LogListCustomAdapter(@NonNull Context context, int resource, @NonNull DocumentFile[] objects) {
             super(context, resource, objects);
-            fLogFiles = objects;
+            dfLogFiles = objects;
             bRowSelected = new boolean[objects.length];
         }
 
@@ -185,13 +183,13 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
                 }
             });
 
-            String sFileName = fLogFiles[position].getName();
+            String sFileName = dfLogFiles[position].getName();
             textView_Line1.setText(sFileName);
 
             button_View.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    viewModel_fragment_logViewer.fLogFile = fLogFiles[position];
+                    viewModel_fragment_logViewer.dfLogFile = dfLogFiles[position];
 
                     Activity_LogViewer activity_logViewer = (Activity_LogViewer) getActivity();
                     if(activity_logViewer != null){

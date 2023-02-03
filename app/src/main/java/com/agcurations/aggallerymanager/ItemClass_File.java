@@ -36,7 +36,7 @@ public class ItemClass_File implements Serializable {
     public final static int COMIC_PAGE_ID_BLOCK_COUNT_OK = 0;
     public final static int COMIC_PAGE_ID_BLOCK_COUNT_INCONSISTENT = 1;
     public final static int COMIC_PAGE_ID_BLOCK_COUNT_SKIPS_PAGES = 2;
-    public String sUriParent = "";       //Folder source for grouping comic pages during import.
+    public String sUriParent = "";       //Folder source for grouping comic pages during import. Also supports DocumentsContract.Move operations.
     public String sUriThumbnailFile = ""; //For use by the comic folder ItemClass_File.
     public String sURL = "";              //For use during web-import.
     public String sPageCount = "";

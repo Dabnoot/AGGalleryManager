@@ -11,8 +11,8 @@ import java.io.File;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
-import androidx.work.ListenableWorker;
 
 
 public class Fragment_Import_0b_ImageSource extends Fragment {
@@ -54,32 +54,45 @@ public class Fragment_Import_0b_ImageSource extends Fragment {
 
         //todo: Determine the number of files in the holding folder and adjust the radiobutton text to show file count.
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-        File[] fImageHoldingFolderFiles = globalClass.gfImageDownloadHoldingFolder.listFiles();
-        if(fImageHoldingFolderFiles != null){
-            int iFileCount = fImageHoldingFolderFiles.length;
-            RadioButton radioButton_ImageSourceHoldingFolder = getView().findViewById(R.id.radioButton_ImageSourceHoldingFolder);
-            RadioGroup radioGroup_ImageSource = getView().findViewById(R.id.radioGroup_ImageSource);
-            ViewGroup.LayoutParams vglp = radioGroup_ImageSource.getLayoutParams();
-            if(iFileCount > 0){
-                String sText = "Internal holding folder (" + iFileCount;
-                if(iFileCount == 1) {
-                    sText = sText + " file)";
-                } else {
-                    sText = sText + " files)";
-                }
-                radioButton_ImageSourceHoldingFolder.setText(sText);
-                radioButton_ImageSourceHoldingFolder.setVisibility(View.VISIBLE);
-                int iNewHeight = globalClass.ConvertDPtoPX(140);
-                radioGroup_ImageSource.getLayoutParams().height = iNewHeight;
-                radioGroup_ImageSource.requestLayout();
-            } else {
-                radioButton_ImageSourceHoldingFolder.setVisibility(View.INVISIBLE);
-                int iNewHeight = globalClass.ConvertDPtoPX(90);
-                radioGroup_ImageSource.getLayoutParams().height = iNewHeight;
-                radioGroup_ImageSource.requestLayout();
-            }
+        DocumentFile[] dfImageHoldingFolderFiles = globalClass.gdfImageDownloadHoldingFolder.listFiles();
 
+        int iFileCount = 0;
+
+        for(DocumentFile df: dfImageHoldingFolderFiles){
+            if(df.isFile()){
+                if(df.getName() != null){
+                    String sFilename = df.getName();
+                    String sExtension = sFilename.substring(sFilename.lastIndexOf("."));
+                    if(!sExtension.equals(".txt")){
+                        iFileCount++;
+                    }
+                }
+            }
         }
+
+        RadioButton radioButton_ImageSourceHoldingFolder = getView().findViewById(R.id.radioButton_ImageSourceHoldingFolder);
+        RadioGroup radioGroup_ImageSource = getView().findViewById(R.id.radioGroup_ImageSource);
+        ViewGroup.LayoutParams vglp = radioGroup_ImageSource.getLayoutParams();
+        if(iFileCount > 0){
+            String sText = "Internal holding folder (" + iFileCount;
+            if(iFileCount == 1) {
+                sText = sText + " file)";
+            } else {
+                sText = sText + " files)";
+            }
+            radioButton_ImageSourceHoldingFolder.setText(sText);
+            radioButton_ImageSourceHoldingFolder.setVisibility(View.VISIBLE);
+            int iNewHeight = globalClass.ConvertDPtoPX(140);
+            radioGroup_ImageSource.getLayoutParams().height = iNewHeight;
+            radioGroup_ImageSource.requestLayout();
+        } else {
+            radioButton_ImageSourceHoldingFolder.setVisibility(View.INVISIBLE);
+            int iNewHeight = globalClass.ConvertDPtoPX(90);
+            radioGroup_ImageSource.getLayoutParams().height = iNewHeight;
+            radioGroup_ImageSource.requestLayout();
+        }
+
+
 
 
 

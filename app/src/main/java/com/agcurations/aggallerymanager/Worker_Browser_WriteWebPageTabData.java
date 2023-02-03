@@ -1,12 +1,18 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
+import android.util.Log;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
+import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -58,11 +64,13 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
 
 
         //Update the webpage tab data file:
-        File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
-        if(fWebPageTabDataFile == null) return Result.failure();
+        DocumentFile dfWebPageTabDataFile = globalClass.gdfWebpageTabDataFile;
+        if(dfWebPageTabDataFile == null) return Result.failure();
 
         //Re-write the data file completely because all of the indexes have changed:
         try {
+
+            String sMessage;
 
             StringBuilder sbBuffer = new StringBuilder();
 
@@ -77,14 +85,22 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             }
 
             //Write the data to the file:
-            FileWriter fwNewWebPageStorageFile = new FileWriter(fWebPageTabDataFile, false);
+            OutputStream osNewWebPageStorageFile = GlobalClass.gcrContentResolver.openOutputStream(dfWebPageTabDataFile.getUri(), "wt");
+            if(osNewWebPageStorageFile == null){
+                sMessage = "Could not open output stream to webpage tab data file.";
+                return Result.failure(DataErrorMessage(sMessage));
+            }
+            BufferedWriter bwNewWebPageStorageFile = new BufferedWriter(new OutputStreamWriter(osNewWebPageStorageFile));
             String sBuffer = sbBuffer.toString();
-            if(sBuffer == null || sBuffer.equals("")){
+            if(sBuffer.equals("")){
                 sBuffer = "No tabs present due to call from " + gsCallerID + ".";
             }
-            fwNewWebPageStorageFile.write(sBuffer);
-            fwNewWebPageStorageFile.flush();
-            fwNewWebPageStorageFile.close();
+            bwNewWebPageStorageFile.write(sBuffer);
+            Log.d("Worker_Browser_WriteWebPageTabData", "Writing Data: " + sBuffer);
+            bwNewWebPageStorageFile.flush();
+            bwNewWebPageStorageFile.close();
+            osNewWebPageStorageFile.flush();
+            osNewWebPageStorageFile.close();
 
         } catch (Exception e) {
             globalClass.problemNotificationConfig( e.getMessage(),
@@ -97,7 +113,11 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
         return Result.success();
     }
 
-
+    private Data DataErrorMessage(String sMessage){
+        return new Data.Builder()
+                .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
+                .build();
+    }
 
 
 

@@ -8,8 +8,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -66,16 +67,22 @@ public class Fragment_WorkerConsole_1_Worker_Details extends Fragment {
             return;
         }
 
-        if(viewModel_fragment_workerConsole.fJobFile != null) {
-            String sFileName = viewModel_fragment_workerConsole.fJobFile.getName();
+        if(viewModel_fragment_workerConsole.dfJobFile != null) {
+            String sFileName = viewModel_fragment_workerConsole.dfJobFile.getName();
             getActivity().setTitle(sFileName);
 
-            String sLogFileAbsolutePath = viewModel_fragment_workerConsole.fJobFile.getAbsolutePath();
+            String sMessage;
 
             //Get data from file:
-            BufferedReader brReader;
+
             try {
-                brReader = new BufferedReader(new FileReader(sLogFileAbsolutePath));
+                InputStream isLogFile = GlobalClass.gcrContentResolver.openInputStream(viewModel_fragment_workerConsole.dfJobFile.getUri());
+                if(isLogFile == null){
+                    sMessage = "Problem opening log file: " + viewModel_fragment_workerConsole.dfJobFile.getUri();
+                    Toast.makeText(getActivity(), sMessage, Toast.LENGTH_LONG).show();
+                    return;
+                }
+                BufferedReader brReader = new BufferedReader(new InputStreamReader(isLogFile));
                 StringBuilder sb = new StringBuilder();
                 String sLine = brReader.readLine();
                 while (sLine != null) {
@@ -84,11 +91,12 @@ public class Fragment_WorkerConsole_1_Worker_Details extends Fragment {
                     sLine = brReader.readLine();
                 }
                 brReader.close();
+                isLogFile.close();
                 textView_JobText.setText(sb.toString());
 
             } catch (IOException e) {
-                String sFailureMessage = "Problem reading log file: " + sLogFileAbsolutePath;
-                Toast.makeText(getActivity(), sFailureMessage, Toast.LENGTH_LONG).show();
+                sMessage = "Problem reading log file: " + viewModel_fragment_workerConsole.dfJobFile.getUri();
+                Toast.makeText(getActivity(), sMessage, Toast.LENGTH_LONG).show();
             }
         }
     }

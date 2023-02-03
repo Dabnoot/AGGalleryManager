@@ -1,7 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import android.Manifest;
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -36,10 +36,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Fragment_Import_1_StorageLocation extends Fragment {
@@ -234,7 +230,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         } else {
             globalClass.gbImportHoldingFolderAnalysisAutoStart = false;
             //If the user has selected to import from the holding folder, move forward with processing.
-            String sHoldingFolderPath = globalClass.gfImageDownloadHoldingFolder.getPath();
+            String sHoldingFolderPath = globalClass.gdfImageDownloadHoldingFolder.getUri().toString();
             ShowFolderAnalysisViews(sHoldingFolderPath);
 
             globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
@@ -249,6 +245,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     ActivityResultLauncher<Intent> garlGetImportFolder = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
+                @SuppressLint("WrongConstant")
                 @Override
                 public void onActivityResult(ActivityResult result) {
                     // look for permissions before executing operations.

@@ -6,8 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
@@ -15,6 +14,7 @@ import com.bumptech.glide.Glide;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -54,6 +54,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     TextView gtextView_ComicDetailsLog;
 
+    DocumentFile gdfComicFolder = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,9 +73,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
         //Get the item ID:
         gsComicItemID = intent.getStringExtra(EXTRA_CATALOG_ITEM_ID);
 
-
-
         if( gsComicItemID == null) return;
+
+
+        gdfComicFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(gsComicItemID);
+        if(gdfComicFolder == null) return;
 
         gtextView_ComicDetailsLog = findViewById(R.id.textView_ComicDetailsLog);
         gtextView_ComicDetailsLog.setMovementMethod(new ScrollingMovementMethod());
@@ -104,77 +108,64 @@ public class Activity_ComicDetails extends AppCompatActivity {
             }
         }
 
-        String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
-        String sComicFolderPath;
-        sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                + gciCatalogItem.sFolder_Name;
-        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
-            //If this is a downloaded comic and the files from DownloadManager have not been moved as
-            //  part of download post-processing, look in the [comic]\download folder for the files:
-            sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                    + gciCatalogItem.sFolder_Name + File.separator
-                    + GlobalClass.gsDLTempFolderName + File.separator;
-        }
+        DocumentFile dfComicFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(gciCatalogItem.sFolder_Name);
+        if(dfComicFolder != null) {
 
-        //Load the full path to each comic page into tmComicPages:
-        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
-            //If this is a downloaded comic and the files from DownloadManager have not been moved as
-            //  part of download post-processing, look in the [comic]\download folder for the files:
-            sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                    + gciCatalogItem.sFolder_Name + File.separator
-                    + GlobalClass.gsDLTempFolderName + File.separator;
-        }
-        File fComicFolder = new File(sComicFolderPath);
-        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
-        if(fComicFolder.exists()){
-            File[] fComicPages = fComicFolder.listFiles();
-            if(fComicPages != null) {
-                for (File fComicPage : fComicPages) {
-                    if(fComicPage.isFile()) {
-                        tmSortByFileName.put(GlobalClass.JumbleFileName(fComicPage.getName()), fComicPage.getAbsolutePath());
+            if (gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
+                //If this is a downloaded comic and the files from DownloadManager have not been moved as
+                //  part of download post-processing, look in the [comic]\download folder for the files:
+                dfComicFolder = dfComicFolder.findFile(GlobalClass.gsDLTempFolderName);
+            }
+
+            //Load the full path to each comic page into tmComicPages:
+            TreeMap<String, String> tmSortByFileName = new TreeMap<>();
+            if (dfComicFolder != null) {
+                DocumentFile[] dfComicPages = dfComicFolder.listFiles();
+                if (dfComicPages.length > 0) {
+                    for (DocumentFile dfComicPage : dfComicPages) {
+                        if (dfComicPage.isFile() && dfComicPage.getName() != null) {
+                            tmSortByFileName.put(GlobalClass.JumbleFileName(dfComicPage.getName()), dfComicPage.getName());
+                        }
+                    }
+                }
+
+                if (tmSortByFileName.size() == 0) {
+                    gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
+                    String sMessage = "No comic files found in folder at: " + dfComicFolder.getUri() + "\n";
+                    sMessage = sMessage + "Comic source: " + gciCatalogItem.sSource + "\n";
+                    gtextView_ComicDetailsLog.setText(sMessage);
+                    gtextView_ComicDetailsLog.bringToFront();
+                } else {
+                    gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
+                    gtextView_ComicDetailsLog.setText("");
+                    gciCatalogItem.iFile_Count = dfComicPages.length; //update the comic file count. Files may have been downloaded, deleted, etc.
+
+                    if (!gciCatalogItem.sComic_Missing_Pages.equals("")) {
+                        String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
+                        //Check to see if this comic is missing any pages:
+                        gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
+                        if (!sMissingPages.equals(gciCatalogItem.sComic_Missing_Pages)) {
+                            //Update the catalog file with the new record of missing pages:
+                            globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                        }
+                        globalClass.gbCatalogViewerRefresh = true;
                     }
                 }
             }
 
-            if(tmSortByFileName.size() == 0) {
-                gtextView_ComicDetailsLog.setVisibility(View.VISIBLE);
-                String sMessage = "No comic files found in folder at: " + fComicFolder.getAbsolutePath() + "\n";
-                sMessage = sMessage  + "Comic source: " + gciCatalogItem.sSource + "\n";
-                gtextView_ComicDetailsLog.setText(sMessage);
-                gtextView_ComicDetailsLog.bringToFront();
-            } else {
-                gtextView_ComicDetailsLog.setVisibility(View.INVISIBLE);
-                gtextView_ComicDetailsLog.setText("");
-                gciCatalogItem.iFile_Count = fComicPages.length; //update the comic file count. Files may have been downloaded, deleted, etc.
 
-                if(!gciCatalogItem.sComic_Missing_Pages.equals("")) {
-                    String sMissingPages = gciCatalogItem.sComic_Missing_Pages;
-                    //Check to see if this comic is missing any pages:
-                    gciCatalogItem = globalClass.analyzeComicReportMissingPages(gciCatalogItem);
-                    if(!sMissingPages.equals(gciCatalogItem.sComic_Missing_Pages)){
-                        //Update the catalog file with the new record of missing pages:
-                        globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
-                    }
-                    globalClass.gbCatalogViewerRefresh = true;
-                }
+            gtmComicPages = new TreeMap<>();
+            int i = 0;
+            for (Map.Entry<String, String> tmFiles : tmSortByFileName.entrySet()) {
+                gtmComicPages.put(i, tmFiles.getValue());
+                i++;
             }
+
+
+            populate_RecyclerViewComicPages();
+
+
         }
-
-
-
-        gtmComicPages = new TreeMap<>();
-        int i = 0;
-        for(Map.Entry<String, String> tmFiles: tmSortByFileName.entrySet()){
-            gtmComicPages.put(i, tmFiles.getValue());
-            i++;
-        }
-
-
-
-        populate_RecyclerViewComicPages();
-
-
-
 
 
     }
@@ -277,6 +268,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         gRecyclerViewComicPagesAdapter = new Activity_ComicDetails.RecyclerViewComicPagesAdapter(gtmComicPages);
         recyclerView.setAdapter(gRecyclerViewComicPagesAdapter);
+        recyclerView.setItemViewCacheSize(8);
 
         gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
@@ -505,11 +497,11 @@ public class Activity_ComicDetails extends AppCompatActivity {
             }
 
 
-            String sThumbnailFilePath = gtmComicPages.get(position);
-            if (sThumbnailFilePath != null) {
-                File fThumbnail = new File(sThumbnailFilePath);
-                if (fThumbnail.exists()) {
-                    Glide.with(getApplicationContext()).load(fThumbnail).into(holder.ivThumbnail);
+            String sThumbnailFileName = gtmComicPages.get(position);
+            DocumentFile dfThumbnailFile = gdfComicFolder.findFile(sThumbnailFileName);
+            if (dfThumbnailFile != null) {
+                if(dfThumbnailFile.exists()) {
+                    Glide.with(getApplicationContext()).load(dfThumbnailFile.getUri()).into(holder.ivThumbnail);
                 }
             }
 

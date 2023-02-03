@@ -55,7 +55,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
                         + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");*/
-                File fBackup = new File(globalClass.gfAppFolder + File.separator
+                File fBackup = new File(globalClass.gdfDataFolder + File.separator
                         + "Backup" + File.separator
                         + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents_" + sDateTimeStamp + ".dat");
 
@@ -94,7 +94,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
                         + File.separator + "Tags_" + sDateTimeStamp + ".dat");*/
-                File fBackup = new File(globalClass.gfAppFolder + File.separator
+                File fBackup = new File(globalClass.gdfDataFolder + File.separator
                         + "Backup" + File.separator
                         + GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat");
                 FileWriter fwNewTagsFile = new FileWriter(fBackup, false);

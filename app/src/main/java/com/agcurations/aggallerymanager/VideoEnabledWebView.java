@@ -4,9 +4,8 @@ import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentResolver;
 import android.content.Context;
-import android.database.Cursor;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,33 +14,24 @@ import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
-import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
-import androidx.work.ListenableWorker;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 /**
  * https://github.com/cprcrack/VideoEnabledWebView
@@ -294,13 +284,21 @@ public class VideoEnabledWebView extends WebView
                         Context cApplicationContext = ((Activity_Browser) gcContext).getApplicationContext();
 
                         final GlobalClass globalClass = (GlobalClass) cApplicationContext;
-                        String sDownloadFolderRelativePath = globalClass.gsImageDownloadHoldingFolderTempRPath; //Android will DL to internal storage only.
+
 
                         String sFileNameRaw = gsNodeData_src;
                         if(sFileNameRaw.contains("/")){
                             sFileNameRaw = gsNodeData_src.substring(gsNodeData_src.lastIndexOf("/") + 1);
                         }
                         String sFileName = Service_Import.cleanFileNameViaTrim(sFileNameRaw);
+
+                        //Create a destination Uri for the file to be downloaded to, ensuring that the
+                        //  file name is unique:
+                        sFileName = GlobalClass.getUniqueFileName(globalClass.gfImageDownloadHoldingFolderTemp, sFileName, false);
+
+                        String sDownloadFolderRelativePath = globalClass.gsImageDownloadHoldingFolderTempRPath; //Android will DL to internal storage only.
+                        String sDownloadManagerDownloadFolder = cApplicationContext.getExternalFilesDir(null).getAbsolutePath() +
+                                sDownloadFolderRelativePath;
 
                         request.setTitle("AGGallery+ Download Single Image")
                                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
@@ -309,8 +307,10 @@ public class VideoEnabledWebView extends WebView
                                 .setMimeType("application/octet-stream")
                                 .setDestinationInExternalFilesDir(cApplicationContext, sDownloadFolderRelativePath, sFileName);
 
-                        final DownloadManager downloadManager = (DownloadManager) cApplicationContext.getSystemService(Context.DOWNLOAD_SERVICE);
-                        final long lDownloadID = downloadManager.enqueue(request);
+                        DownloadManager downloadManager = (DownloadManager) cApplicationContext.getSystemService(Context.DOWNLOAD_SERVICE);
+                        long lDownloadID = downloadManager.enqueue(request);
+                        long[] lDownloadIDs = new long[1];
+                        lDownloadIDs[0] = lDownloadID;
 
                         //Call a worker to monitor the download and move the file into the holding folder out of the DM's reach:
                         String sCallerID = "VideoEnabledWebView:onCreateContextMenu().MenuItem.OnMenuItemClickListener";
@@ -318,7 +318,9 @@ public class VideoEnabledWebView extends WebView
                         Data dataMoveDownloadedFile = new Data.Builder()
                                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                                .putLong(GlobalClass.EXTRA_LONG_DOWNLOAD_ID, lDownloadID)
+                                .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
+                                .putInt(Worker_Browser_ImageDownloadToHoldingFolder.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES)
+                                .putLongArray(Worker_Browser_ImageDownloadToHoldingFolder.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                                 .build();
                         OneTimeWorkRequest otwrMoveDownloadedFile = new OneTimeWorkRequest.Builder(Worker_Browser_ImageDownloadToHoldingFolder.class)
                                 .setInputData(dataMoveDownloadedFile)
@@ -328,14 +330,27 @@ public class VideoEnabledWebView extends WebView
 
                         //Write a text file of the same file name to record details of the origin of the file. This
                         //  text data file is to be used during the import process to add a bit of metadata.
-                        String sImageMetadataFilePath = globalClass.gfImageDownloadHoldingFolder.getPath() +
-                                File.separator + sFileName + ".txt"; //The file will have two extensions.
-                        File fImageMetadataFile = new File(sImageMetadataFilePath);
+                        String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+                        DocumentFile dfImageMetadataFile = globalClass.gdfImageDownloadHoldingFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sMetadataFileName);
+                        if(dfImageMetadataFile == null){
+                            Log.d("MenuItemClick", "Could not create metadata file for downloaded item.");
+                            return true;
+                        }
+                        ContentResolver contentResolver = gcContext.getContentResolver();
                         try {
-                            FileWriter fwImageMetadata = new FileWriter(fImageMetadataFile, true);
+                            OutputStream osImageMetadataFile = contentResolver.openOutputStream(dfImageMetadataFile.getUri(), "wt");
+                            if(osImageMetadataFile == null){
+                                Log.d("MenuItemClick", "Could not write metadata file for downloaded item.");
+                                return true;
+                            }
                             String sWebPageURL = webView.getUrl();
-                            fwImageMetadata.write(sWebPageURL);
-                            fwImageMetadata.close();
+                            if(sWebPageURL == null){
+                                Log.d("MenuItemClick", "No metadata to write to file for downloaded item.");
+                                return true;
+                            }
+                            osImageMetadataFile.write(sWebPageURL.getBytes(StandardCharsets.UTF_8));
+                            osImageMetadataFile.flush();
+                            osImageMetadataFile.close();
                         } catch (Exception e) {
                             String sMessage = "" + e.getMessage();
                             Log.d("VideoEnabledWebView", sMessage);

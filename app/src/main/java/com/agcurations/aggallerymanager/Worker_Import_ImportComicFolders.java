@@ -4,6 +4,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.provider.DocumentsContract;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -106,19 +108,22 @@ public class Worker_Import_ImportComicFolders extends Worker {
             }
         }
 
+        String sMessage;
+
         for(Map.Entry<String, String[]> tmEntryComic: tmComics.entrySet()) {
             //Create a folder and import files for this comic:
 
             String sDestinationFolder = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual destination comic folder name is the comic ID.
 
-            File fDestination = new File(
-                    globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath() + File.separator +
-                            sDestinationFolder);
+            DocumentFile dfDestination = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(sDestinationFolder);
 
-            if (!fDestination.exists()) {
-                if (!fDestination.mkdir()) {
+            if (dfDestination == null) {
+                dfDestination = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].createDirectory(sDestinationFolder);
+                if (dfDestination == null) {
                     //Unable to create directory
-                    globalClass.BroadcastProgress(true, "Unable to create destination folder at: " + fDestination.getPath() + "\n",
+                    sMessage = "Unable to create destination folder " + sDestinationFolder + " at "
+                            + globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getUri() + "\n";
+                    globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
                             true, "Operation halted.",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
@@ -126,13 +131,13 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 } else {
-                    globalClass.BroadcastProgress(true, "Destination folder created: " + fDestination.getPath() + "\n",
+                    globalClass.BroadcastProgress(true, "Destination folder created: " + dfDestination.getUri() + "\n",
                             false, iProgressBarValue,
                             false, "",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder verified: " + fDestination.getPath() + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder verified: " + dfDestination.getUri() + "\n",
                         true, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
@@ -235,57 +240,104 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         lProgressNumerator += fileItem.lSizeBytes;
                         continue;
                     }
-                    inputStream = contentResolver.openInputStream(dfSource.getUri());
 
-                    //Reverse the text on the file so that the file does not get picked off by a search tool:
-                    if (dfSource.getName() == null) continue;
-
-                    outputStream = new FileOutputStream(fDestination.getPath() + File.separator + sNewFilename);
-                    int iLoopCount = 0;
-                    byte[] buffer = new byte[100000];
-                    if (inputStream == null) continue;
-                    while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                        outputStream.write(buffer, 0, buffer.length);
-                        lProgressNumerator += lLoopBytesRead;
-                        iLoopCount++;
-                        if (iLoopCount % 10 == 0) {
-                            //Send update every 10 loops:
-                            iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                            globalClass.BroadcastProgress(false, "",
-                                    true, iProgressBarValue,
-                                    true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    //Execute move or copy:
+                    Uri uriCopiedOrMovedDocument;
+                    if(giMoveOrCopy == GlobalClass.MOVE){
+                        //Move Operation
+                        DocumentFile dfSourceParent = dfSource.getParentFile();
+                        if(dfSourceParent == null){
+                            sMessage = "Could note determine source parent DocumentFile.";
+                            Log.d("Worker_Import_ComicFolders", sMessage);
+                            continue;
                         }
+                        uriCopiedOrMovedDocument = DocumentsContract.moveDocument(
+                                GlobalClass.gcrContentResolver,
+                                dfSource.getUri(),
+                                dfSourceParent.getUri(),
+                                dfDestination.getUri());
+                    } else {
+                        //Copy operation
+                        uriCopiedOrMovedDocument = DocumentsContract.copyDocument(
+                                GlobalClass.gcrContentResolver,
+                                dfSource.getUri(),
+                                dfDestination.getUri());
+
                     }
-                    outputStream.flush();
-                    outputStream.close();
-                    sLogLine = "Copy success.\n";
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(true, sLogLine,
-                            false, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                    //This file has now been copied.
-
-                    //Delete the source file if 'Move' specified:
-                    boolean bUpdateLogOneMoreTime = false;
-                    if (giMoveOrCopy == GlobalClass.MOVE) {
-                        bUpdateLogOneMoreTime = true;
-                        if (!dfSource.delete()) {
-                            sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                    //Rename the copied or moved document:
+                    if(uriCopiedOrMovedDocument != null){
+                        DocumentFile dfCopiedOrMovedDocument = DocumentFile.fromSingleUri(getApplicationContext(), uriCopiedOrMovedDocument);
+                        if(dfCopiedOrMovedDocument != null) {
+                            dfCopiedOrMovedDocument.renameTo(sNewFilename);
                         } else {
-                            sLogLine = "Success deleting source file after copy.\n";
+                            sMessage = "Trouble identifying copied/moved file: " + uriCopiedOrMovedDocument;
+                            Log.d("Worker_Import_ComicFolders", sMessage);
+                            continue;
                         }
+                    } else {
+                        sMessage = "Trouble copying or moving file: " + dfSource.getUri();
+                        Log.d("Worker_Import_ComicFolders", sMessage);
+                        continue;
                     }
 
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
 
-                    globalClass.BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
-                            true, iProgressBarValue,
-                            true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    //Todo: Remove the below code after DocumentContract operations test successfully:
+                    /*{
+                        inputStream = contentResolver.openInputStream(dfSource.getUri());
 
+                        //Reverse the text on the file so that the file does not get picked off by a search tool:
+                        if (dfSource.getName() == null) continue;
+
+
+                        outputStream = new FileOutputStream(dfDestination.getPath() + File.separator + sNewFilename);
+                        int iLoopCount = 0;
+                        byte[] buffer = new byte[100000];
+                        if (inputStream == null) continue;
+                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
+                            outputStream.write(buffer, 0, buffer.length);
+                            lProgressNumerator += lLoopBytesRead;
+                            iLoopCount++;
+                            if (iLoopCount % 10 == 0) {
+                                //Send update every 10 loops:
+                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                globalClass.BroadcastProgress(false, "",
+                                        true, iProgressBarValue,
+                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            }
+                        }
+                        outputStream.flush();
+                        outputStream.close();
+
+
+                        sLogLine = "Copy success.\n";
+                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                        globalClass.BroadcastProgress(true, sLogLine,
+                                false, iProgressBarValue,
+                                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+                        //This file has now been copied.
+
+                        //Delete the source file if 'Move' specified:
+                        boolean bUpdateLogOneMoreTime = false;
+                        if (giMoveOrCopy == GlobalClass.MOVE) {
+                            bUpdateLogOneMoreTime = true;
+                            if (!dfSource.delete()) {
+                                sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
+                            } else {
+                                sLogLine = "Success deleting source file after copy.\n";
+                            }
+                        }
+
+
+                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+
+                        globalClass.BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
+                                true, iProgressBarValue,
+                                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
+                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    }*/
 
                 } catch (Exception e) {
                     globalClass.BroadcastProgress(true, "Problem with copy/move operation.\n\n" + e.getMessage(),

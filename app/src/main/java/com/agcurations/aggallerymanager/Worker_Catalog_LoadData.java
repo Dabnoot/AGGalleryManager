@@ -3,30 +3,51 @@ package com.agcurations.aggallerymanager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.net.Uri;
 import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.provider.DocumentsContract;
+import android.provider.OpenableColumns;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 public class Worker_Catalog_LoadData extends Worker {
 
@@ -55,125 +76,78 @@ public class Worker_Catalog_LoadData extends Worker {
         }
         globalClass.giLoadingState = GlobalClass.LOADING_STATE_STARTED;
 
-        String sExternalStorageState;
-        sExternalStorageState = Environment.getExternalStorageState();
-        if (sExternalStorageState.equals(Environment.MEDIA_MOUNTED) ) {
 
-            File[] fAvailableDirs = gContext.getExternalFilesDirs(null);
-            if (fAvailableDirs.length == 2) {
-                globalClass.gfAppFolder = fAvailableDirs[1];
-            } else {
-                globalClass.gfAppFolder = fAvailableDirs[0];
-            }
 
-            //Create Logs folder if it does not exist:
-            String sLogsFolderPath = globalClass.gfAppFolder + File.separator + "Logs";
-            globalClass.gfLogsFolder = new File(sLogsFolderPath);
-            if(!globalClass.gfLogsFolder.exists()){
-                if(!globalClass.gfLogsFolder.mkdir()){
-                    globalClass.problemNotificationConfig("Could not create logs folder.",
-                            Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
-                }
-            }
+        //Create Logs folder if it does not exist:
+        globalClass.gdfLogsFolder = initSubfolder(GlobalClass.gdfDataFolder, "Logs", "Could not create logs folder.");
 
-            //Create Jobs folder if it does not exist:
-            String sJobFilesFolderPath = globalClass.gfAppFolder + File.separator + "JobFiles";
-            globalClass.gfJobFilesFolder = new File(sJobFilesFolderPath);
-            if(!globalClass.gfJobFilesFolder.exists()){
-                if(!globalClass.gfJobFilesFolder.mkdir()){
-                    problemNotificationConfig("Could not create JobFiles folder.");
-                }
-            }
+        //Create Jobs folder if it does not exist:
+        globalClass.gdfJobFilesFolder = initSubfolder(GlobalClass.gdfDataFolder, "JobFiles", "Could not create JobFiles folder.");
 
-            //Create Backup folder if it does not exist:
-            String sBackupFolderPath = globalClass.gfAppFolder + File.separator + "Backup";
-            File fBackupFolderPath = new File(sBackupFolderPath);
-            if(!fBackupFolderPath.exists()){
-                if(!fBackupFolderPath.mkdir()){
-                    problemNotificationConfig("Could not create backup folder.");
-                }
-            }
+        //Create Backup folder if it does not exist:
+        globalClass.gdfBackupFolder = initSubfolder(GlobalClass.gdfDataFolder, "Backup", "Could not create backup folder.");
 
-            //Catalog Folder Structure:
-            for(int i = 0; i < 3; i++){
-                globalClass.gfCatalogFolders[i] = new File(globalClass.gfAppFolder + File.separator + GlobalClass.gsCatalogFolderNames[i]);
-                obtainFolderStructureItem(globalClass.gfCatalogFolders[i]);
-                //Identify the CatalogContents.dat file:
-                globalClass.gfCatalogContentsFiles[i] = new File(globalClass.gfAppFolder + File.separator
-                        + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat");
+        //Catalog Folder Structure:
+        for(int i = 0; i < 3; i++){
+            globalClass.gdfCatalogFolders[i] = initSubfolder(GlobalClass.gdfDataFolder, GlobalClass.gsCatalogFolderNames[i], "Could not create " + GlobalClass.gsCatalogFolderNames[i] + " folder.");
+
+            //Catalog/tag data files:
+            if(globalClass.gdfCatalogFolders[i] != null){
+                //Identify/create the CatalogContents.dat file:
+                String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat";
+                globalClass.gdfCatalogContentsFiles[i] = getDataFileOrCreateIt(globalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
 
                 //Identify the tags file for the catalog:
-                globalClass.gfCatalogTagsFiles[i] = new File(globalClass.gfAppFolder + File.separator
-                        + GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat");
+                sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat";
+                globalClass.gdfCatalogTagsFiles[i] = getDataFileOrCreateIt(globalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
             }
-
-            //Create image downloading temp holding folder if it does not exist:
-
-            globalClass.gsImageDownloadHoldingFolderTempRPath = File.separator +
-                    GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES] +
-                    File.separator + "HoldingTemp";
-            String sImageDownloadHoldingFolderTemp = globalClass.gfAppFolder +
-                    globalClass.gsImageDownloadHoldingFolderTempRPath;
-            globalClass.gfImageDownloadHoldingFolderTemp = new File(sImageDownloadHoldingFolderTemp);
-            if(!globalClass.gfImageDownloadHoldingFolderTemp.exists()){
-                if(!globalClass.gfImageDownloadHoldingFolderTemp.mkdir()){
-                    problemNotificationConfig("Could not create image download temp holding folder.");
-                }
-            }
-
-            //Create image downloading holding folder if it does not exist:
-            String sImageDownloadHoldingFolder = globalClass.gfAppFolder + File.separator +
-                    GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES] +
-                    File.separator + "Holding";
-            globalClass.gfImageDownloadHoldingFolder = new File(sImageDownloadHoldingFolder);
-            if(!globalClass.gfImageDownloadHoldingFolder.exists()){
-                if(!globalClass.gfImageDownloadHoldingFolder.mkdir()){
-                    problemNotificationConfig("Could not create image download holding folder.");
-                }
-            }
-
-            /*File[] files = globalClass.gfAppFolder.listFiles();
-            if(files != null) {
-                for (File f : files) {
-                    if (f.isFile()) {
-                        if (f.getName().contains("9999")) {
-                            f.delete();
-                        }
-                    }
-                }
-            }*/
-
-            //Create folder to hold Browser data:
-            String sBrowserDataFolderName = globalClass.gfAppFolder.getPath() + File.separator + "BrowserData";
-            globalClass.gfBrowserDataFolder = new File(sBrowserDataFolderName);
-            if(!globalClass.gfBrowserDataFolder.exists()){
-                if(!globalClass.gfBrowserDataFolder.mkdir()){
-                    problemNotificationConfig("Could not create BrowserData folder.");
-                }
-            }
-
-            //Get file to hold web page tab data:
-            String sWebPageTabDataFilePath = globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebpageTabData.dat";
-            globalClass.gfWebpageTabDataFile = new File(sWebPageTabDataFilePath);
-
-            //Create Webpage Favicon folder if it does not exist:
-            String sWebpageFaviconBitmapFolder = globalClass.gfBrowserDataFolder + File.separator + "TempFavicon";
-            globalClass.gfWebpageFaviconBitmapFolder = new File(sWebpageFaviconBitmapFolder);
-            if(!globalClass.gfWebpageFaviconBitmapFolder.exists()){
-                if(!globalClass.gfWebpageFaviconBitmapFolder.mkdir()){
-                    problemNotificationConfig("Could not create TempFavicon folder.");
-                }
-            }
-
-            //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
-            //  This can occur if Android closed the application, but saves the last Activity and the user returns.
-            //  We want to record the log location so that data can be written to it.
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            sharedPreferences.edit()
-                    .putString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, sLogsFolderPath + File.separator + GlobalClass.gsApplicationLogName)
-                    .apply();
-
         }
+
+        //Create image downloading temp holding folder if it does not exist:
+        //This is to temporarily hold downloaded images. We immediately move them so that the downloadManager
+        //  cannot find them and delete them as part of a general "cleanup" thing that it does. It automatically
+        //  deletes files that have not been used in a while. Since this is an archiving program,
+        //  that behavior is not helpful.
+
+        File[] fAvailableDirs = gContext.getExternalFilesDirs(null);
+        if (fAvailableDirs.length >= 1) {
+            globalClass.gfDownloadExternalStorageFolder = fAvailableDirs[0];
+        }
+        globalClass.gsImageDownloadHoldingFolderTempRPath = File.separator +
+                GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES] +
+                File.separator + "HoldingTemp";
+        String sDLExternalTempCatFolder = globalClass.gfDownloadExternalStorageFolder + File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES];
+        File fDLExternalTempCatFolder = new File(sDLExternalTempCatFolder);
+        if(!fDLExternalTempCatFolder.exists()){
+            if(!fDLExternalTempCatFolder.mkdir()){
+                String sMessage = "Trouble with find/create file: " + sDLExternalTempCatFolder;
+                Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
+            }
+        }
+        globalClass.gfImageDownloadHoldingFolderTemp = initSubfolder(fDLExternalTempCatFolder,"HoldingTemp", "Could not create image download temp holding folder.");
+
+        //Create image downloading holding folder if it does not exist:
+        //  The user will import these files into the catalog at their leisure.
+        globalClass.gdfImageDownloadHoldingFolder = initSubfolder(globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_IMAGES],"Holding", "Could not create image download holding folder.");
+
+
+        //Create folder to hold Browser data:
+        globalClass.gdfBrowserDataFolder = initSubfolder(GlobalClass.gdfDataFolder, "BrowserData", "Could not create BrowserData folder.");
+
+        //Get file to hold web page tab data:
+        globalClass.gdfWebpageTabDataFile = getDataFileOrCreateIt(globalClass.gdfBrowserDataFolder, "WebpageTabData.dat", "Could not create file WebpageTabData.dat.");
+
+        //Create Webpage Favicon folder if it does not exist:
+        globalClass.gdfWebpageFaviconBitmapFolder = initSubfolder(GlobalClass.gdfDataFolder, "TempFavicon", "Could not create TempFavicon folder.");
+
+        //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
+        //  This can occur if Android closed the application, but saves the last Activity and the user returns.
+        //  We want to record the log location so that data can be written to it.
+        String sLogsFolderUri = globalClass.gdfLogsFolder.getUri().toString();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        sharedPreferences.edit()
+                .putString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, sLogsFolderUri + File.separator + GlobalClass.gsApplicationLogName) //todo: This is likely not appropriate with the switch from File to DocumentFile.
+                .apply();
 
         /*GlobalClass.CatalogDataFile_UpdateAllRecords_TimeStamps(
                 globalClass.gfCatalogContentsFiles[GlobalClass.MEDIA_CATEGORY_COMICS]);*/
@@ -193,10 +167,10 @@ public class Worker_Catalog_LoadData extends Worker {
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            globalClass.gtmCatalogTagReferenceLists.add(globalClass.InitTagData(iMediaCategory));
+            globalClass.gtmCatalogTagReferenceLists.add(InitTagData(iMediaCategory));
 
             //Get tag restrictions preferences:
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(gContext);
+            //SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(gContext);
             Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet(GlobalClass.gsRestrictedTagsPreferenceNames[iMediaCategory], null);
             //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
             if(ssCatalogTagsRestricted != null) {
@@ -240,8 +214,10 @@ public class Worker_Catalog_LoadData extends Worker {
                 true, iProgressBarValue,
                 true, "Reading Catalogs",
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+
         //Read the catalog list files into memory:
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+
             globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
             iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -295,7 +271,13 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //fixM3U8InternalFilePaths();
 
-
+        //todo: Create test case here.
+        //todo: Use the storage access framework to create a text file of name Bananna.
+        //todo: Create a directory of the name Bananna.
+        //todo: Use DocumentFile to retrieve DocumentFile of name Bananna.
+        //todo: Test if the returned Document file is the text file or the directory.
+        //todo: Attempt to retreive the DocumentFile for the other item that was not returned.
+        //Todo: This is in response to Worker_LocalFileTransfer todo item near line 360.
 
 
         iProgressNumerator++;
@@ -311,6 +293,242 @@ public class Worker_Catalog_LoadData extends Worker {
         return Result.success();
     }
 
+    private DocumentFile initSubfolder(DocumentFile dfFolder, String sFolderName, String sFailMessage){
+
+        DocumentFile dfSubFolder = null;
+
+        try {
+            dfSubFolder = dfFolder.findFile(sFolderName);
+            if (dfSubFolder == null) {
+                dfSubFolder = dfFolder.createDirectory(sFolderName);
+            }
+            if (dfSubFolder == null) {
+                problemNotificationConfig(sFailMessage);
+            }
+        } catch (Exception e){
+            String sMessage = "Trouble with find/create file: " + sFolderName;
+            Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
+        }
+        return dfSubFolder;
+
+    }
+
+    private File initSubfolder(File fParentFolder, String sFolderName, String sFailMessage){
+
+        File fSubFolder = null;
+
+        try {
+            fSubFolder = new File(fParentFolder.getAbsolutePath() + File.separator + sFolderName);
+
+            if (!fSubFolder.exists()) {
+                if(!fSubFolder.mkdir()){
+                    problemNotificationConfig(sFailMessage);
+                }
+            }
+        } catch (Exception e){
+            String sMessage = "Trouble with find/create folder: " + sFolderName;
+            Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
+        }
+        return fSubFolder;
+
+    }
+
+    private DocumentFile getDataFileOrCreateIt(DocumentFile dfFolder, String sFileName, String sFailMessage){
+        DocumentFile dfDataFile = null;
+        try {
+            dfDataFile = dfFolder.findFile(sFileName);
+
+            if (dfDataFile == null) {
+                dfDataFile = dfFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sFileName);
+            }
+            if (dfDataFile == null) {
+                problemNotificationConfig(sFailMessage);
+            }
+        } catch (Exception e){
+            String sMessage = "Trouble with find/create file: " + sFileName;
+            Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
+        }
+        return dfDataFile;
+    }
+
+
+    static public void initDataFolder(Uri treeUri, Context context){
+        DocumentFile dfSelectedFolder = DocumentFile.fromTreeUri(context, treeUri);
+
+        if(dfSelectedFolder == null){
+            return;
+        }
+
+        String sUserFriendlyFolderPath = dfSelectedFolder.getUri().getPath();
+        //Do what you gotta do to reflect back to the user a friendly path that they
+        //  selected:
+        //https://www.dev2qa.com/how-to-get-real-file-path-from-android-uri/
+        Uri uriSelectedFolder = dfSelectedFolder.getUri();
+
+        String uriAuthority = uriSelectedFolder.getAuthority();
+        boolean isExternalStoreDoc = "com.android.externalstorage.documents".equals(uriAuthority);
+        if(isExternalStoreDoc) {
+            //Detect storage devices to determine if one is SD card:
+            ArrayList<Storage> alsStorages = getStorages(context);
+
+            String documentId = DocumentsContract.getDocumentId(uriSelectedFolder);
+
+            String[] idArr = documentId.split(":");
+            if(idArr.length == 2)
+            {
+                String type = idArr[0];
+                String realDocId = idArr[1];
+
+                String sStoragePrefix = "";
+                if("primary".equalsIgnoreCase(type))
+                {
+                    sStoragePrefix = "Internal storage";
+                } else {
+                    for (Storage storage : alsStorages) {
+                        if (storage.getName().contains(type)) {
+                            sStoragePrefix = storage.sName;
+                            break;
+                        }
+                    }
+                }
+                sUserFriendlyFolderPath = sStoragePrefix + "/" + realDocId;
+
+            }
+        }
+        //With the user having specified a folder, identify/create the data folder within:
+        Uri parentFolderUri = dfSelectedFolder.getUri();
+        DocumentFile parentFolder = DocumentFile.fromTreeUri(context, parentFolderUri);
+        if(parentFolder == null){
+            return;
+        }
+        DocumentFile dfDataFolder = parentFolder.findFile(GlobalClass.gsDataFolderBaseName);
+        if(dfDataFolder == null) {
+            boolean bWeAreInTheGalleryFolder = false;
+            if(parentFolder.getName() != null) {
+                if (parentFolder.getName().equals(GlobalClass.gsDataFolderBaseName)){
+                    bWeAreInTheGalleryFolder = true;
+                }
+            }
+            if(!bWeAreInTheGalleryFolder) {
+                dfDataFolder = parentFolder.createDirectory(GlobalClass.gsDataFolderBaseName);
+            } else {
+                dfDataFolder = parentFolder;
+            }
+        }
+
+        sUserFriendlyFolderPath = sUserFriendlyFolderPath + File.separator + GlobalClass.gsDataFolderBaseName;
+
+        if(dfDataFolder == null){
+            Toast.makeText(context, "Unable to create working folder in selected directory.", Toast.LENGTH_LONG).show();
+        } else {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+            String sDataStorageLocationURI = dfDataFolder.getUri().toString();
+            sharedPreferences.edit()
+                    .putString(GlobalClass.gsPreferenceName_DataStorageLocation, sDataStorageLocationURI)
+                    .apply();
+            sharedPreferences.edit()
+                    .putString(GlobalClass.gsPreferenceName_DataStorageLocationUF, sUserFriendlyFolderPath)
+                    .apply();
+
+            GlobalClass.gdfDataFolder = dfDataFolder;
+
+            //Start the worker found in Worker_Catalog_LoadData:
+            Service_Main.startActionLoadData(context);
+        }
+    }
+
+    public static class Storage extends File {
+
+        public static final int INTERNAL_STORAGE = 1;
+        public static final int SD_CARD = 2;
+        public static final int USB_DRIVE = 3;
+
+        public String sName;
+        public int iType;
+
+        public Storage(String path, String sName, int iType) {
+            super(path);
+            this.sName = sName;
+            this.iType = iType;
+        }
+    }
+
+    public static ArrayList<Storage> getStorages(Context context) {
+        //https://stackoverflow.com/questions/41719986/get-all-storages-and-devices-with-their-names-android
+        ArrayList<Storage> storages = new ArrayList<>();
+
+        // Internal storage
+        storages.add(new Storage(Environment.getExternalStorageDirectory().getPath(),
+                "Internal Storage", Storage.INTERNAL_STORAGE));
+
+        // SD Cards
+        ArrayList<File> extStorages = new ArrayList<>();
+        extStorages.addAll(Arrays.asList(context.getExternalFilesDirs(null)));
+        extStorages.remove(0); // Remove internal storage
+        String secondaryStoragePath = System.getenv("SECONDARY_STORAGE");
+        for (int i = 0; i < extStorages.size(); i++) {
+            String path = extStorages.get(i).getPath().split("/Android")[0];
+            if (Environment.isExternalStorageRemovable(extStorages.get(i)) || secondaryStoragePath != null && secondaryStoragePath.contains(path)) {
+                String name = "SD Card" + (i == 0 ? "" : " " + String.valueOf(i+1));
+                storages.add(new Storage(path, name, Storage.SD_CARD));
+            }
+        }
+
+        // USB Drives
+        ArrayList<String> drives = new ArrayList<>();
+        String reg = "(?i).*vold.*(vfat|ntfs|exfat|fat32|ext3|ext4).*rw.*";
+        String s = "";
+        try {
+            final Process process = new ProcessBuilder().command("mount")
+                    .redirectErrorStream(true).start();
+            process.waitFor();
+            final InputStream is = process.getInputStream();
+            final byte[] buffer = new byte[1024];
+            while (is.read(buffer) != -1) {
+                s += new String(buffer);
+            }
+            is.close();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
+        final String[] lines = s.split("\n");
+        for (String line : lines) {
+            if (!line.toLowerCase(Locale.US).contains("asec") && line.matches(reg)) {
+                String[] parts = line.split(" ");
+                for (String path : parts) {
+                    if (path.startsWith(File.separator) && !path.toLowerCase(Locale.US).contains("vold")) {
+                        drives.add(path);
+                    }
+                }
+            }
+        }
+
+        // Remove SD Cards from found drives (already found)
+        ArrayList<String> ids = new ArrayList<>();
+        for (Storage st : storages) {
+            String[] parts = st.getPath().split(File.separator);
+            ids.add(parts[parts.length-1]);
+        }
+        for (int i = drives.size() - 1; i >= 0; i--) {
+            String[] parts = drives.get(i).split(File.separator);
+            String id = parts[parts.length-1];
+            if (ids.contains(id)) drives.remove(i);
+        }
+
+        // Get USB Drive name
+        UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
+        Collection<UsbDevice> dList = usbManager.getDeviceList().values();
+        ArrayList<UsbDevice> deviceList = new ArrayList<>();
+        deviceList.addAll(dList);
+        for (int i = 0; i < deviceList.size(); i++) {
+            storages.add(new Storage(drives.get(i), deviceList.get(i).getProductName(), Storage.USB_DRIVE));
+        }
+
+        return storages;
+    }
+
+
     private void obtainFolderStructureItem(File file){
         if(!file.exists()){
             if(!file.mkdir()){
@@ -322,124 +540,116 @@ public class Worker_Catalog_LoadData extends Worker {
 
     private TreeMap<String, ItemClass_CatalogItem> readCatalogFileToCatalogItems(int iMediaCategory){
 
-        File fCatalogFolder = globalClass.gfCatalogFolders[iMediaCategory];
-        File fCatalogContentsFile = globalClass.gfCatalogContentsFiles[iMediaCategory];
-        //File fLogsFolder = globalClass.gfCatalogLogsFolders[iMediaCategory];
+        DocumentFile dfCatalogFolder = globalClass.gdfCatalogFolders[iMediaCategory];
+        DocumentFile dfCatalogContentsFile = globalClass.gdfCatalogContentsFiles[iMediaCategory];
 
-        boolean bFolderOk = false ;
-        if(!fCatalogFolder.exists()) {
-            if (fCatalogFolder.mkdirs()) {
-                bFolderOk = true;
-            }
-        }else{
-            bFolderOk = true;
-        }
+        ContentResolver contentResolver = getApplicationContext().getContentResolver();
 
-        if (!bFolderOk) {
-            problemNotificationConfig("Could not create catalog data folder " + fCatalogFolder.getPath() + ".");
+        if (!dfCatalogFolder.exists()) {
+            problemNotificationConfig("Catalog data folder does not exist: " + dfCatalogFolder.getName() + ".");
             return null;
         } else {
-
-            if (!fCatalogContentsFile.exists()){
-                try {
-                    if(fCatalogContentsFile.createNewFile()) {
-                        FileWriter fwCatalogContentsFile = null;
-                        try {
-                            fwCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
-
-                            //Write the activity_comic_details_header line to the file:
-                            fwCatalogContentsFile.append(globalClass.getCatalogHeader()); //Write the header.
-                            fwCatalogContentsFile.append("\n");
-
-                        } catch (Exception e) {
-                            problemNotificationConfig("Problem during Catalog Contents File write:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-                        } finally {
-                            try {
-                                if (fwCatalogContentsFile != null) {
-                                    fwCatalogContentsFile.flush();
-                                    fwCatalogContentsFile.close();
-                                }
-                            } catch (IOException e) {
-                                problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage());
-
-                            }
-                        }
-                    } else {
-                        problemNotificationConfig("Could not create CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
-                    }
-                }catch (IOException e){
-                    problemNotificationConfig("Problem creating CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
-
-                }
+            if(dfCatalogContentsFile == null){
+                return null;
             }
-
-            /*//Look for the Logs folder. If it does not exist, create it.
-            if(!fLogsFolder.exists()) {
-                if(!fLogsFolder.mkdirs()){
-                    problemNotificationConfig("Could not create log folder at" + fLogsFolder.getAbsolutePath());
-                }
-            }*/
-
-            //Build the internal list of entries:
             TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = new TreeMap<>();
 
-            //Read the list of entries and populate the catalog array:
-            BufferedReader brReader;
-            try {
-                brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
-                brReader.readLine(); //The first line is the header. Skip this line.
-                String sLine = brReader.readLine();
+            if(getDocumentFileSize(dfCatalogContentsFile) == 0) {
 
-                ItemClass_CatalogItem ci;
-                while (sLine != null) {
-                    ci = GlobalClass.ConvertStringToCatalogItem(sLine);
-                    tmCatalogItems.put(ci.sItemID, ci);
-
-                    //Calculate amounts for use in the Sort/Filter capabilities of the comic viewer:
-                    if(ci.lDuration_Milliseconds > globalClass.glMaxVideoDurationMS){
-                        globalClass.glMaxVideoDurationMS = ci.lDuration_Milliseconds; //For the filter range slider.
+                OutputStream osCatalogContentsFile = null;
+                try {
+                    osCatalogContentsFile = contentResolver.openOutputStream(dfCatalogContentsFile.getUri(), "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                    if(osCatalogContentsFile == null){
+                        throw new Exception();
                     }
-                    if(iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-                        int iMegaPixels = (ci.iHeight * ci.iWidth) / 1000000;
-                        if(globalClass.giMinImageMegaPixels == -1){
-                            globalClass.giMinImageMegaPixels = iMegaPixels;
-                        }
-                        if(iMegaPixels < globalClass.giMinImageMegaPixels){
-                            globalClass.giMinImageMegaPixels = iMegaPixels;
-                        }
-                        if(iMegaPixels > globalClass.giMaxImageMegaPixels){
-                            globalClass.giMaxImageMegaPixels = iMegaPixels;
-                        }
-                    } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                        int iPageCount = ci.iComicPages;
-                        if(globalClass.giMinComicPageCount == -1){
-                            globalClass.giMinComicPageCount = iPageCount;
-                        }
-                        if (iPageCount < globalClass.giMinComicPageCount){
-                            globalClass.giMinComicPageCount = iPageCount;
-                        }
-                        if(iPageCount > globalClass.giMaxComicPageCount){
-                            globalClass.giMaxComicPageCount = iPageCount;
-                        }
-                    }
+                    //Write the activity_comic_details_header line to the file:
+                    osCatalogContentsFile.write(globalClass.getCatalogHeader().getBytes()); //Write the header.
+                    osCatalogContentsFile.write("\n".getBytes());
 
-                    //Update the tags histogram. As of 7/29/2022, this is used to show the user
-                    //  how many tags are in use while they select tags to perform a tag filter.
-                    for(int iCatalogItemTagID: ci.aliTags){
-                        if(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
-                            Objects.requireNonNull(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                } catch (Exception e) {
+                    problemNotificationConfig("Problem during Catalog Contents File write:\n" + dfCatalogContentsFile.getName() + "\n\n" + e.getMessage());
+                } finally {
+                    try {
+                        if(osCatalogContentsFile != null){
+                            osCatalogContentsFile.flush();
+                            osCatalogContentsFile.close();
                         }
-                    }
+                    } catch (IOException e) {
+                        problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + dfCatalogContentsFile.getName() + "\n\n" + e.getMessage());
 
-                    // read next line
-                    sLine = brReader.readLine();
+                    }
                 }
-                brReader.close();
+            } else {
 
-            } catch (IOException e) {
-                problemNotificationConfig("Trouble reading CatalogContents.dat at" + fCatalogContentsFile.getAbsolutePath());
+                //Build the internal list of entries.
+                //Read the list of entries and populate the catalog array:
+                BufferedReader brReader;
+                InputStream isCatalogReader = null;
+                try {
+                    isCatalogReader = contentResolver.openInputStream(dfCatalogContentsFile.getUri());
+                    brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
+
+                    brReader.readLine(); //The first line is the header. Skip this line.
+                    String sLine = brReader.readLine();
+
+                    ItemClass_CatalogItem ci;
+                    while (sLine != null) {
+                        ci = GlobalClass.ConvertStringToCatalogItem(sLine);
+                        tmCatalogItems.put(ci.sItemID, ci);
+
+                        //Calculate amounts for use in the Sort/Filter capabilities of the comic viewer:
+                        if (ci.lDuration_Milliseconds > globalClass.glMaxVideoDurationMS) {
+                            globalClass.glMaxVideoDurationMS = ci.lDuration_Milliseconds; //For the filter range slider.
+                        }
+                        if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                            int iMegaPixels = (ci.iHeight * ci.iWidth) / 1000000;
+                            if (globalClass.giMinImageMegaPixels == -1) {
+                                globalClass.giMinImageMegaPixels = iMegaPixels;
+                            }
+                            if (iMegaPixels < globalClass.giMinImageMegaPixels) {
+                                globalClass.giMinImageMegaPixels = iMegaPixels;
+                            }
+                            if (iMegaPixels > globalClass.giMaxImageMegaPixels) {
+                                globalClass.giMaxImageMegaPixels = iMegaPixels;
+                            }
+                        } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                            int iPageCount = ci.iComicPages;
+                            if (globalClass.giMinComicPageCount == -1) {
+                                globalClass.giMinComicPageCount = iPageCount;
+                            }
+                            if (iPageCount < globalClass.giMinComicPageCount) {
+                                globalClass.giMinComicPageCount = iPageCount;
+                            }
+                            if (iPageCount > globalClass.giMaxComicPageCount) {
+                                globalClass.giMaxComicPageCount = iPageCount;
+                            }
+                        }
+
+                        //Update the tags histogram. As of 7/29/2022, this is used to show the user
+                        //  how many tags are in use while they select tags to perform a tag filter.
+                        for (int iCatalogItemTagID : ci.aliTags) {
+                            if (globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                                Objects.requireNonNull(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                            }
+                        }
+
+                        // read next line
+                        sLine = brReader.readLine();
+                    }
+                    brReader.close();
+
+                } catch (IOException e) {
+                    problemNotificationConfig("Trouble reading CatalogContents.dat: " + dfCatalogFolder.getName());
+                } finally {
+                    if (isCatalogReader != null) {
+                        try {
+                            isCatalogReader.close();
+                        } catch (Exception e) {
+                            problemNotificationConfig("Problem during Catalog Contents file reader close:\n" + dfCatalogFolder.getName() + "\n\n" + e.getMessage());
+                        }
+                    }
+                }
             }
-
 
             globalClass.gbTagHistogramRequiresUpdate[iMediaCategory] = false;
 
@@ -451,13 +661,98 @@ public class Worker_Catalog_LoadData extends Worker {
 
     }
 
+    public TreeMap<Integer, ItemClass_Tag> InitTagData(int iMediaCategory){
+        //TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        TreeMap<Integer, ItemClass_Tag> tmTags = new TreeMap<>();
+
+        DocumentFile dfTagsFile = globalClass.gdfCatalogTagsFiles[iMediaCategory];
+        if(getDocumentFileSize(dfTagsFile) == 0 ) {
+            try {
+                OutputStream osTagsFile = GlobalClass.gcrContentResolver.openOutputStream(dfTagsFile.getUri(), "wt");
+                if (osTagsFile == null) {
+                    problemNotificationConfig("Trouble writing file at\n" + dfTagsFile.getUri());
+                    return null;
+                }
+
+                //Write the header record:
+                osTagsFile.write(GlobalClass.getTagFileHeader().getBytes(StandardCharsets.UTF_8));
+                osTagsFile.write("\n".getBytes(StandardCharsets.UTF_8));
+
+                //Close the tags file:
+                osTagsFile.flush();
+                osTagsFile.close();
+
+            } catch (IOException e) {
+                problemNotificationConfig("Trouble writing file at\n" + dfTagsFile.getUri() + "\n\n" + e.getMessage());
+            }
+        } else {
+
+
+            //Get Tags from file:
+            BufferedReader brReader;
+            try {
+                InputStream isTagsFile = GlobalClass.gcrContentResolver.openInputStream(dfTagsFile.getUri());
+                if (isTagsFile == null) {
+                    return null;
+                }
+                brReader = new BufferedReader(new InputStreamReader(isTagsFile));
+                brReader.readLine();//First line is the header, skip it.
+                String sLine = brReader.readLine();
+
+                while(sLine != null) {
+
+                    ItemClass_Tag ict = GlobalClass.ConvertFileLineToTagItem(sLine);
+                    tmTags.put(ict.iTagID, ict);
+
+                    sLine = brReader.readLine();
+                }
+
+                brReader.close();
+                isTagsFile.close();
+            } catch (IOException e) {
+                problemNotificationConfig("Trouble reading tags file at\n" + dfTagsFile.getUri() + "\n\n" + e.getMessage());
+            }
+        }
+
+        return tmTags;
+    }
+
+
+    private long getDocumentFileSize(DocumentFile documentFile){
+
+        ContentResolver contentResolver = getApplicationContext().getContentResolver();
+        Cursor returnCursor = contentResolver.query(documentFile.getUri(), null, null, null, null);
+        if(returnCursor == null){
+            return -1;
+        }
+        /*
+         * Get the column indexes of the data in the Cursor,
+         * move to the first row in the Cursor, get the data,
+         * and display it.
+         */
+        int sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE);
+        returnCursor.moveToFirst();
+        long lSize = returnCursor.getLong(sizeIndex);
+        returnCursor.close();
+        return lSize;
+    }
+
     private void VerifyVideoFilesIntegrity(){
+        ContentResolver contentResolver = GlobalClass.gcrContentResolver;
+
         boolean bUpdateVideoCatalogFile = false;
         int iItemsWithIssuesCounter = 0;
-        FileWriter fwLogFile = null;
-        String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                File.separator + GlobalClass.GetTimeStampFileSafe() + "_VideoFilesCheck.txt";
-        File fLog = new File(sLogFilePath);
+
+        OutputStream osLogFile = null;
+        BufferedWriter bwLogFile = null;
+
+        String sLogFileName = GlobalClass.GetTimeStampFileSafe() + "_VideoFilesCheck.txt";
+        DocumentFile dfLog = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+        if(dfLog == null){
+            problemNotificationConfig("Problem creating log file during video file integrity check.");
+            return;
+        }
+
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmEntry.getValue();
             if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8)
@@ -466,16 +761,26 @@ public class Worker_Catalog_LoadData extends Worker {
                 //If this is an M3U8 file check to see if all of the segment files are in place.
                 String sMessage = "Examining M3U8 video ID " + tmEntry.getKey();
                 Log.d("VideoFilesCheck", sMessage);
-                String sM3U8FilePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                String sM3U8FilePath = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                         File.separator + ci.sFolder_Name +
                         File.separator + ci.sItemID +
                         File.separator + ci.sFilename;
-                File fM3U8File = new File(sM3U8FilePath);
-                if(fM3U8File.exists()) {
+                DocumentFile dfVideoSubfolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].findFile(ci.sFolder_Name);
+                if(dfVideoSubfolder == null){
+                    continue;
+                }
+                DocumentFile dfItemFolder = dfVideoSubfolder.findFile(ci.sItemID);
+                if(dfItemFolder == null){
+                    continue;
+                }
+                DocumentFile dfM3U8File = dfItemFolder.findFile(ci.sFilename);
+                if(dfM3U8File != null) {
                     //Get data from file:
+                    InputStream isM3U8 = null;
                     BufferedReader brReader;
                     try {
-                        brReader = new BufferedReader(new FileReader(fM3U8File.getAbsolutePath()));
+                        isM3U8 = contentResolver.openInputStream(dfM3U8File.getUri());
+                        brReader = new BufferedReader(new InputStreamReader(isM3U8));
                         String sLine = brReader.readLine();
                         ArrayList<String> alsVideoSequenceFilePaths = new ArrayList<>();
 
@@ -499,7 +804,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
 
                         //Get a listing of the files in the folder:
-                        String sM3U8FolderPath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                        String sM3U8FolderPath = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                                 File.separator + ci.sFolder_Name +
                                 File.separator + ci.sItemID;
                         File fM3U8Folder = new File(sM3U8FolderPath);
@@ -521,12 +826,22 @@ public class Worker_Catalog_LoadData extends Worker {
                                         for (String sM3U8ListedFile : alsVideoFileSequenceFileNames) {
                                             if (!alsFilesInFolder.contains(sM3U8ListedFile)) {
                                                 bAllFilesFound = false;
-                                                if(fwLogFile == null){
-                                                    fwLogFile = new FileWriter(fLog, true);
+                                                if(bwLogFile == null){
+                                                    try {
+                                                        osLogFile = contentResolver.openOutputStream(dfLog.getUri(), "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                                                        if(osLogFile == null){
+                                                            throw new Exception();
+                                                        }
+                                                        bwLogFile = new BufferedWriter(new OutputStreamWriter(osLogFile));
+                                                    } catch (Exception e) {
+                                                        problemNotificationConfig("Problem during log file write:\n" + dfLog.getName() + "\n\n" + e.getMessage());
+                                                    }
                                                 }
-                                                sMessage = "Video ID " + tmEntry.getKey() + " is missing one or more video segment files.";
-                                                fwLogFile.write(sMessage + "\n");
-                                                fwLogFile.flush();
+                                                if(bwLogFile != null) {
+                                                    sMessage = "Video ID " + tmEntry.getKey() + " is missing one or more video segment files.";
+                                                    bwLogFile.write(sMessage + "\n");
+                                                    bwLogFile.flush();
+                                                }
                                                 break;
                                             }
                                         }
@@ -546,6 +861,14 @@ public class Worker_Catalog_LoadData extends Worker {
                     } catch (IOException e) {
                         sMessage = e.getMessage() + "";
                         Log.d("VideoFilesCheck", sMessage);
+                    } finally {
+                        if(isM3U8 != null){
+                            try {
+                                isM3U8.close();
+                            } catch (Exception e){
+                                Log.d("VideoFilesCheck", "Could not close M3U8 during integrity check.");
+                            }
+                        }
                     }
 
                 } else {
@@ -568,9 +891,9 @@ public class Worker_Catalog_LoadData extends Worker {
             //Toast.makeText(this, sMessage , Toast.LENGTH_SHORT).show();
 
             try {
-                if (fwLogFile != null) {
-                    fwLogFile.write(sMessage + "\n");
-                    fwLogFile.flush();
+                if (bwLogFile != null) {
+                    bwLogFile.write(sMessage + "\n");
+                    bwLogFile.flush();
                 }
             } catch (Exception e){
                 sMessage = e.getMessage() + "";
@@ -578,35 +901,45 @@ public class Worker_Catalog_LoadData extends Worker {
             }
         }
 
+        try {
+            if(osLogFile != null){
+                osLogFile.flush();
+                osLogFile.close();
+            }
+        } catch (IOException e) {
+            problemNotificationConfig("Problem during log file flush/close:\n" + dfLog.getName() + "\n\n" + e.getMessage());
+
+        }
+
     }
 
     private void LogFilesMaintenance(){
-        String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath();
-        File fLogsFile = new File(sLogFilePath);
-        if(fLogsFile.exists()){
-            File[] fLogsFiles = fLogsFile.listFiles();
-            if(fLogsFiles != null){
-                if (fLogsFiles.length > 0) {
-                    //Go through the logs files and automatically delete files that are there for a period greater than the
-                    //  "LogFilesHoldDuration".
+
+        DocumentFile[] dfLogFiles;
+        if(globalClass.gdfLogsFolder != null){
+            if(globalClass.gdfLogsFolder.exists()){
+                dfLogFiles = globalClass.gdfLogsFolder.listFiles();
+                if(dfLogFiles.length > 0){
                     LocalDate ldNow = LocalDate.now();
 
-                    for(File fLogFile: fLogsFiles) {
-                        Date dModifiedDate = new Date(fLogFile.lastModified());
+                    for(DocumentFile dfLogFile: dfLogFiles) {
+                        Date dModifiedDate = new Date(dfLogFile.lastModified());
                         LocalDate ldModifiedDate = dModifiedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                         long lDaysBetween = Period.between(ldModifiedDate, ldNow).getDays();
                         //long lDaysBetween = Duration.between(ldModifiedDate, ldNow).toDays();
                         if(lDaysBetween > GlobalClass.giLogFileKeepDurationInDays){
-                            if(!fLogFile.delete()){
-                                Log.d("Log File Maintenance", "Could not delete log file " + fLogFile.getName());
+                            if(!dfLogFile.delete()){
+                                Log.d("Log File Maintenance", "Could not delete log file " + dfLogFile.getName());
                             }
                         }
 
                     }
-
                 }
             }
         }
+
+
+
 
 
 
@@ -627,7 +960,7 @@ public class Worker_Catalog_LoadData extends Worker {
             for(Map.Entry<String, ItemClass_CatalogItem> entry: globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
                 //Determine the full path to the file:
                 ItemClass_CatalogItem ci = entry.getValue();
-                String sFilePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator
+                String sFilePath = globalClass.gdfCatalogFolders[iMediaCategory].getUri().getPath() + File.separator
                         + ci.sFolder_Name + File.separator
                         + ci.sFilename;
 
@@ -666,7 +999,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 //If this is an M3U8 file catalog item, locate the M3U8 file and update file paths.
                 String sMessage = "Examining M3U8 video ID " + tmEntry.getKey();
                 Log.d("VideoFilesCheck", sMessage);
-                String sM3U8FilePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                String sM3U8FilePath = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                         File.separator + ci.sFolder_Name +
                         File.separator + ci.sItemID +
                         File.separator + ci.sFilename;

@@ -12,7 +12,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.Toast;
@@ -32,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -559,15 +559,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private void initializePlayer() {
 
         int iMediaCategory = globalClass.giSelectedCatalogMediaCategory;
-        Uri gMediaUri = null;
+
         if(treeMapRecyclerViewCatItems.containsKey(giKey)) {
             ItemClass_CatalogItem ci;
             ci = treeMapRecyclerViewCatItems.get(giKey);
             if (ci != null) {
                 String sFileName = ci.sFilename;
-                String sFilePath = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator +
-                        ci.sFolder_Name + File.separator +
-                        sFileName;
 
                 setTitle(GlobalClass.JumbleFileName(sFileName));
 
@@ -591,61 +588,64 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                 Service_CatalogViewer.startActionUpdateCatalogItem(this, ci, "Activity_VideoPlayer:initializePlayer()");
 
-                gMediaUri = Uri.parse(sFilePath);
+                DocumentFile dfMediaFileFolder = globalClass.gdfCatalogFolders[iMediaCategory].findFile(ci.sFolder_Name);
+                if(dfMediaFileFolder != null) {
 
-                //Determine if this is a gif file, which the VideoView will not play:
-                bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
+                    DocumentFile dfMediaFile = dfMediaFileFolder.findFile(ci.sFilename);
 
-                if(bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)){
-                    gbPlayingM3U8 = false;
-                    if(gMediaUri != null) {
-                        if (gMediaUri.getPath() != null) {
-                            File fGif = new File(gMediaUri.getPath());
-                            Glide.with(getApplicationContext()).load(fGif).into(gImageView_GifViewer);
+                    if(dfMediaFile != null) {
+
+                        //Determine if this is a gif file, which the VideoView will not play:
+                        bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
+
+                        if (bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
+                            gbPlayingM3U8 = false;
+
+                            Glide.with(getApplicationContext()).load(dfMediaFile.getUri()).into(gImageView_GifViewer);
+
+                            if (!gImageView_GifViewer.isShown()) {
+                                gImageView_GifViewer.setVisibility(View.VISIBLE);
+                                gVideoView_VideoPlayer.setZOrderOnTop(false);
+                                gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+                                gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
+                                gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                            }
+                        } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                            gbPlayingM3U8 = true;
+                            gImageView_GifViewer.setVisibility(View.INVISIBLE);
+                            gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+                            gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
+                            gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
+                            String sVideoPath = globalClass.gdfCatalogFolders[iMediaCategory] +
+                                    File.separator + ci.sFolder_Name +
+                                    File.separator + ci.sItemID +
+                                    File.separator + ci.sFilename;
+                            File fTemp = new File(sVideoPath);
+                            if (fTemp.exists()) {
+                                MediaItem mediaItem = MediaItem.fromUri(sVideoPath);
+                                gSimpleExoPlayer.setMediaItem(mediaItem);
+                                gSimpleExoPlayer.prepare();
+                                gSimpleExoPlayer.setPlayWhenReady(true);
+                                //gSimpleExoPlayer.play();
+                            } else {
+                                Toast.makeText(this, "Cannot find M3U8 file.", Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            gbPlayingM3U8 = false;
+                            gImageView_GifViewer.setVisibility(View.INVISIBLE);
+                            gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
+                            gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                            gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
+                            gVideoView_VideoPlayer.setVideoURI(dfMediaFile.getUri());
+
+                            if (gVideoView_VideoPlayer.getDuration() > glCurrentVideoPosition) {
+                                glCurrentVideoPosition = 1;
+                            }
+                            gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
+                            gVideoView_VideoPlayer.start();
                         }
                     }
-                    if(!gImageView_GifViewer.isShown()) {
-                        gImageView_GifViewer.setVisibility(View.VISIBLE);
-                        gVideoView_VideoPlayer.setZOrderOnTop(false);
-                        gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
-                        gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                        gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
-                    }
-                } else if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                    gbPlayingM3U8 = true;
-                    gImageView_GifViewer.setVisibility(View.INVISIBLE);
-                    gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
-                    gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
-                    gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
-                    String sVideoPath = globalClass.gfCatalogFolders[iMediaCategory] +
-                            File.separator + ci.sFolder_Name +
-                            File.separator + ci.sItemID +
-                            File.separator + ci.sFilename;
-                    File fTemp = new File(sVideoPath);
-                    if(fTemp.exists()) {
-                        MediaItem mediaItem = MediaItem.fromUri(sVideoPath);
-                        gSimpleExoPlayer.setMediaItem(mediaItem);
-                        gSimpleExoPlayer.prepare();
-                        gSimpleExoPlayer.setPlayWhenReady(true);
-                        //gSimpleExoPlayer.play();
-                    } else {
-                        Toast.makeText(this, "Cannot find M3U8 file.", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    gbPlayingM3U8 = false;
-                    gImageView_GifViewer.setVisibility(View.INVISIBLE);
-                    gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                    gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
-                    gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
-                    gVideoView_VideoPlayer.setVideoURI(gMediaUri);
-
-                    if(gVideoView_VideoPlayer.getDuration() > glCurrentVideoPosition){
-                        glCurrentVideoPosition = 1;
-                    }
-                    gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-                    gVideoView_VideoPlayer.start();
                 }
-
             } //End if our catalog item is not null.
 
         } //End if the catalog item was found in the passed-in list.

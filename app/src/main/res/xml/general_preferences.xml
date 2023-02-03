@@ -13,4 +13,10 @@
         app:title="Use FFMPEG to merge video streams into a single file when downloading video.">
     </SwitchPreferenceCompat>
 
+    <Preference
+        app:key="DATA_FOLDER_LOCATION"
+        app:title="Data folder location"
+        app:summary="Current Storage Location">
+    </Preference>
+
 </PreferenceScreen>

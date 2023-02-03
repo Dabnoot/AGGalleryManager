@@ -46,6 +46,12 @@ public class Service_Import {
         WorkManager.getInstance(context).enqueue(otwrGetHoldingFolderDirectoryContents);
     }
 
+    /**
+     *
+     * @param context           Context
+     * @param iMoveOrCopy       Specify move or copy
+     * @param iMediaCategory    Media category
+     */
     public static void startActionImportFiles(Context context, int iMoveOrCopy, int iMediaCategory) {
 
         String sCallerID = "Service_Import:startActionImportFiles()";

@@ -2,15 +2,21 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.provider.DocumentsContract;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -30,61 +36,60 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
         //Get the webpage tab data file path:
-        File fWebPageTabDataFile = globalClass.gfWebpageTabDataFile;
-        if(fWebPageTabDataFile == null) return Result.failure();
+        DocumentFile dfWebPageTabDataFile = globalClass.gdfWebpageTabDataFile;
+        if(dfWebPageTabDataFile == null) return Result.failure();
 
         //Debugging helper section:
         boolean bTestingCloseOfTabs = false;
         if(bTestingCloseOfTabs){
             boolean bFormReferenceTabFile = false;
-            File fReferenceFile = new File(globalClass.gfBrowserDataFolder.getPath() + File.separator + "WebPageTabDataRef.dat");
-            if(bFormReferenceTabFile){
-                //Create a reference tab file:
+            DocumentFile dfReferenceFile = globalClass.gdfBrowserDataFolder.findFile("WebPageTabDataRef.dat");
+            if(dfReferenceFile != null) {
+                if (bFormReferenceTabFile) {
+                    //Create a reference tab file:
+                    try {
+                        DocumentsContract.copyDocument(GlobalClass.gcrContentResolver, dfReferenceFile.getUri(), globalClass.gdfBrowserDataFolder.getUri());
+                    } catch (Exception e) {
+                        String sMessage = e.getMessage();
+                        Log.d("Browser testing", sMessage);
+                    }
+                }
+                //Copy the reference file of open tabs so that I don't have to keep opening them.
                 try {
-                    Files.copy(fWebPageTabDataFile.toPath(), fReferenceFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                } catch (Exception e){
+                    DocumentsContract.copyDocument(GlobalClass.gcrContentResolver, dfReferenceFile.getUri(), globalClass.gdfBrowserDataFolder.getUri());
+                } catch (Exception e) {
                     String sMessage = e.getMessage();
                 }
             }
-            //Copy the reference file of open tabs so that I don't have to keep opening them.
-            try {
-                Files.copy(fReferenceFile.toPath(), fWebPageTabDataFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e){
-                String sMessage = e.getMessage();
-            }
-
         }
 
         //If the file does not exist, return.
-        if(!fWebPageTabDataFile.exists()) return Result.failure();
+        if(!dfWebPageTabDataFile.exists()) return Result.failure();
 
         //Read the file into memory.
         try {
+            InputStream isWebPageTabDataFile = GlobalClass.gcrContentResolver.openInputStream(dfWebPageTabDataFile.getUri());
+            if(isWebPageTabDataFile != null) {
+                BufferedReader brReader;
+                brReader = new BufferedReader(new InputStreamReader(isWebPageTabDataFile));
+                brReader.readLine(); //Skip read of the file header.
 
-            BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fWebPageTabDataFile.getAbsolutePath()));
+                if (globalClass.gal_WebPages == null) {
+                    globalClass.gal_WebPages = new ArrayList<>();
+                } else {
+                    globalClass.gal_WebPages.clear();
+                }
 
-            brReader.readLine(); //Skip read of the file header.
-
-            if(globalClass.gal_WebPages == null){
-                globalClass.gal_WebPages = new ArrayList<>();
-            } else {
-                globalClass.gal_WebPages.clear();
+                String sLine = brReader.readLine();
+                while (sLine != null) {
+                    ItemClass_WebPageTabData icwptd_DataRecordFromFile;
+                    icwptd_DataRecordFromFile = GlobalClass.ConvertStringToWebPageTabData(sLine);
+                    globalClass.gal_WebPages.add(icwptd_DataRecordFromFile);
+                    sLine = brReader.readLine();
+                }
+                brReader.close();
+                isWebPageTabDataFile.close();
             }
-
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-
-                ItemClass_WebPageTabData icwptd_DataRecordFromFile;
-                icwptd_DataRecordFromFile = GlobalClass.ConvertStringToWebPageTabData(sLine);
-                globalClass.gal_WebPages.add(icwptd_DataRecordFromFile);
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-
         } catch (Exception e) {
             globalClass.problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.",
                     Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);

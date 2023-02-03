@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,7 +17,9 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.DocumentsContract;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -29,9 +32,11 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,8 +53,11 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -70,7 +78,8 @@ public class GlobalClass extends Application {
 
     public String gsPin = "";
 
-    public File gfAppFolder;
+    public static DocumentFile gdfDataFolder;
+    public static String gsDataFolderBaseName = "AGGalleryManager";
 
     public static final int MEDIA_CATEGORY_VIDEOS = 0;
     public static final int MEDIA_CATEGORY_IMAGES = 1;
@@ -78,17 +87,22 @@ public class GlobalClass extends Application {
 
     public Integer giSelectedCatalogMediaCategory = null;
 
-    public final File[] gfCatalogFolders = new File[3];
-    public File gfLogsFolder;
-    public File gfJobFilesFolder;
-    public File gfBrowserDataFolder;
-    public File gfWebpageTabDataFile;
-    public File gfWebpageFaviconBitmapFolder;
-    public File gfImageDownloadHoldingFolder; //Used to hold individual images downloaded by the user from the browser prior to import.
+    public final DocumentFile[] gdfCatalogFolders = new DocumentFile[3];
+    public DocumentFile gdfLogsFolder;
+    public DocumentFile gdfBackupFolder;
+    public DocumentFile gdfJobFilesFolder;
+    public DocumentFile gdfBrowserDataFolder;
+    public DocumentFile gdfWebpageTabDataFile;
+    public DocumentFile gdfWebpageFaviconBitmapFolder;
+    public DocumentFile gdfImageDownloadHoldingFolder; //Used to hold individual images downloaded by the user from the browser prior to import.
+    public File gfDownloadExternalStorageFolder;  //Destination root for DownloadManager Downloaded files. Android limits DL destination locations.
     public File gfImageDownloadHoldingFolderTemp; //Used to hold download manager files temporarily, to be moved so that DLM can't find them for cleanup operations.
     public String gsImageDownloadHoldingFolderTempRPath; //For coordinating file transfer from internal storage to SD card.
-    public final File[] gfCatalogContentsFiles = new File[3];
-    public final File[] gfCatalogTagsFiles = new File[3];
+    public final DocumentFile[] gdfCatalogContentsFiles = new DocumentFile[3];
+    public final DocumentFile[] gdfCatalogTagsFiles = new DocumentFile[3];
+
+    public static ContentResolver gcrContentResolver;
+
     //Video tag variables:
     public final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>(); //Use String as the key to avoid duplicates and provide sort.
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
@@ -402,8 +416,7 @@ public class GlobalClass extends Application {
     }
 
     public static String[] SplitFileNameIntoBaseAndExtension(String sFileName){
-        String[] tokens = sFileName.split("\\.(?=[^\\.]+$)");
-        return tokens;
+        return sFileName.split("\\.(?=[^\\.]+$)");
     }
 
     //=====================================================================================
@@ -565,7 +578,7 @@ public class GlobalClass extends Application {
 
     public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci) throws Exception {
 
-        File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
+        DocumentFile dfCatalogContentsFile = gdfCatalogContentsFiles[ci.iMediaCategory];
 
         gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
 
@@ -582,29 +595,41 @@ public class GlobalClass extends Application {
             String sLine = getCatalogRecordString(ci);
             
             //Write the data to the file:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, true);
-            fwNewCatalogContentsFile.write(sLine);
-            fwNewCatalogContentsFile.write("\n");
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+            OutputStream osNewCatalogContentsFile;
+
+            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(dfCatalogContentsFile.getUri(), "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                throw new Exception();
+            }
+            //Write the activity_comic_details_header line to the file:
+            osNewCatalogContentsFile.write(sLine.getBytes());
+            osNewCatalogContentsFile.write("\n".getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
 
         } catch (Exception e) {
-            String sMessage = "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage();
+            String sMessage = "Problem updating CatalogContents.dat.\n" + dfCatalogContentsFile.getUri() + "\n\n" + e.getMessage();
 
             BroadcastProgress(true, sMessage,
                     false, 0,
                     false, "",
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-            FileWriter fwLogFile;
             String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
-            String sLogFilePath = gfLogsFolder.getAbsolutePath() +
-                    File.separator + sJobDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_CatalogUpdate_ErrorLog.txt";
-            File fLog = new File(sLogFilePath);
+            String sNewLogFileName = sJobDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_CatalogUpdate_ErrorLog.txt";
             try {
-                fwLogFile = new FileWriter(fLog, true);
-                fwLogFile.write(sMessage + "\n");
-                fwLogFile.close();
+                DocumentFile dfNewLogFile = gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sNewLogFileName);
+                if(dfNewLogFile == null){
+                    return;
+                }
+                OutputStream osLogFile = gcrContentResolver.openOutputStream(dfNewLogFile.getUri(), "wa");
+                if (osLogFile == null) {
+                    return;
+                }
+                sMessage = sMessage + "\n";
+                osLogFile.write(sMessage.getBytes(StandardCharsets.UTF_8));
+                osLogFile.flush();
+                osLogFile.close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
@@ -616,16 +641,17 @@ public class GlobalClass extends Application {
     }
 
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
-        File fCatalogContentsFile = gfCatalogContentsFiles[ci.iMediaCategory];
+        DocumentFile dfCatalogContentsFile = gdfCatalogContentsFiles[ci.iMediaCategory];
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
 
         //gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true; DO NOT do this here, as this is called to update "last read date" on every item.
 
         try {
-
+            InputStream isCatalogReader;
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogContentsFile.getAbsolutePath()));
+            isCatalogReader = gcrContentResolver.openInputStream(dfCatalogContentsFile.getUri());
+            brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -653,16 +679,24 @@ public class GlobalClass extends Application {
             brReader.close();
 
             //Write the data to the file:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogContentsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+            OutputStream osNewCatalogContentsFile;
+
+            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(dfCatalogContentsFile.getUri(), "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                throw new Exception();
+            }
+            //Write the activity_comic_details_header line to the file:
+            osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
 
             //Update the tags histogram if required:
             updateTagHistogramsIfRequired();
-
+            if(isCatalogReader != null) {
+                isCatalogReader.close();
+            }
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + fCatalogContentsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + dfCatalogContentsFile.getUri() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -684,10 +718,16 @@ public class GlobalClass extends Application {
 
         try {
             //Write the catalog file:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[iMediaCategory], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+
+            OutputStream osNewCatalogContentsFile;
+
+            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gdfCatalogContentsFiles[iMediaCategory].getUri(), "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                throw new Exception();
+            }
+            osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -700,10 +740,13 @@ public class GlobalClass extends Application {
         gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
 
         String sMessage;
+
         try {
+            InputStream isCatalogReader;
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[ci.iMediaCategory].getAbsolutePath()));
+            isCatalogReader = gcrContentResolver.openInputStream(gdfCatalogContentsFiles[ci.iMediaCategory].getUri());
+            brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -730,16 +773,19 @@ public class GlobalClass extends Application {
                 sMessage = "Could not locate item data record (ID: " +
                         GlobalClass.JumbleStorageText(ci.sItemID) +
                         ") in CatalogContents.dat.\n" +
-                        gfCatalogContentsFiles[ci.iMediaCategory];
+                        gdfCatalogContentsFiles[ci.iMediaCategory];
                 problemNotificationConfig(sMessage, sIntentActionFilter);
 
             }
 
             //Re-write the CatalogContentsFile without the deleted item's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[ci.iMediaCategory], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+            OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gdfCatalogContentsFiles[ci.iMediaCategory].getUri(), "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                throw new Exception();
+            }
+            osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
 
 
             //Now update memory to no longer include the item:
@@ -756,52 +802,106 @@ public class GlobalClass extends Application {
         return bSuccess;
     }
 
-    public boolean ComicCatalog_DeleteComic(ItemClass_CatalogItem ci) {
+    public boolean ComicCatalog_DeleteComic(ItemClass_CatalogItem ciToDelete) {
 
         //Delete the comic record from the CatalogContentsFile:
 
-        gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
+        gbTagHistogramRequiresUpdate[ciToDelete.iMediaCategory] = true;
 
         try {
 
-            String  sComicFolderPath = gfCatalogFolders[MEDIA_CATEGORY_COMICS].getPath() + File.separator
-                    + ci.sFolder_Name;
+            DocumentFile dfComicFolder = gdfCatalogFolders[MEDIA_CATEGORY_COMICS].findFile(ciToDelete.sFolder_Name);
 
-            File fComicFolderToBeDeleted = new File(sComicFolderPath);
-            if(fComicFolderToBeDeleted.exists() && fComicFolderToBeDeleted.isDirectory()){
-                try{
-                    //First, the directory must be empty to delete. So delete all files in folder:
-                    String[] sChildFiles = fComicFolderToBeDeleted.list();
-                    if(sChildFiles != null) {
-                        for (String sChildFile : sChildFiles) {
-                            File fChildFile = new File(fComicFolderToBeDeleted, sChildFile);
-                            if(!fChildFile.delete()){
-                                Toast.makeText(this, "Could not delete file of comic ID " + ci.sItemID + ":\n" +
-                                                sChildFile,
-                                                Toast.LENGTH_LONG).show();
+            if(dfComicFolder != null) {
+
+                if (dfComicFolder.exists() && dfComicFolder.isDirectory()) {
+                    try {
+                        //First, the directory must be empty to delete. So delete all files in folder:
+                        DocumentFile[] dfChildFiles = dfComicFolder.listFiles();
+                        for(DocumentFile dfChildFile: dfChildFiles){
+                            if(dfChildFile.isFile()){
+                                if (!dfChildFile.delete()) {
+                                    Toast.makeText(this, "Could not delete file of comic ID " + ciToDelete.sItemID + ":\n" +
+                                                    dfChildFile.getName(),
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+                        }
+                        if (!dfComicFolder.delete()) {
+                            Toast.makeText(this, "Could not delete folder of comic ID " + ciToDelete.sItemID + ".",
+                                    Toast.LENGTH_LONG).show();
+                            return false;
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Could not delete folder of comic ID " + ciToDelete.sItemID + ".",
+                                Toast.LENGTH_LONG).show();
+                        return false;
+                    }
+                } else {
+                    Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + ciToDelete.sItemID + ".",
+                            Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + ciToDelete.sItemID + ".",
+                        Toast.LENGTH_LONG).show();
+            }
+
+            if(ciToDelete.sSource.startsWith("http")){
+                //If this comic was sourced as a download, check to make sure that the files did not get
+                //  stuck in a temporary download folder.
+                String sDownloadFolderRelativePath;
+                sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
+                        File.separator + ciToDelete.sItemID;
+                if (getApplicationContext().getExternalFilesDir(null) != null) {
+                    String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
+                    String sItemDownloadFolder = sExternalFilesDir +
+                            sDownloadFolderRelativePath;
+                    File fItemDownloadFolder = new File(sItemDownloadFolder);
+                    if (fItemDownloadFolder.exists()) {
+
+                        File[] fItemDownloadFolderContents = fItemDownloadFolder.listFiles();
+                        if (fItemDownloadFolderContents != null) {
+                            for (File f1 : fItemDownloadFolderContents) {
+                                if (!f1.delete()) {
+                                    Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
+                                }
+                            }
+                        } //End attempt to delete download folder contents for this comic.
+
+                        if (!fItemDownloadFolder.delete()) {
+                            Log.d("File Deletion", "Unable to delete folder " + fItemDownloadFolder.getAbsolutePath());
+                        }
+
+                        //Delete the category folder on the temp storage if it is empty:
+                        String sDownloadCategoryFolderRelativePath;
+                        sDownloadCategoryFolderRelativePath = sExternalFilesDir +
+                                File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory];
+                        File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
+                        if (fCatFolder.exists()) {
+                            File[] fCatFolderContents = fCatFolder.listFiles();
+                            if (fCatFolderContents != null) {
+                                if (fCatFolderContents.length == 0) {
+                                    if (!fCatFolder.delete()) {
+                                        Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
+                                    }
+                                }
                             }
                         }
                     }
 
-                    if(!fComicFolderToBeDeleted.delete()){
-                        Toast.makeText(this, "Could not delete folder of comic ID " + ci.sItemID + ".",
-                                Toast.LENGTH_LONG).show();
-                        return false;
-                    }
-                } catch (Exception e){
-                    Toast.makeText(this, "Could not delete folder of comic ID " + ci.sItemID + ".",
-                            Toast.LENGTH_LONG).show();
-                    return false;
                 }
-            } else {
-                Toast.makeText(this, "Could not find folder of to-be-deleted comic ID " + ci.sItemID + ".",
-                        Toast.LENGTH_LONG).show();
             }
 
             //Now attempt to delete the comic record from the CatalogContentsFile:
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS].getAbsolutePath()));
+            InputStream isCatalogReader = gcrContentResolver.openInputStream(gdfCatalogContentsFiles[MEDIA_CATEGORY_COMICS].getUri());
+            if(isCatalogReader == null){
+                Toast.makeText(this, "Could not read CatalogContentsFile.",
+                        Toast.LENGTH_LONG).show();
+                return false;
+            }
+            brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
 
@@ -814,7 +914,7 @@ public class GlobalClass extends Application {
                 ciFromFile = ConvertStringToCatalogItem(sLine);
 
                 //Check to see if this record is the one that we want to update:
-                if (!ciFromFile.sItemID.equals(ci.sItemID)) {
+                if (!ciFromFile.sItemID.equals(ciToDelete.sItemID)) {
                     //If the line is not the comic we are trying to delete, transfer it over:
                     sbBuffer.append(sLine);
                     sbBuffer.append("\n");
@@ -824,20 +924,24 @@ public class GlobalClass extends Application {
                 sLine = brReader.readLine();
             }
             brReader.close();
+            isCatalogReader.close();
 
             //Re-write the CatalogContentsFile without the deleted comic's data record:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[MEDIA_CATEGORY_COMICS], false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+            OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gdfCatalogContentsFiles[ciToDelete.iMediaCategory].getUri(), "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                throw new Exception();
+            }
+            osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
 
             //Now update memory to no longer include the comic:
-            gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(ci.sItemID);
+            gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).remove(ciToDelete.sItemID);
 
             //Update the tags histogram:
             updateTagHistogramsIfRequired();
 
-            Toast.makeText(this, "Comic ID " + ci.sItemID + " removed from catalog.",
+            Toast.makeText(this, "Comic ID " + ciToDelete.sItemID + " removed from catalog.",
                     Toast.LENGTH_LONG).show();
             return true;
         } catch (Exception e) {
@@ -866,10 +970,13 @@ public class GlobalClass extends Application {
 
             try {
                 //Write the catalog file:
-                FileWriter fwNewCatalogContentsFile = new FileWriter(gfCatalogContentsFiles[i], false);
-                fwNewCatalogContentsFile.write(sbBuffer.toString());
-                fwNewCatalogContentsFile.flush();
-                fwNewCatalogContentsFile.close();
+                OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gdfCatalogContentsFiles[i].getUri(), "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                if(osNewCatalogContentsFile == null){
+                    throw new Exception();
+                }
+                osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
+                osNewCatalogContentsFile.flush();
+                osNewCatalogContentsFile.close();
 
             } catch (Exception e) {
                 Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -883,70 +990,70 @@ public class GlobalClass extends Application {
 
         String sFolderName = ci.sFolder_Name;
         //Log.d("Comics", sFolderName);
-        String sFolderPath = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getPath() + File.separator + sFolderName;
-        File fFolder = new File(sFolderPath);
+        DocumentFile dfComicFolder = gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(sFolderName);
+        if(dfComicFolder != null){
+            if(dfComicFolder.exists() && dfComicFolder.isDirectory()){
+                String sMessage;
 
-        String sMessage;
+                    DocumentFile[] dfComicPages = dfComicFolder.listFiles();
 
-        if(fFolder.exists()) {
+                    if (dfComicPages.length == 0) {
+                        sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
+                        Log.d("Comics", sMessage);
+                    }
 
-            File[] fComicPages = fFolder.listFiles();
+                    TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
 
-            if(fComicPages != null) {
-                if (fComicPages.length == 0) {
-                    sMessage = "Comic source \"" + ci.sSource + "\" folder exists, but is missing files.";
-                    Log.d("Comics", sMessage);
-                }
+                    for (DocumentFile dfComicPage : dfComicPages) {
+                        if(dfComicPage.getName() != null) {
+                            String sFileName = GlobalClass.JumbleFileName(dfComicPage.getName());
+                            tmSortedFileNames.put(sFileName, sFileName);
+                        }
+                    }
+                    ArrayList<Integer> aliComicPageNumbers = new ArrayList<>();
+                    for (Map.Entry<String, String> tmEntry : tmSortedFileNames.entrySet()) {
+                        String sFileName = tmEntry.getKey();
+                        String sPageID = sFileName.substring(sFileName.lastIndexOf("_") + 1, sFileName.lastIndexOf("."));
+                        aliComicPageNumbers.add(Integer.parseInt(sPageID));
+                    }
+                    ArrayList<Integer> aliMissingPages = new ArrayList<>();
+                    int iExpectedPageID = 0;
+                    for (Integer iPageID : aliComicPageNumbers) {
+                        iExpectedPageID++;
+                        while (iPageID > iExpectedPageID) {
+                            aliMissingPages.add(iExpectedPageID);
+                            iExpectedPageID++;
+                        }
+                    }
+                    int iMaxPageID = iExpectedPageID;
+                    if(iExpectedPageID < ci.iComicPages){
+                        iExpectedPageID++;
+                        for(int i = iExpectedPageID; i <= ci.iComicPages; i++){
+                            aliMissingPages.add(i);
+                            iMaxPageID = i;
+                        }
+
+                    }
+                    ci.iComic_Max_Page_ID = iMaxPageID;
+                    ci.iFile_Count = aliComicPageNumbers.size();
+
+                    if(aliMissingPages.size() > 0) {
+                        String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ",");
+                        ci.sComic_Missing_Pages = sMissingPages;
+                        sMessage = "Comic source \"" + ci.sSource + "\" missing page numbers: " + sMissingPages + ".";
+                        Log.d("Comics", sMessage);
+                    } else {
+                        ci.sComic_Missing_Pages = "";
+                    }
+
+
             } else {
-                return null;
-            }
-
-            TreeMap<String, String> tmSortedFileNames = new TreeMap<>();
-
-            for (File fComicPage : fComicPages) {
-                String sFileName = GlobalClass.JumbleFileName(fComicPage.getName());
-                tmSortedFileNames.put(sFileName, sFileName);
-            }
-            ArrayList<Integer> aliComicPageNumbers = new ArrayList<>();
-            for (Map.Entry<String, String> tmEntry : tmSortedFileNames.entrySet()) {
-                String sFileName = tmEntry.getKey();
-                String sPageID = sFileName.substring(sFileName.lastIndexOf("_") + 1, sFileName.lastIndexOf("."));
-                aliComicPageNumbers.add(Integer.parseInt(sPageID));
-            }
-            ArrayList<Integer> aliMissingPages = new ArrayList<>();
-            int iExpectedPageID = 0;
-            for (Integer iPageID : aliComicPageNumbers) {
-                iExpectedPageID++;
-                while (iPageID > iExpectedPageID) {
-                    aliMissingPages.add(iExpectedPageID);
-                    iExpectedPageID++;
-                }
-            }
-            int iMaxPageID = iExpectedPageID;
-            if(iExpectedPageID < ci.iComicPages){
-                iExpectedPageID++;
-                for(int i = iExpectedPageID; i <= ci.iComicPages; i++){
-                    aliMissingPages.add(i);
-                    iMaxPageID = i;
-                }
-
-            }
-            ci.iComic_Max_Page_ID = iMaxPageID;
-            ci.iFile_Count = aliComicPageNumbers.size();
-
-            if(aliMissingPages.size() > 0) {
-                String sMissingPages = GlobalClass.formDelimitedString(aliMissingPages, ",");
-                ci.sComic_Missing_Pages = sMissingPages;
-                sMessage = "Comic source \"" + ci.sSource + "\" missing page numbers: " + sMissingPages + ".";
+                String sMessage = "Comic source \"" + ci.sSource + "\" missing comic folder.";
                 Log.d("Comics", sMessage);
-            } else {
-                ci.sComic_Missing_Pages = "";
             }
-
-        } else {
-            sMessage = "Comic source \"" + ci.sSource + "\" missing comic folder.";
-            Log.d("Comics", sMessage);
         }
+
+
         return ci;
     }
 
@@ -1010,66 +1117,13 @@ public class GlobalClass extends Application {
         return ConvertFileLineToTagItem(sRecord2);
     }
 
-    public TreeMap<Integer, ItemClass_Tag> InitTagData(int iMediaCategory){
-        //TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        TreeMap<Integer, ItemClass_Tag> tmTags = new TreeMap<>();
 
-        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
-
-        if(fTagsFile.exists()) {
-            //Get Tags from file:
-            BufferedReader brReader;
-            try {
-
-                brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
-                brReader.readLine();//First line is the header, skip it.
-                String sLine = brReader.readLine();
-
-                while(sLine != null) {
-
-                    ItemClass_Tag ict = ConvertFileLineToTagItem(sLine);
-                    tmTags.put(ict.iTagID, ict);
-
-                    sLine = brReader.readLine();
-                }
-
-                brReader.close();
-
-            } catch (IOException e) {
-                Toast.makeText(this, "Trouble reading tags file at\n" + fTagsFile.getAbsolutePath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        } else { //If the tags file does not exist, create it:
-            try {
-                if(fTagsFile.createNewFile()) {
-                    try {
-                        FileWriter fwTagsFile = new FileWriter(fTagsFile, false);
-
-                        //Write the header record:
-                        fwTagsFile.write(getTagFileHeader());
-                        fwTagsFile.write("\n");
-
-                        //Close the tags file:
-                        fwTagsFile.flush();
-                        fwTagsFile.close();
-
-                    } catch (IOException e) {
-                        Toast.makeText(this, "Trouble writing file at\n" + fTagsFile.getAbsolutePath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Toast.makeText(this, "Could not create file at\n" + fTagsFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
-                }
-            }catch (IOException e){
-                Toast.makeText(this, "Could not create file at\n" + fTagsFile.getAbsolutePath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        }
-
-        return tmTags;
-    }
 
     public ArrayList<ItemClass_Tag> TagDataFile_CreateNewRecords(ArrayList<String> sNewTagNames, int iMediaCategory){
 
         //Get the tags file:
-        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+
+        DocumentFile dfTagsFile = gdfCatalogTagsFiles[iMediaCategory];
 
         int iNextRecordId = -1;
 
@@ -1092,14 +1146,19 @@ public class GlobalClass extends Application {
 
         try {
             //Open the tags file write-mode append:
-            FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
+
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(dfTagsFile.getUri(), "wa"); //Write-mode append.
+            if(osNewTagsFile == null){
+                return null;
+            }
+            StringBuilder sbNewTagsStringBuilder = new StringBuilder();
 
             for(String sNewTagName: sNewTagNames) {
                 boolean bTagAlreadyExists = false;
                 if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
                     for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
-                        if (entry.getValue().sTagText.toLowerCase().equals(sNewTagName.toLowerCase())) {
+                        if (entry.getValue().sTagText.equalsIgnoreCase(sNewTagName)) {
                             //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
                             bTagAlreadyExists = true;
                             break;
@@ -1119,16 +1178,17 @@ public class GlobalClass extends Application {
 
                 //Add the new record to the catalog file:
                 String sLine = getTagRecordString(ictNewTag);
-                fwNewTagsFile.write(sLine);
-                fwNewTagsFile.write("\n");
+                sbNewTagsStringBuilder.append(sLine);
+                sbNewTagsStringBuilder.append("\n");
                 iNextRecordId++;
             }
 
-            fwNewTagsFile.flush();
-            fwNewTagsFile.close();
+            osNewTagsFile.write(sbNewTagsStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+            osNewTagsFile.flush();
+            osNewTagsFile.close();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + dfTagsFile.getUri() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         return ictNewTags;
@@ -1138,7 +1198,7 @@ public class GlobalClass extends Application {
     public ItemClass_Tag TagDataFile_CreateNewRecord(ItemClass_Tag ictNewTag, int iMediaCategory){
 
         //Get the tags file:
-        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+        DocumentFile dfTagsFile = gdfCatalogTagsFiles[iMediaCategory];
 
         int iNextRecordId = -1;
 
@@ -1157,7 +1217,11 @@ public class GlobalClass extends Application {
 
         try {
             //Open the tags file write-mode append:
-            FileWriter fwNewTagsFile = new FileWriter(fTagsFile, true);
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(dfTagsFile.getUri(), "wa"); //Open file in write-append mode.
+            if(osNewTagsFile == null){
+                return null;
+            }
+            StringBuilder sbNewTagsStringBuilder = new StringBuilder();
 
             boolean bTagAlreadyExists = false;
             if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
@@ -1181,17 +1245,18 @@ public class GlobalClass extends Application {
 
                 //Add the new record to the catalog file:
                 String sLine = getTagRecordString(ictNewNewTag);
-                fwNewTagsFile.write(sLine);
-                fwNewTagsFile.write("\n");
+                sbNewTagsStringBuilder.append(sLine);
+                sbNewTagsStringBuilder.append("\n");
             } else {
                 ictNewTag = null;
             }
 
-            fwNewTagsFile.flush();
-            fwNewTagsFile.close();
+            osNewTagsFile.write(sbNewTagsStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+            osNewTagsFile.flush();
+            osNewTagsFile.close();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + dfTagsFile.getUri() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
 
         return ictNewTag;
@@ -1202,13 +1267,13 @@ public class GlobalClass extends Application {
 
         ItemClass_Tag ictIncoming = new ItemClass_Tag(Integer.parseInt(sTagID), sData);
 
-        File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+        DocumentFile dfTagsFile = gdfCatalogTagsFiles[iMediaCategory];
 
         try {
-
+            InputStream isTagsFile = gcrContentResolver.openInputStream(dfTagsFile.getUri());
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
+            brReader = new BufferedReader(new InputStreamReader(isTagsFile));
             sbBuffer.append(getTagFileHeader());
             sbBuffer.append("\n");
 
@@ -1237,13 +1302,17 @@ public class GlobalClass extends Application {
             brReader.close();
 
             //Write the data to the file:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fTagsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(dfTagsFile.getUri(), "wt"); //Open the file in overwrite mode.
+            if (osNewTagsFile == null) {
+                Toast.makeText(this, "Problem updating Tags.dat.\n" + dfTagsFile.getUri(), Toast.LENGTH_LONG).show();
+                return false;
+            }
+            osNewTagsFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+            osNewTagsFile.flush();
+            osNewTagsFile.close();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + dfTagsFile.getUri() + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
@@ -1338,11 +1407,16 @@ public class GlobalClass extends Application {
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
 
-            File fTagsFile = gfCatalogTagsFiles[iMediaCategory];
+            DocumentFile dfTagsFile = gdfCatalogTagsFiles[iMediaCategory];
 
             try {
+                InputStream isTagsFile = gcrContentResolver.openInputStream(dfTagsFile.getUri());
+                if(isTagsFile == null){
+                    Toast.makeText(this, "Problem reading Tags.dat.\n" + dfTagsFile.getUri(), Toast.LENGTH_LONG).show();
+                    return;
+                }
                 BufferedReader brReader;
-                brReader = new BufferedReader(new FileReader(fTagsFile.getAbsolutePath()));
+                brReader = new BufferedReader(new InputStreamReader(isTagsFile));
 
                 StringBuilder sbBuffer = new StringBuilder();
                 sbBuffer.append(getTagFileHeader());
@@ -1370,14 +1444,20 @@ public class GlobalClass extends Application {
                 }
                 brReader.close();
 
+                isTagsFile.close();
+
                 //Write the data to the file:
-                FileWriter fwNewCatalogContentsFile = new FileWriter(fTagsFile, false);
-                fwNewCatalogContentsFile.write(sbBuffer.toString());
-                fwNewCatalogContentsFile.flush();
-                fwNewCatalogContentsFile.close();
+                OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(dfTagsFile.getUri(), "wt"); //Open the tags file in overwrite mode.
+                if (osNewTagsFile == null) {
+                    Toast.makeText(this, "Problem writing Tags.dat.\n" + dfTagsFile.getUri(), Toast.LENGTH_LONG).show();
+                    return;
+                }
+                osNewTagsFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+                osNewTagsFile.flush();
+                osNewTagsFile.close();
 
             } catch (Exception e) {
-                String sMessage =  "Problem updating Tags.dat.\n" + fTagsFile.getPath() + "\n" + e.getMessage();
+                String sMessage =  "Problem updating Tags.dat.\n" + dfTagsFile.getUri() + "\n" + e.getMessage();
                 Log.d("TagDataFileAddNewField", sMessage);
             }
         }
@@ -1438,6 +1518,9 @@ public class GlobalClass extends Application {
         //Get a histogram counting the tags that occur alongside tags found in aliTagIDs.
         //  Suppose the user selects tag ID 7, and wants to know what other tag IDs are frequently
         //  found alongside tag ID 7. This routine returns that list with frequency.
+        //  This is used in filtering. The user will select a tag, an xref list will be returned.
+        //  Tags with an occurrence of Zero will be hidden. Therefore, the user will be able to
+        //  filter further by selecting additional tags.
 
         TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram = new TreeMap<>();
 
@@ -1445,12 +1528,14 @@ public class GlobalClass extends Application {
         for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             //if (entry.getValue().bIsRestricted) {
             if(gicuCurrentUser != null) {
-                if (gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
+                if (gicuCurrentUser.iMaturityLevel <= entry.getValue().iTagAgeRating) {
                     aliRestrictedTagIDs.add(entry.getValue().iTagID);
                 }
             } else {
-                if (entry.getValue().iTagAgeRating > giDefaultUserMaturityRating) {
-
+                //If no user is selected or current user is somehow null, follow guidelines for
+                //  default user maturity rating.
+                if (entry.getValue().iTagAgeRating <= giDefaultUserMaturityRating) {
+                    aliRestrictedTagIDs.add(entry.getValue().iTagID);
                 }
             }
         }
@@ -1604,7 +1689,7 @@ public class GlobalClass extends Application {
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb.toString() + "%%" + "}";
+        sRecord = sRecord + sb + "%%" + "}";
 
         //Append the forward-stack to the record:
         sRecord = sRecord + "\t" + "{";
@@ -1616,7 +1701,7 @@ public class GlobalClass extends Application {
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb.toString() + "%%" + "}";
+        sRecord = sRecord + sb + "%%" + "}";
 
         return sRecord;
     }
@@ -1696,160 +1781,205 @@ public class GlobalClass extends Application {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
             if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
                 //Check to see if all of the files have downloaded:
-                String sComicItemFolderPath =
-                        gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath()
-                                + File.separator + ci.sFolder_Name;
-                String sComicItemDLFolderPath = sComicItemFolderPath + File.separator + GlobalClass.gsDLTempFolderName;
-                File fComicItemDLFolder = new File(sComicItemDLFolderPath);
-                if (fComicItemDLFolder.exists()) {
-                    File[] fComicDLFiles = fComicItemDLFolder.listFiles();
-                    if (fComicDLFiles != null) {
-                        if (fComicDLFiles.length == ci.iComicPages) {
-                            //All of the files have been downloaded.
-                            //Attempt to move the files:
-                            boolean bMoveSuccessful = true;
-                            for (File fDLFile : fComicDLFiles) {
-                                String sFileName = fDLFile.getName();
-                                File fDestination = new File(sComicItemFolderPath + File.separator + sFileName);
-                                if (fDLFile.isFile()) {
-                                    if (!fDLFile.renameTo(fDestination)) {
-                                        Log.d("File move", "Cannot move file " + sFileName + " from " + fDLFile.getAbsolutePath() + " to " + fDestination.getAbsolutePath() + ".");
-                                        bMoveSuccessful = false;
-                                    }
+                DocumentFile dfComicsFolder = gdfCatalogFolders[MEDIA_CATEGORY_COMICS];
+                DocumentFile dfComicItemFolder = dfComicsFolder.findFile(ci.sFolder_Name);
+                if (dfComicItemFolder == null) {
+                    Log.d("Post DLManager Ops", "Comic folder not found for comic " + ci.sItemID);
+                    continue;
+                }
+                DocumentFile dfComicItemDLFolder = dfComicItemFolder.findFile(GlobalClass.gsDLTempFolderName);
+                if (dfComicItemDLFolder == null) {
+                    Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
+                    continue;
+                }
+
+                DocumentFile[] dfComicDLFiles = dfComicItemDLFolder.listFiles();
+                if (dfComicDLFiles.length > 0) {
+                    if (dfComicDLFiles.length == ci.iComicPages) {
+                        //All of the files have been downloaded.
+                        //Attempt to move the files:
+                        boolean bMoveSuccessful = true;
+                        for (DocumentFile dfDLFile : dfComicDLFiles) {
+                            if (dfDLFile.isFile()) {
+                                //Here we move the file from the internal download location to a final location.
+                                //  This is to prevent the Android Download Manager from "cleaning up" the files
+                                //  that the user is attempting to add to their library. ADM will come behind
+                                //  and delete files that were downloaded by the app and not opened, etc.
+                                try {
+                                    DocumentsContract.moveDocument(gcrContentResolver, dfDLFile.getUri(), dfComicItemDLFolder.getUri(), dfComicItemFolder.getUri());
+                                } catch (Exception e){
+                                    Log.d("File move", "Cannot move file\n" + dfDLFile.getUri() + "\nfrom\n" + dfComicItemDLFolder.getUri() + "\nto\n" + dfComicItemFolder.getUri() + ".");
+                                    bMoveSuccessful = false;
                                 }
-                            }
-                            if (bMoveSuccessful) {
-                                //Delete the DL folder:
-                                if (!fComicItemDLFolder.delete()) {
-                                    Log.d("File move", "Could not delete " + fComicItemDLFolder.getAbsolutePath() + " folder.");
-                                }
-                                ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
-                                alsCatalogItemsToUpdate.add(ci);
                             }
                         }
+                        if (bMoveSuccessful) {
+                            //Delete the DL folder:
+                            if (!dfComicItemDLFolder.delete()) {
+                                Log.d("File move", "Could not delete " + dfComicItemDLFolder.getUri() + " folder.");
+                            }
+                            ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
+                            alsCatalogItemsToUpdate.add(ci);
+                        }
                     }
-                } else {
-                    Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
                 }
+
             }
         }
+
         //Look for video post-processing required:
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
             if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE) ||
                     (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT)) {
+
                 //Check to see if the concatenation (or single video file download) operation is complete:
-                String sVideoDestinationFolder = gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getAbsolutePath() +
-                        File.separator + ci.sFolder_Name;
-                String sVideoWorkingFolder = sVideoDestinationFolder + File.separator + ci.sItemID;
-                File fVideoWorkingFolder = new File(sVideoWorkingFolder);
-                if(fVideoWorkingFolder.exists()){
-                    File[] fVideoWorkingFolderListing = fVideoWorkingFolder.listFiles();
-                    ArrayList<File> alfOutputFolders = new ArrayList<>();
-                    if(fVideoWorkingFolderListing != null) {
-                        for (File f : fVideoWorkingFolderListing) {
-                            //Locate the output folder
-                            if (f.isDirectory()) {
-                                alfOutputFolders.add(f); //The worker could potentially create multiple output folders if it is re-run.
-                            }
-                        }
-                        //Attempt to locate the output file of a concatenation operation:
-                        for (File f : alfOutputFolders) {
-                            String sOutputFileAbsolutePath = f.getAbsolutePath() + File.separator + ci.sFilename;
-                            File fOutputFile = new File(sOutputFileAbsolutePath);
-                            if (fOutputFile.exists()) {
-                                //Concatenation is complete
-                                //Move the file:
-                                String sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + ci.sFilename;
-                                File fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
-                                //Make sure the 'rename-to' name is unique:
-                                int iOutputFolderRetryIterator = 0;
-                                while(fOutputFileFinalDestination.exists()){
-                                    iOutputFolderRetryIterator++;
-                                    String sDeJumbledFileName = JumbleFileName(ci.sFilename);
-                                    String sFileNameWithoutExtension = sDeJumbledFileName.replaceFirst("[.][^.]+$","");
-                                    String sNewFileName = sFileNameWithoutExtension + "_" + iOutputFolderRetryIterator;
-                                    String sFileNameExtension = sDeJumbledFileName.substring(sDeJumbledFileName.lastIndexOf(".") + 1);
-                                    sNewFileName = sNewFileName + "." + sFileNameExtension;
-                                    sNewFileName = JumbleFileName(sNewFileName);
-                                    ci.sFilename = sNewFileName;
-                                    sOutputFileFinalDestination = sVideoDestinationFolder + File.separator + sNewFileName;
-                                    fOutputFileFinalDestination = new File(sOutputFileFinalDestination);
-                                }
-                                if(!fOutputFile.renameTo(fOutputFileFinalDestination)){
-                                    Log.d("File Move", "Unable to move file from " + fOutputFile.getAbsolutePath() + " to " + fOutputFileFinalDestination.getAbsolutePath());
-                                    break;
-                                }
 
+                DocumentFile dfVideosFolder = gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
+                DocumentFile dfVideoDestinationFolder = dfVideosFolder.findFile(ci.sFolder_Name);
+                if (dfVideoDestinationFolder == null) {
+                    Log.d("Video post-processing", "Could not find video destination folder for item " + ci.sItemID);
+                    continue;
+                }
+                DocumentFile dfVideoWorkingFolder = dfVideoDestinationFolder.findFile(ci.sItemID);
+                if (dfVideoWorkingFolder == null) {
+                    Log.d("Video post-processing", "Could not find video working folder for item " + ci.sItemID);
+                    continue;
+                }
 
-                                //Delete output folder contents:
-                                for (File f2 : alfOutputFolders) {
-                                    File[] f2_Contents = f2.listFiles();
-                                    if (f2_Contents != null) {
-                                        for (File f3 : f2_Contents) {
-                                            if(!f3.delete()){
-                                                Log.d("File Deletion", "Unable to delete file " + f3.getAbsolutePath());
-                                            }
-                                        }
-                                    }
-                                }
-                                //Delete working folder contents:
-                                for (File f4 : fVideoWorkingFolderListing) {
-                                    if(!f4.delete()){
-                                        Log.d("File Deletion", "Unable to delete file or folder " + f4.getAbsolutePath());
-                                    }
-                                }
-                                //Delete working folder:
-                                if(!fVideoWorkingFolder.delete()){
-                                    Log.d("File Deletion", "Unable to delete folder " + fVideoWorkingFolder.getAbsolutePath());
-                                }
-
-                                //Update catalog item to indicate no post-processing needed:
-                                ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
-
-                                //Update the video time:
-                                MediaMetadataRetriever mediaMetadataRetriever;
-                                mediaMetadataRetriever = new MediaMetadataRetriever();
-                                try {
-                                    mediaMetadataRetriever.setDataSource(fOutputFileFinalDestination.getAbsolutePath());
-                                    String sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                                    String sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                                    if(time != null) {
-                                        long lDurationInMilliseconds = Long.parseLong(time);
-                                        ci.lSize = fOutputFileFinalDestination.length();
-                                        int iErrorSign = 1;
-                                        if (ci.lDuration_Milliseconds != 0) {
-                                            double dPercentPredictedDuration = lDurationInMilliseconds / (float) ci.lDuration_Milliseconds;
-                                            if (dPercentPredictedDuration < .95) {
-                                                //Duration of the converted video may indicate that an FFMPEG error occurred. Set the duration to
-                                                //  negative to allow flagging of this issue.
-                                                iErrorSign = -1;
-                                            }
-                                        }
-                                        ci.lDuration_Milliseconds = lDurationInMilliseconds * iErrorSign;
-                                        ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
-                                    }
-                                    if(sWidth != null && sHeight != null) {
-                                        if (!sWidth.equals("") && !sHeight.equals("")) {
-                                            ci.iWidth = Integer.parseInt(sWidth);
-                                            ci.iHeight = Integer.parseInt(sHeight);
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    Log.d("Video post-processing", "Unable to obtain video metadata for item ID " + ci.sItemID);
-                                }
-
-                                mediaMetadataRetriever.release();
-                                //Update the file size:
-
-
-                                alsCatalogItemsToUpdate.add(ci);
-                                break; //Don't go through any more "output" folders in this temp download directory.
-                            }
+                DocumentFile[] dfVideoWorkingFolderListing = dfVideoWorkingFolder.listFiles();
+                ArrayList<DocumentFile> aldfOutputFolders = new ArrayList<>();
+                if(dfVideoWorkingFolderListing.length > 0) {
+                    for (DocumentFile df : dfVideoWorkingFolderListing) {
+                        //Locate the output folder
+                        if (df.isDirectory()) {
+                            aldfOutputFolders.add(df); //The worker could potentially create multiple output folders if it is re-run.
                         }
                     }
+                    //Attempt to locate the output file of a concatenation operation:
+                    for (DocumentFile dfOutputFolder : aldfOutputFolders) {
+                        boolean bRenameAndMoveSuccessful = false;
+                        DocumentFile dfConcatenationOutputFile = dfOutputFolder.findFile(ci.sFilename);
+                        if(dfConcatenationOutputFile == null){
+                            Log.d("Video post-processing", "Could not find video working folder for item " + ci.sItemID);
+                            continue;
+                        }
+
+                        //Concatenation is complete
+                        //Move the file:
+
+                        //Make sure the 'rename-to' name is unique:
+                        ci.sFilename = getUniqueFileName(dfVideoDestinationFolder, ci.sFilename, true);
+
+
+                        try {
+                            //Rename the file:
+                            Uri uriRenamedDocumentUri = DocumentsContract.renameDocument(gcrContentResolver, dfConcatenationOutputFile.getUri(), ci.sFilename);
+                            if(uriRenamedDocumentUri == null){
+                                //Failed to rename document.
+                                Log.d("Video post-processing", "Could not rename concatenated file for item " + ci.sItemID);
+                                continue;
+                            }
+                            dfConcatenationOutputFile = DocumentFile.fromSingleUri(getApplicationContext(), uriRenamedDocumentUri);
+                            if(dfConcatenationOutputFile == null){
+                                //Failed to rename document.
+                                Log.d("Video post-processing", "Could not identify renamed concatenated file for item " + ci.sItemID);
+                                continue;
+                            }
+                            //Move the file:
+                            Uri uriMovedDocumentUri = DocumentsContract.moveDocument(gcrContentResolver,
+                                    dfConcatenationOutputFile.getUri(),
+                                    dfOutputFolder.getUri(),
+                                    dfVideoDestinationFolder.getUri());
+
+                            if(uriMovedDocumentUri != null) {
+                                Log.d("Video post-processing", "Trouble with moving the output file of a concatenation operation for item " + ci.sItemID);
+                                bRenameAndMoveSuccessful = true;
+                            }
+
+                        } catch (Exception e){
+                            Log.d("Video post-processing", "Trouble with locating, renaming, and moving the output file of a concatenation operation for item " + ci.sItemID);
+                        }
+
+
+                        if(!bRenameAndMoveSuccessful){
+                            break;
+                        }
+
+
+                        //Delete output folder contents for any and all output folders since the move op was successful
+                        // via second inner-loop (outer loop will not be run again via break at the end of the loop):
+                        for (DocumentFile df2 : aldfOutputFolders) {
+                            DocumentFile[] f2_Contents = df2.listFiles();
+                            if (f2_Contents.length > 0) {
+                                for (DocumentFile df3 : f2_Contents) {
+                                    if(!df3.delete()){
+                                        Log.d("File Deletion", "Unable to delete file " + df3.getUri() + ".");
+                                    }
+                                }
+                            }
+                        }
+                        //Delete working folder contents:
+                        for (DocumentFile df4 : dfVideoWorkingFolderListing) {
+                            if(!df4.delete()){
+                                Log.d("File Deletion", "Unable to delete file or folder " + df4.getUri() + ".");
+                            }
+                        }
+                        //Delete working folder:
+                        if(!dfVideoWorkingFolder.delete()){
+                            Log.d("File Deletion", "Unable to delete folder " + dfVideoWorkingFolder.getUri() + ".");
+                        }
+
+                        //Update catalog item to indicate no post-processing needed:
+                        ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
+
+                        //Update the video time:
+                        MediaMetadataRetriever mediaMetadataRetriever;
+                        mediaMetadataRetriever = new MediaMetadataRetriever();
+                        try {
+                            DocumentFile dfVideoFile = dfVideoDestinationFolder.findFile(ci.sFilename);
+                            if(dfVideoFile == null){
+                                Log.d("Video post-processing", "Trouble locating the moved output file of a concatenation operation for item " + ci.sItemID);
+                                break;
+                            }
+
+                            mediaMetadataRetriever.setDataSource(getApplicationContext(), dfVideoFile.getUri());
+                            String sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                            String sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                            String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                            if(time != null) {
+                                long lDurationInMilliseconds = Long.parseLong(time);
+                                ci.lSize = dfVideoFile.length(); //Get size of the file in bytes.
+                                int iErrorSign = 1;
+                                if (ci.lDuration_Milliseconds != 0) {
+                                    double dPercentPredictedDuration = lDurationInMilliseconds / (float) ci.lDuration_Milliseconds;
+                                    if (dPercentPredictedDuration < .95) {
+                                        //Duration of the converted video may indicate that an FFMPEG error occurred. Set the duration to
+                                        //  negative to allow flagging of this issue.
+                                        iErrorSign = -1;
+                                    }
+                                }
+                                ci.lDuration_Milliseconds = lDurationInMilliseconds * iErrorSign;
+                                ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
+                            }
+                            if(sWidth != null && sHeight != null) {
+                                if (!sWidth.equals("") && !sHeight.equals("")) {
+                                    ci.iWidth = Integer.parseInt(sWidth);
+                                    ci.iHeight = Integer.parseInt(sHeight);
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.d("Video post-processing", "Unable to obtain video metadata for item ID " + ci.sItemID);
+                        }
+
+                        mediaMetadataRetriever.release();
+
+                        alsCatalogItemsToUpdate.add(ci);
+                        break; //Don't go through any more "output" folders in this temp download directory.
+
+                    }
                 }
+
 
             }
         }
@@ -1875,6 +2005,71 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Other Subroutines Section ===================================================
     //=====================================================================================
+
+    public static String getUniqueFileName(DocumentFile dfParentFolder, String sOriginalFileName, boolean bReturnJumbledFileName){
+        //This routine is used to check to see if a file name is in-use, and if so, return an alternate.
+        String sFileNameCandidate = sOriginalFileName;
+        String sFinalFileName = sOriginalFileName;
+
+        //Make sure the 'rename-to' name is unique:
+        int iOutputFolderRetryIterator = 0;
+        while(dfParentFolder.findFile(sFinalFileName) != null){
+            //If the file name is already in use in the output folder, the file name to be used
+            //  must be changed by adding an iterator to the end.
+            iOutputFolderRetryIterator++;
+            if(bReturnJumbledFileName) {
+                sFileNameCandidate = JumbleFileName(sOriginalFileName);
+            }
+
+            String sFileNameWithoutExtension = sFileNameCandidate.replaceFirst("[.][^.]+$","");
+            String sNewFileName = sFileNameWithoutExtension + "_" + iOutputFolderRetryIterator;
+            String sFileNameExtension = sFileNameCandidate.substring(sFileNameCandidate.lastIndexOf(".") + 1);
+            sNewFileName = sNewFileName + "." + sFileNameExtension;
+
+            if(bReturnJumbledFileName) {
+                sNewFileName = JumbleFileName(sNewFileName);
+            }
+
+            sFinalFileName = sNewFileName;
+        }
+
+        return sFinalFileName;
+    }
+
+    public static String getUniqueFileName(File fParentFolder, String sOriginalFileName, boolean bReturnJumbledFileName){
+        //This routine is used to check to see if a file name is in-use, and if so, return an alternate.
+        String sFileNameCandidate = sOriginalFileName;
+        String sFinalFileName = sOriginalFileName;
+
+        //Make sure the 'rename-to' name is unique:
+        int iOutputFolderRetryIterator = 0;
+        String sTempPath = fParentFolder.getAbsolutePath() + File.separator + sOriginalFileName;
+        File fFileCandidate = new File(sTempPath);
+        while(fFileCandidate.exists()){
+            //If the file name is already in use in the output folder, the file name to be used
+            //  must be changed by adding an iterator to the end.
+            iOutputFolderRetryIterator++;
+            if(bReturnJumbledFileName) {
+                sFileNameCandidate = JumbleFileName(sOriginalFileName);
+            }
+
+            String sFileNameWithoutExtension = sFileNameCandidate.replaceFirst("[.][^.]+$","");
+            String sNewFileName = sFileNameWithoutExtension + "_" + iOutputFolderRetryIterator;
+            String sFileNameExtension = sFileNameCandidate.substring(sFileNameCandidate.lastIndexOf(".") + 1);
+            sNewFileName = sNewFileName + "." + sFileNameExtension;
+
+            if(bReturnJumbledFileName) {
+                sNewFileName = JumbleFileName(sNewFileName);
+            }
+
+            sFinalFileName = sNewFileName;
+            sTempPath = fParentFolder.getAbsolutePath() + File.separator + sFinalFileName;
+            fFileCandidate = new File(sTempPath);
+        }
+
+        return sFinalFileName;
+    }
+
 
     public static String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){
         //Used by preferences for storing integer string representing restricted tags.
@@ -2025,7 +2220,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
-    public static final String EXTRA_LONG_DOWNLOAD_ID = "com.agcurations.aggallerymanager.extra.LONG_DOWNLOAD_ID";
+    //public static final String EXTRA_LONG_DOWNLOAD_ID = "com.agcurations.aggallerymanager.extra.LONG_DOWNLOAD_ID";
     public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
 
     public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER"; //todo: used for the same as EXTRA_CALLER_ACTION_RESPONSE_FILTER?
@@ -2169,6 +2364,11 @@ public class GlobalClass extends Application {
 
     //==============================================================================================
     //=========== Preferences ======================================================================
+
+    //Data storage location:
+    public static final String gsPreferenceName_DataStorageLocation = "com.agcurations.aggallerymanager.preferences.DataStorageLocation";
+    //Data storage location, user-friendly for display purposes:
+    public static final String gsPreferenceName_DataStorageLocationUF = "com.agcurations.aggallerymanager.preferences.DataStorageLocationUF";
 
     public static final String gsPreferenceName_UserAccountData = "com.agcurations.aggallerymanager.preferences.UserAccountData";
 

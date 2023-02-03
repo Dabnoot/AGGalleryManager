@@ -1,10 +1,18 @@
 
 package com.agcurations.aggallerymanager;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -13,16 +21,24 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -38,9 +54,15 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -63,14 +85,106 @@ public class Activity_Main extends AppCompatActivity {
 
     boolean bSingleUserInUse = false;
 
+    Activity_Main AM;
+
+
+
+    //Configure the thing that asks the user to select a data folder:
+    ActivityResultLauncher<Intent> garlPromptForDataFolder = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @SuppressLint("WrongConstant")
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    // look for permissions before executing operations.
+                    if(AM == null){
+                        return;
+                    }
+
+                    //Check to make sure that we have read/write permission in the selected folder.
+                    //If we don't have permission, request it.
+                    if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) ||
+                            (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                                    != PackageManager.PERMISSION_GRANTED)) {
+
+                        // Permission is not granted
+                        // Should we show an explanation?
+                        if ((ActivityCompat.shouldShowRequestPermissionRationale(AM,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
+                                (ActivityCompat.shouldShowRequestPermissionRationale(AM,
+                                        Manifest.permission.READ_EXTERNAL_STORAGE))) {
+                            // Show an explanation to the user *asynchronously* -- don't block
+                            // this thread waiting for the user's response! After the user
+                            // sees the explanation, try again to request the permission.
+                            Toast.makeText(getApplicationContext(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
+                        } else {
+                            // No explanation needed; request the permission
+                            ActivityCompat.requestPermissions(AM,
+                                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                            Manifest.permission.READ_EXTERNAL_STORAGE},
+                                    Fragment_Import_1_StorageLocation.MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
+
+                            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                            // app-defined int constant. The callback method gets the
+                            // result of the request.
+                        }
+                        //} else {
+                        // Permission has already been granted
+                    }
+
+                    //The above code checked for permission, and if not granted, requested it.
+                    //  Check one more time to see if the permission was granted:
+
+                    if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            == PackageManager.PERMISSION_GRANTED) &&
+                            (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                                    == PackageManager.PERMISSION_GRANTED)) {
+                        //If we now have permission...
+                        //The result data contains a URI for the directory that
+                        //the user selected.
+
+                        //Put the import Uri into the intent (this could represent a folder OR a file:
+
+                        if(result.getData() == null) {
+                            return;
+                        }
+                        Intent data = result.getData();
+                        Uri treeUri = data.getData();
+                        if(treeUri == null) {
+                            return;
+                        }
+                        final int takeFlags = data.getFlags() &
+                                (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        //We must persist access to this folder or the user will be asked everytime to select a folder.
+                        //  Even then, they well still have to re-access the location on device restart.
+                        GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
+
+                        //Call a routine to initialize the data folder:
+                        Worker_Catalog_LoadData.initDataFolder(treeUri, getApplicationContext());
+
+
+                    }
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        AM = this;
+
+        GlobalClass.gcrContentResolver = getContentResolver();
+
         //Return theme away from startup_screen
         setTheme(R.style.MainTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSupportActionBar().show();
+        ActionBar AB = getSupportActionBar();
+        if(AB != null) {
+            AB.show();
+        }
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -89,7 +203,7 @@ public class Activity_Main extends AppCompatActivity {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         //Get user listing right away:
-        //Clear the data:
+        //Clear the data (used during debugging):
         /*{
             Set<String> ssUserAccountData = new HashSet<>();
             sharedPreferences.edit()
@@ -112,7 +226,7 @@ public class Activity_Main extends AppCompatActivity {
                     //If there is only one user and the pin is not set, log that user in.
                     globalClass.gicuCurrentUser = globalClass.galicu_Users.get(0);
                 } else if(bSingleUserInUse && !globalClass.galicu_Users.get(0).sPin.equals("")){
-                    Toast.makeText(this, "Welcome guest", Toast.LENGTH_SHORT);
+                    Toast.makeText(this, "Welcome guest", Toast.LENGTH_SHORT).show();
                 }
             } else {
                 AddDefaultAdminUser(sharedPreferences);
@@ -124,16 +238,85 @@ public class Activity_Main extends AppCompatActivity {
 
 
 
+        //Get the data storage location Preference:
+        String sDataStorageLocationURI = sharedPreferences.getString(GlobalClass.gsPreferenceName_DataStorageLocation, null);
+        if(sDataStorageLocationURI != null){
+            if(!sDataStorageLocationURI.equals("")){
+                //Confirm that the URI string points to a valid location.
+                Uri uriDataStorageLocation = Uri.parse(sDataStorageLocationURI);
+                DocumentFile dfDataFolderPreCheck = DocumentFile.fromTreeUri(this, uriDataStorageLocation);
 
+                //Examine to make sure that we have the proper folder.
+                //  Testing showed that the system gave the data folder's parent folder, which is
+                //  the folder that the user selected, rather than the folder that this program
+                //  created within that folder AND saved to the DataStorageLocation preference.
+                if(dfDataFolderPreCheck != null) {
+                    DocumentFile dfDataFolderTest = dfDataFolderPreCheck.findFile(GlobalClass.gsDataFolderBaseName);
+                    if (dfDataFolderTest == null) {
+                        //If the precheck folder does not contain the datafolder by name,
+                        //  check to see if the precheck folder has the proper name.
+                        if (dfDataFolderPreCheck.getName() != null) {
+                            if(dfDataFolderPreCheck.getName().equals(GlobalClass.gsDataFolderBaseName)){
+                                //If the folder has the proper name, use this folder.
+                                //  Testing revealed that we will not hit this, but include here in
+                                //  case DocumentFile.fromTreeUri(this, uriDataStorageLocation) starts
+                                //  working as expected.
+                                GlobalClass.gdfDataFolder = dfDataFolderPreCheck;
+                            }
+                        }
+                    } else {
+                        //If the DataFolderBaseName folder was found within the preCheck folder,
+                        //  use the found folder.
+                        GlobalClass.gdfDataFolder = dfDataFolderTest;
+                    }
 
-        //globalClass.gbGuestMode = sharedPreferences.getBoolean("hide_restricted_tags", false);
+                }
+            }
+        }
 
+        boolean bInitDataFolder = false;
+        if(GlobalClass.gdfDataFolder == null){
+            bInitDataFolder = true;
+        } else {
+            bInitDataFolder = !GlobalClass.gdfDataFolder.exists();
+        }
+        if(bInitDataFolder){
+            //If the storage location data does not exist, such as when the user has not yet selected a location,
+            //  prompt the user to select a location.
 
+            //First present an Alert Dialog informing the user that they must select a storage location before continuing.
+            //  The user must select a storage location to prevent the loss of data in the event that
+            //  the application is uninstalled.
+            AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
+            builder.setTitle("First Time Use - Please Select Data Folder");
+            String sMessage = "Please select a folder in which to store data.\n" +
+                    "We suggest you create a new folder called 'Archive' on an SD card if available.\n" +
+                    "A new storage location may be selected from the Settings menu.\n" +
+                    "This app will not run properly without a selected external data storage location, \n" +
+                    "otherwise data may be lost.";
+            builder.setMessage(sMessage);
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.dismiss();
 
+                    // Allow the user to choose a directory using the system's file picker.
+                    Intent intent_DetermineDataFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 
-        //Call the MA Data Service, which will create a call to a service:
-        Service_Main.startActionLoadData(this);
+                    // Provide write access to files and sub-directories in the user-selected directory:
+                    intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                    //Start the activity:
+                    garlPromptForDataFolder.launch(intent_DetermineDataFolder);
+                }
+            });
+            AlertDialog adConfirmationDialog = builder.create();
+            adConfirmationDialog.show();
 
+        } else {
+            //Call the MA Data Service, which will create a call to a service:
+            Service_Main.startActionLoadData(this);
+        }
 
         //AlertDialogTest2();
 
@@ -178,7 +361,12 @@ public class Activity_Main extends AppCompatActivity {
 
 
 
+
+
+
     }
+
+
 
     private void AddDefaultAdminUser(SharedPreferences sharedPreferences){
         ItemClass_User icu_DefaultUser = new ItemClass_User();
@@ -331,7 +519,6 @@ public class Activity_Main extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        //unregisterReceiver(mainActivityDataServiceResponseReceiver);
         LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(mainActivityDataServiceResponseReceiver);
         super.onDestroy();
     }
@@ -342,8 +529,6 @@ public class Activity_Main extends AppCompatActivity {
     Menu optionsMenu;
     public boolean onCreateOptionsMenu(Menu menu) {
         optionsMenu = menu;
-        /*globalClass.USER_COLOR_ADMIN = ContextCompat.getColor(getApplicationContext(), R.color.colorStatusBar);
-        globalClass.USER_COLOR_GUEST = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);*/
 
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_menu, menu);
@@ -379,27 +564,6 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        /*//Configure the AlertDialog that will gather the pin code if necessary to begin a particular behavior:
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
-
-        // set the custom layout
-        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-        builder.setView(customLayout);
-
-        final AlertDialog adConfirmationDialog = builder.create();
-
-        //Code action for the Cancel button:
-        Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-        button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                adConfirmationDialog.dismiss();
-            }
-        });
-        //Code action for the OK button:
-        */
-
-
         if((item.getItemId() == R.id.menu_UserManagement)
             || (item.getItemId() == R.id.menu_Settings)
             || (item.getItemId() == R.id.menu_TagEditor)
@@ -425,63 +589,6 @@ public class Activity_Main extends AppCompatActivity {
                 }
             }
 
-            /*if(globalClass.gbGuestMode && !globalClass.gsPin.equals("")) {
-                button_PinCodeCancel.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        adConfirmationDialog.dismiss();
-                    }
-                });
-
-                //Code action for the OK button:
-                final MenuItem menuItem = item;
-                button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                        String sPinEntered = editText_DialogInput.getText().toString();
-
-                        if (sPinEntered.equals(globalClass.gsPin)) {
-                            globalClass.gbGuestMode = false;
-                            setUserColor(menuItem, globalClass.USER_COLOR_ADMIN);
-                            if(menuItem.getItemId() == R.id.icon_login) {
-                                //if this is a "user login" button press
-                                Toast.makeText(getApplicationContext(),"Admin access granted.", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Intent intent = getMenuIntent(menuItem);
-                                if (intent != null) {
-                                    startActivity(intent);
-                                }
-                            }
-                        } else {
-                            Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                        }
-
-                        adConfirmationDialog.dismiss();
-                    }
-                });
-
-                EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                editText_DialogInput.requestFocus();
-                adConfirmationDialog.show();
-
-                return true;
-
-
-            } else {
-                if(item.getItemId() == R.id.icon_login){
-                    //if this is a "user login" button press and we are in admin mode already...
-                    globalClass.gbGuestMode = true;
-                    setUserColor(item, globalClass.USER_COLOR_GUEST);
-                    Toast.makeText(getApplicationContext(),"Logging out of admin access.", Toast.LENGTH_SHORT).show();
-                } else {
-                    //Start whatever activity without asking for admin pin:
-                    Intent intent = getMenuIntent(item);
-                    if (intent != null) {
-                        startActivity(intent);
-                    }
-                }
-            }*/
         }
 
         if(item.getItemId() == R.id.menu_DatabaseBackup) {

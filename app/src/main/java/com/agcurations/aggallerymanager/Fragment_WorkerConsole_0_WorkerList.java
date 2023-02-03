@@ -2,7 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +15,6 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -111,9 +110,9 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                     if(workerListCustomAdapter != null) {
                         for (int i = 0; i < workerListCustomAdapter.customWorkerData.length; i++) {
                             if (workerListCustomAdapter.bRowSelected[i]) {
-                                if (workerListCustomAdapter.customWorkerData[i].fJobFile != null) {
-                                    if (!workerListCustomAdapter.customWorkerData[i].fJobFile.delete()) {
-                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + workerListCustomAdapter.customWorkerData[i].fJobFile.getName(), Toast.LENGTH_SHORT).show();
+                                if (workerListCustomAdapter.customWorkerData[i].dfJobFile != null) {
+                                    if (!workerListCustomAdapter.customWorkerData[i].dfJobFile.delete()) {
+                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + workerListCustomAdapter.customWorkerData[i].dfJobFile.getName(), Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             } else {
@@ -236,16 +235,16 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
         }
 
         //Attempt to divine the existence of other past workers by examining job files:
-        File[] fJobFiles = globalClass.gfJobFilesFolder.listFiles();
-        for(File fJobFile: fJobFiles){
-            String sJobFileName = fJobFile.getName();
+        DocumentFile[] dfJobFiles = globalClass.gdfJobFilesFolder.listFiles();
+        for(DocumentFile dfJobFile: dfJobFiles){
+            String sJobFileName = dfJobFile.getName();
             String sJobRequestDateTime = sJobFileName.substring(("Job_").length(),sJobFileName.length()-(".txt").length());
             boolean bDataFound = false;
             for(CustomWorkerData customWorkerData : alWorkerData){
                 if(customWorkerData.sJobRequestDateTime != null) {
                     if (customWorkerData.sJobRequestDateTime.equals(sJobRequestDateTime)) {
                         customWorkerData.sJobRequestDateTime = sJobRequestDateTime;
-                        customWorkerData.fJobFile = fJobFile;
+                        customWorkerData.dfJobFile = dfJobFile;
                         bDataFound = true;
                     }
                 }
@@ -253,7 +252,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             if(!bDataFound){
                 CustomWorkerData customWorkerDataNew = new CustomWorkerData();
                 customWorkerDataNew.sJobRequestDateTime = sJobRequestDateTime;
-                customWorkerDataNew.fJobFile = fJobFile;
+                customWorkerDataNew.dfJobFile = dfJobFile;
                 customWorkerDataNew.sWorkerStatus = "[worker not found]";
                 alWorkerData.add(customWorkerDataNew);
             }
@@ -341,8 +340,8 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
 
 
             final String sJobFileName;
-            if(customWorkerData[position].fJobFile != null){
-                sJobFileName = customWorkerData[position].fJobFile.getName();
+            if(customWorkerData[position].dfJobFile != null){
+                sJobFileName = customWorkerData[position].dfJobFile.getName();
             } else {
                 sJobFileName = "";
             }
@@ -382,7 +381,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             button_View.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    viewModel_fragment_workerConsole.fJobFile = customWorkerData[position].fJobFile;
+                    viewModel_fragment_workerConsole.dfJobFile = customWorkerData[position].dfJobFile;
 
                     Activity_WorkerConsole activity_workerConsole = (Activity_WorkerConsole) getActivity();
                     if(activity_workerConsole != null){
@@ -425,7 +424,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
         String sJobRequestDateTime;
         String sWorkerStatus;
         String sFailureMessage;
-        File fJobFile;
+        DocumentFile dfJobFile;
         long lProgressNumerator;
         long lProgressDenominator;
     }

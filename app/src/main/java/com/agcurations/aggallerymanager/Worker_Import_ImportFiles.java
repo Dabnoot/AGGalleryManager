@@ -1,15 +1,15 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.util.Log;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -21,6 +21,8 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 public class Worker_Import_ImportFiles extends Worker {
 
@@ -65,6 +67,7 @@ public class Worker_Import_ImportFiles extends Worker {
         lByteProgressDenominator = lTotalImportSize;
         iFileCountProgressDenominator = alFileList.size();
 
+        String sMessage;
         String sLogLine;
 
         StringBuilder sbJobFileRecords = new StringBuilder();
@@ -74,16 +77,13 @@ public class Worker_Import_ImportFiles extends Worker {
             //todo: update progress bar and progress bar text here rather than multiple places throughout.
             if(fileItem.bMarkedForDeletion){
 
-                String sFileSource = "";
-                if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
-                    Uri uriTemp = Uri.parse(fileItem.sUri);
-                    sFileSource = uriTemp.getPath();
-                } else {
-                    Uri uriSourceFileToDelete;
-                    uriSourceFileToDelete = Uri.parse(fileItem.sUri);
-                    DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFileToDelete);
-                    sFileSource = dfSourceToDelete.getUri().toString();
+                DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), Uri.parse(fileItem.sUri));
+                if(dfSourceToDelete == null){
+                    sMessage = "Could not locate source file from uri: " + fileItem.sUri;
+                    Log.d("Worker_Import_ImportFiles", sMessage);
+                    continue;
                 }
+
                 //Write next behavior to the screen log:
                 sLogLine = "Preparing data for job file: Delete file " + fileItem.sFileOrFolderName + ".\n";
                 iFileCountProgressNumerator++;
@@ -93,12 +93,38 @@ public class Worker_Import_ImportFiles extends Worker {
                         false, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                String sLine = sFileSource + "\t"
-                        + fileItem.sDestinationFolder + "\t"
-                        + fileItem.sFileOrFolderName + "\t"
-                        + fileItem.lSizeBytes + "\t"
-                        + true + "\n";                 //Item marked for deletion?
+                String sLine = sCreateJobFileRecord(
+                        dfSourceToDelete.getUri().toString(),
+                        fileItem.sUriParent,
+                        fileItem.sDestinationFolder,
+                        fileItem.sFileOrFolderName,
+                        fileItem.lSizeBytes,
+                        true);                 //Item marked for deletion?
                 sbJobFileRecords.append(sLine);
+
+                if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
+                    //If this file is in the image download holding folder, mark the metadata file for deletion as well.
+                    String sFileName = dfSourceToDelete.getName();
+                    String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+
+                    DocumentFile dfMetadataFile = globalClass.gdfImageDownloadHoldingFolder.findFile(sMetadataFileName);
+                    if (dfMetadataFile == null) {
+                        sMessage = "Could not locate metadata file in location " + globalClass.gdfImageDownloadHoldingFolder.getUri();
+                        Log.d("Worker_Import_ImportFiles", sMessage);
+                        continue;
+                    }
+
+                    sLine = sCreateJobFileRecord(
+                            dfMetadataFile.getUri().toString(),
+                            fileItem.sUriParent,
+                            fileItem.sDestinationFolder,
+                            fileItem.sFileOrFolderName,
+                            fileItem.lSizeBytes,
+                            true);
+
+                    sbJobFileRecords.append(sLine);
+
+                }
 
                 continue; //jump to next item in import list.
             } //End if item is marked for deletion.
@@ -108,15 +134,27 @@ public class Worker_Import_ImportFiles extends Worker {
             }
 
             String sFileName = "";
-            String sImageMetadataFilePath = "";
-            String sUriOrPath = "";
+            String sImageMetadataUri = "";
+            String sSourceUri = "";
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
                 Uri uriTemp = Uri.parse(fileItem.sUri);
-                File fSource = new File(uriTemp.getPath());
-                sFileName = fSource.getName();
-                sImageMetadataFilePath = globalClass.gfImageDownloadHoldingFolder.getPath() +
-                        File.separator + sFileName + ".txt"; //The file will have two extensions.
-                sUriOrPath = fSource.getAbsolutePath();
+                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriTemp);
+                if(dfSource == null){
+                    sMessage = "Could not locate source file from uri: " + fileItem.sUri;
+                    Log.d("Worker_Import_ImportFiles", sMessage);
+                    continue;
+                }
+                sFileName = dfSource.getName();
+                String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+                DocumentFile dfMetadataFile = globalClass.gdfImageDownloadHoldingFolder.findFile(sMetadataFileName);
+                if (dfMetadataFile == null) {
+                    sMessage = "Could not locate metadata file in location " + globalClass.gdfImageDownloadHoldingFolder.getUri();
+                    Log.d("Worker_Import_ImportFiles", sMessage);
+                    continue;
+                }
+                sImageMetadataUri = dfMetadataFile.getUri().toString();
+                sSourceUri = dfSource.getUri().toString();
+
             } else {
                 Uri uriSourceFile = Uri.parse(fileItem.sUri);
                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
@@ -135,7 +173,7 @@ public class Worker_Import_ImportFiles extends Worker {
                     continue;
                 }
                 sFileName = dfSource.getName();
-                sUriOrPath = dfSource.getUri().toString();
+                sSourceUri = dfSource.getUri().toString();
             }
 
 
@@ -167,11 +205,14 @@ public class Worker_Import_ImportFiles extends Worker {
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                String sLine = sUriOrPath + "\t"
-                        + fileItem.sDestinationFolder + "\t"
-                        + sFileName + "\t"
-                        + fileItem.lSizeBytes + "\t"
-                        + false + "\n";                 //Item marked for deletion?
+                String sLine = sCreateJobFileRecord(
+                        sSourceUri,
+                        fileItem.sUriParent,
+                        fileItem.sDestinationFolder,
+                        sFileName,
+                        fileItem.lSizeBytes,
+                        false);
+
                 sbJobFileRecords.append(sLine);
 
 
@@ -198,13 +239,19 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.iGrade = fileItem.iGrade;
                 if(!fileItem.sURL.equals("")){
                     ciNew.sSource = fileItem.sURL;
-                    //Prepare to delete any metadata file that might exist associated with this file:
-                    if(!sImageMetadataFilePath.equals("")) {
-                        sLine = sImageMetadataFilePath + "\t"
-                                + fileItem.sDestinationFolder + "\t"
-                                + fileItem.sFileOrFolderName + "\t"
-                                + 100 + "\t"                     //Size should be quite small.
-                                + true + "\n";                 //Item marked for deletion?
+                    //Prepare to delete any metadata file that might exist associated with this file.
+                    // This is different from the "delete metadata file" in an earlier section of
+                    // this code. The earlier is related to when the user has merely decided to
+                    // delete a media item, not to import it.
+                    if(!sImageMetadataUri.equals("")) {
+                        sLine = sCreateJobFileRecord(
+                                sImageMetadataUri,
+                                fileItem.sUriParent,
+                                fileItem.sDestinationFolder,
+                                fileItem.sFileOrFolderName,
+                                100, //Size should be quite small.
+                                true);
+
                         sbJobFileRecords.append(sLine);
                     }
                 }
@@ -245,20 +292,30 @@ public class Worker_Import_ImportFiles extends Worker {
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
             //Create a file with a listing of the files to be copied/moved:
-            String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
-                    File.separator + sJobFileName;
-            File fJobFile = new File(sJobFilePath);
-
-            FileWriter fwJobFile = new FileWriter(fJobFile, true);
+            DocumentFile dfJobFile = globalClass.gdfJobFilesFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sJobFileName);
+            if(dfJobFile == null){
+                sMessage = "Could not create job file.";
+                Log.d("Worker_Import_ImportFiles", sMessage);
+                return Result.failure(DataErrorMessage(sMessage));
+            }
+            OutputStream osJobFile = GlobalClass.gcrContentResolver.openOutputStream(dfJobFile.getUri(), "wt");
+            if(osJobFile == null){
+                sMessage = "Could not open output stream to job file.";
+                Log.d("Worker_Import_ImportFiles", sMessage);
+                return Result.failure(DataErrorMessage(sMessage));
+            }
+            BufferedWriter bwJobFile = new BufferedWriter(new OutputStreamWriter(osJobFile));
             //Write the data header:
             String sConfig = "MediaCategory:" + GlobalClass.gsCatalogFolderNames[giMediaCategory] + "\t"
                     + "MoveOrCopy:" + sMoveOrCopy + "\t"
                     + "TotalSize:" + lTotalImportSize + "\t"
                     + "FileCount:" + alFileList.size() + "\n";
-            fwJobFile.write(sConfig);
-            fwJobFile.write(sbJobFileRecords.toString());
-            fwJobFile.flush();
-            fwJobFile.close();
+            bwJobFile.write(sConfig);
+            bwJobFile.write(sbJobFileRecords.toString());
+            bwJobFile.flush();
+            bwJobFile.close();
+            osJobFile.flush();
+            osJobFile.close();
 
 
 
@@ -304,6 +361,44 @@ public class Worker_Import_ImportFiles extends Worker {
         globalClass.gbImportExecutionRunning = false;
         globalClass.gbImportExecutionFinished = true;
         return Result.success();
+    }
+
+
+    /**
+     * Builds a string to be written to the job file. This routine serves to ensure that the proper
+     * arguments, types, and usage are correct; this routine is to reduce programmer error.
+     *
+     * @param sSourceUri                A DocumentFile-derived Uri for the source file.
+     * @param sSourceParentUri          A DocumentFile-derived Uri to the DocumentFile holding the source file.
+     *                                  This is used to facilitate DocumentsContract.Move if desired.
+     * @param sDestinationFolderName    Name of the folder to hold this file. The header specifying
+     *                                  the Catalog type (Videos, Pictures, Comics) is to include
+     *                                  this folder name.
+     * @param sFileOrFolderName         The destination file name.
+     * @param lSizeInBytes              The size of the file for progress display to user.
+     * @param bMarkForDeletion          A flag to mark if this file should be deleted rather than copied
+     *                                  or moved.
+     * @return sJobFileRecord           A string is returned to be written to the job file.
+     */
+    private String sCreateJobFileRecord(String sSourceUri,
+                                        String sSourceParentUri,
+                                        String sDestinationFolderName,
+                                        String sFileOrFolderName,
+                                        long lSizeInBytes,
+                                        boolean bMarkForDeletion){
+
+        return sSourceUri + "\t" +
+        sSourceParentUri + "\t" +
+        sDestinationFolderName + "\t" +
+        sFileOrFolderName + "\t" +
+        lSizeInBytes + "\t" +
+        bMarkForDeletion + "\n";
+    }
+
+    private Data DataErrorMessage(String sMessage){
+        return new Data.Builder()
+                .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
+                .build();
     }
 
 }

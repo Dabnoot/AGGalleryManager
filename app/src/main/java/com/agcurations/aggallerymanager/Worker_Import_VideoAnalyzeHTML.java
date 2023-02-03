@@ -10,10 +10,13 @@ import org.htmlcleaner.TagNode;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -30,6 +34,8 @@ import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS;
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL;
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 public class Worker_Import_VideoAnalyzeHTML extends Worker {
 
@@ -574,14 +580,26 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             //Write the m3u8 master file to the logs folder for debugging purposes:
                             String sShortFileName = sURLM3U8VideoLink.substring(sURLM3U8VideoLink.lastIndexOf("/") + 1);
                             sShortFileName = Service_Import.cleanFileNameViaTrim(sShortFileName);
-                            String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                                    File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                            File fM3U8 = new File(sM3U8FilePath);
-                            FileWriter fwM3U8File = new FileWriter(fM3U8, true);
-                            fwM3U8File.write("#" + sURLM3U8VideoLink + "\n");
-                            fwM3U8File.write(sbM3U8Content.toString());
-                            fwM3U8File.flush();
-                            fwM3U8File.close();
+                            String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
+                            DocumentFile dfM3U8 = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
+                            if(dfM3U8 == null){
+                                String sMessage = "Could not create M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
+                            } else {
+                                OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(dfM3U8.getUri(), "wt");
+                                if(osM3U8 == null){
+                                    String sMessage = "Could not open output stream ot M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                    Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
+                                } else {
+                                    BufferedWriter bwM3U8File = new BufferedWriter(new OutputStreamWriter(osM3U8));
+                                    bwM3U8File.write("#" + sURLM3U8VideoLink + "\n");
+                                    bwM3U8File.write(sbM3U8Content.toString());
+                                    bwM3U8File.flush();
+                                    bwM3U8File.close();
+                                    osM3U8.flush();
+                                    osM3U8.close();
+                                }
+                            }
                         }
 
 
@@ -726,13 +744,26 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             if(globalClass.gbLogM3U8Files) {
                                 //Write the m3u8 file to the logs folder for debugging purposes:
 
-                                String sM3U8FilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                                        File.separator + GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                                File fM3U8 = new File(sM3U8FilePath);
-                                FileWriter fwM3U8File = new FileWriter(fM3U8, true);
-                                fwM3U8File.write(sM3U8Content);
-                                fwM3U8File.flush();
-                                fwM3U8File.close();
+                                String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
+                                DocumentFile dfM3U8 = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
+                                if(dfM3U8 == null){
+                                    String sMessage = "Could not create M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                    Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
+                                } else {
+                                    OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(dfM3U8.getUri(), "wt");
+                                    if(osM3U8 == null){
+                                        String sMessage = "Could not open output stream ot M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                        Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
+                                    } else {
+                                        BufferedWriter bwM3U8File = new BufferedWriter(new OutputStreamWriter(osM3U8));
+                                        bwM3U8File.write(sM3U8Content);
+                                        bwM3U8File.flush();
+                                        bwM3U8File.close();
+                                        osM3U8.flush();
+                                        osM3U8.close();
+                                    }
+                                }
+
                             }
 
                             /*final String sM3U8InterprettedFilePath = globalClass.gfLogsFolder.getAbsolutePath() +

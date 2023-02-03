@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.documentfile.provider.DocumentFile;
 
 import android.content.Context;
 import android.content.Intent;
@@ -13,15 +14,15 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PersistableBundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -30,6 +31,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -106,11 +108,12 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
     //Comic global variables
     private GlobalClass globalClass;
-    private TreeMap<Integer, String> tmImagePaths;
+    private TreeMap<Integer, DocumentFile> tmImagePaths;
     private TreeMap<Integer, String> tmImageFileNamesReadable;
     private String gsActivityTitleString = "";
     private int giCurrentCatalogItemIndex;
     private int giMaxFileCount;
+    private DocumentFile gdfComicFolder = null;
 
     //Graphics global variables
     private ImageView givImageViewer;
@@ -188,64 +191,58 @@ public class Activity_ComicViewer extends AppCompatActivity {
         gsActivityTitleString = gciCatalogItem.sTitle;
         giMaxFileCount = gciCatalogItem.iFile_Count;
 
-        String sComicFolder_AbsolutePath = globalClass.gfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getAbsolutePath();
-        String sComicFolderPath;
-        sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                + gciCatalogItem.sFolder_Name;
+        gdfComicFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(gciCatalogItem.sFolder_Name);
 
-        //Load the full path to each comic page into tmComicPages:
-        if(gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
-            //If this is a downloaded comic and the files from DownloadManager have not been moved as
-            //  part of download post-processing, look in the [comic]\download folder for the files:
-            sComicFolderPath = sComicFolder_AbsolutePath + File.separator
-                    + gciCatalogItem.sFolder_Name + File.separator
-                    + GlobalClass.gsDLTempFolderName + File.separator;
-        }
-        File fComicFolder = new File(sComicFolderPath);
-        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
-        if(fComicFolder.exists()){
-            tmImagePaths = new TreeMap<>();
-            tmImageFileNamesReadable = new TreeMap<>();
-            File[] fComicPages = fComicFolder.listFiles();
-            String sReadableFileName;
-            if(fComicPages != null) {
-                for (File fComicPage : fComicPages) {
-                    if(fComicPage.isFile()) {
-                        sReadableFileName = GlobalClass.JumbleFileName(fComicPage.getName());
-                        tmSortByFileName.put(sReadableFileName, fComicPage.getAbsolutePath());
+        if(gdfComicFolder != null) {
+            //Load the full path to each comic page into tmComicPages:
+            if (gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
+                //If this is a downloaded comic and the files from DownloadManager have not been moved as
+                //  part of download post-processing, look in the [comic]\download folder for the files:
+                gdfComicFolder = gdfComicFolder.findFile(GlobalClass.gsDLTempFolderName);
+            }
+
+            TreeMap<String, DocumentFile> tmSortByFileName = new TreeMap<>();
+            if (gdfComicFolder != null) {
+                tmImagePaths = new TreeMap<>();
+                tmImageFileNamesReadable = new TreeMap<>();
+                DocumentFile[] dfComicPages = gdfComicFolder.listFiles();
+                String sReadableFileName;
+                if (dfComicPages.length > 0) {
+                    for (DocumentFile dfComicPage : dfComicPages) {
+                        if (dfComicPage.isFile() && dfComicPage.getName() != null) {
+                            sReadableFileName = GlobalClass.JumbleFileName(dfComicPage.getName());
+                            tmSortByFileName.put(sReadableFileName, dfComicPage);
+                        }
                     }
                 }
+                int i = 0;
+                for (Map.Entry<String, DocumentFile> tmFiles : tmSortByFileName.entrySet()) {
+                    tmImagePaths.put(i, tmFiles.getValue());
+                    tmImageFileNamesReadable.put(i, tmFiles.getKey()); //For toast messages when changing the page.
+                    i++;
+                }
             }
-            int i = 0;
-            for(Map.Entry<String, String> tmFiles: tmSortByFileName.entrySet()){
-                tmImagePaths.put(i, tmFiles.getValue());
-                tmImageFileNamesReadable.put(i, tmFiles.getKey()); //For toast messages when changing the page.
-                i++;
-            }
-        }
 
 
+            //Get the display size:
+            WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+            gDisplay = windowManager.getDefaultDisplay(); //Deprecated. Use GlobalClass.getScreenWidth(this); upon refactoring opportunity.
+            gpDisplaySize = new Point();
+            gpLastDisplaySize = new Point();
+            gDisplay.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
+            gDisplay.getRealSize(gpLastDisplaySize);
+            //display.getSize(gpDisplaySize);   //Get the size of the screen with the navigation bar shown.
 
+            //Post a runnable from onCreate(), that will be executed when the view has been created, in
+            //  order to load the first comic page:
+            mContentView.post(new Runnable() {
+                public void run() {
+                    //https://stackoverflow.com/questions/12829653/content-view-width-and-height/21426049
+                    LoadComicPage(giCurrentCatalogItemIndex);
+                }
+            });
 
-        //Get the display size:
-        WindowManager windowManager = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-        gDisplay = windowManager.getDefaultDisplay(); //Deprecated. Use GlobalClass.getScreenWidth(this); upon refactoring opportunity.
-        gpDisplaySize = new Point();
-        gpLastDisplaySize = new Point();
-        gDisplay.getRealSize(gpDisplaySize); //Get the total size of the screen, assume that the navigation bar will be hidden.
-        gDisplay.getRealSize(gpLastDisplaySize);
-        //display.getSize(gpDisplaySize);   //Get the size of the screen with the navigation bar shown.
-
-        //Post a runnable from onCreate(), that will be executed when the view has been created, in
-        //  order to load the first comic page:
-        mContentView.post(new Runnable(){
-            public void run(){
-                //https://stackoverflow.com/questions/12829653/content-view-width-and-height/21426049
-                LoadComicPage(giCurrentCatalogItemIndex);
-            }
-        });
-
-        // Set up the user interaction to manually show or hide the system UI.
+            // Set up the user interaction to manually show or hide the system UI.
         /*mContentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -253,76 +250,77 @@ public class Activity_ComicViewer extends AppCompatActivity {
             }
         });*/
 
-        mContentView.setOnTouchListener(new OnSwipeTouchListener(this) {
-            public void onSwipeTop() {
-                if(gbDebugSwiping){
-                    makeToast("Swiped top", Toast.LENGTH_SHORT);
-                }
-            }
-
-            public void onSwipeBottom() {
-                if(gbDebugSwiping){
-                    makeToast("Swiped bottom", Toast.LENGTH_SHORT);
-                }
-            }
-
-            public void onSwipeRight() {
-                if(gbDebugSwiping){
-                    makeToast("Swiped right", Toast.LENGTH_SHORT);
-                }
-                if(gfScaleFactor <= gfJumpOutAxisScale) {
-                    if(giCurrentCatalogItemIndex == 0){
-                        if(iSwipeToExitCounter == 0) {
-                            makeToast("Start of comic", Toast.LENGTH_SHORT);
-                        } else if (iSwipeToExitCounter == 1){
-                            //right/left - it feels like a "right-swipe" in the comic reference frame.
-                            makeToast("Swipe left again to exit", Toast.LENGTH_SHORT);
-                        } else if (iSwipeToExitCounter == 2){
-                            if(toastLastToastMessage != null){
-                                toastLastToastMessage.cancel();
-                            }
-                            finish();
-                        }
-                        iSwipeToExitCounter++;
-                    } else {
-                        gotoPreviousComicPage();
-                        iSwipeToExitCounter = 0;
+            mContentView.setOnTouchListener(new OnSwipeTouchListener(this) {
+                public void onSwipeTop() {
+                    if (gbDebugSwiping) {
+                        makeToast("Swiped top", Toast.LENGTH_SHORT);
                     }
                 }
-            }
 
-            public void onSwipeLeft() {
-                if(gbDebugSwiping){
-                    makeToast("Swiped left", Toast.LENGTH_SHORT);
-                }
-
-                if(gfScaleFactor <= gfJumpOutAxisScale){
-
-                    if(giCurrentCatalogItemIndex == (giMaxFileCount - 1)){
-                        if(iSwipeToExitCounter == 0) {
-                            makeToast("End of comic", Toast.LENGTH_SHORT);
-                        } else if (iSwipeToExitCounter == 1){
-                            //right/left - it feels like a "right-swipe" in the comic reference frame.
-                            makeToast("Swipe right again to exit", Toast.LENGTH_SHORT);
-                        } else if (iSwipeToExitCounter == 2){
-                            if(toastLastToastMessage != null){
-                                toastLastToastMessage.cancel();
-                            }
-                            finish();
-                        }
-                        iSwipeToExitCounter++;
-                    } else {
-                        gotoNextComicPage();
-                        iSwipeToExitCounter = 0;
+                public void onSwipeBottom() {
+                    if (gbDebugSwiping) {
+                        makeToast("Swiped bottom", Toast.LENGTH_SHORT);
                     }
                 }
-            }
-        });
+
+                public void onSwipeRight() {
+                    if (gbDebugSwiping) {
+                        makeToast("Swiped right", Toast.LENGTH_SHORT);
+                    }
+                    if (gfScaleFactor <= gfJumpOutAxisScale) {
+                        if (giCurrentCatalogItemIndex == 0) {
+                            if (iSwipeToExitCounter == 0) {
+                                makeToast("Start of comic", Toast.LENGTH_SHORT);
+                            } else if (iSwipeToExitCounter == 1) {
+                                //right/left - it feels like a "right-swipe" in the comic reference frame.
+                                makeToast("Swipe left again to exit", Toast.LENGTH_SHORT);
+                            } else if (iSwipeToExitCounter == 2) {
+                                if (toastLastToastMessage != null) {
+                                    toastLastToastMessage.cancel();
+                                }
+                                finish();
+                            }
+                            iSwipeToExitCounter++;
+                        } else {
+                            gotoPreviousComicPage();
+                            iSwipeToExitCounter = 0;
+                        }
+                    }
+                }
+
+                public void onSwipeLeft() {
+                    if (gbDebugSwiping) {
+                        makeToast("Swiped left", Toast.LENGTH_SHORT);
+                    }
+
+                    if (gfScaleFactor <= gfJumpOutAxisScale) {
+
+                        if (giCurrentCatalogItemIndex == (giMaxFileCount - 1)) {
+                            if (iSwipeToExitCounter == 0) {
+                                makeToast("End of comic", Toast.LENGTH_SHORT);
+                            } else if (iSwipeToExitCounter == 1) {
+                                //right/left - it feels like a "right-swipe" in the comic reference frame.
+                                makeToast("Swipe right again to exit", Toast.LENGTH_SHORT);
+                            } else if (iSwipeToExitCounter == 2) {
+                                if (toastLastToastMessage != null) {
+                                    toastLastToastMessage.cancel();
+                                }
+                                finish();
+                            }
+                            iSwipeToExitCounter++;
+                        } else {
+                            gotoNextComicPage();
+                            iSwipeToExitCounter = 0;
+                        }
+                    }
+                }
+            });
 
 
-        givImageViewer = findViewById(R.id.imageView_ComicPage);
-        givImageViewer.setScaleType(ImageView.ScaleType.MATRIX);
+            givImageViewer = findViewById(R.id.imageView_ComicPage);
+            givImageViewer.setScaleType(ImageView.ScaleType.MATRIX);
 
+        }
     }
 
     @Override
@@ -395,14 +393,22 @@ public class Activity_ComicViewer extends AppCompatActivity {
             return;
         }
 
-        File fComicPage = new File(Objects.requireNonNull(tmImagePaths.get(iPageIndex)));
+        DocumentFile dfComicPage = tmImagePaths.get(iPageIndex);
 
 
-        if (fComicPage.exists()) {
+        if (dfComicPage != null) {
             //https://developer.android.com/topic/performance/graphics/load-bitmap
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
+            //BitmapFactory.decodeFile(dfComicPage.getAbsolutePath(), options);
+
+            try {
+                Rect rect = new Rect(0,0,0,0);
+                InputStream inputStream = GlobalClass.gcrContentResolver.openInputStream(dfComicPage.getUri());
+                BitmapFactory.decodeStream(inputStream, rect, options);
+            } catch (Exception e){
+                Log.d("Activity_ComicViewer", "Could not open decode file.");
+            }
 
             //Get the dimensions of the image in the file without loading the image:
             int imageHeight = options.outHeight;
@@ -435,8 +441,15 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
             //todo: REFACTOR USING createImageThumbnail ONCE API LEVEL 29 IS COMMON
 
-            Bitmap myBitmap;
-            myBitmap = BitmapFactory.decodeFile(fComicPage.getAbsolutePath(), options);
+            Bitmap myBitmap = null;
+            //myBitmap = BitmapFactory.decodeFile(dfComicPage.getAbsolutePath(), options);
+            try {
+                Rect rect = new Rect(0,0,0,0);
+                InputStream inputStream = GlobalClass.gcrContentResolver.openInputStream(dfComicPage.getUri());
+                myBitmap = BitmapFactory.decodeStream(inputStream, rect, options);
+            } catch (Exception e){
+                Log.d("Activity_ComicViewer", "Could not open decode file.");
+            }
             setTitle(gsActivityTitleString);
             if(globalClass.gbOptionComicViewerShowPageNumber) {
                 makeToast(tmImageFileNamesReadable.get(iPageIndex), Toast.LENGTH_SHORT);

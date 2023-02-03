@@ -6,10 +6,12 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -17,7 +19,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Objects;
 
 import androidx.annotation.NonNull;
@@ -26,6 +30,8 @@ import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 public class Worker_LocalFileTransfer extends Worker {
 
@@ -65,7 +71,8 @@ public class Worker_LocalFileTransfer extends Worker {
     Notification gNotification;
     NotificationCompat.Builder gNotificationBuilder;
 
-    FileWriter gfwLogFile;
+    BufferedWriter gbwLogFile;
+    OutputStream gosLogFile;
     //=========================
 
     public Worker_LocalFileTransfer(
@@ -89,7 +96,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
         String sMessage;
 
-        if(!globalClass.gfLogsFolder.exists()){
+        if(!globalClass.gdfLogsFolder.exists()){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
             globalClass.gbImportExecutionRunning = false;
             globalClass.gbImportExecutionFinished = true;
@@ -98,19 +105,32 @@ public class Worker_LocalFileTransfer extends Worker {
         }
 
         //Put the log file in the logs folder:
-        String sLogFilePath = globalClass.gfLogsFolder.getAbsolutePath() +
-                File.separator + gsJobRequestDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_LocalFileTransfer_WorkerLog.txt";
-        File fLog = new File(sLogFilePath);
-
+        String sLogFileName = gsJobRequestDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_LocalFileTransfer_WorkerLog.txt";
+        DocumentFile dfLogFile = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+        if(dfLogFile == null){
+            sMessage = "Could not create log file at location " + globalClass.gdfLogsFolder.getUri() + ".";
+            globalClass.gbImportExecutionRunning = false;
+            globalClass.gbImportExecutionFinished = true;
+            return Result.failure(DataErrorMessage(sMessage));
+        }
         try { //Required for the log file.
-
-            gfwLogFile = new FileWriter(fLog, true);
+            gosLogFile = GlobalClass.gcrContentResolver.openOutputStream(dfLogFile.getUri(), "wt");
+            if(gosLogFile == null){
+                sMessage = "Could not open output stream to log file at location " + globalClass.gdfLogsFolder.getUri() + ".";
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
+                return Result.failure(DataErrorMessage(sMessage));
+            }
+            gbwLogFile = new BufferedWriter(new OutputStreamWriter(gosLogFile));
 
             //Validate data
             if (gsJobFile.equals("")) {
                 sMessage = "No job file name provided. This is the file telling the worker what files to copy, and where to place them.";
-                gfwLogFile.write(sMessage + "\n");
-                gfwLogFile.close();
+                gbwLogFile.write(sMessage + "\n");
+                gbwLogFile.flush();
+                gbwLogFile.close();
+                gosLogFile.flush();
+                gosLogFile.close();
                 globalClass.BroadcastProgress(true, sMessage,
                         false, 0,
                         false, "",
@@ -120,11 +140,9 @@ public class Worker_LocalFileTransfer extends Worker {
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
-            String sJobFilePath = globalClass.gfJobFilesFolder.getAbsolutePath() +
-                    File.separator + gsJobFile;
-            File fJobFile = new File(sJobFilePath);
+            DocumentFile dfJobFile = globalClass.gdfJobFilesFolder.findFile(gsJobFile);
 
-            if (fJobFile.exists()) {
+            if (dfJobFile != null) {
 
                 boolean bProblemWithFileTransfer = false;
 
@@ -135,16 +153,35 @@ public class Worker_LocalFileTransfer extends Worker {
                 // already taken place and will either skip the copy or, in the case of a move op,
                 //  will delete the source file.
                 int SOURCE_FILE_URI_INDEX = 0;
-                int DESTINATION_FOLDER = 1;
-                int DESTINATION_FILENAME = 2;
-                int SOURCE_FILE_SIZE_BYTES = 3;
-                int SOURCE_FILE_DELETE_ONLY = 4; //If the user is not importing this item and has marked it for deletion.
+                int SOURCE_FILE_PARENT_URI_INDEX = 1; //Used to determine the source's parent DocumentFile for Move operations.
+                int DESTINATION_FOLDER = 2;
+                int DESTINATION_FILENAME = 3;
+                int SOURCE_FILE_SIZE_BYTES = 4;
+                int SOURCE_FILE_DELETE_ONLY = 5; //If the user is not importing this item and has marked it for deletion.
+                int JOB_FILE_RECORD_FIELD_COUNT = 6; //Number of fields to expect per record in a job file.
 
                 long lLoopBytesRead;
 
+                InputStream isJobFile = GlobalClass.gcrContentResolver.openInputStream(dfJobFile.getUri());
+                if(isJobFile == null){
+                    sMessage = "Unable to open job file for reading. This is the file telling the worker what files to copy, and where to place them.";
+                    gbwLogFile.write(sMessage + "\n");
+                    gbwLogFile.flush();
+                    gbwLogFile.close();
+                    gosLogFile.flush();
+                    gosLogFile.close();
+                    globalClass.BroadcastProgress(true, sMessage,
+                            false, 0,
+                            false, "",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure(DataErrorMessage(sMessage));
+                }
+
                 BufferedReader brReader;
                 try { //Required for the job file.
-                    brReader = new BufferedReader(new FileReader(fJobFile.getAbsolutePath()));
+                    brReader = new BufferedReader(new InputStreamReader(isJobFile));
 
                     int iMediaCategory;
                     int iMoveOrCopy;
@@ -199,8 +236,11 @@ public class Worker_LocalFileTransfer extends Worker {
 
                     } catch (Exception e){
                         sMessage = e.getMessage();
-                        gfwLogFile.write(sMessage + "\n");
-                        gfwLogFile.close();
+                        gbwLogFile.write(sMessage + "\n");
+                        gbwLogFile.flush();
+                        gbwLogFile.close();
+                        gosLogFile.flush();
+                        gosLogFile.close();
                         globalClass.BroadcastProgress(true, sMessage,
                                 false, 0,
                                 false, "",
@@ -255,10 +295,8 @@ public class Worker_LocalFileTransfer extends Worker {
                         giFilesProcessed++;
                         if (!sLine.equals("")) {
                             String[] sTemp = sLine.split("\t");
-                            if (sTemp.length == 5) {
+                            if (sTemp.length == JOB_FILE_RECORD_FIELD_COUNT) {
 
-                                String sDestinationFolder = globalClass.gfCatalogFolders[iMediaCategory].getAbsolutePath() + File.separator + sTemp[DESTINATION_FOLDER];
-                                String sDestinationFileName = sTemp[DESTINATION_FILENAME];
                                 long lFileSize = Long.parseLong(sTemp[SOURCE_FILE_SIZE_BYTES]);
 
                                 //Check if source file exists:
@@ -267,52 +305,37 @@ public class Worker_LocalFileTransfer extends Worker {
                                 if(uriSourceFile == null){
                                     continue;
                                 }
-                                DocumentFile dfSource = null;
-                                File fSourceFile = null;
-                                boolean bUseFileRatherThanUri = false;
-                                boolean bTryAlternate = false;
-                                try {
-                                    dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-                                    if (dfSource == null) {
-                                        continue;
-                                    }
-                                    if (dfSource.getName() == null) {
-                                        bTryAlternate = true;
-                                    }
-                                } catch (Exception e){
-                                    bTryAlternate = true;
-                                }
-                                if(bTryAlternate){
-                                    //If there was a problem here, then it might not be a Uri but rather a file address to the holding folder. Test.
-                                    fSourceFile = new File(Objects.requireNonNull(uriSourceFile.getPath()));
-                                    if(fSourceFile.exists()){
-                                        bUseFileRatherThanUri = true;
-                                    } else {
-                                        continue;
-                                    }
+
+                                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
+                                if (dfSource == null) {
+
+                                    //If the source does not exist and was marked for transfer (not marked for deletion without transfer), assume that the file has already been transferred.
+                                    //todo: make sure that the file exists in the destination, and if not, provide an error message.
+                                    glProgressNumerator = glProgressNumerator + lFileSize;
+
+                                    sMessage = "Could not locate source file " + uriSourceFile;
+                                    gbwLogFile.write(sMessage + "\n");
+                                    globalClass.BroadcastProgress(true, sMessage,
+                                            false, 0,
+                                            false, "",
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                    bProblemWithFileTransfer = true;
+                                    continue; //Skip to the end of the loop and read the next line in the job file.
                                 }
 
                                 boolean bMarkedForDeletion = Boolean.parseBoolean(sTemp[SOURCE_FILE_DELETE_ONLY]);
 
                                 String sLogLine;
 
-                                String sFileName = "";
-                                if(bUseFileRatherThanUri){
-                                    sFileName = fSourceFile.getName();
-                                } else {
-                                    sFileName = dfSource.getName();
-                                }
+                                String sFileName = dfSource.getName();
 
                                 if(bMarkedForDeletion) {
                                     //If this source item is marked for deletion (no move or copy op to be performed), delete the source file:
                                     boolean bDeleteSuccess;
-                                    if(bUseFileRatherThanUri){
-                                        glProgressNumerator = glProgressNumerator + fSourceFile.length();
-                                        bDeleteSuccess = fSourceFile.delete();
-                                    } else {
-                                        glProgressNumerator = glProgressNumerator + dfSource.length();
-                                        bDeleteSuccess = dfSource.delete();
-                                    }
+
+                                    glProgressNumerator = glProgressNumerator + dfSource.length();
+                                    bDeleteSuccess = dfSource.delete();
+
                                     UpdateProgressOutput();
 
                                     if (!bDeleteSuccess) {
@@ -320,7 +343,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     } else {
                                         sLogLine = "Success deleting file marked for deletion: " + sFileName;
                                     }
-                                    gfwLogFile.write(sLogLine + "\n");
+                                    gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,
                                             false, "",
@@ -329,139 +352,127 @@ public class Worker_LocalFileTransfer extends Worker {
                                 } else {
                                     //If this item is not merely marked for deletion...
 
-                                    File fDestinationFolder = new File(sDestinationFolder);
-                                    if (!fDestinationFolder.exists()) {
-                                        if (!fDestinationFolder.mkdir()) {
-                                            sMessage = "Could not create destination folder \"" + sDestinationFolder + "\" for file \""
-                                                    + sDestinationFileName + "\", line " + giFilesProcessed + ": " + sJobFilePath;
-                                            gfwLogFile.write(sMessage + "\n");
-                                            globalClass.BroadcastProgress(true, sMessage,
+                                    String sDestinationFileName = sTemp[DESTINATION_FILENAME];
+
+                                    //todo: will there be a problem here if there is a file and a directory of the same name?
+                                    DocumentFile dfDestinationFolder = globalClass.gdfCatalogFolders[iMediaCategory].findFile(sTemp[DESTINATION_FOLDER]);
+                                    if(dfDestinationFolder == null){
+                                        dfDestinationFolder = globalClass.gdfCatalogFolders[iMediaCategory].createDirectory(sTemp[DESTINATION_FOLDER]);
+                                    }
+                                    if(dfDestinationFolder == null){
+                                        sMessage = "Could not create destination folder \"" + sTemp[DESTINATION_FOLDER] + "\" for file \""
+                                                + sDestinationFileName + "\", line " + giFilesProcessed + ": " + dfJobFile.getUri();
+                                        gbwLogFile.write(sMessage + "\n");
+                                        globalClass.BroadcastProgress(true, sMessage,
+                                                false, 0,
+                                                false, "",
+                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                        bProblemWithFileTransfer = true;
+                                        continue; //Skip to the end of the loop and read the next line in the job file.
+                                    }
+                                    //Destination folder exists or has been created successfully.
+
+
+
+                                    DocumentFile dfDestinationFile = dfDestinationFolder.findFile(sDestinationFileName);
+                                    if (dfDestinationFile != null) {
+                                        //The file copy has already been executed by a previous instance of this requested worker.
+                                        //If the operation was a move operation, we are here only because the source file still
+                                        //  exists. Attempt to delete the source file.
+                                        if (iMoveOrCopy == GlobalClass.MOVE) {
+                                            boolean bDeleteSuccess = dfSource.delete();
+
+                                            if (!bDeleteSuccess) {
+                                                sMessage = "Source file copied, but could not delete source file as part of a 'move' operation. File \""
+                                                        + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + dfJobFile.getUri() + ".";
+                                                gbwLogFile.write(sMessage + "\n");
+                                                globalClass.BroadcastProgress(true, sMessage + "\n",
+                                                        false, 0,
+                                                        false, "",
+                                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                bProblemWithFileTransfer = true;
+                                            }
+                                        }
+                                        glProgressNumerator = glProgressNumerator + lFileSize;
+                                        continue; //Skip to the end of the loop and read the next line in the job file.
+                                    }
+                                    //Destination file does not exist.
+
+                                    // Execute the copy or move operation:
+
+
+                                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 1]
+                                            + " file " + sFileName + " to " + dfDestinationFolder.getUri() + ".";
+                                    gbwLogFile.write(sLogLine + "\n");
+                                    globalClass.BroadcastProgress(true, sLogLine,
+                                            false, 0,
+                                            false, "",
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+                                    Uri uriMovedOrCopiedDocumentUri;
+                                    if(iMoveOrCopy == GlobalClass.MOVE){
+                                        String sSourceParentUri = sTemp[SOURCE_FILE_PARENT_URI_INDEX];
+                                        Uri uriSourceParentUri = Uri.parse(sSourceParentUri);
+                                        DocumentFile dfSourceParent = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceParentUri);
+                                        if(dfSourceParent == null){
+                                            sMessage = "Could not determine source file parent DocumentFile. Move operation aborted. File \""
+                                                    + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + dfJobFile.getUri() + ".";
+                                            gbwLogFile.write(sMessage + "\n");
+                                            globalClass.BroadcastProgress(true, sMessage + "\n",
                                                     false, 0,
                                                     false, "",
                                                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                             bProblemWithFileTransfer = true;
-                                            continue; //Skip to the end of the loop and read the next line in the job file.
-                                        }
-                                    }
-                                    //Destination folder exists or has been created successfully.
-
-                                    boolean bFileExists;
-                                    if(bUseFileRatherThanUri){
-                                        bFileExists = fSourceFile.exists();
-                                    } else {
-                                        bFileExists = dfSource.exists();
-                                    }
-
-                                    if (bFileExists) {
-                                        String sDestinationFileFullPath = sDestinationFolder + File.separator + sDestinationFileName;
-                                        File fDestinationFile = new File(sDestinationFileFullPath);
-                                        if (fDestinationFile.exists()) {
-                                            //The file copy has already been executed by a previous instance of this requested worker.
-                                            //If the operation was a move operation, we are here only because the source file still
-                                            //  exists. Attempt to delete the source file.
-                                            if (iMoveOrCopy == GlobalClass.MOVE) {
-                                                boolean bDeleteSuccess;
-                                                if(bUseFileRatherThanUri){
-                                                    bDeleteSuccess = fSourceFile.delete();
-                                                } else {
-                                                    bDeleteSuccess = dfSource.delete();
-                                                }
-
-                                                if (!bDeleteSuccess) {
-                                                    sMessage = "Source file copied, but could not delete source file as part of a 'move' operation. File \""
-                                                            + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + sJobFilePath + ".";
-                                                    gfwLogFile.write(sMessage + "\n");
-                                                    globalClass.BroadcastProgress(true, sMessage + "\n",
-                                                            false, 0,
-                                                            false, "",
-                                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                                                    bProblemWithFileTransfer = true;
-                                                }
-                                            }
                                             glProgressNumerator = glProgressNumerator + lFileSize;
-                                            continue; //Skip to the end of the loop and read the next line in the job file.
-                                        }
-                                        //Destination file does not exist.
-
-                                        // Execute the copy or move operation:
-
-
-                                        sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 1]
-                                                + " file " + sFileName + " to " + fDestinationFile.getPath() + ".";
-                                        gfwLogFile.write(sLogLine + "\n");
-                                        globalClass.BroadcastProgress(true, sLogLine,
-                                                false, 0,
-                                                false, "",
-                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-
-                                        ContentResolver contentResolver = getApplicationContext().getContentResolver();
-                                        //InputStream inputStream = contentResolver.openInputStream(dfSource.getUri());
-                                        FileInputStream inputStream;
-                                        if(bUseFileRatherThanUri){
-                                            inputStream = new FileInputStream(fSourceFile);
-                                        } else {
-                                            inputStream = (FileInputStream) contentResolver.openInputStream(dfSource.getUri());
-                                        }
-
-                                        OutputStream outputStream = new FileOutputStream(fDestinationFile.getPath());
-                                        int iLoopCount = 0;
-                                        byte[] buffer = new byte[100000];
-                                        if (inputStream == null) {
                                             continue;
                                         }
-                                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                                            outputStream.write(buffer, 0, buffer.length);
-                                            glProgressNumerator += lLoopBytesRead;
-                                            iLoopCount++;
-                                            if (iLoopCount % 10 == 0) {
-                                                //Send update every 10 loops:
-                                                UpdateProgressOutput();
-                                            }
+                                        uriMovedOrCopiedDocumentUri = DocumentsContract.moveDocument(
+                                                GlobalClass.gcrContentResolver,
+                                                dfSource.getUri(),
+                                                dfSourceParent.getUri(),
+                                                dfDestinationFolder.getUri());
 
-                                        }
-                                        outputStream.flush();
-                                        outputStream.close();
-
-                                        sLogLine = " Success.";
-                                        gfwLogFile.write(sLogLine + "\n");
-                                        globalClass.BroadcastProgress(true, sLogLine + "\n",
+                                    } else {
+                                        uriMovedOrCopiedDocumentUri = DocumentsContract.copyDocument(
+                                                GlobalClass.gcrContentResolver,
+                                                dfSource.getUri(),
+                                                dfDestinationFolder.getUri());
+                                    }
+                                    if(uriMovedOrCopiedDocumentUri == null){
+                                        sMessage = "Source file could not be moved or copied. File \""
+                                                + dfSource.getName() + "\", job file line " + giFilesProcessed + " in job file " + dfJobFile.getUri() + ".";
+                                        gbwLogFile.write(sMessage + "\n");
+                                        globalClass.BroadcastProgress(true, sMessage + "\n",
                                                 false, 0,
                                                 false, "",
                                                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                                        if (iMoveOrCopy == GlobalClass.MOVE) {
-                                            boolean bDeleteSuccess;
-                                            if(bUseFileRatherThanUri){
-                                                bDeleteSuccess = fSourceFile.delete();
-                                            } else {
-                                                bDeleteSuccess = dfSource.delete();
-                                            }
-                                            if (!bDeleteSuccess) {
-                                                sLogLine = "Could not delete source file after copy: " + sFileName;
-                                            } else {
-                                                sLogLine = "Success deleting source file after copy: " + sFileName;
-                                            }
-                                            gfwLogFile.write(sLogLine + "\n");
-                                            globalClass.BroadcastProgress(true, sLogLine + "\n",
-                                                    false, 0,
-                                                    false, "",
-                                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                                        }
-
-                                    } else {
-                                        //If the source does not exist and was marked for transfer (not marked for deletion without transfer), assume that the file has already been transferred.
-                                        //todo: make sure that the file exists in the destination, and if not, provide an error message.
+                                        bProblemWithFileTransfer = true;
                                         glProgressNumerator = glProgressNumerator + lFileSize;
+                                        continue;
                                     }
+                                    DocumentsContract.renameDocument(
+                                            GlobalClass.gcrContentResolver,
+                                            uriMovedOrCopiedDocumentUri,
+                                            sDestinationFileName);
+
+
+                                    sLogLine = " Success.";
+                                    gbwLogFile.write(sLogLine + "\n");
+                                    globalClass.BroadcastProgress(true, sLogLine + "\n",
+                                            false, 0,
+                                            false, "",
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                                 }
                                 dataProgress = UpdateProgressOutput();
 
                             } else {
-                                sMessage = "Data missing while reading job file, line " + giFilesProcessed + ": " + sJobFilePath;
-                                gfwLogFile.write(sMessage + "\n");
-                                gfwLogFile.close();
+                                sMessage = "Data missing while reading job file, line " + giFilesProcessed + ": " + dfJobFile.getUri();
+                                gbwLogFile.write(sMessage + "\n");
+                                gbwLogFile.flush();
+                                gbwLogFile.close();
+                                gosLogFile.flush();
+                                gosLogFile.close();
                                 globalClass.BroadcastProgress(true, sMessage,
                                         false, 0,
                                         false, "",
@@ -479,13 +490,17 @@ public class Worker_LocalFileTransfer extends Worker {
 
                     } while (true);
                     brReader.close();
+                    isJobFile.close();
 
                     CloseNotification();
 
                 } catch (IOException e) {
-                    sMessage = "Problem reading job file: " + sJobFilePath;
-                    gfwLogFile.write(sMessage + "\n");
-                    gfwLogFile.close();
+                    sMessage = "Problem reading job file: " + dfJobFile.getUri();
+                    gbwLogFile.write(sMessage + "\n");
+                    gbwLogFile.flush();
+                    gbwLogFile.close();
+                    gosLogFile.flush();
+                    gosLogFile.close();
                     globalClass.BroadcastProgress(true, sMessage,
                             false, 0,
                             false, "",
@@ -497,9 +512,9 @@ public class Worker_LocalFileTransfer extends Worker {
 
                 //Delete the job file if there were no problems:
                 if(!bProblemWithFileTransfer){
-                    if(!fJobFile.delete()){
-                        sMessage = "Worker finished processing job but could not delete job file: " + sJobFilePath;
-                        gfwLogFile.write(sMessage + "\n");
+                    if(!dfJobFile.delete()){
+                        sMessage = "Worker finished processing job but could not delete job file: " + dfJobFile.getUri();
+                        gbwLogFile.write(sMessage + "\n");
                         globalClass.BroadcastProgress(true, sMessage + "\n",
                                 false, 0,
                                 false, "",
@@ -508,9 +523,12 @@ public class Worker_LocalFileTransfer extends Worker {
                 }
 
             } else {
-                sMessage = "Job file does not exist: " + sJobFilePath;
-                gfwLogFile.write(sMessage + "\n");
-                gfwLogFile.close();
+                sMessage = "Job file does not exist: " + gsJobFile + " at location " + globalClass.gdfJobFilesFolder.getUri();
+                gbwLogFile.write(sMessage + "\n");
+                gbwLogFile.flush();
+                gbwLogFile.close();
+                gosLogFile.flush();
+                gosLogFile.close();
                 globalClass.BroadcastProgress(true, sMessage,
                         false, 0,
                         false, "",
@@ -520,7 +538,10 @@ public class Worker_LocalFileTransfer extends Worker {
                 return Result.failure(DataErrorMessage(sMessage));
             }
 
-            gfwLogFile.close();
+            gbwLogFile.flush();
+            gbwLogFile.close();
+            gosLogFile.flush();
+            gosLogFile.close();
 
             globalClass.gbImportExecutionRunning = false;
             globalClass.gbImportExecutionFinished = true;
@@ -629,7 +650,7 @@ public class Worker_LocalFileTransfer extends Worker {
         globalClass.notificationManager.notify(giNotificationID, gNotification);
 
         try {
-            gfwLogFile.write(sMessage + "\n");
+            gbwLogFile.write(sMessage + "\n");
 
         }catch (Exception e){
             //Do nothing at this point.
@@ -637,5 +658,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
         super.onStopped();
     }
+
+
 
 }

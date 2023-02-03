@@ -8,15 +8,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
@@ -50,9 +52,6 @@ public class Worker_Tags_DeleteTag extends Worker {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        String sTagFolderPath = globalClass.gfCatalogFolders[giMediaCategory].getAbsolutePath() + File.separator +
-                gict_TagToDelete.iTagID;
-
         //Loop through all catalog items and look for items that contain the tag to delete:
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : globalClass.gtmCatalogLists.get(giMediaCategory).entrySet()){
             String sTags = tmEntryCatalogRecord.getValue().sTags;
@@ -81,11 +80,17 @@ public class Worker_Tags_DeleteTag extends Worker {
         globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
 
         //Remove tag from reference list:
-        File fCatalogTagsFile = globalClass.gfCatalogTagsFiles[giMediaCategory];
+        DocumentFile dfCatalogTagsFile = globalClass.gdfCatalogTagsFiles[giMediaCategory];
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            brReader = new BufferedReader(new FileReader(fCatalogTagsFile.getAbsolutePath()));
+            InputStream isCatalogTagsFile = GlobalClass.gcrContentResolver.openInputStream(dfCatalogTagsFile.getUri());
+            if(isCatalogTagsFile == null){
+                String sMessage = "Problem reading Tags.dat.\n" + dfCatalogTagsFile.getUri();
+                globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
+                return Result.failure();
+            }
+            brReader = new BufferedReader(new InputStreamReader(isCatalogTagsFile));
             sbBuffer.append(brReader.readLine());  //Read the header. //todo: replace with getHeader().
             sbBuffer.append("\n");
 
@@ -105,13 +110,20 @@ public class Worker_Tags_DeleteTag extends Worker {
             }
             brReader.close();
 
+            isCatalogTagsFile.close();
+
             //Write the data to the file:
-            FileWriter fwNewCatalogContentsFile = new FileWriter(fCatalogTagsFile, false);
-            fwNewCatalogContentsFile.write(sbBuffer.toString());
-            fwNewCatalogContentsFile.flush();
-            fwNewCatalogContentsFile.close();
+            OutputStream osCatalogTagsFile = GlobalClass.gcrContentResolver.openOutputStream(dfCatalogTagsFile.getUri(), "wt");
+            if (osCatalogTagsFile == null){
+                String sMessage = "Problem updating Tags.dat. Cannot open output stream for file \n" + dfCatalogTagsFile.getUri();
+                globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
+                return Result.failure();
+            }
+            osCatalogTagsFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+            osCatalogTagsFile.flush();
+            osCatalogTagsFile.close();
         } catch (Exception e) {
-            String sMessage = "Problem updating Tags.dat.\n" + fCatalogTagsFile.getPath() + "\n\n" + e.getMessage();
+            String sMessage = "Problem updating Tags.dat.\n" + dfCatalogTagsFile.getUri() + "\n\n" + e.getMessage();
             globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
             return Result.failure();
         }
