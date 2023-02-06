@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -20,10 +21,16 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -589,8 +596,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 Service_CatalogViewer.startActionUpdateCatalogItem(this, ci, "Activity_VideoPlayer:initializePlayer()");
 
                 DocumentFile dfMediaFileFolder = globalClass.gdfCatalogFolders[iMediaCategory].findFile(ci.sFolder_Name);
-                if(dfMediaFileFolder != null) {
 
+                if(dfMediaFileFolder != null) {
+                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                        dfMediaFileFolder = dfMediaFileFolder.findFile(ci.sItemID);
+                    }
                     DocumentFile dfMediaFile = dfMediaFileFolder.findFile(ci.sFilename);
 
                     if(dfMediaFile != null) {
@@ -616,20 +626,53 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                             gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                             gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
                             gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
-                            String sVideoPath = globalClass.gdfCatalogFolders[iMediaCategory] +
-                                    File.separator + ci.sFolder_Name +
-                                    File.separator + ci.sItemID +
-                                    File.separator + ci.sFilename;
-                            File fTemp = new File(sVideoPath);
-                            if (fTemp.exists()) {
-                                MediaItem mediaItem = MediaItem.fromUri(sVideoPath);
-                                gSimpleExoPlayer.setMediaItem(mediaItem);
-                                gSimpleExoPlayer.prepare();
-                                gSimpleExoPlayer.setPlayWhenReady(true);
-                                //gSimpleExoPlayer.play();
-                            } else {
-                                Toast.makeText(this, "Cannot find M3U8 file.", Toast.LENGTH_SHORT).show();
+
+
+                            //Find the m3u8 file and create a list in proper order of the ts files:
+                            DocumentFile dfM3U8 = dfMediaFileFolder.findFile(ci.sFilename);
+                            TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
+                            List<MediaItem> lMediaItems = new ArrayList<>();
+                            int iSequence = 0;
+                            if(dfM3U8 != null) {
+                                try {
+                                    InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(dfM3U8.getUri());
+                                    if(isM3U8 != null){
+                                        BufferedReader brM3U8 = new BufferedReader(new InputStreamReader(isM3U8));
+                                        String sLine = brM3U8.readLine();
+                                        while (sLine != null){
+                                            if(!sLine.startsWith("#") && sLine.endsWith("st")){
+                                                tmFileSequence.put(iSequence, sLine);
+                                                iSequence++;
+                                            }
+                                            sLine = brM3U8.readLine();
+                                        }
+                                        brM3U8.close();
+                                        isM3U8.close();
+                                    }
+                                } catch (Exception e){
+                                    String sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
+                                    Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
+                                }
+                                DocumentFile[] dfMediaFiles = dfMediaFileFolder.listFiles();
+                                for (int i = 0; i <= iSequence; i++) {
+                                    String sFileNameSought = tmFileSequence.get(i);
+                                    if(sFileNameSought != null) {
+                                        dfMediaFile = dfMediaFileFolder.findFile(sFileNameSought);
+                                        if(dfMediaFile != null){
+                                            MediaItem mediaItem = MediaItem.fromUri(dfMediaFile.getUri());
+                                            lMediaItems.add(mediaItem);
+                                        }
+                                    }
+
+                                }
+
                             }
+                            gSimpleExoPlayer.setMediaItems(lMediaItems, false);
+                            //gSimpleExoPlayer.setMediaItem(mediaItem);
+                            gSimpleExoPlayer.prepare();
+                            gSimpleExoPlayer.setPlayWhenReady(true);
+                            //gSimpleExoPlayer.play();
+
                         } else {
                             gbPlayingM3U8 = false;
                             gImageView_GifViewer.setVisibility(View.INVISIBLE);
