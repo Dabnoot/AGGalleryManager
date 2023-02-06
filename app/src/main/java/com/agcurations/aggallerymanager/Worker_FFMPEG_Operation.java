@@ -33,6 +33,9 @@ public class Worker_FFMPEG_Operation extends Worker {
         //  Android Storage Access Framework. To get it to work again, coding will have to be added
         //  to move the files to be worked upon to the app's internal storage space where File
         //  objects and standard operating paths are valid, as opposed to using DocumentFile objects.
+        //File name should not be "Jumbled" as if it is a .ts file download of videos, FFMPEG will
+        //  not understand what to do with the files if the extension is unrecognized.
+
 
 
         /*if(giDownloadTypeSingleOrM3U8 != DOWNLOAD_TYPE_M3U8_LOCAL) {

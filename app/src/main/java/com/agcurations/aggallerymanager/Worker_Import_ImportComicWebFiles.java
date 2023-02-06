@@ -228,8 +228,6 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         lDownloadIDs[i] = allDownloadIDs.get(i);
                     }
 
-                    //todo: mimic video downloadID logic. See video download routine.
-
                     //Build-out data to send to the worker:
                     String sCallerID = "Worker_Import_ImportComicWebFiles:doWork()";
                     Data dataComicDownloadPostProcessor = new Data.Builder()
@@ -237,7 +235,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                             .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
                             .putString(Worker_ComicPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, dfDestinationFolder.getName())
-                            .putInt(Worker_ComicPostProcessing.KEY_ARG_MEDIA_CATEGORY, ci.iMediaCategory)
+                            .putInt(Worker_ComicPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
                             .putLongArray(Worker_ComicPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                             .putString(Worker_ComicPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
                             .build();

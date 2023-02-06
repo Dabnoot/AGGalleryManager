@@ -2342,8 +2342,6 @@ public class GlobalClass extends Application {
         //  the video a stream may continually request .ts files. This attempts to filter them out.
         //  However, it may block content that the user wants. Thus, allow it to be an option.
 
-    boolean gbUseFFMPEGToMerge = true;
-    boolean gbUseFFMPEGConvertToMP4 = true;
 
     //Create an array of keys that allow program to locate video links:
     ArrayList<ItemClass_WebVideoDataLocator> galWebVideoDataLocators;

@@ -66,8 +66,6 @@ public class Worker_Import_VideoDownload extends Worker {
         long lProgressDenominator;
         int iProgressBarValue = 0;
 
-        globalClass.gbUseFFMPEGToMerge = sharedPreferences.getBoolean(GlobalClass.PREF_USE_FFMPEG_TO_MERGE_VIDEO_STREAMS, false);
-
         ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
         ItemClass_File icfDownloadItem = alFileList.get(0);
         //Use file count as progress denominator:
@@ -167,7 +165,7 @@ public class Worker_Import_VideoDownload extends Worker {
         ciNew.iGrade = icfDownloadItem.iGrade;
         ciNew.sSource = gsAddress;
         ciNew.sTitle = icfDownloadItem.sTitle;
-        //ciNew.alsDownloadURLsAndDestFileNames = new ArrayList<>();
+
         ArrayList<String[]> alsDownloadURLsAndDestFileNames = new ArrayList<>();
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
             ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE;
@@ -175,40 +173,24 @@ public class Worker_Import_VideoDownload extends Worker {
             ciNew.sVideoLink = icfDownloadItem.sURLVideoLink;
             ciNew.sFilename = GlobalClass.JumbleFileName(icfDownloadItem.sFileOrFolderName);
         } else {
-            //M3U8. Mark post-processing to concat videos and move the result.
-            if(globalClass.gbUseFFMPEGToMerge) {
-                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT;
-                //Form a name for the concatenated video file:
-                String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
-                sTempFilename = Service_Import.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
-                sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
-                sTempFilename = sTempFilename.substring(0,sTempFilename.lastIndexOf(".")); //Remove extension (probably .m3u8).
-                if(globalClass.gbUseFFMPEGConvertToMP4) {
-                    sTempFilename = sTempFilename + ".mp4"; //Add appropriate extension.
-                } else {
-                    sTempFilename = sTempFilename + ".ts"; //Add appropriate extension.
-                }
-                ciNew.sFilename = GlobalClass.JumbleFileName(sTempFilename);
-                ciNew.iFile_Count = 1; //There will only be 1 file after concatenation.
-            } else {
-                ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_M3U8;
-                //Form a name for the M3U8 file:
-                String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
-                sTempFilename = Service_Import.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
-                sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
-                ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
-                ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
+            //M3U8.
+            ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_M3U8;
+            //Form a name for the M3U8 file:
+            String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
+            sTempFilename = Service_Import.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
+            sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
+            ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
+            ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
 
-                //Configure thumbnail file for M3U8:
-                String sThumbnailURL = icfDownloadItem.sURLThumbnail;
-                try{
-                    String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
-                    sThumbnailFileName = Service_Import.cleanFileNameViaTrim(sThumbnailFileName);
-                    ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
-                    alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
-                } catch (Exception e){
-                    globalClass.problemNotificationConfig("Could not get thumbnail image.", sIntentActionFilter);
-                }
+            //Configure thumbnail file for M3U8:
+            String sThumbnailURL = icfDownloadItem.sURLThumbnail;
+            try{
+                String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
+                sThumbnailFileName = Service_Import.cleanFileNameViaTrim(sThumbnailFileName);
+                ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
+                alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
+            } catch (Exception e){
+                globalClass.problemNotificationConfig("Could not get thumbnail image.", sIntentActionFilter);
             }
 
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
@@ -285,7 +267,7 @@ public class Worker_Import_VideoDownload extends Worker {
             DownloadManager downloadManager;
             downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
 
-            //ArrayList<Long> allDownloadIDs = new ArrayList<>();
+            ArrayList<Long> allDownloadIDs = new ArrayList<>();
 
             //Download the file(s):
             int FILE_DOWNLOAD_ADDRESS = 0;
@@ -296,23 +278,9 @@ public class Worker_Import_VideoDownload extends Worker {
             ArrayList<String[]> alsDLIDsAndFileNames = new ArrayList<>();
             for(String[] sURLAndFileName: alsDownloadURLsAndDestFileNames) {
                 String sNewFullPathFilename = dfWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
-                //File name is not Jumbled for download as if it is a .ts file download of videos, FFMPEG will
-                //  not understand what to do with the files if the extension is unrecognized.
+
                 File fNewFile = new File(sNewFullPathFilename);
-                /*//Debugging an issue...
-                String s;
-                try {
-                    s = fNewFile.getCanonicalPath();  //Check to see if the file name and path is valid:
-                } catch (Exception e){
-                    sNewFullPathFilename = fTempDestination + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
-                    fNewFile = new File(sNewFullPathFilename);
-                    try{
-                        s = fNewFile.getCanonicalPath();
-                    } catch (Exception e2){
-                        Log.d("File exception", e2.getMessage());
-                    }
-                    Log.d("File exception", e.getMessage());
-                }*/
+
                 if(!fNewFile.exists()) {
 
                     globalClass.BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
@@ -322,15 +290,6 @@ public class Worker_Import_VideoDownload extends Worker {
 
                     //Use the download manager to download the file:
                     DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
-                    /*request.setTitle("AG Gallery+ File Download: " + "Video ID " + ciNew.sItemID)
-                            .setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
-                            //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-                            //Set to equivalent of binary file so that Android MediaStore will not try to index it,
-                            //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
-                            .setMimeType("application/octet-stream")
-                            .setDestinationUri(Uri.fromFile(fNewFile));*/
-                    //The above method no longer works as of Android 11 API level 30, One UI version 3.1.
                     String sDownloadFolderRelativePath;
                     sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                             File.separator + ciNew.sFolder_Name +
@@ -347,6 +306,7 @@ public class Worker_Import_VideoDownload extends Worker {
                             .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, fNewFile.getName());
 
                     long lDownloadID = downloadManager.enqueue(request);
+                    allDownloadIDs.add(lDownloadID);
                     //todo: Check to make sure that the download is approved. Such as download source exists, and filename is
                     //  valid and not already taken.
                     //Record the download ID so that we can check to see if it is completed via the worker.
@@ -369,16 +329,13 @@ public class Worker_Import_VideoDownload extends Worker {
             int iSingleOrM3U8;
             if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
                 iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_SINGLE;
-            } else if(!globalClass.gbUseFFMPEGToMerge) {
-                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8_LOCAL;
             } else {
                 iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8;
             }
 
             //If this is an M3U8 stream download and the user has elected not to concatenate via
             //  FFMPEG, download the M3U8 file as well:
-            if((icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) &&
-                    (!globalClass.gbUseFFMPEGToMerge)){
+            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8){
 
                 ItemClass_M3U8 icM3U8_entry = icfDownloadItem.ic_M3U8;
 
@@ -503,7 +460,7 @@ public class Worker_Import_VideoDownload extends Worker {
             osDLIDFileSequenceFile.close();
 
             //Build-out data to send to the worker:
-            Data dataVideoPostProcessor = new Data.Builder()
+            /*Data dataVideoPostProcessor = new Data.Builder()
                     .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_M3U8_M3U8LOCAL, iSingleOrM3U8)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_URI_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
                     .putString(Worker_VideoPostProcessing.KEY_ARG_URI_PATH_TO_WORKING_FOLDER, dfVideoWorkingFolder.getUri().toString())
@@ -516,9 +473,30 @@ public class Worker_Import_VideoDownload extends Worker {
             OneTimeWorkRequest otwrVideoPostProcessor = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
                     .setInputData(dataVideoPostProcessor)
                     .addTag(Worker_VideoPostProcessing.WORKER_VIDEO_POST_PROCESSING_TAG) //To allow finding the worker later.
+                    .build();*/
+
+            long[] lDownloadIDs = new long[allDownloadIDs.size()];
+            for(int i = 0; i < allDownloadIDs.size(); i++){
+                lDownloadIDs[i] = allDownloadIDs.get(i);
+            }
+
+            String sCallerID = "Worker_Import_VideoDownload:doWork()";
+            Data dataDownloadPostProcessor = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
+                    .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ciNew.sFolder_Name)  //Videos/<Tag folder>
+                    .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS)
+                    .putInt(Worker_DownloadPostProcessing.KEY_ARG_VIDEO_TYPE_SINGLE_M3U8, iSingleOrM3U8) //Used to tell if it should search for subfolder.
+                    .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID) //Used if the type is M3U8 to find subfolder.
+                    .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                     .build();
-            UUID UUIDWorkID = otwrVideoPostProcessor.getId();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrVideoPostProcessor);
+            OneTimeWorkRequest otwrDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_DownloadPostProcessing.class)
+                    .setInputData(dataDownloadPostProcessor)
+                    .addTag(Worker_ComicPostProcessing.WORKER_COMIC_POST_PROCESSING_TAG) //To allow finding the worker later.
+                    .build();
+            UUID UUIDWorkID = otwrDownloadPostProcessor.getId();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);
 
             sMessage = "Operation complete.\n";
             if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){

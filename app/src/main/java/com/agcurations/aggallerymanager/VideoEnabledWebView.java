@@ -242,6 +242,12 @@ public class VideoEnabledWebView extends WebView
 
         final HitTestResult result = getHitTestResult();
 
+
+        //todo: Create your own dialog menu so that you can change the colors.
+        //https://stackoverflow.com/questions/38872585/how-to-specify-the-background-color-of-the-context-menu
+
+
+
         MenuItem.OnMenuItemClickListener handler = new MenuItem.OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 // do the menu action
@@ -318,7 +324,7 @@ public class VideoEnabledWebView extends WebView
                         Data dataMoveDownloadedFile = new Data.Builder()
                                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                                .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
+                                .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
                                 .putInt(Worker_Browser_ImageDownloadToHoldingFolder.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES)
                                 .putLongArray(Worker_Browser_ImageDownloadToHoldingFolder.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                                 .build();
