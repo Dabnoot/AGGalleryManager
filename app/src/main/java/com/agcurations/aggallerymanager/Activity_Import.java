@@ -254,7 +254,12 @@ public class Activity_Import extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         if(mediaMetadataRetriever != null) {
-            mediaMetadataRetriever.release();
+            try {
+                mediaMetadataRetriever.release();
+            } catch (Exception e){
+                String sMessage = "" + e.getMessage();
+                Log.d("Activity_Import:onDestroy", sMessage);
+            }
         }
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(importDataServiceResponseReceiver);

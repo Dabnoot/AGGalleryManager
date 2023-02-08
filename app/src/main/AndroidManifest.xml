@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.agcurations.aggallerymanager">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
         android:name=".GlobalClass"
@@ -30,10 +29,10 @@
         <activity
             android:name=".Activity_PinCodePopup"
             android:theme="@style/AppTheme.PinCodePopup" />
-        <activity android:name=".Activity_Main">
+        <activity android:name=".Activity_Main"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

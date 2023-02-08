@@ -1972,7 +1972,12 @@ public class GlobalClass extends Application {
                             Log.d("Video post-processing", "Unable to obtain video metadata for item ID " + ci.sItemID);
                         }
 
-                        mediaMetadataRetriever.release();
+                        try {
+                            mediaMetadataRetriever.release();
+                        } catch (Exception e){
+                            String sMessage = "" + e.getMessage();
+                            Log.d("GlobalClass:ExecuteDownloadManagerPostProcessing", sMessage);
+                        }
 
                         alsCatalogItemsToUpdate.add(ci);
                         break; //Don't go through any more "output" folders in this temp download directory.

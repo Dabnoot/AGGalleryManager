@@ -10,11 +10,11 @@
 
         <item name="android:windowBackground">@color/colorBackgroundMain</item>
         <item name="android:navigationBarColor">@color/colorNavigationBar</item>
-        <item name="android:textColor">@color/colorTextColor</item>
-        <item name="android:textColorPrimary">@color/colorTextColor</item>         <!-- sets AlertDialog summaryText color -->
+        <item name="android:textColor">@color/colorTextColor</item>                 <!--Don't set all of the text color as the WebView ContextMenu Colors are VERY had to identify and change.-->
+        <item name="android:textColorPrimary">@color/colorTextColor</item>          <!-- sets AlertDialog summaryText color -->
         <item name="android:textColorSecondary">@color/colorTextColor</item>
-        <!--<item name="colorBackgroundFloating">@color/colorLightOrange</item>    &lt;!&ndash; Sets AlertDialog color &ndash;&gt;-->
-        <item name="textColorAlertDialogListItem">@color/colorTextColor</item>     <!-- Sets AlertDialog text color -->
+        <!--<item name="colorBackgroundFloating">@color/colorButton</item>-->       <!-- Sets AlertDialog color -->
+        <item name="textColorAlertDialogListItem">@color/colorTextColor</item>      <!-- Sets AlertDialog text color -->
         <item name="android:editTextColor">@color/colorTextColor</item>
 
         <item name="subtitleTextColor">@color/colorTextColor</item>
@@ -36,10 +36,14 @@
 
         <item name="colorSurface">@color/colorNavigationBar</item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
-        <!--<item name="actionBarStyle">@style/ActionBarTheme</item>-->            <!-- Sets the popup menu color -->
+        <!--<item name="android:itemBackground">@color/colorBlack</item>--> <!-- Can set BG color of menu items, context menu items, and perhaps also list items. -->
+        <!--<item name="actionOverflowMenuStyle">@style/custom_optionsMenuStyle</item>--> <!-- Can set background of menu -->
 
     </style>
 
+    <style name="custom_optionsMenuStyle" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <item name="android:popupBackground">@color/colorBlack</item>
+    </style>
 
     <style name="MainTheme" parent="AppTheme">
         <item name="android:windowBackground">@drawable/sora_sagano_unsplash</item>

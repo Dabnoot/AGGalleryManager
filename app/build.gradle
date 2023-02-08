@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.agcurations.aggallerymanager"
         minSdkVersion 30
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -24,6 +24,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8//Required for ExoPlayer.
     }
+    namespace 'com.agcurations.aggallerymanager'
 }
 
 
@@ -61,11 +62,10 @@ dependencies {
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
 
     //WorkManager, for background tasks such as internet file download:
-    implementation "androidx.work:work-runtime:2.7.0-alpha02"
+    implementation "androidx.work:work-runtime:2.8.0-rc01"
 
     //FFMPEG, for video concatenation:javjava -v
-
-    implementation 'com.arthenica:ffmpeg-kit-full:4.4.LTS'
+    //implementation 'com.arthenica:ffmpeg-kit-full:4.4.LTS'
 
     //ExoPlayer, for playing local m3u8 playlists:
     implementation 'com.google.android.exoplayer:exoplayer:2.14.1'
