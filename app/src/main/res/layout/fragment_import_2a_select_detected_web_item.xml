@@ -14,6 +14,7 @@
         android:layout_gravity="start"
         android:textAlignment="textStart"
         android:text="Select an item to download. Select next to continue."
+        android:textColor="@color/colorTextColor"
         android:textSize="20sp" />
 
     <ListView

@@ -20,7 +20,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="24sp"
-            android:text="Choose Import Method"/>
+            android:text="Choose Import Method"
+            android:textColor="@color/colorTextColor"/>
 
         <TextView
             android:id="@+id/TextView_Subtitle"
@@ -28,7 +29,8 @@
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:layout_gravity="center"
-            android:text="Please choose the import method you would like to use."/>
+            android:text="Please choose the import method you would like to use."
+            android:textColor="@color/colorTextColor"/>
 
 
         <!--<TextView

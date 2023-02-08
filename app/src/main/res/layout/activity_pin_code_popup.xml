@@ -17,6 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Enter Pin:"
+            android:textColor="@color/colorTextColor"
             android:textSize="30sp"
             android:layout_centerHorizontal="true"/>
 
@@ -24,6 +25,7 @@
             android:id="@+id/editText_NumberPassword"
             android:layout_width="140sp"
             android:layout_height="wrap_content"
+            android:textColor="@color/colorTextColor"
             android:ems="10"
             android:inputType="numberPassword"
             android:textSize="30sp"

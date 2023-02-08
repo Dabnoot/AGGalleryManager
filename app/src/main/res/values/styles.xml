@@ -10,7 +10,7 @@
 
         <item name="android:windowBackground">@color/colorBackgroundMain</item>
         <item name="android:navigationBarColor">@color/colorNavigationBar</item>
-        <item name="android:textColor">@color/colorTextColor</item>                 <!--Don't set all of the text color as the WebView ContextMenu Colors are VERY had to identify and change.-->
+        <!--<item name="android:textColor">@color/colorTextColor</item>-->                 <!--Don't set all of the text color as the WebView ContextMenu Colors are VERY had to identify and change.-->
         <item name="android:textColorPrimary">@color/colorTextColor</item>          <!-- sets AlertDialog summaryText color -->
         <item name="android:textColorSecondary">@color/colorTextColor</item>
         <!--<item name="colorBackgroundFloating">@color/colorButton</item>-->       <!-- Sets AlertDialog color -->
@@ -78,6 +78,7 @@
         <item name="android:shadowDx">3</item>
         <item name="android:shadowDy">3</item>
         <item name="android:shadowRadius">3</item>
+        <item name="android:textColor">@color/colorTextColor</item>
     </style>
 
 

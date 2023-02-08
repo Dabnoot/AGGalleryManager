@@ -33,6 +33,7 @@
                 android:layout_centerHorizontal="true"
                 android:layout_alignParentTop="true"
                 android:text="Tag Selection"
+                android:textColor="@color/colorTextColor"
                 android:textSize="24sp" />
 
             <TextView
@@ -44,6 +45,7 @@
                 android:layout_gravity="start"
                 android:textAlignment="textStart"
                 android:text="Here you may apply tags to all selected items at once. Select next to continue."
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp" />
 
             <TextView
@@ -54,6 +56,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
                 android:text="Tags:"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp" />
 
             <TextView

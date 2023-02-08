@@ -40,6 +40,7 @@
         android:layout_toRightOf="@id/imageView_Thumbnail"
         android:ellipsize="marquee"
         android:text="@string/comic_name"
+        android:textColor="@color/colorTextColor"
         android:textSize="16sp"
         android:singleLine="true" />
 
@@ -53,6 +54,7 @@
         android:layout_toRightOf="@id/imageView_Thumbnail"
         android:gravity="center_vertical"
         android:text="@string/comic_details"
+        android:textColor="@color/colorTextColor"
         android:textSize="16sp"/>
 
 </RelativeLayout>

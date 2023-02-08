@@ -37,6 +37,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginEnd="15dp"
                 android:text="@string/comic_title"
+                android:textColor="@color/colorTextColor"
                 android:textSize="28sp"
                 android:textIsSelectable="true"/>
 
@@ -46,6 +47,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="Comic Source:"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_ComicSource"/>
 
@@ -56,6 +58,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="ComicSource"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Title"
@@ -67,6 +70,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/parodies"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Parodies"/>
 
@@ -89,6 +93,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/characters"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Characters"/>
 
@@ -99,6 +104,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/characters_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Parodies"
@@ -110,6 +116,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/tags"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Tags"/>
 
@@ -121,6 +128,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginEnd="15dp"
                 android:text="@string/tags_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Characters"
@@ -132,6 +140,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/artists"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Artists"/>
 
@@ -142,6 +151,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/artists_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Tags"
@@ -153,6 +163,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/groups"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Groups"/>
 
@@ -163,6 +174,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/groups_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Artists"
@@ -174,6 +186,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/languages_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Languages"/>
 
@@ -184,6 +197,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/languages"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Groups"
@@ -195,6 +209,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="15dp"
                 android:text="@string/categories"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Categories"/>
 
@@ -205,6 +220,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="@string/categories_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Languages"
@@ -217,6 +233,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginBottom="10dp"
                 android:text="@string/pages"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Pages"/>
 
@@ -227,6 +244,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="9999"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Categories"
@@ -239,6 +257,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginBottom="10dp"
                 android:text="File count:"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Pages"
                 android:layout_toEndOf="@id/textView_Pages"/>
@@ -250,6 +269,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="9999"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Categories"
@@ -262,6 +282,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginBottom="10dp"
                 android:text="Missing:"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_Pages"
                 android:layout_toEndOf="@id/textView_FileCount"
@@ -274,6 +295,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginTop="10dp"
                 android:text="1,2,3,4"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_Categories"
@@ -287,6 +309,7 @@
                 android:layout_marginStart="15dp"
                 android:layout_marginBottom="10dp"
                 android:text="@string/comic_id"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignBaseline="@id/textView_ComicID"/>
 
@@ -298,6 +321,7 @@
                 android:layout_marginTop="10dp"
                 android:layout_marginBottom="15dp"
                 android:text="@string/comicid_"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:textIsSelectable="true"
                 android:layout_below="@id/textView_MissingPages"

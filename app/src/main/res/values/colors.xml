@@ -14,6 +14,8 @@
     <color name="colorFragmentBackgroundHighlight2">#447ad4</color>
     <color name="colorButton">#eb305b</color>
 
+    <color name="colorSeparator">@color/colorActionBar</color>
+
     <color name="colorBlack">#000000</color>
     <color name="black_overlay">#66000000</color>
 

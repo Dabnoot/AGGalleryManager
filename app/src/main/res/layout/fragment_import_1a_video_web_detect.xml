@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Address:"
+        android:textColor="@color/colorTextColor"
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
         android:textSize="20sp"
@@ -22,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
+        android:textColor="@color/colorTextColor"
         android:layout_toStartOf="@id/button_PasteAddress"
         android:layout_toEndOf="@id/textView_Label_WebAddress"
         android:singleLine="true"
@@ -70,6 +72,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
         android:text="Enter an address and click 'Go'."
+        android:textColor="@color/colorTextColor"
         android:layout_below="@id/editText_WebAddress"
         android:layout_alignParentEnd="true"/>
 

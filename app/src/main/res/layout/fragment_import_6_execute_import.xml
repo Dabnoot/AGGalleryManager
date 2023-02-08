@@ -12,6 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Import Files"
+        android:textColor="@color/colorTextColor"
         android:textSize="24sp"
         android:layout_marginTop="10dp"
         android:layout_centerHorizontal="true"
@@ -37,6 +38,7 @@
             android:id="@+id/textView_ImportProgressBarText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="@color/colorTextColor"
             android:layout_centerInParent="true"/>
     </RelativeLayout>
 
@@ -55,6 +57,7 @@
             android:id="@+id/textView_ImportLog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/colorTextColor"
             android:gravity="bottom"/>
     </ScrollView>
 

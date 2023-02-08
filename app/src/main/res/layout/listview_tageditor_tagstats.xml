@@ -9,12 +9,14 @@
         android:id="@+id/textView_TagText"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:textColor="@color/colorTextColor"
         android:textSize="30sp"/>
 
     <TextView
         android:id="@+id/textView_TagStats"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:textColor="@color/colorTextColor"
         android:textSize="24sp"/>
 
 </LinearLayout>

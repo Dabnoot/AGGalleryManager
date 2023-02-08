@@ -40,6 +40,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:text="Line1"
+            android:textColor="@color/colorTextColor"
             android:textSize="16sp" />
 
         <TextView
@@ -48,6 +49,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:text="Line2"
+            android:textColor="@color/colorTextColor"
             android:textSize="16sp" />
 
         <TextView
@@ -56,6 +58,7 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:text="Line3"
+            android:textColor="@color/colorTextColor"
             android:textSize="16sp" />
 
     </LinearLayout>

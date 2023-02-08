@@ -11,6 +11,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/comic_export"
+        android:textColor="@color/colorTextColor"
         android:textSize="30sp"
         android:gravity="center"
         app:layout_constraintEnd_toEndOf="parent"
@@ -24,6 +25,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:text="@string/catalog_size"
+        android:textColor="@color/colorTextColor"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="@+id/button_SaveAs"
         app:layout_constraintEnd_toStartOf="@+id/textView_CatalogSize"
@@ -36,6 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:text=""
+        android:textColor="@color/colorTextColor"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="@+id/button_SaveAs"
         app:layout_constraintStart_toEndOf="@+id/textView_LabelCatalogSize"
@@ -49,8 +52,8 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="15dp"
         android:onClick="selectOutputFile"
-        android:textColor="#000000"
         android:text="@string/select_output_file"
+        android:textColor="@color/colorTextColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/textView_CatalogSize"
         app:layout_constraintTop_toBottomOf="@+id/textView_Title" />
@@ -63,6 +66,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:text="@string/export_file"
+        android:textColor="@color/colorTextColor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button_SaveAs" />
 
@@ -74,6 +78,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:text=""
+        android:textColor="@color/colorTextColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/textView_LabelExportFile"
         app:layout_constraintTop_toBottomOf="@+id/button_SaveAs" />
@@ -99,6 +104,7 @@
         android:layout_marginTop="10dp"
         android:background="#00000000"
         android:text="Progress: 0%"
+        android:textColor="@color/colorTextColor"
         app:layout_constraintTop_toBottomOf="@id/textView_ExportFileAbsPath"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -112,6 +118,7 @@
         android:layout_marginBottom="10dp"
         android:gravity="bottom"
         android:scrollbars="vertical"
+        android:textColor="@color/colorTextColor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/determinateBar_Export"
         app:layout_constraintEnd_toEndOf="parent"

@@ -15,7 +15,8 @@
         android:textSize="20sp"
         android:textIsSelectable="true"
         android:visibility="invisible"
-        android:gravity="bottom"/>
+        android:gravity="bottom"
+        android:textColor="@color/colorTextColor"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/RecyclerView_ComicPages"

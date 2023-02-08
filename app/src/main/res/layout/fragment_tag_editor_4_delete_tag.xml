@@ -24,6 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Delete Tag"
+                android:textColor="@color/colorTextColor"
                 android:textSize="40sp"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"/>
@@ -33,6 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Select a tag from the drop down to delete."
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"
                 android:layout_alignParentStart="true"
                 android:layout_below="@+id/textView_DeleteTagTitle"/>

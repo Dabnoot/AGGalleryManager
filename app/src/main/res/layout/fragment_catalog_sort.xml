@@ -30,6 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:text="Sort and Filter"
+            android:textColor="@color/colorTextColor"
             android:textSize="24sp"
             android:layout_centerHorizontal="true" />
 
@@ -38,6 +39,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="Sort by:"
+            android:textColor="@color/colorTextColor"
             android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
@@ -64,14 +66,15 @@
             android:src="@drawable/baseline_sort_ascending_white_18dp"
             android:title="sort_order" />
 
+        <!--Separator-->
         <View
             android:id="@+id/view_SortBySearchKeywordsSeparator"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="3dp"
             android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:background="@color/colorTextColor"
+            android:background="@color/colorSeparator"
             android:layout_below="@id/textView_labelSortBy"/>
 
 
@@ -83,6 +86,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:text="Search keywords:"
+            android:textColor="@color/colorTextColor"
             android:textSize="20sp"
             android:layout_below="@+id/view_SortBySearchKeywordsSeparator" />
 
@@ -93,7 +97,8 @@
             android:layout_marginEnd="10dp"
             android:layout_toEndOf="@+id/textView_labelSearchKeyWords"
             android:layout_alignBaseline="@id/textView_labelSearchKeyWords"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:textColor="@color/colorTextColor"/>
 
         <TextView
             android:id="@+id/textView_labelSearchField"
@@ -101,6 +106,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:text="Search in:"
+            android:textColor="@color/colorTextColor"
             android:textSize="20sp"
             android:layout_alignEnd="@+id/textView_labelSearchKeyWords"
             android:layout_below="@+id/editText_SearchKeywords"/>
@@ -113,14 +119,15 @@
             android:layout_toEndOf="@id/textView_labelSearchField"
             android:layout_alignBottom="@+id/textView_labelSearchField" />
 
+        <!--Separator-->
         <View
             android:id="@+id/view_SearchFilterSeparator"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="3dp"
             android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:background="@color/colorTextColor"
+            android:background="@color/colorSeparator"
             android:layout_below="@id/textView_labelSearchField"/>
 
         <TextView
@@ -131,6 +138,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:text="Filter by:"
+            android:textColor="@color/colorTextColor"
             android:textSize="20sp"
             android:layout_below="@+id/view_SearchFilterSeparator"/>
 
@@ -141,14 +149,15 @@
             android:layout_toEndOf="@id/textView_labelFilter"
             android:layout_alignBottom="@+id/textView_labelFilter" />
 
+        <!--Separator-->
         <View
             android:id="@+id/view_FilterResolutionSeparator"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="3dp"
             android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:background="@color/colorTextColor"
+            android:background="@color/colorSeparator"
             android:layout_below="@id/textView_labelFilter"/>
 
         <TextView
@@ -159,6 +168,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:text="Resolution:"
+            android:textColor="@color/colorTextColor"
             android:textSize="20sp"
             android:layout_below="@+id/view_FilterResolutionSeparator"/>
 
@@ -166,16 +176,20 @@
             android:id="@+id/rangeSlider_Resolution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            app:thumbColor="@color/colorTextColor"
+            app:trackColor="@color/colorTextColor"
             android:layout_alignBaseline="@id/textView_labelResolution" />
 
+
+        <!--Separator-->
         <View
             android:id="@+id/view_ResolutionVideoDurationSeparator"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="3dp"
             android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:background="@color/colorTextColor"
+            android:background="@color/colorSeparator"
             android:layout_below="@id/rangeSlider_Resolution"/>
 
         <RelativeLayout
@@ -192,23 +206,28 @@
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
                 android:text="Video duration:"
+                android:textColor="@color/colorTextColor"
                 android:textSize="20sp"/>
 
             <com.google.android.material.slider.RangeSlider
                 android:id="@+id/rangeSlider_VideoDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                app:thumbColor="@color/colorTextColor"
+                app:trackColor="@color/colorTextColor"
                 android:layout_alignBaseline="@id/textView_labelVideoDuration" />
 
+            <!--Separator-->
             <View
                 android:id="@+id/view_VideoDurationTagsSeparator"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
+                android:layout_height="3dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginStart="10dp"
                 android:layout_marginEnd="10dp"
-                android:background="@color/colorTextColor"
+                android:background="@color/colorSeparator"
                 android:layout_below="@id/rangeSlider_VideoDuration"/>
+
 
         </RelativeLayout>
 
@@ -220,6 +239,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
             android:text="Tags:"
+            android:textColor="@color/colorTextColor"
             android:textSize="20sp"
             android:layout_below="@id/relativeLayout_VideoDuration"/>
 
@@ -230,7 +250,8 @@
             android:layout_marginEnd="10dp"
             android:textSize="20sp"
             android:layout_alignTop="@id/textView_labelTags"
-            android:layout_toEndOf="@id/textView_labelTags"/>
+            android:layout_toEndOf="@id/textView_labelTags"
+            android:textColor="@color/colorTextColor"/>
 
 
         <Button

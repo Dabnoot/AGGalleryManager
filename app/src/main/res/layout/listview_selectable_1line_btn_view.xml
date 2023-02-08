@@ -20,6 +20,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="Line1"
+        android:textColor="@color/colorTextColor"
         android:textSize="16sp"
         android:layout_centerVertical="true"
         android:layout_toEndOf="@id/checkBox_ItemSelect"/>

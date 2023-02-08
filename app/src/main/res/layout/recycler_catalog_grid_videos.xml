@@ -33,7 +33,8 @@
         android:shadowColor = "#000000"
         android:shadowDx = "3"
         android:shadowDy = "3"
-        android:shadowRadius = "3"/>
+        android:shadowRadius = "3"
+        android:textColor="@color/colorTextColor"/>
 
     <TextView
         android:id="@+id/textView_CatalogItemNotification"
@@ -41,7 +42,8 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
-        android:visibility="invisible"/>
+        android:visibility="invisible"
+        android:textColor="@color/colorTextColor"/>
 
     <Button
         android:id="@+id/button_Delete"
@@ -59,6 +61,7 @@
         android:layout_below="@id/imageView_Thumbnail"
         android:layout_alignWithParentIfMissing="true"
         android:textSize="16sp"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:textColor="@color/colorTextColor"/>
 
 </RelativeLayout>
