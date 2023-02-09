@@ -259,7 +259,6 @@ public class Worker_Import_VideoDownload extends Worker {
         //Initiate the download(s):
 
         //NOTE: Android has DownloadIdleService which is reponsible for cleaning up stale or orphan downloads.
-        //  I have witnessed disappearance of downloaded files. This service seems to be deleting comic files.
         //See article at: https://www.vvse.com/blog/blog/2020/01/06/android-10-automatically-deletes-downloaded-files/
 
         try {
@@ -459,22 +458,6 @@ public class Worker_Import_VideoDownload extends Worker {
             osDLIDFileSequenceFile.flush();
             osDLIDFileSequenceFile.close();
 
-            //Build-out data to send to the worker:
-            /*Data dataVideoPostProcessor = new Data.Builder()
-                    .putInt(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_TYPE_SINGLE_M3U8_M3U8LOCAL, iSingleOrM3U8)
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_URI_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_URI_PATH_TO_WORKING_FOLDER, dfVideoWorkingFolder.getUri().toString())
-                    //.putStringArray(Worker_VideoPostProcessing.KEY_ARG_FILENAME_SEQUENCE, sFilenameSequence)
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_VIDEO_OUTPUT_FILENAME, GlobalClass.JumbleFileName(ciNew.sFilename)) //Double-jumble.
-                    .putLong(Worker_VideoPostProcessing.KEY_ARG_VIDEO_TOTAL_FILE_SIZE, ciNew.lSize)
-                    //.putLongArray(Worker_VideoPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
-                    .putString(Worker_VideoPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID)
-                    .build();
-            OneTimeWorkRequest otwrVideoPostProcessor = new OneTimeWorkRequest.Builder(Worker_VideoPostProcessing.class)
-                    .setInputData(dataVideoPostProcessor)
-                    .addTag(Worker_VideoPostProcessing.WORKER_VIDEO_POST_PROCESSING_TAG) //To allow finding the worker later.
-                    .build();*/
-
             long[] lDownloadIDs = new long[allDownloadIDs.size()];
             for(int i = 0; i < allDownloadIDs.size(); i++){
                 lDownloadIDs[i] = allDownloadIDs.get(i);
@@ -493,7 +476,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     .build();
             OneTimeWorkRequest otwrDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_DownloadPostProcessing.class)
                     .setInputData(dataDownloadPostProcessor)
-                    .addTag(Worker_ComicPostProcessing.WORKER_COMIC_POST_PROCESSING_TAG) //To allow finding the worker later.
+                    .addTag(Worker_DownloadPostProcessing.WORKER_TAG_DOWNLOAD_POST_PROCESSING) //To allow finding the worker later.
                     .build();
             UUID UUIDWorkID = otwrDownloadPostProcessor.getId();
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);

@@ -230,21 +230,21 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
                     //Build-out data to send to the worker:
                     String sCallerID = "Worker_Import_ImportComicWebFiles:doWork()";
-                    Data dataComicDownloadPostProcessor = new Data.Builder()
+                    Data dataDownloadPostProcessor = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                            .putString(Worker_ComicPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
-                            .putString(Worker_ComicPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, dfDestinationFolder.getName())
-                            .putInt(Worker_ComicPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
-                            .putLongArray(Worker_ComicPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
-                            .putString(Worker_ComicPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
+                            .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
+                            .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, dfDestinationFolder.getName())
+                            .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
+                            .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
+                            .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
                             .build();
-                    OneTimeWorkRequest otwrComicDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_ComicPostProcessing.class)
-                            .setInputData(dataComicDownloadPostProcessor)
-                            .addTag(Worker_ComicPostProcessing.WORKER_COMIC_POST_PROCESSING_TAG) //To allow finding the worker later.
+                    OneTimeWorkRequest otwrDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_DownloadPostProcessing.class)
+                            .setInputData(dataDownloadPostProcessor)
+                            .addTag(Worker_DownloadPostProcessing.WORKER_TAG_DOWNLOAD_POST_PROCESSING) //To allow finding the worker later.
                             .build();
-                    UUID UUIDWorkID = otwrComicDownloadPostProcessor.getId();
-                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrComicDownloadPostProcessor);
+                    UUID UUIDWorkID = otwrDownloadPostProcessor.getId();
+                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);
 
 
 

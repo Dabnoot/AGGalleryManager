@@ -321,18 +321,18 @@ public class VideoEnabledWebView extends WebView
                         //Call a worker to monitor the download and move the file into the holding folder out of the DM's reach:
                         String sCallerID = "VideoEnabledWebView:onCreateContextMenu().MenuItem.OnMenuItemClickListener";
                         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-                        Data dataMoveDownloadedFile = new Data.Builder()
+                        Data dataDownloadPostProcessor = new Data.Builder()
                                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                                 .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
-                                .putInt(Worker_Browser_ImageDownloadToHoldingFolder.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES)
-                                .putLongArray(Worker_Browser_ImageDownloadToHoldingFolder.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
+                                .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES)
+                                .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                                 .build();
-                        OneTimeWorkRequest otwrMoveDownloadedFile = new OneTimeWorkRequest.Builder(Worker_Browser_ImageDownloadToHoldingFolder.class)
-                                .setInputData(dataMoveDownloadedFile)
-                                .addTag(Worker_Browser_ImageDownloadToHoldingFolder.TAG_WORKER_BROWSER_IMAGEDOWNLOADTOHOLDINGFOLDER) //To allow finding the worker later.
+                        OneTimeWorkRequest otwrDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_DownloadPostProcessing.class)
+                                .setInputData(dataDownloadPostProcessor)
+                                .addTag(Worker_DownloadPostProcessing.WORKER_TAG_DOWNLOAD_POST_PROCESSING) //To allow finding the worker later.
                                 .build();
-                        WorkManager.getInstance(getContext()).enqueue(otwrMoveDownloadedFile);
+                        WorkManager.getInstance(getContext()).enqueue(otwrDownloadPostProcessor);
 
                         //Write a text file of the same file name to record details of the origin of the file. This
                         //  text data file is to be used during the import process to add a bit of metadata.
