@@ -1768,7 +1768,8 @@ public class GlobalClass extends Application {
     //===== Worker/Download Management ==========================================================
     //====================================================================================
 
-    public void ExecuteDownloadManagerPostProcessing(){
+    /*The below routine is believed to be moved to a worker*/
+    /*public void ExecuteDownloadManagerPostProcessing(){
         //DownloadIdleService will delete files after about a week. Rename downloaded files to prevent
         //  this from happening. This will need to occur for downloaded comics or
 
@@ -1779,7 +1780,7 @@ public class GlobalClass extends Application {
         //  that case, DownloadManager will download to the final directory and those files will need to be moved.
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
+            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) { todo: Is this flag still used?
                 //Check to see if all of the files have downloaded:
                 DocumentFile dfComicsFolder = gdfCatalogFolders[MEDIA_CATEGORY_COMICS];
                 DocumentFile dfComicItemFolder = dfComicsFolder.findFile(ci.sFolder_Name);
@@ -1831,7 +1832,7 @@ public class GlobalClass extends Application {
         for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
             if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE) ||
-                    (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT)) {
+                    (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT)) {todo: Are these flags still used?
 
                 //Check to see if the concatenation (or single video file download) operation is complete:
 
@@ -2001,7 +2002,7 @@ public class GlobalClass extends Application {
         //Look for image files downloaded from the browser into a temporary holding folder:
         //CheckAndMoveDLHoldingTempImageFiles();
 
-    }
+    }*/
 
 
 
