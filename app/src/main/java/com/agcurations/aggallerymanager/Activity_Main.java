@@ -18,6 +18,7 @@ import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
+import androidx.work.ListenableWorker;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -38,6 +39,7 @@ import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.util.Log;
@@ -172,14 +174,18 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        AM = this;
-
-        GlobalClass.gcrContentResolver = getContentResolver();
+        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+                .detectLeakedClosableObjects()
+                .build());
 
         //Return theme away from startup_screen
         setTheme(R.style.MainTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        AM = this;
+
+        GlobalClass.gcrContentResolver = getContentResolver();
 
         ActionBar AB = getSupportActionBar();
         if(AB != null) {
@@ -188,6 +194,7 @@ public class Activity_Main extends AppCompatActivity {
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
+
 
         gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);
         gTextView_CatalogReadProgressBarText = findViewById(R.id.textView_CatalogReadProgressBarText);
