@@ -64,13 +64,12 @@ public class Worker_Import_GetDirectoryContents extends Worker {
             try {
 
                 //Get data about the files from the UriTree:
-                ContentResolver contentResolver = getApplicationContext().getContentResolver();
                 Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(guriImportTreeUri, DocumentsContract.getTreeDocumentId(guriImportTreeUri));
                 List<Uri> dirNodes = new LinkedList<>();
                 dirNodes.add(childrenUri);
                 childrenUri = dirNodes.remove(0); // get the item from top
                 String sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
-                Cursor cImport = contentResolver.query(childrenUri,
+                Cursor cImport = GlobalClass.gcrContentResolver.query(childrenUri,
                         new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                                 DocumentsContract.Document.COLUMN_MIME_TYPE,
@@ -113,7 +112,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                 luriSubfiles.add(uriSubfiles);
                                 uriSubfiles = luriSubfiles.remove(0); // get the item from top
                                 sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
-                                Cursor cSubfiles = contentResolver.query(uriSubfiles,
+                                Cursor cSubfiles = GlobalClass.gcrContentResolver.query(uriSubfiles,
                                         new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                                                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                                                 DocumentsContract.Document.COLUMN_MIME_TYPE},
@@ -342,7 +341,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                 luriComicPages.add(uriComicPages);
                                 uriComicPages = luriComicPages.remove(0); // get the item from top
                                 sSortOrder = DocumentsContract.Document.COLUMN_DISPLAY_NAME + " COLLATE NOCASE ASC"; //Sort does not appear to work.
-                                Cursor cComicPages = contentResolver.query(uriComicPages,
+                                Cursor cComicPages = GlobalClass.gcrContentResolver.query(uriComicPages,
                                         new String[]{DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                                                 DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                                                 DocumentsContract.Document.COLUMN_MIME_TYPE,
@@ -439,7 +438,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                                                 DocumentBuilder builder = factory.newDocumentBuilder();
                                                 //Build Document
-                                                InputStream inputStream = contentResolver.openInputStream(uriComicPageUri);
+                                                InputStream inputStream = GlobalClass.gcrContentResolver.openInputStream(uriComicPageUri);
                                                 Document docComicXML = builder.parse(inputStream);
                                                 inputStream.close();
 
