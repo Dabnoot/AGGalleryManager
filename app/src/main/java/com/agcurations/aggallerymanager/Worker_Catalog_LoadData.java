@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -44,6 +46,9 @@ import java.util.TreeMap;
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -68,6 +73,9 @@ public class Worker_Catalog_LoadData extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+
+        StopWatch stopWatch = new StopWatch(false);
+
         globalClass = (GlobalClass) getApplicationContext();
 
         if(globalClass.giLoadingState == GlobalClass.LOADING_STATE_STARTED
@@ -95,20 +103,34 @@ public class Worker_Catalog_LoadData extends Worker {
             if(globalClass.gdfCatalogFolders[i] != null){
                 //Identify/create the CatalogContents.dat file:
                 String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat";
-                globalClass.gdfCatalogContentsFiles[i] = getDataFileOrCreateIt(globalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
+                globalClass.gdfCatalogContentsFiles[i] = getDataFileOrCreateIt(GlobalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
 
                 //Identify the tags file for the catalog:
                 sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat";
-                globalClass.gdfCatalogTagsFiles[i] = getDataFileOrCreateIt(globalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
+                globalClass.gdfCatalogTagsFiles[i] = getDataFileOrCreateIt(GlobalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
             }
         }
+
+
+        //With a threshold of items initialized, build a list of all document files for fast look-up:
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataCatalogBuildDocumentUriList = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .build();
+        OneTimeWorkRequest otwrCatalogBuildDocumentUriList = new OneTimeWorkRequest.Builder(Worker_Catalog_BuildDocumentUriList.class)
+                .setInputData(dataCatalogBuildDocumentUriList)
+                .addTag(Worker_Catalog_BuildDocumentUriList.TAG_WORKER_BUILD_URI_LIST) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBuildDocumentUriList);
+
 
         //Create image downloading temp holding folder if it does not exist:
         //This is to temporarily hold downloaded images. We immediately move them so that the downloadManager
         //  cannot find them and delete them as part of a general "cleanup" thing that it does. It automatically
         //  deletes files that have not been used in a while. Since this is an archiving program,
         //  that behavior is not helpful.
-
+        stopWatch.Reset();
         File[] fAvailableDirs = gContext.getExternalFilesDirs(null);
         if (fAvailableDirs.length >= 1) {
             globalClass.gfDownloadExternalStorageFolder = fAvailableDirs[0];
@@ -125,6 +147,7 @@ public class Worker_Catalog_LoadData extends Worker {
             }
         }
         globalClass.gfImageDownloadHoldingFolderTemp = initSubfolder(fDLExternalTempCatFolder,"HoldingTemp", "Could not create image download temp holding folder.");
+        stopWatch.PostDebugLogAndRestart("Internal folders built/verified with duration ");
 
         //Create image downloading holding folder if it does not exist:
         //  The user will import these files into the catalog at their leisure.
@@ -139,6 +162,8 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //Create Webpage Favicon folder if it does not exist:
         globalClass.gdfWebpageFaviconBitmapFolder = initSubfolder(GlobalClass.gdfDataFolder, "TempFavicon", "Could not create TempFavicon folder.");
+
+        stopWatch.PostDebugLogAndRestart("External folders built/verified with duration ");
 
         //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
         //  This can occur if Android closed the application, but saves the last Activity and the user returns.
@@ -166,6 +191,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 true, "Reading Tags",
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
 
+        stopWatch.Reset();
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogTagReferenceLists.add(InitTagData(iMediaCategory));
 
@@ -191,6 +217,7 @@ public class Worker_Catalog_LoadData extends Worker {
                     false, "Reading Tags",
                     Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         }
+        stopWatch.PostDebugLogAndRestart("Tag data initialized/read with duration ");
 
         //Configure video resolution options:
         //Prepare to list possible item resolutions:
@@ -216,6 +243,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
 
         //Read the catalog list files into memory:
+        stopWatch.Reset();
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
 
             globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
@@ -225,13 +253,17 @@ public class Worker_Catalog_LoadData extends Worker {
                     true, iProgressBarValue,
                     false, "Reading Catalogs",
                     Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+            stopWatch.PostDebugLogAndRestart("Catalog data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " initialized/read with duration ");
         }
+        stopWatch.PostDebugLogAndRestart("Catalog data initialized/read with duration ");
+
 
         if(globalClass.connectivityManager == null){
             globalClass.registerNetworkCallback();
             //This lets us check globalClass.isNetworkConnected to see if we are connected to the
             //network;
         }
+        stopWatch.PostDebugLogAndRestart("Internet connectivity initialized with duration ");
 
         //Create the notification channel to be used to display notifications to the user (to notify
         //  the user when things happen with WorkManager when the user has left the app, such as
@@ -246,6 +278,7 @@ public class Worker_Catalog_LoadData extends Worker {
         // or other notification behaviors after this
         globalClass.notificationManager = gContext.getSystemService(NotificationManager.class);
         globalClass.notificationManager.createNotificationChannel(globalClass.notificationChannel);
+        stopWatch.PostDebugLogAndRestart("Notification channel initialized with duration ");
 
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -253,7 +286,8 @@ public class Worker_Catalog_LoadData extends Worker {
                 true, iProgressBarValue,
                 true, "Post Processing",
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
-        globalClass.ExecuteDownloadManagerPostProcessing();
+        //todo: Below item removed as this should now be fully executed by the download post-processor worker
+        //globalClass.ExecuteDownloadManagerPostProcessing();
 
         iProgressNumerator++;
         /*iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -289,7 +323,9 @@ public class Worker_Catalog_LoadData extends Worker {
 
 
         LogFilesMaintenance();
+        stopWatch.PostDebugLogAndRestart("Log file maintenance completed with duration ");
         globalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
+
         return Result.success();
     }
 
@@ -540,25 +576,30 @@ public class Worker_Catalog_LoadData extends Worker {
 
     private TreeMap<String, ItemClass_CatalogItem> readCatalogFileToCatalogItems(int iMediaCategory){
 
+        StopWatch stopWatch = new StopWatch(false);
+        stopWatch.Start();
+
         DocumentFile dfCatalogFolder = globalClass.gdfCatalogFolders[iMediaCategory];
         DocumentFile dfCatalogContentsFile = globalClass.gdfCatalogContentsFiles[iMediaCategory];
-
-        ContentResolver contentResolver = getApplicationContext().getContentResolver();
 
         if (!dfCatalogFolder.exists()) {
             problemNotificationConfig("Catalog data folder does not exist: " + dfCatalogFolder.getName() + ".");
             return null;
         } else {
+            stopWatch.PostDebugLogAndRestart("Catalog folder existence confirmed at duration ");
             if(dfCatalogContentsFile == null){
                 return null;
             }
             TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = new TreeMap<>();
 
-            if(getDocumentFileSize(dfCatalogContentsFile) == 0) {
+            long lCatalogContentsFileSize = getDocumentFileSize(dfCatalogContentsFile);
+            stopWatch.PostDebugLogAndRestart("Catalog contents file size gathered after duration ");
+
+            if(lCatalogContentsFileSize == 0) {
 
                 OutputStream osCatalogContentsFile = null;
                 try {
-                    osCatalogContentsFile = contentResolver.openOutputStream(dfCatalogContentsFile.getUri(), "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                    osCatalogContentsFile = GlobalClass.gcrContentResolver.openOutputStream(dfCatalogContentsFile.getUri(), "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
                     if(osCatalogContentsFile == null){
                         throw new Exception();
                     }
@@ -583,18 +624,116 @@ public class Worker_Catalog_LoadData extends Worker {
 
                 //Build the internal list of entries.
                 //Read the list of entries and populate the catalog array:
-                BufferedReader brReader;
+                //BufferedReader brReader;
                 InputStream isCatalogReader = null;
                 try {
-                    isCatalogReader = contentResolver.openInputStream(dfCatalogContentsFile.getUri());
-                    brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
 
-                    brReader.readLine(); //The first line is the header. Skip this line.
-                    String sLine = brReader.readLine();
+                    isCatalogReader = GlobalClass.gcrContentResolver.openInputStream(dfCatalogContentsFile.getUri());
+                    stopWatch.PostDebugLogAndRestart("Opening InputStream to catalog file completed at duration ");
+
+                    String sCatalogRecordData;
+                    String[] sCatalogRecords = null;
+
+                    if(isCatalogReader != null) {
+
+                        byte[] bytesCatalogData = isCatalogReader.readAllBytes(); //Read all data at once as this is fastest.
+                        isCatalogReader.close();
+
+                        stopWatch.PostDebugLogAndRestart("All bytes read from catalog file at duration ");
+                        sCatalogRecordData = new String(bytesCatalogData);
+                        sCatalogRecords = sCatalogRecordData.split("\n");
+
+                        stopWatch.PostDebugLogAndRestart("Catalog file bytes processed at duration ");
+                    }
+                    if(sCatalogRecords == null){
+                        return tmCatalogItems;
+                    }
+
 
                     ItemClass_CatalogItem ci;
-                    while (sLine != null) {
+                    String sLine;
+                    for(int i = 1; i < sCatalogRecords.length; i++){
+                        sLine = sCatalogRecords[i];
+                        if(sLine.equals("")){
+                            continue;
+                        }
                         ci = GlobalClass.ConvertStringToCatalogItem(sLine);
+
+
+                        if(ci.iSpecialFlag ==  ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
+                            if(ci.sThumbnail_File.equals("")){
+                                Log.d("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "============= M3U8 FILE DETECTED WITH MISSING THUMBNAIL DEFINITION ============");
+                                Log.d("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "============= Come and fix it. ============");
+                                //Commented code below was previously used to detect if there was a missing thumbnail definition.
+                                //  Last used on 2/14/2023.
+                                /*iM3U8VideosWithoutThumbnailFile++;
+                                DocumentFile dfVideosFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
+                                if(dfVideosFolder != null){
+                                    DocumentFile dfVideoTagFolder = dfVideosFolder.findFile(ci.sFolder_Name);
+                                    if(dfVideoTagFolder != null){
+                                        DocumentFile dfItemFolder = dfVideoTagFolder.findFile(ci.sItemID);
+                                        if(dfItemFolder != null){
+                                            DocumentFile dfM3U8File = dfItemFolder.findFile(ci.sFilename);
+                                            if(dfM3U8File != null){
+                                                InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(dfM3U8File.getUri());
+                                                if (isM3U8File != null) {
+                                                    BufferedReader brReader;
+                                                    brReader = new BufferedReader(new InputStreamReader(isM3U8File));
+                                                    String sLine2 = brReader.readLine();
+
+                                                    //Get a listing of all of the files in this folder:
+                                                    final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(dfItemFolder.getUri(),
+                                                            DocumentsContract.getDocumentId(dfItemFolder.getUri()));
+
+                                                    Cursor c = null;
+                                                    try {
+                                                        ArrayList<String> alsFileNames = new ArrayList<>();
+                                                        c = GlobalClass.gcrContentResolver.query(childrenUri, new String[]{
+                                                                DocumentsContract.Document.COLUMN_DISPLAY_NAME
+                                                        }, null, null, null);
+                                                        if (c != null) {
+                                                            while (c.moveToNext()) {
+                                                                final String sDocumentName = c.getString(0);
+                                                                alsFileNames.add(sDocumentName);
+                                                            }
+                                                        }
+                                                        while (sLine2 != null) {
+                                                            if (!sLine2.startsWith("#") && sLine2.contains(".st")) {
+                                                                if(alsFileNames.contains(sLine2)){
+                                                                    ci.sThumbnail_File = sLine2;
+                                                                    break;
+                                                                }
+                                                            }
+                                                            // read next line
+                                                            sLine2 = brReader.readLine();
+                                                        }
+                                                        brReader.close();
+                                                        isM3U8File.close();
+
+                                                    } catch (Exception e) {
+                                                        Log.w("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "Failed query: " + e);
+                                                    } finally {
+                                                        if (c != null) {
+                                                            c.close();
+                                                        }
+                                                    }
+
+
+
+
+
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+*/
+                            }
+                        }
+
+
+
                         tmCatalogItems.put(ci.sItemID, ci);
 
                         //Calculate amounts for use in the Sort/Filter capabilities of the comic viewer:
@@ -633,10 +772,8 @@ public class Worker_Catalog_LoadData extends Worker {
                             }
                         }
 
-                        // read next line
-                        sLine = brReader.readLine();
                     }
-                    brReader.close();
+
 
                 } catch (IOException e) {
                     problemNotificationConfig("Trouble reading CatalogContents.dat: " + dfCatalogFolder.getName());
@@ -649,8 +786,8 @@ public class Worker_Catalog_LoadData extends Worker {
                         }
                     }
                 }
+                stopWatch.PostDebugLogAndRestart("Processing catalog contents records and cross-referencing tags completed at duration ");
             }
-
             globalClass.gbTagHistogramRequiresUpdate[iMediaCategory] = false;
 
 
@@ -690,8 +827,9 @@ public class Worker_Catalog_LoadData extends Worker {
 
             //Get Tags from file:
             BufferedReader brReader;
+            InputStream isTagsFile = null;
             try {
-                InputStream isTagsFile = GlobalClass.gcrContentResolver.openInputStream(dfTagsFile.getUri());
+                isTagsFile = GlobalClass.gcrContentResolver.openInputStream(dfTagsFile.getUri());
                 if (isTagsFile == null) {
                     return null;
                 }
@@ -708,9 +846,17 @@ public class Worker_Catalog_LoadData extends Worker {
                 }
 
                 brReader.close();
-                isTagsFile.close();
+
             } catch (IOException e) {
                 problemNotificationConfig("Trouble reading tags file at\n" + dfTagsFile.getUri() + "\n\n" + e.getMessage());
+            } finally {
+                if(isTagsFile != null){
+                    try {
+                        isTagsFile.close();
+                    } catch (Exception e){
+                        Log.d("Worker_Catalog_LoadData:InitTagData", "Could not close tags file.");
+                    }
+                }
             }
         }
 

@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
@@ -36,11 +37,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
-import org.w3c.dom.Document;
-
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -449,6 +447,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
+            StopWatch stopWatch = new StopWatch(false);
+            stopWatch.Start();
+            String sWatchMessageBase = "Activity_CatalogViewer:RecyclerViewCatalogAdapter:onBindViewHolder:";
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Getting catalog item data from treemap. ");
+
             //Get the data for the row:
             ItemClass_CatalogItem ci;
             ci = treeMap.get(mapKeys[position]);
@@ -457,136 +460,173 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             String sItemName = "";
 
-
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item data gathered from treemap. ");
 
             //Load the non-obfuscated image into the RecyclerView ViewHolder:
-            DocumentFile dfThumbnailFile = null;
-            DocumentFile dfCatalogItemFolder = globalClass.gdfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].findFile(ci.sFolder_Name);
-            if(dfCatalogItemFolder != null){
-                dfThumbnailFile = dfCatalogItemFolder.findFile(ci.sFilename);
-            }
-            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
-                ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE){
-                //If this is a comic, and the files from DownloadManager have not been moved as
-                //  part of download post-processing, look in the [comic]\download folder for the files:
-                if(dfCatalogItemFolder != null) {
-                    DocumentFile dfDLTempFolder = dfCatalogItemFolder.findFile(GlobalClass.gsDLTempFolderName);
-                    if(dfDLTempFolder != null){
-                        dfThumbnailFile = dfDLTempFolder.findFile(ci.sFilename);
-                    }
+
+            Uri uriThumbnailUri = null;
+            boolean bThumbnailQuickLookupSuccess = false;
+            if(globalClass.bFileLookupArrayLoaded.get()){
+                //If the file lookup array is loaded, use that loaded data instead of DocumentFile.
+                String sFileName = ci.sThumbnail_File;
+                if(sFileName.equals("")){
+                    sFileName = ci.sFilename;
+                }
+                String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory] + File.separator + ci.sFolder_Name + File.separator + sFileName;
+                if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                    //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
+                    sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                            + File.separator + ci.sFolder_Name
+                            + File.separator + ci.sItemID
+                            + File.separator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
+                }
+                ItemClass_DocFileData icdfd = globalClass.gtm_FileLookupArray.get(sPath);
+                if(icdfd != null){
+                    uriThumbnailUri = icdfd.uri;
+                    bThumbnailQuickLookupSuccess = true;
+                    stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "ThumbnailFile Uri found via quick lookup. ");
                 }
             }
-            if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
-                    //If this is a video and the post-processing is incomplete...
-                    //Every sort operation will attempt to relocate the file. However, we can
-                    // look in the output folder for a result.
-                    boolean bVideoFileFound = false;
+            if(!bThumbnailQuickLookupSuccess) {
+                DocumentFile dfCatalogItemFolder;
+                DocumentFile dfThumbnailFile;
+                dfCatalogItemFolder = globalClass.gdfCatalogFolders[globalClass.giSelectedCatalogMediaCategory].findFile(ci.sFolder_Name);
+                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "CatalogItemFolder DocumentFile sought.");
+                if (dfCatalogItemFolder != null) {
+                    dfThumbnailFile = dfCatalogItemFolder.findFile(ci.sFilename);
+                    if (dfThumbnailFile != null) {
+                        uriThumbnailUri = dfThumbnailFile.getUri();
+                    }
+                    stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "ThumbnailFile DocumentFile sought. ");
+                }
 
-                    DocumentFile dfVideoDestinationFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].findFile(ci.sFolder_Name);
-                    if(dfVideoDestinationFolder != null) {
-                        DocumentFile dfVideoWorkingFolder = dfVideoDestinationFolder.findFile(ci.sItemID);
-                        if (dfVideoWorkingFolder != null) {
-                            DocumentFile[] dfVideoDownloadFolderListing = dfVideoWorkingFolder.listFiles();
-                            ArrayList<DocumentFile> aldfOutputFolders = new ArrayList<>();
-                            if (dfVideoDownloadFolderListing.length > 0) {
-                                for (DocumentFile df : dfVideoDownloadFolderListing) {
-                                    //Locate the output folder
-                                    if (df.isDirectory()) {
-                                        aldfOutputFolders.add(df); //The worker could potentially create multiple output folders if it is re-run.
-                                    }
-                                }
-                                //Attempt to locate the output file of a concatenation operation:
-                                for (DocumentFile df : aldfOutputFolders) {
 
-                                    DocumentFile dfOutputFile = df.findFile(ci.sFilename);
-                                    if (dfOutputFile != null) {
-                                        //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
-                                        dfThumbnailFile = dfOutputFile;
-                                        bVideoFileFound = true;
-                                        break; //Don't go through any more "output" folders in this temp download directory.
-                                    }
-                                }
-
-                            }
+                if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
+                        ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
+                    //If this is a comic, and the files from DownloadManager have not been moved as
+                    //  part of download post-processing, look in the [comic]\download folder for the files:
+                    if (dfCatalogItemFolder != null) {
+                        DocumentFile dfDLTempFolder = dfCatalogItemFolder.findFile(GlobalClass.gsDLTempFolderName);
+                        if (dfDLTempFolder != null) {
+                            dfThumbnailFile = dfDLTempFolder.findFile(ci.sFilename);
+                            uriThumbnailUri = dfThumbnailFile.getUri();
                         }
                     }
-                    if (!bVideoFileFound) {
-                        if (holder.textView_CatalogItemNotification != null) {
-                            //Notify the user that post-processing is incomplete:
-                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
-                            String sMessage = "Item pending post-processing...";
-                            holder.textView_CatalogItemNotification.setText(sMessage);
-                        }
-                    }
+                }
+                if (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
+                        //If this is a video and the post-processing is incomplete...
+                        //Every sort operation will attempt to relocate the file. However, we can
+                        // look in the output folder for a result.
+                        boolean bVideoFileFound = false;
 
-
-                } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                    //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
-                    DocumentFile dfVideoDestinationFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].findFile(ci.sFolder_Name);
-                    if(dfVideoDestinationFolder != null) {
-                        DocumentFile dfVideoWorkingFolder = dfVideoDestinationFolder.findFile(ci.sItemID);
-                        if(dfVideoWorkingFolder != null) {
-                            DocumentFile dfDownloadedThumbnailFile = dfVideoWorkingFolder.findFile(ci.sThumbnail_File);
-                            if (dfDownloadedThumbnailFile != null) { //isDir if ci.sThum=="".
-                                dfThumbnailFile = dfDownloadedThumbnailFile;
-                            } else {
-                                //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
-                                boolean bVideoFileFound = false;
-                                DocumentFile dfM3U8File = dfVideoWorkingFolder.findFile(ci.sFilename);
-                                if (dfM3U8File != null) {
-                                    try {
-                                        InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(dfM3U8File.getUri());
-                                        if(isM3U8File != null) {
-                                            BufferedReader brReader;
-                                            brReader = new BufferedReader(new InputStreamReader(isM3U8File));
-                                            String sLine = brReader.readLine();
-                                            while (sLine != null) {
-                                                if (!sLine.startsWith("#") && sLine.contains(".st")) {
-                                                    DocumentFile dfThumbnailFileCandidate = dfVideoWorkingFolder.findFile(sLine);
-                                                    if (dfThumbnailFileCandidate != null) {
-                                                        dfThumbnailFile = dfThumbnailFileCandidate;
-                                                        bVideoFileFound = true;
-                                                        break;
-                                                    }
-                                                }
-                                                // read next line
-                                                sLine = brReader.readLine();
-                                            }
-                                            brReader.close();
-                                            isM3U8File.close();
+                        DocumentFile dfVideoDestinationFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].findFile(ci.sFolder_Name);
+                        if (dfVideoDestinationFolder != null) {
+                            DocumentFile dfVideoWorkingFolder = dfVideoDestinationFolder.findFile(ci.sItemID);
+                            if (dfVideoWorkingFolder != null) {
+                                DocumentFile[] dfVideoDownloadFolderListing = dfVideoWorkingFolder.listFiles();
+                                ArrayList<DocumentFile> aldfOutputFolders = new ArrayList<>();
+                                if (dfVideoDownloadFolderListing.length > 0) {
+                                    for (DocumentFile df : dfVideoDownloadFolderListing) {
+                                        //Locate the output folder
+                                        if (df.isDirectory()) {
+                                            aldfOutputFolders.add(df); //The worker could potentially create multiple output folders if it is re-run.
                                         }
-
-                                    } catch (Exception e) {
-                                        //Probably a file IO exception.
-                                        bVideoFileFound = false; //redundant, but don't want special behavior.
                                     }
-                                }
-                                if (!bVideoFileFound) {
-                                    if (holder.textView_CatalogItemNotification != null) {
-                                        //Notify the user that post-processing is incomplete:
-                                        holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
-                                        String sMessage = "Item pending post-processing...";
-                                        holder.textView_CatalogItemNotification.setText(sMessage);
-                                    }
-                                }
+                                    //Attempt to locate the output file of a concatenation operation:
+                                    for (DocumentFile df : aldfOutputFolders) {
 
+                                        DocumentFile dfOutputFile = df.findFile(ci.sFilename);
+                                        if (dfOutputFile != null) {
+                                            //Post-processing is complete but the output file has not yet been moved. Grab it for the thumbnail:
+                                            dfThumbnailFile = dfOutputFile;
+                                            uriThumbnailUri = dfThumbnailFile.getUri();
+                                            bVideoFileFound = true;
+                                            break; //Don't go through any more "output" folders in this temp download directory.
+                                        }
+                                    }
+
+                                }
                             }
                         }
+                        if (!bVideoFileFound) {
+                            if (holder.textView_CatalogItemNotification != null) {
+                                //Notify the user that post-processing is incomplete:
+                                holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                String sMessage = "Item pending post-processing...";
+                                holder.textView_CatalogItemNotification.setText(sMessage);
+                            }
+                        }
+                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                        //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
+                        DocumentFile dfVideoTagFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].findFile(ci.sFolder_Name);
+                        if (dfVideoTagFolder != null) {
+                            DocumentFile dfVideoWorkingFolder = dfVideoTagFolder.findFile(ci.sItemID);
+                            if (dfVideoWorkingFolder != null) {
+                                DocumentFile dfDownloadedThumbnailFile = dfVideoWorkingFolder.findFile(ci.sThumbnail_File);
+                                if (dfDownloadedThumbnailFile != null) { //isDir if ci.sThum=="".
+                                    dfThumbnailFile = dfDownloadedThumbnailFile;
+                                    uriThumbnailUri = dfThumbnailFile.getUri();
+                                } else {
+                                    //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                                    boolean bVideoFileFound = false;
+                                    DocumentFile dfM3U8File = dfVideoWorkingFolder.findFile(ci.sFilename);
+                                    if (dfM3U8File != null) {
+                                        try {
+                                            InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(dfM3U8File.getUri());
+                                            if (isM3U8File != null) {
+                                                BufferedReader brReader;
+                                                brReader = new BufferedReader(new InputStreamReader(isM3U8File));
+                                                String sLine = brReader.readLine();
+                                                while (sLine != null) {
+                                                    if (!sLine.startsWith("#") && sLine.contains(".st")) {
+                                                        DocumentFile dfThumbnailFileCandidate = dfVideoWorkingFolder.findFile(sLine);
+                                                        if (dfThumbnailFileCandidate != null) {
+                                                            dfThumbnailFile = dfThumbnailFileCandidate;
+                                                            uriThumbnailUri = dfThumbnailFile.getUri();
+                                                            bVideoFileFound = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    // read next line
+                                                    sLine = brReader.readLine();
+                                                }
+                                                brReader.close();
+                                                isM3U8File.close();
+                                            }
+
+                                        } catch (Exception e) {
+                                            //Probably a file IO exception.
+                                            bVideoFileFound = false; //redundant, but don't want special behavior.
+                                        }
+                                    }
+                                    if (!bVideoFileFound) {
+                                        if (holder.textView_CatalogItemNotification != null) {
+                                            //Notify the user that post-processing is incomplete:
+                                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                            String sMessage = "Item pending post-processing...";
+                                            holder.textView_CatalogItemNotification.setText(sMessage);
+                                        }
+                                    }
+
+                                }  //End if we had to look for a .ts file to serve as a thumbnail file.
+                            } //End if unable to find video working folder DocumentFile.
+                        } //End if unable to find video tag folder DocumentFile.
+                    } //End if video is m3u8 style.
+                } else {
+                    if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
+                        holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
                     }
-                }
-            } else {
-                if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
-                    holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
                 }
             }
 
 
-            if(dfThumbnailFile != null) {
+            if(uriThumbnailUri != null) {
                 Glide.with(getApplicationContext())
-                        .load(dfThumbnailFile.getUri())
+                        .load(uriThumbnailUri)
                         .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                         .into(holder.ivThumbnail);
+                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail load complete. ");
             } else {
                 //Special behavior if this is a comic.
                 boolean bFoundMissingComicThumbnail = false;
@@ -615,7 +655,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                 if(bFoundMissingComicThumbnail){
                     Glide.with(getApplicationContext())
-                            .load(dfThumbnailFile)
+                            .load(uriThumbnailUri)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
                             .into(holder.ivThumbnail);
                     globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
@@ -626,6 +666,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             .into(holder.ivThumbnail);
                 }
             }
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail image loaded. ");
 
             String sThumbnailText = "";
             switch (globalClass.giSelectedCatalogMediaCategory) {
@@ -656,6 +697,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
 
             holder.tvThumbnailText.setText(sThumbnailText);
+
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail text set. ");
 
             if (holder.btnDelete != null) {
                 holder.btnDelete.setVisibility(View.VISIBLE);
@@ -757,7 +800,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                 });
             }
-
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "onBindViewHolder finished. ");
+            stopWatch.Stop();
+            stopWatch.Reset();
         }
 
         // Return the size of the data set (invoked by the layout manager)

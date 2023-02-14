@@ -79,33 +79,35 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
         globalClass.bFileLookupArrayLoaded.set(false);
         globalClass.bFolderLookupArrayLoaded.set(false);
 
-        StopWatch stopWatch = new StopWatch(true);
+        StopWatch stopWatch = new StopWatch(false);
 
         //Debug Experiment...
         //Get all URIs for all documents with an up-front query so that we don't have to deal with
         //  the lag later. Inspired by https://stackoverflow.com/questions/42186820/why-is-documentfile-so-slow-and-what-should-i-use-instead.
         globalClass.gtm_FileLookupArray = new TreeMap<>();
         globalClass.gtm_BaseFoldersLookupArray = new TreeMap<>();
-        long lItemCount = 0;
+
         try {
 
+            int[] iCatOrder = {1, 2, 0};
             for(int i = 0; i < 3; i++) {
-                Uri uriCatalogFolder = globalClass.gdfCatalogFolders[i].getUri();
-                final String sRelativePath = GlobalClass.gsCatalogFolderNames[i];
+                //Odd loop ordering - videos is the biggest and takes the longest to process.
+                //  Look at images, comics, and then videos.
+                Uri uriCatalogFolder = globalClass.gdfCatalogFolders[iCatOrder[i]].getUri();
+                final String sRelativePath = GlobalClass.gsCatalogFolderNames[iCatOrder[i]];
                 final ItemClass_DocFileData icdfd = new ItemClass_DocFileData();
                 icdfd.sPath = "";
-                icdfd.sFileName = GlobalClass.gsCatalogFolderNames[i];
+                icdfd.sFileName = GlobalClass.gsCatalogFolderNames[iCatOrder[i]];
                 icdfd.sPath = icdfd.sFileName;
                 icdfd.bIsFolder = true;
                 icdfd.uri = uriCatalogFolder;
-                icdfd.iMediaCategory = i;
+                icdfd.iMediaCategory = iCatOrder[i];
                 icdfd.uriParentFolder = GlobalClass.gdfDataFolder.getUri();
                 globalClass.gtm_FileLookupArray.put(sRelativePath, icdfd);
                 globalClass.gtm_BaseFoldersLookupArray.put(sRelativePath, icdfd);
             }
             boolean bFreshItemsAdded = true; //Flag to keep digging in the tree for more.
             stopWatch.Start();
-            boolean bFirstLayerComplete; //Used to allow faster access to read contents.
             boolean bVideosCatalogProcessed;
             boolean bImagesCatalogProcessed;
             boolean bComicsCatalogProcessed;
@@ -175,6 +177,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
         } catch (Exception e){
             String sMessage = "Trouble getting file listings. " + e.getMessage();
             Log.d("Worker_Catalog_BuildDocumentUriList:doWork()", sMessage);
+            globalClass.giBuildingDocumentUriListState = GlobalClass.LOADING_STATE_FINISHED;
             return Result.failure();
         }
 

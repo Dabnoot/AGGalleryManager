@@ -249,7 +249,16 @@ public class Worker_Import_VideoDownload extends Worker {
                     //If we will be holding the .ts files in storage as part of a local M3U8 configuration,
                     // jumble the .ts filenames:
                     sNewFilename = GlobalClass.JumbleFileName(sNewFilename);
+
+                    if(ciNew.sThumbnail_File.equals("")){
+                        //If there is no thumbnail file marked for download, specify the file name of the first .ts file
+                        //  as the file name for the thumbnail file to be used by the catalog:
+                        ciNew.sThumbnail_File = sNewFilename;
+                    }
                 }
+
+
+
                 alsDownloadURLsAndDestFileNames.add(new String[]{sDownloadAddress, sNewFilename});
             }
         }

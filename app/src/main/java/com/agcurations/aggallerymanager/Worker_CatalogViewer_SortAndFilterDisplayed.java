@@ -29,7 +29,8 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         globalClass = (GlobalClass) getApplicationContext();
 
         //First look for any download items requiring post-processing:
-        globalClass.ExecuteDownloadManagerPostProcessing();
+        //todo: Below item removed as this should now be fully executed by the download post-processor worker
+        //globalClass.ExecuteDownloadManagerPostProcessing();
 
         //Apply the sort field.
         //Copy over only items that match a filter, if applied.

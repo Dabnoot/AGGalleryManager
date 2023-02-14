@@ -51,6 +51,7 @@ import java.util.Queue;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
@@ -101,6 +102,21 @@ public class GlobalClass extends Application {
     public final DocumentFile[] gdfCatalogContentsFiles = new DocumentFile[3];
     public final DocumentFile[] gdfCatalogTagsFiles = new DocumentFile[3];
 
+    //The below is for fast lookup of files and folders in order to avoid using DocumentFile.ListFiles()
+    //  or DocumentFile.FindFile().
+    TreeMap<String, ItemClass_DocFileData> gtm_BaseFoldersLookupArray; //This item is to get the base files
+                                    //out of gtm_FileLookupArray. FileLookupArray takes like 137.6 seconds for
+                                    //50,000 files. When a user jumps into Activity_CatalogViewer, just looking-up
+                                    //the tag folders takes 0.5s for each item in the RecyclerView.
+                                    //todo:implement the above.
+    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArray; //Relative Path, ICDFD. This includes all items within the catalog scope,
+                                    // and includes the contents of BaseFoldersLookupArray, a duplication of data. The duplication of the
+                                    //data is absolutely miniscule in terms of processing time and data load, but simplifies coding complexity.
+    AtomicBoolean bFolderLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
+                                    //todo:implement the above.
+    AtomicBoolean bFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
+    //todo: look for other opportunities to include Atomic items in order to create a thread-safe environment.
+
     public static ContentResolver gcrContentResolver;
 
     //Video tag variables:
@@ -112,6 +128,7 @@ public class GlobalClass extends Application {
     public static final int LOADING_STATE_NOT_STARTED = 0;
     public static final int LOADING_STATE_STARTED = 1;
     public static final int LOADING_STATE_FINISHED = 2;
+    public int giBuildingDocumentUriListState = LOADING_STATE_NOT_STARTED;
 
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
     public TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
