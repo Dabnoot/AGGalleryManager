@@ -60,7 +60,7 @@ public class ItemClass_CatalogItem implements Serializable {
 
     public int iGrade = 3;                                //Rating (grade) of the item, 1-5. Default to 3.
 
-    public int iAllVideoSegmentFilesDetected = VIDEO_SEGMENT_FILES_UNDETERMINED; //Only used for m3u8 video downloads in which a video comprises many .tS files.
+    public int iAllVideoSegmentFilesDetected = VIDEO_SEGMENT_FILES_UNDETERMINED; //Only used for m3u8 video downloads in which a video comprises many .ts files.
     public static final int VIDEO_SEGMENT_FILES_UNDETERMINED = 0;     //Video segment files have not been checked for complete set.
     public static final int VIDEO_SEGMENT_FILES_KNOWN_COMPLETE = 1;   //All video segment files detected and in-place.
     public static final int VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE = 2; //Some video segment files are missing, don't attempt to process.
