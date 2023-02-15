@@ -113,16 +113,20 @@ public class Worker_Catalog_LoadData extends Worker {
 
 
         //With a threshold of items initialized, build a list of all document files for fast look-up:
-        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-        Data dataCatalogBuildDocumentUriList = new Data.Builder()
-                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
-                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                .build();
-        OneTimeWorkRequest otwrCatalogBuildDocumentUriList = new OneTimeWorkRequest.Builder(Worker_Catalog_BuildDocumentUriList.class)
-                .setInputData(dataCatalogBuildDocumentUriList)
-                .addTag(Worker_Catalog_BuildDocumentUriList.TAG_WORKER_BUILD_URI_LIST) //To allow finding the worker later.
-                .build();
-        WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBuildDocumentUriList);
+        for(int i = 0; i < 3; i++){
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataCatalogBuildDocumentUriList = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, i)
+                    .build();
+            OneTimeWorkRequest otwrCatalogBuildDocumentUriList = new OneTimeWorkRequest.Builder(Worker_Catalog_BuildDocumentUriList.class)
+                    .setInputData(dataCatalogBuildDocumentUriList)
+                    .addTag(Worker_Catalog_BuildDocumentUriList.TAG_WORKER_BUILD_URI_LIST) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBuildDocumentUriList);
+
+        }
 
 
         //Create image downloading temp holding folder if it does not exist:

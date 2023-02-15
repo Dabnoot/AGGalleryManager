@@ -466,7 +466,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             Uri uriThumbnailUri = null;
             boolean bThumbnailQuickLookupSuccess = false;
-            if(globalClass.bFileLookupArrayLoaded.get()){
+            if(globalClass.gatbFileLookupArrayLoaded.get()){
                 //If the file lookup array is loaded, use that loaded data instead of DocumentFile.
                 String sFileName = ci.sThumbnail_File;
                 if(sFileName.equals("")){

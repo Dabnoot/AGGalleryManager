@@ -1,57 +1,25 @@
 package com.agcurations.aggallerymanager;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.ContentResolver;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.DocumentsContract;
-import android.provider.OpenableColumns;
 import android.util.Log;
-import android.widget.Toast;
+import android.widget.Switch;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
-import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class Worker_Catalog_BuildDocumentUriList extends Worker {
 
     public static final String TAG_WORKER_BUILD_URI_LIST = "com.agcurations.aggallermanager.tag_worker_build_uri_list";
 
+    int giMediaCategory;
     String gsResponseActionFilter;
     Context gContext;
     GlobalClass globalClass;
@@ -61,7 +29,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
         gContext = context;
         gsResponseActionFilter = getInputData().getString(GlobalClass.EXTRA_CALLER_ACTION_RESPONSE_FILTER);
 
-
+        giMediaCategory = getInputData().getInt(GlobalClass.EXTRA_MEDIA_CATEGORY, -1);
     }
 
     @NonNull
@@ -70,51 +38,82 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
 
         globalClass = (GlobalClass) getApplicationContext();
 
-        if(globalClass.giBuildingDocumentUriListState == GlobalClass.LOADING_STATE_STARTED
-            || globalClass.giBuildingDocumentUriListState == GlobalClass.LOADING_STATE_FINISHED){
+        int iLoadingState;
+        switch (giMediaCategory){
+            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                iLoadingState = globalClass.giBuildingDocumentUriListStateMC1;
+                break;
+            case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                iLoadingState = globalClass.giBuildingDocumentUriListStateMC2;
+                break;
+            default:
+                iLoadingState = globalClass.giBuildingDocumentUriListStateMC3;
+        }
+
+        if(iLoadingState == GlobalClass.LOADING_STATE_STARTED
+                || iLoadingState == GlobalClass.LOADING_STATE_FINISHED){
             return Result.failure();
         }
-        globalClass.giBuildingDocumentUriListState = GlobalClass.LOADING_STATE_STARTED;
 
-        globalClass.bFileLookupArrayLoaded.set(false);
-        globalClass.bFolderLookupArrayLoaded.set(false);
+        switch (giMediaCategory){
+            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                globalClass.giBuildingDocumentUriListStateMC1 = GlobalClass.LOADING_STATE_STARTED;
+                globalClass.gtm_FileLookupArrayMC1 = new TreeMap<>();
+                break;
+            case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                globalClass.giBuildingDocumentUriListStateMC2 = GlobalClass.LOADING_STATE_STARTED;
+                globalClass.gtm_FileLookupArrayMC2 = new TreeMap<>();
+                break;
+            default:
+                globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_STARTED;
+                globalClass.gtm_FileLookupArrayMC3 = new TreeMap<>();
+        }
+
+        //todo: globalClass.bFileLookupArrayLoaded.set(false); Create custom atomic variable for each category.
+        //todo: globalClass.bFolderLookupArrayLoaded.set(false); Create custom atomic variable for each category.
 
         StopWatch stopWatch = new StopWatch(false);
 
         //Debug Experiment...
         //Get all URIs for all documents with an up-front query so that we don't have to deal with
         //  the lag later. Inspired by https://stackoverflow.com/questions/42186820/why-is-documentfile-so-slow-and-what-should-i-use-instead.
-        globalClass.gtm_FileLookupArray = new TreeMap<>();
-        globalClass.gtm_BaseFoldersLookupArray = new TreeMap<>();
+        //todo: globalClass.gtm_FileLookupArray = new TreeMap<>();
+        //todo: globalClass.gtm_BaseFoldersLookupArray = new TreeMap<>();
 
         try {
 
-            int[] iCatOrder = {1, 2, 0};
-            for(int i = 0; i < 3; i++) {
-                //Odd loop ordering - videos is the biggest and takes the longest to process.
-                //  Look at images, comics, and then videos.
-                Uri uriCatalogFolder = globalClass.gdfCatalogFolders[iCatOrder[i]].getUri();
-                final String sRelativePath = GlobalClass.gsCatalogFolderNames[iCatOrder[i]];
-                final ItemClass_DocFileData icdfd = new ItemClass_DocFileData();
-                icdfd.sPath = "";
-                icdfd.sFileName = GlobalClass.gsCatalogFolderNames[iCatOrder[i]];
-                icdfd.sPath = icdfd.sFileName;
-                icdfd.bIsFolder = true;
-                icdfd.uri = uriCatalogFolder;
-                icdfd.iMediaCategory = iCatOrder[i];
-                icdfd.uriParentFolder = GlobalClass.gdfDataFolder.getUri();
-                globalClass.gtm_FileLookupArray.put(sRelativePath, icdfd);
-                globalClass.gtm_BaseFoldersLookupArray.put(sRelativePath, icdfd);
+            TreeMap<String, ItemClass_DocFileData> gtmfla_Ref;
+            switch (giMediaCategory){
+                case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                    gtmfla_Ref = globalClass.gtm_FileLookupArrayMC1;
+                    break;
+                case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                    gtmfla_Ref = globalClass.gtm_FileLookupArrayMC2;
+                    break;
+                default:
+                    gtmfla_Ref = globalClass.gtm_FileLookupArrayMC3;
             }
+
+            //Odd loop ordering - videos is the biggest and takes the longest to process.
+            //  Look at images, comics, and then videos.
+            Uri uriCatalogFolder = globalClass.gdfCatalogFolders[giMediaCategory].getUri();
+            final String sRelativePathBase = GlobalClass.gsCatalogFolderNames[giMediaCategory];
+            final ItemClass_DocFileData icdfdBase = new ItemClass_DocFileData();
+            icdfdBase.sPath = "";
+            icdfdBase.sFileName = GlobalClass.gsCatalogFolderNames[giMediaCategory];
+            icdfdBase.sPath = icdfdBase.sFileName;
+            icdfdBase.bIsFolder = true;
+            icdfdBase.uri = uriCatalogFolder;
+            icdfdBase.iMediaCategory = giMediaCategory;
+            icdfdBase.uriParentFolder = GlobalClass.gdfDataFolder.getUri();
+            gtmfla_Ref.put(sRelativePathBase, icdfdBase);
+
             boolean bFreshItemsAdded = true; //Flag to keep digging in the tree for more.
             stopWatch.Start();
-            boolean bVideosCatalogProcessed;
-            boolean bImagesCatalogProcessed;
-            boolean bComicsCatalogProcessed;
             while(bFreshItemsAdded){
                 bFreshItemsAdded = false;
                 TreeMap<String, ItemClass_DocFileData> gtm_NewAdditionsToFileLookupArray = new TreeMap<>();
-                for(Map.Entry<String, ItemClass_DocFileData> entry: globalClass.gtm_FileLookupArray.entrySet()) {
+                for(Map.Entry<String, ItemClass_DocFileData> entry: gtmfla_Ref.entrySet()) {
                     ItemClass_DocFileData icdfd_Parent = entry.getValue();
                     if(!icdfd_Parent.bContentQueried) {
                         final Uri uriFolder = icdfd_Parent.uri;
@@ -153,7 +152,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
                                     icdfd.iMediaCategory = icdfd_Parent.iMediaCategory;
                                     icdfd.uriParentFolder = uriFolder;
                                     gtm_NewAdditionsToFileLookupArray.put(sRelativePath, icdfd);
-                                    Log.d("Worker_Catalog_BuildDocumentUriList:doWork()", "Added item " + sRelativePath);
+                                    //Log.d("Worker_Catalog_BuildDocumentUriList:doWork()", "Added item " + sRelativePath);
                                 }
                             }
 
@@ -169,20 +168,55 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
 
                 } //End for loop through all found items.
 
-                globalClass.gtm_FileLookupArray.putAll(gtm_NewAdditionsToFileLookupArray);
+                gtmfla_Ref.putAll(gtm_NewAdditionsToFileLookupArray);
 
             } //End while(there are new items to explore)
-
-            stopWatch.PostDebugLogAndRestart("Built list of document Uris with duration ");
+            String sMessage =  "Built list of document Uris for media category " + giMediaCategory + " with duration ";
+            stopWatch.PostDebugLogAndRestart(sMessage); //Took 151.7s with 74,068 items in gtm_FileLookupArray on one thread.
+            //When split into threads, took 11s for images, 48s for videos, 54s for comics,
+            //  with a parallel timing of about 57s with my physical stopwatch.
+            //  Timing improvement from 2:31 to 0:57, a savings of 1:34.
         } catch (Exception e){
             String sMessage = "Trouble getting file listings. " + e.getMessage();
             Log.d("Worker_Catalog_BuildDocumentUriList:doWork()", sMessage);
-            globalClass.giBuildingDocumentUriListState = GlobalClass.LOADING_STATE_FINISHED;
+            switch (giMediaCategory){
+                case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                    globalClass.giBuildingDocumentUriListStateMC1 = GlobalClass.LOADING_STATE_FINISHED;
+                    break;
+                case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                    globalClass.giBuildingDocumentUriListStateMC2 = GlobalClass.LOADING_STATE_FINISHED;
+                    break;
+                default:
+                    globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_FINISHED;
+            }
             return Result.failure();
         }
 
-        globalClass.bFileLookupArrayLoaded.set(true);
-        globalClass.giBuildingDocumentUriListState = GlobalClass.LOADING_STATE_FINISHED;
+        //todo: globalClass.bFileLookupArrayLoaded.set(true);
+        switch (giMediaCategory){
+            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                globalClass.giBuildingDocumentUriListStateMC1 = GlobalClass.LOADING_STATE_FINISHED;
+                break;
+            case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                globalClass.giBuildingDocumentUriListStateMC2 = GlobalClass.LOADING_STATE_FINISHED;
+                break;
+            default:
+                globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_FINISHED;
+        }
+
+        int iFileIndexingCompletionCounter = globalClass.gatiFileIndexingCompletionCounter.addAndGet(giMediaCategory + 1);
+        //1 + 2 + 3 = 6
+        if(iFileIndexingCompletionCounter == 6){
+            //If this is the last of these series of workers, complete final actions:
+            globalClass.gtm_FileLookupArray = new TreeMap<>();
+            globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC1);
+            globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC2);
+            globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC3);
+            globalClass.gatbFileLookupArrayLoaded.set(true);
+            stopWatch.PostDebugLogAndRestart("Consolidated file indexes with duration ");
+        }
+
+
         return Result.success();
     }
 

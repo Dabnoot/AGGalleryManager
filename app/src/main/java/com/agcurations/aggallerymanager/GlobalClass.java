@@ -14,12 +14,9 @@ import android.graphics.Canvas;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
-import android.media.MediaMetadataRetriever;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.net.Uri;
 import android.os.Build;
-import android.provider.DocumentsContract;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -52,6 +49,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
@@ -114,7 +112,11 @@ public class GlobalClass extends Application {
                                     //data is absolutely miniscule in terms of processing time and data load, but simplifies coding complexity.
     AtomicBoolean bFolderLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
                                     //todo:implement the above.
-    AtomicBoolean bFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
+    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC1;
+    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC2;
+    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC3;
+    AtomicBoolean gatbFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
+    AtomicInteger gatiFileIndexingCompletionCounter = new AtomicInteger(0);
     //todo: look for other opportunities to include Atomic items in order to create a thread-safe environment.
 
     public static ContentResolver gcrContentResolver;
@@ -129,6 +131,9 @@ public class GlobalClass extends Application {
     public static final int LOADING_STATE_STARTED = 1;
     public static final int LOADING_STATE_FINISHED = 2;
     public int giBuildingDocumentUriListState = LOADING_STATE_NOT_STARTED;
+    public int giBuildingDocumentUriListStateMC1 = LOADING_STATE_NOT_STARTED;
+    public int giBuildingDocumentUriListStateMC2 = LOADING_STATE_NOT_STARTED;
+    public int giBuildingDocumentUriListStateMC3 = LOADING_STATE_NOT_STARTED;
 
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
     public TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
