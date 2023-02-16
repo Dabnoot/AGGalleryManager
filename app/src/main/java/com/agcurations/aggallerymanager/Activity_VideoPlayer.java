@@ -15,18 +15,15 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.MediaController;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.ui.PlayerControlView;
-import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.ui.StyledPlayerControlView;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -63,9 +60,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private MediaController gMediaController;
 
     //ExoPlayer is used for playback of local M3U8 files:
-    private SimpleExoPlayer gSimpleExoPlayer;
-    private PlayerView gplayerView_ExoVideoPlayer;
-    private PlayerControlView gPlayerControlView_ExoPlayerControls;
+    private ExoPlayer gExoPlayer;
+    private StyledPlayerView gplayerView_ExoVideoPlayer;
+    private StyledPlayerControlView gPlayerControlView_ExoPlayerControls;
 
     private Fragment_ItemDetails gFragment_itemDetails;
 
@@ -128,19 +125,17 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         }
 
         gMediaController = new MediaController(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
-                @Override
-                public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
-                    //Handle BACK button
-                    if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                        onBackPressed();
-                        return true;
-                    }
-                    return false;
+        gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
+            @Override
+            public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
+                //Handle BACK button
+                if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                    onBackPressed();
+                    return true;
                 }
-            });
-        }
+                return false;
+            }
+        });
 
         gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
         gVideoView_VideoPlayer.setMediaController(gMediaController);
@@ -405,8 +400,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     //  Update 11/14/2021 - I'm not sure if the above is still true. Will need to test again. (todo).
                     initializePlayer();
                     if(gbPlayingM3U8){
-                        gSimpleExoPlayer.seekTo(glCurrentVideoPosition);
-                        gSimpleExoPlayer.play();
+                        gExoPlayer.seekTo(glCurrentVideoPosition);
+                        gExoPlayer.play();
                     } else {
                         gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
                         gVideoView_VideoPlayer.start();
@@ -416,9 +411,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         };
         viewModel_fragment_selectTags.bTagDeleted.observe(this, observerTagDeleted);
 
-        gSimpleExoPlayer = new SimpleExoPlayer.Builder(this).build();
-        gplayerView_ExoVideoPlayer.setPlayer(gSimpleExoPlayer);
-        gPlayerControlView_ExoPlayerControls.setPlayer(gSimpleExoPlayer);
+        gExoPlayer = new ExoPlayer.Builder(this).build();
+        gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
+        gPlayerControlView_ExoPlayerControls.setPlayer(gExoPlayer);
 
         gplayerView_ExoVideoPlayer.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -433,13 +428,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private void PausePlayback(){
 
         if(gbPlayingM3U8) {
-            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
-            if (gSimpleExoPlayer.isPlaying()) {
+            glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
+            if (gExoPlayer.isPlaying()) {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
             } else {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
             }
-            gSimpleExoPlayer.pause();
+            gExoPlayer.pause();
         } else {
             glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
             if (gVideoView_VideoPlayer.isPlaying()) {
@@ -454,13 +449,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private void StopPlayback(){
 
         if(gbPlayingM3U8) {
-            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
-            if (gSimpleExoPlayer.isPlaying()) {
+            glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
+            if (gExoPlayer.isPlaying()) {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
             } else {
                 giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
             }
-            gSimpleExoPlayer.stop();
+            gExoPlayer.stop();
         } else {
             glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
             if (gVideoView_VideoPlayer.isPlaying()) {
@@ -489,12 +484,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             //Figure out which video player is active, and resume that object.
             if(gbPlayingM3U8) {
-                gSimpleExoPlayer.seekTo(glCurrentVideoPosition);
+                gExoPlayer.seekTo(glCurrentVideoPosition);
                 if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
-                    gSimpleExoPlayer.setPlayWhenReady(true);
+                    gExoPlayer.setPlayWhenReady(true);
                     //gSimpleExoPlayer.play();
                 }
-                gSimpleExoPlayer.pause();
+                gExoPlayer.pause();
             } else {
                 gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
                 if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
@@ -548,7 +543,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         //Figure out which video player is active, and save the position.
         if(gbPlayingM3U8) {
-            glCurrentVideoPosition = gSimpleExoPlayer.getCurrentPosition();
+            glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
         } else {
             glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
         }
@@ -631,46 +626,60 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                             //Find the m3u8 file and create a list in proper order of the ts files:
                             DocumentFile dfM3U8 = dfMediaFileFolder.findFile(ci.sFilename);
                             TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
-                            List<MediaItem> lMediaItems = new ArrayList<>();
-                            int iSequence = 0;
-                            if(dfM3U8 != null) {
-                                try {
-                                    InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(dfM3U8.getUri());
-                                    if(isM3U8 != null){
-                                        BufferedReader brM3U8 = new BufferedReader(new InputStreamReader(isM3U8));
-                                        String sLine = brM3U8.readLine();
-                                        while (sLine != null){
-                                            if(!sLine.startsWith("#") && sLine.endsWith("st")){
-                                                tmFileSequence.put(iSequence, sLine);
-                                                iSequence++;
-                                            }
-                                            sLine = brM3U8.readLine();
-                                        }
-                                        brM3U8.close();
-                                        isM3U8.close();
+                            boolean btestingM3U8SAF = false;
+                            if(btestingM3U8SAF){
+                                MediaItem mediaItem = null;
+                                if (dfM3U8 != null) {
+                                    mediaItem = MediaItem.fromUri(dfM3U8.getUri());
+                                    if (mediaItem != null) {
+                                        gExoPlayer.setMediaItem(mediaItem);
+                                        gExoPlayer.prepare();
+                                        gExoPlayer.setPlayWhenReady(true);
                                     }
-                                } catch (Exception e){
-                                    String sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
-                                    Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
                                 }
-                                DocumentFile[] dfMediaFiles = dfMediaFileFolder.listFiles();
-                                for (int i = 0; i <= iSequence; i++) {
-                                    String sFileNameSought = tmFileSequence.get(i);
-                                    if(sFileNameSought != null) {
-                                        dfMediaFile = dfMediaFileFolder.findFile(sFileNameSought);
-                                        if(dfMediaFile != null){
-                                            MediaItem mediaItem = MediaItem.fromUri(dfMediaFile.getUri());
-                                            lMediaItems.add(mediaItem);
+                            } else {
+                                List<MediaItem> lMediaItems = new ArrayList<>();
+                                int iSequence = 0;
+                                if (dfM3U8 != null) {
+                                    try {
+                                        InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(dfM3U8.getUri());
+                                        if (isM3U8 != null) {
+                                            BufferedReader brM3U8 = new BufferedReader(new InputStreamReader(isM3U8));
+                                            String sLine = brM3U8.readLine();
+                                            while (sLine != null) {
+                                                if (!sLine.startsWith("#") && sLine.endsWith("st")) {
+                                                    tmFileSequence.put(iSequence, sLine);
+                                                    iSequence++;
+                                                }
+                                                sLine = brM3U8.readLine();
+                                            }
+                                            brM3U8.close();
+                                            isM3U8.close();
                                         }
+                                    } catch (Exception e) {
+                                        String sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
+                                        Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
+                                    }
+                                    DocumentFile[] dfMediaFiles = dfMediaFileFolder.listFiles();
+                                    for (int i = 0; i <= iSequence; i++) {
+                                        String sFileNameSought = tmFileSequence.get(i);
+                                        if (sFileNameSought != null) {
+                                            dfMediaFile = dfMediaFileFolder.findFile(sFileNameSought);
+                                            if (dfMediaFile != null) {
+                                                Uri uriTest = dfMediaFile.getUri();
+                                                MediaItem mediaItem = MediaItem.fromUri(uriTest);
+                                                lMediaItems.add(mediaItem);
+                                            }
+                                        }
+
                                     }
 
                                 }
+                                gExoPlayer.setMediaItems(lMediaItems, false);
+                                gExoPlayer.prepare();
+                                gExoPlayer.setPlayWhenReady(true);
 
                             }
-                            gSimpleExoPlayer.setMediaItems(lMediaItems, false);
-                            //gSimpleExoPlayer.setMediaItem(mediaItem);
-                            gSimpleExoPlayer.prepare();
-                            gSimpleExoPlayer.setPlayWhenReady(true);
                             //gSimpleExoPlayer.play();
 
                         } else {
