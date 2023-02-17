@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.Switch;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -214,6 +215,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
             globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC3);
             globalClass.gatbFileLookupArrayLoaded.set(true);
             stopWatch.PostDebugLogAndRestart("Consolidated file indexes with duration ");
+            Toast.makeText(gContext, "File indexing complete.", Toast.LENGTH_SHORT).show();
         }
 
 
