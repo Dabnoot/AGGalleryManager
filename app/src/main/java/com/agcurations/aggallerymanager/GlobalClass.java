@@ -2386,7 +2386,18 @@ public class GlobalClass extends Application {
 
     public static boolean gbOptionUserAutoLogin = false;
 
-
+    public static boolean gbOptionIndividualizeM3U8VideoSegmentPlayback = false;
+    //If the option to individualize M3U8 video segment playback is selected,
+    //  create an array of the individual video segment files and feed
+    //  them into the ExoPlayer as a playlist.
+    //  There was an issue during coding and testing an SAF-adapted M3U8
+    //  in which the program would freeze the entire tablet causing the
+    //  need for a hard reset. If this happens again, a coder can change the
+    //  buffer amount (in onCreate), or configure this boolean to be
+    //  user-configurable.
+    //  If the option to individualize M3U8 video segment playback is not selected,
+    //  play an SAF-adapted M3U8 file. That is, a file with video listings
+    //  of Android Storage Access Framework Uris.
 
     //==============================================================================================
     //=========== Preferences ======================================================================
