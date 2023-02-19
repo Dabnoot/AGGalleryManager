@@ -11,7 +11,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Environment;
-import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -35,8 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -111,8 +108,36 @@ public class Worker_Catalog_LoadData extends Worker {
             }
         }
 
+        //Attempt to read FileIndexHelper.dat before instantiating the file indexing workers:
+        try {
+            DocumentFile dfFileIndexHelper = GlobalClass.gdfDataFolder.findFile("FileIndexHelper.dat");
+            if(dfFileIndexHelper != null){
+                InputStream isFileIndexHelper = GlobalClass.gcrContentResolver.openInputStream(dfFileIndexHelper.getUri());
+                if(isFileIndexHelper != null){
+                    byte[] bAllBytes = isFileIndexHelper.readAllBytes();
+                    isFileIndexHelper.close();
+                    String sFileIndexHelperData = new String(bAllBytes);
+                    String[] sFileIndexHelperRecords = sFileIndexHelperData.split("\n");
+                    if(sFileIndexHelperRecords.length > 0){
+                        String sFileCount = sFileIndexHelperRecords[0];
+                        try{
+                            if(!sFileCount.equals("")){
+                                GlobalClass.gfFileCountFromFileIndexHelper = (float) Integer.parseInt(sFileCount);
+                                    //converted to float to simplify rapid access in Worker_Catalog_BuildDocumentUriList.
+                            }
+                        } catch (Exception e){
+                            LogThis("doWork", "Problem reading/interpretting FileIndexHelper.dat.", e.getMessage());
+                        }
+                    }
+                }
+            }
+        }catch (Exception e){
+            LogThis("doWork", "Unable to create index helper file.", e.getMessage());
+        }
+
 
         //With a threshold of items initialized, build a list of all document files for fast look-up:
+        globalClass.gatiFileIndexingCompletionCounter.set(3); //Set the number that are to exist.
         for(int i = 0; i < 3; i++){
             Double dTimeStamp = GlobalClass.GetTimeStampDouble();
             Data dataCatalogBuildDocumentUriList = new Data.Builder()
@@ -465,10 +490,10 @@ public class Worker_Catalog_LoadData extends Worker {
 
             String sDataStorageLocationURI = dfDataFolder.getUri().toString();
             sharedPreferences.edit()
-                    .putString(GlobalClass.gsPreferenceName_DataStorageLocation, sDataStorageLocationURI)
+                    .putString(GlobalClass.gsPreference_DataStorageLocationUri, sDataStorageLocationURI)
                     .apply();
             sharedPreferences.edit()
-                    .putString(GlobalClass.gsPreferenceName_DataStorageLocationUF, sUserFriendlyFolderPath)
+                    .putString(GlobalClass.gsPreference_DataStorageLocationUriUF, sUserFriendlyFolderPath)
                     .apply();
 
             GlobalClass.gdfDataFolder = dfDataFolder;
@@ -1201,6 +1226,11 @@ public class Worker_Catalog_LoadData extends Worker {
     void problemNotificationConfig(String sMessage){
         globalClass.problemNotificationConfig(sMessage,
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+    }
+
+    private void LogThis(String sRoutine, String sMessage, String sExtraErrorMessage){
+        String s = sMessage + " " + sExtraErrorMessage;
+        Log.d("Worker_Catalog_LoadData:" + sRoutine, s);
     }
 
 }

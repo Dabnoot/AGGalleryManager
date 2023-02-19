@@ -116,7 +116,9 @@ public class GlobalClass extends Application {
     TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC2;
     TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC3;
     AtomicBoolean gatbFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
-    AtomicInteger gatiFileIndexingCompletionCounter = new AtomicInteger(0);
+    public static float gfFileCountFromFileIndexHelper = -1;
+    public AtomicInteger gatiFilesIndexed = new AtomicInteger(0); //Used in a progressbar
+    public AtomicInteger gatiFileIndexingCompletionCounter = new AtomicInteger(0); //Used to tell when all of the workers are complete.
     //todo: look for other opportunities to include Atomic items in order to create a thread-safe environment.
 
     public static ContentResolver gcrContentResolver;
@@ -2403,9 +2405,9 @@ public class GlobalClass extends Application {
     //=========== Preferences ======================================================================
 
     //Data storage location:
-    public static final String gsPreferenceName_DataStorageLocation = "com.agcurations.aggallerymanager.preferences.DataStorageLocation";
+    public static final String gsPreference_DataStorageLocationUri = "com.agcurations.aggallerymanager.preferences.DataStorageLocation";
     //Data storage location, user-friendly for display purposes:
-    public static final String gsPreferenceName_DataStorageLocationUF = "com.agcurations.aggallerymanager.preferences.DataStorageLocationUF";
+    public static final String gsPreference_DataStorageLocationUriUF = "com.agcurations.aggallerymanager.preferences.DataStorageLocationUF";
 
     public static final String gsPreferenceName_UserAccountData = "com.agcurations.aggallerymanager.preferences.UserAccountData";
 

@@ -5,14 +5,16 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
-import android.widget.Switch;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.google.android.exoplayer2.util.MimeTypes;
+
 import java.io.File;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -111,6 +113,8 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
 
             boolean bFreshItemsAdded = true; //Flag to keep digging in the tree for more.
             stopWatch.Start();
+            int iItemsFound = 0;
+            int iProgressBarValue;
             while(bFreshItemsAdded){
                 bFreshItemsAdded = false;
                 TreeMap<String, ItemClass_DocFileData> gtm_NewAdditionsToFileLookupArray = new TreeMap<>();
@@ -153,6 +157,26 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
                                     icdfd.iMediaCategory = icdfd_Parent.iMediaCategory;
                                     icdfd.uriParentFolder = uriFolder;
                                     gtm_NewAdditionsToFileLookupArray.put(sRelativePath, icdfd);
+                                    iItemsFound++;
+                                    if(iItemsFound % 20 == 0){
+                                        int iIndexedItems = globalClass.gatiFilesIndexed.addAndGet(iItemsFound);
+                                        iItemsFound = 0;
+                                        int iProgressNumerator = iIndexedItems;
+                                        float fProgressDenominator = 1000;
+                                        String sProgressDenominator = "?";
+                                        if(GlobalClass.gfFileCountFromFileIndexHelper > 0){
+                                            fProgressDenominator = GlobalClass.gfFileCountFromFileIndexHelper;
+                                            sProgressDenominator = String.valueOf((int) fProgressDenominator);
+                                        } else {
+                                            iIndexedItems = iIndexedItems % 1000;
+                                        }
+                                        iProgressBarValue = Math.round((iIndexedItems / (float) fProgressDenominator) * 100);
+                                        globalClass.BroadcastProgress(false, "",
+                                                true, iProgressBarValue,
+                                                true, "File Indexing " + iProgressNumerator + "/" + sProgressDenominator,
+                                                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+
+                                    }
                                     //Log.d("Worker_Catalog_BuildDocumentUriList:doWork()", "Added item " + sRelativePath);
                                 }
                             }
@@ -205,22 +229,53 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
                 globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_FINISHED;
         }
 
-        int iFileIndexingCompletionCounter = globalClass.gatiFileIndexingCompletionCounter.addAndGet(giMediaCategory + 1);
-        //1 + 2 + 3 = 6
-        if(iFileIndexingCompletionCounter == 6){
+        int iFileIndexingCompletionCounter = globalClass.gatiFileIndexingCompletionCounter.addAndGet(-1);
+        if(iFileIndexingCompletionCounter <= 0){
             //If this is the last of these series of workers, complete final actions:
             globalClass.gtm_FileLookupArray = new TreeMap<>();
             globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC1);
             globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC2);
             globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC3);
-            globalClass.gatbFileLookupArrayLoaded.set(true);
+            int iFileCount = globalClass.gtm_FileLookupArray.size(); //Max size is Integer.MAX_VALUE. 2,147,483,647.
+                    globalClass.gatbFileLookupArrayLoaded.set(true);
             stopWatch.PostDebugLogAndRestart("Consolidated file indexes with duration ");
-            Toast.makeText(gContext, "File indexing complete.", Toast.LENGTH_SHORT).show();
+
+            globalClass.BroadcastProgress(false, "",
+                    true, 100,
+                    true, "File Indexing Complete",
+                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+
+            //Create a text file listing the total file count. Do this in a text file rather than in a preference
+            //  because some day may want to come back and add more data to guide the creation of
+            //  more Worker_Catalog_BuildDocumentUriList instances for faster indexing.
+            try {
+                Uri uriFileIndexHelper = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gdfDataFolder.getUri(), MimeTypes.BASE_TYPE_TEXT, "FileIndexHelper.dat");
+                if(uriFileIndexHelper != null){
+                    OutputStream osFileIndexHelper = GlobalClass.gcrContentResolver.openOutputStream(uriFileIndexHelper);
+                    if(osFileIndexHelper != null){
+                        String sFileCount = iFileCount + "";
+                        osFileIndexHelper.write(sFileCount.getBytes(StandardCharsets.UTF_8));
+                        osFileIndexHelper.flush();
+                        osFileIndexHelper.close();
+                    }
+                }
+            }catch (Exception e){
+                LogThis("doWork", "Unable to create index helper file.", e.getMessage());
+            }
+
+
         }
 
 
         return Result.success();
     }
+
+    private void LogThis(String sRoutine, String sMessage, String sExtraErrorMessage){
+        String s = sMessage + " " + sExtraErrorMessage;
+        Log.d("Worker_Catalog_BuildDocumentUriList:" + sRoutine, s);
+    }
+
+
 
 
 }

@@ -18,7 +18,6 @@ import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
-import androidx.work.ListenableWorker;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -34,13 +33,9 @@ import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
-import android.hardware.usb.UsbDevice;
-import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.StrictMode;
-import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -56,15 +51,9 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
-import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -246,7 +235,7 @@ public class Activity_Main extends AppCompatActivity {
 
 
         //Get the data storage location Preference:
-        String sDataStorageLocationURI = sharedPreferences.getString(GlobalClass.gsPreferenceName_DataStorageLocation, null);
+        String sDataStorageLocationURI = sharedPreferences.getString(GlobalClass.gsPreference_DataStorageLocationUri, null);
         if(sDataStorageLocationURI != null){
             if(!sDataStorageLocationURI.equals("")){
                 //Confirm that the URI string points to a valid location.
