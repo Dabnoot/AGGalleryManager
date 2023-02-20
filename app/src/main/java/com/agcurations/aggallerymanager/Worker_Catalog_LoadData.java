@@ -1228,9 +1228,12 @@ public class Worker_Catalog_LoadData extends Worker {
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
     }
 
-    private void LogThis(String sRoutine, String sMessage, String sExtraErrorMessage){
-        String s = sMessage + " " + sExtraErrorMessage;
-        Log.d("Worker_Catalog_LoadData:" + sRoutine, s);
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Catalog_LoadData:" + sRoutine, sMessage);
     }
 
 }

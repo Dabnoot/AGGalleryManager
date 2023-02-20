@@ -55,6 +55,7 @@ import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.work.ListenableWorker;
 
 import com.google.android.exoplayer2.util.MimeTypes;
 
@@ -102,23 +103,13 @@ public class GlobalClass extends Application {
 
     //The below is for fast lookup of files and folders in order to avoid using DocumentFile.ListFiles()
     //  or DocumentFile.FindFile().
-    TreeMap<String, ItemClass_DocFileData> gtm_BaseFoldersLookupArray; //This item is to get the base files
-                                    //out of gtm_FileLookupArray. FileLookupArray takes like 137.6 seconds for
-                                    //50,000 files. When a user jumps into Activity_CatalogViewer, just looking-up
-                                    //the tag folders takes 0.5s for each item in the RecyclerView.
-                                    //todo:implement the above.
-    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArray; //Relative Path, ICDFD. This includes all items within the catalog scope,
-                                    // and includes the contents of BaseFoldersLookupArray, a duplication of data. The duplication of the
-                                    //data is absolutely miniscule in terms of processing time and data load, but simplifies coding complexity.
-    AtomicBoolean bFolderLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
-                                    //todo:implement the above.
-    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC1;
-    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC2;
-    TreeMap<String, ItemClass_DocFileData> gtm_FileLookupArrayMC3;
-    AtomicBoolean gatbFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
+    public static ArrayList<TreeMap<String, ItemClass_DocFileData>> galtm_FileLookupTreeMap;
+    public static AtomicBoolean gabFileLookupArrayWriteBusy = new AtomicBoolean(false);
+
+    public static AtomicBoolean gatbFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
     public static float gfFileCountFromFileIndexHelper = -1;
-    public AtomicInteger gatiFilesIndexed = new AtomicInteger(0); //Used in a progressbar
-    public AtomicInteger gatiFileIndexingCompletionCounter = new AtomicInteger(0); //Used to tell when all of the workers are complete.
+    public static AtomicInteger gatiFilesIndexed = new AtomicInteger(0); //Used in a progressbar
+    public static AtomicInteger gatiFileIndexingCompletionCounter = new AtomicInteger(0); //Used to tell when all of the workers are complete.
     //todo: look for other opportunities to include Atomic items in order to create a thread-safe environment.
 
     public static ContentResolver gcrContentResolver;
@@ -132,10 +123,6 @@ public class GlobalClass extends Application {
     public static final int LOADING_STATE_NOT_STARTED = 0;
     public static final int LOADING_STATE_STARTED = 1;
     public static final int LOADING_STATE_FINISHED = 2;
-    public int giBuildingDocumentUriListState = LOADING_STATE_NOT_STARTED;
-    public int giBuildingDocumentUriListStateMC1 = LOADING_STATE_NOT_STARTED;
-    public int giBuildingDocumentUriListStateMC2 = LOADING_STATE_NOT_STARTED;
-    public int giBuildingDocumentUriListStateMC3 = LOADING_STATE_NOT_STARTED;
 
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
     public TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
@@ -182,10 +169,7 @@ public class GlobalClass extends Application {
     public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
-
-
     public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
-
 
     ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
     ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
@@ -198,9 +182,6 @@ public class GlobalClass extends Application {
     public boolean gbIsDarkModeOn = false;
 
     ArrayList<ItemClass_WebPageTabData> gal_WebPages;
-
-    /*public int USER_COLOR_ADMIN; //Used to set color of login/user icon used throughout the app.
-    public int USER_COLOR_GUEST;*/
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
@@ -254,6 +235,73 @@ public class GlobalClass extends Application {
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
 
     public ArrayList<ItemClass_User> galicu_Users;
+
+    //=====================================================================================
+    //===== File Indexing =================================================================
+    //=====================================================================================
+
+    public static ItemClass_DocFileData getIndexedFileData(String sRelativePath){
+        //This routine returns data related to indexed files.
+        ItemClass_DocFileData icdfd = null;
+        for(TreeMap<String, ItemClass_DocFileData> tm_FileLookupTreeMap: GlobalClass.galtm_FileLookupTreeMap){
+            icdfd = tm_FileLookupTreeMap.get(sRelativePath);
+            if(icdfd != null){
+                return icdfd;
+            }
+        }
+        return null;
+    }
+
+    public static boolean putIndexedFileData(String sRelativePath, ItemClass_DocFileData icdfd){
+        //Add an item to the global file indexing. Return true if successful, false if there was a failure.
+        //Wait for the global file lookup treemap to become available, or wait for a timeout:
+        int i = 0;
+        int iMaxWaitTimeInSeconds = 20;
+        int iMaxWaitTimeInMS = iMaxWaitTimeInSeconds * 1000;
+        int iSleepAccumulator = 0;
+        int iLoopFrequency = 20; //Hz
+        int iSleepDurationMS = (int) ((float) 1/iLoopFrequency * 1000);
+        while(iSleepAccumulator <= iMaxWaitTimeInMS){
+
+            if(!GlobalClass.gabFileLookupArrayWriteBusy.get()){
+                //If the lock is available, take it:
+                GlobalClass.gabFileLookupArrayWriteBusy.set(true);
+                if(galtm_FileLookupTreeMap.size() > 0) {
+                    galtm_FileLookupTreeMap.get(0).put(sRelativePath, icdfd);
+                    return getIndexedFileData(sRelativePath) != null; //Report on the success of adding the data.
+                } else {
+                    TreeMap<String, ItemClass_DocFileData> tm_FileLookupArray = new TreeMap<>();
+                    tm_FileLookupArray.put(sRelativePath, icdfd);
+                    galtm_FileLookupTreeMap.add(tm_FileLookupArray);
+                }
+
+                //Release the lock on the global file lookup treemap:
+                GlobalClass.gabFileLookupArrayWriteBusy.set(false);
+                break;
+            }
+            try {
+                Thread.sleep(iSleepDurationMS);
+                if(iSleepAccumulator >= iMaxWaitTimeInMS){
+                    //Timeout. Display message and leave.
+                    return false;
+                }
+            } catch (InterruptedException e) {
+                Log.d("GlobalClass:putIndexedFileData()", "Problem waiting for FileLookupArray. " + e.getMessage());
+            }
+            iSleepAccumulator += iSleepDurationMS;
+        }
+
+        return false;
+    }
+
+    public static int getIndexedFileCount(){
+        //This routine returns count of indexed files.
+        int iAccumulator = 0;
+        for(TreeMap<String, ItemClass_DocFileData> tm_FileLookupTreeMap: GlobalClass.galtm_FileLookupTreeMap){
+            iAccumulator += tm_FileLookupTreeMap.size();
+        }
+        return iAccumulator;
+    }
 
 
     //=====================================================================================

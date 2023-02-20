@@ -43,6 +43,7 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -480,7 +481,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             + File.separator + ci.sItemID
                             + File.separator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
                 }
-                ItemClass_DocFileData icdfd = globalClass.gtm_FileLookupArray.get(sPath);
+                ItemClass_DocFileData icdfd = GlobalClass.getIndexedFileData(sPath);
                 if(icdfd != null){
                     uriThumbnailUri = icdfd.uri;
                     bThumbnailQuickLookupSuccess = true;

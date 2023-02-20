@@ -15,6 +15,7 @@ import com.google.android.exoplayer2.util.MimeTypes;
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -41,64 +42,15 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
 
         globalClass = (GlobalClass) getApplicationContext();
 
-        int iLoadingState;
-        switch (giMediaCategory){
-            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                iLoadingState = globalClass.giBuildingDocumentUriListStateMC1;
-                break;
-            case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                iLoadingState = globalClass.giBuildingDocumentUriListStateMC2;
-                break;
-            default:
-                iLoadingState = globalClass.giBuildingDocumentUriListStateMC3;
-        }
-
-        if(iLoadingState == GlobalClass.LOADING_STATE_STARTED
-                || iLoadingState == GlobalClass.LOADING_STATE_FINISHED){
-            return Result.failure();
-        }
-
-        switch (giMediaCategory){
-            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                globalClass.giBuildingDocumentUriListStateMC1 = GlobalClass.LOADING_STATE_STARTED;
-                globalClass.gtm_FileLookupArrayMC1 = new TreeMap<>();
-                break;
-            case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                globalClass.giBuildingDocumentUriListStateMC2 = GlobalClass.LOADING_STATE_STARTED;
-                globalClass.gtm_FileLookupArrayMC2 = new TreeMap<>();
-                break;
-            default:
-                globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_STARTED;
-                globalClass.gtm_FileLookupArrayMC3 = new TreeMap<>();
-        }
-
-        //todo: globalClass.bFileLookupArrayLoaded.set(false); Create custom atomic variable for each category.
-        //todo: globalClass.bFolderLookupArrayLoaded.set(false); Create custom atomic variable for each category.
+        TreeMap<String, ItemClass_DocFileData> tm_FileLookupArray = new TreeMap<>();
 
         StopWatch stopWatch = new StopWatch(false);
 
-        //Debug Experiment...
         //Get all URIs for all documents with an up-front query so that we don't have to deal with
         //  the lag later. Inspired by https://stackoverflow.com/questions/42186820/why-is-documentfile-so-slow-and-what-should-i-use-instead.
-        //todo: globalClass.gtm_FileLookupArray = new TreeMap<>();
-        //todo: globalClass.gtm_BaseFoldersLookupArray = new TreeMap<>();
 
         try {
 
-            TreeMap<String, ItemClass_DocFileData> gtmfla_Ref;
-            switch (giMediaCategory){
-                case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                    gtmfla_Ref = globalClass.gtm_FileLookupArrayMC1;
-                    break;
-                case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                    gtmfla_Ref = globalClass.gtm_FileLookupArrayMC2;
-                    break;
-                default:
-                    gtmfla_Ref = globalClass.gtm_FileLookupArrayMC3;
-            }
-
-            //Odd loop ordering - videos is the biggest and takes the longest to process.
-            //  Look at images, comics, and then videos.
             Uri uriCatalogFolder = globalClass.gdfCatalogFolders[giMediaCategory].getUri();
             final String sRelativePathBase = GlobalClass.gsCatalogFolderNames[giMediaCategory];
             final ItemClass_DocFileData icdfdBase = new ItemClass_DocFileData();
@@ -109,7 +61,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
             icdfdBase.uri = uriCatalogFolder;
             icdfdBase.iMediaCategory = giMediaCategory;
             icdfdBase.uriParentFolder = GlobalClass.gdfDataFolder.getUri();
-            gtmfla_Ref.put(sRelativePathBase, icdfdBase);
+            tm_FileLookupArray.put(sRelativePathBase, icdfdBase);
 
             boolean bFreshItemsAdded = true; //Flag to keep digging in the tree for more.
             stopWatch.Start();
@@ -118,7 +70,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
             while(bFreshItemsAdded){
                 bFreshItemsAdded = false;
                 TreeMap<String, ItemClass_DocFileData> gtm_NewAdditionsToFileLookupArray = new TreeMap<>();
-                for(Map.Entry<String, ItemClass_DocFileData> entry: gtmfla_Ref.entrySet()) {
+                for(Map.Entry<String, ItemClass_DocFileData> entry: tm_FileLookupArray.entrySet()) {
                     ItemClass_DocFileData icdfd_Parent = entry.getValue();
                     if(!icdfd_Parent.bContentQueried) {
                         final Uri uriFolder = icdfd_Parent.uri;
@@ -159,7 +111,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
                                     gtm_NewAdditionsToFileLookupArray.put(sRelativePath, icdfd);
                                     iItemsFound++;
                                     if(iItemsFound % 20 == 0){
-                                        int iIndexedItems = globalClass.gatiFilesIndexed.addAndGet(iItemsFound);
+                                        int iIndexedItems = GlobalClass.gatiFilesIndexed.addAndGet(iItemsFound);
                                         iItemsFound = 0;
                                         int iProgressNumerator = iIndexedItems;
                                         float fProgressDenominator = 1000;
@@ -193,7 +145,7 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
 
                 } //End for loop through all found items.
 
-                gtmfla_Ref.putAll(gtm_NewAdditionsToFileLookupArray);
+                tm_FileLookupArray.putAll(gtm_NewAdditionsToFileLookupArray);
 
             } //End while(there are new items to explore)
             String sMessage =  "Built list of document Uris for media category " + giMediaCategory + " with duration ";
@@ -204,41 +156,62 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
         } catch (Exception e){
             String sMessage = "Trouble getting file listings. " + e.getMessage();
             Log.d("Worker_Catalog_BuildDocumentUriList:doWork()", sMessage);
-            switch (giMediaCategory){
-                case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                    globalClass.giBuildingDocumentUriListStateMC1 = GlobalClass.LOADING_STATE_FINISHED;
-                    break;
-                case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                    globalClass.giBuildingDocumentUriListStateMC2 = GlobalClass.LOADING_STATE_FINISHED;
-                    break;
-                default:
-                    globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_FINISHED;
-            }
+
             return Result.failure();
         }
 
-        //todo: globalClass.bFileLookupArrayLoaded.set(true);
-        switch (giMediaCategory){
-            case GlobalClass.MEDIA_CATEGORY_VIDEOS:
-                globalClass.giBuildingDocumentUriListStateMC1 = GlobalClass.LOADING_STATE_FINISHED;
+
+
+        //Write the found data to the master data holder.
+        //Wait for the global file lookup treemap to become available, or wait for a timeout:
+        int i = 0;
+        int iMaxWaitTimeInSeconds = 20;
+        int iMaxWaitTimeInMS = iMaxWaitTimeInSeconds * 1000;
+        int iSleepAccumulator = 0;
+        int iLoopFrequency = 20; //Hz
+        int iSleepDurationMS = (int) ((float) 1/iLoopFrequency * 1000);
+        while(iSleepAccumulator <= iMaxWaitTimeInMS){
+
+            if(!GlobalClass.gabFileLookupArrayWriteBusy.get()){
+                //If the lock is available, take it:
+                GlobalClass.gabFileLookupArrayWriteBusy.set(true);
+                stopWatch.PostDebugLogAndRestart("Waited for " + iSleepAccumulator + "ms for global file lookup array to become available with total duration since last message of ");
+                //Initialize the global file lookup treemap if needed:
+                if(GlobalClass.galtm_FileLookupTreeMap == null) {
+                    GlobalClass.galtm_FileLookupTreeMap = new ArrayList<>();
+                }
+                //Add data to the global file lookup treemap:
+                GlobalClass.galtm_FileLookupTreeMap.add(tm_FileLookupArray); //Took 2.1807E-5s to perform. Waaay faster than building one giant treemap.
+                stopWatch.PostDebugLogAndRestart("Added items to lookup arraylist of treemaps with duration ");
+
+
+                stopWatch.PostDebugLogAndRestart("Consolidated file indexes with duration ");
+                //Release the lock on the global file lookup treemap:
+                GlobalClass.gabFileLookupArrayWriteBusy.set(false);
                 break;
-            case GlobalClass.MEDIA_CATEGORY_IMAGES:
-                globalClass.giBuildingDocumentUriListStateMC2 = GlobalClass.LOADING_STATE_FINISHED;
-                break;
-            default:
-                globalClass.giBuildingDocumentUriListStateMC3 = GlobalClass.LOADING_STATE_FINISHED;
+            }
+            try {
+                Thread.sleep(iSleepDurationMS);
+                if(iSleepAccumulator >= iMaxWaitTimeInMS){
+                    //Timeout. Display message and leave.
+                    LogThis("doWork", "Timeout waiting for FileLoopupArray to become available for writing. Data dropped from indexing.", null);
+                    return Result.failure();
+                }
+            } catch (InterruptedException e) {
+                LogThis("doWork", "Problem waiting for FileLookupArray. ", e.getMessage());
+            }
+            iSleepAccumulator += iSleepDurationMS;
         }
 
-        int iFileIndexingCompletionCounter = globalClass.gatiFileIndexingCompletionCounter.addAndGet(-1);
+
+
+        //Check to see if all of the workers of this type are complete, and if so execute final actions:
+        int iFileIndexingCompletionCounter = GlobalClass.gatiFileIndexingCompletionCounter.addAndGet(-1);
         if(iFileIndexingCompletionCounter <= 0){
             //If this is the last of these series of workers, complete final actions:
-            globalClass.gtm_FileLookupArray = new TreeMap<>();
-            globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC1);
-            globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC2);
-            globalClass.gtm_FileLookupArray.putAll(globalClass.gtm_FileLookupArrayMC3);
-            int iFileCount = globalClass.gtm_FileLookupArray.size(); //Max size is Integer.MAX_VALUE. 2,147,483,647.
-                    globalClass.gatbFileLookupArrayLoaded.set(true);
-            stopWatch.PostDebugLogAndRestart("Consolidated file indexes with duration ");
+            int iFileCount = GlobalClass.getIndexedFileCount(); //Max size is Integer.MAX_VALUE. 2,147,483,647.
+
+            GlobalClass.gatbFileLookupArrayLoaded.set(true); //Set flag to allow other routines to know that the FileLookupArray is complete.
 
             globalClass.BroadcastProgress(false, "",
                     true, 100,
@@ -262,17 +235,18 @@ public class Worker_Catalog_BuildDocumentUriList extends Worker {
             }catch (Exception e){
                 LogThis("doWork", "Unable to create index helper file.", e.getMessage());
             }
-
-
         }
 
 
         return Result.success();
     }
 
-    private void LogThis(String sRoutine, String sMessage, String sExtraErrorMessage){
-        String s = sMessage + " " + sExtraErrorMessage;
-        Log.d("Worker_Catalog_BuildDocumentUriList:" + sRoutine, s);
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Catalog_BuildDocumentUriList:" + sRoutine, sMessage);
     }
 
 

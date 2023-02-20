@@ -653,12 +653,14 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                             //Find the M3U8 file:
                             Uri uriM3U8;
-                            if(globalClass.gatbFileLookupArrayLoaded.get()){
+                            if(GlobalClass.gatbFileLookupArrayLoaded.get()){
                                 String sRelativePathM3U8 = GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                                         File.separator + ci.sFolder_Name +
                                         File.separator + ci.sItemID +
                                         File.separator + ci.sFilename;
-                                ItemClass_DocFileData icdfd_M3U8 = globalClass.gtm_FileLookupArray.get(sRelativePathM3U8);
+
+                                ItemClass_DocFileData icdfd_M3U8 = GlobalClass.getIndexedFileData(sRelativePathM3U8);
+
                                 if(icdfd_M3U8 == null){
                                     sMessage = "Problem locating M3U8 file at location " + sRelativePathM3U8;
                                     Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
@@ -715,13 +717,20 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                         while (sLine != null) {
                                             if (!sLine.startsWith("#") && sLine.endsWith("st")) {
 
-                                                if (globalClass.gatbFileLookupArrayLoaded.get()) {
+                                                if (GlobalClass.gatbFileLookupArrayLoaded.get()) {
                                                     //If the uri's are preloaded, lookup the uri:
                                                     String sVideoSegmentRelativePath = GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                                                             File.separator + ci.sFolder_Name +
                                                             File.separator + ci.sItemID +
                                                             File.separator + sLine;
-                                                    sLine = globalClass.gtm_FileLookupArray.get(sVideoSegmentRelativePath).uri.toString();
+
+                                                    sLine = "";
+                                                    ItemClass_DocFileData icdfd_M3U8_Segment = GlobalClass.getIndexedFileData(sVideoSegmentRelativePath);
+                                                    if(icdfd_M3U8_Segment != null){
+                                                        sLine = icdfd_M3U8_Segment.uri.toString();
+                                                    } else {
+                                                        LogThis("initializePlayer()", "Could not file file segment uri.", null);
+                                                    }
                                                 } else {
                                                     tmFileSequence.put(iSequence, sLine);
                                                 }
@@ -796,13 +805,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 String sM3U8_SAF_FileName = sFileNameAndExtension[0] + "_SAF_Adapted." + sFileNameAndExtension[1];
 
                                 //Check to see indexing of the files for the app is complete. If not, return.
-                                if(globalClass.gatbFileLookupArrayLoaded.get()){
+                                if(GlobalClass.gatbFileLookupArrayLoaded.get()){
                                     //If the global file indexing is complete, use fast-lookup:
                                     String sRelativePathM3U8_SAF = GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                                             File.separator + ci.sFolder_Name +
                                             File.separator + ci.sItemID +
                                             File.separator + sM3U8_SAF_FileName;
-                                    ItemClass_DocFileData icdfd_M3U8_SAF = globalClass.gtm_FileLookupArray.get(sRelativePathM3U8_SAF);
+                                    ItemClass_DocFileData icdfd_M3U8_SAF = GlobalClass.getIndexedFileData(sRelativePathM3U8_SAF);
                                     Uri uriM3U8_SAF = null;
                                     if(icdfd_M3U8_SAF == null){
                                         //The SAF-adapted M3U8 file does not exist. Create it.
@@ -811,7 +820,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                             String sRelativePathParent = GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                                                     File.separator + ci.sFolder_Name +
                                                     File.separator + ci.sItemID;
-                                            ItemClass_DocFileData icdfd_Parent = globalClass.gtm_FileLookupArray.get(sRelativePathParent);
+                                            ItemClass_DocFileData icdfd_Parent = GlobalClass.getIndexedFileData(sRelativePathParent);
                                             if(icdfd_Parent == null){
                                                 sMessage = "Problem with locating parent directory via relative path: " + sRelativePathParent;
                                                 Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
@@ -832,7 +841,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                             icdfd_M3U8_SAF.iMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
                                             icdfd_M3U8_SAF.sFileName = sM3U8_SAF_FileName;
                                             icdfd_M3U8_SAF.uriParentFolder = uriParent;
-                                            globalClass.gtm_FileLookupArray.put(sRelativePathM3U8_SAF, icdfd_M3U8_SAF);
+                                            if(!GlobalClass.putIndexedFileData(sRelativePathM3U8_SAF, icdfd_M3U8_SAF)){
+                                                LogThis("initializePlayer()", "Could not add entry for SAF-adjusted M3U8 file to the file index.", null);
+                                            }
+
 
                                             //With the new file created but empty, copy over the contents of the existing M3U8 file but replace the video segment files
                                             //  with the SAF Uri strings:
@@ -857,7 +869,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                                                 File.separator + ci.sFolder_Name +
                                                                 File.separator + ci.sItemID +
                                                                 File.separator + sLine;
-                                                        ItemClass_DocFileData icdfd_VideoSegment = globalClass.gtm_FileLookupArray.get(sVideoSegmentRelativePath);
+                                                        ItemClass_DocFileData icdfd_VideoSegment = GlobalClass.getIndexedFileData(sVideoSegmentRelativePath);
                                                         if(icdfd_VideoSegment == null){
                                                             sMessage = "Problem locating video segment via relative path in file index with relative location at " + sVideoSegmentRelativePath;
                                                             Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
@@ -896,7 +908,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 } else {
                                     //If the fast lookup is not complete, don't attempt to create this file as it will take too long.
                                     Toast.makeText(this, "M3U8 file first-use preprocessing incomplete. Please allow file indexing to complete.", Toast.LENGTH_SHORT).show();
-                                    return;
                                 }
                                 //File indexing should be complete or we would have exited.
                                 //M3U8_SAF file should now exist and be defined.
@@ -1069,6 +1080,14 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //  Above note from AGGalleryManager author, WRC.
         mHideHandler.removeCallbacks(mHideRunnable);
         mHideHandler.postDelayed(mHideRunnable, Activity_VideoPlayer.AUTO_HIDE_DELAY_MILLIS);
+    }
+
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Activity_VideoPlayer:" + sRoutine, sMessage);
     }
 
 }
