@@ -38,8 +38,6 @@ public class Worker_ComicPostProcessing extends Worker {
     //Define string used to identify this worker type:
     public static final String WORKER_COMIC_POST_PROCESSING_TAG = "WORKER_COMIC_POST_PROCESSING_TAG";
 
-    public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
-
     final static boolean DEBUG = false;
     
     //=========================
@@ -419,7 +417,7 @@ public class Worker_ComicPostProcessing extends Worker {
 
     private Data DataErrorMessage(String sMessage){
         return new Data.Builder()
-                .putString(FAILURE_MESSAGE, sMessage)
+                .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
                 .build();
     }
 
@@ -439,9 +437,7 @@ public class Worker_ComicPostProcessing extends Worker {
                 }
             }
         }
-        return new Data.Builder()
-                .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
-                .build();
+        return DataErrorMessage(sMessage);
     }
 
 }
