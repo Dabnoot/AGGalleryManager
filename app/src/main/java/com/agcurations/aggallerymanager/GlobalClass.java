@@ -1522,7 +1522,7 @@ public class GlobalClass extends Application {
         for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             //if (entry.getValue().bIsRestricted) {
             if(gicuCurrentUser != null) {
-                if (gicuCurrentUser.iMaturityLevel <= entry.getValue().iTagAgeRating) {
+                if (gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
                     aliRestrictedTagIDs.add(entry.getValue().iTagID);
                 }
             } else {
