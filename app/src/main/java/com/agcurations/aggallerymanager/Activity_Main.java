@@ -51,6 +51,9 @@ import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -183,6 +186,13 @@ public class Activity_Main extends AppCompatActivity {
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
+
+        try {
+            GlobalClass.gsFileSeparator = URLEncoder.encode(File.separator, StandardCharsets.UTF_8.toString());
+        } catch (Exception e){
+            String sMessage = "" + e.getMessage();
+            Log.d("Activity_Main:onCreate()", sMessage);
+        }
 
 
         gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);

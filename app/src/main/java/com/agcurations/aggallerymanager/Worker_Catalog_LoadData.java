@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
+import android.text.Html;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Period;
@@ -50,6 +52,8 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.google.android.exoplayer2.util.MimeTypes;
+
+import org.htmlcleaner.audit.HtmlModificationListener;
 
 public class Worker_Catalog_LoadData extends Worker {
 
@@ -81,7 +85,7 @@ public class Worker_Catalog_LoadData extends Worker {
         }
         globalClass.giLoadingState = GlobalClass.LOADING_STATE_STARTED;
 
-
+        GlobalClass.gsUriAppRootPrefix = GlobalClass.gdfDataFolder.getUri().toString();
 
         //Create Logs folder if it does not exist:
         globalClass.gdfLogsFolder = initSubfolder(GlobalClass.gdfDataFolder, "Logs", "Could not create logs folder.");
@@ -106,51 +110,6 @@ public class Worker_Catalog_LoadData extends Worker {
                 sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat";
                 globalClass.gdfCatalogTagsFiles[i] = getDataFileOrCreateIt(GlobalClass.gdfDataFolder, sFileName, "Could not create file " + sFileName + ".");
             }
-        }
-
-        //Attempt to read FileIndexHelper.dat before instantiating the file indexing workers:
-        try {
-            DocumentFile dfFileIndexHelper = GlobalClass.gdfDataFolder.findFile("FileIndexHelper.dat");
-            if(dfFileIndexHelper != null){
-                InputStream isFileIndexHelper = GlobalClass.gcrContentResolver.openInputStream(dfFileIndexHelper.getUri());
-                if(isFileIndexHelper != null){
-                    byte[] bAllBytes = isFileIndexHelper.readAllBytes();
-                    isFileIndexHelper.close();
-                    String sFileIndexHelperData = new String(bAllBytes);
-                    String[] sFileIndexHelperRecords = sFileIndexHelperData.split("\n");
-                    if(sFileIndexHelperRecords.length > 0){
-                        String sFileCount = sFileIndexHelperRecords[0];
-                        try{
-                            if(!sFileCount.equals("")){
-                                GlobalClass.gfFileCountFromFileIndexHelper = (float) Integer.parseInt(sFileCount);
-                                    //converted to float to simplify rapid access in Worker_Catalog_BuildDocumentUriList.
-                            }
-                        } catch (Exception e){
-                            LogThis("doWork", "Problem reading/interpretting FileIndexHelper.dat.", e.getMessage());
-                        }
-                    }
-                }
-            }
-        }catch (Exception e){
-            LogThis("doWork", "Unable to create index helper file.", e.getMessage());
-        }
-
-
-        //With a threshold of items initialized, build a list of all document files for fast look-up:
-        globalClass.gatiFileIndexingCompletionCounter.set(3); //Set the number that are to exist.
-        for(int i = 0; i < 3; i++){
-            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-            Data dataCatalogBuildDocumentUriList = new Data.Builder()
-                    .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
-                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                    .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, i)
-                    .build();
-            OneTimeWorkRequest otwrCatalogBuildDocumentUriList = new OneTimeWorkRequest.Builder(Worker_Catalog_BuildDocumentUriList.class)
-                    .setInputData(dataCatalogBuildDocumentUriList)
-                    .addTag(Worker_Catalog_BuildDocumentUriList.TAG_WORKER_BUILD_URI_LIST) //To allow finding the worker later.
-                    .build();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBuildDocumentUriList);
-
         }
 
 

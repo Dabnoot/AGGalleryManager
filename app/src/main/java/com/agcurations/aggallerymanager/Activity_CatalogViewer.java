@@ -43,7 +43,6 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -467,27 +466,27 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             Uri uriThumbnailUri = null;
             boolean bThumbnailQuickLookupSuccess = false;
-            if(globalClass.gatbFileLookupArrayLoaded.get()){
-                //If the file lookup array is loaded, use that loaded data instead of DocumentFile.
-                String sFileName = ci.sThumbnail_File;
-                if(sFileName.equals("")){
-                    sFileName = ci.sFilename;
-                }
-                String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory] + File.separator + ci.sFolder_Name + File.separator + sFileName;
-                if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                    //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
-                    sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
-                            + File.separator + ci.sFolder_Name
-                            + File.separator + ci.sItemID
-                            + File.separator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
-                }
-                ItemClass_DocFileData icdfd = GlobalClass.getIndexedFileData(sPath);
-                if(icdfd != null){
-                    uriThumbnailUri = icdfd.uri;
-                    bThumbnailQuickLookupSuccess = true;
-                    stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "ThumbnailFile Uri found via quick lookup. ");
-                }
+
+            String sFileName = ci.sThumbnail_File;
+            if(sFileName.equals("")){
+                sFileName = ci.sFilename;
             }
+            String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                    + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                    + GlobalClass.gsFileSeparator + sFileName;
+            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
+                sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                        + GlobalClass.gsFileSeparator + ci.sItemID
+                        + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
+            }
+            String sThumbnailUri = GlobalClass.gsUriAppRootPrefix
+                    + GlobalClass.gsFileSeparator + sPath;
+            uriThumbnailUri = Uri.parse(sThumbnailUri);
+            bThumbnailQuickLookupSuccess = true;
+
+
             if(!bThumbnailQuickLookupSuccess) {
                 DocumentFile dfCatalogItemFolder;
                 DocumentFile dfThumbnailFile;

@@ -48,14 +48,11 @@ import java.util.Queue;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
-import androidx.work.ListenableWorker;
 
 import com.google.android.exoplayer2.util.MimeTypes;
 
@@ -100,17 +97,6 @@ public class GlobalClass extends Application {
     public String gsImageDownloadHoldingFolderTempRPath; //For coordinating file transfer from internal storage to SD card.
     public final DocumentFile[] gdfCatalogContentsFiles = new DocumentFile[3];
     public final DocumentFile[] gdfCatalogTagsFiles = new DocumentFile[3];
-
-    //The below is for fast lookup of files and folders in order to avoid using DocumentFile.ListFiles()
-    //  or DocumentFile.FindFile().
-    public static ArrayList<TreeMap<String, ItemClass_DocFileData>> galtm_FileLookupTreeMap;
-    public static AtomicBoolean gabFileLookupArrayWriteBusy = new AtomicBoolean(false);
-
-    public static AtomicBoolean gatbFileLookupArrayLoaded = new AtomicBoolean(false); //This item is used to check to see if the lookup array is done.
-    public static float gfFileCountFromFileIndexHelper = -1;
-    public static AtomicInteger gatiFilesIndexed = new AtomicInteger(0); //Used in a progressbar
-    public static AtomicInteger gatiFileIndexingCompletionCounter = new AtomicInteger(0); //Used to tell when all of the workers are complete.
-    //todo: look for other opportunities to include Atomic items in order to create a thread-safe environment.
 
     public static ContentResolver gcrContentResolver;
 
@@ -236,73 +222,6 @@ public class GlobalClass extends Application {
 
     public ArrayList<ItemClass_User> galicu_Users;
 
-    //=====================================================================================
-    //===== File Indexing =================================================================
-    //=====================================================================================
-
-    public static ItemClass_DocFileData getIndexedFileData(String sRelativePath){
-        //This routine returns data related to indexed files.
-        ItemClass_DocFileData icdfd = null;
-        for(TreeMap<String, ItemClass_DocFileData> tm_FileLookupTreeMap: GlobalClass.galtm_FileLookupTreeMap){
-            icdfd = tm_FileLookupTreeMap.get(sRelativePath);
-            if(icdfd != null){
-                return icdfd;
-            }
-        }
-        return null;
-    }
-
-    public static boolean putIndexedFileData(String sRelativePath, ItemClass_DocFileData icdfd){
-        //Add an item to the global file indexing. Return true if successful, false if there was a failure.
-        //Wait for the global file lookup treemap to become available, or wait for a timeout:
-        int i = 0;
-        int iMaxWaitTimeInSeconds = 20;
-        int iMaxWaitTimeInMS = iMaxWaitTimeInSeconds * 1000;
-        int iSleepAccumulator = 0;
-        int iLoopFrequency = 20; //Hz
-        int iSleepDurationMS = (int) ((float) 1/iLoopFrequency * 1000);
-        while(iSleepAccumulator <= iMaxWaitTimeInMS){
-
-            if(!GlobalClass.gabFileLookupArrayWriteBusy.get()){
-                //If the lock is available, take it:
-                GlobalClass.gabFileLookupArrayWriteBusy.set(true);
-                if(galtm_FileLookupTreeMap.size() > 0) {
-                    galtm_FileLookupTreeMap.get(0).put(sRelativePath, icdfd);
-                    return getIndexedFileData(sRelativePath) != null; //Report on the success of adding the data.
-                } else {
-                    TreeMap<String, ItemClass_DocFileData> tm_FileLookupArray = new TreeMap<>();
-                    tm_FileLookupArray.put(sRelativePath, icdfd);
-                    galtm_FileLookupTreeMap.add(tm_FileLookupArray);
-                }
-
-                //Release the lock on the global file lookup treemap:
-                GlobalClass.gabFileLookupArrayWriteBusy.set(false);
-                break;
-            }
-            try {
-                Thread.sleep(iSleepDurationMS);
-                if(iSleepAccumulator >= iMaxWaitTimeInMS){
-                    //Timeout. Display message and leave.
-                    return false;
-                }
-            } catch (InterruptedException e) {
-                Log.d("GlobalClass:putIndexedFileData()", "Problem waiting for FileLookupArray. " + e.getMessage());
-            }
-            iSleepAccumulator += iSleepDurationMS;
-        }
-
-        return false;
-    }
-
-    public static int getIndexedFileCount(){
-        //This routine returns count of indexed files.
-        int iAccumulator = 0;
-        for(TreeMap<String, ItemClass_DocFileData> tm_FileLookupTreeMap: GlobalClass.galtm_FileLookupTreeMap){
-            iAccumulator += tm_FileLookupTreeMap.size();
-        }
-        return iAccumulator;
-    }
-
 
     //=====================================================================================
     //===== Network Monitoring ============================================================
@@ -336,6 +255,9 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Utilities =====================================================================
     //=====================================================================================
+
+    public static String gsFileSeparator = null;
+    public static String gsUriAppRootPrefix = null;
 
     public static Point getScreenWidth(@NonNull Activity activity) {
         Point pReturn = new Point();
