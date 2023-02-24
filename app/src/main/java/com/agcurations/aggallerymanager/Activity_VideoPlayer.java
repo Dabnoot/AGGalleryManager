@@ -45,7 +45,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -620,274 +619,273 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                 Service_CatalogViewer.startActionUpdateCatalogItem(this, ci, "Activity_VideoPlayer:initializePlayer()");
 
-                DocumentFile dfMediaFileFolder = globalClass.gdfCatalogFolders[iMediaCategory].findFile(ci.sFolder_Name);
-                if(dfMediaFileFolder != null) {
-                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                        dfMediaFileFolder = dfMediaFileFolder.findFile(ci.sItemID);
+
+
+                //Determine if this is a gif file, which the VideoView will not play:
+                bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
+
+                String sFileUri = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                        + GlobalClass.gsFileSeparator + ci.sFilename;
+                Uri uriFileUri = Uri.parse(sFileUri);
+
+                if (bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
+                    gbPlayingM3U8 = false;
+
+                    Glide.with(getApplicationContext()).load(uriFileUri).into(gImageView_GifViewer);
+
+                    if (!gImageView_GifViewer.isShown()) {
+                        gImageView_GifViewer.setVisibility(View.VISIBLE);
+                        gVideoView_VideoPlayer.setZOrderOnTop(false);
+                        gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+                        gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
+                        gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
                     }
-                    DocumentFile dfMediaFile = dfMediaFileFolder.findFile(ci.sFilename);
+                } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                    gbPlayingM3U8 = true;
+                    gImageView_GifViewer.setVisibility(View.INVISIBLE);
+                    gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
+                    gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
+                    gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
 
-                    if(dfMediaFile != null) {
+                    //Find the M3U8 file:
+                    Uri uriM3U8;
 
-                        //Determine if this is a gif file, which the VideoView will not play:
-                        bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
+                    String sM3U8Uri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+                            + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                            + GlobalClass.gsFileSeparator + ci.sItemID
+                            + GlobalClass.gsFileSeparator + ci.sFilename;
 
-                        if (bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
-                            gbPlayingM3U8 = false;
+                    uriM3U8 = Uri.parse(sM3U8Uri);
 
-                            Glide.with(getApplicationContext()).load(dfMediaFile.getUri()).into(gImageView_GifViewer);
+                    TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
 
-                            if (!gImageView_GifViewer.isShown()) {
-                                gImageView_GifViewer.setVisibility(View.VISIBLE);
-                                gVideoView_VideoPlayer.setZOrderOnTop(false);
-                                gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
-                                gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                                gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                    if(GlobalClass.gbOptionIndividualizeM3U8VideoSegmentPlayback) {
+                        //If the option to individualize M3U8 video segment playback is selected,
+                        //  create an array of the individual video segment files and feed
+                        //  them into the ExoPlayer as a playlist.
+                        //  There was an issue during coding and testing an SAF-adapted M3U8
+                        //  in which the program would freeze the entire tablet causing the
+                        //  need for a hard reset. If this happens again, a coder can change the
+                        //  buffer amount (in onCreate), or configure this boolean to be
+                        //  user-configurable.
+
+                        List<MediaItem> lMediaItems = new ArrayList<>();
+                        int iSequence = 0;
+                        String[] sFileNameAndExtension = ci.sFilename.split("\\.");
+                        if (sFileNameAndExtension.length != 2) {
+                            return;
+                        }
+                        String sNewFileName = sFileNameAndExtension[0] + "_new." + sFileNameAndExtension[1];
+                        String sParentFolderUri = GlobalClass.gsUriAppRootPrefix
+                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+                                + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                + GlobalClass.gsFileSeparator + ci.sItemID
+                                + GlobalClass.gsFileSeparator + sNewFileName;
+                        Uri uriParentFolderUri = Uri.parse(sParentFolderUri);
+                        try {
+                            Uri uriNewM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolderUri,MimeTypes.BASE_TYPE_TEXT, sNewFileName);
+                            if(uriNewM3U8 == null){
+                                LogThis("inintializePlayer", "Could not create new M3U8 file.", null);
+                                return;
                             }
-                        } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                            gbPlayingM3U8 = true;
-                            gImageView_GifViewer.setVisibility(View.INVISIBLE);
-                            gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
-                            gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
-                            gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
+                            InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
+                            OutputStream osM3U8New = GlobalClass.gcrContentResolver.openOutputStream(uriNewM3U8);
+                            if (osM3U8New == null) {
+                                LogThis("inintializePlayer", "Could not open output stream to new M3U8 file.", null);
+                                return;
+                            }
 
-                            //Find the M3U8 file:
-                            Uri uriM3U8;
-
-                            String sRelativePathM3U8 = GlobalClass.gsUriAppRootPrefix
-                                    + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                    + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                    + GlobalClass.gsFileSeparator + ci.sItemID
-                                    + GlobalClass.gsFileSeparator + ci.sFilename;
-
-                            uriM3U8 = Uri.parse(sRelativePathM3U8);
-
-                            TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
-
-                            if(GlobalClass.gbOptionIndividualizeM3U8VideoSegmentPlayback) {
-                                //If the option to individualize M3U8 video segment playback is selected,
-                                //  create an array of the individual video segment files and feed
-                                //  them into the ExoPlayer as a playlist.
-                                //  There was an issue during coding and testing an SAF-adapted M3U8
-                                //  in which the program would freeze the entire tablet causing the
-                                //  need for a hard reset. If this happens again, a coder can change the
-                                //  buffer amount (in onCreate), or configure this boolean to be
-                                //  user-configurable.
-
-                                List<MediaItem> lMediaItems = new ArrayList<>();
-                                int iSequence = 0;
-                                String[] sFileNameAndExtension = ci.sFilename.split("\\.");
-                                if (sFileNameAndExtension.length != 2) {
-                                    return;
-                                }
-                                String sNewFileName = sFileNameAndExtension[0] + "_new." + sFileNameAndExtension[1];
-                                DocumentFile dfNewM3U8 = dfMediaFileFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sNewFileName);
-
-
-                                try {
-                                    InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
-                                    OutputStream osM3U8New = GlobalClass.gcrContentResolver.openOutputStream(dfNewM3U8.getUri());
-                                    if (osM3U8New == null) {
-                                        return;
-                                    }
-
-                                    if (isM3U8 != null) {
-                                        BufferedReader brM3U8 = new BufferedReader(new InputStreamReader(isM3U8));
-                                        StringBuilder sbM3U8New = new StringBuilder();
-                                        String sLine = brM3U8.readLine();
-                                        StringBuilder sbUriString = new StringBuilder();
-                                        while (sLine != null) {
-                                            if (!sLine.startsWith("#") && sLine.endsWith("st")) {
-                                                //Form the uri string:
-                                                sbUriString.append(GlobalClass.gsUriAppRootPrefix)
-                                                        .append(GlobalClass.gsFileSeparator).append(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS])
-                                                        .append(GlobalClass.gsFileSeparator).append(ci.sFolder_Name)
-                                                        .append(GlobalClass.gsFileSeparator).append(ci.sItemID)
-                                                        .append(GlobalClass.gsFileSeparator).append(sLine);
-                                                sLine = sbUriString.toString();
-                                                sbUriString.setLength(0);
-                                                iSequence++;
-
-                                            }
-                                            sbM3U8New.append(sLine);
-                                            sbM3U8New.append("\n");
-                                            sLine = brM3U8.readLine();
-                                        }
-                                        brM3U8.close();
-                                        isM3U8.close();
-                                        String sData = sbM3U8New.toString();
-                                        osM3U8New.write(sData.getBytes(StandardCharsets.UTF_8));
-                                        osM3U8New.flush();
-                                        osM3U8New.close();
-                                    }
-                                } catch (Exception e) {
-                                    sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
-                                    Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
-                                }
-
-                                try {
-                                    for (int i = 0; i <= iSequence; i++) {
-                                        String sFileNameSought = tmFileSequence.get(i);
-                                        if (sFileNameSought != null) {
-                                            dfMediaFile = dfMediaFileFolder.findFile(sFileNameSought);
-                                            if (dfMediaFile != null) {
-                                                Uri uriTest = dfMediaFile.getUri();
-                                            /*AssetFileDescriptor assetFileDescriptor;
-                                            try {
-                                                assetFileDescriptor = GlobalClass.gcrContentResolver.openAssetFileDescriptor(uriTest, "r");
-                                            } catch (Exception e){
-                                                String sMessage = "" + e.getMessage();
-                                                Log.d("Activity_VideoPlayer:initializePlayer()", sMessage);
-                                            }*/
-                                                MediaItem mediaItem = MediaItem.fromUri(uriTest);
-                                                lMediaItems.add(mediaItem);
-                                            }
-                                        }
+                            if (isM3U8 != null) {
+                                BufferedReader brM3U8 = new BufferedReader(new InputStreamReader(isM3U8));
+                                StringBuilder sbM3U8New = new StringBuilder();
+                                String sLine = brM3U8.readLine();
+                                StringBuilder sbUriString = new StringBuilder();
+                                while (sLine != null) {
+                                    if (!sLine.startsWith("#") && sLine.endsWith("st")) {
+                                        //Form the uri string:
+                                        sbUriString.append(GlobalClass.gsUriAppRootPrefix)
+                                                .append(GlobalClass.gsFileSeparator).append(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS])
+                                                .append(GlobalClass.gsFileSeparator).append(ci.sFolder_Name)
+                                                .append(GlobalClass.gsFileSeparator).append(ci.sItemID)
+                                                .append(GlobalClass.gsFileSeparator).append(sLine);
+                                        sLine = sbUriString.toString();
+                                        sbUriString.setLength(0);
+                                        tmFileSequence.put(iSequence, sLine);
+                                        iSequence++;
 
                                     }
-                                } catch (Exception e) {
-                                    sMessage = "" + e.getMessage();
-                                    Log.d("Activity_VideoPlayer:initializePlayer()", sMessage);
+                                    sbM3U8New.append(sLine);
+                                    sbM3U8New.append("\n");
+                                    sLine = brM3U8.readLine();
+                                }
+                                brM3U8.close();
+                                isM3U8.close();
+                                String sData = sbM3U8New.toString();
+                                osM3U8New.write(sData.getBytes(StandardCharsets.UTF_8));
+                                osM3U8New.flush();
+                                osM3U8New.close();
+                            }
+                        } catch (Exception e) {
+                            sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
+                            Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
+                        }
+
+                        try {
+                            for (int i = 0; i <= iSequence; i++) {
+                                String sSegmentFileUri = tmFileSequence.get(i);
+                                if (sSegmentFileUri != null) {
+                                    Uri uriSegmentFile = Uri.parse(sSegmentFileUri);
+                                    MediaItem mediaItem = MediaItem.fromUri(uriSegmentFile);
+                                    lMediaItems.add(mediaItem);
+
                                 }
 
+                            }
+                        } catch (Exception e) {
+                            sMessage = "" + e.getMessage();
+                            Log.d("Activity_VideoPlayer:initializePlayer()", sMessage);
+                        }
 
-                                gExoPlayer.setMediaItems(lMediaItems, false);
-                                gExoPlayer.prepare();
-                                gExoPlayer.setPlayWhenReady(true);
 
-                            } else { //End if GlobalClass.gbOptionIndividualizeM3U8VideoSegmentPlayback
-                                //If the option to individualize M3U8 video segment playback is not selected,
-                                //  play an SAF-adapted M3U8 file. That is, a file with video listings
-                                //  of Android Storage Access Framework Uris.
+                        gExoPlayer.setMediaItems(lMediaItems, false);
+                        gExoPlayer.prepare();
+                        gExoPlayer.setPlayWhenReady(true);
 
-                                MediaItem mediaItem = null;
-                                //todo: Create a flow chart to map this logic.
+                    } else { //End if GlobalClass.gbOptionIndividualizeM3U8VideoSegmentPlayback
+                        //If the option to individualize M3U8 video segment playback is not selected,
+                        //  play an SAF-adapted M3U8 file. That is, a file with video listings
+                        //  of Android Storage Access Framework Uris.
 
-                                //Check to see if the SAF-aligned M3U8 file exists, and if not, create it.
-                                //todo: what to do if the user has transferred files to another device? This file will need to be recreated.
-                                // todo: Perhaps check to see if the file exists. If it exists, test the first valid file URI link and see if it is good.
-                                // todo:   if not, recreate the file.
-                                String[] sFileNameAndExtension = ci.sFilename.split("\\.");
-                                if(sFileNameAndExtension.length != 2){
-                                    sMessage = "Problem with filename: " + ci.sFilename;
-                                    Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
-                                    return;
-                                }
-                                //Determine the name of the SAF-adapted M3U8 file:
-                                String sM3U8_SAF_FileName = sFileNameAndExtension[0] + "_SAF_Adapted." + sFileNameAndExtension[1];
+                        MediaItem mediaItem = null;
+                        //todo: Create a flow chart to map this logic.
 
-                                //Check to see indexing of the files for the app is complete. If not, return.
-                                //If the global file indexing is complete, use fast-lookup:
-                                String sUriM3U8_SAF = GlobalClass.gsUriAppRootPrefix
+                        //Check to see if the SAF-aligned M3U8 file exists, and if not, create it.
+                        //todo: what to do if the user has transferred files to another device? This file will need to be recreated.
+                        // todo: Perhaps check to see if the file exists. If it exists, test the first valid file URI link and see if it is good.
+                        // todo:   if not, recreate the file.
+                        String[] sFileNameAndExtension = ci.sFilename.split("\\.");
+                        if(sFileNameAndExtension.length != 2){
+                            sMessage = "Problem with filename: " + ci.sFilename;
+                            Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
+                            return;
+                        }
+                        //Determine the name of the SAF-adapted M3U8 file:
+                        String sM3U8_SAF_FileName = sFileNameAndExtension[0] + "_SAF_Adapted." + sFileNameAndExtension[1];
+
+                        //Check to see indexing of the files for the app is complete. If not, return.
+                        //If the global file indexing is complete, use fast-lookup:
+                        String sUriM3U8_SAF = GlobalClass.gsUriAppRootPrefix
+                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+                                + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                + GlobalClass.gsFileSeparator + ci.sItemID
+                                + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
+                        Uri uriM3U8_SAF = Uri.parse(sUriM3U8_SAF);
+
+                        boolean bM3U8_SAF_File_Exists = false;
+                        try{
+                            InputStream is = GlobalClass.gcrContentResolver.openInputStream(uriM3U8_SAF);
+                            if(is != null){
+                                bM3U8_SAF_File_Exists = true;
+                                is.close();
+                            }
+                        } catch (Exception e){
+                            LogThis("initializePlayer()", "Could not find SAF-adapted M3U8 file. This is a handled condition, non-error.", null);
+                        }
+
+                        if(!bM3U8_SAF_File_Exists){
+                            //The SAF-adapted M3U8 file does not exist. Create it.
+                            try {
+                                //DocumentsContract.createDocument requires a Uri to the parent folder. Find the Uri:
+                                String sParentUri = GlobalClass.gsUriAppRootPrefix
                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                         + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                        + GlobalClass.gsFileSeparator + ci.sItemID
-                                        + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
-                                Uri uriM3U8_SAF = Uri.parse(sUriM3U8_SAF);
-
-                                boolean bM3U8_SAF_File_Exists = false;
-                                try{
-                                    InputStream is = GlobalClass.gcrContentResolver.openInputStream(uriM3U8_SAF);
-                                    if(is != null){
-                                        bM3U8_SAF_File_Exists = true;
-                                        is.close();
-                                    }
-                                } catch (Exception e){
-                                    LogThis("initializePlayer()", "Could not find SAF-adapted M3U8 file. This is a handled condition, non-error.", null);
-                                }
-
-                                if(!bM3U8_SAF_File_Exists){
-                                    //The SAF-adapted M3U8 file does not exist. Create it.
-                                    try {
-                                        //DocumentsContract.createDocument requires a Uri to the parent folder. Find the Uri:
-                                        String sParentUri = GlobalClass.gsUriAppRootPrefix
-                                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                                + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                                + GlobalClass.gsFileSeparator + ci.sItemID;
-                                        Uri uriParent = Uri.parse(sParentUri);
-                                        //With the parent folder Uri identified, create the M3U8_SAF text file at that location:
-                                        uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, MimeTypes.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
-                                        if(uriM3U8_SAF == null){
-                                            sMessage = "Problem creating updated M3U8 file with SAF paths with parent uri " + sParentUri;
-                                            Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
-                                            return;
-                                        }
-
-                                        //With the new file created but empty, copy over the contents of the existing M3U8 file but replace the video segment files
-                                        //  with the SAF Uri strings:
-                                        InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
-                                        OutputStream osM3U8New = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8_SAF);
-                                        if(osM3U8New == null){
-                                            return;
-                                        }
-
-                                        if (isM3U8 != null) {
-                                            byte[] byteM3U8File = isM3U8.readAllBytes();
-                                            isM3U8.close();
-                                            String sM3U8File = new String(byteM3U8File);
-                                            String[] sM3U8FileRecords = sM3U8File.split("\n");
-                                            StringBuilder sbM3U8New = new StringBuilder();
-                                            String sLine;
-                                            for (String sM3U8FileRecord : sM3U8FileRecords) {
-                                                sLine = sM3U8FileRecord;
-                                                if (!sM3U8FileRecord.startsWith("#") && sM3U8FileRecord.endsWith("st")) {
-                                                    //sLine should have a file name.
-                                                    String sVideoSegmentUri = GlobalClass.gsUriAppRootPrefix
-                                                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                                            + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                                            + GlobalClass.gsFileSeparator + ci.sItemID
-                                                            + GlobalClass.gsFileSeparator + sLine;
-                                                    sLine = sVideoSegmentUri;
-                                                }
-                                                sbM3U8New.append(sLine);
-                                                sbM3U8New.append("\n");
-                                            }
-
-                                            String sData = sbM3U8New.toString();
-                                            osM3U8New.write(sData.getBytes(StandardCharsets.UTF_8));
-                                            osM3U8New.flush();
-                                            osM3U8New.close();
-                                        }
-                                    } catch (Exception e) {
-                                        sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
-                                        Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
-                                    }
-                                } //End if the M3U8_SAF file does not exist.
-
-                                //The Uri for the M3U8_SAF file should now be defined.
-                                if(uriM3U8_SAF != null) {
-                                    mediaItem = MediaItem.fromUri(uriM3U8_SAF);
-                                    gExoPlayer.setMediaItem(mediaItem);
-                                    gExoPlayer.prepare();
-                                    gExoPlayer.setPlayWhenReady(true);
-                                } else {
-                                    sMessage = "Something went wrong while loading the M3U8 file.";
+                                        + GlobalClass.gsFileSeparator + ci.sItemID;
+                                Uri uriParent = Uri.parse(sParentUri);
+                                //With the parent folder Uri identified, create the M3U8_SAF text file at that location:
+                                uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, MimeTypes.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
+                                if(uriM3U8_SAF == null){
+                                    sMessage = "Problem creating updated M3U8 file with SAF paths with parent uri " + sParentUri;
                                     Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
+                                    return;
                                 }
 
+                                //With the new file created but empty, copy over the contents of the existing M3U8 file but replace the video segment files
+                                //  with the SAF Uri strings:
+                                InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
+                                OutputStream osM3U8New = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8_SAF);
+                                if(osM3U8New == null){
+                                    return;
+                                }
 
-                                //File indexing should be complete or we would have exited.
-                                //M3U8_SAF file should now exist and be defined.
+                                if (isM3U8 != null) {
+                                    byte[] byteM3U8File = isM3U8.readAllBytes();
+                                    isM3U8.close();
+                                    String sM3U8File = new String(byteM3U8File);
+                                    String[] sM3U8FileRecords = sM3U8File.split("\n");
+                                    StringBuilder sbM3U8New = new StringBuilder();
+                                    String sLine;
+                                    for (String sM3U8FileRecord : sM3U8FileRecords) {
+                                        sLine = sM3U8FileRecord;
+                                        if (!sM3U8FileRecord.startsWith("#") && sM3U8FileRecord.endsWith("st")) {
+                                            //sLine should have a file name.
+                                            String sVideoSegmentUri = GlobalClass.gsUriAppRootPrefix
+                                                    + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+                                                    + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                                    + GlobalClass.gsFileSeparator + ci.sItemID
+                                                    + GlobalClass.gsFileSeparator + sLine;
+                                            sLine = sVideoSegmentUri;
+                                        }
+                                        sbM3U8New.append(sLine);
+                                        sbM3U8New.append("\n");
+                                    }
 
-                            } //End if !gbOptionIndividualizeM3U8VideoSegmentPlayback
-
-
-                        } else {
-                            gbPlayingM3U8 = false;
-                            gImageView_GifViewer.setVisibility(View.INVISIBLE);
-                            gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                            gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
-                            gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
-                            gVideoView_VideoPlayer.setVideoURI(dfMediaFile.getUri());
-
-                            if (gVideoView_VideoPlayer.getDuration() > glCurrentVideoPosition) {
-                                glCurrentVideoPosition = 1;
+                                    String sData = sbM3U8New.toString();
+                                    osM3U8New.write(sData.getBytes(StandardCharsets.UTF_8));
+                                    osM3U8New.flush();
+                                    osM3U8New.close();
+                                }
+                            } catch (Exception e) {
+                                sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
+                                Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
                             }
-                            gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-                            gVideoView_VideoPlayer.start();
+                        } //End if the M3U8_SAF file does not exist.
+
+                        //The Uri for the M3U8_SAF file should now be defined.
+                        if(uriM3U8_SAF != null) {
+                            mediaItem = MediaItem.fromUri(uriM3U8_SAF);
+                            gExoPlayer.setMediaItem(mediaItem);
+                            gExoPlayer.prepare();
+                            gExoPlayer.setPlayWhenReady(true);
+                        } else {
+                            sMessage = "Something went wrong while loading the M3U8 file.";
+                            Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
                         }
+
+
+                        //File indexing should be complete or we would have exited.
+                        //M3U8_SAF file should now exist and be defined.
+
+                    } //End if !gbOptionIndividualizeM3U8VideoSegmentPlayback
+
+
+                } else {
+                    gbPlayingM3U8 = false;
+                    gImageView_GifViewer.setVisibility(View.INVISIBLE);
+                    gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
+                    gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                    gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
+                    gVideoView_VideoPlayer.setVideoURI(uriFileUri);
+
+                    if (gVideoView_VideoPlayer.getDuration() > glCurrentVideoPosition) {
+                        glCurrentVideoPosition = 1;
                     }
+                    gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
+                    gVideoView_VideoPlayer.start();
                 }
+
             } //End if our catalog item is not null.
 
         } //End if the catalog item was found in the passed-in list.
