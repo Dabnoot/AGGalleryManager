@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -9,22 +8,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
 
 public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
 
     public boolean gbSimplifiedView = false;
+    public boolean gbCompactMode = false;
+    int[] giSelectedUnselectedBGColors = null;
 
     public AdapterUserList(@NonNull Context context, int resource, @NonNull List<ItemClass_User> objects) {
         super(context, resource, objects);
@@ -38,7 +36,9 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
         if (row == null) {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             //My custom list item design is here
-            row = inflater.inflate(R.layout.listview_useritem, parent, false);
+            int iStyle = R.layout.listview_useritem;
+            if(gbCompactMode) iStyle = R.layout.listview_useritem_compact;
+            row = inflater.inflate(iStyle, parent, false);
         }
 
         //Get user data for this row:
@@ -72,9 +72,61 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
             textView_Admin.setVisibility(View.INVISIBLE);
         }
 
-
+        if(giSelectedUnselectedBGColors != null) {
+            if (icu.bIsChecked) {
+                row.setBackgroundColor(giSelectedUnselectedBGColors[0]);
+            } else {
+                row.setBackgroundColor(giSelectedUnselectedBGColors[1]);
+            }
+        }
 
         //return super.getView(position, convertView, parent);
         return row;
     }
+
+    public ArrayList<ItemClass_User> GetSelectedUsers(){
+
+        ArrayList<ItemClass_User> alicu = new ArrayList<>();
+        for(int i = 0; i < getCount(); i++){
+            ItemClass_User icu = getItem(i);
+            if(icu != null) {
+                if (icu.bIsChecked) {
+                    alicu.add(icu);
+                }
+            }
+        }
+        return alicu;
+
+    }
+
+    public void RemoveUsersFromList(ArrayList<ItemClass_User> alicu){
+        for(ItemClass_User icuToRemove: alicu){
+            int i;
+            for(i = 0; i < getCount(); i++){
+                ItemClass_User icu = getItem(i);
+                if(icu != null) {
+                    if (icu.sUserName.equals(icuToRemove.sUserName)) {
+                        remove(icu);
+                        break;
+                    }
+                }
+            }
+
+        }
+        //notifyDataSetChanged(); //todo: is this necessary?
+
+    }
+
+    public void AddUsers(ArrayList<ItemClass_User> alicu){
+
+        for(ItemClass_User icu: alicu){
+            add(icu);
+        }
+        //notifyDataSetChanged(); //todo: is this necessary?
+
+    }
+
+
+
+
 }

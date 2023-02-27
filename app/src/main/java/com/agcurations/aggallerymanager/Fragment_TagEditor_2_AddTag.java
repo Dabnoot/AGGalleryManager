@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.os.Bundle;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -9,11 +10,16 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -28,6 +34,9 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private GlobalClass globalClass;
     private ViewModel_TagEditor viewModelTagEditor;
+
+    RelativeLayout gRelativeLayout_UserSelection;
+    RelativeLayout.LayoutParams gLayoutParams_UserSelection;
 
     private ArrayList<ItemClass_Tag> galNewTags;
 
@@ -104,11 +113,116 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 }
             });
 
+            //Call thing to hide the keyboard when somewhere other than an EditText is touched:
             setupUI(getView().findViewById(R.id.linearLayout_fragment_tag_editor_2_add_tag));
+
+            //Configure the Restrict-To-User elements:
+            gRelativeLayout_UserSelection = getView().findViewById(R.id.relativeLayout_UserSelection);
+            gLayoutParams_UserSelection = (RelativeLayout.LayoutParams) gRelativeLayout_UserSelection.getLayoutParams();
+            gLayoutParams_UserSelection.height = 0;
+            gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
+
+            final CheckBox checkBox_RestrictTagToUserIDs = getView().findViewById(R.id.checkBox_RestrictTagToUserIDs);
+            checkBox_RestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ToggleRestrictToUserVisibility();
+                }
+            });
+
+            TextView textView_labelRestrictTagToUserIDs = getView().findViewById(R.id.textView_labelRestrictTagToUserIDs);
+            textView_labelRestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    checkBox_RestrictTagToUserIDs.setChecked(!checkBox_RestrictTagToUserIDs.isChecked());
+                    ToggleRestrictToUserVisibility();
+                }
+            });
+
+            //Initialize the user list:
+            //Initialize the displayed list of users:
+            ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
+            AdapterUserList adapterUserList = new AdapterUserList(
+                    getActivity().getApplicationContext(), R.layout.listview_useritem, globalClass.galicu_Users);
+            adapterUserList.gbCompactMode = true;
+            int[] iSelectedUnselectedBGColors = {
+                    ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2),
+                    ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain)};
+            adapterUserList.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
+            listView_UserPool.setAdapter(adapterUserList);
+            listView_UserPool.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+                    icu.bIsChecked = !icu.bIsChecked;
+                    if(getActivity() == null) return;
+                    if(icu.bIsChecked){
+                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    } else {
+                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+                    }
+                } //End if ListView.onItemClick().
+            }); //End ListView.setOnItemClickListener()
+
+            ListView listView_SelectedUsers = getView().findViewById(R.id.listView_SelectedUsers);
+            ArrayList<ItemClass_User> alicu_Blank = new ArrayList<>();
+            AdapterUserList adapterSelectedUsers = new AdapterUserList(
+                    getActivity().getApplicationContext(), R.layout.listview_useritem, alicu_Blank);
+            adapterSelectedUsers.gbCompactMode = true;
+            adapterSelectedUsers.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
+            listView_SelectedUsers.setAdapter(adapterSelectedUsers);
+            listView_SelectedUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+                    icu.bIsChecked = !icu.bIsChecked;
+                    if(getActivity() == null) return;
+                    if(icu.bIsChecked){
+                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    } else {
+                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+                    }
+                } //End if ListView.onItemClick().
+            }); //End ListView.setOnItemClickListener()
+
+            //Configure the buttons that transfer users from the "user pool" to "selected users" for tag restricted-to selection:
+            ImageButton imageButton_AddUser = getView().findViewById(R.id.imageButton_AddUser);
+            imageButton_AddUser.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ArrayList<ItemClass_User> alicu_UsersToAdd = adapterUserList.GetSelectedUsers();
+                    adapterSelectedUsers.AddUsers(alicu_UsersToAdd);
+                    adapterUserList.RemoveUsersFromList(alicu_UsersToAdd);
+                }
+            });
+
+            ImageButton imageButton_RemoveUser = getView().findViewById(R.id.imageButton_RemoveUser);
+            imageButton_RemoveUser.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ArrayList<ItemClass_User> alicu_UsersToMoveBack = adapterSelectedUsers.GetSelectedUsers();
+                    adapterUserList.AddUsers(alicu_UsersToMoveBack);
+                    adapterSelectedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
+                }
+            });
+
+
+
         }
 
-
         RefreshTagListView();
+    }
+
+    private void ToggleRestrictToUserVisibility(){
+        if(getView() == null) return;
+        final CheckBox checkBox_RestrictTagToUserIDs = getView().findViewById(R.id.checkBox_RestrictTagToUserIDs);
+        boolean bCheckedState = checkBox_RestrictTagToUserIDs.isChecked();
+        if(bCheckedState){
+            gLayoutParams_UserSelection.height = RelativeLayout.LayoutParams.WRAP_CONTENT;
+        } else {
+            gLayoutParams_UserSelection.height = 0;
+        }
+        gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
     }
 
     private void RefreshTagListView(){
@@ -131,7 +245,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
         listView_TagViewer.setAdapter(aasTags);
 
-        EditText editText_TagText = getView().findViewById(R.id.editText_UserName);
+        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
         editText_TagText.setText("");
     }
 
@@ -142,7 +256,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             return;
         }
 
-        EditText editText_TagText = getView().findViewById(R.id.editText_UserName);
+        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
         String sTagName = editText_TagText.getText().toString();
         if(sTagName.equals("")){
             Toast.makeText(getActivity(), "Tag text cannot be blank.", Toast.LENGTH_SHORT).show();
@@ -151,7 +265,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ItemClass_Tag ictNewTag = new ItemClass_Tag(-1, sTagName);
 
         //Get the user-entered tag description:
-        EditText editText_TagDescription = getView().findViewById(R.id.editText_AccessPinNumber);
+        EditText editText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
 
         //Get the selected Age Rating:
@@ -194,6 +308,9 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             }
         }
     }
+
+
+
 
 
 

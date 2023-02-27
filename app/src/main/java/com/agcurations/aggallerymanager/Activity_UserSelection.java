@@ -41,7 +41,7 @@ public class Activity_UserSelection extends AppCompatActivity {
         ListView listView_UserList = findViewById(R.id.listView_UserList);
         AdapterUserList adapterUserList = new AdapterUserList(
                 getApplicationContext(), R.layout.listview_useritem, globalClass.galicu_Users);
-        adapterUserList.gbSimplifiedView = true;
+        //adapterUserList.gbSimplifiedView = true;  //Hides the maturity rating and admin status
         listView_UserList.setAdapter(adapterUserList);
         listView_UserList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

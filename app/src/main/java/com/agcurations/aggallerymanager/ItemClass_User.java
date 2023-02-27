@@ -11,6 +11,7 @@ public class ItemClass_User implements Serializable {
     public int iUserIconColor;
     public boolean bAdmin = false;
     public int iMaturityLevel = 0;
+    public boolean bIsChecked = false; //For listView purposes.
 
     public ItemClass_User() {
     }

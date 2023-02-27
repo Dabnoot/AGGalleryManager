@@ -43,7 +43,7 @@ public class AdapterTagMaturityRatings extends ArrayAdapter<String[]> {
             {"RP",  "Rating Pending - Titles with the RP rating have not yet been assigned a final ESRB rating."},
             {"IB",  "Implicit Bias - Tag associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW. content."},
             {"X",  "X-Rated - Tag associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
-             //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
+             //DO NOT CHANGE ORDER OR INDEXING WITHOUT UPDATING STORED USER DATA.
     };
 
 
