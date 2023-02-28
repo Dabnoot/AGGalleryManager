@@ -2,15 +2,22 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.provider.DocumentsContract;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
@@ -34,6 +41,10 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         Intent broadcastIntent = new Intent();
         boolean bProblem = false;
 
+        String sUriBackupFolder = GlobalClass.gdfDataFolder.getUri()
+                + GlobalClass.gsFileSeparator + "Backup";
+        Uri uriBackupFolder = Uri.parse(sUriBackupFolder);
+
         //Backup the catalog text files:
         for(int i = 0; i < 3; i++){
             StringBuilder sbBuffer = new StringBuilder();
@@ -53,17 +64,17 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
             try {
                 //Write the catalog file:
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
-                /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "CatalogContents_" + sDateTimeStamp + ".dat");*/
-                File fBackup = new File(globalClass.gdfDataFolder + File.separator
-                        + "Backup" + File.separator
-                        + GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents_" + sDateTimeStamp + ".dat");
 
-                FileWriter fwNewCatalogContentsFile = new FileWriter(fBackup, false);
-
-                fwNewCatalogContentsFile.write(sbBuffer.toString());
-                fwNewCatalogContentsFile.flush();
-                fwNewCatalogContentsFile.close();
+                String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents_" + sDateTimeStamp + ".dat";
+                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                if(uriBackupFile != null){
+                    OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
+                    if(osBackupFile != null) {
+                        osBackupFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+                        osBackupFile.flush();
+                        osBackupFile.close();
+                    }
+                }
 
             } catch (Exception e) {
                 String sMessage = "Problem creating backup of CatalogContents.dat.\n" + e.getMessage();
@@ -85,23 +96,24 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                     bHeaderWritten = true;
                 }
 
-                sbBuffer.append(globalClass.getTagRecordString(tmEntry.getValue())); //Append the data.
+                sbBuffer.append(GlobalClass.getTagRecordString(tmEntry.getValue())); //Append the data.
                 sbBuffer.append("\n");
             }
 
             try {
                 //Write the tag file:
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
-                /*File fBackup = new File(globalClass.gfCatalogFolders[i].getAbsolutePath()
-                        + File.separator + "Tags_" + sDateTimeStamp + ".dat");*/
-                File fBackup = new File(globalClass.gdfDataFolder + File.separator
-                        + "Backup" + File.separator
-                        + GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat");
-                FileWriter fwNewTagsFile = new FileWriter(fBackup, false);
 
-                fwNewTagsFile.write(sbBuffer.toString());
-                fwNewTagsFile.flush();
-                fwNewTagsFile.close();
+                String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat";
+                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                if(uriBackupFile != null){
+                    OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
+                    if(osBackupFile != null) {
+                        osBackupFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+                        osBackupFile.flush();
+                        osBackupFile.close();
+                    }
+                }
 
             } catch (Exception e) {
                 String sMessage = "Problem creating backup of Tags.dat.\n" + e.getMessage();
@@ -122,6 +134,12 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         return Result.success();
     }
 
-
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Catalog_BackupCatalogDBFiles:" + sRoutine, sMessage);
+    }
 
 }

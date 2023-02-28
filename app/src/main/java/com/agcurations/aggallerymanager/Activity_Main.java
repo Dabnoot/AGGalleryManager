@@ -599,6 +599,7 @@ public class Activity_Main extends AppCompatActivity {
 
         if(item.getItemId() == R.id.menu_DatabaseBackup) {
             //Backup the database files (CatalogContents.dat):
+            Toast.makeText(getApplicationContext(), "Initiating database backup.", Toast.LENGTH_SHORT).show();
             Service_Main.startActionCatalogBackup(this);
             return true;
         } else if(item.getItemId() == R.id.menu_WorkerConsole){
