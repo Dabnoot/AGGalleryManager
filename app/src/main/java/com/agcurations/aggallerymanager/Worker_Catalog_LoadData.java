@@ -293,13 +293,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //fixM3U8InternalFilePaths();
 
-        //todo: Create test case here.
-        //todo: Use the storage access framework to create a text file of name Bananna.
-        //todo: Create a directory of the name Bananna.
-        //todo: Use DocumentFile to retrieve DocumentFile of name Bananna.
-        //todo: Test if the returned Document file is the text file or the directory.
-        //todo: Attempt to retreive the DocumentFile for the other item that was not returned.
-        //Todo: This is in response to Worker_LocalFileTransfer todo item near line 360.
+
 
 
         iProgressNumerator++;

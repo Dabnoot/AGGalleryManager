@@ -18,12 +18,12 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:orientation="vertical"
-            android:gravity="center">
+            app:layout_constraintTop_toTopOf="parent">
 
             <RelativeLayout
                 android:layout_width="wrap_content"
@@ -33,74 +33,74 @@
                     android:id="@+id/textView_NewTagTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
                     android:text="New Tag"
                     android:textColor="@color/colorTextColor"
-                    android:textSize="40sp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_alignParentTop="true"/>
+                    android:textSize="40sp" />
 
                 <TextView
                     android:id="@+id/textView_NewTagSubText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_below="@+id/textView_NewTagTitle"
+                    android:layout_centerHorizontal="true"
                     android:text="Enter new tag details below."
                     android:textColor="@color/colorTextColor"
-                    android:textSize="24sp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_below="@+id/textView_NewTagTitle"/>
+                    android:textSize="24sp" />
 
                 <RelativeLayout
                     android:id="@+id/relativeLayout_TagDetails"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
                     android:layout_below="@+id/textView_NewTagSubText"
-                    android:layout_centerHorizontal="true">
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="10dp">
 
                     <TextView
                         android:id="@+id/textView_labelTagText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignEnd="@+id/textView_labelTagDescription"
                         android:layout_marginTop="10dp"
                         android:layout_marginBottom="20dp"
                         android:text="Tag text:"
                         android:textColor="@color/colorTextColor"
-                        android:textSize="22sp"
-                        android:layout_alignEnd="@+id/textView_labelTagDescription"/>
+                        android:textSize="22sp" />
 
                     <EditText
                         android:id="@+id/editText_TagText"
                         android:layout_width="wrap_content"
-                        android:minWidth="200dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:textSize="22sp"
-                        android:textColor="@color/colorTextColor"
                         android:layout_alignBaseline="@+id/textView_labelTagText"
-                        android:layout_toEndOf="@+id/textView_labelTagText"/>
+                        android:layout_marginStart="10dp"
+                        android:layout_toEndOf="@+id/textView_labelTagText"
+                        android:minWidth="200dp"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
 
                     <TextView
                         android:id="@+id/textView_labelTagDescription"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_below="@+id/editText_TagText"
+                        android:layout_alignParentStart="true"
                         android:layout_marginTop="10dp"
                         android:text="Tag description:"
                         android:textColor="@color/colorTextColor"
-                        android:textSize="22sp"
-                        android:layout_alignParentStart="true"
-                        android:layout_below="@+id/editText_TagText"/>
+                        android:textSize="22sp" />
 
                     <EditText
                         android:id="@+id/editText_TagDescription"
                         android:layout_width="wrap_content"
-                        android:minWidth="200dp"
                         android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@+id/textView_labelTagDescription"
                         android:layout_marginStart="10dp"
                         android:layout_marginTop="10dp"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp"
                         android:layout_toEndOf="@+id/textView_labelTagDescription"
-                        android:layout_alignBaseline="@+id/textView_labelTagDescription"/>
+                        android:minWidth="200dp"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
 
                 </RelativeLayout>
 
@@ -108,51 +108,49 @@
                     android:id="@+id/textView_labelContentMaturity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_below="@+id/relativeLayout_TagDetails"
+                    android:layout_centerHorizontal="true"
                     android:layout_marginTop="30dp"
                     android:text="Age rating:"
                     android:textColor="@color/colorTextColor"
-                    android:textSize="22sp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_below="@+id/relativeLayout_TagDetails"/>
+                    android:textSize="22sp" />
 
                 <Spinner
                     android:id="@+id/spinner_ContentMaturity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginEnd="20dp"
                     android:layout_below="@+id/textView_labelContentMaturity"
-                    />
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp" />
 
                 <RelativeLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_below="@+id/spinner_ContentMaturity">
+                    android:layout_below="@+id/spinner_ContentMaturity"
+                    android:layout_centerHorizontal="true">
 
                     <RelativeLayout
-                        android:id="@+id/relativeLayout_CheckboxRestrictToUsers"
+                        android:id="@+id/relativeLayout_CheckboxSetApprovedUsers"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerHorizontal="true">
 
                         <CheckBox
-                            android:id="@+id/checkBox_RestrictTagToUserIDs"
+                            android:id="@+id/checkBox_SetApprovedUsers"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            />
+                            android:layout_height="wrap_content" />
 
                         <TextView
                             android:id="@+id/textView_labelRestrictTagToUserIDs"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
                             android:layout_marginTop="7dp"
+                            android:layout_toEndOf="@+id/checkBox_SetApprovedUsers"
                             android:text="Restrict tag to user IDs"
                             android:textColor="@color/colorTextColor"
-                            android:textSize="22sp"
-                            android:layout_centerHorizontal="true"
-                            android:layout_toEndOf="@+id/checkBox_RestrictTagToUserIDs"/>
+                            android:textSize="22sp" />
 
                     </RelativeLayout>
 
@@ -161,7 +159,7 @@
                         android:id="@+id/relativeLayout_UserSelection"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_below="@+id/relativeLayout_CheckboxRestrictToUsers">
+                        android:layout_below="@+id/relativeLayout_CheckboxSetApprovedUsers">
 
                         <RelativeLayout
                             android:id="@+id/relativeLayout_UserPool"
@@ -172,16 +170,16 @@
                                 android:id="@+id/textView_labelUserPool"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_centerHorizontal="true"
                                 android:text="User pool:"
                                 android:textColor="@color/colorTextColor"
-                                android:textSize="22sp"
-                                android:layout_centerHorizontal="true"/>
+                                android:textSize="22sp" />
 
                             <ListView
                                 android:id="@+id/listView_UserPool"
                                 android:layout_width="200dp"
                                 android:layout_height="100dp"
-                                android:layout_below="@+id/textView_labelUserPool"/>
+                                android:layout_below="@+id/textView_labelUserPool" />
 
                         </RelativeLayout>
 
@@ -190,24 +188,25 @@
                             android:id="@+id/relativeLayout_UserMove"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_toEndOf="@+id/relativeLayout_UserPool"
+                            android:layout_centerVertical="true"
                             android:layout_margin="10dp"
-                            android:layout_centerVertical="true">
+                            android:layout_marginTop="30dp"
+                            android:layout_toEndOf="@+id/relativeLayout_UserPool">
 
                             <ImageButton
                                 android:id="@+id/imageButton_AddUser"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:src="@drawable/baseline_chevron_right_24"
-                                android:backgroundTint="@color/colorButton" />
+                                android:backgroundTint="@color/colorButton"
+                                android:src="@drawable/baseline_chevron_right_24" />
 
                             <ImageButton
                                 android:id="@+id/imageButton_RemoveUser"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:src="@drawable/baseline_chevron_left_24"
+                                android:layout_below="@+id/imageButton_AddUser"
                                 android:backgroundTint="@color/colorButton"
-                                android:layout_below="@+id/imageButton_AddUser"/>
+                                android:src="@drawable/baseline_chevron_left_24" />
 
                         </RelativeLayout>
 
@@ -222,26 +221,24 @@
                                 android:id="@+id/textView_labelSelectedUsers"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:layout_centerHorizontal="true"
                                 android:text="Selected Users:"
                                 android:textColor="@color/colorTextColor"
-                                android:textSize="22sp"
-                                android:layout_centerHorizontal="true"/>
+                                android:textSize="22sp" />
 
                             <ListView
                                 android:id="@+id/listView_SelectedUsers"
                                 android:layout_width="200dp"
                                 android:layout_height="100dp"
-                                android:layout_below="@+id/textView_labelSelectedUsers"/>
+                                android:layout_below="@+id/textView_labelSelectedUsers" />
 
                         </RelativeLayout>
-
 
 
                     </RelativeLayout>
 
 
                 </RelativeLayout>
-
 
 
             </RelativeLayout>
@@ -258,7 +255,7 @@
                     android:layout_marginTop="10dp"
                     android:text="Add Tag"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorButton"/>
+                    app:backgroundTint="@color/colorButton" />
 
                 <Button
                     android:id="@+id/button_Finish"

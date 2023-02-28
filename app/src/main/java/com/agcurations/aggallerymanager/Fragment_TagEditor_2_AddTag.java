@@ -122,8 +122,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gLayoutParams_UserSelection.height = 0;
             gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
 
-            final CheckBox checkBox_RestrictTagToUserIDs = getView().findViewById(R.id.checkBox_RestrictTagToUserIDs);
-            checkBox_RestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
+            final CheckBox checkBox_SetApprovedUsers = getView().findViewById(R.id.checkBox_SetApprovedUsers);
+            checkBox_SetApprovedUsers.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ToggleRestrictToUserVisibility();
@@ -134,7 +134,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             textView_labelRestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    checkBox_RestrictTagToUserIDs.setChecked(!checkBox_RestrictTagToUserIDs.isChecked());
+                    checkBox_SetApprovedUsers.setChecked(!checkBox_SetApprovedUsers.isChecked());
                     ToggleRestrictToUserVisibility();
                 }
             });
@@ -215,7 +215,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private void ToggleRestrictToUserVisibility(){
         if(getView() == null) return;
-        final CheckBox checkBox_RestrictTagToUserIDs = getView().findViewById(R.id.checkBox_RestrictTagToUserIDs);
+        final CheckBox checkBox_RestrictTagToUserIDs = getView().findViewById(R.id.checkBox_SetApprovedUsers);
         boolean bCheckedState = checkBox_RestrictTagToUserIDs.isChecked();
         if(bCheckedState){
             gLayoutParams_UserSelection.height = RelativeLayout.LayoutParams.WRAP_CONTENT;

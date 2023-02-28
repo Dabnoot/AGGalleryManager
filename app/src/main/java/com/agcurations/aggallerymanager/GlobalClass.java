@@ -1084,10 +1084,12 @@ public class GlobalClass extends Application {
 
     public static final int giTagFileVersion = 1;
     public static String getTagFileHeader(){
-        return "TagID" +
+        return
+                "TagID" +
                 "\t" + "TagText" +
                 "\t" + "TagDescription" +
                 "\t" + "TagAgeRating" +
+                "\t" + "ApprovedUsers" +
                 "\t" + "Version:" + giTagFileVersion;
     }
 
@@ -1102,6 +1104,16 @@ public class GlobalClass extends Application {
             ict.iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_X; //Default to highest restricted age rating.
             ict.sTagText = "00TagFault_" + ict.sTagText;
         }
+
+        //Length is 1-based
+        //Get the approved user list:
+        String sApprovedUserRaw = sRecord[4]; //Array index is 0-based.
+        sApprovedUserRaw = sApprovedUserRaw.substring(1, sApprovedUserRaw.length() - 1); //Remove '{' and '}'.
+        String[] sApprovedUserArray = sApprovedUserRaw.split("%%");
+        for (int i = 0; i < sApprovedUserArray.length; i++) {
+            sApprovedUserArray[i] = GlobalClass.JumbleStorageText(sApprovedUserArray[i]);
+        }
+        ict.alsTagApprovedUsers = new ArrayList<>(Arrays.asList(sApprovedUserArray));
 
         return ict;
     }
@@ -1315,11 +1327,30 @@ public class GlobalClass extends Application {
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static String getTagRecordString(ItemClass_Tag ict){
         //For writing tags to a tags file.
-        String sTagRecord =
+
+        String sTagRecord = "";
+
+        sTagRecord = sTagRecord +
                 JumbleStorageText(ict.iTagID.toString()) + "\t" +
                         JumbleStorageText(ict.sTagText) + "\t" +
                         JumbleStorageText(ict.sTagDescription) + "\t" +
                         ict.iTagAgeRating;
+
+        //If users are assigned to the tag, build the users' string:
+        //Append the back-stack to the record:
+        sTagRecord = sTagRecord + "\t" + "{";
+        if(ict.alsTagApprovedUsers != null) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < ict.alsTagApprovedUsers.size(); i++) {
+                sb.append(GlobalClass.JumbleStorageText(ict.alsTagApprovedUsers.get(i)));
+                if (i < (ict.alsTagApprovedUsers.size() - 1)) {
+                    sb.append("%%"); //A double-percent is a symbol not allowed in a web address. Using this as an in-string delimiter.
+                }
+            }
+            sTagRecord = sTagRecord + sb;
+        }
+        sTagRecord = sTagRecord + "%%" + "}";
+
         return sTagRecord;
     }
 
@@ -1386,18 +1417,18 @@ public class GlobalClass extends Application {
 
     public void TagDataFileAddNewField(){
         //Execute these steps to add a new field to the tags files.
-        //  .1. Create a backup of the tags files.
-        //  .2. Verify that the backup was successful by confirming the files exist and are not empty.
-        //  .3. Update ItemClass_Tag.java to include the new data item, perhaps with an initial value.
-        //  .3. Update "getTagFileHeader" to include the name of the new field.
-        //  .4. Update "getTagRecordString" to include the new field data in the write operation.
-        //  .5. Run this routine from Worker_Catalog_LoadData.java.
-        //  .6. Verify the new field exists in the tags data files.
-        //  .7. Comment-out code that ran this routine from Worker_Catalog_LoadData.java.
-        //  .8. Update "ConvertFileLineToTagItem(String[] sRecord)" to interpret the new field in the data record and write to ItemClass_Tag.
-        //  .9. Consider removing any initial value that was applied to the field in ItemClass_Tag.
-        //  .10. Rebuild and install the app on the test device.
-        //  11. Verify all is well and commit code.
+        //  .01. Create a backup of the tags files.
+        //  .02. Verify that the backup was successful by confirming the files exist and are not empty.
+        //  .03. Update ItemClass_Tag.java to include the new data item, perhaps with an initial value.
+        //  .04. Update "getTagFileHeader" to include the name of the new field.
+        //  .05. Update "getTagRecordString" to include the new field data in the write operation.
+        //  .06. Run this routine from Worker_Catalog_LoadData.java.
+        //  .07. Verify the new field exists in the tags data files.
+        //  .08. Comment-out code that ran this routine from Worker_Catalog_LoadData.java.
+        //  .09. Update "ConvertFileLineToTagItem(String[] sRecord)" to interpret the new field in the data record and write to ItemClass_Tag.
+        //  .10. Consider removing any initial value that was applied to the field in ItemClass_Tag.
+        //  .11. Rebuild and install the app on the test device.
+        //  .12. Verify all is well and commit code.
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
 
@@ -1761,244 +1792,6 @@ public class GlobalClass extends Application {
     //====================================================================================
     //===== Worker/Download Management ==========================================================
     //====================================================================================
-
-    /*The below routine is believed to be moved to a worker*/
-    /*public void ExecuteDownloadManagerPostProcessing(){
-        //DownloadIdleService will delete files after about a week. Rename downloaded files to prevent
-        //  this from happening. This will need to occur for downloaded comics or
-
-        ArrayList<ItemClass_CatalogItem> alsCatalogItemsToUpdate = new ArrayList<>();
-
-        //Look for comic post-processing required:
-        //Comic post-processing should not be required unless the user is missing an external SD Card. In
-        //  that case, DownloadManager will download to the final directory and those files will need to be moved.
-        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-            ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) { todo: Is this flag still used?
-                //Check to see if all of the files have downloaded:
-                DocumentFile dfComicsFolder = gdfCatalogFolders[MEDIA_CATEGORY_COMICS];
-                DocumentFile dfComicItemFolder = dfComicsFolder.findFile(ci.sFolder_Name);
-                if (dfComicItemFolder == null) {
-                    Log.d("Post DLManager Ops", "Comic folder not found for comic " + ci.sItemID);
-                    continue;
-                }
-                DocumentFile dfComicItemDLFolder = dfComicItemFolder.findFile(GlobalClass.gsDLTempFolderName);
-                if (dfComicItemDLFolder == null) {
-                    Log.d("Post DLManager Ops", "DL folder not found for comic " + ci.sItemID);
-                    continue;
-                }
-
-                DocumentFile[] dfComicDLFiles = dfComicItemDLFolder.listFiles();
-                if (dfComicDLFiles.length > 0) {
-                    if (dfComicDLFiles.length == ci.iComicPages) {
-                        //All of the files have been downloaded.
-                        //Attempt to move the files:
-                        boolean bMoveSuccessful = true;
-                        for (DocumentFile dfDLFile : dfComicDLFiles) {
-                            if (dfDLFile.isFile()) {
-                                //Here we move the file from the internal download location to a final location.
-                                //  This is to prevent the Android Download Manager from "cleaning up" the files
-                                //  that the user is attempting to add to their library. ADM will come behind
-                                //  and delete files that were downloaded by the app and not opened, etc.
-                                try {
-                                    DocumentsContract.moveDocument(gcrContentResolver, dfDLFile.getUri(), dfComicItemDLFolder.getUri(), dfComicItemFolder.getUri());
-                                } catch (Exception e){
-                                    Log.d("File move", "Cannot move file\n" + dfDLFile.getUri() + "\nfrom\n" + dfComicItemDLFolder.getUri() + "\nto\n" + dfComicItemFolder.getUri() + ".");
-                                    bMoveSuccessful = false;
-                                }
-                            }
-                        }
-                        if (bMoveSuccessful) {
-                            //Delete the DL folder:
-                            if (!dfComicItemDLFolder.delete()) {
-                                Log.d("File move", "Could not delete " + dfComicItemDLFolder.getUri() + " folder.");
-                            }
-                            ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
-                            alsCatalogItemsToUpdate.add(ci);
-                        }
-                    }
-                }
-
-            }
-        }
-
-        //Look for video post-processing required:
-        for(Map.Entry<String, ItemClass_CatalogItem> tmCatalogEntry: gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
-            ItemClass_CatalogItem ci = tmCatalogEntry.getValue();
-            if((ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE) ||
-                    (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT)) {todo: Are these flags still used?
-
-                //Check to see if the concatenation (or single video file download) operation is complete:
-
-                DocumentFile dfVideosFolder = gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
-                DocumentFile dfVideoDestinationFolder = dfVideosFolder.findFile(ci.sFolder_Name);
-                if (dfVideoDestinationFolder == null) {
-                    Log.d("Video post-processing", "Could not find video destination folder for item " + ci.sItemID);
-                    continue;
-                }
-                DocumentFile dfVideoWorkingFolder = dfVideoDestinationFolder.findFile(ci.sItemID);
-                if (dfVideoWorkingFolder == null) {
-                    Log.d("Video post-processing", "Could not find video working folder for item " + ci.sItemID);
-                    continue;
-                }
-
-                DocumentFile[] dfVideoWorkingFolderListing = dfVideoWorkingFolder.listFiles();
-                ArrayList<DocumentFile> aldfOutputFolders = new ArrayList<>();
-                if(dfVideoWorkingFolderListing.length > 0) {
-                    for (DocumentFile df : dfVideoWorkingFolderListing) {
-                        //Locate the output folder
-                        if (df.isDirectory()) {
-                            aldfOutputFolders.add(df); //The worker could potentially create multiple output folders if it is re-run.
-                        }
-                    }
-                    //Attempt to locate the output file of a concatenation operation:
-                    for (DocumentFile dfOutputFolder : aldfOutputFolders) {
-                        boolean bRenameAndMoveSuccessful = false;
-                        DocumentFile dfConcatenationOutputFile = dfOutputFolder.findFile(ci.sFilename);
-                        if(dfConcatenationOutputFile == null){
-                            Log.d("Video post-processing", "Could not find video working folder for item " + ci.sItemID);
-                            continue;
-                        }
-
-                        //Concatenation is complete
-                        //Move the file:
-
-                        //Make sure the 'rename-to' name is unique:
-                        ci.sFilename = getUniqueFileName(dfVideoDestinationFolder, ci.sFilename, true);
-
-
-                        try {
-                            //Rename the file:
-                            Uri uriRenamedDocumentUri = DocumentsContract.renameDocument(gcrContentResolver, dfConcatenationOutputFile.getUri(), ci.sFilename);
-                            if(uriRenamedDocumentUri == null){
-                                //Failed to rename document.
-                                Log.d("Video post-processing", "Could not rename concatenated file for item " + ci.sItemID);
-                                continue;
-                            }
-                            dfConcatenationOutputFile = DocumentFile.fromSingleUri(getApplicationContext(), uriRenamedDocumentUri);
-                            if(dfConcatenationOutputFile == null){
-                                //Failed to rename document.
-                                Log.d("Video post-processing", "Could not identify renamed concatenated file for item " + ci.sItemID);
-                                continue;
-                            }
-                            //Move the file:
-                            Uri uriMovedDocumentUri = DocumentsContract.moveDocument(gcrContentResolver,
-                                    dfConcatenationOutputFile.getUri(),
-                                    dfOutputFolder.getUri(),
-                                    dfVideoDestinationFolder.getUri());
-
-                            if(uriMovedDocumentUri != null) {
-                                Log.d("Video post-processing", "Trouble with moving the output file of a concatenation operation for item " + ci.sItemID);
-                                bRenameAndMoveSuccessful = true;
-                            }
-
-                        } catch (Exception e){
-                            Log.d("Video post-processing", "Trouble with locating, renaming, and moving the output file of a concatenation operation for item " + ci.sItemID);
-                        }
-
-
-                        if(!bRenameAndMoveSuccessful){
-                            break;
-                        }
-
-
-                        //Delete output folder contents for any and all output folders since the move op was successful
-                        // via second inner-loop (outer loop will not be run again via break at the end of the loop):
-                        for (DocumentFile df2 : aldfOutputFolders) {
-                            DocumentFile[] f2_Contents = df2.listFiles();
-                            if (f2_Contents.length > 0) {
-                                for (DocumentFile df3 : f2_Contents) {
-                                    if(!df3.delete()){
-                                        Log.d("File Deletion", "Unable to delete file " + df3.getUri() + ".");
-                                    }
-                                }
-                            }
-                        }
-                        //Delete working folder contents:
-                        for (DocumentFile df4 : dfVideoWorkingFolderListing) {
-                            if(!df4.delete()){
-                                Log.d("File Deletion", "Unable to delete file or folder " + df4.getUri() + ".");
-                            }
-                        }
-                        //Delete working folder:
-                        if(!dfVideoWorkingFolder.delete()){
-                            Log.d("File Deletion", "Unable to delete folder " + dfVideoWorkingFolder.getUri() + ".");
-                        }
-
-                        //Update catalog item to indicate no post-processing needed:
-                        ci.iSpecialFlag = ItemClass_CatalogItem.FLAG_NO_CODE;
-
-                        //Update the video time:
-                        MediaMetadataRetriever mediaMetadataRetriever;
-                        mediaMetadataRetriever = new MediaMetadataRetriever();
-                        try {
-                            DocumentFile dfVideoFile = dfVideoDestinationFolder.findFile(ci.sFilename);
-                            if(dfVideoFile == null){
-                                Log.d("Video post-processing", "Trouble locating the moved output file of a concatenation operation for item " + ci.sItemID);
-                                break;
-                            }
-
-                            mediaMetadataRetriever.setDataSource(getApplicationContext(), dfVideoFile.getUri());
-                            String sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                            String sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                            String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                            if(time != null) {
-                                long lDurationInMilliseconds = Long.parseLong(time);
-                                ci.lSize = dfVideoFile.length(); //Get size of the file in bytes.
-                                int iErrorSign = 1;
-                                if (ci.lDuration_Milliseconds != 0) {
-                                    double dPercentPredictedDuration = lDurationInMilliseconds / (float) ci.lDuration_Milliseconds;
-                                    if (dPercentPredictedDuration < .95) {
-                                        //Duration of the converted video may indicate that an FFMPEG error occurred. Set the duration to
-                                        //  negative to allow flagging of this issue.
-                                        iErrorSign = -1;
-                                    }
-                                }
-                                ci.lDuration_Milliseconds = lDurationInMilliseconds * iErrorSign;
-                                ci.sDuration_Text = GlobalClass.getDurationTextFromMilliseconds(lDurationInMilliseconds);
-                            }
-                            if(sWidth != null && sHeight != null) {
-                                if (!sWidth.equals("") && !sHeight.equals("")) {
-                                    ci.iWidth = Integer.parseInt(sWidth);
-                                    ci.iHeight = Integer.parseInt(sHeight);
-                                }
-                            }
-                        } catch (Exception e) {
-                            Log.d("Video post-processing", "Unable to obtain video metadata for item ID " + ci.sItemID);
-                        }
-
-                        try {
-                            mediaMetadataRetriever.release();
-                        } catch (Exception e){
-                            String sMessage = "" + e.getMessage();
-                            Log.d("GlobalClass:ExecuteDownloadManagerPostProcessing", sMessage);
-                        }
-
-                        alsCatalogItemsToUpdate.add(ci);
-                        break; //Don't go through any more "output" folders in this temp download directory.
-
-                    }
-                }
-
-
-            }
-        }
-
-        //Update any catalog records:
-        for(ItemClass_CatalogItem ci: alsCatalogItemsToUpdate) {
-            CatalogDataFile_UpdateRecord(ci);
-        }
-
-
-        //todo: Look for left-behind downloaded video files:
-
-
-        //Look for image files downloaded from the browser into a temporary holding folder:
-        //CheckAndMoveDLHoldingTempImageFiles();
-
-    }*/
-
-
 
 
 
