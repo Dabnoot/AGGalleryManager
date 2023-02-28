@@ -1,6 +1,7 @@
 package com.agcurations.aggallerymanager;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class ItemClass_Tag implements Serializable {
 
@@ -11,10 +12,9 @@ public class ItemClass_Tag implements Serializable {
     public Boolean bIsRestricted = false;
     public int iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_RP;
 
-    public String sTagPrivateToUser = "";   //If given a user name, this tag can only be seen by the user that created it.
-                                            // Security flaw - if the user is deleted and re-added,
-                                            // the individual recreating the user will be able to see the tags.
-                                            //todo.
+    public ArrayList<String> alsTagApprovedUsers = null;
+    //A list of users to whom this tag, and items carrying this tag, is restricted. Other users
+    //  will not be able to see this tag nor the items to which it has been assigned.
 
     //Create a variable to be used to preserve the order in which items are selected.
     //  This is needed because the first tag may be used for special purposes.
@@ -23,8 +23,6 @@ public class ItemClass_Tag implements Serializable {
     public Boolean bIsChecked = false;
 
     int iHistogramCount = 0;            //To count the number of times this tag is used.
-    int iHistogramCountXref = 0;        //Not for global use. Used to facilitate counting the
-                                        //  number of times this tag is used alongside other tags.
 
     public ItemClass_Tag(int _iTagID, String _sTagText) {
         this.iTagID = _iTagID;
