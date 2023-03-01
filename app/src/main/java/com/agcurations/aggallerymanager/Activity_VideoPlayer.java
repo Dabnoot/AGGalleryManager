@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -285,6 +286,17 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
         });
 
+        RelativeLayout frameLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
+        frameLayout_VideoPlayer.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                //This handles the case when the VideoView has resized to fit a video and
+                //  left touch-insensitive deadzones to the left and right of the playing video.
+                //  This typically happens when playing portrait-oriented videos in a landscape
+                //  screen orientation.
+                return gdVideoView.onTouchEvent(event);
+            }
+        });
 
         //Prepare the Gif image viewer to accept swipe to go to next or previous file:
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
