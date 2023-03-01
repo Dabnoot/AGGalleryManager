@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Insets;
@@ -16,7 +17,9 @@ import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.DocumentsContract;
 import android.text.Html;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -412,6 +415,34 @@ public class GlobalClass extends Application {
     public static String[] SplitFileNameIntoBaseAndExtension(String sFileName){
         return sFileName.split("\\.(?=[^\\.]+$)");
     }
+
+    public static ArrayList<String> GetDirFileNames(Uri uriParent){
+
+        ArrayList<String> alsFileNames = new ArrayList<>();
+
+        final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent,
+                DocumentsContract.getDocumentId(uriParent));
+        Cursor c = null;
+        try {
+            c = gcrContentResolver.query(childrenUri, new String[] {
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME }, null, null, null);
+            if(c != null) {
+                while (c.moveToNext()) {
+                    final String sFileName = c.getString(0);
+                    alsFileNames.add(sFileName);
+                }
+                c.close();
+            }
+        } catch (Exception e) {
+            Log.d("GlobalClass:GetDirFileNames()", "Problem querying folder.");
+        }
+        return alsFileNames;
+    }
+    public static ArrayList<String> GetDirFileNames(String sUriParent){
+        Uri uriParent = Uri.parse(sUriParent);
+        return GetDirFileNames(uriParent);
+    }
+
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================

@@ -786,10 +786,44 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                         boolean bM3U8_SAF_File_Exists = false;
                         try{
-                            InputStream is = GlobalClass.gcrContentResolver.openInputStream(uriM3U8_SAF);
-                            if(is != null){
+                            InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8_SAF);
+                            if(isM3U8 != null){
                                 bM3U8_SAF_File_Exists = true;
-                                is.close();
+                                //Read-in one path to make sure it is accurate:
+                                byte[] byteM3U8File = isM3U8.readAllBytes();
+                                isM3U8.close();
+                                String sM3U8File = new String(byteM3U8File);
+                                String[] sM3U8FileRecords = sM3U8File.split("\n");
+                                StringBuilder sbM3U8New = new StringBuilder();
+                                String sLine;
+                                for (String sM3U8FileRecord : sM3U8FileRecords) {
+                                    sLine = sM3U8FileRecord;
+                                    if (!sM3U8FileRecord.startsWith("#") && sM3U8FileRecord.endsWith("st")) {
+                                        //sLine should now have a Uri path name.
+                                        Uri uriTest = Uri.parse(sLine);
+                                        try {
+                                            InputStream isTest = GlobalClass.gcrContentResolver.openInputStream(uriTest);
+                                            if(isTest != null){
+                                                isTest.close();
+                                            }
+                                        } catch (Exception e){
+                                            //If the segment file in the M3U8 file does not exist, delete the adapted M3U8 file so that it can be re-written.
+                                            isM3U8.close();
+                                            if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriM3U8_SAF)){
+                                                LogThis("initializePlayer()", "Android Storage Access Framework-adapted M3U8 file contained a \n" +
+                                                        "reference to a segment file whose Uri does not point to a file. The adapted M3U8 file must be re-written\n" +
+                                                        "but it could not be deleted.", null);
+                                            } else {
+                                                bM3U8_SAF_File_Exists = false;
+                                            }
+                                            break;
+                                        }
+
+                                    }
+                                    sbM3U8New.append(sLine);
+                                    sbM3U8New.append("\n");
+                                }
+                                isM3U8.close();
                             }
                         } catch (Exception e){
                             LogThis("initializePlayer()", "Could not find SAF-adapted M3U8 file. This is a handled condition, non-error.", null);
@@ -812,6 +846,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                     return;
                                 }
 
+                                ArrayList<String> alsExistingFileNames = GlobalClass.GetDirFileNames(uriParent);
+
                                 //With the new file created but empty, copy over the contents of the existing M3U8 file but replace the video segment files
                                 //  with the SAF Uri strings:
                                 InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
@@ -827,16 +863,22 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                     String[] sM3U8FileRecords = sM3U8File.split("\n");
                                     StringBuilder sbM3U8New = new StringBuilder();
                                     String sLine;
+                                    boolean bMissingRecords = false;
                                     for (String sM3U8FileRecord : sM3U8FileRecords) {
                                         sLine = sM3U8FileRecord;
+                                        //todo: make sure all of the video segment files exist or the video player will not play at all.
                                         if (!sM3U8FileRecord.startsWith("#") && sM3U8FileRecord.endsWith("st")) {
                                             //sLine should have a file name.
-                                            String sVideoSegmentUri = GlobalClass.gsUriAppRootPrefix
-                                                    + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                                    + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                                    + GlobalClass.gsFileSeparator + ci.sItemID
-                                                    + GlobalClass.gsFileSeparator + sLine;
-                                            sLine = sVideoSegmentUri;
+                                            if(alsExistingFileNames.contains(sLine)) {
+                                                sLine = GlobalClass.gsUriAppRootPrefix
+                                                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+                                                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                                        + GlobalClass.gsFileSeparator + ci.sItemID
+                                                        + GlobalClass.gsFileSeparator + sLine;
+                                            } else {
+                                                sLine = "#Missing file: " + sLine;
+                                                bMissingRecords = true;
+                                            }
                                         }
                                         sbM3U8New.append(sLine);
                                         sbM3U8New.append("\n");
@@ -846,6 +888,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                     osM3U8New.write(sData.getBytes(StandardCharsets.UTF_8));
                                     osM3U8New.flush();
                                     osM3U8New.close();
+                                    if(bMissingRecords){
+                                        Toast.makeText(getApplicationContext(), "This video file appears to be missing video segment files. Perhaps retry download.", Toast.LENGTH_SHORT).show();
+                                        ci.iAllVideoSegmentFilesDetected = ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE;
+                                        globalClass.CatalogDataFile_UpdateRecord(ci); //Write the status to the database.
+                                    }
                                 }
                             } catch (Exception e) {
                                 sMessage = "Problem opening InputStream to M3U8 file: " + e.getMessage();
