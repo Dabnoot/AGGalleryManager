@@ -312,7 +312,9 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         /*lEndTime = System.nanoTime();
         Log.d("********Time used to read folder","*******Time used to do everything else: " + TimeUnit.MILLISECONDS.convert(lEndTime - lStartTime, TimeUnit.NANOSECONDS));*/
 
-        ((Activity_Import) getActivity()).fileListCustomAdapter.recalcButtonNext();
+        if(getActivity() != null) {
+            ((Activity_Import) getActivity()).fileListCustomAdapter.recalcButtonNext();
+        }
 
     }
 

@@ -38,6 +38,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     RelativeLayout gRelativeLayout_UserSelection;
     RelativeLayout.LayoutParams gLayoutParams_UserSelection;
 
+    AdapterUserList gAdapterApprovedUsers;
+
     private ArrayList<ItemClass_Tag> galNewTags;
 
     public Fragment_TagEditor_2_AddTag() {
@@ -130,7 +132,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 }
             });
 
-            TextView textView_labelRestrictTagToUserIDs = getView().findViewById(R.id.textView_labelRestrictTagToUserIDs);
+            TextView textView_labelRestrictTagToUserIDs = getView().findViewById(R.id.textView_labelRestrictToUsers);
             textView_labelRestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -164,14 +166,14 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 } //End if ListView.onItemClick().
             }); //End ListView.setOnItemClickListener()
 
-            ListView listView_SelectedUsers = getView().findViewById(R.id.listView_SelectedUsers);
-            ArrayList<ItemClass_User> alicu_Blank = new ArrayList<>();
-            AdapterUserList adapterSelectedUsers = new AdapterUserList(
-                    getActivity().getApplicationContext(), R.layout.listview_useritem, alicu_Blank);
-            adapterSelectedUsers.gbCompactMode = true;
-            adapterSelectedUsers.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
-            listView_SelectedUsers.setAdapter(adapterSelectedUsers);
-            listView_SelectedUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            ListView listView_ApprovedUsers = getView().findViewById(R.id.listView_ApprovedUsers);
+            ArrayList<ItemClass_User> alicu_EmptyUserList = new ArrayList<>();
+            gAdapterApprovedUsers = new AdapterUserList(
+                    getActivity().getApplicationContext(), R.layout.listview_useritem, alicu_EmptyUserList);
+            gAdapterApprovedUsers.gbCompactMode = true;
+            gAdapterApprovedUsers.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
+            listView_ApprovedUsers.setAdapter(gAdapterApprovedUsers);
+            listView_ApprovedUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
@@ -191,7 +193,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 @Override
                 public void onClick(View v) {
                     ArrayList<ItemClass_User> alicu_UsersToAdd = adapterUserList.GetSelectedUsers();
-                    adapterSelectedUsers.AddUsers(alicu_UsersToAdd);
+                    gAdapterApprovedUsers.AddUsers(alicu_UsersToAdd);
                     adapterUserList.RemoveUsersFromList(alicu_UsersToAdd);
                 }
             });
@@ -200,9 +202,9 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             imageButton_RemoveUser.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ArrayList<ItemClass_User> alicu_UsersToMoveBack = adapterSelectedUsers.GetSelectedUsers();
+                    ArrayList<ItemClass_User> alicu_UsersToMoveBack = gAdapterApprovedUsers.GetSelectedUsers();
                     adapterUserList.AddUsers(alicu_UsersToMoveBack);
-                    adapterSelectedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
+                    gAdapterApprovedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
                 }
             });
 
@@ -271,6 +273,9 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         //Get the selected Age Rating:
         Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
         ictNewTag.iTagAgeRating = spinner_AgeRating.getSelectedItemPosition();
+
+        //Get any users to whom the tag is to be restricted (approved users):
+        ictNewTag.alsTagApprovedUsers = gAdapterApprovedUsers.getUserNamesInList();
 
         //Attempt to add the new record:
         ictNewTag = globalClass.TagDataFile_CreateNewRecord(ictNewTag, viewModelTagEditor.iTagEditorMediaCategory);

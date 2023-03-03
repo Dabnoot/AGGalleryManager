@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.DocumentsContract;
@@ -32,7 +31,6 @@ import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -858,7 +856,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                     return;
                                 }
 
-                                ArrayList<String> alsExistingFileNames = GlobalClass.GetDirFileNames(uriParent);
+                                ArrayList<String> alsExistingFileNames = GlobalClass.GetDirectoryFileNames(uriParent);
 
                                 //With the new file created but empty, copy over the contents of the existing M3U8 file but replace the video segment files
                                 //  with the SAF Uri strings:

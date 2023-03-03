@@ -3,11 +3,9 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -80,13 +78,13 @@ public class Worker_Tags_DeleteTag extends Worker {
         globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
 
         //Remove tag from reference list:
-        DocumentFile dfCatalogTagsFile = globalClass.gdfCatalogTagsFiles[giMediaCategory];
+        Uri uriCatalogTagsFile = GlobalClass.gUriCatalogTagsFiles[giMediaCategory];
         try {
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            InputStream isCatalogTagsFile = GlobalClass.gcrContentResolver.openInputStream(dfCatalogTagsFile.getUri());
+            InputStream isCatalogTagsFile = GlobalClass.gcrContentResolver.openInputStream(uriCatalogTagsFile);
             if(isCatalogTagsFile == null){
-                String sMessage = "Problem reading Tags.dat.\n" + dfCatalogTagsFile.getUri();
+                String sMessage = "Problem reading Tags.dat.\n" + uriCatalogTagsFile;
                 globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
                 return Result.failure();
             }
@@ -113,9 +111,9 @@ public class Worker_Tags_DeleteTag extends Worker {
             isCatalogTagsFile.close();
 
             //Write the data to the file:
-            OutputStream osCatalogTagsFile = GlobalClass.gcrContentResolver.openOutputStream(dfCatalogTagsFile.getUri(), "wt");
+            OutputStream osCatalogTagsFile = GlobalClass.gcrContentResolver.openOutputStream(uriCatalogTagsFile, "wt");
             if (osCatalogTagsFile == null){
-                String sMessage = "Problem updating Tags.dat. Cannot open output stream for file \n" + dfCatalogTagsFile.getUri();
+                String sMessage = "Problem updating Tags.dat. Cannot open output stream for file \n" + uriCatalogTagsFile;
                 globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
                 return Result.failure();
             }
@@ -123,7 +121,7 @@ public class Worker_Tags_DeleteTag extends Worker {
             osCatalogTagsFile.flush();
             osCatalogTagsFile.close();
         } catch (Exception e) {
-            String sMessage = "Problem updating Tags.dat.\n" + dfCatalogTagsFile.getUri() + "\n\n" + e.getMessage();
+            String sMessage = "Problem updating Tags.dat.\n" + uriCatalogTagsFile + "\n\n" + e.getMessage();
             globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
             return Result.failure();
         }

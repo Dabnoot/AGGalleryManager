@@ -3,15 +3,13 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.UUID;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
@@ -45,9 +43,9 @@ public class Worker_Import_ImportFiles extends Worker {
         //Set the flags to tell the catalogViewer to view the imported files first:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         sharedPreferences.edit()
-                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
+                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory],
                         GlobalClass.SORT_BY_DATETIME_IMPORTED)
-                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
+                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory],
                         false)
                 .apply();
 
@@ -107,15 +105,15 @@ public class Worker_Import_ImportFiles extends Worker {
                     String sFileName = dfSourceToDelete.getName();
                     String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
 
-                    DocumentFile dfMetadataFile = globalClass.gdfImageDownloadHoldingFolder.findFile(sMetadataFileName);
-                    if (dfMetadataFile == null) {
-                        sMessage = "Could not locate metadata file in location " + globalClass.gdfImageDownloadHoldingFolder.getUri();
+                    Uri uriMetadataFile = GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
+                    if (!GlobalClass.CheckIfFileExists(uriMetadataFile)) {
+                        sMessage = "Could not locate metadata file in location " + GlobalClass.gUriImageDownloadHoldingFolder;
                         Log.d("Worker_Import_ImportFiles", sMessage);
                         continue;
                     }
 
                     sLine = sCreateJobFileRecord(
-                            dfMetadataFile.getUri().toString(),
+                            uriMetadataFile.toString(),
                             fileItem.sUriParent,
                             fileItem.sDestinationFolder,
                             fileItem.sFileOrFolderName,
@@ -133,9 +131,9 @@ public class Worker_Import_ImportFiles extends Worker {
                 fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }
 
-            String sFileName = "";
+            String sFileName;
             String sImageMetadataUri = "";
-            String sSourceUri = "";
+            String sSourceUri;
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
                 Uri uriTemp = Uri.parse(fileItem.sUri);
                 DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriTemp);
@@ -146,13 +144,13 @@ public class Worker_Import_ImportFiles extends Worker {
                 }
                 sFileName = dfSource.getName();
                 String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
-                DocumentFile dfMetadataFile = globalClass.gdfImageDownloadHoldingFolder.findFile(sMetadataFileName);
-                if (dfMetadataFile == null) {
-                    sMessage = "Could not locate metadata file in location " + globalClass.gdfImageDownloadHoldingFolder.getUri();
+                Uri uriMetadataFile = GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
+                if (uriMetadataFile == null) {
+                    sMessage = "Could not locate metadata file in location " + GlobalClass.gUriImageDownloadHoldingFolder;
                     Log.d("Worker_Import_ImportFiles", sMessage);
                     continue;
                 }
-                sImageMetadataUri = dfMetadataFile.getUri().toString();
+                sImageMetadataUri = uriMetadataFile.toString();
                 sSourceUri = dfSource.getUri().toString();
 
             } else {
@@ -237,6 +235,8 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;
                 ciNew.iGrade = fileItem.iGrade;
+                ciNew.sTitle = "" + fileItem.sTitle; //If this is a file from the holding folder, it may have an original, unshortened file name.
+
                 if(!fileItem.sURL.equals("")){
                     ciNew.sSource = fileItem.sURL;
                     //Prepare to delete any metadata file that might exist associated with this file.
@@ -285,20 +285,19 @@ public class Worker_Import_ImportFiles extends Worker {
             String sMoveOrCopy = GlobalClass.gsMoveOrCopy[giMoveOrCopy];
             sLogLine = "Using background worker for file " + sMoveOrCopy.toLowerCase() + " operations.\n"
                     + "Preparing job file.\n\n";
-            lByteProgressDenominator = alFileList.size();
             globalClass.BroadcastProgress(true, sLogLine,
                     false, iProgressBarValue,
                     true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
             //Create a file with a listing of the files to be copied/moved:
-            DocumentFile dfJobFile = globalClass.gdfJobFilesFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sJobFileName);
-            if(dfJobFile == null){
+            Uri uriJobFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sJobFileName);
+            if(uriJobFile == null){
                 sMessage = "Could not create job file.";
                 Log.d("Worker_Import_ImportFiles", sMessage);
                 return Result.failure(DataErrorMessage(sMessage));
             }
-            OutputStream osJobFile = GlobalClass.gcrContentResolver.openOutputStream(dfJobFile.getUri(), "wt");
+            OutputStream osJobFile = GlobalClass.gcrContentResolver.openOutputStream(uriJobFile, "wt");
             if(osJobFile == null){
                 sMessage = "Could not open output stream to job file.";
                 Log.d("Worker_Import_ImportFiles", sMessage);
@@ -349,7 +348,6 @@ public class Worker_Import_ImportFiles extends Worker {
                 .setInputData(dataLocalFileTransfer)
                 .addTag(Worker_LocalFileTransfer.WORKER_LOCAL_FILE_TRANSFER_TAG) //To allow finding the worker later.
                 .build();
-        UUID UUIDWorkID = otwrLocalFileTransfer.getId();
         WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
         globalClass.BroadcastProgress(true, "Operation complete.\n",

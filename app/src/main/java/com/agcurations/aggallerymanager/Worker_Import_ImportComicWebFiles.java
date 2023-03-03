@@ -7,14 +7,9 @@ import android.net.Uri;
 import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.UUID;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -42,9 +37,9 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         //Set the flags to tell the catalogViewer to view the imported files first:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         sharedPreferences.edit()
-                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
+                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory],
                         GlobalClass.SORT_BY_DATETIME_IMPORTED)
-                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
+                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory],
                         false)
                 .apply();
 
@@ -64,17 +59,16 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ci.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
 
 
-        DocumentFile dfDestinationFolder =
-                globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(ci.sFolder_Name);
+        Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ci.sFolder_Name);
 
 
-        if (dfDestinationFolder == null) {
-            dfDestinationFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].createDirectory(ci.sFolder_Name);
+        if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
+            uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
 
-            if (dfDestinationFolder == null) {
+            if (uriDestinationFolder == null) {
                 //Unable to create directory
                 String sMessage = "Unable to create destination folder " +  ci.sFolder_Name + " at: "
-                        + globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getUri() + "\n";
+                        + GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] + "\n";
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
                         true, "Operation halted.",
@@ -83,13 +77,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + dfDestinationFolder.getUri() + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         gsIntentActionFilter);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + dfDestinationFolder.getUri() + "\n",
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestinationFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
                     gsIntentActionFilter);
@@ -137,17 +131,24 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
             //  I have witnessed disappearance of downloaded files. This service seems to be deleting comic files.
             //See article at: https://www.vvse.com/blog/blog/2020/01/06/android-10-automatically-deletes-downloaded-files/
 
-            InputStream input = null;
-            OutputStream output = null;
             try {
 
                 ArrayList<Long> allDownloadIDs = new ArrayList<>();
-                DownloadManager downloadManager = null;
-                if(globalClass.gbUseDownloadManager){
-                    downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                DownloadManager downloadManager;
+
+                downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+                if(downloadManager == null){
+                    globalClass.BroadcastProgress(true, "Could not get download manager.",
+                            false, iProgressBarValue,
+                            true, "Halted.",
+                            gsIntentActionFilter);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure();
                 }
+
+
                 //Download the files:
-                int FILE_DOWNLOAD_ADDRESS = 0;
                 String sDownloadManagerDownloadFolder = "";
                 for(ItemClass_File icf: alFileList) {
 
@@ -166,9 +167,9 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
 
 
-                    DocumentFile dfNewFile = dfDestinationFolder.findFile(sJumbledNewFileName);
+                    Uri uriNewFile = GlobalClass.FormChildUri(uriDestinationFolder.toString(), sJumbledNewFileName);
 
-                    if(dfNewFile == null) {
+                    if(uriNewFile == null) {
 
                         globalClass.BroadcastProgress(true, "Initiating download of file: " + icf.sURL + "...",
                                 false, iProgressBarValue,
@@ -190,8 +191,19 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         String sDownloadFolderRelativePath;
                         sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS] +
                                 File.separator + ci.sFolder_Name;
-                        sDownloadManagerDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
+                        File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
+                        if(fExternalFilesDir != null) {
+                            sDownloadManagerDownloadFolder = fExternalFilesDir.getAbsolutePath() +
                                 sDownloadFolderRelativePath;
+                        } else {
+                            globalClass.BroadcastProgress(true, "Could not identify external files dir.",
+                                    false, iProgressBarValue,
+                                    true, "Halted.",
+                                    gsIntentActionFilter);
+                            globalClass.gbImportExecutionRunning = false;
+                            globalClass.gbImportExecutionFinished = true;
+                            return Result.failure();
+                        }
                         request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ci.sItemID)
                                 .setDescription("Comic ID " + ci.sItemID + "; " + icf.sURL)
                                 //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -220,35 +232,34 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 }
                 //Success downloading files.
 
-                //Start a worker to move the downloaded files if using DownloadManager:
-                if(globalClass.gbUseDownloadManager){
-
-                    long[] lDownloadIDs = new long[allDownloadIDs.size()];
-                    for(int i = 0; i < allDownloadIDs.size(); i++){
-                        lDownloadIDs[i] = allDownloadIDs.get(i);
-                    }
-
-                    //Build-out data to send to the worker:
-                    String sCallerID = "Worker_Import_ImportComicWebFiles:doWork()";
-                    Data dataDownloadPostProcessor = new Data.Builder()
-                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
-                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                            .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
-                            .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, dfDestinationFolder.getName())
-                            .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
-                            .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
-                            .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
-                            .build();
-                    OneTimeWorkRequest otwrDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_DownloadPostProcessing.class)
-                            .setInputData(dataDownloadPostProcessor)
-                            .addTag(Worker_DownloadPostProcessing.WORKER_TAG_DOWNLOAD_POST_PROCESSING) //To allow finding the worker later.
-                            .build();
-                    UUID UUIDWorkID = otwrDownloadPostProcessor.getId();
-                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);
+                //Start a worker to move the downloaded files:
 
 
-
+                long[] lDownloadIDs = new long[allDownloadIDs.size()];
+                for(int i = 0; i < allDownloadIDs.size(); i++){
+                    lDownloadIDs[i] = allDownloadIDs.get(i);
                 }
+
+                //Build-out data to send to the worker:
+                String sCallerID = "Worker_Import_ImportComicWebFiles:doWork()";
+                Data dataDownloadPostProcessor = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
+                        .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ci.sFolder_Name)
+                        .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
+                        .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
+                        .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ci.sItemID)
+                        .build();
+                OneTimeWorkRequest otwrDownloadPostProcessor = new OneTimeWorkRequest.Builder(Worker_DownloadPostProcessing.class)
+                        .setInputData(dataDownloadPostProcessor)
+                        .addTag(Worker_DownloadPostProcessing.WORKER_TAG_DOWNLOAD_POST_PROCESSING) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);
+
+
+
+
 
 
 
@@ -267,17 +278,6 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         gsIntentActionFilter);
-            } finally {
-                try {
-                    if(output != null) {
-                        output.close();
-                    }
-                    if(input != null) {
-                        input.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
 
         }

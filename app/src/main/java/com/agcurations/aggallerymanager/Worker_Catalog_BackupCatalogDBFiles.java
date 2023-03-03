@@ -6,8 +6,6 @@ import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -41,9 +39,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         Intent broadcastIntent = new Intent();
         boolean bProblem = false;
 
-        String sUriBackupFolder = GlobalClass.gdfDataFolder.getUri()
-                + GlobalClass.gsFileSeparator + "Backup";
-        Uri uriBackupFolder = Uri.parse(sUriBackupFolder);
+        Uri uriBackupFolder = GlobalClass.FormChildUri(GlobalClass.gUriDataFolder, "Backup");
 
         //Backup the catalog text files:
         for(int i = 0; i < 3; i++){
@@ -78,6 +74,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
             } catch (Exception e) {
                 String sMessage = "Problem creating backup of CatalogContents.dat.\n" + e.getMessage();
+                LogThis("doWork()", sMessage, null);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                 bProblem = true;

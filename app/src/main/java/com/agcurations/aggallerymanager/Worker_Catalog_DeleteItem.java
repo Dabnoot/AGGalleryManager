@@ -2,14 +2,16 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Objects;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -42,8 +44,8 @@ public class Worker_Catalog_DeleteItem extends Worker {
 
         //Delete the file(s):
 
-        DocumentFile dfItemFolder = globalClass.gdfCatalogFolders[ciToDelete.iMediaCategory].findFile(ciToDelete.sFolder_Name);
-        if(dfItemFolder == null){
+        Uri uriItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[ciToDelete.iMediaCategory], ciToDelete.sFolder_Name);
+        if(!GlobalClass.CheckIfFileExists(uriItemFolder)){
             //Could not find folder holding item to be deleted. Item must have failed to be integrated or deleted via
             //  some other method. Proceed with removing data from catalog.
             bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
@@ -53,14 +55,18 @@ public class Worker_Catalog_DeleteItem extends Worker {
 
             if (!ciToDelete.sSource.startsWith("http")) {
                 //If the source is not from the web...
-                DocumentFile dfFileToBeDeleted = dfItemFolder.findFile(ciToDelete.sFilename);
-                if (dfFileToBeDeleted != null) {
-                    if (!dfFileToBeDeleted.delete()) {
+                Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
+                if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
+                    try {
+                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                            globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                            bSuccess = false;
+                        }
+                    } catch (FileNotFoundException e) {
                         globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
-                        bSuccess = false;
                     }
                 } else {
-                    globalClass.problemNotificationConfig("Could not find file at this location: " + dfItemFolder.getUri() + ".", gsResponseActionFilter);
+                    globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", gsResponseActionFilter);
                     bSuccess = false;
                     bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                 }
@@ -71,15 +77,15 @@ public class Worker_Catalog_DeleteItem extends Worker {
 
                 if(ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
-                    DocumentFile dfVideoWorkingFolder = dfItemFolder.findFile(ciToDelete.sItemID);
-                    if (dfVideoWorkingFolder != null) {
-                        DocumentFile[] dfVideoWorkingFolderListing = dfVideoWorkingFolder.listFiles();
-                        ArrayList<DocumentFile> aldfOutputFolders = new ArrayList<>();
-                        if (dfVideoWorkingFolderListing.length > 0) {
-                            for (DocumentFile df : dfVideoWorkingFolderListing) {
+                    Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sItemID);
+                    if (GlobalClass.CheckIfFileExists(uriVideoWorkingFolder)) {
+                        ArrayList<String> alsVideoWorkingFolderListing = GlobalClass.GetDirectoryFileNames(uriVideoWorkingFolder);
+
+                        if (alsVideoWorkingFolderListing.size() > 0) {
+                            /*for (String sFileName : alsVideoWorkingFolderListing) {
                                 //Locate the output folder
-                                if (df.isDirectory()) {
-                                    aldfOutputFolders.add(df); //The worker could potentially create multiple output folders if it is re-run.
+                                if (sFileName.isDirectory()) {
+                                    aldfOutputFolders.add(sFileName); //The worker could potentially create multiple output folders if it is re-run.
                                 }
                             }
                             //Go through the output folders and delete contents:
@@ -92,16 +98,25 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                         }
                                     }
                                 }
-                            }
+                            }*/
                             //Delete download folder contents:
-                            for (DocumentFile df4 : dfVideoWorkingFolderListing) {
-                                if (!df4.delete()) {
-                                    Log.d("File Deletion", "Unable to delete file or folder " + df4.getUri() + ".");
+                            for (String sFileName: alsVideoWorkingFolderListing) {
+                                Uri uriFileToDelete = GlobalClass.FormChildUri(uriVideoWorkingFolder, sFileName);
+                                try {
+                                    if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToDelete)) {
+                                        Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
+                                    }
+                                } catch (FileNotFoundException e) {
+                                    Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
                                 }
                             }
                             //Delete download folder:
-                            if (!dfVideoWorkingFolder.delete()) {
-                                Log.d("File Deletion", "Unable to delete folder " + dfVideoWorkingFolder.getUri() + ".");
+                            try {
+                                if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder)) {
+                                    Log.d("File Deletion", "Unable to delete folder " + uriVideoWorkingFolder + ".");
+                                }
+                            } catch (FileNotFoundException e) {
+                                Log.d("File Deletion", "Unable to delete folder " + uriVideoWorkingFolder + ".");
                             }
 
                         }
@@ -157,14 +172,19 @@ public class Worker_Catalog_DeleteItem extends Worker {
                 } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
 
                     //Delete the single file...
-                    DocumentFile dfFileToBeDeleted = dfItemFolder.findFile(ciToDelete.sFilename);
-                    if (dfFileToBeDeleted != null) {
-                        if (!dfFileToBeDeleted.delete()) {
+                    Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
+                    if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
+                        try {
+                            if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                                globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                                bSuccess = false;
+                            }
+                        } catch (FileNotFoundException e) {
                             globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
                             bSuccess = false;
                         }
                     } else {
-                        globalClass.problemNotificationConfig("Could not find file at this location: " + dfItemFolder.getUri() + ".", gsResponseActionFilter);
+                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", gsResponseActionFilter);
                         bSuccess = false;
                         bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                     }
@@ -209,28 +229,33 @@ public class Worker_Catalog_DeleteItem extends Worker {
                     }
 
                     //End if the catalog item sourced as a download was an image item.
-                } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                }/* else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                     //Note - this is executed in GlobalClass routine ComicCatalog_DeleteComic.
                     //  It may be desireable to move that routine to this location.
-                }
+                }*/
 
 
                 //End if the catalog item was sourced as a download.
 
             }
 
-            DocumentFile dfLogFolder = globalClass.gdfLogsFolder;
-            if (dfLogFolder.exists()) {
-                DocumentFile[] dfLogFiles = dfLogFolder.listFiles();
+            Uri uriLogFolder = GlobalClass.gUriLogsFolder;
+            if (GlobalClass.CheckIfFileExists(uriLogFolder)) {
+                ArrayList<String> alsLogFiles = GlobalClass.GetDirectoryFileNames(uriLogFolder);
 
-                for (DocumentFile df : dfLogFiles) {
-                    if (df.isFile() && df.getName() != null) {
-                        if(df.getName().startsWith(ciToDelete.sItemID)) {
-                            if (!df.delete()) {
-                                globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + df.getName() + ".", gsResponseActionFilter);
+                for (String sLogFileName : alsLogFiles) {
+
+                    if(sLogFileName.startsWith(ciToDelete.sItemID)) {
+                        Uri uriLogFileToDelete = GlobalClass.FormChildUri(uriLogFolder, sLogFileName);
+                        try {
+                            if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriLogFileToDelete)) {
+                                globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", gsResponseActionFilter);
                             }
+                        } catch (FileNotFoundException e) {
+                            globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", gsResponseActionFilter);
                         }
                     }
+
                 }
 
             }
@@ -239,10 +264,14 @@ public class Worker_Catalog_DeleteItem extends Worker {
 
                 //Delete the folder if the folder is now empty:
 
-                DocumentFile[] dfFilesRemaining = dfItemFolder.listFiles();
-                if (dfFilesRemaining.length == 0) {
-                    if (!dfItemFolder.delete()) {
-                        globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + dfItemFolder.getUri() + ".", gsResponseActionFilter);
+                ArrayList<String> alsFilesRemaining = GlobalClass.GetDirectoryFileNames(uriItemFolder);
+                if (alsFilesRemaining.size() == 0) {
+                    try {
+                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
+                            globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
+                        }
+                    } catch (FileNotFoundException e) {
+                        globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
                     }
                 }
 

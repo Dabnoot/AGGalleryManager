@@ -8,6 +8,8 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -54,20 +56,17 @@ public class Fragment_Import_0b_ImageSource extends Fragment {
 
         //todo: Determine the number of files in the holding folder and adjust the radiobutton text to show file count.
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
-        DocumentFile[] dfImageHoldingFolderFiles = globalClass.gdfImageDownloadHoldingFolder.listFiles();
+        ArrayList<String> sImageHoldingFolderFiles = GlobalClass.GetDirectoryFileNames(GlobalClass.gUriImageDownloadHoldingFolder);
 
         int iFileCount = 0;
+        int iTotalFileCount = 0;
 
-        for(DocumentFile df: dfImageHoldingFolderFiles){
-            if(df.isFile()){
-                if(df.getName() != null){
-                    String sFilename = df.getName();
-                    String sExtension = sFilename.substring(sFilename.lastIndexOf("."));
-                    if(!sExtension.equals(".txt")){
-                        iFileCount++;
-                    }
-                }
+        for(String sFileName: sImageHoldingFolderFiles){
+            String sExtension = sFileName.substring(sFileName.lastIndexOf("."));
+            if(!sExtension.equals(".txt")){
+                iFileCount++;
             }
+            iTotalFileCount++;
         }
 
         RadioButton radioButton_ImageSourceHoldingFolder = getView().findViewById(R.id.radioButton_ImageSourceHoldingFolder);

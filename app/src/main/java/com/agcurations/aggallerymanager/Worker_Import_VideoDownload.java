@@ -4,13 +4,13 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -18,10 +18,8 @@ import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.UUID;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -30,8 +28,6 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.google.android.exoplayer2.util.MimeTypes;
-
-import org.w3c.dom.Document;
 
 public class Worker_Import_VideoDownload extends Worker {
 
@@ -52,9 +48,9 @@ public class Worker_Import_VideoDownload extends Worker {
         //Set the flags to tell the catalogViewer to view the imported files first:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         sharedPreferences.edit()
-                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
+                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory],
                         GlobalClass.SORT_BY_DATETIME_IMPORTED)
-                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
+                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory],
                         false)
                 .apply();
 
@@ -84,59 +80,65 @@ public class Worker_Import_VideoDownload extends Worker {
             icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
         }
 
-        DocumentFile dfDestination = globalClass.gdfCatalogFolders[iMediaCategory].findFile(icfDownloadItem.sDestinationFolder);
+        Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
+
 
         String sMessage;
 
-        if (dfDestination == null) {
-            dfDestination = globalClass.gdfCatalogFolders[iMediaCategory].createDirectory(icfDownloadItem.sDestinationFolder);
-            if (dfDestination == null) {
+        if (uriDestinationFolder == null) {
+            uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
+            uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+            if (uriDestinationFolder == null) {
                 //Unable to create directory
                 sMessage = "Unable to create destination folder " +
                         icfDownloadItem.sDestinationFolder + " at: "
-                        + globalClass.gdfCatalogFolders[iMediaCategory].getUri() + "\n";
+                        + GlobalClass.gUriCatalogFolders[iMediaCategory] + "\n";
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + dfDestination.getUri() + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + dfDestination.getUri() + "\n",
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestinationFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         }
 
         //Create a folder to serve as a working folder:
-        DocumentFile dfWorkingFolder = dfDestination.findFile(sNextRecordId);
+        Uri uriWorkingFolder = GlobalClass.FormChildUri(uriDestinationFolder.toString(), sNextRecordId);
 
         //Create the temporary download folder (within the destination folder):
-        if (dfWorkingFolder == null) {
-            dfWorkingFolder = dfDestination.createDirectory(sNextRecordId);
-            if (dfWorkingFolder == null) {
+        if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
+            uriWorkingFolder = GlobalClass.CreateDirectory(uriWorkingFolder);
+            if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
                 //Unable to create directory
                 sMessage = "Unable to create working folder " +
                         sNextRecordId + " at: "
-                        + dfDestination.getUri() + "\n";
+                        + uriDestinationFolder + "\n";
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
                         true, "Operation halted.",
                         sIntentActionFilter);
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + dfWorkingFolder.getUri() + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder created: " + uriWorkingFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         sIntentActionFilter);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + dfWorkingFolder.getUri() + "\n",
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriWorkingFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
                     sIntentActionFilter);
@@ -285,7 +287,7 @@ public class Worker_Import_VideoDownload extends Worker {
             String sVideoDownloadFolder = "";
             ArrayList<String[]> alsDLIDsAndFileNames = new ArrayList<>();
             for(String[] sURLAndFileName: alsDownloadURLsAndDestFileNames) {
-                String sNewFullPathFilename = dfWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
+                String sNewFullPathFilename = uriWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
 
                 File fNewFile = new File(sNewFullPathFilename);
 
@@ -302,8 +304,19 @@ public class Worker_Import_VideoDownload extends Worker {
                     sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
                             File.separator + ciNew.sFolder_Name +
                             File.separator + ciNew.sItemID;
-                    sVideoDownloadFolder = getApplicationContext().getExternalFilesDir(null).getAbsolutePath() +
-                            sDownloadFolderRelativePath;
+                    File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
+                    if(fExternalFilesDir != null) {
+                        sVideoDownloadFolder = fExternalFilesDir.getAbsolutePath() + sDownloadFolderRelativePath;
+                    } else {
+                        sMessage = "Could not identify external files dir.";
+                        globalClass.BroadcastProgress(true, sMessage,
+                                false, iProgressBarValue,
+                                true, "Halted.",
+                                sIntentActionFilter);
+                        globalClass.gbImportExecutionRunning = false;
+                        globalClass.gbImportExecutionFinished = true;
+                        return Result.failure(DataErrorMessage(sMessage));
+                    }
                     request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " VideoID " + ciNew.sItemID)
                             //.setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
                             //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -363,22 +376,26 @@ public class Worker_Import_VideoDownload extends Worker {
                 inputStream.close();
 
                 //Write the m3u8 file to the working folder:
-                DocumentFile dfM3U8 = dfWorkingFolder.createFile(MimeTypes.BASE_TYPE_TEXT, ciNew.sFilename);
-                if(dfM3U8 == null){
+                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriWorkingFolder, MimeTypes.BASE_TYPE_TEXT, ciNew.sFilename);
+                if(uriM3U8 == null){
                     sMessage = "Could not create M3U8 file.";
                     globalClass.BroadcastProgress(true, sMessage,
                             true, iProgressBarValue,
                             true, sMessage,
                             sIntentActionFilter);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 }
-                OutputStream osM3U8File = GlobalClass.gcrContentResolver.openOutputStream(dfM3U8.getUri(), "wa");
+                OutputStream osM3U8File = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8, "wt");
                 if(osM3U8File == null){
                     sMessage = "Could not write M3U8 file.";
                     globalClass.BroadcastProgress(true, sMessage,
                             true, iProgressBarValue,
                             true, sMessage,
                             sIntentActionFilter);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 }
                 BufferedWriter bwM3U8File = new BufferedWriter(new OutputStreamWriter(osM3U8File));
@@ -427,32 +444,40 @@ public class Worker_Import_VideoDownload extends Worker {
             public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";*/
 
 
-            DocumentFile dfVideoFinalDestinationFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].findFile(ciNew.sFolder_Name);
-            if(dfVideoFinalDestinationFolder == null){
+            Uri uriVideoFinalDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ciNew.sFolder_Name);
+            if(uriVideoFinalDestinationFolder == null){
                 sMessage = "Could not locate video final destination folder " + ciNew.sFolder_Name + " in " +
-                        globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].getUri();
+                        GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
-            DocumentFile dfVideoWorkingFolder = dfVideoFinalDestinationFolder.findFile(ciNew.sItemID);
-            if(dfVideoWorkingFolder == null){
+            Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoFinalDestinationFolder.toString(), ciNew.sItemID);
+            if(uriVideoWorkingFolder == null){
                 sMessage = "Could not locate video working folder " + ciNew.sItemID + " in " +
-                        dfVideoFinalDestinationFolder.getUri();
+                        uriVideoFinalDestinationFolder;
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
             //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
             //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
             //A file sequence string array can be too big to pass to a worker, so write it to a file:
 
-            final DocumentFile dfDLIDFileSequenceFile = dfVideoWorkingFolder.createFile(MimeTypes.BASE_TYPE_TEXT,
+            Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder, MimeTypes.BASE_TYPE_TEXT,
                     Worker_VideoPostProcessing.VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
-            if(dfDLIDFileSequenceFile == null){
+            if(uriDLIDFileSequenceFile == null){
                 sMessage = "Could not create file to record download ID sequencing: " + Worker_VideoPostProcessing.VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
-                        dfVideoWorkingFolder.getUri();
+                        uriVideoWorkingFolder;
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
-            OutputStream osDLIDFileSequenceFile = GlobalClass.gcrContentResolver.openOutputStream(dfDLIDFileSequenceFile.getUri(), "wt");
+            OutputStream osDLIDFileSequenceFile = GlobalClass.gcrContentResolver.openOutputStream(uriDLIDFileSequenceFile, "wt");
             if(osDLIDFileSequenceFile == null){
-                sMessage = "Could not open output stream to file " + dfDLIDFileSequenceFile.getUri();
+                sMessage = "Could not open output stream to file " + uriDLIDFileSequenceFile;
+                globalClass.gbImportExecutionRunning = false;
+                globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
             }
             BufferedWriter bwDLIDFileSequenceFile;
@@ -487,7 +512,6 @@ public class Worker_Import_VideoDownload extends Worker {
                     .setInputData(dataDownloadPostProcessor)
                     .addTag(Worker_DownloadPostProcessing.WORKER_TAG_DOWNLOAD_POST_PROCESSING) //To allow finding the worker later.
                     .build();
-            UUID UUIDWorkID = otwrDownloadPostProcessor.getId();
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);
 
             sMessage = "Operation complete.\n";

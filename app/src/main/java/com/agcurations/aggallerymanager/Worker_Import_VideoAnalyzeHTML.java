@@ -2,6 +2,8 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import org.htmlcleaner.CleanerProperties;
@@ -11,8 +13,6 @@ import org.htmlcleaner.TagNode;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -581,14 +580,14 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             String sShortFileName = sURLM3U8VideoLink.substring(sURLM3U8VideoLink.lastIndexOf("/") + 1);
                             sShortFileName = Service_Import.cleanFileNameViaTrim(sShortFileName);
                             String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                            DocumentFile dfM3U8 = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
-                            if(dfM3U8 == null){
-                                String sMessage = "Could not create M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                            Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
+                            if(uriM3U8 == null){
+                                String sMessage = "Could not create M3U8 file for debugging purposes at location " + GlobalClass.gUriLogsFolder;
                                 Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
                             } else {
-                                OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(dfM3U8.getUri(), "wt");
+                                OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8, "wt");
                                 if(osM3U8 == null){
-                                    String sMessage = "Could not open output stream ot M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                    String sMessage = "Could not open output stream ot M3U8 file for debugging purposes at location " + GlobalClass.gUriLogsFolder;
                                     Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
                                 } else {
                                     BufferedWriter bwM3U8File = new BufferedWriter(new OutputStreamWriter(osM3U8));
@@ -745,14 +744,14 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                 //Write the m3u8 file to the logs folder for debugging purposes:
 
                                 String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                                DocumentFile dfM3U8 = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
-                                if(dfM3U8 == null){
-                                    String sMessage = "Could not create M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
+                                if(uriM3U8 == null){
+                                    String sMessage = "Could not create M3U8 file for debugging purposes at location " + GlobalClass.gUriLogsFolder;
                                     Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
                                 } else {
-                                    OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(dfM3U8.getUri(), "wt");
+                                    OutputStream osM3U8 = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8, "wt");
                                     if(osM3U8 == null){
-                                        String sMessage = "Could not open output stream ot M3U8 file for debugging purposes at location " + globalClass.gdfLogsFolder.getUri();
+                                        String sMessage = "Could not open output stream ot M3U8 file for debugging purposes at location " + GlobalClass.gUriLogsFolder;
                                         Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
                                     } else {
                                         BufferedWriter bwM3U8File = new BufferedWriter(new OutputStreamWriter(osM3U8));

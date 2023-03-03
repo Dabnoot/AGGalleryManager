@@ -1,7 +1,9 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -110,9 +111,15 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
                     if(workerListCustomAdapter != null) {
                         for (int i = 0; i < workerListCustomAdapter.customWorkerData.length; i++) {
                             if (workerListCustomAdapter.bRowSelected[i]) {
-                                if (workerListCustomAdapter.customWorkerData[i].dfJobFile != null) {
-                                    if (!workerListCustomAdapter.customWorkerData[i].dfJobFile.delete()) {
-                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + workerListCustomAdapter.customWorkerData[i].dfJobFile.getName(), Toast.LENGTH_SHORT).show();
+                                String sJobFileName = workerListCustomAdapter.customWorkerData[i].sJobFileName;
+                                if (sJobFileName != null) {
+                                    try{
+                                        Uri uriJobFileToDelete = GlobalClass.FormChildUri(GlobalClass.gUriJobFilesFolder, sJobFileName);
+                                        if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriJobFileToDelete)){
+                                            Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + sJobFileName, Toast.LENGTH_SHORT).show();
+                                        }
+                                    } catch (Exception e){
+                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + sJobFileName, Toast.LENGTH_SHORT).show();
                                     }
                                 }
                             } else {
@@ -235,16 +242,15 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
         }
 
         //Attempt to divine the existence of other past workers by examining job files:
-        DocumentFile[] dfJobFiles = globalClass.gdfJobFilesFolder.listFiles();
-        for(DocumentFile dfJobFile: dfJobFiles){
-            String sJobFileName = dfJobFile.getName();
+        ArrayList<String> sJobFiles = GlobalClass.GetDirectoryFileNames(GlobalClass.gUriJobFilesFolder);
+        for(String sJobFileName: sJobFiles){
             String sJobRequestDateTime = sJobFileName.substring(("Job_").length(),sJobFileName.length()-(".txt").length());
             boolean bDataFound = false;
             for(CustomWorkerData customWorkerData : alWorkerData){
                 if(customWorkerData.sJobRequestDateTime != null) {
                     if (customWorkerData.sJobRequestDateTime.equals(sJobRequestDateTime)) {
                         customWorkerData.sJobRequestDateTime = sJobRequestDateTime;
-                        customWorkerData.dfJobFile = dfJobFile;
+                        customWorkerData.sJobFileName = sJobFileName;
                         bDataFound = true;
                     }
                 }
@@ -252,7 +258,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             if(!bDataFound){
                 CustomWorkerData customWorkerDataNew = new CustomWorkerData();
                 customWorkerDataNew.sJobRequestDateTime = sJobRequestDateTime;
-                customWorkerDataNew.dfJobFile = dfJobFile;
+                customWorkerDataNew.sJobFileName = sJobFileName;
                 customWorkerDataNew.sWorkerStatus = "[worker not found]";
                 alWorkerData.add(customWorkerDataNew);
             }
@@ -340,8 +346,8 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
 
 
             final String sJobFileName;
-            if(customWorkerData[position].dfJobFile != null){
-                sJobFileName = customWorkerData[position].dfJobFile.getName();
+            if(customWorkerData[position].sJobFileName != null){
+                sJobFileName = customWorkerData[position].sJobFileName;
             } else {
                 sJobFileName = "";
             }
@@ -381,7 +387,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
             button_View.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    viewModel_fragment_workerConsole.dfJobFile = customWorkerData[position].dfJobFile;
+                    viewModel_fragment_workerConsole.sJobFileName = customWorkerData[position].sJobFileName;
 
                     Activity_WorkerConsole activity_workerConsole = (Activity_WorkerConsole) getActivity();
                     if(activity_workerConsole != null){
@@ -424,7 +430,7 @@ public class Fragment_WorkerConsole_0_WorkerList extends Fragment {
         String sJobRequestDateTime;
         String sWorkerStatus;
         String sFailureMessage;
-        DocumentFile dfJobFile;
+        String sJobFileName;
         long lProgressNumerator;
         long lProgressDenominator;
     }

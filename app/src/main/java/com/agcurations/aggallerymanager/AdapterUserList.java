@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -124,6 +125,17 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
         }
         //notifyDataSetChanged(); //todo: is this necessary?
 
+    }
+
+    public ArrayList<String> getUserNamesInList(){
+        ArrayList<String> alsUserNames = new ArrayList<>();
+        for(int i = 0; i < getCount(); i++){
+            ItemClass_User icu = getItem(i);
+            if(icu != null) {
+                alsUserNames.add(icu.sUserName);
+            }
+        }
+        return alsUserNames;
     }
 
 

@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,8 +68,10 @@ public class Fragment_WorkerConsole_1_Worker_Details extends Fragment {
             return;
         }
 
-        if(viewModel_fragment_workerConsole.dfJobFile != null) {
-            String sFileName = viewModel_fragment_workerConsole.dfJobFile.getName();
+        if(viewModel_fragment_workerConsole.sJobFileName != null) {
+            String sFileName = viewModel_fragment_workerConsole.sJobFileName;
+            Uri uriJobFile = GlobalClass.FormChildUri(GlobalClass.gUriJobFilesFolder, sFileName);
+
             getActivity().setTitle(sFileName);
 
             String sMessage;
@@ -76,9 +79,9 @@ public class Fragment_WorkerConsole_1_Worker_Details extends Fragment {
             //Get data from file:
 
             try {
-                InputStream isLogFile = GlobalClass.gcrContentResolver.openInputStream(viewModel_fragment_workerConsole.dfJobFile.getUri());
+                InputStream isLogFile = GlobalClass.gcrContentResolver.openInputStream(uriJobFile);
                 if(isLogFile == null){
-                    sMessage = "Problem opening log file: " + viewModel_fragment_workerConsole.dfJobFile.getUri();
+                    sMessage = "Problem opening log file: " + uriJobFile;
                     Toast.makeText(getActivity(), sMessage, Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -95,7 +98,7 @@ public class Fragment_WorkerConsole_1_Worker_Details extends Fragment {
                 textView_JobText.setText(sb.toString());
 
             } catch (IOException e) {
-                sMessage = "Problem reading log file: " + viewModel_fragment_workerConsole.dfJobFile.getUri();
+                sMessage = "Problem reading log file: " + uriJobFile;
                 Toast.makeText(getActivity(), sMessage, Toast.LENGTH_LONG).show();
             }
         }

@@ -1,22 +1,17 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -42,9 +37,9 @@ public class Worker_Import_ImportComicFolders extends Worker {
         //Set the flags to tell the catalogViewer to view the imported files first:
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         sharedPreferences.edit()
-                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[globalClass.giSelectedCatalogMediaCategory],
+                .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory],
                         GlobalClass.SORT_BY_DATETIME_IMPORTED)
-                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[globalClass.giSelectedCatalogMediaCategory],
+                .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory],
                         false)
                 .apply();
 
@@ -52,10 +47,6 @@ public class Worker_Import_ImportComicFolders extends Worker {
         long lProgressDenominator;
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
-        long lLoopBytesRead;
-
-
-        ContentResolver contentResolver = getApplicationContext().getContentResolver();
 
         ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
 
@@ -115,14 +106,14 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
             String sDestinationFolder = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual destination comic folder name is the comic ID.
 
-            DocumentFile dfDestination = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].findFile(sDestinationFolder);
+            Uri uriDestination = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), sDestinationFolder);
 
-            if (dfDestination == null) {
-                dfDestination = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].createDirectory(sDestinationFolder);
-                if (dfDestination == null) {
+            if (!GlobalClass.CheckIfFileExists(uriDestination)) {
+                uriDestination = GlobalClass.CreateDirectory(uriDestination);
+                if (uriDestination == null) {
                     //Unable to create directory
                     sMessage = "Unable to create destination folder " + sDestinationFolder + " at "
-                            + globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].getUri() + "\n";
+                            + GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] + "\n";
                     globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
                             true, "Operation halted.",
@@ -131,13 +122,13 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 } else {
-                    globalClass.BroadcastProgress(true, "Destination folder created: " + dfDestination.getUri() + "\n",
+                    globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestination + "\n",
                             false, iProgressBarValue,
                             false, "",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 }
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder verified: " + dfDestination.getUri() + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestination + "\n",
                         true, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
@@ -186,15 +177,18 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
                 String sLogLine;
                 Uri uriSourceFile = Uri.parse(fileItem.sUri);
-                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
                 if(fileItem.sFileOrFolderName.equals(GlobalClass.STRING_COMIC_XML_FILENAME)){
                     if (giMoveOrCopy == GlobalClass.MOVE) {
-                        if(dfSource != null) {
-                            if (!dfSource.delete()) {
+                        if(GlobalClass.CheckIfFileExists(uriSourceFile)) {
+                            try {
+                                if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFile)) {
+                                    sLogLine = "Could not delete xml file from source folder.\n";
+                                } else {
+                                    sLogLine = "Success deleting xml file from source folder.\n";
+                                }
+                            } catch (FileNotFoundException e) {
                                 sLogLine = "Could not delete xml file from source folder.\n";
-                            } else {
-                                sLogLine = "Success deleting xml file from source folder.\n";
                             }
                         } else {
                             sLogLine = "Could not delete xml file from source folder.\n";
@@ -220,9 +214,6 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 }
                 ciNewComic.lSize += fileItem.lSizeBytes;
 
-                InputStream inputStream;
-                OutputStream outputStream;
-
                 try {
                     //Write next behavior to the screen log:
                     sLogLine = "Attempting " + GlobalClass.gsMoveOrCopy[giMoveOrCopy].toLowerCase();
@@ -232,7 +223,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                             true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                    if (dfSource == null) {
+                    if (uriSourceFile == null) {
                         globalClass.BroadcastProgress(true, "Problem with copy/move operation of file " + fileItem.sFileOrFolderName,
                                 false, iProgressBarValue,
                                 false, "",
@@ -245,99 +236,39 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     Uri uriCopiedOrMovedDocument;
                     if(giMoveOrCopy == GlobalClass.MOVE){
                         //Move Operation
-                        DocumentFile dfSourceParent = dfSource.getParentFile();
-                        if(dfSourceParent == null){
+                        Uri uriSourceParent = GlobalClass.GetParentUri(uriSourceFile);
+                        if(uriSourceParent == null){
                             sMessage = "Could note determine source parent DocumentFile.";
                             Log.d("Worker_Import_ComicFolders", sMessage);
                             continue;
                         }
                         uriCopiedOrMovedDocument = DocumentsContract.moveDocument(
                                 GlobalClass.gcrContentResolver,
-                                dfSource.getUri(),
-                                dfSourceParent.getUri(),
-                                dfDestination.getUri());
+                                uriSourceFile,
+                                uriSourceParent,
+                                uriDestination);
                     } else {
                         //Copy operation
                         uriCopiedOrMovedDocument = DocumentsContract.copyDocument(
                                 GlobalClass.gcrContentResolver,
-                                dfSource.getUri(),
-                                dfDestination.getUri());
+                                uriSourceFile,
+                                uriDestination);
 
                     }
                     //Rename the copied or moved document:
                     if(uriCopiedOrMovedDocument != null){
-                        DocumentFile dfCopiedOrMovedDocument = DocumentFile.fromSingleUri(getApplicationContext(), uriCopiedOrMovedDocument);
-                        if(dfCopiedOrMovedDocument != null) {
-                            dfCopiedOrMovedDocument.renameTo(sNewFilename);
-                        } else {
+                        Uri uriCopiedOrMovedRenamedDocument = DocumentsContract.renameDocument(GlobalClass.gcrContentResolver, uriCopiedOrMovedDocument, sNewFilename);
+                        if(uriCopiedOrMovedRenamedDocument == null) {
                             sMessage = "Trouble identifying copied/moved file: " + uriCopiedOrMovedDocument;
                             Log.d("Worker_Import_ComicFolders", sMessage);
-                            continue;
                         }
                     } else {
-                        sMessage = "Trouble copying or moving file: " + dfSource.getUri();
+                        sMessage = "Trouble copying or moving file: " + uriSourceFile;
                         Log.d("Worker_Import_ComicFolders", sMessage);
-                        continue;
                     }
 
 
-                    //Todo: Remove the below code after DocumentContract operations test successfully:
-                    /*{
-                        inputStream = contentResolver.openInputStream(dfSource.getUri());
 
-                        //Reverse the text on the file so that the file does not get picked off by a search tool:
-                        if (dfSource.getName() == null) continue;
-
-
-                        outputStream = new FileOutputStream(dfDestination.getPath() + File.separator + sNewFilename);
-                        int iLoopCount = 0;
-                        byte[] buffer = new byte[100000];
-                        if (inputStream == null) continue;
-                        while ((lLoopBytesRead = inputStream.read(buffer, 0, buffer.length)) >= 0) {
-                            outputStream.write(buffer, 0, buffer.length);
-                            lProgressNumerator += lLoopBytesRead;
-                            iLoopCount++;
-                            if (iLoopCount % 10 == 0) {
-                                //Send update every 10 loops:
-                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                                globalClass.BroadcastProgress(false, "",
-                                        true, iProgressBarValue,
-                                        true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                            }
-                        }
-                        outputStream.flush();
-                        outputStream.close();
-
-
-                        sLogLine = "Copy success.\n";
-                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                        globalClass.BroadcastProgress(true, sLogLine,
-                                false, iProgressBarValue,
-                                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-                        //This file has now been copied.
-
-                        //Delete the source file if 'Move' specified:
-                        boolean bUpdateLogOneMoreTime = false;
-                        if (giMoveOrCopy == GlobalClass.MOVE) {
-                            bUpdateLogOneMoreTime = true;
-                            if (!dfSource.delete()) {
-                                sLogLine = "Could not delete source file after copy (deletion is required step of 'move' operation, otherwise it is a 'copy' operation).\n";
-                            } else {
-                                sLogLine = "Success deleting source file after copy.\n";
-                            }
-                        }
-
-
-                        iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-
-                        globalClass.BroadcastProgress(bUpdateLogOneMoreTime, sLogLine,
-                                true, iProgressBarValue,
-                                true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                    }*/
 
                 } catch (Exception e) {
                     globalClass.BroadcastProgress(true, "Problem with copy/move operation.\n\n" + e.getMessage(),
@@ -359,13 +290,17 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 //a comic folder within that folder.
                 String sLogLine;
                 uriComicSourceFolder = Uri.parse(tmEntryComic.getKey());
-                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriComicSourceFolder);
-                sLogLine = "Could not delete folder for comic '" + tmEntryComic.getValue()[INDEX_COMIC_NAME] + "'.\n";
-                if(dfSource != null) {
-                    if (dfSource.delete()) {
+
+                try {
+                    if (DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriComicSourceFolder)) {
                         sLogLine = "Success deleting folder for comic '" + tmEntryComic.getValue()[INDEX_COMIC_NAME] + "'.\n";
+                    } else {
+                        sLogLine = "Could not delete folder for comic '" + tmEntryComic.getValue()[INDEX_COMIC_NAME] + "'.\n";
                     }
+                } catch (FileNotFoundException e) {
+                    sLogLine = "Could not delete folder for comic '" + tmEntryComic.getValue()[INDEX_COMIC_NAME] + "'.\n";
                 }
+
                 globalClass.BroadcastProgress(true, sLogLine,
                         true, iProgressBarValue,
                         true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -373,10 +308,6 @@ public class Worker_Import_ImportComicFolders extends Worker {
             }
 
         } //End NHComics (plural) Import Loop.
-
-        //Modify viewer settings to show the newly-imported files:
-        /*globalClass.giCatalogViewerSortBySetting[GlobalClass.MEDIA_CATEGORY_COMICS] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        globalClass.gbCatalogViewerSortAscending[GlobalClass.MEDIA_CATEGORY_COMICS] = false;*/ //Handled in onHandleIntent.
 
         globalClass.BroadcastProgress(true, "Operation complete.\n",
                 true, iProgressBarValue,

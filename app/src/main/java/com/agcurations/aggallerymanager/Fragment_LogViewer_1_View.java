@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -68,18 +69,19 @@ public class Fragment_LogViewer_1_View extends Fragment {
             return;
         }
 
-        if(viewModel_fragment_logViewer.dfLogFile != null) {
-            String sFileName = viewModel_fragment_logViewer.dfLogFile.getName();
+        if(viewModel_fragment_logViewer.sLogFileName != null) {
+            String sFileName = viewModel_fragment_logViewer.sLogFileName;
             getActivity().setTitle(sFileName);
 
             String sMessage;
 
             //Get data from file:
-
+            Uri uriLogFile = GlobalClass.FormChildUri(GlobalClass.gUriLogsFolder,sFileName);
             try {
-                InputStream isLogFile = GlobalClass.gcrContentResolver.openInputStream(viewModel_fragment_logViewer.dfLogFile.getUri());
+
+                InputStream isLogFile = GlobalClass.gcrContentResolver.openInputStream(uriLogFile);
                 if(isLogFile == null){
-                    sMessage = "Problem opening log file: " + viewModel_fragment_logViewer.dfLogFile.getUri();
+                    sMessage = "Problem opening log file: " + uriLogFile;
                     Toast.makeText(getActivity(), sMessage, Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -96,7 +98,7 @@ public class Fragment_LogViewer_1_View extends Fragment {
                 textView_LogText.setText(sb.toString());
 
             } catch (IOException e) {
-                sMessage = "Problem reading log file: " + viewModel_fragment_logViewer.dfLogFile.getUri();
+                sMessage = "Problem reading log file: " + uriLogFile;
                 Toast.makeText(getActivity(), sMessage, Toast.LENGTH_LONG).show();
             }
         }

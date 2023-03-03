@@ -4,13 +4,13 @@ import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.provider.DocumentsContract;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -21,12 +21,14 @@ import android.webkit.WebView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -34,7 +36,7 @@ import androidx.work.WorkManager;
 import com.google.android.exoplayer2.util.MimeTypes;
 
 /**
- * https://github.com/cprcrack/VideoEnabledWebView
+ * <a href="https://github.com/cprcrack/VideoEnabledWebView">...</a>
  * This class serves as a WebView to be used in conjunction with a VideoEnabledWebChromeClient.
  * It makes possible:
  * - To detect the HTML5 video ended event so that the VideoEnabledWebChromeClient can exit full-screen.
@@ -43,7 +45,7 @@ import com.google.android.exoplayer2.util.MimeTypes;
  * - Javascript is enabled by default and must not be disabled with getSettings().setJavaScriptEnabled(false).
  * - setWebChromeClient() must be called before any loadData(), loadDataWithBaseURL() or loadUrl() method.
  *
- * @author Cristian Perez (http://cpr.name)
+ * @author Cristian Perez (<a href="http://cpr.name">...</a>)
  *
  */
 public class VideoEnabledWebView extends WebView
@@ -289,9 +291,6 @@ public class VideoEnabledWebView extends WebView
 
                         Context cApplicationContext = ((Activity_Browser) gcContext).getApplicationContext();
 
-                        final GlobalClass globalClass = (GlobalClass) cApplicationContext;
-
-
                         String sFileNameRaw = gsNodeData_src;
                         if(sFileNameRaw.contains("/")){
                             sFileNameRaw = gsNodeData_src.substring(gsNodeData_src.lastIndexOf("/") + 1);
@@ -300,11 +299,40 @@ public class VideoEnabledWebView extends WebView
 
                         //Create a destination Uri for the file to be downloaded to, ensuring that the
                         //  file name is unique:
-                        sFileName = GlobalClass.getUniqueFileName(globalClass.gfImageDownloadHoldingFolderTemp, sFileName, false);
+                        try {
+                            sFileName = URLDecoder.decode(sFileName, StandardCharsets.UTF_8.toString());
+                        } catch (Exception e){
+                            Log.d("VideoEnabledWebView: onMenuItemClick()", "Trouble with URL Decoder.");
+                        }
+                        String sOriginalFileName = sFileName;
+                        int iFileNameMaxLength = 46; //Arbitrarily set because I don't know Download Manager's rules. Gave some buffer from what I have seen.
+                        if(sFileName.length() > iFileNameMaxLength){
+                            //Limit max length of file name or download manager will do it for you.
+                            String sFileBaseName = sFileName.substring(0, sFileName.lastIndexOf("."));
+                            String sFileExtension = sFileName.substring(sFileName.lastIndexOf("."));
+                            if(sFileExtension.length() > 5){
+                                Log.d("VideoEnabledWebView: onMenuItemClick()", "File extension wierd. Not processing due to uncaptured case.");
+                                return true;
+                            }
+                            int iAmountToTrim = sFileName.length() - iFileNameMaxLength;
+                            sFileBaseName = sFileBaseName.substring(0, sFileBaseName.length() - iAmountToTrim);
+                            sFileName = sFileBaseName + sFileExtension;
 
-                        String sDownloadFolderRelativePath = globalClass.gsImageDownloadHoldingFolderTempRPath; //Android will DL to internal storage only.
-                        String sDownloadManagerDownloadFolder = cApplicationContext.getExternalFilesDir(null).getAbsolutePath() +
-                                sDownloadFolderRelativePath;
+
+                        }
+                        sFileName = GlobalClass.getUniqueFileName(GlobalClass.gfImageDownloadHoldingFolderTemp, sFileName, false);
+
+                        String sDownloadFolderRelativePath = GlobalClass.gsImageDownloadHoldingFolderTempRPath; //Android will DL to internal storage only.
+                        String sDownloadManagerDownloadFolder;
+                        File fExternalFilesDir = cApplicationContext.getExternalFilesDir(null);
+                        if(fExternalFilesDir != null) {
+                            sDownloadManagerDownloadFolder = fExternalFilesDir.getAbsolutePath() +
+                                    sDownloadFolderRelativePath;
+                        } else {
+                            String sMessage = "Could not identify external files dir.";
+                            Toast.makeText(getContext(), sMessage, Toast.LENGTH_SHORT).show();
+                            return true;
+                        }
 
                         request.setTitle("AGGallery+ Download Single Image")
                                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
@@ -336,15 +364,24 @@ public class VideoEnabledWebView extends WebView
 
                         //Write a text file of the same file name to record details of the origin of the file. This
                         //  text data file is to be used during the import process to add a bit of metadata.
-                        String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
-                        DocumentFile dfImageMetadataFile = globalClass.gdfImageDownloadHoldingFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sMetadataFileName);
-                        if(dfImageMetadataFile == null){
+
+                        Uri uriImageMetadataFile;
+                        try {
+                            String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+                            uriImageMetadataFile = DocumentsContract.createDocument(
+                                    GlobalClass.gcrContentResolver,
+                                    GlobalClass.gUriImageDownloadHoldingFolder,
+                                    MimeTypes.BASE_TYPE_TEXT, sMetadataFileName);
+                        } catch (Exception e) {
                             Log.d("MenuItemClick", "Could not create metadata file for downloaded item.");
                             return true;
                         }
-                        ContentResolver contentResolver = gcContext.getContentResolver();
+                        if(uriImageMetadataFile == null){
+                            Log.d("MenuItemClick", "Could not create metadata file for downloaded item.");
+                            return true;
+                        }
                         try {
-                            OutputStream osImageMetadataFile = contentResolver.openOutputStream(dfImageMetadataFile.getUri(), "wt");
+                            OutputStream osImageMetadataFile = GlobalClass.gcrContentResolver.openOutputStream(uriImageMetadataFile, "wt");
                             if(osImageMetadataFile == null){
                                 Log.d("MenuItemClick", "Could not write metadata file for downloaded item.");
                                 return true;
@@ -354,7 +391,11 @@ public class VideoEnabledWebView extends WebView
                                 Log.d("MenuItemClick", "No metadata to write to file for downloaded item.");
                                 return true;
                             }
-                            osImageMetadataFile.write(sWebPageURL.getBytes(StandardCharsets.UTF_8));
+                            StringBuilder sb = new StringBuilder();
+                            sb.append(sWebPageURL).append("\n");
+                            sb.append(sOriginalFileName).append("\n");
+                            osImageMetadataFile.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+
                             osImageMetadataFile.flush();
                             osImageMetadataFile.close();
                         } catch (Exception e) {

@@ -6,7 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.UriPermission;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -17,6 +16,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -35,8 +35,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.List;
 
 public class Fragment_Import_1_StorageLocation extends Fragment {
 
@@ -151,7 +149,10 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         }
 
         getActivity().setTitle("Import");
-        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        ActionBar actionBar =((AppCompatActivity) getActivity()).getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.show();
+        }
 
         if(!globalClass.gbImportHoldingFolderAnalysisAutoStart) {
 
@@ -230,7 +231,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         } else {
             globalClass.gbImportHoldingFolderAnalysisAutoStart = false;
             //If the user has selected to import from the holding folder, move forward with processing.
-            String sHoldingFolderPath = globalClass.gdfImageDownloadHoldingFolder.getUri().toString();
+            String sHoldingFolderPath = GlobalClass.gUriImageDownloadHoldingFolder.toString();
             ShowFolderAnalysisViews(sHoldingFolderPath);
 
             globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
@@ -299,23 +300,25 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         //Put the import Uri into the intent (this could represent a folder OR a file:
 
                         if(result.getData() == null) {
-                            return;
+                            return; //todo: create message.
                         }
                         Intent data = result.getData();
                         Uri treeUri = data.getData();
                         Activity_Import.guriImportTreeURI = treeUri;
-                        List<UriPermission> uriPermissionList;
-                        uriPermissionList = getActivity().getContentResolver().getPersistedUriPermissions();
+
+                        if(treeUri == null){
+                            return; //todo: create message.
+                        }
+
                         final int takeFlags = data.getFlags() & (
                                 Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                         getActivity().getContentResolver().takePersistableUriPermission(treeUri,
                                 takeFlags);
-                        uriPermissionList = getActivity().getContentResolver().getPersistedUriPermissions();
 
                         assert Activity_Import.guriImportTreeURI != null;
                         DocumentFile df1 = DocumentFile.fromTreeUri(getActivity(), Activity_Import.guriImportTreeURI);
                         if(df1 == null){
-                            return;
+                            return; //todo: create message.
                         }
                         String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
                         ShowFolderAnalysisViews(sTreeUriSourceName);
@@ -345,7 +348,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     private void ShowFolderAnalysisViews(String sImportFolderName){
         //Display the source name:
         if(getView() == null){
-            return;
+            return; //todo: create message.
         }
         TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
         textView_Selected_Import_Folder.setText(sImportFolderName);
@@ -413,7 +416,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     if(gbutton_FolderSelectComplete != null) {
                         gbutton_FolderSelectComplete.setEnabled(true);
                         viewModelImportActivity.bUpdateImportSelectList = true;
-                        int i = gTextView_FileAnalysisDebugLog.getVisibility();
+
                         if(gTextView_FileAnalysisDebugLog.getVisibility() == View.INVISIBLE) {
                             //Go ahead and move to the next fragment if there is no log data for the user.
                             gbutton_FolderSelectComplete.performClick();

@@ -265,7 +265,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                     sLine3 = sLine3 + "\n";
                 }
                 sLine3 = sLine3 + "Destination path: " +
-                        globalClass.gdfCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
+                        globalClass.gUriCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
                         File.separator +
                         alFileItemsDisplay.get(position).sDestinationFolder;
             }

@@ -24,8 +24,8 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
     public static final String RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED = "com.agcurations.webbrowser.result.WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED";
 
 
-    private String gsTabID = "";
-    private String gsAddress = "";
+    private final String gsTabID;
+    private final String gsAddress;
 
     Double gdCallerTimeStamp;
     public Worker_Browser_GetWebPagePreview(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -82,7 +82,7 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
             props.setAllowMultiWordAttributes(true);
             props.setRecognizeUnicodeChars(true);
             props.setOmitComments(true);
-            TagNode node = null;
+            TagNode node;
             try {
                 node = pageParser.clean(sHTML);
             } catch (Exception e){

@@ -3,13 +3,14 @@ package com.agcurations.aggallerymanager;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -25,6 +26,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class Worker_DownloadPostProcessing  extends Worker {
     //This routine moves downloaded files from a temporary download folder to a more permanent
@@ -52,7 +56,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
     //=========================
 
-    public static final int DOWNLOAD_TYPE_SINGLE = 1;
+    //public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
 
 
@@ -61,8 +65,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
     String gsPathToMonitorForDownloads;                 //Location to monitor for download file(s)
     long[] glDownloadIDs;                               //Used to determine if a download ID in DownloadManager has status 'completed'.
     String gsItemID;
-    DocumentFile gdfDestinationFolder = null;
-    DocumentFile gdfM3U8DestinationParent = null;
+    Uri uriDestinationFolder = null;
     boolean gbExpectDifferentFilesSameNames = false;
     int giMediaCategory;
     int giSingleOrM3U8 = -1;
@@ -97,7 +100,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
             //Image file will be in the image download holding folder on temporary storage
             //  and will be transferred to the image download holding folder in the user-specified
             //  application storage tree.
-            gdfDestinationFolder = globalClass.gdfImageDownloadHoldingFolder;
+            uriDestinationFolder = GlobalClass.gUriImageDownloadHoldingFolder;
             gsItemID = "Image"; //gsItemID is used in log name generation
             gbExpectDifferentFilesSameNames = true; //Some image files that are downloaded could
             // have the same name. Such as 001.jpg. Need to create a unique destination file name if
@@ -105,22 +108,21 @@ public class Worker_DownloadPostProcessing  extends Worker {
         } else {
             //If the download(s) are related to a comic, the calling routine will have
             //  specified a particular folder for the destination:
-            DocumentFile dfMediaCategoryFolder = GlobalClass.gdfDataFolder.findFile(GlobalClass.gsCatalogFolderNames[giMediaCategory]);
-            if (dfMediaCategoryFolder != null) {
-                String sWorkingFolderName = getInputData().getString(KEY_ARG_WORKING_FOLDER_NAME); //If this is a comic, it will be the comic ID. If it is a video, it will be the tag folder.
-                if (sWorkingFolderName != null) {
-                    gdfDestinationFolder = dfMediaCategoryFolder.findFile(sWorkingFolderName);
-                }
+            String sSubFolderName = getInputData().getString(KEY_ARG_WORKING_FOLDER_NAME); //If this is a comic, it will be the comic ID. If it is a video, it will be the tag folder.
+            if(sSubFolderName != null){
+                uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[giMediaCategory], sSubFolderName);
+            } else {
+                LogThis("Worker_DownloadPostProcessing Constructor:", "Subfolder data not passed to worker.", null);
+                return;
             }
+
             if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 //If the download(s) are related to a video check to see if it is a M3U8
                 // download. If so, find the appropriate subfolder:
                 giSingleOrM3U8 = getInputData().getInt(KEY_ARG_VIDEO_TYPE_SINGLE_M3U8, -1);
                 if (giSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
                     //If this is a M3U8, find the subfolder for the destination.
-                    gdfDestinationFolder = gdfDestinationFolder.findFile(gsItemID);
-                    //The above will be null if the destination folder does not exist, which
-                    //  is appropriate.
+                    uriDestinationFolder = GlobalClass.FormChildUri(uriDestinationFolder, gsItemID);
                 }
             }
         }
@@ -134,9 +136,9 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         String sMessage;
 
-        if(!globalClass.gdfLogsFolder.exists()){
+        if(!GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
-            bDebug = false;
+            return Result.failure(DataErrorMessage(sMessage));
         }
 
         //Prepare log file:
@@ -144,11 +146,11 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         try {
             if(bDebug) {
-                DocumentFile dfLog = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sLogFileName);
-                if(dfLog == null){
+                Uri uriLog = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+                if(uriLog == null){
                     bDebug = false;
                 } else {
-                    gosLogFile = GlobalClass.gcrContentResolver.openOutputStream(dfLog.getUri(), "wt");
+                    gosLogFile = GlobalClass.gcrContentResolver.openOutputStream(uriLog, "wt");
                     gbwLogFile = new BufferedWriter(new OutputStreamWriter(gosLogFile));
                     gbLogInUse = true;
                 }
@@ -288,7 +290,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 break;
                             case DownloadManager.STATUS_PENDING:
                                 //No action.
-                                break;
+                                //break;
                             case DownloadManager.STATUS_RUNNING:
                                 //No action.
                                 break;
@@ -307,14 +309,14 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                     String sFileName = fSource.getName();
                                     if(bDebug) gbwLogFile.write("Download completed: " + sFileName);
 
-                                    DocumentFile dfDestinationFile = null;
+
 
                                     //Ensure the destination filename is unique:
                                     if(gbExpectDifferentFilesSameNames){
                                         //  In this case, create a new filename with a
                                         //  filename modifier if there is a file of the same name:
-                                        DocumentFile[] dfExistingFilesInDestinationFolder = gdfDestinationFolder.listFiles();
-                                        if(dfExistingFilesInDestinationFolder.length > 0) {
+                                        ArrayList<String> sExistingFilesInDestinationFolder = GlobalClass.GetDirectoryFileNames(uriDestinationFolder);
+                                        if(sExistingFilesInDestinationFolder.size() > 0) {
                                             String sNew = sFileName;
                                             if(sNew.length() > 50){
                                                 //Limit the length of the filename:
@@ -324,31 +326,32 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                                     sNew = sNew + "." + sBaseAndExtension[1];
                                                 }
                                             }
-                                            sFileName = GlobalClass.getUniqueFileName(globalClass.gdfImageDownloadHoldingFolder, sNew, false);
+                                            sFileName = GlobalClass.getUniqueFileName(GlobalClass.gUriImageDownloadHoldingFolder, sNew, false);
                                         }
-                                    } else {
+                                    } //else {
                                         //There should be no file of the same name in the destination.
                                         //  Check to see if such a file exists, and if so, don't
                                         //  execute a copy, merely delete the source if it is a
                                         //  move operation.
-                                        dfDestinationFile = gdfDestinationFolder.findFile(sFileName);
-                                    }
+
+                                    //}
+                                    Uri uriDestinationFile = GlobalClass.FormChildUri(uriDestinationFolder, sFileName);
 
                                     //Move the file to the destination folder:
-                                    if (dfDestinationFile == null) {
+                                    if (!GlobalClass.CheckIfFileExists(uriDestinationFile)) {
                                         //If the destination file does not exist...
-                                        dfDestinationFile = gdfDestinationFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sFileName);
-                                        if(dfDestinationFile != null) {
+                                        uriDestinationFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                                        if(uriDestinationFile != null) {
                                             try {
                                                 InputStream inputStream;
-                                                OutputStream osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(dfDestinationFile.getUri(), "wt");
+                                                OutputStream osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriDestinationFile, "wt");
                                                 if (osDestinationFile == null) {
                                                     sMessage = "Problem opening output stream.";
                                                     Log.d("CopyFile", sMessage);
                                                     if (bDebug) gbwLogFile.write(sMessage);
                                                     continue;
                                                 }
-                                                inputStream = new FileInputStream(fSource.getPath());
+                                                inputStream = Files.newInputStream(Paths.get(fSource.getPath()));
                                                 byte[] buffer = new byte[100000];
                                                 while ((inputStream.read(buffer, 0, buffer.length)) >= 0) {
                                                     osDestinationFile.write(buffer, 0, buffer.length);
@@ -483,6 +486,14 @@ public class Worker_DownloadPostProcessing  extends Worker {
         return new Data.Builder()
                 .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
                 .build();
+    }
+
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Catalog_LoadData:" + sRoutine, sMessage);
     }
 
 }

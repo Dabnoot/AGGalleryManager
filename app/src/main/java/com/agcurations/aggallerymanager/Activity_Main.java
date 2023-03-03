@@ -12,7 +12,6 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -250,30 +249,22 @@ public class Activity_Main extends AppCompatActivity {
             if(!sDataStorageLocationURI.equals("")){
                 //Confirm that the URI string points to a valid location.
                 Uri uriDataStorageLocation = Uri.parse(sDataStorageLocationURI);
-                DocumentFile dfDataFolderPreCheck = DocumentFile.fromTreeUri(this, uriDataStorageLocation);
 
                 //Examine to make sure that we have the proper folder.
                 //  Testing showed that the system gave the data folder's parent folder, which is
                 //  the folder that the user selected, rather than the folder that this program
                 //  created within that folder AND saved to the DataStorageLocation preference.
-                if(dfDataFolderPreCheck != null) {
-                    DocumentFile dfDataFolderTest = dfDataFolderPreCheck.findFile(GlobalClass.gsDataFolderBaseName);
-                    if (dfDataFolderTest == null) {
-                        //If the precheck folder does not contain the datafolder by name,
-                        //  check to see if the precheck folder has the proper name.
-                        if (dfDataFolderPreCheck.getName() != null) {
-                            if(dfDataFolderPreCheck.getName().equals(GlobalClass.gsDataFolderBaseName)){
-                                //If the folder has the proper name, use this folder.
-                                //  Testing revealed that we will not hit this, but include here in
-                                //  case DocumentFile.fromTreeUri(this, uriDataStorageLocation) starts
-                                //  working as expected.
-                                GlobalClass.gdfDataFolder = dfDataFolderPreCheck;
-                            }
-                        }
+                if(uriDataStorageLocation != null) {
+                    String sDataStorageLocationFileName = GlobalClass.GetFileName(uriDataStorageLocation.toString());
+                    if(sDataStorageLocationFileName.equals(GlobalClass.gsDataFolderBaseName)){
+                        //If the folder has the proper name, use this folder.
+                        GlobalClass.gUriDataFolder = uriDataStorageLocation;
                     } else {
-                        //If the DataFolderBaseName folder was found within the preCheck folder,
-                        //  use the found folder.
-                        GlobalClass.gdfDataFolder = dfDataFolderTest;
+                        if (GlobalClass.CheckIfFileExists(uriDataStorageLocation, GlobalClass.gsDataFolderBaseName)){
+                            //If the DataFolderBaseName folder was found within the preCheck folder,
+                            //  use the found folder.
+                            GlobalClass.gUriDataFolder = globalClass.FormChildUri(uriDataStorageLocation.toString(), GlobalClass.gsDataFolderBaseName);
+                        }
                     }
 
                 }
@@ -281,10 +272,10 @@ public class Activity_Main extends AppCompatActivity {
         }
 
         boolean bInitDataFolder = false;
-        if(GlobalClass.gdfDataFolder == null){
+        if(GlobalClass.gUriDataFolder == null){
             bInitDataFolder = true;
         } else {
-            bInitDataFolder = !GlobalClass.gdfDataFolder.exists();
+            bInitDataFolder = !globalClass.CheckIfFileExists(GlobalClass.gUriDataFolder );
         }
         if(bInitDataFolder){
             //If the storage location data does not exist, such as when the user has not yet selected a location,

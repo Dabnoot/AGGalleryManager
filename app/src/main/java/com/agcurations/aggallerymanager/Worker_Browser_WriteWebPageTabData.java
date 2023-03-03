@@ -1,11 +1,10 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.UUID;
@@ -53,19 +52,22 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
         int iLoopSleepMS = 20;
         int iMaxLoops = GlobalClass.giMaxDelayForWriteRequestMS / iLoopSleepMS;
         int i = 0;
-        while (!GlobalClass.queueWebPageTabDataFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops){
+        while (!GlobalClass.queueWebPageTabDataFileWriteRequests.peek().equals(thisHash) && i < iMaxLoops) {
             try {
                 Thread.sleep(iLoopSleepMS);
-            } catch (Exception e){
-
+            } catch (Exception e) {
+                LogThis("doWork()", "Problem with call to sleep.", e.getMessage());
             }
             i++;
         }
 
 
+
         //Update the webpage tab data file:
-        DocumentFile dfWebPageTabDataFile = globalClass.gdfWebpageTabDataFile;
-        if(dfWebPageTabDataFile == null) return Result.failure();
+        Uri uriWebPageTabDataFile = GlobalClass.gUriWebpageTabDataFile;
+        if(!GlobalClass.CheckIfFileExists(uriWebPageTabDataFile)){
+            return Result.failure();
+        }
 
         //Re-write the data file completely because all of the indexes have changed:
         try {
@@ -85,7 +87,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             }
 
             //Write the data to the file:
-            OutputStream osNewWebPageStorageFile = GlobalClass.gcrContentResolver.openOutputStream(dfWebPageTabDataFile.getUri(), "wt");
+            OutputStream osNewWebPageStorageFile = GlobalClass.gcrContentResolver.openOutputStream(uriWebPageTabDataFile, "wt");
             if(osNewWebPageStorageFile == null){
                 sMessage = "Could not open output stream to webpage tab data file.";
                 return Result.failure(DataErrorMessage(sMessage));
@@ -119,6 +121,12 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
                 .build();
     }
 
-
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Browser_WriteWebPageTabData:" + sRoutine, sMessage);
+    }
 
 }

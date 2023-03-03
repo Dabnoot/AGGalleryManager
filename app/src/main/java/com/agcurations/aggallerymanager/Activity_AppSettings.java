@@ -3,17 +3,17 @@ package com.agcurations.aggallerymanager;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -30,14 +30,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
 
 public class Activity_AppSettings extends AppCompatActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
@@ -257,10 +255,14 @@ public class Activity_AppSettings extends AppCompatActivity implements
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.dismiss();
 
-                            if(globalClass.gdfWebpageTabDataFile.exists()){
-                                if(globalClass.gdfWebpageTabDataFile.delete()){
-                                    Toast.makeText(getContext(), "Success deleting file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
-                                } else {
+                            if(globalClass.CheckIfFileExists(GlobalClass.gUriWebpageTabDataFile)){
+                                try {
+                                    if(DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriWebpageTabDataFile)){
+                                        Toast.makeText(getContext(), "Success deleting file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
+                                    } else {
+                                        Toast.makeText(getContext(), "Could not delete file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
+                                    }
+                                } catch (FileNotFoundException e) {
                                     Toast.makeText(getContext(), "Could not delete file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
                                 }
                             }

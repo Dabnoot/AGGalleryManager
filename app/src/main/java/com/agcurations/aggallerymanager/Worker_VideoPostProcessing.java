@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -20,8 +21,6 @@ import java.io.OutputStreamWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
@@ -104,7 +103,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
         String sMessage;
 
-        if(!globalClass.gdfLogsFolder.exists()){
+        if(!globalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
             return Result.failure(DataErrorMessage(sMessage));
         }
@@ -113,8 +112,14 @@ public class Worker_VideoPostProcessing extends Worker {
         ContentResolver contentResolver = GlobalClass.gcrContentResolver;
 
         String sLogFileName = gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_WorkerLog.txt";
-        DocumentFile dfLogFile = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sLogFileName);
-        if(dfLogFile == null){
+        Uri uriLogFile = null;
+        try {
+            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+        } catch (FileNotFoundException e) {
+            Toast.makeText(getApplicationContext(), "Could not create log file to monitor video post processing.", Toast.LENGTH_SHORT).show();
+            return Result.failure();
+        }
+        if(uriLogFile == null){
             Toast.makeText(getApplicationContext(), "Could not create log file to monitor video post processing.", Toast.LENGTH_SHORT).show();
             return Result.failure();
         }
@@ -123,7 +128,7 @@ public class Worker_VideoPostProcessing extends Worker {
 
         try {
             OutputStream osLogFile;
-            osLogFile = contentResolver.openOutputStream(dfLogFile.getUri(), "wt");
+            osLogFile = contentResolver.openOutputStream(uriLogFile, "wt");
             if(osLogFile == null){
                 Toast.makeText(getApplicationContext(), "Could not write log file to monitor video post processing.", Toast.LENGTH_SHORT).show();
                 return Result.failure();
