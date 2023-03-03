@@ -12,7 +12,6 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -75,9 +74,9 @@ public class Worker_Import_ImportFiles extends Worker {
             //todo: update progress bar and progress bar text here rather than multiple places throughout.
             if(fileItem.bMarkedForDeletion){
 
-                DocumentFile dfSourceToDelete = DocumentFile.fromSingleUri(getApplicationContext(), Uri.parse(fileItem.sUri));
-                if(dfSourceToDelete == null){
-                    sMessage = "Could not locate source file from uri: " + fileItem.sUri;
+                Uri uriFileItem = Uri.parse(fileItem.sUri);
+                if(GlobalClass.CheckIfFileExists(uriFileItem)){
+                    sMessage = "Could not locate source file from uri: " + uriFileItem;
                     Log.d("Worker_Import_ImportFiles", sMessage);
                     continue;
                 }
@@ -92,7 +91,7 @@ public class Worker_Import_ImportFiles extends Worker {
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 String sLine = sCreateJobFileRecord(
-                        dfSourceToDelete.getUri().toString(),
+                        uriFileItem.toString(),
                         fileItem.sUriParent,
                         fileItem.sDestinationFolder,
                         fileItem.sFileOrFolderName,
@@ -102,7 +101,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
                 if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
                     //If this file is in the image download holding folder, mark the metadata file for deletion as well.
-                    String sFileName = dfSourceToDelete.getName();
+                    String sFileName = GlobalClass.GetFileName(uriFileItem);
                     String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
 
                     Uri uriMetadataFile = GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
@@ -133,16 +132,19 @@ public class Worker_Import_ImportFiles extends Worker {
 
             String sFileName;
             String sImageMetadataUri = "";
-            String sSourceUri;
+            Uri uriFileItemSource = Uri.parse(fileItem.sUri);
+            if(!GlobalClass.CheckIfFileExists(uriFileItemSource)){
+                sMessage = "Could not locate source file from uri: " + uriFileItemSource;
+                Log.d("Worker_Import_ImportFiles", sMessage);
+                globalClass.BroadcastProgress(true, "Problem with source reference for " + fileItem.sFileOrFolderName + "\n",
+                        false, iProgressBarValue,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                lByteProgressNumerator += fileItem.lSizeBytes;
+                continue;
+            }
+            sFileName = GlobalClass.GetFileName(uriFileItemSource);
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
-                Uri uriTemp = Uri.parse(fileItem.sUri);
-                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriTemp);
-                if(dfSource == null){
-                    sMessage = "Could not locate source file from uri: " + fileItem.sUri;
-                    Log.d("Worker_Import_ImportFiles", sMessage);
-                    continue;
-                }
-                sFileName = dfSource.getName();
                 String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
                 Uri uriMetadataFile = GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
                 if (uriMetadataFile == null) {
@@ -151,27 +153,6 @@ public class Worker_Import_ImportFiles extends Worker {
                     continue;
                 }
                 sImageMetadataUri = uriMetadataFile.toString();
-                sSourceUri = dfSource.getUri().toString();
-
-            } else {
-                Uri uriSourceFile = Uri.parse(fileItem.sUri);
-                DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-                boolean bProblemWithSourceFile = false;
-                if (dfSource == null) {
-                    bProblemWithSourceFile = true;
-                } else if (dfSource.getName() == null){
-                    bProblemWithSourceFile = true;
-                }
-                if(bProblemWithSourceFile){
-                    globalClass.BroadcastProgress(true, "Problem with source reference for " + fileItem.sFileOrFolderName + "\n",
-                            false, iProgressBarValue,
-                            false, "",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                    lByteProgressNumerator += fileItem.lSizeBytes;
-                    continue;
-                }
-                sFileName = dfSource.getName();
-                sSourceUri = dfSource.getUri().toString();
             }
 
 
@@ -204,7 +185,7 @@ public class Worker_Import_ImportFiles extends Worker {
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                 String sLine = sCreateJobFileRecord(
-                        sSourceUri,
+                        uriFileItemSource.toString(),
                         fileItem.sUriParent,
                         fileItem.sDestinationFolder,
                         sFileName,
