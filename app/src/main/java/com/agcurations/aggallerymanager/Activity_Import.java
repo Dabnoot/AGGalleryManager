@@ -11,13 +11,13 @@ import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
+import androidx.work.WorkManager;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -31,6 +31,7 @@ import android.graphics.Point;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -50,8 +51,8 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
-import java.lang.annotation.Target;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -152,7 +153,7 @@ public class Activity_Import extends AppCompatActivity {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
-        if(globalClass.giSelectedCatalogMediaCategory == null){
+        if(GlobalClass.giSelectedCatalogMediaCategory == null){
             ApplicationLogWriter("Selected media category is null. Returning to Main Activity.");
             finish();
             return;
@@ -187,7 +188,7 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder = new Stack<>();
 
 
-        if(globalClass.gbImportFolderAnalysisRunning && !globalClass.gbImportFolderAnalysisFinished){
+        if(GlobalClass.gbImportFolderAnalysisRunning && !GlobalClass.gbImportFolderAnalysisFinished){
             //If a folder analysis operation has been started and is not finished, go to the storage
             // location fragment which should show the analysis progress.
             giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
@@ -381,7 +382,7 @@ public class Activity_Import extends AppCompatActivity {
             iNewImportMediaCatagory = GlobalClass.MEDIA_CATEGORY_COMICS;
         }
 
-        globalClass.giSelectedCatalogMediaCategory = iNewImportMediaCatagory;
+        GlobalClass.giSelectedCatalogMediaCategory = iNewImportMediaCatagory;
         gotoMediaCategorySelectedFragment(iNewImportMediaCatagory);
 
     }
@@ -391,8 +392,8 @@ public class Activity_Import extends AppCompatActivity {
         if(iNewImportMediaCatagory != viewModelImportActivity.iImportMediaCategory) {
             viewModelImportActivity.bImportCategoryChange = true; //Force user to select new import folder (in the event that they backtracked).
             globalClass.gbImportExecutionStarted = false;
-            if(globalClass.gbImportFolderAnalysisRunning){
-                globalClass.gbImportFolderAnalysisStop = true;
+            if(GlobalClass.gbImportFolderAnalysisRunning){
+                GlobalClass.gbImportFolderAnalysisStop = true;
             }
             viewModelImportActivity.iImportMediaCategory = iNewImportMediaCatagory;
         }
@@ -445,7 +446,7 @@ public class Activity_Import extends AppCompatActivity {
             iNewImageSource = ViewModel_ImportActivity.IMAGE_SOURCE_WEBPAGE;
         } else if (radioButton_ImageSourceHoldingFolder.isChecked()){
             iNewImageSource = ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER;
-            globalClass.gbImportHoldingFolderAnalysisAutoStart = true;
+            GlobalClass.gbImportHoldingFolderAnalysisAutoStart = true;
         } else {
             iNewImageSource = ViewModel_ImportActivity.IMAGE_SOURCE_FOLDER;
         }
@@ -595,14 +596,20 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonClick_Cancel(View v){
-        if(globalClass.gbImportFolderAnalysisRunning){
-            globalClass.gbImportFolderAnalysisStop = true;
+        if(GlobalClass.gbImportFolderAnalysisRunning){
+            GlobalClass.gbImportFolderAnalysisStop = true;
         }
         gotoFinish();
     }
 
     public void gotoFinish(){
         //Code any pre-finish operations here.
+        //Kill any file indexing workers that might be running:
+        WorkManager.getInstance(getApplicationContext())
+                .cancelAllWorkByTag(Worker_Import_GetHoldingFolderDirectoryContents.TAG_WORKER_IMPORT_GETHOLDINGFOLDERDIRECTORYCONTENTS);
+        WorkManager.getInstance(getApplicationContext())
+                .cancelAllWorkByTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS);
+
         finish();
     }
     
@@ -897,21 +904,25 @@ public class Activity_Import extends AppCompatActivity {
                                 String sMessage = "";
                                 boolean bFileDeleted = false;
                                 if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER){
+                                    //Todo: delete the media file and any metadata file that might exist.
                                     Uri uriTemp = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                                    File fSource = new File(uriTemp.getPath());
-                                    if(fSource.exists()){
-                                        if(!fSource.delete()){
+                                    if(GlobalClass.CheckIfFileExists(uriTemp)){
+                                        try {
+                                            if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriTemp)){
+                                                sMessage = "Could not delete file.";
+                                            } else {
+                                                sMessage = "File deleted.";
+                                                bFileDeleted = true;
+                                            }
+                                        } catch (FileNotFoundException e) {
                                             sMessage = "Could not delete file.";
-                                        } else {
-                                            sMessage = "File deleted.";
-                                            bFileDeleted = true;
                                         }
                                     }
                                 } else {
                                     Uri uriSourceFile;
                                     uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
                                     DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-
+                                    //todo: Switch away from DocumentFile.
                                     if (dfSource != null) {
                                         if (!dfSource.delete()) {
                                             sMessage = "Could not delete file.";

@@ -105,8 +105,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             @Override
             public void onClick(View v) {
 
-                if(globalClass.gbImportFolderAnalysisRunning){
-                    globalClass.gbImportFolderAnalysisStop = true;
+                if(GlobalClass.gbImportFolderAnalysisRunning){
+                    GlobalClass.gbImportFolderAnalysisStop = true;
                 }
 
 
@@ -154,14 +154,14 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             actionBar.show();
         }
 
-        if(!globalClass.gbImportHoldingFolderAnalysisAutoStart) {
+        if(!GlobalClass.gbImportHoldingFolderAnalysisAutoStart) {
 
             if (viewModelImportActivity.bImportCategoryChange) {
                 //Reset all the stuff so that it looks like time to select a folder:
-                if (globalClass.gbImportFolderAnalysisRunning) {
-                    globalClass.gbImportFolderAnalysisStop = true;
+                if (GlobalClass.gbImportFolderAnalysisRunning) {
+                    GlobalClass.gbImportFolderAnalysisStop = true;
                 }
-                globalClass.gbImportFolderAnalysisFinished = false;
+                GlobalClass.gbImportFolderAnalysisFinished = false;
 
                 viewModelImportActivity.bImportCategoryChange = false;
                 gProgressBar_FileAnalysisProgress.setProgress(0);
@@ -190,7 +190,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                 }
 
             } else {
-                if (globalClass.gbImportFolderAnalysisRunning || globalClass.gbImportFolderAnalysisFinished) {
+                if (GlobalClass.gbImportFolderAnalysisRunning || GlobalClass.gbImportFolderAnalysisFinished) {
 
                     //Make some more space to show the progress bar:
                     LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
@@ -219,7 +219,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         gTextView_FileAnalysisDebugLog.setText(globalClass.gsbImportFolderAnalysisLog.toString());
                     }
 
-                    if (globalClass.gbImportFolderAnalysisFinished) {
+                    if (GlobalClass.gbImportFolderAnalysisFinished) {
                         if (gbutton_FolderSelectComplete != null) {
                             gbutton_FolderSelectComplete.setEnabled(true);
                             viewModelImportActivity.bUpdateImportSelectList = true;
@@ -229,7 +229,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                 }
             }
         } else {
-            globalClass.gbImportHoldingFolderAnalysisAutoStart = false;
+            GlobalClass.gbImportHoldingFolderAnalysisAutoStart = false;
             //If the user has selected to import from the holding folder, move forward with processing.
             String sHoldingFolderPath = GlobalClass.gUriImageDownloadHoldingFolder.toString();
             ShowFolderAnalysisViews(sHoldingFolderPath);
@@ -330,9 +330,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                             iFilesOrFolders = GlobalClass.FOLDERS_ONLY;
                         }
 
-                        globalClass.gbImportFolderAnalysisRunning = true;
+                        GlobalClass.gbImportFolderAnalysisRunning = true;
                         globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
-                        globalClass.gbImportFolderAnalysisFinished = false;
+                        GlobalClass.gbImportFolderAnalysisFinished = false;
                         Service_Import.startActionGetDirectoryContents(getContext(),
                                 Activity_Import.guriImportTreeURI,
                                 viewModelImportActivity.iImportMediaCategory,
@@ -412,7 +412,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         gTextView_FileAnalysisProgressBarText.setText(sProgressBarText);
                     }
                 }
-                if(globalClass.gbImportFolderAnalysisFinished){
+                if(GlobalClass.gbImportFolderAnalysisFinished){
+                    GlobalClass.gbImportFolderAnalysisFinished = false; //Prevent this GlobalClass var from allowing a re-run of this case.
                     if(gbutton_FolderSelectComplete != null) {
                         gbutton_FolderSelectComplete.setEnabled(true);
                         viewModelImportActivity.bUpdateImportSelectList = true;

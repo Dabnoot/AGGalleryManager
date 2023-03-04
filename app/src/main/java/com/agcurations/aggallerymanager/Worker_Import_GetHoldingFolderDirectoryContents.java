@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
@@ -23,7 +22,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -32,8 +30,11 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
     public static final String TAG_WORKER_IMPORT_GETHOLDINGFOLDERDIRECTORYCONTENTS = "com.agcurations.aggallermanager.tag_worker_import_getholdingfolderdirectorycontents";
 
+    private double gdTimeStamp;
+
     public Worker_Import_GetHoldingFolderDirectoryContents(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
+        gdTimeStamp = getInputData().getDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, -1);
     }
 
     @NonNull
@@ -152,8 +153,8 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
 
             if(tmHoldingFolderRecordData.size() == 0){
-                globalClass.gbImportFolderAnalysisRunning = false;
-                globalClass.gbImportFolderAnalysisFinished = true;
+                GlobalClass.gbImportFolderAnalysisRunning = false;
+                GlobalClass.gbImportFolderAnalysisFinished = true;
                 String sMessage = "No files found in the holding folder.";
                 globalClass.gsbImportFolderAnalysisLog.append(sMessage);
                 globalClass.problemNotificationConfig(sMessage, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
@@ -172,7 +173,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
             //Process the holding folder entries:
             for(Map.Entry<String, String[]> HoldingFolderEntry: tmHoldingFolderRecordData.entrySet()){
 
-                if(globalClass.gbImportFolderAnalysisStop){
+                if(GlobalClass.gbImportFolderAnalysisStop){
                     break;
                 }
 
@@ -281,8 +282,8 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
 
         }catch (Exception e){
-            globalClass.gbImportFolderAnalysisRunning = false;
-            globalClass.gbImportFolderAnalysisFinished = true;
+            GlobalClass.gbImportFolderAnalysisRunning = false;
+            GlobalClass.gbImportFolderAnalysisFinished = true;
             String sMessage = "Problem during Worker_Import_GetHoldingFolderDirectoryContents: " + e.getMessage();
             globalClass.gsbImportFolderAnalysisLog.append(sMessage);
             globalClass.problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
@@ -298,15 +299,15 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
 
         //Set finished and broadcast so that the fragment knows that we are done.
-        globalClass.gbImportFolderAnalysisFinished = true;
+        GlobalClass.gbImportFolderAnalysisFinished = true;
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 true, lProgressNumerator + "/" + lProgressDenominator,
                 Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
-        globalClass.gbImportFolderAnalysisRunning = false;
-        if(globalClass.gbImportFolderAnalysisStop) {
-            globalClass.gbImportFolderAnalysisStop = false;
+        GlobalClass.gbImportFolderAnalysisRunning = false;
+        if(GlobalClass.gbImportFolderAnalysisStop) {
+            GlobalClass.gbImportFolderAnalysisStop = false;
         }
 
 

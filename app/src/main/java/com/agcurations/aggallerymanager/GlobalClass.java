@@ -186,10 +186,10 @@ public class GlobalClass extends Application {
     // These variables prevent the system/user from starting another folder analysis until an
     // existing folder analysis operation is finished.
     //public boolean gbImportFolderAnalysisStarted = false; This item not needed for this fragment.
-    public boolean gbImportFolderAnalysisRunning = false;
-    public boolean gbImportHoldingFolderAnalysisAutoStart = false;
-    public boolean gbImportFolderAnalysisStop = false;
-    public boolean gbImportFolderAnalysisFinished = false;
+    public static boolean gbImportFolderAnalysisRunning = false;
+    public static boolean gbImportHoldingFolderAnalysisAutoStart = false;
+    public static boolean gbImportFolderAnalysisStop = false;
+    public static boolean gbImportFolderAnalysisFinished = false;
     public StringBuilder gsbImportFolderAnalysisLog = new StringBuilder();
     public int giImportFolderAnalysisProgressBarPercent = 0;
     public String gsImportFolderAnalysisProgressBarText = "";
