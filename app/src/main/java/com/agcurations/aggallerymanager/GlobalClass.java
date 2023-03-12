@@ -53,11 +53,9 @@ import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 
-import com.google.android.exoplayer2.util.MimeTypes;
 
 public class GlobalClass extends Application {
     //GlobalClass built using this guide:
@@ -740,6 +738,69 @@ public class GlobalClass extends Application {
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
         }
+
+    }
+
+    public void CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+
+        int iMediaCategory;
+
+        if(alci_CatalogItems != null){
+            if(alci_CatalogItems.size() > 0){
+                iMediaCategory = alci_CatalogItems.get(0).iMediaCategory; //All items should have the same media category.
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        gbTagHistogramRequiresUpdate[iMediaCategory] = true;
+
+        TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(iMediaCategory);
+
+        try {
+
+            StringBuilder sbNewCatalogRecords = new StringBuilder();
+            for(ItemClass_CatalogItem ci: alci_CatalogItems) {
+
+                //Add the details to the TreeMap:
+                tmCatalogRecords.put(ci.sItemID, ci);
+
+                sbNewCatalogRecords.append(getCatalogRecordString(ci)).append("\n");
+
+            }
+
+            //Write the data to the file:
+            OutputStream osNewCatalogContentsFile;
+
+            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                String sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory];
+
+                BroadcastProgress(true, sMessage,
+                        false, 0,
+                        false, "",
+                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                return;
+            }
+            //Write the activity_comic_details_header line to the file:
+            osNewCatalogContentsFile.write(sbNewCatalogRecords.toString().getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            String sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory] + "\n\n" + e.getMessage();
+
+            BroadcastProgress(true, sMessage,
+                    false, 0,
+                    false, "",
+                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+        }
+
+        //Update the tags histogram:
+        updateTagHistogramsIfRequired();
 
     }
 
