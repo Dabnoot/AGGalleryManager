@@ -37,18 +37,12 @@ public class Worker_LocalFileTransfer extends Worker {
     // Define keys for arguments passed to this worker:
     public static final String KEY_ARG_JOB_REQUEST_DATETIME = "KEY_ARG_JOB_REQUEST_DATETIME";
     public static final String KEY_ARG_JOB_FILE = "KEY_ARG_JOB_FILE";
-    //public static final String KEY_ARG_MEDIA_CATEGORY = "KEY_ARG_MEDIA_CATEGORY";
-    //public static final String KEY_ARG_COPY_OR_MOVE = "KEY_ARG_COPY_OR_MOVE";
-    //public static final String KEY_ARG_TOTAL_IMPORT_SIZE_BYTES = "KEY_ARG_TOTAL_IMPORT_SIZE_BYTES";
 
     public static final String JOB_PROGRESS = "JOB_PROGRESS";
     public static final String JOB_BYTES_PROCESSED = "JOB_BYTES_PROCESSED";
     public static final String JOB_BYTES_TOTAL = "JOB_BYTES_TOTAL";
 
     public static final String JOB_DATETIME = "JOB_DATETIME";
-
-    //public static final int LOCAL_FILE_TRANSFER_MOVE = 0;
-    //public static final int LOCAL_FILE_TRANSFER_COPY = 1;
 
     public static final int HEADER_FIELD_INDEX_MOVE_OR_COPY = 1;
     public static final int HEADER_FIELD_INDEX_MEDIA_CATEGORY = 0;
@@ -404,21 +398,40 @@ public class Worker_LocalFileTransfer extends Worker {
 
 
                                     sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 1]
-                                            + " file " + sSourceFileName + " to " + uriDestinationFolder + ".";
+                                            + " file " + sSourceFileName + " to " + uriDestinationFolder + ".\n";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine,
                                             false, 0,
                                             false, "",
                                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                                    Uri uriMovedOrCopiedDocumentUri;
-                                    if(iMoveOrCopy == GlobalClass.MOVE){
 
-                                        Uri uriSourceParentUri = GlobalClass.GetParentUri(uriSourceFile);
+                                    //Copy the document first. DocumentsContract.Copy and .Move are finicky and don't always do the job.
+                                    Uri uriSourceParentUri = GlobalClass.GetParentUri(uriSourceFile);
+                                    Uri uriOutputFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, "none", sDestinationFileName);
+                                    if(uriOutputFile != null) {
+                                        InputStream isSourceFile = null;
+                                        OutputStream osDestinationFile = null;
 
-                                        /*if(!GlobalClass.CheckIfFileExists(uriSourceParentUri)){
-                                            sMessage = "Could not determine source file parent. Move operation aborted. File \""
-                                                    + sDestinationFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
+                                        try {
+                                            isSourceFile = GlobalClass.gcrContentResolver.openInputStream(uriSourceFile);
+                                            osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriOutputFile);
+
+                                            if (isSourceFile != null && osDestinationFile != null) {
+                                                byte[] bucket = new byte[32 * 1024];
+                                                int bytesRead = 0;
+                                                while (bytesRead != -1) {
+                                                    bytesRead = isSourceFile.read(bucket); //-1, 0, or more
+                                                    if (bytesRead > 0) {
+                                                        osDestinationFile.write(bucket, 0, bytesRead);
+                                                    }
+                                                }
+
+                                            }
+
+                                        } catch (Exception e) {
+                                            sMessage = "Source file could not be copied. File \""
+                                                    + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                             gbwLogFile.write(sMessage + "\n");
                                             globalClass.BroadcastProgress(true, sMessage + "\n",
                                                     false, 0,
@@ -427,21 +440,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                             bProblemWithFileTransfer = true;
                                             glProgressNumerator = glProgressNumerator + lFileSize;
                                             continue;
-                                        }*/
-                                        uriMovedOrCopiedDocumentUri = DocumentsContract.moveDocument(
-                                                GlobalClass.gcrContentResolver,
-                                                uriSourceFile,
-                                                uriSourceParentUri,
-                                                uriDestinationFolder);
 
+                                        } finally {
+                                            if (isSourceFile != null)
+                                                isSourceFile.close();
+                                            if (osDestinationFile != null)
+                                                osDestinationFile.close();
+                                        }
                                     } else {
-                                        uriMovedOrCopiedDocumentUri = DocumentsContract.copyDocument(
-                                                GlobalClass.gcrContentResolver,
-                                                uriSourceFile,
-                                                uriDestinationFolder);
-                                    }
-                                    if(uriMovedOrCopiedDocumentUri == null){
-                                        sMessage = "Source file could not be moved or copied. File \""
+                                        sMessage = "Source file could not be copied. File \""
                                                 + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                         gbwLogFile.write(sMessage + "\n");
                                         globalClass.BroadcastProgress(true, sMessage + "\n",
@@ -451,13 +458,11 @@ public class Worker_LocalFileTransfer extends Worker {
                                         bProblemWithFileTransfer = true;
                                         glProgressNumerator = glProgressNumerator + lFileSize;
                                         continue;
-                                    } else {
-                                        //I have found that DocumentsContract.moveDocument returns a funny URI that does not actually point to the final document.
-                                        //  Create the proper URI here before moving on.
+                                    }
 
-                                        uriMovedOrCopiedDocumentUri = GlobalClass.FormChildUri(uriDestinationFolder, sSourceFileName);
-                                        if(!GlobalClass.CheckIfFileExists(uriMovedOrCopiedDocumentUri)){
-                                            sMessage = "Could not detect moved or copied file. File \""
+                                    if(iMoveOrCopy == GlobalClass.MOVE){
+                                        if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFile)){
+                                            sMessage = "Source file could not be deleted after copy to complete move operation. File \""
                                                     + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                             gbwLogFile.write(sMessage + "\n");
                                             globalClass.BroadcastProgress(true, sMessage + "\n",
@@ -468,16 +473,9 @@ public class Worker_LocalFileTransfer extends Worker {
                                             glProgressNumerator = glProgressNumerator + lFileSize;
                                             continue;
                                         }
-
-
                                     }
-                                    DocumentsContract.renameDocument(
-                                            GlobalClass.gcrContentResolver,
-                                            uriMovedOrCopiedDocumentUri,
-                                            sDestinationFileName);
 
-
-                                    sLogLine = " Success.";
+                                    sLogLine = "Success.";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,
