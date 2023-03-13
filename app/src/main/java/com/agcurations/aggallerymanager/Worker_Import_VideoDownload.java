@@ -33,6 +33,10 @@ public class Worker_Import_VideoDownload extends Worker {
 
     public static final String TAG_WORKER_IMPORT_VIDEODOWNLOAD = "com.agcurations.aggallermanager.tag_worker_import_videodownload";
 
+    public static final String VIDEO_DLID_AND_SEQUENCE_FILE_NAME = "DLID_And_Sequence.txt";
+    public static final int DOWNLOAD_TYPE_SINGLE = 1;
+    public static final int DOWNLOAD_TYPE_M3U8 = 2;
+
     String gsAddress;
     
     public Worker_Import_VideoDownload(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -349,9 +353,9 @@ public class Worker_Import_VideoDownload extends Worker {
 
             int iSingleOrM3U8;
             if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
-                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_SINGLE;
+                iSingleOrM3U8 = DOWNLOAD_TYPE_SINGLE;
             } else {
-                iSingleOrM3U8 = Worker_VideoPostProcessing.DOWNLOAD_TYPE_M3U8;
+                iSingleOrM3U8 = DOWNLOAD_TYPE_M3U8;
             }
 
             //If this is an M3U8 stream download and the user has elected not to concatenate via
@@ -465,9 +469,9 @@ public class Worker_Import_VideoDownload extends Worker {
             //A file sequence string array can be too big to pass to a worker, so write it to a file:
 
             Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder, MimeTypes.BASE_TYPE_TEXT,
-                    Worker_VideoPostProcessing.VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
+                    VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
             if(uriDLIDFileSequenceFile == null){
-                sMessage = "Could not create file to record download ID sequencing: " + Worker_VideoPostProcessing.VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
+                sMessage = "Could not create file to record download ID sequencing: " + VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
                         uriVideoWorkingFolder;
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
