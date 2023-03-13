@@ -69,6 +69,8 @@ public class Worker_Import_ImportFiles extends Worker {
 
         StringBuilder sbJobFileRecords = new StringBuilder();
 
+        ArrayList<ItemClass_CatalogItem> alci_NewCatalogItems = new ArrayList<>();
+
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
             //todo: update progress bar and progress bar text here rather than multiple places throughout.
@@ -92,7 +94,6 @@ public class Worker_Import_ImportFiles extends Worker {
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                 String sLine = sCreateJobFileRecord(
                         uriFileItem.toString(),
-                        fileItem.sUriParent,
                         fileItem.sDestinationFolder,
                         fileItem.sFileOrFolderName,
                         fileItem.lSizeBytes,
@@ -113,7 +114,6 @@ public class Worker_Import_ImportFiles extends Worker {
 
                     sLine = sCreateJobFileRecord(
                             uriMetadataFile.toString(),
-                            fileItem.sUriParent,
                             fileItem.sDestinationFolder,
                             fileItem.sFileOrFolderName,
                             fileItem.lSizeBytes,
@@ -186,7 +186,6 @@ public class Worker_Import_ImportFiles extends Worker {
 
                 String sLine = sCreateJobFileRecord(
                         uriFileItemSource.toString(),
-                        fileItem.sUriParent,
                         fileItem.sDestinationFolder,
                         sFileName,
                         fileItem.lSizeBytes,
@@ -227,7 +226,6 @@ public class Worker_Import_ImportFiles extends Worker {
                     if(!sImageMetadataUri.equals("")) {
                         sLine = sCreateJobFileRecord(
                                 sImageMetadataUri,
-                                fileItem.sUriParent,
                                 fileItem.sDestinationFolder,
                                 fileItem.sFileOrFolderName,
                                 100, //Size should be quite small.
@@ -237,10 +235,7 @@ public class Worker_Import_ImportFiles extends Worker {
                     }
                 }
 
-                //The below call should add the record to both the catalog contents file
-                //  and memory:
-                globalClass.CatalogDataFile_CreateNewRecord(ciNew);
-
+                alci_NewCatalogItems.add(ciNew);
 
 
             } catch (Exception e) {
@@ -254,9 +249,13 @@ public class Worker_Import_ImportFiles extends Worker {
             }
 
 
-        } //End file processing loop.
+        } //End fileItem processing loop.
 
-        //Close the job file, written-to in the file loop above:
+        //Create catalog records in both the catalog contents file and memory:
+        globalClass.CatalogDataFile_CreateNewRecords(alci_NewCatalogItems);
+
+
+        //Prepare the job file from a StringBuilder configured in the loop above:
         String sJobDateTime = GlobalClass.GetTimeStampFileSafe();
         String sJobFileName = "Job_" + sJobDateTime + ".txt";
 
@@ -321,9 +320,6 @@ public class Worker_Import_ImportFiles extends Worker {
         Data dataLocalFileTransfer = new Data.Builder()
                 .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_REQUEST_DATETIME, sJobDateTime)
                 .putString(Worker_LocalFileTransfer.KEY_ARG_JOB_FILE, sJobFileName)
-                //.putInt(Worker_LocalFileTransfer.KEY_ARG_MEDIA_CATEGORY, iMediaCategory)
-                //.putInt(Worker_LocalFileTransfer.KEY_ARG_COPY_OR_MOVE, iMoveOrCopy)
-                //.putLong(Worker_LocalFileTransfer.KEY_ARG_TOTAL_IMPORT_SIZE_BYTES, lTotalImportSize)
                 .build();
         OneTimeWorkRequest otwrLocalFileTransfer = new OneTimeWorkRequest.Builder(Worker_LocalFileTransfer.class)
                 .setInputData(dataLocalFileTransfer)
@@ -347,9 +343,7 @@ public class Worker_Import_ImportFiles extends Worker {
      * Builds a string to be written to the job file. This routine serves to ensure that the proper
      * arguments, types, and usage are correct; this routine is to reduce programmer error.
      *
-     * @param sSourceUri                A DocumentFile-derived Uri for the source file.
-     * @param sSourceParentUri          A DocumentFile-derived Uri to the DocumentFile holding the source file.
-     *                                  This is used to facilitate DocumentsContract.Move if desired.
+     * @param sSourceUri                A Uri for the source file.
      * @param sDestinationFolderName    Name of the folder to hold this file. The header specifying
      *                                  the Catalog type (Videos, Pictures, Comics) is to include
      *                                  this folder name.
@@ -360,14 +354,12 @@ public class Worker_Import_ImportFiles extends Worker {
      * @return sJobFileRecord           A string is returned to be written to the job file.
      */
     private String sCreateJobFileRecord(String sSourceUri,
-                                        String sSourceParentUri,
                                         String sDestinationFolderName,
                                         String sFileOrFolderName,
                                         long lSizeInBytes,
                                         boolean bMarkForDeletion){
 
         return sSourceUri + "\t" +
-        sSourceParentUri + "\t" +
         sDestinationFolderName + "\t" +
         sFileOrFolderName + "\t" +
         lSizeInBytes + "\t" +
