@@ -299,25 +299,6 @@ public class Worker_Catalog_LoadData extends Worker {
         return Result.success();
     }
 
-    /*private DocumentFile initSubfolder(DocumentFile dfFolder, String sFolderName, String sFailMessage){
-
-        DocumentFile dfSubFolder = null;
-
-        try {
-            dfSubFolder = dfFolder.findFile(sFolderName);
-            if (dfSubFolder == null) {
-                dfSubFolder = dfFolder.createDirectory(sFolderName);
-            }
-            if (dfSubFolder == null) {
-                problemNotificationConfig(sFailMessage);
-            }
-        } catch (Exception e){
-            String sMessage = "Trouble with find/create file: " + sFolderName;
-            Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
-        }
-        return dfSubFolder;
-
-    }*/
 
     private Uri initSubfolder(Uri uriParentFolder, String sFolderName, String sFailMessage) {
 
@@ -850,7 +831,7 @@ public class Worker_Catalog_LoadData extends Worker {
         //todo: is it faster to use DocumentFile or DocumentContract here?
         DocumentFile dfLogsFolder = DocumentFile.fromTreeUri(getApplicationContext(), GlobalClass.gUriLogsFolder);
         if(dfLogsFolder != null){
-            if(dfLogsFolder.exists()){
+            if(GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
                 DocumentFile[] dfLogFiles = dfLogsFolder.listFiles();
                 if(dfLogFiles.length > 0){
                     LocalDate ldNow = LocalDate.now();
