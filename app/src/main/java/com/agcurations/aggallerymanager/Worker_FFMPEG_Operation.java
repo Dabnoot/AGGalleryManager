@@ -6,15 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-/*import com.google.android.exoplayer2.util.MimeTypes;
-import androidx.documentfile.provider.DocumentFile;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.Map;
-import java.util.TreeMap;*/
-
 public class Worker_FFMPEG_Operation extends Worker {
 
 
