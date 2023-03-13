@@ -2,11 +2,11 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 
 import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -34,7 +34,7 @@ public class Worker_Import_DeleteFiles extends Worker {
         int iProgressBarValue = 0;
 
         Uri uriSourceFile;
-        DocumentFile dfSource;
+
         String sLogLine;
         boolean bDisplayLogMessage;
         String sProgressBarText;
@@ -42,24 +42,30 @@ public class Worker_Import_DeleteFiles extends Worker {
             bDisplayLogMessage = false;
             sLogLine = GlobalClass.FILE_DELETION_MESSAGE + sUriFileToDelete + "...";
             uriSourceFile = Uri.parse(sUriFileToDelete);
-            dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
 
-            if (dfSource != null) {
+            String sMessage;
+
+            if (GlobalClass.CheckIfFileExists(uriSourceFile)) {
                 try {
-                    if (dfSource.delete()) {
+                    if (DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFile)) {
                         sLogLine = sLogLine + "Success.";
+                        sMessage = "deleted.";
                     } else {
                         sLogLine = sLogLine + "Failed.";
+                        sMessage = "could not be deleted.";
                         bDisplayLogMessage = true;
                     }
                 } catch (Exception e){
+                    sMessage = "could not be deleted.";
                     sLogLine = sLogLine + e.getMessage();
                     bDisplayLogMessage = true;
                 }
+            } else {
+                sMessage = "was not found.";
             }
 
             iProgressNumerator++;
-            sProgressBarText = "File " + iProgressNumerator + " of " + iProgressDenominator + " deleted.";
+            sProgressBarText = "File " + iProgressNumerator + " of " + iProgressDenominator + " " + sMessage;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(bDisplayLogMessage, sLogLine,
                     true, iProgressBarValue,
