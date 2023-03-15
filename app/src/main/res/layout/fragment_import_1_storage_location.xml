@@ -29,6 +29,52 @@
             app:layout_constraintTop_toTopOf="parent"
             android:onClick="buttonNextClick_StorageImportFromLocation"/>
 
+        <RelativeLayout
+            android:id="@+id/relativeLayout_GraphicsAttributesInclusion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/button_SelectFolder"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="20dp">
+
+            <CheckBox
+                android:id="@+id/checkBox_IncludeGraphicsAttributes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"/>
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_GAI_Main_line"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/checkBox_IncludeGraphicsAttributes">
+
+                <TextView
+                    android:id="@+id/textView_Label_IncludeGraphicsAttributes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:text="Include graphics attributes in query results."
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="24sp"
+                    android:layout_marginTop="6dp"/>
+
+                <TextView
+                    android:id="@+id/textView_Label_IncludeGraphicsAttributes_SubText"
+                    android:gravity="center"
+                    android:layout_centerHorizontal="true"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/textView_Label_IncludeGraphicsAttributes"
+                    android:text="This allows sorting of results by graphics dimensions\n and video length but adds time to initial processing."
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="18sp"
+                    android:layout_marginTop="0dp"/>
+
+            </RelativeLayout>
+
+        </RelativeLayout>
 
         <TextView
             android:id="@+id/textView_Label_Selected_Folder"
@@ -39,7 +85,7 @@
             android:textSize="24sp"
             android:layout_margin="20dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/button_SelectFolder"
+            app:layout_constraintTop_toBottomOf="@+id/relativeLayout_GraphicsAttributesInclusion"
             app:layout_constraintEnd_toEndOf="parent"
             android:visibility="invisible" />
 
