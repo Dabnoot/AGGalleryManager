@@ -740,6 +740,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
+                                Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
                                 Service_CatalogViewer.startActionDeleteCatalogItem(
                                         getApplicationContext(), ci_final,
                                         "Activity_CatalogViewer:RecyclerViewCatalogAdapter.onBindViewHolder.btnDelete.OnClick",
