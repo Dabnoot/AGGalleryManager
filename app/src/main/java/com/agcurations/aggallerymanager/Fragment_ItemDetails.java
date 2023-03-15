@@ -344,6 +344,12 @@ public class Fragment_ItemDetails extends Fragment {
             textView_FileName.setText(sFilename);
         }
 
+        TextView textView_Dimensions = getView().findViewById(R.id.textView_Dimensions);
+        if(textView_Dimensions != null){
+            String sDimensions = "Dimensions: " + gciCatalogItem.iWidth + " x " + gciCatalogItem.iHeight;
+            textView_Dimensions.setText(sDimensions);
+        }
+
         TextView textView_Source = getView().findViewById(R.id.textView_Source);
         if(textView_Source != null){
             String sSource = "Source: " + gciCatalogItem.sSource;

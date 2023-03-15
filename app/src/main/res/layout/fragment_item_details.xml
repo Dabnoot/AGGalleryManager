@@ -117,6 +117,17 @@
                     android:layout_alignStart="@id/textView_Title"/>
 
                 <TextView
+                    android:id="@+id/textView_Dimensions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dimensions: "
+                    android:textColor="@color/colorTextColor"
+                    android:layout_marginTop="20dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_FileName"
+                    android:layout_alignStart="@id/textView_Title"/>
+
+                <TextView
                     android:id="@+id/textView_Source"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -124,7 +135,7 @@
                     android:textColor="@color/colorTextColor"
                     android:layout_marginTop="20dp"
                     android:textSize="20sp"
-                    android:layout_below="@id/textView_FileName"
+                    android:layout_below="@id/textView_Dimensions"
                     android:layout_alignStart="@id/textView_FileName"
                     android:textIsSelectable="true"/>
 
