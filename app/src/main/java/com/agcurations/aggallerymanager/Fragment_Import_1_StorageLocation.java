@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,12 +26,14 @@ import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -49,6 +52,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     TextView gTextView_FileAnalysisDebugLog;
     LinearLayout gLinearLayout_Progress;
     Button gbutton_FolderSelectComplete;
+
+    boolean gbIncludeGraphicsAttributesInFileQuery = false;
 
     public Fragment_Import_1_StorageLocation() {
         // Required empty public constructor
@@ -100,6 +105,45 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         if(getView() == null){
             return;
         }
+
+        //Determine Checkbox state for importing graphics file data (which increases the time of the folder processing):
+        if(getActivity() != null) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+            gbIncludeGraphicsAttributesInFileQuery = sharedPreferences.getBoolean(GlobalClass.gsPreference_Import_IncludeGraphicsFileData, false);
+        }
+        final CheckBox checkBox_IncludeGraphicsAttributes = getView().findViewById(R.id.checkBox_IncludeGraphicsAttributes);
+        checkBox_IncludeGraphicsAttributes.setChecked(gbIncludeGraphicsAttributesInFileQuery);
+        checkBox_IncludeGraphicsAttributes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                gbIncludeGraphicsAttributesInFileQuery = ((CheckBox) v).isChecked();
+                if(getActivity() != null) {
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                    sharedPreferences.edit()
+                            .putBoolean(GlobalClass.gsPreference_Import_IncludeGraphicsFileData, gbIncludeGraphicsAttributesInFileQuery)
+                            .apply();
+                }
+            }
+        });
+        TextView textView_Label_IncludeGraphicsAttributes = getView().findViewById(R.id.textView_Label_IncludeGraphicsAttributes);
+        textView_Label_IncludeGraphicsAttributes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flipGraphicsCheckboxState(checkBox_IncludeGraphicsAttributes);
+            }
+        });
+        TextView textView_Label_IncludeGraphicsAttributes_SubText = getView().findViewById(R.id.textView_Label_IncludeGraphicsAttributes_SubText);
+        textView_Label_IncludeGraphicsAttributes_SubText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                flipGraphicsCheckboxState(checkBox_IncludeGraphicsAttributes);
+            }
+        });
+
+
+
+
+
         Button button_SelectFolder = getView().findViewById(R.id.button_SelectFolder);
         button_SelectFolder.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -140,6 +184,19 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
 
     }
+
+    private void flipGraphicsCheckboxState(CheckBox checkBox_IncludeGraphicsAttributes){
+        boolean bCheckedState = checkBox_IncludeGraphicsAttributes.isChecked();
+        checkBox_IncludeGraphicsAttributes.setChecked(!bCheckedState);
+        gbIncludeGraphicsAttributesInFileQuery = !bCheckedState;
+        if(getActivity() != null) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+            sharedPreferences.edit()
+                    .putBoolean(GlobalClass.gsPreference_Import_IncludeGraphicsFileData, gbIncludeGraphicsAttributesInFileQuery)
+                    .apply();
+        }
+    }
+
 
     @Override
     public void onResume() {
