@@ -130,8 +130,6 @@ public class Worker_Import_ImportFiles extends Worker {
                 fileItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
             }
 
-            String sFileName;
-            String sImageMetadataUri = "";
             Uri uriFileItemSource = Uri.parse(fileItem.sUri);
             if(!GlobalClass.CheckIfFileExists(uriFileItemSource)){
                 sMessage = "Could not locate source file from uri: " + uriFileItemSource;
@@ -143,26 +141,16 @@ public class Worker_Import_ImportFiles extends Worker {
                 lByteProgressNumerator += fileItem.lSizeBytes;
                 continue;
             }
-            sFileName = GlobalClass.GetFileName(uriFileItemSource);
-            if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
-                String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
-                Uri uriMetadataFile = GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
-                if (uriMetadataFile == null) {
-                    sMessage = "Could not locate metadata file in location " + GlobalClass.gUriImageDownloadHoldingFolder;
-                    Log.d("Worker_Import_ImportFiles", sMessage);
-                    continue;
-                }
-                sImageMetadataUri = uriMetadataFile.toString();
-            }
+
 
 
             try {
-
 
                 ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
                 ciNew.sItemID = globalClass.getNewCatalogRecordID(giMediaCategory);
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
+                String sFileName = GlobalClass.GetFileName(uriFileItemSource);
                 String sTempFileName = ciNew.sItemID + "_" + sFileName; //Create unique filename. Using ID will allow database error checking.
                 if(sTempFileName.length() > 50){
                     //Limit the length of the filename:
@@ -223,6 +211,9 @@ public class Worker_Import_ImportFiles extends Worker {
                     // This is different from the "delete metadata file" in an earlier section of
                     // this code. The earlier is related to when the user has merely decided to
                     // delete a media item, not to import it.
+
+                    Uri uriMetadataFile = Activity_Import.getHoldingFolderItemMetadataFileUri(uriFileItemSource);
+                    String sImageMetadataUri = uriMetadataFile.toString();
                     if(!sImageMetadataUri.equals("")) {
                         sLine = sCreateJobFileRecord(
                                 sImageMetadataUri,
