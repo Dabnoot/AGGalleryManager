@@ -903,35 +903,37 @@ public class Activity_Import extends AppCompatActivity {
                             if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
                                 String sMessage = "";
                                 boolean bFileDeleted = false;
-                                if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER){
-                                    //Todo: delete the media file and any metadata file that might exist.
-                                    Uri uriTemp = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                                    if(GlobalClass.CheckIfFileExists(uriTemp)){
-                                        try {
-                                            if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriTemp)){
-                                                sMessage = "Could not delete file.";
-                                            } else {
-                                                sMessage = "File deleted.";
-                                                bFileDeleted = true;
-                                            }
-                                        } catch (FileNotFoundException e) {
-                                            sMessage = "Could not delete file.";
-                                        }
-                                    }
-                                } else {
-                                    Uri uriSourceFile;
-                                    uriSourceFile = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                                    DocumentFile dfSource = DocumentFile.fromSingleUri(getApplicationContext(), uriSourceFile);
-                                    //todo: Switch away from DocumentFile.
-                                    if (dfSource != null) {
-                                        if (!dfSource.delete()) {
+
+                                Uri uriSourceFileUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
+                                if(GlobalClass.CheckIfFileExists(uriSourceFileUri)){
+                                    try {
+                                        if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFileUri)){
                                             sMessage = "Could not delete file.";
                                         } else {
                                             sMessage = "File deleted.";
                                             bFileDeleted = true;
                                         }
+                                    } catch (FileNotFoundException e) {
+                                        sMessage = "Could not delete file.";
                                     }
                                 }
+
+                                if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER) {
+                                    //Deleting from the holding folder. Check to see if the metadata file is there and if so delete it.
+                                    Uri uriMetadataFileUri = getHoldingFolderItemMetadataFileUri(uriSourceFileUri);
+                                    if(GlobalClass.CheckIfFileExists(uriMetadataFileUri)){
+                                        try {
+                                            if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriMetadataFileUri)){
+                                                sMessage = sMessage + "\nCould not delete metadata file.";
+                                            } else {
+                                                sMessage = sMessage + "\nMetadata file deleted.";
+                                            }
+                                        } catch (FileNotFoundException e) {
+                                            sMessage = sMessage + "\nCould not delete metadata file.";
+                                        }
+                                    }
+                                }
+
                                 Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
 
                                 if(bFileDeleted) {
@@ -1981,5 +1983,14 @@ public class Activity_Import extends AppCompatActivity {
 
     }
 
+
+    static public Uri getHoldingFolderItemMetadataFileUri(String sFileNameUri){
+        String sFileName = GlobalClass.GetFileName(sFileNameUri);
+        String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+        return GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
+    }
+    static public Uri getHoldingFolderItemMetadataFileUri(Uri uriFileNameUri){
+        return getHoldingFolderItemMetadataFileUri(uriFileNameUri.toString());
+    }
 
 }
