@@ -91,7 +91,17 @@ public class Worker_Import_VideoDownload extends Worker {
 
         if (uriDestinationFolder == null) {
             uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
-            uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+
+
+            try {
+                uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+            } catch (Exception e){
+                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + uriDestinationFolder;
+                LogThis("doWork()", sMessage, e.getMessage());
+                uriDestinationFolder = null;
+            }
+
+
             if (uriDestinationFolder == null) {
                 //Unable to create directory
                 sMessage = "Unable to create destination folder " +
@@ -122,8 +132,16 @@ public class Worker_Import_VideoDownload extends Worker {
 
         //Create the temporary download folder (within the destination folder):
         if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
-            uriWorkingFolder = GlobalClass.CreateDirectory(uriWorkingFolder);
-            if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
+
+            try {
+                uriWorkingFolder = GlobalClass.CreateDirectory(uriWorkingFolder);
+            } catch (Exception e){
+                sMessage = "Could not locate parent directory of destination folder in order to create working folder. Working folder: " + uriWorkingFolder;
+                LogThis("doWork()", sMessage, e.getMessage());
+                uriWorkingFolder = null;
+            }
+
+            if (uriWorkingFolder == null) {
                 //Unable to create directory
                 sMessage = "Unable to create working folder " +
                         sNextRecordId + " at: "
@@ -579,6 +597,12 @@ public class Worker_Import_VideoDownload extends Worker {
                 .build();
     }
 
-
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Import_VideoDownload:" + sRoutine, sMessage);
+    }
 
 }

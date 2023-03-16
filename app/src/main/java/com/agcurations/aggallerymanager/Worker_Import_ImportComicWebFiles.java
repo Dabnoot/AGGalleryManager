@@ -45,6 +45,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         //sIntentActionFilter is used to send out the broadcast responses.
 
+        String sMessage;
+
         ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
 
         long lProgressNumerator = 0L;
@@ -63,11 +65,18 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
 
         if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
-            uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+
+            try {
+                uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+            } catch (Exception e){
+                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + uriDestinationFolder;
+                LogThis("doWork()", sMessage, e.getMessage());
+                uriDestinationFolder = null;
+            }
 
             if (uriDestinationFolder == null) {
                 //Unable to create directory
-                String sMessage = "Unable to create destination folder " +  ci.sFolder_Name + " at: "
+                sMessage = "Unable to create destination folder " +  ci.sFolder_Name + " at: "
                         + GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] + "\n";
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
@@ -295,6 +304,14 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         globalClass.gbImportExecutionRunning = false;
         globalClass.gbImportExecutionFinished = true;
         return Result.success();
+    }
+
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Import_ImportComicWebFiles:" + sRoutine, sMessage);
     }
 
 }

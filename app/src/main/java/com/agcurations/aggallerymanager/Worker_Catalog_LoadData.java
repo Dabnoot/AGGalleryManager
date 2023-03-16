@@ -310,7 +310,7 @@ public class Worker_Catalog_LoadData extends Worker {
             return uriChildFolder;
         } else {
             try {
-                return DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolder, MimeTypes.BASE_TYPE_TEXT, sFolderName);
+                return DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolder, DocumentsContract.Document.MIME_TYPE_DIR, sFolderName);
             } catch (Exception e){
                 return null;
             }

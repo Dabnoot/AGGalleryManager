@@ -100,7 +100,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
         }
 
         String sMessage;
-
+        ArrayList<ItemClass_CatalogItem> alci_NewCatalogItemsToUpdate = new ArrayList<>();
         for(Map.Entry<String, String[]> tmEntryComic: tmComics.entrySet()) {
             //Create a folder and import files for this comic:
 
@@ -109,7 +109,13 @@ public class Worker_Import_ImportComicFolders extends Worker {
             Uri uriDestination = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), sDestinationFolder);
 
             if (!GlobalClass.CheckIfFileExists(uriDestination)) {
-                uriDestination = GlobalClass.CreateDirectory(uriDestination);
+                try {
+                    uriDestination = GlobalClass.CreateDirectory(uriDestination);
+                } catch (Exception e){
+                    sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + sDestinationFolder;
+                    LogThis("doWork()", sMessage, e.getMessage());
+                    uriDestination = null;
+                }
                 if (uriDestination == null) {
                     //Unable to create directory
                     sMessage = "Unable to create destination folder " + sDestinationFolder + " at "
@@ -238,7 +244,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         //Move Operation
                         Uri uriSourceParent = GlobalClass.GetParentUri(uriSourceFile);
                         if(uriSourceParent == null){
-                            sMessage = "Could note determine source parent DocumentFile.";
+                            sMessage = "Could note determine source parent.";
                             Log.d("Worker_Import_ComicFolders", sMessage);
                             continue;
                         }
@@ -280,8 +286,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
             } //End comic page import Loop.
 
-            //Update the record with the file count, size, etc:
-            globalClass.CatalogDataFile_UpdateRecord(ciNewComic);
+            //Mark record for update with the file count, size, etc:
+            alci_NewCatalogItemsToUpdate.add(ciNewComic);
 
 
             //Delete the comic folder from source directory if required:
@@ -309,6 +315,11 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
         } //End NHComics (plural) Import Loop.
 
+        //Write data again to the CatalogContents file and memory with updated data regarding:
+        // file counts, collection size, max page number, thumbnail filename, etc:
+        globalClass.CatalogDataFile_UpdateRecords(alci_NewCatalogItemsToUpdate);
+
+
         globalClass.BroadcastProgress(true, "Operation complete.\n",
                 true, iProgressBarValue,
                 true, lProgressNumerator / 1024 + " / " + lProgressDenominator / 1024 + " KB",
@@ -319,6 +330,14 @@ public class Worker_Import_ImportComicFolders extends Worker {
         globalClass.gbImportExecutionFinished = true;
 
         return Result.success();
+    }
+
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Import_ImportComicFolders:" + sRoutine, sMessage);
     }
 
 }
