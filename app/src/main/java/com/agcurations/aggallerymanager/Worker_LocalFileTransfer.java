@@ -407,7 +407,6 @@ public class Worker_LocalFileTransfer extends Worker {
 
 
                                     //Copy the document first. DocumentsContract.Copy and .Move are finicky and don't always do the job.
-                                    Uri uriSourceParentUri = GlobalClass.GetParentUri(uriSourceFile);
                                     Uri uriOutputFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, "none", sDestinationFileName);
                                     if(uriOutputFile != null) {
                                         InputStream isSourceFile = null;
