@@ -32,10 +32,12 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -55,6 +57,8 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 
 public class GlobalClass extends Application {
@@ -516,15 +520,21 @@ public class GlobalClass extends Application {
 
     }
 
-    public static Uri CreateDirectory(Uri uriParent){
-        //https://stackoverflow.com/questions/57570369/android-saf-uri-of-a-folder-on-disk-from-documentscontract-gettreedocumentid
-        String id = DocumentsContract.getTreeDocumentId(uriParent);
-        Uri uriNewDirectory = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent, id);
+    public static Uri CreateDirectory(Uri uriDesiredDirectory) throws FileNotFoundException {
+        /*//https://stackoverflow.com/questions/57570369/android-saf-uri-of-a-folder-on-disk-from-documentscontract-gettreedocumentid
+        String id = DocumentsContract.getTreeDocumentId(uriDesiredDirectory);
+        Uri uriNewDirectory = DocumentsContract.buildChildDocumentsUriUsingTree(uriDesiredDirectory, id);*/
+        Uri uriParent = GetParentUri(uriDesiredDirectory);
+        String sDirName = GetFileName(uriDesiredDirectory);
+        Uri uriNewDirectory;
+
+                uriNewDirectory = DocumentsContract.createDocument(gcrContentResolver, uriParent, DocumentsContract.Document.MIME_TYPE_DIR, sDirName);
+
         return uriNewDirectory;
 
     }
-    public static Uri CreateDirectory(String sParentUri){
-        return CreateDirectory(Uri.parse(sParentUri));
+    public static Uri CreateDirectory(String sDesiredDirectory) throws FileNotFoundException {
+        return CreateDirectory(Uri.parse(sDesiredDirectory));
     }
 
     public static Uri GetParentUri(String sUriChild){
@@ -695,50 +705,9 @@ public class GlobalClass extends Application {
     }
 
     public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci) throws Exception {
-
-        gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
-
-        TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
-
-        try {
-
-            //Add the details to the TreeMap:
-            tmCatalogRecords.put(ci.sItemID, ci);
-
-            //Update the tags histogram:
-            updateTagHistogramsIfRequired();
-
-            String sLine = getCatalogRecordString(ci);
-            
-            //Write the data to the file:
-            OutputStream osNewCatalogContentsFile;
-
-            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[ci.iMediaCategory], "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
-            if(osNewCatalogContentsFile == null){
-                String sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[ci.iMediaCategory];
-
-                BroadcastProgress(true, sMessage,
-                        false, 0,
-                        false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                return;
-            }
-            //Write the activity_comic_details_header line to the file:
-            osNewCatalogContentsFile.write(sLine.getBytes());
-            osNewCatalogContentsFile.write("\n".getBytes());
-            osNewCatalogContentsFile.flush();
-            osNewCatalogContentsFile.close();
-
-        } catch (Exception e) {
-            String sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[ci.iMediaCategory] + "\n\n" + e.getMessage();
-
-            BroadcastProgress(true, sMessage,
-                    false, 0,
-                    false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-
-        }
-
+        ArrayList<ItemClass_CatalogItem> alci_CatalogItems = new ArrayList<>();
+        alci_CatalogItems.add(ci);
+        CatalogDataFile_CreateNewRecords(alci_CatalogItems);
     }
 
     public void CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
@@ -805,13 +774,32 @@ public class GlobalClass extends Application {
     }
 
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
-        TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(ci.iMediaCategory);
+        ArrayList<ItemClass_CatalogItem> alci_CatalogItems = new ArrayList<>();
+        alci_CatalogItems.add(ci);
+        CatalogDataFile_UpdateRecords(alci_CatalogItems);
+    }
+
+
+    public void CatalogDataFile_UpdateRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+        int iMediaCategory;
+
+        if(alci_CatalogItems != null){
+            if(alci_CatalogItems.size() > 0){
+                iMediaCategory = alci_CatalogItems.get(0).iMediaCategory; //All items should have the same media category.
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+
+        TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(iMediaCategory);
 
         try {
             InputStream isCatalogReader;
             StringBuilder sbBuffer = new StringBuilder();
             BufferedReader brReader;
-            isCatalogReader = gcrContentResolver.openInputStream(gUriCatalogContentsFiles[ci.iMediaCategory]);
+            isCatalogReader = gcrContentResolver.openInputStream(gUriCatalogContentsFiles[iMediaCategory]);
             brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
             sbBuffer.append(brReader.readLine());
             sbBuffer.append("\n");
@@ -821,13 +809,14 @@ public class GlobalClass extends Application {
             while (sLine != null) {
                 ciFromFile = ConvertStringToCatalogItem(sLine);
 
-                //Check to see if this record is the one that we want to update:
-                if (ciFromFile.sItemID.equals(ci.sItemID)) {
-                    sLine = getCatalogRecordString(ci);
+                //Check to see if this record is one of the records that we want to update:
+                for (ItemClass_CatalogItem ciToUpdate: alci_CatalogItems) {
+                    if (ciFromFile.sItemID.equals(ciToUpdate.sItemID)) {
+                        sLine = getCatalogRecordString(ciToUpdate);
 
-                    //Now update the record in the treeMap:
-                    tmCatalogRecords.put(ci.sItemID,ci);
-
+                        //Now update the record in the treeMap:
+                        tmCatalogRecords.put(ciToUpdate.sItemID, ciToUpdate);
+                    }
                 }
 
                 //Write the current record to the buffer:
@@ -842,7 +831,7 @@ public class GlobalClass extends Application {
             //Write the data to the file:
             OutputStream osNewCatalogContentsFile;
 
-            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[ci.iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
             if(osNewCatalogContentsFile == null){
                 throw new Exception();
             }
@@ -857,7 +846,7 @@ public class GlobalClass extends Application {
                 isCatalogReader.close();
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[ci.iMediaCategory] + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory] + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -2341,6 +2330,9 @@ public class GlobalClass extends Application {
     };
 
     public static final String gsPinPreference = "preferences_pin";
+
+    public static final String gsPreference_Import_IncludeGraphicsFileData = "com.agcurations.aggallerymanager.preferences.ImportIncludeGraphicsFileData";
+
 
     public static final String PREF_WEB_TAB_PREV_FOCUS_INDEX = "com.agcurations.aggallerymanager.preference.web_tab_prev_focus_index";
 

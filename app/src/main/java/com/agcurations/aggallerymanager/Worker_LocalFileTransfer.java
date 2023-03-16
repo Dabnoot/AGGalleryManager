@@ -397,7 +397,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     // Execute the copy or move operation:
 
 
-                                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 1]
+                                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 2]
                                             + " file " + sSourceFileName + " to " + uriDestinationFolder + ".\n";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine,

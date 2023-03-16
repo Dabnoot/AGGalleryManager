@@ -25,8 +25,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -154,6 +156,16 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         //Go through the tags treeMap and put the ListView together:
         for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             alict_TagItems.add(tmEntryTagReferenceItem.getValue());
+        }
+
+        //Alphabetize the tags:
+        TreeMap<String, ItemClass_Tag> tmICT = new TreeMap<>();
+        for(ItemClass_Tag ict: alict_TagItems){
+            tmICT.put(ict.sTagText.toLowerCase(Locale.ROOT), ict);
+        }
+        alict_TagItems.clear();
+        for(Map.Entry<String, ItemClass_Tag> tmEntry : tmICT.entrySet()){
+            alict_TagItems.add(tmEntry.getValue());
         }
 
         gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alict_TagItems);

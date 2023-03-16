@@ -23,7 +23,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -238,6 +241,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
             alsTags.add(entry.getValue().sTagText);
         }
+        //Alphabetize the tags:
+        alsTags.sort(String.CASE_INSENSITIVE_ORDER);
 
         String[] sTemp = new String[alsTags.size()];
         sTemp = alsTags.toArray(sTemp);

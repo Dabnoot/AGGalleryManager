@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 
 import androidx.annotation.NonNull;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
@@ -51,6 +50,7 @@ public class Worker_Tags_DeleteTag extends Worker {
         globalClass = (GlobalClass) getApplicationContext();
 
         //Loop through all catalog items and look for items that contain the tag to delete:
+        ArrayList<ItemClass_CatalogItem> alci_CatalogItemsToUpdate = new ArrayList<>();
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : globalClass.gtmCatalogLists.get(giMediaCategory).entrySet()){
             String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
@@ -68,11 +68,13 @@ public class Worker_Tags_DeleteTag extends Worker {
                 tmEntryCatalogRecord.getValue().sTags = GlobalClass.formDelimitedString(aliNewTags, ",");
                 tmEntryCatalogRecord.getValue().aliTags = new ArrayList<>(aliNewTags);
                 //Update the record and the catalog file:
-                globalClass.CatalogDataFile_UpdateRecord(tmEntryCatalogRecord.getValue());
+                alci_CatalogItemsToUpdate.add(tmEntryCatalogRecord.getValue());
 
             } //End if the record contains the tag
 
         } //End for loop through catalog.
+        //Update the catalog file:
+        globalClass.CatalogDataFile_UpdateRecords(alci_CatalogItemsToUpdate);
 
         //Inform program of a need to update the tags histogram:
         globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;

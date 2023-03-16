@@ -109,6 +109,8 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             String sItemText = entry.getValue().sTagText + " (ID:" + entry.getValue().iTagID + ")";
             alsTags.add(sItemText);
         }
+        //Alphabetize the tags:
+        alsTags.sort(String.CASE_INSENSITIVE_ORDER);
 
         String[] sTemp = new String[alsTags.size()];
         sTemp = alsTags.toArray(sTemp);
