@@ -20,6 +20,8 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Locale;
+
 
 public class Fragment_Import_6_ExecuteImport extends Fragment {
 
@@ -197,7 +199,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                                 gScrollView_ImportLog.fullScroll(View.FOCUS_DOWN);
                             }
                         }
-                        if (sLogLine.contains("Operation complete.")) {
+                        if (sLogLine.toLowerCase(Locale.ROOT).contains("operation complete.")) {
                             if(getView() != null) {
                                 Button button_ImportFinish = getView().findViewById(R.id.button_ImportFinish);
                                 if (button_ImportFinish != null) {

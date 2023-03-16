@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
@@ -26,6 +27,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -144,6 +146,13 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                             Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
 
+                    //Determine if we should query the sought media files for graphics data. The extra exploration increases processing time.
+                    boolean bIncludeGraphicsAttributesInFileQuery = false;
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                    bIncludeGraphicsAttributesInFileQuery = sharedPreferences.getBoolean(GlobalClass.gsPreference_Import_IncludeGraphicsFileData, false);
+
+
+
                     MediaMetadataRetriever mediaMetadataRetriever;
                     mediaMetadataRetriever = new MediaMetadataRetriever();
 
@@ -250,54 +259,57 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                 }
                             }
 
-                            if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS && GlobalClass.bVideoDeepDirectoryContentFileAnalysis) {
-                                if (mimeType.startsWith("video") ||
-                                        (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
-                                    try {
-                                        mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
-                                    } catch (Exception e) {
-                                        //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
-                                        continue; //Skip the rest of this loop.
-                                    }
-                                    sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                                    sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                                    String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                                    if(time != null) {
-                                        lDurationInMilliseconds = Long.parseLong(time);
-                                    }
-                                } else { //if it's not a video file, check to see if it's a gif:
-                                    if (fileExtension.equals(".gif")) {
-                                        //Get the duration of the gif image:
-                                        Context activityContext = getApplicationContext();
+                            boolean bMetadataDetected = false;
+                            if(bIncludeGraphicsAttributesInFileQuery) {
+                                bMetadataDetected = true;
+                                if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                                    if (mimeType.startsWith("video") ||
+                                            (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                                         try {
-                                            pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
-                                            lDurationInMilliseconds = gd.getDuration();
-                                            sWidth = "" + gd.getIntrinsicWidth();
-                                            sHeight = "" + gd.getIntrinsicHeight();
+                                            mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                                         } catch (Exception e) {
-                                            globalClass.problemNotificationConfig(e.getMessage() + "\n" + docName, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
+                                            //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
                                             continue; //Skip the rest of this loop.
                                         }
+                                        sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                        sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                                        String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                                        if (time != null) {
+                                            lDurationInMilliseconds = Long.parseLong(time);
+                                        }
+                                    } else { //if it's not a video file, check to see if it's a gif:
+                                        if (fileExtension.equals(".gif")) {
+                                            //Get the duration of the gif image:
+                                            Context activityContext = getApplicationContext();
+                                            try {
+                                                pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), docUri);
+                                                lDurationInMilliseconds = gd.getDuration();
+                                                sWidth = "" + gd.getIntrinsicWidth();
+                                                sHeight = "" + gd.getIntrinsicHeight();
+                                            } catch (Exception e) {
+                                                globalClass.problemNotificationConfig(e.getMessage() + "\n" + docName, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
+                                                continue; //Skip the rest of this loop.
+                                            }
+                                        }
                                     }
-                                }
-                            } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                                //Get the width and height of the image:
-                                try {
-                                    InputStream input = getApplicationContext().getContentResolver().openInputStream(docUri);
-                                    if (input != null) {
-                                        BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
-                                        onlyBoundsOptions.inJustDecodeBounds = true;
-                                        BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
-                                        input.close();
-                                        sWidth = "" + onlyBoundsOptions.outWidth;
-                                        sHeight = "" + onlyBoundsOptions.outHeight;
-                                    }
+                                } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                                    //Get the width and height of the image:
+                                    try {
+                                        InputStream input = getApplicationContext().getContentResolver().openInputStream(docUri);
+                                        if (input != null) {
+                                            BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                            onlyBoundsOptions.inJustDecodeBounds = true;
+                                            BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                            input.close();
+                                            sWidth = "" + onlyBoundsOptions.outWidth;
+                                            sHeight = "" + onlyBoundsOptions.outHeight;
+                                        }
 
-                                } catch (Exception e) {
-                                    continue; //Skip the rest of this loop.
+                                    } catch (Exception e) {
+                                        continue; //Skip the rest of this loop.
+                                    }
                                 }
                             }
-
 
 
                             //Convert the file Uri to string. Uri's don't transport well as intent extras.
@@ -308,6 +320,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                             icfFileItem.sExtension = fileExtension;
                             icfFileItem.lSizeBytes = lFileSize;
                             icfFileItem.dateLastModified = dateLastModified;
+                            icfFileItem.bMetadataDetected = bMetadataDetected;
                             icfFileItem.sWidth = sWidth;
                             icfFileItem.sHeight = sHeight;
                             icfFileItem.sUri = sUri;

@@ -16,6 +16,7 @@ public class ItemClass_File implements Serializable {
     public String sExtension = "";
     public long lSizeBytes = 0;
     public Date dateLastModified = null;
+    public boolean bMetadataDetected = false;
     public String sWidth = "";
     public String sHeight = "";
     public Boolean bIsChecked = false;

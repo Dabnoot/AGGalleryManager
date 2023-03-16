@@ -2,11 +2,14 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
 import java.io.BufferedWriter;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
@@ -71,6 +74,14 @@ public class Worker_Import_ImportFiles extends Worker {
 
         ArrayList<ItemClass_CatalogItem> alci_NewCatalogItems = new ArrayList<>();
 
+        MediaMetadataRetriever mediaMetadataRetriever;
+        mediaMetadataRetriever = new MediaMetadataRetriever();
+
+        globalClass.BroadcastProgress(true, "Preparing data for job file.\n",
+                false, iProgressBarValue,
+                true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
+                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
         //Loop and import files:
         for(ItemClass_File fileItem: alFileList) {
             //todo: update progress bar and progress bar text here rather than multiple places throughout.
@@ -84,7 +95,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 }
 
                 //Write next behavior to the screen log:
-                sLogLine = "Preparing data for job file: Delete file " + fileItem.sFileOrFolderName + ".\n";
+                sLogLine = fileItem.sFileOrFolderName + " will be deleted.\n";
                 iFileCountProgressNumerator++;
                 lByteProgressNumerator += fileItem.lSizeBytes;
                 iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
@@ -164,7 +175,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
 
                 //Write next behavior to the screen log:
-                sLogLine = "Preparing data for job file: Import " + fileItem.sFileOrFolderName + ".\n";
+                sLogLine = fileItem.sFileOrFolderName + " will be imported.";
                 iFileCountProgressNumerator++;
                 iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
@@ -190,6 +201,76 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.iMediaCategory = giMediaCategory;
                 ciNew.sFilename = sFileName;
                 ciNew.lSize = fileItem.lSizeBytes;
+
+                if(!fileItem.bMetadataDetected){
+                    //If the metadata for the file was not previously acquired during the folder examination, attempt to get the metadata here:
+
+                    globalClass.BroadcastProgress(true, " Obtaining metadata for file... ",
+                            false, iProgressBarValue,
+                            false, "",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+                    if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+
+                        if (fileItem.sMimeType.startsWith("video") ||
+                                (fileItem.sMimeType.equals("application/octet-stream") && fileItem.sExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
+                            try {
+                                mediaMetadataRetriever.setDataSource(getApplicationContext(), Uri.parse(fileItem.sUri));
+                            } catch (Exception e) {
+                                globalClass.BroadcastProgress(true, "Could not get metadata for video.\n" + e.getMessage(),
+                                        false, iProgressBarValue,
+                                        false, "",
+                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            }
+                            fileItem.sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                            fileItem.sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                            String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                            if (time != null) {
+                                fileItem.lVideoTimeInMilliseconds = Long.parseLong(time);
+                            }
+                        } else { //if it's not a video file, check to see if it's a gif:
+                            if (fileItem.sExtension.equals(".gif")) {
+                                //Get the duration of the gif image:
+                                Context activityContext = getApplicationContext();
+                                try {
+                                    pl.droidsonroids.gif.GifDrawable gd = new pl.droidsonroids.gif.GifDrawable(activityContext.getContentResolver(), Uri.parse(fileItem.sUri));
+                                    fileItem.lVideoTimeInMilliseconds = gd.getDuration();
+                                    fileItem.sWidth = "" + gd.getIntrinsicWidth();
+                                    fileItem.sHeight = "" + gd.getIntrinsicHeight();
+                                } catch (Exception e) {
+                                    globalClass.BroadcastProgress(true, "Could not get metadata for gif.\n" + e.getMessage(),
+                                            false, iProgressBarValue,
+                                            false, "",
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                }
+                            }
+                        }
+                    } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                        //Get the width and height of the image:
+                        try {
+                            InputStream input = getApplicationContext().getContentResolver().openInputStream(Uri.parse(fileItem.sUri));
+                            if (input != null) {
+                                BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                onlyBoundsOptions.inJustDecodeBounds = true;
+                                BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                input.close();
+                                fileItem.sWidth = "" + onlyBoundsOptions.outWidth;
+                                fileItem.sHeight = "" + onlyBoundsOptions.outHeight;
+                            }
+
+                        } catch (Exception e) {
+                            globalClass.BroadcastProgress(true, "Could not get metadata for image.\n" + e.getMessage(),
+                                    false, iProgressBarValue,
+                                    false, "",
+                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        }
+                    }
+                    globalClass.BroadcastProgress(true, "Metadata seek complete for this file.\n",
+                            false, iProgressBarValue,
+                            false, "",
+                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                }
+
                 ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
                 ciNew.sDuration_Text = fileItem.sVideoTimeText;
                 if(!fileItem.sWidth.equals("") && !fileItem.sHeight.equals("")) {
@@ -254,8 +335,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
             //Inform user of preparation of worker:
             String sMoveOrCopy = GlobalClass.gsMoveOrCopy[giMoveOrCopy];
-            sLogLine = "Using background worker for file " + sMoveOrCopy.toLowerCase() + " operations.\n"
-                    + "Preparing job file.\n\n";
+            sLogLine = "\nPreparing job file. ";
             globalClass.BroadcastProgress(true, sLogLine,
                     false, iProgressBarValue,
                     true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
@@ -299,7 +379,7 @@ public class Worker_Import_ImportFiles extends Worker {
             return Result.failure();
         }
         //Write next behavior to the screen log:
-        sLogLine = "\nStarting worker to process job file.\n\n"
+        sLogLine = "\nStarting worker to process job file. This 'job file creation worker' will end and 'job file process worker' will continue in the background.\n"
                 + "Files will appear in the catalog as the worker progresses.\n"
                 + "Refresh the catalog viewer (exit/re-enter, change sort direction) to view newly-added files.\n";
         globalClass.BroadcastProgress(true, sLogLine,
@@ -318,7 +398,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 .build();
         WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
-        globalClass.BroadcastProgress(true, "Operation complete.\n",
+        globalClass.BroadcastProgress(true, "Job file creation worker operation complete.\n",
                 false, iProgressBarValue,
                 false, "",
                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
