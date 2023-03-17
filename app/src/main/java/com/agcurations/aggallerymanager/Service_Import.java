@@ -69,7 +69,7 @@ public class Service_Import {
         WorkManager.getInstance(context).enqueue(otwrImportFiles);
     }
 
-    public static void startActionImportComicFolders(Context context, int iMoveOrCopy, int iComicImportSource) {
+    public static void startActionImportComicFolders(Context context, int iMoveOrCopy) {
 
         String sCallerID = "Service_Import:startActionImportComicFolders()";
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -77,7 +77,6 @@ public class Service_Import {
                 .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                 .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, iMoveOrCopy)
-                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, iComicImportSource)
                 .build();
         OneTimeWorkRequest otwrImportComicFolders = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicFolders.class)
                 .setInputData(dataImportComicFolders)
