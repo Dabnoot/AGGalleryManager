@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -28,6 +29,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
@@ -86,10 +88,11 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT = 12;
     public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 13;
     public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 14;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 15;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 16;
+    public static final int FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE = 15;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 16;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 17;
 
-    public static final int FRAGMENT_COUNT = 17;
+    public static final int FRAGMENT_COUNT = 18;
 
     //=================================================
     //User selection global variables:
@@ -534,7 +537,26 @@ public class Activity_Import extends AppCompatActivity {
             // of tags that don't already exist in the list of tags.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
         } else {
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
+            //If this is an item selection for local import of videos, images, or comics...
+
+            //First do a quick check to see if the user is moving forward with only a selection of items to delete:
+            boolean bDeleteOnly = false;
+            for(ItemClass_File icf: fileListCustomAdapter.alFileItems){
+                if(icf.bIsChecked){
+                    bDeleteOnly = false;
+                    break;
+                }
+                if(icf.bMarkedForDeletion){
+                    bDeleteOnly = true;
+                }
+            }
+
+            if(bDeleteOnly){
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE, false);
+            } else {
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3_ID_SELECT_TAGS, false);
+            }
+
         }
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
@@ -575,7 +597,29 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
-    public void buttonNextClick_ImportConfirm(View v){
+    public void buttonNextClick_ImportConfirm(View v) {
+        //First check to see if any items are marked for deletion to allow the user to confirm:
+        boolean bItemSelectedForDeletion = false;
+        for (ItemClass_File icf : fileListCustomAdapter.alFileItems) {
+            if (icf.bMarkedForDeletion) {
+                bItemSelectedForDeletion = true;
+                break;
+            }
+        }
+
+        if (bItemSelectedForDeletion) {
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE, false);
+        } else {
+            globalClass.gbImportExecutionStarted = true;
+            globalClass.gbImportExecutionFinished = false;
+            giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
+            ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+            stackFragmentOrder.clear();
+            stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+        }
+    }
+
+    public void buttonNextClick_ImportConfirmDelete(View v){
         globalClass.gbImportExecutionStarted = true;
         globalClass.gbImportExecutionFinished = false;
         giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
@@ -846,6 +890,7 @@ public class Activity_Import extends AppCompatActivity {
             cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).bIsChecked);
 
             final Button button_Delete = row.findViewById(R.id.button_Delete);
+            UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
 
             //Expand the width of the listItem to the width of the ListView.
             //  This makes it so that the listItem responds to the click even when
@@ -864,6 +909,7 @@ public class Activity_Import extends AppCompatActivity {
                     if(bNewCheckedState){
                         alFileItemsDisplay.get(position).bMarkedForDeletion = false;
                         button_Delete.setPressed(false);
+                        UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
                     }
                     toggleItemChecked(position, bNewCheckedState);
                 }
@@ -882,6 +928,7 @@ public class Activity_Import extends AppCompatActivity {
                     if(bNewCheckedState){
                         alFileItemsDisplay.get(position).bMarkedForDeletion = false;
                         button_Delete.setPressed(false);
+                        UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
                     }
                     toggleItemChecked(position, bNewCheckedState);
 
@@ -892,8 +939,8 @@ public class Activity_Import extends AppCompatActivity {
 
             button_Delete.setOnClickListener(new View.OnClickListener(){
                 @Override
-                public void onClick(View view) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
+                public void onClick(View viewButton) {
+                    /*AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
                     builder.setTitle("Delete Item");
                     builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).sFileOrFolderName);
                     //builder.setIcon(R.drawable.ic_launcher);
@@ -998,7 +1045,45 @@ public class Activity_Import extends AppCompatActivity {
                         }
                     });
                     AlertDialog alert = builder.create();
-                    alert.show();
+                    alert.show();*/
+
+
+
+                    //Mark items for deletion:
+                    boolean bNewDeleteStateIsYesDelete = !alFileItemsDisplay.get(position).bMarkedForDeletion;
+
+                    if(bNewDeleteStateIsYesDelete) {
+                        checkBox_StorageItemSelect.setChecked(false);
+                        alFileItemsDisplay.get(position).bIsChecked = false;
+                        toggleItemChecked(position, false);
+                    }
+
+                    alFileItemsDisplay.get(position).bMarkedForDeletion = bNewDeleteStateIsYesDelete;
+                    if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                        //Special behavior for comic imports as we only show the comic cover page.
+                        //The folder is marked for deletion/not-deletion by the display item.
+
+                        //Mark comic page files for deletion/not-deletion:
+                        String sComicParentUri = alFileItemsDisplay.get(position).sUri;
+                        for (ItemClass_File icf: alFileItems) {
+                            if(icf.sUriParent.equals(sComicParentUri)){
+                                icf.bMarkedForDeletion = bNewDeleteStateIsYesDelete;
+                            }
+                        }
+
+                    } else {
+                        //Find the single item in alFileItems and apply the new 'marked for deletion state:
+                        for(ItemClass_File icf: alFileItems){
+                            if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(position).sFileOrFolderName)){
+                                icf.bMarkedForDeletion = bNewDeleteStateIsYesDelete;
+                                break; //Break, as only one item should match.
+                            }
+                        }
+                    }
+
+                    UpdateRowDeleteIcon(viewButton, bNewDeleteStateIsYesDelete);
+                    recalcButtonNext();
+
                 }
             });
 
@@ -1070,6 +1155,18 @@ public class Activity_Import extends AppCompatActivity {
             return row;
         }
 
+        private void UpdateRowDeleteIcon(View viewButton, boolean bNewDeleteState){
+            Drawable drawableMarkedForDeletionStateImage;
+            if(bNewDeleteState) {
+                //If the item is marked for deletion, set the icon to a filled trashcan.
+                drawableMarkedForDeletionStateImage = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_delete_white_18dp, null);
+            } else {
+                //If the item is not marked for deletion, set the icon to an unfilled trashcan.
+                drawableMarkedForDeletionStateImage = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_delete_outline_36, null);
+            }
+            ((Button) viewButton).setCompoundDrawablesWithIntrinsicBounds(drawableMarkedForDeletionStateImage, null, null, null);
+        }
+
 
         private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
 
@@ -1119,7 +1216,7 @@ public class Activity_Import extends AppCompatActivity {
         public void recalcButtonNext(){
             boolean bEnableNextButton = false;
             for(ItemClass_File fi: alFileItems){
-                if(fi.bIsChecked){
+                if(fi.bIsChecked || fi.bMarkedForDeletion){
                     bEnableNextButton = true;
                     break;
                 }
@@ -1522,7 +1619,6 @@ public class Activity_Import extends AppCompatActivity {
             notifyDataSetChanged();
 
         }
-
 
 
     }
@@ -1968,6 +2064,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_4_CopyOrMoveFiles();
                 case FRAGMENT_IMPORT_5_ID_CONFIRMATION:
                     return new Fragment_Import_5_Confirmation();
+                case FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE:
+                    return new Fragment_Import_5a_ConfirmationDelete();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
                 default:
