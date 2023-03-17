@@ -588,7 +588,6 @@ public class Worker_LocalFileTransfer extends Worker {
 
         int iProgressBarValue = Math.round((glProgressNumerator / (float) glProgressDenominator) * 100);
 
-
         //Update the notification on the notification bar:
         //String sNotificationText = giFilesProcessed + "/" + giFileCount + " files " + gsMoveCopyPastTense + ".";
         String sNotificationText = giFilesProcessed + "/" + giFileCount + " files processed.";
@@ -677,6 +676,32 @@ public class Worker_LocalFileTransfer extends Worker {
         super.onStopped();
     }
 
+    /**
+     * Builds a string to be written to the job file. This routine serves to ensure that the proper
+     * arguments, types, and usage are correct; this routine is to reduce programmer error.
+     *
+     * @param sSourceUri                        A Uri for the source file.
+     * @param sDestinationFolderName            Name of the folder to hold this file. The header specifying
+     *                                          the Catalog type (Videos, Pictures, Comics) is to include
+     *                                          this folder name.
+     * @param sDestinationFileOrFolderName      The destination file name.
+     * @param lSizeInBytes                      The size of the file for progress display to user.
+     * @param bMarkForDeletion                  A flag to mark if this file should be deleted rather than copied
+     *                                          or moved.
+     * @return sJobFileRecord                   A string is returned to be written to the job file.
+     */
+    public static String CreateJobFileRecord(String sSourceUri,
+                                              String sDestinationFolderName,
+                                              String sDestinationFileOrFolderName,
+                                              long lSizeInBytes,
+                                              boolean bMarkForDeletion){
+
+        return sSourceUri + "\t" +
+                sDestinationFolderName + "\t" +
+                sDestinationFileOrFolderName + "\t" +
+                lSizeInBytes + "\t" +
+                bMarkForDeletion + "\n";
+    }
 
 
 }

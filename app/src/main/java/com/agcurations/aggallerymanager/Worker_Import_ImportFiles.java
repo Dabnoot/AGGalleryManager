@@ -39,6 +39,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
     @NonNull
     @Override
+    @SuppressWarnings("unchecked")
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
 
@@ -58,7 +59,7 @@ public class Worker_Import_ImportFiles extends Worker {
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
 
-        ArrayList<ItemClass_File> alFileList = globalClass.galImportFileList;
+        ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>)globalClass.galImportFileList.clone();
 
         //Calculate total size of all files to import:
         for(ItemClass_File fi: alFileList){
@@ -82,7 +83,8 @@ public class Worker_Import_ImportFiles extends Worker {
                 true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                 Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-        //Loop and import files:
+        //Loop and examine list of files to be imported, build a buffer of records to write to a job file,
+        // and create catalog item records:
         for(ItemClass_File fileItem: alFileList) {
             //todo: update progress bar and progress bar text here rather than multiple places throughout.
             if(fileItem.bMarkedForDeletion){
@@ -103,7 +105,7 @@ public class Worker_Import_ImportFiles extends Worker {
                         false, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
-                String sLine = sCreateJobFileRecord(
+                String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                         uriFileItem.toString(),
                         fileItem.sDestinationFolder,
                         fileItem.sFileOrFolderName,
@@ -123,7 +125,7 @@ public class Worker_Import_ImportFiles extends Worker {
                         continue;
                     }
 
-                    sLine = sCreateJobFileRecord(
+                    sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                             uriMetadataFile.toString(),
                             fileItem.sDestinationFolder,
                             fileItem.sFileOrFolderName,
@@ -183,7 +185,7 @@ public class Worker_Import_ImportFiles extends Worker {
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
-                String sLine = sCreateJobFileRecord(
+                String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                         uriFileItemSource.toString(),
                         fileItem.sDestinationFolder,
                         sFileName,
@@ -296,7 +298,7 @@ public class Worker_Import_ImportFiles extends Worker {
                     Uri uriMetadataFile = Activity_Import.getHoldingFolderItemMetadataFileUri(uriFileItemSource);
                     String sImageMetadataUri = uriMetadataFile.toString();
                     if(!sImageMetadataUri.equals("")) {
-                        sLine = sCreateJobFileRecord(
+                        sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                                 sImageMetadataUri,
                                 fileItem.sDestinationFolder,
                                 fileItem.sFileOrFolderName,
@@ -311,7 +313,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
 
             } catch (Exception e) {
-                globalClass.BroadcastProgress(true, "Problem with copy/move operation.\n" + e.getMessage(),
+                globalClass.BroadcastProgress(true, "Problem with copy/move operation. Operation complete.\n" + e.getMessage(),
                         false, iProgressBarValue,
                         false, "",
                         Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
@@ -345,13 +347,13 @@ public class Worker_Import_ImportFiles extends Worker {
             Uri uriJobFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sJobFileName);
             if(uriJobFile == null){
                 sMessage = "Could not create job file.";
-                Log.d("Worker_Import_ImportFiles", sMessage);
+                LogThis("doWork()", sMessage, null);
                 return Result.failure(DataErrorMessage(sMessage));
             }
             OutputStream osJobFile = GlobalClass.gcrContentResolver.openOutputStream(uriJobFile, "wt");
             if(osJobFile == null){
                 sMessage = "Could not open output stream to job file.";
-                Log.d("Worker_Import_ImportFiles", sMessage);
+                LogThis("doWork()", sMessage, null);
                 return Result.failure(DataErrorMessage(sMessage));
             }
             BufferedWriter bwJobFile = new BufferedWriter(new OutputStreamWriter(osJobFile));
@@ -409,38 +411,18 @@ public class Worker_Import_ImportFiles extends Worker {
         return Result.success();
     }
 
-
-    /**
-     * Builds a string to be written to the job file. This routine serves to ensure that the proper
-     * arguments, types, and usage are correct; this routine is to reduce programmer error.
-     *
-     * @param sSourceUri                A Uri for the source file.
-     * @param sDestinationFolderName    Name of the folder to hold this file. The header specifying
-     *                                  the Catalog type (Videos, Pictures, Comics) is to include
-     *                                  this folder name.
-     * @param sFileOrFolderName         The destination file name.
-     * @param lSizeInBytes              The size of the file for progress display to user.
-     * @param bMarkForDeletion          A flag to mark if this file should be deleted rather than copied
-     *                                  or moved.
-     * @return sJobFileRecord           A string is returned to be written to the job file.
-     */
-    private String sCreateJobFileRecord(String sSourceUri,
-                                        String sDestinationFolderName,
-                                        String sFileOrFolderName,
-                                        long lSizeInBytes,
-                                        boolean bMarkForDeletion){
-
-        return sSourceUri + "\t" +
-        sDestinationFolderName + "\t" +
-        sFileOrFolderName + "\t" +
-        lSizeInBytes + "\t" +
-        bMarkForDeletion + "\n";
-    }
-
     private Data DataErrorMessage(String sMessage){
         return new Data.Builder()
                 .putString(GlobalClass.FAILURE_MESSAGE, sMessage)
                 .build();
+    }
+
+    private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
+        String sMessage = sMainMessage;
+        if(sExtraErrorMessage != null){
+            sMessage = sMessage + " " + sExtraErrorMessage;
+        }
+        Log.d("Worker_Import_ImportFiles:" + sRoutine, sMessage);
     }
 
 }
