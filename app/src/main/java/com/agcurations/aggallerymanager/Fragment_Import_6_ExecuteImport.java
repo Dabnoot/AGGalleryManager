@@ -120,8 +120,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                     Service_Import.startActionImportComicFolders(getContext(),
-                            viewModelImportActivity.iImportMethod,
-                            viewModelImportActivity.iComicImportSource);
+                            viewModelImportActivity.iImportMethod);
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
                     Service_Import.startActionImportComicWebFiles(getContext(),
                             ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
