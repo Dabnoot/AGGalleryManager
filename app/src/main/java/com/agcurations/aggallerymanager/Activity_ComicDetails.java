@@ -116,6 +116,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }
 
         Uri uriComicFolderUri = Uri.parse(sComicFolderUri);
+        if(!GlobalClass.CheckIfFileExists(uriComicFolderUri)){
+            Toast.makeText(getApplicationContext(), "Comic folder does not exist. Try deleting and re-import the comic.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Uri uriComicFilesChildUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriComicFolderUri,
                 DocumentsContract.getDocumentId(uriComicFolderUri));
         Cursor cComicFiles = GlobalClass.gcrContentResolver.query(uriComicFilesChildUri,
@@ -232,6 +236,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         gtmComicPages = new TreeMap<>();
         gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
         globalClass.gbCatalogViewerRefresh = true;
+        Toast.makeText(getApplicationContext(), "Deleting comic...", Toast.LENGTH_LONG).show();
         if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem)) {
             //If comic deletion successful, close the activity. Otherwise remain open so that
             //  the user can view the toast message.
