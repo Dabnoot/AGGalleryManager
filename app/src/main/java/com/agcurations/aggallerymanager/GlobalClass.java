@@ -89,6 +89,8 @@ public class GlobalClass extends Application {
 
     public static Integer giSelectedCatalogMediaCategory = null;
 
+    public static TreeMap<String, String> gtmStorageDeviceNames;
+
     public static final Uri[] gUriCatalogFolders = new Uri[3];
     public static Uri gUriLogsFolder;
     public static Uri gUriBackupFolder;
@@ -422,6 +424,10 @@ public class GlobalClass extends Application {
         //This routine does not return folder names!
         ArrayList<String> alsFileNames = new ArrayList<>();
 
+        if(!GlobalClass.CheckIfFileExists(uriParent)){
+            //The program will crash if the folder does not exist.
+            return alsFileNames; //Let it behave as if there are no files in the folder.
+        }
         final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent,
                 DocumentsContract.getDocumentId(uriParent));
         Cursor c = null;

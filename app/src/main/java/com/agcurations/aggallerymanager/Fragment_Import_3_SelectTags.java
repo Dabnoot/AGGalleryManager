@@ -473,7 +473,9 @@ public class Fragment_Import_3_SelectTags extends Fragment {
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
                 if(fi.iTypeFileFolderURL ==iTypeFileOrFolder){
-                    alFileItemsDisplay.add(fi);
+                    if(!fi.bMarkedForDeletion) {
+                        alFileItemsDisplay.add(fi);
+                    }
                 }
             }
         }

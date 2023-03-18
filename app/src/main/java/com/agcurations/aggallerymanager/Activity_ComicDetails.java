@@ -234,7 +234,9 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
     public void DeleteComic(){
         gtmComicPages = new TreeMap<>();
-        gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
+        if(gRecyclerViewComicPagesAdapter != null) {
+            gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
+        }
         globalClass.gbCatalogViewerRefresh = true;
         Toast.makeText(getApplicationContext(), "Deleting comic...", Toast.LENGTH_LONG).show();
         if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem)) {

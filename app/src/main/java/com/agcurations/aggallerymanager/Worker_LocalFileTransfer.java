@@ -11,12 +11,17 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -294,14 +299,36 @@ public class Worker_LocalFileTransfer extends Worker {
                             String[] sTemp = sLine.split("\t");
                             if (sTemp.length == RECORD_FIELD_COUNT) {
 
-                                //Check if source file exists:
+                                //Get a user-friendly version of the source file path + filename:
                                 String sSourceFileUri = sTemp[RECORD_FIELD_INDEX_SOURCE_FILE_URI_INDEX];
                                 Uri uriSourceFile = Uri.parse(sSourceFileUri);
+                                String sUserFriendlySourceFileUri = sSourceFileUri;
+                                for(Map.Entry<String, String> entryStorageDef: GlobalClass.gtmStorageDeviceNames.entrySet()){
+                                    String sKey = entryStorageDef.getKey();
+                                    if(sKey.contains("/")){
+                                        sKey = sKey.substring(sKey.lastIndexOf("/"));
+                                        sKey = sKey.replace("/", "");
+                                    }
+                                    if(sUserFriendlySourceFileUri.contains(sKey)){
+                                        //Replace the cryptic storage location text with something the user is more likely to understand:
+                                        sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.replace(sKey, entryStorageDef.getValue());
+                                        break;
+                                    }
+                                }
+                                if(sUserFriendlySourceFileUri.contains("/")) {
+                                    sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.substring(sUserFriendlySourceFileUri.lastIndexOf("/"));
+                                    sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.replace("/", "");
+                                }
+                                sUserFriendlySourceFileUri = URLDecoder.decode(sUserFriendlySourceFileUri, StandardCharsets.UTF_8.toString());
+                                if(sUserFriendlySourceFileUri.contains(":")){
+                                    sUserFriendlySourceFileUri = sUserFriendlySourceFileUri.replace(":", "://");
+                                }
+
 
                                 long lFileSize = Long.parseLong(sTemp[RECORD_FIELD_INDEX_SOURCE_FILE_SIZE_BYTES]);
 
 
-
+                                //Check if source file exists:
                                 if (!GlobalClass.CheckIfFileExists(uriSourceFile)) {
 
                                     //If the source does not exist and was marked for transfer (not marked for deletion without transfer), assume that the file has already been transferred.
@@ -334,9 +361,9 @@ public class Worker_LocalFileTransfer extends Worker {
                                     UpdateProgressOutput();
 
                                     if (!bDeleteSuccess) {
-                                        sLogLine = "Could not delete file marked for deletion: " + sSourceFileName;
+                                        sLogLine = "Could not delete file marked for deletion: " + sUserFriendlySourceFileUri;
                                     } else {
-                                        sLogLine = "Success deleting file marked for deletion: " + sSourceFileName;
+                                        sLogLine = "Success deleting file marked for deletion: " + sUserFriendlySourceFileUri;
                                     }
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
@@ -355,9 +382,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                         uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER]);
                                         uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
                                     }
+
+                                    String sUserFriendlyDestinationFolderUri = URLDecoder.decode(uriDestinationFolder.toString(), StandardCharsets.UTF_8.toString());
+                                    if(sUserFriendlyDestinationFolderUri.contains(":")) {
+                                        sUserFriendlyDestinationFolderUri = sUserFriendlyDestinationFolderUri.substring(sUserFriendlyDestinationFolderUri.lastIndexOf(":"));
+                                    }
+
                                     if(uriDestinationFolder == null){
                                         sMessage = "Could not create destination folder \"" + sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER] + "\" for file \""
-                                                + sDestinationFileName + "\", line " + giFilesProcessed + ": " + uriJobFile;
+                                                + sUserFriendlyDestinationFolderUri + "\", line " + giFilesProcessed + ": " + uriJobFile;
                                         gbwLogFile.write(sMessage + "\n");
                                         globalClass.BroadcastProgress(true, sMessage,
                                                 false, 0,
@@ -370,6 +403,13 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                     Uri uriDestinationFile = GlobalClass.FormChildUri(uriDestinationFolder, sDestinationFileName);
 
+                                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 2]
+                                            + " file " + sUserFriendlySourceFileUri + " to " + sUserFriendlyDestinationFolderUri + ".\n";
+                                    gbwLogFile.write(sLogLine + "\n");
+                                    globalClass.BroadcastProgress(true, sLogLine,
+                                            false, 0,
+                                            false, "",
+                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
 
                                     if (GlobalClass.CheckIfFileExists(uriDestinationFile)) {
                                         //The file copy has already been executed by a previous instance of this requested worker.
@@ -380,7 +420,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                             if (!bDeleteSuccess) {
                                                 sMessage = "Source file copied, but could not delete source file as part of a 'move' operation. File \""
-                                                        + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
+                                                        + sUserFriendlySourceFileUri + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                                 gbwLogFile.write(sMessage + "\n");
                                                 globalClass.BroadcastProgress(true, sMessage + "\n",
                                                         false, 0,
@@ -397,13 +437,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     // Execute the copy or move operation:
 
 
-                                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 2]
-                                            + " file " + sSourceFileName + " to " + uriDestinationFolder + ".\n";
-                                    gbwLogFile.write(sLogLine + "\n");
-                                    globalClass.BroadcastProgress(true, sLogLine,
-                                            false, 0,
-                                            false, "",
-                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
 
 
                                     //Copy the document first. DocumentsContract.Copy and .Move are finicky and don't always do the job.
@@ -430,7 +464,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                         } catch (Exception e) {
                                             sMessage = "Source file could not be copied. File \""
-                                                    + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
+                                                    + sUserFriendlySourceFileUri + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                             gbwLogFile.write(sMessage + "\n");
                                             globalClass.BroadcastProgress(true, sMessage + "\n",
                                                     false, 0,
@@ -448,7 +482,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         }
                                     } else {
                                         sMessage = "Source file could not be copied. File \""
-                                                + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
+                                                + sUserFriendlySourceFileUri + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                         gbwLogFile.write(sMessage + "\n");
                                         globalClass.BroadcastProgress(true, sMessage + "\n",
                                                 false, 0,
@@ -460,9 +494,18 @@ public class Worker_LocalFileTransfer extends Worker {
                                     }
 
                                     if(iMoveOrCopy == GlobalClass.MOVE){
+                                        //Notify the user of the pending delete operation:
+                                        sLogLine = " Deleting source file as part of move operation...";
+                                        gbwLogFile.write(sLogLine + "\n");
+                                        globalClass.BroadcastProgress(true, sLogLine,
+                                                false, 0,
+                                                false, "",
+                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+
+                                        //Attempt the delete operation:
                                         if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFile)){
                                             sMessage = "Source file could not be deleted after copy to complete move operation. File \""
-                                                    + sSourceFileName + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
+                                                    + sUserFriendlyDestinationFolderUri + "\", job file line " + giFilesProcessed + " in job file " + uriJobFile + ".";
                                             gbwLogFile.write(sMessage + "\n");
                                             globalClass.BroadcastProgress(true, sMessage + "\n",
                                                     false, 0,
@@ -474,7 +517,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         }
                                     }
 
-                                    sLogLine = "Success.";
+                                    sLogLine = "\nSuccess.";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,

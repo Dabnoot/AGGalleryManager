@@ -85,10 +85,6 @@ public class Worker_Import_GetDirectoryContents extends Worker {
 
                 if(cImport != null) {
 
-
-
-
-
                     //Calculate total number of files for a progress bar:
                     lProgressDenominator = cImport.getCount();
 
@@ -423,24 +419,27 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                         lFileSize = Long.parseLong(sComicPageFileSize); //size in Bytes
                                         icf_ComicPage.lSizeBytes = lFileSize;
 
-                                        //Get the image dimensions:
                                         if(icf_ComicPage.sMimeType.contains("image")) {
-                                            try {
-                                                InputStream input = getApplicationContext().getContentResolver().openInputStream(uriComicPageUri);
-                                                if (input != null) {
-                                                    BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
-                                                    onlyBoundsOptions.inJustDecodeBounds = true;
-                                                    BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
-                                                    input.close();
-                                                    sWidth = "" + onlyBoundsOptions.outWidth;
-                                                    sHeight = "" + onlyBoundsOptions.outHeight;
-                                                }
+                                            if(bIncludeGraphicsAttributesInFileQuery) {
+                                                //Get the image dimensions:
+                                                try {
+                                                    InputStream input = getApplicationContext().getContentResolver().openInputStream(uriComicPageUri);
+                                                    if (input != null) {
+                                                        BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                                        onlyBoundsOptions.inJustDecodeBounds = true;
+                                                        BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                                        input.close();
+                                                        sWidth = "" + onlyBoundsOptions.outWidth;
+                                                        sHeight = "" + onlyBoundsOptions.outHeight;
+                                                    }
 
-                                            } catch (Exception e) {
-                                                continue; //Skip the rest of this loop.
+                                                } catch (Exception e) {
+                                                    continue; //Skip the rest of this loop.
+                                                }
+                                                icf_ComicPage.sWidth = sWidth;
+                                                icf_ComicPage.sHeight = sHeight;
+                                                icf_ComicPage.bMetadataDetected = true;
                                             }
-                                            icf_ComicPage.sWidth = sWidth;
-                                            icf_ComicPage.sHeight = sHeight;
                                         } else {
                                             //Check to see if this is an xml file.
                                             //If this is an xml file, it likely contains comic details.

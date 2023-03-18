@@ -86,17 +86,22 @@ public class Fragment_Import_5_Confirmation extends Fragment {
 
         // Construct the data source
         long lRequiredStorageSpaceBytes = 0L;
+        ArrayList<ItemClass_File> alicf_FileImports = new ArrayList<>();
         for(ItemClass_File fileItem: viewModelImportActivity.alfiConfirmedFileImports){
-            lRequiredStorageSpaceBytes += fileItem.lSizeBytes;
 
-            //Set the destination folder on each file item:
-            String sPrimaryTag;
-            if(fileItem.aliProspectiveTags.size() > 0){
-                sPrimaryTag = fileItem.aliProspectiveTags.get(0).toString();
-            } else {
-                sPrimaryTag = GlobalClass.gsUnsortedFolderName;
+            if(!fileItem.bMarkedForDeletion) {
+                lRequiredStorageSpaceBytes += fileItem.lSizeBytes;
+
+                //Set the destination folder on each file item:
+                String sPrimaryTag;
+                if (fileItem.aliProspectiveTags.size() > 0) {
+                    sPrimaryTag = fileItem.aliProspectiveTags.get(0).toString();
+                } else {
+                    sPrimaryTag = GlobalClass.gsUnsortedFolderName;
+                }
+                fileItem.sDestinationFolder = sPrimaryTag;
+                alicf_FileImports.add(fileItem);
             }
-            fileItem.sDestinationFolder = sPrimaryTag;
         }
 
         //Populate the ListView with selected file names from an earlier step:
@@ -104,7 +109,7 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         if (getActivity() == null) {
             return;
         }
-        confirmationFileListCustomAdapter = new ConfirmationFileListCustomAdapter(getActivity(), R.id.listView_GlobalTagsSelection, viewModelImportActivity.alfiConfirmedFileImports);
+        confirmationFileListCustomAdapter = new ConfirmationFileListCustomAdapter(getActivity(), R.id.listView_GlobalTagsSelection, alicf_FileImports);
         if(listView_FilesToImport != null) {
             listView_FilesToImport.setAdapter(confirmationFileListCustomAdapter);
         }

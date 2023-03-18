@@ -100,6 +100,12 @@ public class Worker_Catalog_LoadData extends Worker {
             }
         }
 
+        //Detect storage devices to determine if one is SD card:
+        ArrayList<Storage> alsStorages = getStorages(getApplicationContext());
+        GlobalClass.gtmStorageDeviceNames = new TreeMap<>();
+        for(Storage storage: alsStorages){
+            GlobalClass.gtmStorageDeviceNames.put(storage.getPath(), storage.sName);
+        }
 
         //Create image downloading temp holding folder if it does not exist:
         //This is to temporarily hold downloaded images. We immediately move them so that the downloadManager

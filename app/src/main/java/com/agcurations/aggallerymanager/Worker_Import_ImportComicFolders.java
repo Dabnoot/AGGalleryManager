@@ -157,7 +157,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     sbJobFileRecords.append(sLine);
 
                     //Write progress to the screen log:
-                    sLogLine = sComicFolderName + "\\" + entryComicFile.getValue().sFileOrFolderName + " marked for deletion.\n";
+                    sLogLine = "\"" + sComicFolderName + "\\" + entryComicFile.getValue().sFileOrFolderName + "\" marked for deletion.\n";
                     iFileCountProgressNumerator++;
                     iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                     globalClass.BroadcastProgress(true, sLogLine,
@@ -177,7 +177,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 sbJobFileRecords.append(sLine);
 
                 //Write progress to the screen log:
-                sLogLine = sComicFolderName + " folder marked for deletion.\n";
+                sLogLine = "\"" + sComicFolderName + "\" folder marked for deletion.\n";
                 iFileCountProgressNumerator++;
                 iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
@@ -218,7 +218,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         sbJobFileRecords.append(sLine);
                     }
                     //Write progress to the screen log:
-                    sLogLine = sComicFolderName + "\\" + fileItem.sFileOrFolderName + " will be deleted - XML file no longer needed.\n";
+                    sLogLine = "\"" + sComicFolderName + "\\" + fileItem.sFileOrFolderName + "\" will be deleted - XML file no longer needed.\n";
                     iFileCountProgressNumerator++;
                     iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                     globalClass.BroadcastProgress(true, sLogLine,
@@ -252,7 +252,12 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 sbJobFileRecords.append(sLine);
 
                 //Write progress to the screen log:
-                sLogLine = sComicFolderName + "\\" + fileItem.sFileOrFolderName + " will be imported.\n";
+                sLogLine = "\"" + sComicFolderName + "\\" + fileItem.sFileOrFolderName + "\" will be imported";
+                if(giMoveOrCopy == GlobalClass.COPY) {
+                    sLogLine = sLogLine + " via copy operation.\n";
+                } else {
+                    sLogLine = sLogLine + " via move operation.\n";
+                }
                 iFileCountProgressNumerator++;
                 iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
