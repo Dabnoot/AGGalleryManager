@@ -211,6 +211,10 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
 
         Uri uriComicFolderUri = Uri.parse(sComicFolderUri);
+        if(!GlobalClass.CheckIfFileExists(uriComicFolderUri)){
+            Toast.makeText(getApplicationContext(), "Comic folder does not exist. Try deleting and re-import the comic.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         Uri uriComicFilesChildUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriComicFolderUri,
                 DocumentsContract.getDocumentId(uriComicFolderUri));
         Cursor cComicFiles = GlobalClass.gcrContentResolver.query(uriComicFilesChildUri,
