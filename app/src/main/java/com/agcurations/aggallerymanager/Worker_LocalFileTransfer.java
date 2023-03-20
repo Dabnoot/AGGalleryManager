@@ -450,15 +450,25 @@ public class Worker_LocalFileTransfer extends Worker {
                                             isSourceFile = GlobalClass.gcrContentResolver.openInputStream(uriSourceFile);
                                             osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriOutputFile);
 
+
+
                                             if (isSourceFile != null && osDestinationFile != null) {
                                                 byte[] bucket = new byte[32 * 1024];
                                                 int bytesRead = 0;
+                                                int iLoopCount = 1;
                                                 while (bytesRead != -1) {
                                                     bytesRead = isSourceFile.read(bucket); //-1, 0, or more
                                                     if (bytesRead > 0) {
                                                         osDestinationFile.write(bucket, 0, bytesRead);
+                                                        glProgressNumerator = glProgressNumerator + bytesRead;
+                                                        if(iLoopCount % 10 == 0) {
+                                                            //Update bytes transferred every 10 loops:
+                                                            UpdateProgressOutput();
+                                                        }
                                                     }
+                                                    iLoopCount++;
                                                 }
+                                                UpdateProgressOutput();
 
                                             }
 
@@ -512,7 +522,6 @@ public class Worker_LocalFileTransfer extends Worker {
                                                     false, "",
                                                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                                             bProblemWithFileTransfer = true;
-                                            glProgressNumerator = glProgressNumerator + lFileSize;
                                             continue;
                                         }
                                     }
