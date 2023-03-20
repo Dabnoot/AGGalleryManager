@@ -19,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -340,8 +341,14 @@ public class Fragment_ItemDetails extends Fragment {
 
         TextView textView_FileName = getView().findViewById(R.id.textView_FileName);
         if(textView_FileName != null){
-            String sFilename = "File name: " + GlobalClass.JumbleFileName(gciCatalogItem.sFilename);
+            String sFilename = "File name: " + gciCatalogItem.sFilename;
             textView_FileName.setText(sFilename);
+        }
+
+        TextView textView_StorageLocation = getView().findViewById(R.id.textView_StorageLocation);
+        if(textView_StorageLocation != null){
+            String sStorageLocation = "Storage Location: " + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory] + File.separator + gciCatalogItem.sFolder_Name;
+            textView_StorageLocation.setText(sStorageLocation);
         }
 
         TextView textView_Dimensions = getView().findViewById(R.id.textView_Dimensions);
