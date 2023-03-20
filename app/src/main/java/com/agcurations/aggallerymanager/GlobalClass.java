@@ -38,6 +38,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
@@ -499,7 +500,14 @@ public class GlobalClass extends Application {
     }
 
     public static String GetFileName(String sFileUri){
-        return sFileUri.substring(sFileUri.lastIndexOf(gsFileSeparator) + gsFileSeparator.length());
+        //todo: Add exception signature and handle the exception in the callers.
+        String sFileName = sFileUri.substring(sFileUri.lastIndexOf(gsFileSeparator) + gsFileSeparator.length());
+        try {
+            sFileName = URLDecoder.decode(sFileName, StandardCharsets.UTF_8.toString());
+        } catch (Exception e){
+            return sFileName;
+        }
+        return sFileName;
     }
     public static String GetFileName(Uri uriFileUri){
         return GetFileName(uriFileUri.toString());

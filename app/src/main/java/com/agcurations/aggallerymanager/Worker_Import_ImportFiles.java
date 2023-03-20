@@ -267,7 +267,7 @@ public class Worker_Import_ImportFiles extends Worker {
                                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
                         }
                     }
-                    globalClass.BroadcastProgress(true, "Metadata seek complete for this file.\n",
+                    globalClass.BroadcastProgress(true, "Metadata seek complete.\n",
                             false, iProgressBarValue,
                             false, "",
                             Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
