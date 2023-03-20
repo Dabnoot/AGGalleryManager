@@ -495,7 +495,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                     if(iMoveOrCopy == GlobalClass.MOVE){
                                         //Notify the user of the pending delete operation:
-                                        sLogLine = " Deleting source file as part of move operation...";
+                                        sLogLine = "Deleting source file as part of move operation...";
                                         gbwLogFile.write(sLogLine + "\n");
                                         globalClass.BroadcastProgress(true, sLogLine,
                                                 false, 0,
