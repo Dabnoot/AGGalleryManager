@@ -17,12 +17,12 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:orientation="vertical"
-            android:gravity="center">
+            app:layout_constraintTop_toTopOf="parent">
 
             <RelativeLayout
                 android:layout_width="wrap_content"
@@ -32,69 +32,98 @@
                     android:id="@+id/textView_EditTagTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
                     android:text="Edit Tag"
                     android:textColor="@color/colorTextColor"
-                    android:textSize="40sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignParentTop="true"/>
+                    android:textSize="40sp" />
 
                 <TextView
                     android:id="@+id/textView_EditTagSubText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_below="@+id/textView_EditTagTitle"
+                    android:layout_alignParentStart="true"
                     android:text="Select a tag from the right and edit tag details below."
                     android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_EditTagTitle"/>
+                    android:textSize="20sp" />
 
-                <TextView
-                    android:id="@+id/textView_TagLabel"
+                <RelativeLayout
+                    android:id="@+id/relativeLayout_TagDetails"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginBottom="20dp"
-                    android:text="Tag ID: "
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="30sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_EditTagSubText"/>
-
-                <TextView
-                    android:id="@+id/textView_TagID"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="40dp"
-                    android:layout_marginBottom="20dp"
-                    android:text=""
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="30sp"
                     android:layout_below="@+id/textView_EditTagSubText"
-                    android:layout_toEndOf="@id/textView_TagLabel"/>
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="10dp">
 
-                <TextView
-                    android:id="@+id/textView_TagText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="20dp"
-                    android:text="Tag text:"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="30sp"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/textView_TagID"/>
+                    <TextView
+                        android:id="@+id/textView_TagIDLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignEnd="@+id/textView_labelTagDescription"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="20dp"
+                        android:text="Tag ID:"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
 
-                <EditText
-                    android:id="@+id/editText_UserName"
-                    android:layout_width="wrap_content"
-                    android:minWidth="200dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="20dp"
-                    android:textSize="30sp"
-                    android:textColor="@color/colorTextColor"
-                    android:layout_alignBaseline="@+id/textView_TagText"
-                    android:layout_toEndOf="@+id/textView_TagText"/>
+                    <TextView
+                        android:id="@+id/textView_TagID"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="13dp"
+                        android:layout_alignTop="@+id/textView_TagIDLabel"
+                        android:layout_toEndOf="@id/textView_TagIDLabel"
+                        android:text="TagID"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:id="@+id/textView_labelTagText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignEnd="@+id/textView_labelTagDescription"
+                        android:layout_below="@+id/textView_TagID"
+                        android:layout_marginTop="15dp"
+                        android:text="Tag text:"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
+
+                    <EditText
+                        android:id="@+id/editText_TagText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@+id/textView_labelTagText"
+                        android:layout_marginStart="10dp"
+                        android:layout_toEndOf="@+id/textView_labelTagText"
+                        android:minWidth="200dp"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
+
+                    <TextView
+                        android:id="@+id/textView_labelTagDescription"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/editText_TagText"
+                        android:layout_alignParentStart="true"
+                        android:layout_marginTop="10dp"
+                        android:text="Tag description:"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
+
+                    <EditText
+                        android:id="@+id/editText_TagDescription"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBaseline="@+id/textView_labelTagDescription"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_toEndOf="@+id/textView_labelTagDescription"
+                        android:minWidth="200dp"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
+
+                </RelativeLayout>
 
 
 
@@ -110,10 +139,10 @@
                     android:layout_width="149dp"
                     android:layout_height="67dp"
                     android:layout_marginTop="40dp"
+                    android:enabled="false"
                     android:text="Apply"
                     android:textSize="24sp"
-                    app:backgroundTint="@color/colorButton"
-                    android:enabled="false"/>
+                    app:backgroundTint="@color/colorButton" />
 
                 <Button
                     android:id="@+id/button_Finish"
