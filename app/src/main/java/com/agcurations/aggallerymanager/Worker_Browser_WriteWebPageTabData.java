@@ -22,6 +22,8 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
     String gsCallerID;
     Double gdCallerTimeStamp;
 
+    final boolean bDebug = false;
+
     public Worker_Browser_WriteWebPageTabData(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         gsCallerID = getInputData().getString(GlobalClass.EXTRA_CALLER_ID);
@@ -97,7 +99,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
                 sBuffer = "No tabs present due to call from " + gsCallerID + ".";
             }
             bwNewWebPageStorageFile.write(sBuffer);
-            Log.d("Worker_Browser_WriteWebPageTabData", "Writing Data: " + sBuffer);
+            if(bDebug) Log.d("Worker_Browser_WriteWebPageTabData", "Writing Data: " + sBuffer);
             bwNewWebPageStorageFile.flush();
             bwNewWebPageStorageFile.close();
             osNewWebPageStorageFile.flush();
