@@ -600,10 +600,12 @@ public class Activity_Import extends AppCompatActivity {
     public void buttonNextClick_ImportConfirm(View v) {
         //First check to see if any items are marked for deletion to allow the user to confirm:
         boolean bItemSelectedForDeletion = false;
-        for (ItemClass_File icf : fileListCustomAdapter.alFileItems) {
-            if (icf.bMarkedForDeletion) {
-                bItemSelectedForDeletion = true;
-                break;
+        if(fileListCustomAdapter != null) {
+            for (ItemClass_File icf : fileListCustomAdapter.alFileItems) {
+                if (icf.bMarkedForDeletion) {
+                    bItemSelectedForDeletion = true;
+                    break;
+                }
             }
         }
 
