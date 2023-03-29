@@ -1443,9 +1443,7 @@ public class GlobalClass extends Application {
 
     }
 
-    public boolean TagDataFile_UpdateRecord(String sTagID, String sData, int iMediaCategory) {
-
-        ItemClass_Tag ictIncoming = new ItemClass_Tag(Integer.parseInt(sTagID), sData);
+    public boolean TagDataFile_UpdateRecord(ItemClass_Tag ict_TagToUpdate, int iMediaCategory) {
 
         Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
 
@@ -1456,21 +1454,15 @@ public class GlobalClass extends Application {
             brReader = new BufferedReader(new InputStreamReader(isTagsFile));
             sbBuffer.append(getTagFileHeader());
             sbBuffer.append("\n");
-
+            brReader.readLine(); //Read past the header.
             String sLine = brReader.readLine();
             while (sLine != null) {
 
                 ItemClass_Tag ictFromFile = ConvertFileLineToTagItem(sLine);
 
                 //Check to see if this record is the one that we want to update:
-                if (ictFromFile.iTagID.equals(ictIncoming.iTagID)) {
-
-                    sLine = getTagRecordString(ictIncoming);
-
-                    //Now update the record in the treeMap:
-                    gtmCatalogTagReferenceLists.get(iMediaCategory).remove(ictFromFile.iTagID);
-                    gtmCatalogTagReferenceLists.get(iMediaCategory).put(ictIncoming.iTagID, ictIncoming);
-
+                if (ictFromFile.iTagID.equals(ict_TagToUpdate.iTagID)) {
+                    sLine = getTagRecordString(ict_TagToUpdate);
                 }
                 //Write the current record to the buffer:
                 sbBuffer.append(sLine);
@@ -1490,6 +1482,9 @@ public class GlobalClass extends Application {
             osNewTagsFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
             osNewTagsFile.flush();
             osNewTagsFile.close();
+
+            //Update memory:
+            gtmCatalogTagReferenceLists.get(iMediaCategory).replace(ict_TagToUpdate.iTagID, ict_TagToUpdate);
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + uriTagsFile + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();

@@ -102,6 +102,8 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
 
         setupUI(getView().findViewById(R.id.linearLayout_fragment_tag_editor_2_add_tag));
 
+
+
         RefreshTagListView();
     }
 
@@ -111,7 +113,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             return;
         }
 
-        gTextView_TagID = getView().findViewById(R.id.textView_TagID);
+        //gTextView_TagID = getView().findViewById(R.id.textView_TagID);
         gEditText_TagText = getView().findViewById(R.id.editText_TagText);
         gEditText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
         gTextView_TagID.setText("");
@@ -191,7 +193,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         }
 
 
-        TextView textView_TagID = getView().findViewById(R.id.textView_TagID);
+        /*TextView textView_TagID = getView().findViewById(R.id.textView_TagID);
         String sTagID = textView_TagID.getText().toString();
 
         if(globalClass.TagDataFile_UpdateRecord(sTagID, sNewTagName, viewModelTagEditor.iTagEditorMediaCategory)){
@@ -200,7 +202,7 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
             viewModelTagEditor.bTagRenamed = true;
         } else {
             Toast.makeText(getActivity(), "Could not alter tag.", Toast.LENGTH_SHORT).show();
-        }
+        }*/
     }
 
 

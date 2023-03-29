@@ -71,6 +71,8 @@ public class AdapterTagMaturityRatings extends ArrayAdapter<String[]> {
 
         String[] sItemData = getItem(position);
 
+        //todo: don't preset restrictions greater than that of the user or the won't be able to see the tag they just created.
+
         TextView textView_AgeRatingCode = convertView.findViewById(R.id.textView_AgeRatingCode);
         //textView_AgeRatingCode.setText(TAG_AGE_RATINGS[position][TAG_AGE_RATING_CODE_INDEX]);
         textView_AgeRatingCode.setText(sItemData[TAG_AGE_RATING_CODE_INDEX]);

@@ -1,7 +1,9 @@
 package com.agcurations.aggallerymanager;
 
+import android.content.Context;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -14,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -23,8 +26,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -36,7 +37,7 @@ import java.util.TreeMap;
 public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private GlobalClass globalClass;
-    private ViewModel_TagEditor viewModelTagEditor;
+    private ViewModel_TagEditor gViewModelTagEditor;
 
     RelativeLayout gRelativeLayout_UserSelection;
     RelativeLayout.LayoutParams gLayoutParams_UserSelection;
@@ -44,6 +45,13 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     AdapterUserList gAdapterApprovedUsers;
 
     private ArrayList<ItemClass_Tag> galNewTags;
+
+    private EditText gEditText_TagText;
+    private EditText gEditText_TagDescription;
+    private Spinner gSpinner_AgeRating;
+    private CheckBox gCheckBox_SetApprovedUsers;
+
+    private ItemClass_Tag gictTagIDInEditMode;
 
     public Fragment_TagEditor_2_AddTag() {
         // Required empty public constructor
@@ -62,7 +70,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
         //Instantiate the ViewModel sharing data between fragments:
-        viewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
+        gViewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
 
         galNewTags = new ArrayList<>();
     }
@@ -94,15 +102,33 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         if (getView() != null) {
 
-            Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
+            gEditText_TagText = getView().findViewById(R.id.editText_TagText);
+            gEditText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
+
+            gSpinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
             ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
-                alsTemp.add(sESRBRating);
+
+            for(int i = 0; i < AdapterTagMaturityRatings.TAG_AGE_RATINGS.length; i++){
+            //for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
+                if(globalClass.gicuCurrentUser.iMaturityLevel >= i) {
+                    //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
+                    //  to them unless their user rating is modified.
+                    String[] sESRBRating = AdapterTagMaturityRatings.TAG_AGE_RATINGS[i];
+                    alsTemp.add(sESRBRating);
+                }
             }
             AdapterTagMaturityRatings atarSpinnerAdapter = new AdapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
-            spinner_AgeRating.setAdapter(atarSpinnerAdapter);
+            gSpinner_AgeRating.setAdapter(atarSpinnerAdapter);
 
             Button button_AddTag = getView().findViewById(R.id.button_AddTag);
+            TextView textView_NewTagTitle = getView().findViewById(R.id.textView_NewTagTitle);
+            if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE){
+                button_AddTag.setText("Apply");
+                textView_NewTagTitle.setText("Edit Tag");
+            } else {
+                button_AddTag.setText("Add Tag");
+                textView_NewTagTitle.setText("New Tag");
+            }
             button_AddTag.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     button_AddTag_Click(v);
@@ -127,8 +153,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gLayoutParams_UserSelection.height = 0;
             gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
 
-            final CheckBox checkBox_SetApprovedUsers = getView().findViewById(R.id.checkBox_SetApprovedUsers);
-            checkBox_SetApprovedUsers.setOnClickListener(new View.OnClickListener() {
+            gCheckBox_SetApprovedUsers = getView().findViewById(R.id.checkBox_SetApprovedUsers);
+            gCheckBox_SetApprovedUsers.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ToggleRestrictToUserVisibility();
@@ -139,7 +165,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             textView_labelRestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    checkBox_SetApprovedUsers.setChecked(!checkBox_SetApprovedUsers.isChecked());
+                    gCheckBox_SetApprovedUsers.setChecked(!gCheckBox_SetApprovedUsers.isChecked());
                     ToggleRestrictToUserVisibility();
                 }
             });
@@ -220,8 +246,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private void ToggleRestrictToUserVisibility(){
         if(getView() == null) return;
-        final CheckBox checkBox_RestrictTagToUserIDs = getView().findViewById(R.id.checkBox_SetApprovedUsers);
-        boolean bCheckedState = checkBox_RestrictTagToUserIDs.isChecked();
+        boolean bCheckedState = gCheckBox_SetApprovedUsers.isChecked();
         if(bCheckedState){
             gLayoutParams_UserSelection.height = RelativeLayout.LayoutParams.WRAP_CONTENT;
         } else {
@@ -235,25 +260,55 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         if(getView() == null){
             return;
         }
-        final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
 
-        ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()){
-            alsTags.add(entry.getValue().sTagText);
+        TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        boolean bIsTagToBeRestricted = false;
+        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
+            //if (entry.getValue().bIsRestricted) {
+            if(globalClass.gicuCurrentUser != null) {
+                if (globalClass.gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
+                    bIsTagToBeRestricted = true;
+                }
+            } else {
+                //If no user is selected or current user is somehow null, follow guidelines for
+                //  default user maturity rating.
+                if (entry.getValue().iTagAgeRating <= globalClass.giDefaultUserMaturityRating) {
+                    bIsTagToBeRestricted = true;
+                }
+            }
+            if(!bIsTagToBeRestricted){
+                if(entry.getValue().alsTagApprovedUsers != null){
+                    if(entry.getValue().alsTagApprovedUsers.size() > 0){
+                        bIsTagToBeRestricted = true;
+                        for(String sApprovedUser: entry.getValue().alsTagApprovedUsers){
+                            if (globalClass.gicuCurrentUser.sUserName.equals(sApprovedUser)){
+                                bIsTagToBeRestricted = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (!bIsTagToBeRestricted) {
+                String sTagTextForSort = entry.getValue().sTagText + entry.getValue().iTagID;
+                tmTags.put(sTagTextForSort, entry.getValue());
+            }
+
         }
-        //Alphabetize the tags:
-        alsTags.sort(String.CASE_INSENSITIVE_ORDER);
 
-        String[] sTemp = new String[alsTags.size()];
-        sTemp = alsTags.toArray(sTemp);
-        if(getActivity() == null){
-            return;
+        ArrayList<ItemClass_Tag> alict_TagsListTags = new ArrayList<>();
+
+        for(Map.Entry<String, ItemClass_Tag> entry : tmTags.entrySet()){
+            alict_TagsListTags.add(entry.getValue());
         }
-        ArrayAdapter<String> aasTags = new ArrayAdapter<>(getActivity(), R.layout.listview_tageditor_tagtext, sTemp);
-        listView_TagViewer.setAdapter(aasTags);
 
-        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
-        editText_TagText.setText("");
+        if(getActivity() != null) {
+            ListViewTagsAdapter listViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alict_TagsListTags);
+            ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
+            listView_TagViewer.setAdapter(listViewTagsAdapter);
+            listView_TagViewer.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        }
+
     }
 
 
@@ -263,37 +318,152 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             return;
         }
 
-        EditText editText_TagText = getView().findViewById(R.id.editText_TagText);
-        String sTagName = editText_TagText.getText().toString();
+        String sTagName = gEditText_TagText.getText().toString();
         if(sTagName.equals("")){
             Toast.makeText(getActivity(), "Tag text cannot be blank.", Toast.LENGTH_SHORT).show();
             return;
         }
-        ItemClass_Tag ictNewTag = new ItemClass_Tag(-1, sTagName);
 
+        //Gather tag data from the UI:
+        ItemClass_Tag ictNewTag;
+        if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
+            if(gictTagIDInEditMode == null){
+                Toast.makeText(getActivity(), "Select a tag to modify first from the tag reference list.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ictNewTag = gictTagIDInEditMode;
+            ictNewTag.sTagText = sTagName;
+        } else {
+            ictNewTag = new ItemClass_Tag(-1, sTagName);
+        }
         //Get the user-entered tag description:
         EditText editText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
-
         //Get the selected Age Rating:
-        Spinner spinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
-        ictNewTag.iTagAgeRating = spinner_AgeRating.getSelectedItemPosition();
-
+        ictNewTag.iTagAgeRating = gSpinner_AgeRating.getSelectedItemPosition();
         //Get any users to whom the tag is to be restricted (approved users):
         ictNewTag.alsTagApprovedUsers = gAdapterApprovedUsers.getUserNamesInList();
 
-        //Attempt to add the new record:
-        ictNewTag = globalClass.TagDataFile_CreateNewRecord(ictNewTag, viewModelTagEditor.iTagEditorMediaCategory);
-        if(ictNewTag != null){
-            RefreshTagListView();
-            galNewTags.add(ictNewTag);
-            viewModelTagEditor.alNewTags = galNewTags; //To allow new tags to be sent back to a possible calling activity.
-            viewModelTagEditor.bTagAdded = true;
-            Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();
+        //Update data in storage and memory, and notify the user:
+        boolean bTagSuccess = false;
+        if(gViewModelTagEditor.iTagAddOrEditMode == gViewModelTagEditor.TAG_EDIT_MODE) {
+            //Attempt to update the record:
+            if(globalClass.TagDataFile_UpdateRecord(ictNewTag, gViewModelTagEditor.iTagEditorMediaCategory)){
+                RefreshTagListView();
+                Toast.makeText(getActivity(), "Tag modified successfully.", Toast.LENGTH_SHORT).show();
+                gictTagIDInEditMode = null;
+                gViewModelTagEditor.bTagDataUpdated = true;
+                bTagSuccess = true;
+            } else {
+                Toast.makeText(getActivity(), "Could not alter tag.", Toast.LENGTH_SHORT).show();
+            }
         } else {
-            Toast.makeText(getActivity(), sTagName + " already exists in tag list.", Toast.LENGTH_SHORT).show();
+            //Attempt to add the new record:
+            ictNewTag = globalClass.TagDataFile_CreateNewRecord(ictNewTag, gViewModelTagEditor.iTagEditorMediaCategory);
+            if (ictNewTag != null) {
+                RefreshTagListView();
+                galNewTags.add(ictNewTag);
+                gViewModelTagEditor.alNewTags = galNewTags; //To allow new tags to be sent back to a possible calling activity.
+                gViewModelTagEditor.bTagAdded = true;
+                bTagSuccess = true;
+                Toast.makeText(getActivity(), sTagName + " added successfully.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getActivity(), sTagName + " already exists in tag list.", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        if(bTagSuccess){
+            gEditText_TagText.setText("");
+            gEditText_TagDescription.setText("");
+            gCheckBox_SetApprovedUsers.setChecked(false);
         }
     }
+
+
+
+    public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
+
+        ArrayList<ItemClass_Tag> alictTagItems; //Contains all tag items passed to the listviewTagsAdapter.
+
+        public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems) {
+            super(context, 0, tagItems);
+            alictTagItems = tagItems;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, View v, @NonNull ViewGroup parent) {
+            // Get the data item for this position
+
+            final ItemClass_Tag tagItem = alictTagItems.get(position);
+
+            if(tagItem == null){
+                return v;
+            }
+            // Check if an existing view is being reused, otherwise inflate the view
+            if (v == null) {
+                v = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
+            }
+            // Lookup view for data population
+            final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
+            checkedTextView_TagText.setText(tagItem.sTagText);
+
+            if(gViewModelTagEditor.iTagAddOrEditMode == gViewModelTagEditor.TAG_EDIT_MODE) {
+                //Only allow the user to select items if we are in edit mode.
+
+                //Set the selection state (needed as views are recycled).
+                if(getActivity() != null) {
+                    if (tagItem.bIsChecked) {
+                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    } else {
+                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                    }
+                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                }
+
+                v.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        //Handle changing the checked state:
+                        tagItem.bIsChecked = !tagItem.bIsChecked;
+                        boolean bUpdateOtherItemsViews = false;
+                        if (tagItem.bIsChecked) {
+                            checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                            checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                            gictTagIDInEditMode = tagItem;
+                            gEditText_TagText.setText(tagItem.sTagText);
+                            gEditText_TagDescription.setText(tagItem.sTagDescription);
+                            gSpinner_AgeRating.setSelection(tagItem.iTagAgeRating);
+                            //Go through and uncheck anything but this tag:
+                            for (ItemClass_Tag ict : alictTagItems) {
+                                if (ict.bIsChecked && !ict.iTagID.equals(tagItem.iTagID)) {
+                                    ict.bIsChecked = false;
+                                    bUpdateOtherItemsViews = true;
+                                }
+                            }
+                        } else {
+                            checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                            checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                        }
+                        if (bUpdateOtherItemsViews) {
+                            notifyDataSetChanged();
+                        }
+
+                    }
+                });
+            }
+
+            // Return the completed view to render on screen
+            return v;
+        }
+
+
+        @Override
+        public int getCount() {
+            return super.getCount();
+        }
+    }
+
 
 
     public void setupUI(View view) {

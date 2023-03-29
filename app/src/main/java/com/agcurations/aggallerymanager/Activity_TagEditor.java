@@ -112,7 +112,7 @@ public class Activity_TagEditor extends AppCompatActivity {
             b.putSerializable(Activity_TagEditor.NEW_TAGS, viewModelTagEditor.alNewTags);
             data.putExtra(Activity_TagEditor.EXTRA_BUNDLE_TAG_EDITOR_NEW_TAGS_RESULT, b);
         }
-        if(viewModelTagEditor.bTagRenamed) {
+        if(viewModelTagEditor.bTagDataUpdated) {
             //Send back data to the caller that a tag has been renamed.
             //  If the user reached this stage while viewing a catalog item, the cat
             //  item may need to have tags reloaded.
@@ -194,7 +194,8 @@ public class Activity_TagEditor extends AppCompatActivity {
         if (rbAddTags.isChecked()){
             ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG, false);
         } else if (rbEditTags.isChecked()){
-            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_3_ID_EDIT_TAG, false);
+            viewModelTagEditor.iTagAddOrEditMode = ViewModel_TagEditor.TAG_EDIT_MODE;
+            ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG, false);
         } else {
             ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG, false);
         }
@@ -246,8 +247,8 @@ public class Activity_TagEditor extends AppCompatActivity {
                     return new Fragment_TagEditor_1_Action();
                 case FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG:
                     return new Fragment_TagEditor_2_AddTag();
-                case FRAGMENT_TAG_EDITOR_3_ID_EDIT_TAG:
-                    return new Fragment_TagEditor_3_EditTag();
+                /*case FRAGMENT_TAG_EDITOR_3_ID_EDIT_TAG:
+                    return new Fragment_TagEditor_3_EditTag();*/
                 case FRAGMENT_TAG_EDITOR_4_ID_DELETE_TAG:
                     return new Fragment_TagEditor_4_DeleteTag();
                 default:

@@ -57,33 +57,10 @@
                     android:layout_marginTop="10dp">
 
                     <TextView
-                        android:id="@+id/textView_TagIDLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignEnd="@+id/textView_labelTagDescription"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="20dp"
-                        android:text="Tag ID:"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                    <TextView
-                        android:id="@+id/textView_TagID"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="13dp"
-                        android:layout_alignTop="@+id/textView_TagIDLabel"
-                        android:layout_toEndOf="@id/textView_TagIDLabel"
-                        android:text="TagID"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                    <TextView
                         android:id="@+id/textView_labelTagText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignEnd="@+id/textView_labelTagDescription"
-                        android:layout_below="@+id/textView_TagID"
                         android:layout_marginTop="15dp"
                         android:text="Tag text:"
                         android:textColor="@color/colorTextColor"
@@ -122,6 +99,142 @@
                         android:minWidth="200dp"
                         android:textColor="@color/colorTextColor"
                         android:textSize="22sp" />
+
+                </RelativeLayout>
+
+                <TextView
+                    android:id="@+id/textView_labelContentMaturity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/relativeLayout_TagDetails"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="30dp"
+                    android:text="Age rating:"
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="22sp" />
+
+                <Spinner
+                    android:id="@+id/spinner_ContentMaturity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/textView_labelContentMaturity"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="20dp" />
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/spinner_ContentMaturity"
+                    android:layout_centerHorizontal="true">
+
+                    <RelativeLayout
+                        android:id="@+id/relativeLayout_CheckboxSetApprovedUsers"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true">
+
+                        <CheckBox
+                            android:id="@+id/checkBox_SetApprovedUsers"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+
+                        <TextView
+                            android:id="@+id/textView_labelRestrictToUsers"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true"
+                            android:layout_marginTop="7dp"
+                            android:layout_toEndOf="@+id/checkBox_SetApprovedUsers"
+                            android:text="Restrict tag to user IDs"
+                            android:textColor="@color/colorTextColor"
+                            android:textSize="22sp" />
+
+                    </RelativeLayout>
+
+
+                    <RelativeLayout
+                        android:id="@+id/relativeLayout_UserSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/relativeLayout_CheckboxSetApprovedUsers">
+
+                        <RelativeLayout
+                            android:id="@+id/relativeLayout_UserPool"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:id="@+id/textView_labelUserPool"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_centerHorizontal="true"
+                                android:text="User pool:"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp" />
+
+                            <ListView
+                                android:id="@+id/listView_UserPool"
+                                android:layout_width="200dp"
+                                android:layout_height="100dp"
+                                android:layout_below="@+id/textView_labelUserPool" />
+
+                        </RelativeLayout>
+
+
+                        <RelativeLayout
+                            android:id="@+id/relativeLayout_UserMove"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_margin="10dp"
+                            android:layout_marginTop="30dp"
+                            android:layout_toEndOf="@+id/relativeLayout_UserPool">
+
+                            <ImageButton
+                                android:id="@+id/imageButton_AddUser"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:backgroundTint="@color/colorButton"
+                                android:src="@drawable/baseline_chevron_right_24" />
+
+                            <ImageButton
+                                android:id="@+id/imageButton_RemoveUser"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_below="@+id/imageButton_AddUser"
+                                android:backgroundTint="@color/colorButton"
+                                android:src="@drawable/baseline_chevron_left_24" />
+
+                        </RelativeLayout>
+
+
+                        <RelativeLayout
+                            android:id="@+id/relativeLayout_SelectedUsers"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_toEndOf="@+id/relativeLayout_UserMove">
+
+                            <TextView
+                                android:id="@+id/textView_labelApprovedUsers"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_centerHorizontal="true"
+                                android:text="Approved Users:"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp" />
+
+                            <ListView
+                                android:id="@+id/listView_ApprovedUsers"
+                                android:layout_width="200dp"
+                                android:layout_height="100dp"
+                                android:layout_below="@+id/textView_labelApprovedUsers" />
+
+                        </RelativeLayout>
+
+
+                    </RelativeLayout>
+
 
                 </RelativeLayout>
 
