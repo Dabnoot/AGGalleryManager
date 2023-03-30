@@ -43,7 +43,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
         //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
         int iProgressNumerator = 1;
-        int iProgressDenominator = globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).size() + 1;
+        int iProgressDenominator = globalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() + 1;
         int iProgressBarValue;
 
         String sKey;
@@ -58,7 +58,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         int iPageMax = globalClass.giMaxComicPageCount;
         long lDurationMin = Math.max(0, globalClass.glMinVideoDurationMSSelected);
         long lDurationMax = globalClass.glMaxVideoDurationMSSelected;
-        switch (globalClass.giSelectedCatalogMediaCategory){
+        switch (GlobalClass.giSelectedCatalogMediaCategory){
             case GlobalClass.MEDIA_CATEGORY_VIDEOS:
 
                 if(globalClass.glMinVideoDurationMSSelected > -1 || globalClass.glMaxVideoDurationMSSelected > -1){
@@ -116,13 +116,13 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
 
         for (Map.Entry<String, ItemClass_CatalogItem>
-                entry : globalClass.gtmCatalogLists.get(globalClass.giSelectedCatalogMediaCategory).entrySet()) {
+                entry : globalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).entrySet()) {
             sKey = "";
             //Create a unique key to identify the record in the TreeMap, which includes
             // the SortBy field. TreeMap automatically sorts by the Key field.
-            if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
+            if(globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
                 sKey = entry.getValue().dDatetime_Last_Viewed_by_User.toString();
-            } else if(globalClass.giCatalogViewerSortBySetting[globalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
+            } else if(globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
                 sKey = entry.getValue().dDatetime_Import.toString();
             }
             sKey = sKey + entry.getValue().sItemID;
@@ -133,12 +133,12 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //  the TreeMap destined for the RecyclerView:
             boolean bSearchMatchApplicable = false;
             boolean bSearchMatch = false;
-            if(globalClass.giCatalogViewerSearchInSelection[globalClass.giSelectedCatalogMediaCategory] != GlobalClass.SEARCH_IN_NO_SELECTION) {
+            if(globalClass.giCatalogViewerSearchInSelection[GlobalClass.giSelectedCatalogMediaCategory] != GlobalClass.SEARCH_IN_NO_SELECTION) {
                 bSearchMatchApplicable = true;
 
-                String sSearchInText_LowerCase = globalClass.gsCatalogViewerSearchInText[globalClass.giSelectedCatalogMediaCategory].toLowerCase();
+                String sSearchInText_LowerCase = globalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory].toLowerCase();
                 String sKey_RecordText = "";
-                switch (globalClass.giCatalogViewerSearchInSelection[globalClass.giSelectedCatalogMediaCategory]) {
+                switch (globalClass.giCatalogViewerSearchInSelection[GlobalClass.giSelectedCatalogMediaCategory]) {
                     case GlobalClass.SEARCH_IN_TITLE:
                         sKey_RecordText = entry.getValue().sTitle;
                         break;
@@ -170,10 +170,10 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //  the TreeMap destined for the RecyclerView:
             boolean bFilterByApplicable = false;
             boolean bIsFilterByMatch = false;
-            if(globalClass.giCatalogViewerFilterBySelection[globalClass.giSelectedCatalogMediaCategory] != GlobalClass.FILTER_BY_NO_SELECTION) {
+            if(globalClass.giCatalogViewerFilterBySelection[GlobalClass.giSelectedCatalogMediaCategory] != GlobalClass.FILTER_BY_NO_SELECTION) {
                 bFilterByApplicable = true;
 
-                switch (globalClass.giCatalogViewerFilterBySelection[globalClass.giSelectedCatalogMediaCategory]) {
+                switch (globalClass.giCatalogViewerFilterBySelection[GlobalClass.giSelectedCatalogMediaCategory]) {
                     case GlobalClass.FILTER_BY_WEBSOURCE:
                         if (entry.getValue().sSource.startsWith("http")) {
                             bIsFilterByMatch = true;
@@ -204,7 +204,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //Filter on resolution or page count, as applicable:
             boolean bResolutionOrPageCountMatch = false;
             if(bResolutionOrPageCountFilterApplicable) {
-                switch (globalClass.giSelectedCatalogMediaCategory) {
+                switch (GlobalClass.giSelectedCatalogMediaCategory) {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         if (iResMin == null || iResMax == null) {
                             bResolutionOrPageCountMatch = true;
@@ -253,9 +253,9 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             boolean bTagsMatch = false;
             //Check to see if the user wants to filter by tag:
             if(globalClass.galtsiCatalogViewerFilterTags != null){
-                if(globalClass.galtsiCatalogViewerFilterTags.get(globalClass.giSelectedCatalogMediaCategory).size() > 0){
+                if(globalClass.galtsiCatalogViewerFilterTags.get(GlobalClass.giSelectedCatalogMediaCategory).size() > 0){
                     bTagMatchApplicable = true;
-                    if(entry.getValue().aliTags.containsAll(globalClass.galtsiCatalogViewerFilterTags.get(globalClass.giSelectedCatalogMediaCategory))){
+                    if(entry.getValue().aliTags.containsAll(globalClass.galtsiCatalogViewerFilterTags.get(GlobalClass.giSelectedCatalogMediaCategory))){
                         bTagsMatch = true;
                     }
                 }
@@ -281,7 +281,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                         //sErrorMessage = e.getMessage();
                         continue;
                     }
-                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(globalClass.giSelectedCatalogMediaCategory).get(iTagID);
+                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.giSelectedCatalogMediaCategory).get(iTagID);
                     if (ict != null) {
                         if (globalClass.gicuCurrentUser != null) {
                             if (ict.iTagAgeRating > globalClass.gicuCurrentUser.iMaturityLevel) {
@@ -340,7 +340,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         //Clean up the key, apply a reverse sort order, if applicable:
         TreeMap<Integer, ItemClass_CatalogItem> tmNewOrderCatalogList = new TreeMap<>();
         int iRID, iIterator;
-        if(globalClass.gbCatalogViewerSortAscending[globalClass.giSelectedCatalogMediaCategory]){
+        if(globalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory]){
             iRID = 0;
             iIterator = 1;
         } else {
