@@ -37,7 +37,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     //Glide
@@ -60,19 +60,19 @@ dependencies {
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
 
     //WorkManager, for background tasks such as internet file download:
-    implementation "androidx.work:work-runtime:2.8.0-rc01"
+    implementation "androidx.work:work-runtime:2.8.1"
 
     //FFMPEG, for video concatenation:javjava -v
     //implementation 'com.arthenica:ffmpeg-kit-full:4.4.LTS'
 
     //ExoPlayer, for playing local m3u8 playlists:
-    implementation 'com.google.android.exoplayer:exoplayer:2.18.2'
+    implementation 'com.google.android.exoplayer:exoplayer:2.18.5'
 
     //For adding recently-used tags:
     implementation 'co.lujun:androidtagview:1.1.7'
 
     //For slider on sort/filter fragment:
-    implementation 'com.google.android.material:material:1.9.0-alpha01'
+    /*implementation 'com.google.android.material:material:1.9.0-alpha01'*/
 
     //For Color Picker:
     implementation 'com.thebluealliance:spectrum:0.7.1'
