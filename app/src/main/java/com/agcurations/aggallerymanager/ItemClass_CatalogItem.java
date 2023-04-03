@@ -65,7 +65,8 @@ public class ItemClass_CatalogItem implements Serializable {
     public static final int VIDEO_SEGMENT_FILES_KNOWN_COMPLETE = 1;   //All video segment files detected and in-place.
     public static final int VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE = 2; //Some video segment files are missing, don't attempt to process.
 
-    //******* Any new variable must also be updated in the Copy_ItemClass_CatalogItem routine in GlobalClass.
-    //  A copy method cannot be added here due to the Serializable attribute.
+    public int iMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_RP;
+    public ArrayList<String> alsApprovedUsers = new ArrayList<>();
+
 
 }

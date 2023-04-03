@@ -33,11 +33,9 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -58,8 +56,6 @@ import java.util.concurrent.TimeUnit;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
-
-import com.google.android.exoplayer2.util.MimeTypes;
 
 
 public class GlobalClass extends Application {
@@ -610,6 +606,8 @@ public class GlobalClass extends Application {
                                                                     //  stored in sAddress. There can be multiple video downloads and streams
                                                                     //  per web page, hence this field.*/
         sHeader = sHeader + "\t" + "M3U8IntegrityFlag";             //For verifying m3u8 segment-file-complex integrity.
+        sHeader = sHeader + "\t" + "Maturity_Rating";               //Maturity rating either defined by the user or inherited from tags.
+        sHeader = sHeader + "\t" + "Approved_Users";                //Approved user(s) either defined from the importing user, explicity by the user, or inhereted from tags.
         sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
 
         return sHeader;
@@ -651,10 +649,23 @@ public class GlobalClass extends Application {
         sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
         sRecord = sRecord + "\t" + JumbleStorageText(ci.iSpecialFlag);                    //Code for required post-processing.
-        //sRecord = sRecord + "\t" + ci.sVideoLink;                                       //For video download from web page or M3U8 stream. Web address of page is
-                                                                                          //  stored in sAddress. There can be multiple video downloads and streams
-                                                                                          //  per web page, hence this field.
         sRecord = sRecord + "\t" + ci.iAllVideoSegmentFilesDetected;                      //For verifying m3u8 segment file complex integrity.
+
+        //Append the Maturity Rating to the record:
+        sRecord = sRecord + "\t" + ci.iMaturityRating;
+
+        //Append the list of approved users for this item to the record:
+        sRecord = sRecord + "\t" + "{";
+        StringBuilder sb = new StringBuilder();
+        int iUserListSize = ci.alsApprovedUsers.size();
+        for(int i = 0; i < iUserListSize; i++){
+            sb.append(GlobalClass.JumbleStorageText(ci.alsApprovedUsers.get(i)));
+            if(i < (iUserListSize - 1)){
+                sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
+            }
+        }
+        sRecord = sRecord + sb + "%%" + "}";
+
 
         return sRecord;
     }
@@ -694,20 +705,21 @@ public class GlobalClass extends Application {
                                                                                         // for video M3U8 download completion check.
         ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[26]));  //Typically used to gather tag data from an online comic source, if automatic.
         ci.sSource = JumbleStorageText(sRecord[27]);                                    //Website, if relevant. Originally for comics also used for video.
-        if(sRecord.length >= 29) {
-            ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[28]));               //Grade, supplied by user.
+        ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[28]));               //Grade, supplied by user.
+        ci.iSpecialFlag = Integer.parseInt(JumbleStorageText(sRecord[29]));  //Code for required post-processing.
+
+        ci.iAllVideoSegmentFilesDetected = Integer.parseInt(JumbleStorageText(sRecord[30])); //For verifying m3u8 segment file complex integrity.
+
+        ci.iMaturityRating = Integer.parseInt(sRecord[31]);
+
+        //Get list of approved users:
+        String sApprovedUsersRaw = sRecord[32]; //Array index is 0-based.
+        sApprovedUsersRaw = sApprovedUsersRaw.substring(1, sApprovedUsersRaw.length() - 1); //Remove '{' and '}'.
+        String[] sApprovedUsersArray = sApprovedUsersRaw.split("%%");
+        for (int i = 0; i < sApprovedUsersArray.length; i++) {
+            sApprovedUsersArray[i] = GlobalClass.JumbleStorageText(sApprovedUsersArray[i]);
         }
-        if(sRecord.length >= 30) {
-            ci.iSpecialFlag = Integer.parseInt(JumbleStorageText(sRecord[29]));  //Code for required post-processing.
-        }
-        /*if(sRecord.length >= 31) {
-            ci.sVideoLink = JumbleStorageText(sRecord[30]);                             //For video download from web page or M3U8 stream. Web address of page is
-                                                                                        //  stored in sAddress. There can be multiple video downloads and streams
-                                                                                        //  per web page, hence this field.
-        }*/
-        if(sRecord.length >= 31){
-            ci.iAllVideoSegmentFilesDetected = Integer.parseInt(JumbleStorageText(sRecord[30])); //For verifying m3u8 segment file complex integrity.
-        }
+        ci.alsApprovedUsers.addAll(Arrays.asList(sApprovedUsersArray));
 
 
         return ci;
@@ -1274,9 +1286,9 @@ public class GlobalClass extends Application {
         ict = new ItemClass_Tag(Integer.parseInt(JumbleStorageText(sRecord[0])), JumbleStorageText(sRecord[1]));
         ict.sTagDescription = JumbleStorageText(sRecord[2]);
         try {
-            ict.iTagAgeRating = Integer.parseInt(sRecord[3]);
+            ict.iMaturityRating = Integer.parseInt(sRecord[3]);
         } catch (Exception e){
-            ict.iTagAgeRating = AdapterTagMaturityRatings.TAG_AGE_RATING_X; //Default to highest restricted age rating.
+            ict.iMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_X; //Default to highest restricted age rating.
             ict.sTagText = "00TagFault_" + ict.sTagText;
         }
 
@@ -1419,7 +1431,7 @@ public class GlobalClass extends Application {
                 //Add the tag to memory
                 ItemClass_Tag ictNewNewTag = new ItemClass_Tag(iNextRecordId, ictNewTag.sTagText); //Tag ID in the tag item is final. Must update here with "newnew" item.
                 ictNewNewTag.sTagDescription = ictNewTag.sTagDescription;
-                ictNewNewTag.iTagAgeRating = ictNewTag.iTagAgeRating;
+                ictNewNewTag.iMaturityRating = ictNewTag.iMaturityRating;
 
                 gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
 
@@ -1503,7 +1515,7 @@ public class GlobalClass extends Application {
                 JumbleStorageText(ict.iTagID.toString()) + "\t" +
                         JumbleStorageText(ict.sTagText) + "\t" +
                         JumbleStorageText(ict.sTagDescription) + "\t" +
-                        ict.iTagAgeRating;
+                        ict.iMaturityRating;
 
         //If users are assigned to the tag, build the users' string:
         //Append the back-stack to the record:
@@ -1722,13 +1734,13 @@ public class GlobalClass extends Application {
         for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             //if (entry.getValue().bIsRestricted) {
             if(gicuCurrentUser != null) {
-                if (gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
+                if (gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating) {
                     aliRestrictedTagIDs.add(entry.getValue().iTagID);
                 }
             } else {
                 //If no user is selected or current user is somehow null, follow guidelines for
                 //  default user maturity rating.
-                if (entry.getValue().iTagAgeRating <= giDefaultUserMaturityRating) {
+                if (entry.getValue().iMaturityRating <= giDefaultUserMaturityRating) {
                     aliRestrictedTagIDs.add(entry.getValue().iTagID);
                 }
             }
