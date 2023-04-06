@@ -178,7 +178,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
                     Uri uriNewFile = GlobalClass.FormChildUri(uriDestinationFolder.toString(), sJumbledNewFileName);
 
-                    if(uriNewFile == null) {
+                    if(uriNewFile != null) {
 
                         globalClass.BroadcastProgress(true, "Initiating download of file: " + icf.sURL + "...",
                                 false, iProgressBarValue,
