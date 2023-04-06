@@ -284,12 +284,12 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                     ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.giSelectedCatalogMediaCategory).get(iTagID);
                     if (ict != null) {
                         if (globalClass.gicuCurrentUser != null) {
-                            if (ict.iTagAgeRating > globalClass.gicuCurrentUser.iMaturityLevel) {
+                            if (ict.iMaturityRating > globalClass.gicuCurrentUser.iMaturityLevel) {
                                 bIsRestricted = true;
                                 break;
                             }
                         } else {
-                            if (ict.iTagAgeRating > globalClass.giDefaultUserMaturityRating) {
+                            if (ict.iMaturityRating > globalClass.giDefaultUserMaturityRating) {
                                 bIsRestricted = true;
                                 break;
                             }

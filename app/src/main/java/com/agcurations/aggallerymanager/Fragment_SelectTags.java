@@ -4,8 +4,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -13,9 +11,6 @@ import androidx.lifecycle.ViewModelProvider;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -28,9 +23,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -402,7 +395,7 @@ public class Fragment_SelectTags extends Fragment {
                     }
                 }
             } else {
-                if (ictNew.iTagAgeRating > globalClass.giDefaultUserMaturityRating) {
+                if (ictNew.iMaturityRating > globalClass.giDefaultUserMaturityRating) {
                     //Don't add the tag if the tag maturity rating is above a default rating.
                     viewModel_fragment_selectTags.alTagsAll.add(ictNew);
                     if (ictNew.bIsChecked) {

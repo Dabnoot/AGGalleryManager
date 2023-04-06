@@ -125,13 +125,13 @@ public class Fragment_TagEditor_3_EditTag extends Fragment {
         for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             //if (entry.getValue().bIsRestricted) {
             if(globalClass.gicuCurrentUser != null) {
-                if (globalClass.gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
+                if (globalClass.gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating) {
                     bIsTagToBeRestricted = true;
                 }
             } else {
                 //If no user is selected or current user is somehow null, follow guidelines for
                 //  default user maturity rating.
-                if (entry.getValue().iTagAgeRating <= globalClass.giDefaultUserMaturityRating) {
+                if (entry.getValue().iMaturityRating <= globalClass.giDefaultUserMaturityRating) {
                     bIsTagToBeRestricted = true;
                 }
             }

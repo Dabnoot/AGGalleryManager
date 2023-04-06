@@ -266,13 +266,13 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             //if (entry.getValue().bIsRestricted) {
             if(globalClass.gicuCurrentUser != null) {
-                if (globalClass.gicuCurrentUser.iMaturityLevel < entry.getValue().iTagAgeRating) {
+                if (globalClass.gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating) {
                     bIsTagToBeRestricted = true;
                 }
             } else {
                 //If no user is selected or current user is somehow null, follow guidelines for
                 //  default user maturity rating.
-                if (entry.getValue().iTagAgeRating <= globalClass.giDefaultUserMaturityRating) {
+                if (entry.getValue().iMaturityRating <= globalClass.giDefaultUserMaturityRating) {
                     bIsTagToBeRestricted = true;
                 }
             }
@@ -340,7 +340,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         EditText editText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
         //Get the selected Age Rating:
-        ictNewTag.iTagAgeRating = gSpinner_AgeRating.getSelectedItemPosition();
+        ictNewTag.iMaturityRating = gSpinner_AgeRating.getSelectedItemPosition();
         //Get any users to whom the tag is to be restricted (approved users):
         ictNewTag.alsTagApprovedUsers = gAdapterApprovedUsers.getUserNamesInList();
 
@@ -433,7 +433,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                             gictTagIDInEditMode = tagItem;
                             gEditText_TagText.setText(tagItem.sTagText);
                             gEditText_TagDescription.setText(tagItem.sTagDescription);
-                            gSpinner_AgeRating.setSelection(tagItem.iTagAgeRating);
+                            gSpinner_AgeRating.setSelection(tagItem.iMaturityRating);
                             //Go through and uncheck anything but this tag:
                             for (ItemClass_Tag ict : alictTagItems) {
                                 if (ict.bIsChecked && !ict.iTagID.equals(tagItem.iTagID)) {
