@@ -183,6 +183,8 @@ public class Worker_Import_VideoDownload extends Worker {
         ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
         ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
         ciNew.aliTags = new ArrayList<>(icfDownloadItem.aliProspectiveTags);
+        ciNew.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+        ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ciNew.dDatetime_Import = dTimeStamp;

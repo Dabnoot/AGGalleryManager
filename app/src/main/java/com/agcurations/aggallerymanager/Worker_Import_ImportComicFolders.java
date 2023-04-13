@@ -285,6 +285,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
             ciNewComic.sTitle = sComicFolderName;
             ciNewComic.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
             ciNewComic.aliTags = GlobalClass.getTagIDsFromTagIDString(ciNewComic.sTags);
+            ciNewComic.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNewComic.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+            ciNewComic.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
             ciNewComic.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNewComic.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:

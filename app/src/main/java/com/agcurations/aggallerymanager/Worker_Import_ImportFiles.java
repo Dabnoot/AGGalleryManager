@@ -90,7 +90,7 @@ public class Worker_Import_ImportFiles extends Worker {
             if(fileItem.bMarkedForDeletion){
 
                 Uri uriFileItem = Uri.parse(fileItem.sUri);
-                if(GlobalClass.CheckIfFileExists(uriFileItem)){
+                if(!GlobalClass.CheckIfFileExists(uriFileItem)){
                     sMessage = "Could not locate source file from uri: " + uriFileItem;
                     Log.d("Worker_Import_ImportFiles", sMessage);
                     continue;
@@ -283,6 +283,8 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.aliTags = new ArrayList<>(fileItem.aliProspectiveTags);
+                ciNew.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+                ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
                 ciNew.dDatetime_Import = dTimeStamp;
                 ciNew.iGrade = fileItem.iGrade;
