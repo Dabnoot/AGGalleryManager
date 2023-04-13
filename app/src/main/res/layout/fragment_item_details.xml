@@ -162,6 +162,17 @@
                     android:layout_alignStart="@id/textView_Title"/>
 
                 <TextView
+                    android:id="@+id/textView_ApprovedUsers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Approved Users:"
+                    android:textColor="@color/colorTextColor"
+                    android:layout_marginTop="20dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_MaturityRating"
+                    android:layout_alignStart="@id/textView_Title"/>
+
+                <TextView
                     android:id="@+id/textView_Tags"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -169,7 +180,7 @@
                     android:textColor="@color/colorTextColor"
                     android:layout_marginTop="20dp"
                     android:textSize="20sp"
-                    android:layout_below="@id/textView_MaturityRating"
+                    android:layout_below="@id/textView_ApprovedUsers"
                     android:layout_alignStart="@id/textView_Title"/>
 
             </RelativeLayout>

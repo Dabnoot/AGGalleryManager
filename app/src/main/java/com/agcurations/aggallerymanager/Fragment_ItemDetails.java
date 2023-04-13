@@ -377,6 +377,23 @@ public class Fragment_ItemDetails extends Fragment {
             textView_MaturityRating.setText(sMaturityRatingText);
         }
 
+        TextView textView_ApprovedUsers = getView().findViewById(R.id.textView_ApprovedUsers);
+        if(textView_ApprovedUsers != null){
+            StringBuilder sbApprovedUsersText = new StringBuilder();
+            sbApprovedUsersText.append("Approved Users: ");
+            if(gciCatalogItem.alsApprovedUsers.size() > 0) {
+                for (int i = 0; i < gciCatalogItem.alsApprovedUsers.size(); i++) {
+                    sbApprovedUsersText.append(gciCatalogItem.alsApprovedUsers.get(i));
+                    if (i < gciCatalogItem.alsApprovedUsers.size()) {
+                        sbApprovedUsersText.append(", ");
+                    }
+                }
+            } else {
+                sbApprovedUsersText.append("[Unrestricted]");
+            }
+            textView_ApprovedUsers.setText(sbApprovedUsersText);
+        }
+
         TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
         if(textView_Tags != null){
             String sTagText = "Tags: ";
