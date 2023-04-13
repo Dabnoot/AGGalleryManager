@@ -127,43 +127,46 @@ public class Worker_Import_VideoDownload extends Worker {
                     Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
         }
 
-        //Create a folder to serve as a working folder:
-        Uri uriWorkingFolder = GlobalClass.FormChildUri(uriDestinationFolder.toString(), sNextRecordId);
+        Uri uriWorkingFolder = null;
+        if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) {
+            //Create a folder to serve as a working folder:
+            uriWorkingFolder = GlobalClass.FormChildUri(uriDestinationFolder.toString(), sNextRecordId);
 
-        //Create the temporary download folder (within the destination folder):
-        if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
+            //Create the temporary download folder (within the destination folder):
+            if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
 
-            try {
-                uriWorkingFolder = GlobalClass.CreateDirectory(uriWorkingFolder);
-            } catch (Exception e){
-                sMessage = "Could not locate parent directory of destination folder in order to create working folder. Working folder: " + uriWorkingFolder;
-                LogThis("doWork()", sMessage, e.getMessage());
-                uriWorkingFolder = null;
-            }
+                try {
+                    uriWorkingFolder = GlobalClass.CreateDirectory(uriWorkingFolder);
+                } catch (Exception e) {
+                    sMessage = "Could not locate parent directory of destination folder in order to create working folder. Working folder: " + uriWorkingFolder;
+                    LogThis("doWork()", sMessage, e.getMessage());
+                    uriWorkingFolder = null;
+                }
 
-            if (uriWorkingFolder == null) {
-                //Unable to create directory
-                sMessage = "Unable to create working folder " +
-                        sNextRecordId + " at: "
-                        + uriDestinationFolder + "\n";
-                globalClass.BroadcastProgress(true, sMessage,
-                        false, iProgressBarValue,
-                        true, "Operation halted.",
-                        sIntentActionFilter);
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
-                return Result.failure();
+                if (uriWorkingFolder == null) {
+                    //Unable to create directory
+                    sMessage = "Unable to create working folder " +
+                            sNextRecordId + " at: "
+                            + uriDestinationFolder + "\n";
+                    globalClass.BroadcastProgress(true, sMessage,
+                            false, iProgressBarValue,
+                            true, "Operation halted.",
+                            sIntentActionFilter);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure();
+                } else {
+                    globalClass.BroadcastProgress(true, "Destination folder created: " + uriWorkingFolder + "\n",
+                            false, iProgressBarValue,
+                            false, "",
+                            sIntentActionFilter);
+                }
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + uriWorkingFolder + "\n",
-                        false, iProgressBarValue,
+                globalClass.BroadcastProgress(true, "Destination folder verified: " + uriWorkingFolder + "\n",
+                        true, iProgressBarValue,
                         false, "",
                         sIntentActionFilter);
             }
-        } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriWorkingFolder + "\n",
-                    true, iProgressBarValue,
-                    false, "",
-                    sIntentActionFilter);
         }
 
         // With the download folder successfully created, record the catalog item:
@@ -312,62 +315,57 @@ public class Worker_Import_VideoDownload extends Worker {
             String sVideoDownloadFolder = "";
             ArrayList<String[]> alsDLIDsAndFileNames = new ArrayList<>();
             for(String[] sURLAndFileName: alsDownloadURLsAndDestFileNames) {
-                String sNewFullPathFilename = uriWorkingFolder + File.separator + sURLAndFileName[FILE_NAME_AND_EXTENSION];
 
-                File fNewFile = new File(sNewFullPathFilename);
+                globalClass.BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
+                        false, iProgressBarValue,
+                        true, "Submitting download requests...",
+                        sIntentActionFilter);
 
-                if(!fNewFile.exists()) {
-
-                    globalClass.BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
+                //Use the download manager to download the file:
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
+                String sDownloadFolderRelativePath;
+                sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
+                        File.separator + ciNew.sFolder_Name +
+                        File.separator + ciNew.sItemID;
+                File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
+                if(fExternalFilesDir != null) {
+                    sVideoDownloadFolder = fExternalFilesDir.getAbsolutePath() + sDownloadFolderRelativePath;
+                } else {
+                    sMessage = "Could not identify external files dir.";
+                    globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
-                            true, "Submitting download requests...",
+                            true, "Halted.",
                             sIntentActionFilter);
-
-                    //Use the download manager to download the file:
-                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
-                    String sDownloadFolderRelativePath;
-                    sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                            File.separator + ciNew.sFolder_Name +
-                            File.separator + ciNew.sItemID;
-                    File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
-                    if(fExternalFilesDir != null) {
-                        sVideoDownloadFolder = fExternalFilesDir.getAbsolutePath() + sDownloadFolderRelativePath;
-                    } else {
-                        sMessage = "Could not identify external files dir.";
-                        globalClass.BroadcastProgress(true, sMessage,
-                                false, iProgressBarValue,
-                                true, "Halted.",
-                                sIntentActionFilter);
-                        globalClass.gbImportExecutionRunning = false;
-                        globalClass.gbImportExecutionFinished = true;
-                        return Result.failure(DataErrorMessage(sMessage));
-                    }
-                    request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " VideoID " + ciNew.sItemID)
-                            //.setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
-                            //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
-                            //Set to equivalent of binary file so that Android MediaStore will not try to index it,
-                            //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
-                            .setMimeType("application/octet-stream")
-                            .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, fNewFile.getName());
-
-                    long lDownloadID = downloadManager.enqueue(request);
-                    allDownloadIDs.add(lDownloadID);
-                    //todo: Check to make sure that the download is approved. Such as download source exists, and filename is
-                    //  valid and not already taken.
-                    //Record the download ID so that we can check to see if it is completed via the worker.
-                    alsDLIDsAndFileNames.add(new String[]{
-                            String.valueOf(lDownloadID),
-                            sURLAndFileName[FILE_NAME_AND_EXTENSION]});
-
-                    lProgressNumerator++;
-
-                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(true, "\n",
-                            true, iProgressBarValue,
-                            false, "",
-                            sIntentActionFilter);
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure(DataErrorMessage(sMessage));
                 }
+                request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " VideoID " + ciNew.sItemID)
+                        //.setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
+                        //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
+                        //Set to equivalent of binary file so that Android MediaStore will not try to index it,
+                        //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
+                        .setMimeType("application/octet-stream")
+                        .setDestinationInExternalFilesDir(getApplicationContext(), sDownloadFolderRelativePath, sURLAndFileName[FILE_NAME_AND_EXTENSION]);
+
+                long lDownloadID = downloadManager.enqueue(request);
+                allDownloadIDs.add(lDownloadID);
+                //todo: Check to make sure that the download is approved. Such as download source exists, and filename is
+                //  valid and not already taken.
+                //Record the download ID so that we can check to see if it is completed via the worker.
+                alsDLIDsAndFileNames.add(new String[]{
+                        String.valueOf(lDownloadID),
+                        sURLAndFileName[FILE_NAME_AND_EXTENSION]});
+
+                lProgressNumerator++;
+
+                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                globalClass.BroadcastProgress(true, "\n",
+                        true, iProgressBarValue,
+                        false, "",
+                        sIntentActionFilter);
+
 
             }
             //Success initiating file download(s).
