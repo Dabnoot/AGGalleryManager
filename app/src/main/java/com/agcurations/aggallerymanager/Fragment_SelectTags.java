@@ -382,6 +382,7 @@ public class Fragment_SelectTags extends Fragment {
                     tmEntryTagReferenceItem.getValue().sTagText);
             ictNew.bIsChecked = bIsChecked;
             ictNew.iSelectionOrder = iSelectionOrder;
+            ictNew.iMaturityRating = tmEntryTagReferenceItem.getValue().iMaturityRating;
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
             ictNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
 

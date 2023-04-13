@@ -99,16 +99,36 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 //Get the text of the tags and display:
                 StringBuilder sb = new StringBuilder();
                 sb.append("Tags: ");
+                String sMaturityRatingText = "";
                 if (tagItems.size() > 0) {
                     sb.append(tagItems.get(0).sTagText);
+                    int iGreatestMaturityRating = ((GlobalClass) getApplicationContext()).giDefaultUserMaturityRating;
+                    if(tagItems.get(0).iMaturityRating > iGreatestMaturityRating){
+                        iGreatestMaturityRating = tagItems.get(0).iMaturityRating;
+                    }
                     for (int i = 1; i < tagItems.size(); i++) {
                         sb.append(", ");
                         sb.append(tagItems.get(i).sTagText);
+                        if(tagItems.get(i).iMaturityRating > iGreatestMaturityRating){
+                            iGreatestMaturityRating = tagItems.get(i).iMaturityRating;
+                        }
+                    }
+                    sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][0];
+                    sMaturityRatingText += " - ";
+                    String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][1];
+                    int iMaxTextLength = 75;
+                    sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
+                    if(iMaxTextLength < sMatRatDesc.length()) {
+                        sMaturityRatingText += "...";
                     }
                 }
                 TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
                 if (textView_SelectedTags != null) {
                     textView_SelectedTags.setText(sb.toString());
+                }
+                TextView textView_MaturityRating = findViewById(R.id.textView_MaturityRating);
+                if(textView_MaturityRating != null) {
+                    textView_MaturityRating.setText(sMaturityRatingText);
                 }
 
                 //Get the tag IDs to pass back to the calling activity:
