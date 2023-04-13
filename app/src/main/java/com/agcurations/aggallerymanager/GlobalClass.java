@@ -104,8 +104,8 @@ public class GlobalClass extends Application {
 
     public static ContentResolver gcrContentResolver;
 
-    //Video tag variables:
-    public final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>(); //Use String as the key to avoid duplicates and provide sort.
+    //Tag variables:
+    public final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
@@ -480,11 +480,40 @@ public class GlobalClass extends Application {
 
     public static boolean CheckIfFileExists(Uri uriFile){
 
-        String sUriChild = uriFile.toString();
-        String sUriParent = sUriChild.substring(0, sUriChild.lastIndexOf(gsFileSeparator));
-        Uri uriParent = Uri.parse(sUriParent);
+        if(uriFile != null) {
+            /*String sPossibleExtension = uriFile.toString();
+            if(sPossibleExtension.length() > 3){
+                if(sPossibleExtension.contains(".")){
+                    sPossibleExtension = sPossibleExtension.substring(sPossibleExtension.lastIndexOf("."), sPossibleExtension.length());
+                    if(sPossibleExtension.length() <= 4){
+                        //Consider this to be a file.
+                        //todo: confirmation that this is not a folder?
+                        StopWatch stopWatch = new StopWatch(true);
+                        stopWatch.Start();
+                        String sWatchMessageBase = "Globalclass:CheckIfFileExists: ";
+                        stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Checking if file exists with Inputstream. ");
+                        try {
+                            InputStream inputStream = gcrContentResolver.openInputStream(uriFile);
+                            if(inputStream != null){
+                                inputStream.close();
+                            }
+                            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Inputstream successfully opened and closed.");
+                            return true;
+                        } catch (Exception e) {
+                            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Inputstream exception. Uri must not be a file.");
+                            return false;
+                        }
+                    }
+                }
+            }*/
 
-        return CheckIfFileExists(uriFile, uriParent);
+            String sUriChild = uriFile.toString();
+            String sUriParent = sUriChild.substring(0, sUriChild.lastIndexOf(gsFileSeparator));
+            Uri uriParent = Uri.parse(sUriParent);
+            return CheckIfFileExists(uriFile, uriParent);
+        }
+        return false;
+
     }
 
     public static boolean CheckIfFileExists(Uri uriFile, Uri uriParent) {
@@ -1821,6 +1850,56 @@ public class GlobalClass extends Application {
 
         return tmCompoundTagHistogram;
     }
+
+    public int getLowestTagMaturityRating(ArrayList<ItemClass_Tag> alict_Tags){
+        int iLowestTagMaturityRating = giDefaultUserMaturityRating;
+
+        for(ItemClass_Tag ict: alict_Tags){
+            if(ict.iMaturityRating < iLowestTagMaturityRating){
+                iLowestTagMaturityRating = ict.iMaturityRating;
+            }
+        }
+
+        return iLowestTagMaturityRating;
+    }
+
+    public int getLowestTagMaturityRating(ArrayList<Integer> ali_TagIDs, int iMediaCategory){
+
+        ArrayList<ItemClass_Tag> alict_Tags = new ArrayList<>();
+        for(Integer iTagID: ali_TagIDs){
+
+            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
+            if (ict != null) {
+                alict_Tags.add(ict);
+            }
+
+        }
+
+        return getLowestTagMaturityRating(alict_Tags);
+    }
+
+    public void UpdateAllCatalogItemMaturitiesBasedOnTags(){
+
+        for(int i = 0; i < 3; i++){
+            for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(i).entrySet()){
+                int iLowestMaturityRating = giDefaultUserMaturityRating;
+                for(int iTagID: icciCatalogItem.getValue().aliTags){
+                    ItemClass_Tag ictReferenceTag = gtmCatalogTagReferenceLists.get(i).get(iTagID);
+                    if(ictReferenceTag != null){
+                        if(iLowestMaturityRating > ictReferenceTag.iMaturityRating){
+                            iLowestMaturityRating = ictReferenceTag.iMaturityRating;
+                        }
+                    }
+                }
+                icciCatalogItem.getValue().iMaturityRating = iLowestMaturityRating;
+            }
+        }
+
+        CatalogDataFile_AddNewField();
+
+    }
+
+
 
     //==================================================================================================
     //=========  USER ACCOUNT DATA STORAGE  ============================================================
