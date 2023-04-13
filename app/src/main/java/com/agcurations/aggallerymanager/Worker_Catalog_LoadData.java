@@ -281,6 +281,8 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //globalClass.CatalogDataFile_AddNewField();
 
+        //globalClass.UpdateAllCatalogItemMaturitiesBasedOnTags();
+
         //VerifyVideoFilesIntegrity();
 
         //investigateLongFileNames();
@@ -312,7 +314,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 + GlobalClass.gsFileSeparator + sFolderName;
         Uri uriChildFolder = Uri.parse(sUriChildFolder);
 
-        if (GlobalClass.CheckIfFileExists(uriChildFolder, uriParentFolder)) {
+        if (GlobalClass.CheckIfFileExists(uriChildFolder)) {
             return uriChildFolder;
         } else {
             try {
