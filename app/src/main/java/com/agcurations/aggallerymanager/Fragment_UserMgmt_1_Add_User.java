@@ -19,7 +19,6 @@ import androidx.preference.PreferenceManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -163,14 +162,14 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
             final Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
             ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
-                if(!(sESRBRating[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX].equals(
-                        AdapterTagMaturityRatings.TAG_AGE_RATINGS[AdapterTagMaturityRatings.TAG_AGE_RATING_RP][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX]))) {
+            for(String[] sESRBRating: AdapterMaturityRatings.MATURITY_RATINGS){
+                if(!(sESRBRating[AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX].equals(
+                        AdapterMaturityRatings.MATURITY_RATINGS[AdapterMaturityRatings.MATURITY_RATING_RP][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX]))) {
                     //Don't add "rating pending" to the drop-down. Those are for tags only.
                     alsTemp.add(sESRBRating);
                 }
             }
-            AdapterTagMaturityRatings atarSpinnerAdapter = new AdapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
+            AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
             spinner_ContentMaturity.setAdapter(atarSpinnerAdapter);
 
             spinner_ContentMaturity.setOnTouchListener(new View.OnTouchListener() {
@@ -319,9 +318,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 if(tv != null){
                     sMaturityCode = tv.getText().toString();
                     //Maturity code lookup
-                    for(int i = 0; i < AdapterTagMaturityRatings.RATINGS_COUNT; i++){
-                        String[] sMaturityRecord = AdapterTagMaturityRatings.TAG_AGE_RATINGS[i];
-                        if(sMaturityCode.equals(sMaturityRecord[AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX])){
+                    for(int i = 0; i < AdapterMaturityRatings.RATINGS_COUNT; i++){
+                        String[] sMaturityRecord = AdapterMaturityRatings.MATURITY_RATINGS[i];
+                        if(sMaturityCode.equals(sMaturityRecord[AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX])){
                             iMaturityLevel = i;
                             break;
                         }

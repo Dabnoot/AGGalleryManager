@@ -368,12 +368,14 @@ public class Fragment_ItemDetails extends Fragment {
         if(textView_MaturityRating != null){
             String sMaturityRatingText = "Maturity Rating: ";
 
-            sMaturityRatingText += AdapterTagMaturityRatings.TAG_AGE_RATINGS[gciCatalogItem.iMaturityRating][0];
+            sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[gciCatalogItem.iMaturityRating][0];
             sMaturityRatingText += " - ";
-            String sMatRatDesc = AdapterTagMaturityRatings.TAG_AGE_RATINGS[gciCatalogItem.iMaturityRating][1];
-            int iLen = sMatRatDesc.length();
-            sMaturityRatingText += sMatRatDesc.substring(0, Math.min(35, sMatRatDesc.length()));
-            sMaturityRatingText += "...";
+            String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[gciCatalogItem.iMaturityRating][1];
+            int iMaxTextLength = 75;
+            sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
+            if(iMaxTextLength < sMatRatDesc.length()) {
+                sMaturityRatingText += "...";
+            }
             textView_MaturityRating.setText(sMaturityRatingText);
         }
 

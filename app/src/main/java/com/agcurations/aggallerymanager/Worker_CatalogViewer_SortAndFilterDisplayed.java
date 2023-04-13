@@ -3,6 +3,7 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -263,12 +264,9 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             }
 
             //Check to see if the record needs to be skipped due to restriction settings:
-            //todo: If SortAndFilter takes a long time, consider saving the minimum maturity tag rating
-            //      with the catalog item so that it doesn't have to be reprocessed every sort. Of course,
-            //      the item rating will have to be recalculated if the user changes the rating of a tag.
             boolean bIsRestricted = false;
 
-            String sRecordTags = entry.getValue().sTags;
+            /*String sRecordTags = entry.getValue().sTags;
             if(sRecordTags.length() > 0) {
                 String[] saRecordTags = sRecordTags.split(",");
                 for (String s : saRecordTags) {
@@ -296,10 +294,31 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                         }
                     }
                 }
+            }*/
+            int iMaturityRating = entry.getValue().iMaturityRating;
+            if (globalClass.gicuCurrentUser != null) {
+                if (iMaturityRating > globalClass.gicuCurrentUser.iMaturityLevel) {
+                    bIsRestricted = true;
+                }
+            } else {
+                if (iMaturityRating > globalClass.giDefaultUserMaturityRating) {
+                    bIsRestricted = true;
+                }
+            }
+            boolean bApprovedForThisUser = false;
+            ArrayList<String> alsAssignedUsers = entry.getValue().alsApprovedUsers;
+            if(alsAssignedUsers.size() > 0){
+                for(String sAssignedUser: alsAssignedUsers){
+                    if(globalClass.gicuCurrentUser.sUserName.equals(sAssignedUser)){
+                        bApprovedForThisUser = true;
+                        break;
+                    }
+                }
+            } else {
+                bApprovedForThisUser = true;
             }
 
-
-            if(!bIsRestricted){
+            if(!bIsRestricted && bApprovedForThisUser){
                 boolean bIsMatch = true;
 
                 if(bSearchMatchApplicable){

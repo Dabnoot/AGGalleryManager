@@ -108,16 +108,16 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gSpinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
             ArrayList<String[]> alsTemp = new ArrayList<>();
 
-            for(int i = 0; i < AdapterTagMaturityRatings.TAG_AGE_RATINGS.length; i++){
+            for(int i = 0; i < AdapterMaturityRatings.MATURITY_RATINGS.length; i++){
             //for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
                 if(globalClass.gicuCurrentUser.iMaturityLevel >= i) {
                     //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
                     //  to them unless their user rating is modified.
-                    String[] sESRBRating = AdapterTagMaturityRatings.TAG_AGE_RATINGS[i];
+                    String[] sESRBRating = AdapterMaturityRatings.MATURITY_RATINGS[i];
                     alsTemp.add(sESRBRating);
                 }
             }
-            AdapterTagMaturityRatings atarSpinnerAdapter = new AdapterTagMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
+            AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
             gSpinner_AgeRating.setAdapter(atarSpinnerAdapter);
 
             Button button_AddTag = getView().findViewById(R.id.button_AddTag);

@@ -65,7 +65,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public static final int VIDEO_SEGMENT_FILES_KNOWN_COMPLETE = 1;   //All video segment files detected and in-place.
     public static final int VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE = 2; //Some video segment files are missing, don't attempt to process.
 
-    public int iMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_RP;
+    public int iMaturityRating = AdapterMaturityRatings.MATURITY_RATING_RP;
     public ArrayList<String> alsApprovedUsers = new ArrayList<>();
 
 

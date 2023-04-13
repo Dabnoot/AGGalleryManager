@@ -176,7 +176,7 @@ public class GlobalClass extends Application {
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
     public ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
-    public int giDefaultUserMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_M; //todo: Setting - add to settings
+    public int giDefaultUserMaturityRating = AdapterMaturityRatings.MATURITY_RATING_M; //todo: Setting - add to settings
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
@@ -1317,7 +1317,7 @@ public class GlobalClass extends Application {
         try {
             ict.iMaturityRating = Integer.parseInt(sRecord[3]);
         } catch (Exception e){
-            ict.iMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_X; //Default to highest restricted age rating.
+            ict.iMaturityRating = AdapterMaturityRatings.MATURITY_RATING_X; //Default to highest restricted age rating.
             ict.sTagText = "00TagFault_" + ict.sTagText;
         }
 
@@ -1886,7 +1886,7 @@ public class GlobalClass extends Application {
                 for(int iTagID: icciCatalogItem.getValue().aliTags){
                     ItemClass_Tag ictReferenceTag = gtmCatalogTagReferenceLists.get(i).get(iTagID);
                     if(ictReferenceTag != null){
-                        if(iLowestMaturityRating > ictReferenceTag.iMaturityRating){
+                        if(iLowestMaturityRating < ictReferenceTag.iMaturityRating){
                             iLowestMaturityRating = ictReferenceTag.iMaturityRating;
                         }
                     }

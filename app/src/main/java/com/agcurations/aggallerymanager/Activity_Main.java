@@ -371,7 +371,7 @@ public class Activity_Main extends AppCompatActivity {
         icu_DefaultUser.sPin = "";
         icu_DefaultUser.bAdmin = true;
         icu_DefaultUser.iUserIconColor = R.color.colorStatusBar;
-        icu_DefaultUser.iMaturityLevel = AdapterTagMaturityRatings.TAG_AGE_RATING_X;
+        icu_DefaultUser.iMaturityLevel = AdapterMaturityRatings.MATURITY_RATING_X;
         globalClass.galicu_Users.add(icu_DefaultUser);
         globalClass.gicuCurrentUser = icu_DefaultUser;
         bSingleUserInUse = true;

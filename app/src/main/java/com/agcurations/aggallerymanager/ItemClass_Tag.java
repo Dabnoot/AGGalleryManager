@@ -10,7 +10,7 @@ public class ItemClass_Tag implements Serializable {
     public String sTagText;
     public String sTagDescription = "";
     public Boolean bIsRestricted = false;
-    public int iMaturityRating = AdapterTagMaturityRatings.TAG_AGE_RATING_RP;
+    public int iMaturityRating = AdapterMaturityRatings.MATURITY_RATING_RP;
 
     public ArrayList<String> alsTagApprovedUsers = null;
     //A list of users to whom this tag, and items carrying this tag, is restricted. Other users

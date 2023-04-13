@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +57,7 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
         //Set the maturity rating code text for the readout:
         TextView textView_Maturity = row.findViewById(R.id.textView_Maturity);
         if(!gbSimplifiedView) {
-            String sMaturityCode = AdapterTagMaturityRatings.TAG_AGE_RATINGS[icu.iMaturityLevel][AdapterTagMaturityRatings.TAG_AGE_RATING_CODE_INDEX];
+            String sMaturityCode = AdapterMaturityRatings.MATURITY_RATINGS[icu.iMaturityLevel][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX];
             sMaturityCode = "(" + sMaturityCode + ")";
             textView_Maturity.setText(sMaturityCode);
         } else {
