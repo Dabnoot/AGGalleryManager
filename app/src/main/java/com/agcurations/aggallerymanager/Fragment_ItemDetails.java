@@ -363,10 +363,24 @@ public class Fragment_ItemDetails extends Fragment {
             textView_Source.setText(sSource);
         }
 
+
+        TextView textView_MaturityRating = getView().findViewById(R.id.textView_MaturityRating);
+        if(textView_MaturityRating != null){
+            String sMaturityRatingText = "Maturity Rating: ";
+
+            sMaturityRatingText += AdapterTagMaturityRatings.TAG_AGE_RATINGS[gciCatalogItem.iMaturityRating][0];
+            sMaturityRatingText += " - ";
+            String sMatRatDesc = AdapterTagMaturityRatings.TAG_AGE_RATINGS[gciCatalogItem.iMaturityRating][1];
+            int iLen = sMatRatDesc.length();
+            sMaturityRatingText += sMatRatDesc.substring(0, Math.min(35, sMatRatDesc.length()));
+            sMaturityRatingText += "...";
+            textView_MaturityRating.setText(sMaturityRatingText);
+        }
+
         TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
         if(textView_Tags != null){
             String sTagText = "Tags: ";
-            sTagText += sTagText = globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
+            sTagText += globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
             textView_Tags.setText(sTagText);
         }
     }

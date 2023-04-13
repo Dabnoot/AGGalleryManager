@@ -151,6 +151,17 @@
                     android:textIsSelectable="true"/>
 
                 <TextView
+                    android:id="@+id/textView_MaturityRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Maturity Rating:"
+                    android:textColor="@color/colorTextColor"
+                    android:layout_marginTop="20dp"
+                    android:textSize="20sp"
+                    android:layout_below="@id/textView_Source"
+                    android:layout_alignStart="@id/textView_Title"/>
+
+                <TextView
                     android:id="@+id/textView_Tags"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -158,7 +169,7 @@
                     android:textColor="@color/colorTextColor"
                     android:layout_marginTop="20dp"
                     android:textSize="20sp"
-                    android:layout_below="@id/textView_Source"
+                    android:layout_below="@id/textView_MaturityRating"
                     android:layout_alignStart="@id/textView_Title"/>
 
             </RelativeLayout>
