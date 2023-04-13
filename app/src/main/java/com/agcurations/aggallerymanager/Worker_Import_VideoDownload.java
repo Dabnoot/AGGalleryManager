@@ -236,6 +236,7 @@ public class Worker_Import_VideoDownload extends Worker {
             //If this is a single download file, only 1 file needs to be downloaded.
             String sDownloadAddress = icfDownloadItem.sURLVideoLink;
             String sFileName = icfDownloadItem.sFileOrFolderName;
+            sFileName = GlobalClass.JumbleFileName(sFileName);
 
             if(sFileName.length() > 50){
                 //Limit the length of the filename:
@@ -380,7 +381,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
             //If this is an M3U8 stream download and the user has elected not to concatenate via
             //  FFMPEG, download the M3U8 file as well:
-            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8){
+            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) {
 
                 ItemClass_M3U8 icM3U8_entry = icfDownloadItem.ic_M3U8;
 
@@ -401,7 +402,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
                 //Write the m3u8 file to the working folder:
                 Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriWorkingFolder, MimeTypes.BASE_TYPE_TEXT, ciNew.sFilename);
-                if(uriM3U8 == null){
+                if (uriM3U8 == null) {
                     sMessage = "Could not create M3U8 file.";
                     globalClass.BroadcastProgress(true, sMessage,
                             true, iProgressBarValue,
@@ -412,7 +413,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     return Result.failure();
                 }
                 OutputStream osM3U8File = GlobalClass.gcrContentResolver.openOutputStream(uriM3U8, "wt");
-                if(osM3U8File == null){
+                if (osM3U8File == null) {
                     sMessage = "Could not write M3U8 file.";
                     globalClass.BroadcastProgress(true, sMessage,
                             true, iProgressBarValue,
@@ -427,7 +428,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 String[] sLines = sM3U8Content.split("\n");
                 for (String sLine : sLines) {
                     if (!sLine.startsWith("#") && sLine.contains(".ts")) {// && sLine.startsWith("hls")) {
-                        if(sLine.contains("/")){
+                        if (sLine.contains("/")) {
                             sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
                         }
                         String sTSShortFileName = ciNew.sItemID + "_" + Service_Import.cleanFileNameViaTrim(sLine);
@@ -447,74 +448,55 @@ public class Worker_Import_VideoDownload extends Worker {
                 osM3U8File.flush();
                 osM3U8File.close();
 
+                Uri uriVideoFinalDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ciNew.sFolder_Name);
+                if (uriVideoFinalDestinationFolder == null) {
+                    sMessage = "Could not locate video final destination folder " + ciNew.sFolder_Name + " in " +
+                            GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure(DataErrorMessage(sMessage));
+                }
+                Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoFinalDestinationFolder.toString(), ciNew.sItemID);
+                if (uriVideoWorkingFolder == null) {
+                    sMessage = "Could not locate video working folder " + ciNew.sItemID + " in " +
+                            uriVideoFinalDestinationFolder;
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure(DataErrorMessage(sMessage));
+                }
+                //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
+                //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
+                //A file sequence string array can be too big to pass to a worker, so write it to a file:
+
+                Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder, MimeTypes.BASE_TYPE_TEXT,
+                        VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
+                if (uriDLIDFileSequenceFile == null) {
+                    sMessage = "Could not create file to record download ID sequencing: " + VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
+                            uriVideoWorkingFolder;
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure(DataErrorMessage(sMessage));
+                }
+                OutputStream osDLIDFileSequenceFile = GlobalClass.gcrContentResolver.openOutputStream(uriDLIDFileSequenceFile, "wt");
+                if (osDLIDFileSequenceFile == null) {
+                    sMessage = "Could not open output stream to file " + uriDLIDFileSequenceFile;
+                    globalClass.gbImportExecutionRunning = false;
+                    globalClass.gbImportExecutionFinished = true;
+                    return Result.failure(DataErrorMessage(sMessage));
+                }
+                BufferedWriter bwDLIDFileSequenceFile;
+                bwDLIDFileSequenceFile = new BufferedWriter(new OutputStreamWriter(osDLIDFileSequenceFile));
+
+                for (String[] sDLIDsAndFileNames : alsDLIDsAndFileNames) {
+                    String sLine = sDLIDsAndFileNames[DOWNLOAD_ID] + "\t" + sDLIDsAndFileNames[FILE_NAME_AND_EXTENSION] + "\n";
+                    bwDLIDFileSequenceFile.write(sLine);
+                }
+                bwDLIDFileSequenceFile.flush();
+                bwDLIDFileSequenceFile.close();
+                osDLIDFileSequenceFile.flush();
+                osDLIDFileSequenceFile.close();
+
             }
-
-
-
-
-            //Start Video Post-Processing Worker.
-            //Testing WorkManager for video concatenation:
-            //https://developer.android.com/topic/libraries/architecture/workmanager/advanced
-
-            //Send:
-            // Location to monitor
-            // Single-file or M3U8 result (M3U8 => multiple .ts files)
-            // Expected file count (needed for M3U8)
-            // Name of file to create
-
-            /*public static final String KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8 = "KEY_ARG_DOWNLOAD_TYPE_SINGLE_OR_M3U8";
-            public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
-            public static final String KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT = "KEY_ARG_EXPECTED_DOWNLOAD_FILE_COUNT";
-            public static final String KEY_ARG_VIDEO_OUTPUT_FILENAME = "KEY_ARG_VIDEO_OUTPUT_FILENAME";*/
-
-
-            Uri uriVideoFinalDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ciNew.sFolder_Name);
-            if(uriVideoFinalDestinationFolder == null){
-                sMessage = "Could not locate video final destination folder " + ciNew.sFolder_Name + " in " +
-                        GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
-                return Result.failure(DataErrorMessage(sMessage));
-            }
-            Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoFinalDestinationFolder.toString(), ciNew.sItemID);
-            if(uriVideoWorkingFolder == null){
-                sMessage = "Could not locate video working folder " + ciNew.sItemID + " in " +
-                        uriVideoFinalDestinationFolder;
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
-                return Result.failure(DataErrorMessage(sMessage));
-            }
-            //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
-            //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
-            //A file sequence string array can be too big to pass to a worker, so write it to a file:
-
-            Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder, MimeTypes.BASE_TYPE_TEXT,
-                    VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
-            if(uriDLIDFileSequenceFile == null){
-                sMessage = "Could not create file to record download ID sequencing: " + VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
-                        uriVideoWorkingFolder;
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
-                return Result.failure(DataErrorMessage(sMessage));
-            }
-            OutputStream osDLIDFileSequenceFile = GlobalClass.gcrContentResolver.openOutputStream(uriDLIDFileSequenceFile, "wt");
-            if(osDLIDFileSequenceFile == null){
-                sMessage = "Could not open output stream to file " + uriDLIDFileSequenceFile;
-                globalClass.gbImportExecutionRunning = false;
-                globalClass.gbImportExecutionFinished = true;
-                return Result.failure(DataErrorMessage(sMessage));
-            }
-            BufferedWriter bwDLIDFileSequenceFile;
-            bwDLIDFileSequenceFile = new BufferedWriter(new OutputStreamWriter(osDLIDFileSequenceFile));
-
-            for(String[] sDLIDsAndFileNames: alsDLIDsAndFileNames){
-                String sLine = sDLIDsAndFileNames[DOWNLOAD_ID] + "\t" + sDLIDsAndFileNames[FILE_NAME_AND_EXTENSION] + "\n";
-                bwDLIDFileSequenceFile.write(sLine);
-            }
-            bwDLIDFileSequenceFile.flush();
-            bwDLIDFileSequenceFile.close();
-            osDLIDFileSequenceFile.flush();
-            osDLIDFileSequenceFile.close();
 
             long[] lDownloadIDs = new long[allDownloadIDs.size()];
             for(int i = 0; i < allDownloadIDs.size(); i++){

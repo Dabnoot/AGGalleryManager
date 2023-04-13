@@ -424,6 +424,11 @@ public class Worker_DownloadPostProcessing  extends Worker {
                         }
                     }
 
+                } else {
+                    //Delete the working folder holding the DLID_And_Sequence.txt file:
+
+
+
                 }
             }
 
