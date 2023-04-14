@@ -89,7 +89,7 @@ public class Worker_Import_VideoDownload extends Worker {
 
         String sMessage;
 
-        if (uriDestinationFolder == null) {
+        if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
             uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
 
 
