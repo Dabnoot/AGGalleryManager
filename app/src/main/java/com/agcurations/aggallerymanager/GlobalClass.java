@@ -1855,7 +1855,7 @@ public class GlobalClass extends Application {
         int iLowestTagMaturityRating = giDefaultUserMaturityRating;
 
         for(ItemClass_Tag ict: alict_Tags){
-            if(ict.iMaturityRating < iLowestTagMaturityRating){
+            if(iLowestTagMaturityRating < ict.iMaturityRating){
                 iLowestTagMaturityRating = ict.iMaturityRating;
             }
         }
