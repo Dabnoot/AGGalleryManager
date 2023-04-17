@@ -547,6 +547,8 @@ public class Activity_Main extends AppCompatActivity {
             return new Intent(getApplicationContext(), Activity_AppSettings.class);
         } else if(item.getItemId() == R.id.menu_TagEditor) {
             return new Intent(getApplicationContext(), Activity_TagEditor.class);
+        } else if (item.getItemId() == R.id.icon_login) {
+            return new Intent(getApplicationContext(), Activity_UserSelection.class);
         }
         return null;
     }
