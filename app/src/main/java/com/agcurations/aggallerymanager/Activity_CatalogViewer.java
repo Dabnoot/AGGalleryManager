@@ -315,7 +315,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         gTextView_CatalogSortProgressBarText.setVisibility(View.INVISIBLE);
                     }
 
-                    toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " items.", Toast.LENGTH_SHORT);
+                    int iItemCount = gRecyclerViewCatalogAdapter.getItemCount();
+                    String sNoun = "item";
+                    if(iItemCount != 1){
+                        sNoun += "s";
+                    }
+                    toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " " + sNoun + ".", Toast.LENGTH_SHORT);
                     toastLastToastMessage.show();
                 }
 
@@ -669,6 +674,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
                     if (gbDebugTouch)
                         Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
+                    else
+                        Toast.makeText(getApplicationContext(), "Opening...", Toast.LENGTH_LONG).show();
 
                     if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
