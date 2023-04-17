@@ -184,6 +184,7 @@ public class Activity_Browser extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     gsNewTabSequenceHelper = null; //Clear the helper, new tab creation order reset.
+                    Toast.makeText(getApplicationContext(), "New tab...", Toast.LENGTH_SHORT).show();
                     CreateNewTab("");
                 }
             });
@@ -445,7 +446,9 @@ public class Activity_Browser extends AppCompatActivity {
 
                     //Wake the newly-visible tab:
                     int iSelectedTab = tabLayout_WebTabs.getSelectedTabPosition();
-                    viewPagerFragmentAdapter.alFragment_WebPages.get(iSelectedTab).onResume();
+                    if(iSelectedTab > -1) {
+                        viewPagerFragmentAdapter.alFragment_WebPages.get(iSelectedTab).onResume();
+                    }
 
                 }
             });
