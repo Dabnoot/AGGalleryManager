@@ -691,6 +691,7 @@ public class Activity_Main extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
             return;
         }
+        Toast.makeText(getApplicationContext(), "Opening Videos catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
@@ -702,6 +703,7 @@ public class Activity_Main extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
             return;
         }
+        Toast.makeText(getApplicationContext(), "Opening Images catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentCatalogActivity);
@@ -712,7 +714,7 @@ public class Activity_Main extends AppCompatActivity {
             Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        Toast.makeText(getApplicationContext(), "Opening Comics catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentCatalogActivity);
