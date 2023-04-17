@@ -606,7 +606,10 @@ public class Worker_Catalog_LoadData extends Worker {
 
                     if(isCatalogReader != null) {
 
-                        byte[] bytesCatalogData = isCatalogReader.readAllBytes(); //Read all data at once as this is fastest.
+                        //Don't use InputStream.readAllBytes() if using a version of Java less than 9.
+                        //byte[] bytesCatalogData = isCatalogReader.readAllBytes(); //Read all data at once as this is fastest.
+                        byte[] bytesCatalogData = GlobalClass.readAllBytes(isCatalogReader);
+
                         isCatalogReader.close();
 
                         stopWatch.PostDebugLogAndRestart("All bytes read from catalog file at duration ");

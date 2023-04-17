@@ -800,7 +800,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                             if(isM3U8 != null){
                                 bM3U8_SAF_File_Exists = true;
                                 //Read-in one path to make sure it is accurate:
-                                byte[] byteM3U8File = isM3U8.readAllBytes();
+                                //byte[] byteM3U8File = isM3U8.readAllBytes();
+                                byte[] byteM3U8File = GlobalClass.readAllBytes(isM3U8);
                                 isM3U8.close();
                                 String sM3U8File = new String(byteM3U8File);
                                 String[] sM3U8FileRecords = sM3U8File.split("\n");
@@ -867,7 +868,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 }
 
                                 if (isM3U8 != null) {
-                                    byte[] byteM3U8File = isM3U8.readAllBytes();
+                                    //byte[] byteM3U8File = isM3U8.readAllBytes();
+                                    byte[] byteM3U8File = GlobalClass.readAllBytes(isM3U8);
                                     isM3U8.close();
                                     String sM3U8File = new String(byteM3U8File);
                                     String[] sM3U8FileRecords = sM3U8File.split("\n");
