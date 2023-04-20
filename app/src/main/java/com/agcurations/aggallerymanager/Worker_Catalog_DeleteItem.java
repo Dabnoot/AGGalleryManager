@@ -36,6 +36,13 @@ public class Worker_Catalog_DeleteItem extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+
+        if(GlobalClass.gUriCatalogFolders[0] == null){
+            //todo: Examine uninitialized case. This typically would occur when I was debugging this
+            // routine, stopped the program, and the program restarted and attempted to run the
+            // worker again.
+            return Result.failure();
+        }
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
 
@@ -45,6 +52,7 @@ public class Worker_Catalog_DeleteItem extends Worker {
         //Delete the file(s):
 
         Uri uriItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[ciToDelete.iMediaCategory], ciToDelete.sFolder_Name);
+
         if(!GlobalClass.CheckIfFileExists(uriItemFolder)){
             //Could not find folder holding item to be deleted. Item must have failed to be integrated or deleted via
             //  some other method. Proceed with removing data from catalog.
@@ -76,52 +84,39 @@ public class Worker_Catalog_DeleteItem extends Worker {
                 //Delete any working folders:
 
                 if(ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if(ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
 
-                    Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sItemID);
-                    if (GlobalClass.CheckIfFileExists(uriVideoWorkingFolder)) {
-                        ArrayList<String> alsVideoWorkingFolderListing = GlobalClass.GetDirectoryFileNames(uriVideoWorkingFolder);
+                        Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sItemID);
+                        if (GlobalClass.CheckIfFileExists(uriVideoWorkingFolder)) {
+                            //ArrayList<String> alsVideoWorkingFolderListing = GlobalClass.GetDirectoryFileNames(uriVideoWorkingFolder);
 
-                        if (alsVideoWorkingFolderListing.size() > 0) {
-                            /*for (String sFileName : alsVideoWorkingFolderListing) {
-                                //Locate the output folder
-                                if (sFileName.isDirectory()) {
-                                    aldfOutputFolders.add(sFileName); //The worker could potentially create multiple output folders if it is re-run.
-                                }
-                            }
-                            //Go through the output folders and delete contents:
-                            for (DocumentFile df2 : aldfOutputFolders) {
-                                DocumentFile[] df2_Contents = df2.listFiles();
-                                if (df2_Contents.length > 0) {
-                                    for (DocumentFile df3 : df2_Contents) {
-                                        if (!df3.delete()) {
-                                            Log.d("File Deletion", "Unable to delete file " + df3.getUri() + ".");
+                            //if (alsVideoWorkingFolderListing.size() > 0) {
+
+                                /*//Delete folder contents:
+                                for (String sFileName : alsVideoWorkingFolderListing) {
+                                    Uri uriFileToDelete = GlobalClass.FormChildUri(uriVideoWorkingFolder, sFileName);
+                                    try {
+                                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToDelete)) {
+                                            Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
                                         }
-                                    }
-                                }
-                            }*/
-                            //Delete download folder contents:
-                            for (String sFileName: alsVideoWorkingFolderListing) {
-                                Uri uriFileToDelete = GlobalClass.FormChildUri(uriVideoWorkingFolder, sFileName);
-                                try {
-                                    if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToDelete)) {
+                                    } catch (FileNotFoundException e) {
                                         Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
                                     }
+                                }*/
+
+                                //Delete folder:
+                                try {
+                                    if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder)) {
+                                        Log.d("File Deletion", "Unable to delete folder " + uriVideoWorkingFolder + ".");
+                                    }
                                 } catch (FileNotFoundException e) {
-                                    Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
-                                }
-                            }
-                            //Delete download folder:
-                            try {
-                                if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder)) {
                                     Log.d("File Deletion", "Unable to delete folder " + uriVideoWorkingFolder + ".");
                                 }
-                            } catch (FileNotFoundException e) {
-                                Log.d("File Deletion", "Unable to delete folder " + uriVideoWorkingFolder + ".");
-                            }
+
+                            //}
 
                         }
-
-                    } //End if VideoWorkingFolderExists
+                    }
 
                     //Check to see if the download folder exists as well and delete if it does:
                     //Delete the download folder to which downloadManager downloaded the files:
@@ -263,9 +258,7 @@ public class Worker_Catalog_DeleteItem extends Worker {
             if (bSuccess) {
 
                 //Delete the folder if the folder is now empty:
-
-                ArrayList<String> alsFilesRemaining = GlobalClass.GetDirectoryFileNames(uriItemFolder);
-                if (alsFilesRemaining.size() == 0) {
+                if (GlobalClass.IsDirEmpty(uriItemFolder)) {
                     try {
                         if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
                             globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
