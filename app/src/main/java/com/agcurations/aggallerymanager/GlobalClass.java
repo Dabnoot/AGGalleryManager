@@ -455,6 +455,33 @@ public class GlobalClass extends Application {
         return GetDirectoryFileNames(uriParent);
     }
 
+    public static boolean IsDirEmpty(Uri uriDirectory){
+        boolean EMPTY = true;
+        boolean NOT_EMPTY = false;
+        if(!GlobalClass.CheckIfFileExists(uriDirectory)){
+            return EMPTY;
+        }
+        final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriDirectory,
+                DocumentsContract.getDocumentId(uriDirectory));
+        Cursor c = null;
+        try {
+            c = gcrContentResolver.query(childrenUri, new String[] {
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+            if(c != null) {
+                if (c.moveToNext()) {
+                    c.close();
+                    return NOT_EMPTY;
+                }
+
+            }
+        } catch (Exception e) {
+            Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
+        }
+        return EMPTY;
+    }
+
+
 
 
     public static String FormChildUriString(String sUriParent, String sFileName){
