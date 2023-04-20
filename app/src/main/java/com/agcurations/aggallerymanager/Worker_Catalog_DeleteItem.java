@@ -88,21 +88,6 @@ public class Worker_Catalog_DeleteItem extends Worker {
 
                         Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sItemID);
                         if (GlobalClass.CheckIfFileExists(uriVideoWorkingFolder)) {
-                            //ArrayList<String> alsVideoWorkingFolderListing = GlobalClass.GetDirectoryFileNames(uriVideoWorkingFolder);
-
-                            //if (alsVideoWorkingFolderListing.size() > 0) {
-
-                                /*//Delete folder contents:
-                                for (String sFileName : alsVideoWorkingFolderListing) {
-                                    Uri uriFileToDelete = GlobalClass.FormChildUri(uriVideoWorkingFolder, sFileName);
-                                    try {
-                                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToDelete)) {
-                                            Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
-                                        }
-                                    } catch (FileNotFoundException e) {
-                                        Log.d("File Deletion", "Unable to delete file or folder " + uriFileToDelete + ".");
-                                    }
-                                }*/
 
                                 //Delete folder:
                                 try {
