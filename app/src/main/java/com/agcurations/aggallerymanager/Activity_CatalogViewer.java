@@ -280,6 +280,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 if(bIsDeleteItemResponse) {
                     boolean bDeleteItemResult = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
                     if (bDeleteItemResult) {
+                        globalClass.updateTagHistogramsIfRequired(); //todo: Moved here after refactor of comic delete logic. Examine if this is appropriate.
                         populate_RecyclerViewCatalogItems(); //Refresh the catalog recycler view.
                     } else {
                         Toast.makeText(getApplicationContext(),"Could not successfully delete item.", Toast.LENGTH_LONG).show();

@@ -19,6 +19,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.provider.DocumentsContract;
 import android.text.method.ScrollingMovementMethod;
@@ -239,11 +242,25 @@ public class Activity_ComicDetails extends AppCompatActivity {
         }
         globalClass.gbCatalogViewerRefresh = true;
         Toast.makeText(getApplicationContext(), "Deleting comic...", Toast.LENGTH_LONG).show();
-        if(globalClass.ComicCatalog_DeleteComic(gciCatalogItem)) {
-            //If comic deletion successful, close the activity. Otherwise remain open so that
-            //  the user can view the toast message.
-            finish();
-        }
+
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        String sCatalogRecord = GlobalClass.getCatalogRecordString(gciCatalogItem);
+        Data dataCatalogDeleteItem = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_ComicDetails:DeleteComic()")
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
+                .putString(GlobalClass.EXTRA_CALLER_ACTION_RESPONSE_FILTER, Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE)
+                .build();
+        OneTimeWorkRequest otwrCatalogDeleteItem = new OneTimeWorkRequest.Builder(Worker_Catalog_DeleteItem.class)
+                .setInputData(dataCatalogDeleteItem)
+                .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
+        globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
+
+        finish();
+
+
     }
 
 

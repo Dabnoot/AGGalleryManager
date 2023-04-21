@@ -209,10 +209,16 @@ public class Worker_Catalog_DeleteItem extends Worker {
                     }
 
                     //End if the catalog item sourced as a download was an image item.
-                }/* else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                    //Note - this is executed in GlobalClass routine ComicCatalog_DeleteComic.
-                    //  It may be desireable to move that routine to this location.
-                }*/
+                } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    //Delete folder:
+                    try {
+                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
+                            Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
+                        }
+                    } catch (FileNotFoundException e) {
+                        Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
+                    }
+                }
 
 
                 //End if the catalog item was sourced as a download.
