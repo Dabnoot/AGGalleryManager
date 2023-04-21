@@ -263,7 +263,7 @@ public class Activity_Main extends AppCompatActivity {
                         if (GlobalClass.CheckIfFileExists(uriDataStorageLocation, GlobalClass.gsDataFolderBaseName)){
                             //If the DataFolderBaseName folder was found within the preCheck folder,
                             //  use the found folder.
-                            GlobalClass.gUriDataFolder = globalClass.FormChildUri(uriDataStorageLocation.toString(), GlobalClass.gsDataFolderBaseName);
+                            GlobalClass.gUriDataFolder = GlobalClass.FormChildUri(uriDataStorageLocation.toString(), GlobalClass.gsDataFolderBaseName);
                         }
                     }
 
@@ -275,7 +275,7 @@ public class Activity_Main extends AppCompatActivity {
         if(GlobalClass.gUriDataFolder == null){
             bInitDataFolder = true;
         } else {
-            bInitDataFolder = !globalClass.CheckIfFileExists(GlobalClass.gUriDataFolder );
+            bInitDataFolder = !GlobalClass.CheckIfFileExists(GlobalClass.gUriDataFolder );
         }
         if(bInitDataFolder){
             //If the storage location data does not exist, such as when the user has not yet selected a location,
@@ -694,7 +694,7 @@ public class Activity_Main extends AppCompatActivity {
         Toast.makeText(getApplicationContext(), "Opening Videos catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
         //intentCatalogActivity.putExtra("MEDIA_CATEGORY", GlobalClass.MEDIA_CATEGORY_VIDEOS);
-        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         startActivity(intentCatalogActivity);
     }
 
@@ -705,7 +705,7 @@ public class Activity_Main extends AppCompatActivity {
         }
         Toast.makeText(getApplicationContext(), "Opening Images catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
-        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentCatalogActivity);
     }
 
@@ -716,7 +716,7 @@ public class Activity_Main extends AppCompatActivity {
         }
         Toast.makeText(getApplicationContext(), "Opening Comics catalog...", Toast.LENGTH_SHORT).show();
         Intent intentCatalogActivity = new Intent(this, Activity_CatalogViewer.class);
-        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentCatalogActivity);
     }
 
@@ -727,7 +727,7 @@ public class Activity_Main extends AppCompatActivity {
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS); //todo: Redundant
-        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         startActivity(intentImportGuided);
     }
 
@@ -738,7 +738,7 @@ public class Activity_Main extends AppCompatActivity {
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES); //todo: Redundant
-        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentImportGuided);
     }
 
@@ -749,7 +749,7 @@ public class Activity_Main extends AppCompatActivity {
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS); //todo: Redundant
-        globalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentImportGuided);
     }
 
