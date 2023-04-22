@@ -388,19 +388,23 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 if(galsInitialApprovedUsers.size() != ictNewTag.alsTagApprovedUsers.size()){
                     bApprovedUserChanged = true;
                 }
-                    for(String sOriginalUserEntry: galsInitialApprovedUsers){
-                        boolean bUserFound = false;
-                        for(String sNewUserEntry: ictNewTag.alsTagApprovedUsers){
-                            if(sNewUserEntry.equals(sOriginalUserEntry)){
-                                bUserFound = true;
-                                break;
-                            }
-                        }
-                        if(!bUserFound){
-                            bApprovedUserChanged = true;
+                for(String sOriginalUserEntry: galsInitialApprovedUsers){
+                    boolean bUserFound = false;
+                    for(String sNewUserEntry: ictNewTag.alsTagApprovedUsers){
+                        if(sNewUserEntry.equals(sOriginalUserEntry)){
+                            bUserFound = true;
                             break;
                         }
                     }
+                    if(!bUserFound){
+                        bApprovedUserChanged = true;
+                        break;
+                    }
+                }
+
+                if(getActivity() != null){
+                    Toast.makeText(getActivity().getApplicationContext(), "Updating catalog records...", Toast.LENGTH_SHORT).show();
+                }
 
                 if (bMaturityRatingChanged || bApprovedUserChanged) {
                     globalClass.ReassessCatalogItemsForTagUserAndRating(ictNewTag, gViewModelTagEditor.iTagEditorMediaCategory);

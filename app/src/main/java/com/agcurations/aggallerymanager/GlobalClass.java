@@ -1062,8 +1062,9 @@ public class GlobalClass extends Application {
     }
 
     public void CatalogDataFile_AddNewField(){
-        //Update getCatalogRecordString before calling this routine.
-        //Update ConvertStringToCatalogItem after calling this routine.
+        //If calling this routine to add a new field:
+        //  Update getCatalogRecordString before calling this routine.
+        //  Update ConvertStringToCatalogItem after calling this routine.
         for(int i = 0; i < 3; i++){
             StringBuilder sbBuffer = new StringBuilder();
             boolean bHeaderWritten = false;
@@ -1860,7 +1861,9 @@ public class GlobalClass extends Application {
             }
         }
 
-
+        //Save the catalog file:
+        WriteCatalogDataFile(iMediaCategory);
+        Toast.makeText(getApplicationContext(), "Catalog records updated with user permissions and maturity ratings.", Toast.LENGTH_SHORT).show();
 
 
 
