@@ -42,7 +42,11 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     RelativeLayout gRelativeLayout_UserSelection;
     RelativeLayout.LayoutParams gLayoutParams_UserSelection;
 
+    AdapterUserList gAdapterUserPool;
     AdapterUserList gAdapterApprovedUsers;
+
+    int giInitialMaturityRating = -1;
+    ArrayList<String> galsInitialApprovedUsers;
 
     private ArrayList<ItemClass_Tag> galNewTags;
 
@@ -73,6 +77,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         gViewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
 
         galNewTags = new ArrayList<>();
+        galsInitialApprovedUsers = new ArrayList<>();
     }
 
     @Override
@@ -173,14 +178,15 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             //Initialize the user list:
             //Initialize the displayed list of users:
             ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
-            AdapterUserList adapterUserList = new AdapterUserList(
-                    getActivity().getApplicationContext(), R.layout.listview_useritem, globalClass.galicu_Users);
-            adapterUserList.gbCompactMode = true;
+            ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
+            gAdapterUserPool = new AdapterUserList(
+                    getActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
+            gAdapterUserPool.gbCompactMode = true;
             int[] iSelectedUnselectedBGColors = {
                     ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2),
                     ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain)};
-            adapterUserList.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
-            listView_UserPool.setAdapter(adapterUserList);
+            gAdapterUserPool.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
+            listView_UserPool.setAdapter(gAdapterUserPool);
             listView_UserPool.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -221,9 +227,9 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             imageButton_AddUser.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ArrayList<ItemClass_User> alicu_UsersToAdd = adapterUserList.GetSelectedUsers();
+                    ArrayList<ItemClass_User> alicu_UsersToAdd = gAdapterUserPool.GetSelectedUsers();
                     gAdapterApprovedUsers.AddUsers(alicu_UsersToAdd);
-                    adapterUserList.RemoveUsersFromList(alicu_UsersToAdd);
+                    gAdapterUserPool.RemoveUsersFromList(alicu_UsersToAdd);
                 }
             });
 
@@ -232,7 +238,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 @Override
                 public void onClick(View v) {
                     ArrayList<ItemClass_User> alicu_UsersToMoveBack = gAdapterApprovedUsers.GetSelectedUsers();
-                    adapterUserList.AddUsers(alicu_UsersToMoveBack);
+                    gAdapterUserPool.AddUsers(alicu_UsersToMoveBack);
                     gAdapterApprovedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
                 }
             });
@@ -373,10 +379,52 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         }
 
         if(bTagSuccess){
-            gEditText_TagText.setText("");
-            gEditText_TagDescription.setText("");
-            gCheckBox_SetApprovedUsers.setChecked(false);
+
+            if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
+                //If we are editing a tag, check to see if we need to go and recalculate maturity
+                // ratings and/or approved users for catalog items.
+                boolean bMaturityRatingChanged = ictNewTag.iMaturityRating != giInitialMaturityRating;
+                boolean bApprovedUserChanged = false;
+                if(galsInitialApprovedUsers.size() != ictNewTag.alsTagApprovedUsers.size()){
+                    bApprovedUserChanged = true;
+                }
+                    for(String sOriginalUserEntry: galsInitialApprovedUsers){
+                        boolean bUserFound = false;
+                        for(String sNewUserEntry: ictNewTag.alsTagApprovedUsers){
+                            if(sNewUserEntry.equals(sOriginalUserEntry)){
+                                bUserFound = true;
+                                break;
+                            }
+                        }
+                        if(!bUserFound){
+                            bApprovedUserChanged = true;
+                            break;
+                        }
+                    }
+
+                if (bMaturityRatingChanged || bApprovedUserChanged) {
+                    globalClass.ReassessCatalogItemsForTagUserAndRating(ictNewTag, gViewModelTagEditor.iTagEditorMediaCategory);
+                }
+            }
+
+            ClearTagData();
         }
+    }
+
+    private void ClearTagData(){
+        gEditText_TagText.setText("");
+        gEditText_TagDescription.setText("");
+        gCheckBox_SetApprovedUsers.setChecked(false);
+        ToggleRestrictToUserVisibility();
+        giInitialMaturityRating = -1;
+        galsInitialApprovedUsers = new ArrayList<>();
+        if(getActivity() == null) return;
+        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
+        gAdapterUserPool = new AdapterUserList(
+                getActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
+        ArrayList<ItemClass_User> alicu_EmptyUserList = new ArrayList<>();
+        gAdapterApprovedUsers = new AdapterUserList(
+                getActivity().getApplicationContext(), R.layout.listview_useritem, alicu_EmptyUserList);
     }
 
 
@@ -434,6 +482,38 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                             gEditText_TagText.setText(tagItem.sTagText);
                             gEditText_TagDescription.setText(tagItem.sTagDescription);
                             gSpinner_AgeRating.setSelection(tagItem.iMaturityRating);
+                            giInitialMaturityRating = tagItem.iMaturityRating;
+                            if(tagItem.alsTagApprovedUsers.size() > 0){
+                                gCheckBox_SetApprovedUsers.setChecked(true);
+                                ToggleRestrictToUserVisibility();
+                                ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
+                                ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
+                                ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>();
+                                galsInitialApprovedUsers = new ArrayList<>();
+
+                                for (ItemClass_User icu : alicuAllUserPool) {
+                                    boolean bUserSelected = false;
+                                    for(String sUserName: tagItem.alsTagApprovedUsers) {
+                                        if(sUserName.equals(icu.sUserName)){
+                                            galsInitialApprovedUsers.add(sUserName);
+                                            bUserSelected = true;
+                                            break;
+                                        }
+                                    }
+                                    if(bUserSelected){
+                                        alicuSelectedUsers.add(icu);
+                                    } else {
+                                        alicuRemainingUserPool.add(icu);
+                                    }
+                                }
+
+                                gAdapterUserPool.clear();
+                                gAdapterApprovedUsers.clear();
+
+                                gAdapterUserPool.AddUsers(alicuRemainingUserPool);
+                                gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
+
+                            }
                             //Go through and uncheck anything but this tag:
                             for (ItemClass_Tag ict : alictTagItems) {
                                 if (ict.bIsChecked && !ict.iTagID.equals(tagItem.iTagID)) {
@@ -444,6 +524,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                         } else {
                             checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
                             checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                            ClearTagData();
                         }
                         if (bUpdateOtherItemsViews) {
                             notifyDataSetChanged();

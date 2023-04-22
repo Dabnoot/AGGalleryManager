@@ -1801,6 +1801,72 @@ public class GlobalClass extends Application {
     }
 
 
+    public ArrayList<String> getApprovedUsersForTagGrouping(ArrayList<Integer> aliTagIDs, int iMediaCategory){
+
+        //If the group of tags has a single approved user, then only that user is approved for the
+        // whole catalog item.
+        //If the group of tags has two or more approved users, all users must be approved for
+        //  each tag that is restricted to users.
+
+        //Start with a listing of all users:
+        ArrayList<ItemClass_User> alsApprovedUserPool = new ArrayList<>(galicu_Users);
+
+        //Process each listed tag ID:
+        for(Integer iTagID: aliTagIDs) {
+            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
+            if(ict.alsTagApprovedUsers.size() > 0){
+                //Check to see if users are included:
+                ArrayList<ItemClass_User> alsApprovedUsers = new ArrayList<>();
+                for(ItemClass_User icu: alsApprovedUserPool){
+                    boolean bUserApproved = false;
+                    for(String sUserApprovedForTag: ict.alsTagApprovedUsers){
+                        if(sUserApprovedForTag.equals(icu.sUserName)){
+                            bUserApproved = true;
+                            break;
+                        }
+                    }
+                    if(bUserApproved){
+                        alsApprovedUsers.add(icu);
+                    }
+                }
+                alsApprovedUserPool = alsApprovedUsers;
+            }
+        }
+        ArrayList<String> alsApprovedUsers = new ArrayList<>();
+        for(ItemClass_User icu: alsApprovedUserPool){
+            alsApprovedUsers.add(icu.sUserName);
+        }
+        return alsApprovedUsers;
+    }
+
+    public void ReassessCatalogItemsForTagUserAndRating(ItemClass_Tag itemClass_tag, int iMediaCategory){
+        //If the user has changed approved users on a tag, go and find all items using that tag and
+        //  recalculate the approved users.
+
+
+        //Go through the list of catalog items:
+        for(Map.Entry<String, ItemClass_CatalogItem> CatalogItemEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
+            //Check to see if the tag is in use by this catalog item:
+            if(CatalogItemEntry.getValue().aliTags.contains(itemClass_tag.iTagID)){
+                //If the tag IS in use by this catalog item, recalculate the approved users and
+                //  highest maturity for this catalog item.
+
+                ArrayList<String> alsApprovedUsers = getApprovedUsersForTagGrouping(CatalogItemEntry.getValue().aliTags, iMediaCategory);
+                CatalogItemEntry.getValue().alsApprovedUsers = alsApprovedUsers;
+
+                int iMaturityRating = getLowestTagMaturityRating(CatalogItemEntry.getValue().aliTags, iMediaCategory);
+                CatalogItemEntry.getValue().iMaturityRating = iMaturityRating;
+
+            }
+        }
+
+
+
+
+
+    }
+
+
 
     //==================================================================================================
     //=========  USER ACCOUNT DATA STORAGE  ============================================================

@@ -211,8 +211,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     private void initUserList(){
         //Initialize the displayed list of users:
         ListView listView_UserList = getView().findViewById(R.id.listView_UserList);
+        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
         AdapterUserList adapterUserList = new AdapterUserList(
-                        requireActivity().getApplicationContext(), R.layout.listview_useritem, globalClass.galicu_Users);
+                        requireActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
         listView_UserList.setAdapter(adapterUserList);
         int iWidthWidestUserItemView = (int)(getWidestView(requireActivity().getApplicationContext(), adapterUserList) * 1.05);
 

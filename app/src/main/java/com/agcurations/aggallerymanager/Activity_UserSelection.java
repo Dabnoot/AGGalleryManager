@@ -19,6 +19,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class Activity_UserSelection extends AppCompatActivity {
 
     Activity_UserSelectionResponseReceiver activity_userSelectionResponseReceiver;
@@ -39,8 +41,9 @@ public class Activity_UserSelection extends AppCompatActivity {
 
         //Initialize the displayed list of users:
         ListView listView_UserList = findViewById(R.id.listView_UserList);
+        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
         AdapterUserList adapterUserList = new AdapterUserList(
-                getApplicationContext(), R.layout.listview_useritem, globalClass.galicu_Users);
+                getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
         //adapterUserList.gbSimplifiedView = true;  //Hides the maturity rating and admin status
         listView_UserList.setAdapter(adapterUserList);
         listView_UserList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
