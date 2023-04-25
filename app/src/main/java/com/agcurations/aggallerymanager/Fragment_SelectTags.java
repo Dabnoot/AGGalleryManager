@@ -336,7 +336,7 @@ public class Fragment_SelectTags extends Fragment {
 
         viewModel_fragment_selectTags.alTagsAll.clear();
 
-        TreeMap<Integer, ItemClass_Tag> tmTagPool = globalClass.gtmCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
+        TreeMap<Integer, ItemClass_Tag> tmTagPool = globalClass.gtmApprovedCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
 
         ArrayList<ItemClass_Tag> alict_SelectedTagsViewModelReset = new ArrayList<>();
 
@@ -385,24 +385,11 @@ public class Fragment_SelectTags extends Fragment {
             ictNew.iMaturityRating = tmEntryTagReferenceItem.getValue().iMaturityRating;
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
             ictNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
+            ictNew.alsTagApprovedUsers = new ArrayList<>(tmEntryTagReferenceItem.getValue().alsTagApprovedUsers);
 
-            //if(!(globalClass.gbGuestMode && ictNew.bIsRestricted)) {
-            if(globalClass.gicuCurrentUser != null) {
-                if (globalClass.gicuCurrentUser.iMaturityLevel >= globalClass.giDefaultUserMaturityRating) {
-                    //Don't add the tag if the tag maturity rating is above the user's rating.
-                    viewModel_fragment_selectTags.alTagsAll.add(ictNew);
-                    if (ictNew.bIsChecked) {
-                        alict_SelectedTagsViewModelReset.add(ictNew);
-                    }
-                }
-            } else {
-                if (ictNew.iMaturityRating > globalClass.giDefaultUserMaturityRating) {
-                    //Don't add the tag if the tag maturity rating is above a default rating.
-                    viewModel_fragment_selectTags.alTagsAll.add(ictNew);
-                    if (ictNew.bIsChecked) {
-                        alict_SelectedTagsViewModelReset.add(ictNew);
-                    }
-                }
+            viewModel_fragment_selectTags.alTagsAll.add(ictNew);
+            if (ictNew.bIsChecked) {
+                alict_SelectedTagsViewModelReset.add(ictNew);
             }
 
         }

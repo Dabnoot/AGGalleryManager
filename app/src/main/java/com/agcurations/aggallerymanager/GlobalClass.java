@@ -54,6 +54,7 @@ import java.util.Queue;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -108,6 +109,8 @@ public class GlobalClass extends Application {
 
     //Tag variables:
     public final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
+    public final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
+    public AtomicBoolean abTagsLoaded = new AtomicBoolean();
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
@@ -1255,9 +1258,9 @@ public class GlobalClass extends Application {
         ItemClass_Tag ictNewTag;
 
         //Find the greatest tag ID:
-        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+        if(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
             int iThisId;
-            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                 iThisId = entry.getValue().iTagID;
                 if (iThisId >= iNextRecordId){
                     iNextRecordId = iThisId + 1;
@@ -1278,8 +1281,8 @@ public class GlobalClass extends Application {
 
             for(String sNewTagName: sNewTagNames) {
                 boolean bTagAlreadyExists = false;
-                if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-                    for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                if (gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+                    for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
                         if (entry.getValue().sTagText.equalsIgnoreCase(sNewTagName)) {
                             //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
@@ -1294,7 +1297,7 @@ public class GlobalClass extends Application {
 
 
                 ictNewTag = new ItemClass_Tag(iNextRecordId, sNewTagName);
-                gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewTag);
+                gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewTag);
 
                 //Prep for return of new tag items to the caller:
                 ictNewTags.add(ictNewTag);
@@ -1326,9 +1329,9 @@ public class GlobalClass extends Application {
         int iNextRecordId = -1;
 
         //Find the greatest tag ID:
-        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+        if(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
             int iThisId;
-            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                 iThisId = entry.getValue().iTagID;
                 if (iThisId >= iNextRecordId){
                     iNextRecordId = iThisId + 1;
@@ -1347,8 +1350,8 @@ public class GlobalClass extends Application {
             StringBuilder sbNewTagsStringBuilder = new StringBuilder();
 
             boolean bTagAlreadyExists = false;
-            if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-                for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            if (gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+                for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
                     if (entry.getValue().sTagText.toLowerCase().equals(ictNewTag.sTagText.toLowerCase())) {
                         //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
@@ -1364,6 +1367,7 @@ public class GlobalClass extends Application {
                 ictNewNewTag.sTagDescription = ictNewTag.sTagDescription;
                 ictNewNewTag.iMaturityRating = ictNewTag.iMaturityRating;
 
+                gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
                 gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
 
                 //Add the new record to the catalog file:
@@ -1427,6 +1431,7 @@ public class GlobalClass extends Application {
             osNewTagsFile.close();
 
             //Update memory:
+            gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).replace(ict_TagToUpdate.iTagID, ict_TagToUpdate);
             gtmCatalogTagReferenceLists.get(iMediaCategory).replace(ict_TagToUpdate.iTagID, ict_TagToUpdate);
 
         } catch (Exception e) {
@@ -1487,7 +1492,7 @@ public class GlobalClass extends Application {
         String sTagText = "[Tag ID " + iTagID + " not found]";
 
         //todo: instead of looping through items, use TreeMap.getValue or TreeMap.getKey if it exists.
-        for(Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             Integer iRefTag = entry.getValue().iTagID;
             if(iRefTag.equals(iTagID)){
                 sTagText = entry.getValue().sTagText;
@@ -1517,7 +1522,7 @@ public class GlobalClass extends Application {
 
     public boolean TagIDExists(Integer iTagID, int iMediaCategory){
 
-        for(Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             Integer iRefTag = entry.getValue().iTagID;
             if(iRefTag.equals(iTagID)){
                 return true;
@@ -1611,7 +1616,7 @@ public class GlobalClass extends Application {
 
     public Integer getTagIDFromText(String sTagText, Integer iMediaCategory){
         int iKey = -1;
-        for(Map.Entry<Integer, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry: gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
             if(entry.getValue().sTagText.equalsIgnoreCase(sTagText)){
                 iKey = entry.getValue().iTagID;
                 break;
@@ -1626,7 +1631,7 @@ public class GlobalClass extends Application {
             if(gbTagHistogramRequiresUpdate[iMediaCategory]) {
 
                 //Reset all of the tag counts back to zero for this media category:
-                for(Map.Entry<Integer, ItemClass_Tag> entry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+                for(Map.Entry<Integer, ItemClass_Tag> entry: gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
                     entry.getValue().iHistogramCount = 0;
                 }
 
@@ -1640,8 +1645,8 @@ public class GlobalClass extends Application {
                     }
 
                     for (int iCatalogItemTagID : ci.aliTags) {
-                        if(gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
-                            Objects.requireNonNull(gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                        if(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                            Objects.requireNonNull(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
                         }
                     }
                 }
@@ -1662,7 +1667,7 @@ public class GlobalClass extends Application {
         TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram = new TreeMap<>();
 
         ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
-        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             //if (entry.getValue().bIsRestricted) {
             if(gicuCurrentUser != null) {
                 if (gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating) {
@@ -1696,7 +1701,7 @@ public class GlobalClass extends Application {
                 for (int iCatalogItemTagID : ci.aliTags) {
                     if(iCatalogItemTagID != -1) {
                         if (!tmXrefTagHistogram.containsKey(iCatalogItemTagID)) {
-                            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID);
+                            ItemClass_Tag ict = gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID);
                             if(ict != null){
                                 ict.iHistogramCount = 1;
                                 tmXrefTagHistogram.put(iCatalogItemTagID, ict);
@@ -1718,7 +1723,7 @@ public class GlobalClass extends Application {
         TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
 
         ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
-        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
             if (entry.getValue().bIsRestricted) {
                 aliRestrictedTagIDs.add(entry.getValue().iTagID);
             }
@@ -1770,7 +1775,7 @@ public class GlobalClass extends Application {
         ArrayList<ItemClass_Tag> alict_Tags = new ArrayList<>();
         for(Integer iTagID: ali_TagIDs){
 
-            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
+            ItemClass_Tag ict = gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
             if (ict != null) {
                 alict_Tags.add(ict);
             }
@@ -1786,7 +1791,7 @@ public class GlobalClass extends Application {
             for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(i).entrySet()){
                 int iLowestMaturityRating = giDefaultUserMaturityRating;
                 for(int iTagID: icciCatalogItem.getValue().aliTags){
-                    ItemClass_Tag ictReferenceTag = gtmCatalogTagReferenceLists.get(i).get(iTagID);
+                    ItemClass_Tag ictReferenceTag = gtmApprovedCatalogTagReferenceLists.get(i).get(iTagID);
                     if(ictReferenceTag != null){
                         if(iLowestMaturityRating < ictReferenceTag.iMaturityRating){
                             iLowestMaturityRating = ictReferenceTag.iMaturityRating;
@@ -1814,7 +1819,7 @@ public class GlobalClass extends Application {
 
         //Process each listed tag ID:
         for(Integer iTagID: aliTagIDs) {
-            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
+            ItemClass_Tag ict = gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
             if(ict.alsTagApprovedUsers.size() > 0){
                 //Check to see if users are included:
                 ArrayList<ItemClass_User> alsApprovedUsers = new ArrayList<>();
@@ -1841,9 +1846,8 @@ public class GlobalClass extends Application {
     }
 
     public void ReassessCatalogItemsForTagUserAndRating(ItemClass_Tag itemClass_tag, int iMediaCategory){
-        //If the user has changed approved users on a tag, go and find all items using that tag and
-        //  recalculate the approved users.
-
+        //If the user has changed maturity rating and/or approved users on a tag, go and find
+        // all items using that tag and recalculate maturity rating and approved users.
 
         //Go through the list of catalog items:
         for(Map.Entry<String, ItemClass_CatalogItem> CatalogItemEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
@@ -1868,6 +1872,51 @@ public class GlobalClass extends Application {
 
 
     }
+
+
+    public void populateApprovedTags(){
+        if(!abTagsLoaded.get()){
+            return;
+        }
+        gtmApprovedCatalogTagReferenceLists.clear();
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
+            TreeMap<Integer, ItemClass_Tag> tmApprovedTags = new TreeMap<>();
+            gtmApprovedCatalogTagReferenceLists.add(tmApprovedTags); //Add empty list.
+            //Process all tags in this media category:
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                boolean bOkToAddTag = false;
+                if(gicuCurrentUser == null){
+                    //If no user has been selected, don't show tags that have been approved for users
+                    //  and don't show tags above the default user's maturity rating.
+                    if(entry.getValue().alsTagApprovedUsers.size() == 0 &&
+                        entry.getValue().iMaturityRating <= giDefaultUserMaturityRating){
+                        bOkToAddTag = true;
+                    }
+                } else {
+                    //If a user has been selected...
+                    if(entry.getValue().iMaturityRating <= gicuCurrentUser.iMaturityLevel){
+                        if(entry.getValue().alsTagApprovedUsers.size() == 0){
+                            bOkToAddTag = true;
+                        } else {
+                            for(String sUserName: entry.getValue().alsTagApprovedUsers){
+                                if(sUserName.equals(gicuCurrentUser.sUserName)){
+                                    bOkToAddTag = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(bOkToAddTag) {
+                    gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+
+
+    }
+
 
 
 

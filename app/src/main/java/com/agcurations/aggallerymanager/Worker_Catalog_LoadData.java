@@ -177,21 +177,21 @@ public class Worker_Catalog_LoadData extends Worker {
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             globalClass.gtmCatalogTagReferenceLists.add(InitTagData(iMediaCategory));
 
-            //Get tag restrictions preferences:
+            /*//Get tag restrictions preferences:
             //SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(gContext);
             Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet(GlobalClass.gsRestrictedTagsPreferenceNames[iMediaCategory], null);
             //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
             if(ssCatalogTagsRestricted != null) {
                 for (String sRestrictedTag : ssCatalogTagsRestricted) {
                     Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
-                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                         if (entry.getValue().iTagID.equals(iRestrictedTag)) {
                             //If the restricted tag has been found, mark it as restricted:
                             entry.getValue().bIsRestricted = true;
                         }
                     }
                 }
-            }
+            }*/
             iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(false, "",
@@ -199,6 +199,8 @@ public class Worker_Catalog_LoadData extends Worker {
                     false, "Reading Tags",
                     Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         }
+        globalClass.abTagsLoaded.set(true);
+        globalClass.populateApprovedTags();
         stopWatch.PostDebugLogAndRestart("Tag data initialized/read with duration ");
 
         //Configure video resolution options:
@@ -740,8 +742,8 @@ public class Worker_Catalog_LoadData extends Worker {
                         //Update the tags histogram. As of 7/29/2022, this is used to show the user
                         //  how many tags are in use while they select tags to perform a tag filter.
                         for (int iCatalogItemTagID : ci.aliTags) {
-                            if (globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
-                                Objects.requireNonNull(globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                            if (globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                                Objects.requireNonNull(globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
                             }
                         }
 

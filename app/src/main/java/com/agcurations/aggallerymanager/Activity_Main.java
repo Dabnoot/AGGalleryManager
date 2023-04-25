@@ -545,8 +545,6 @@ public class Activity_Main extends AppCompatActivity {
             return new Intent(getApplicationContext(), Activity_UserManagement.class);
         } else if(item.getItemId() == R.id.menu_Settings) {
             return new Intent(getApplicationContext(), Activity_AppSettings.class);
-        } else if(item.getItemId() == R.id.menu_TagEditor) {
-            return new Intent(getApplicationContext(), Activity_TagEditor.class);
         } else if (item.getItemId() == R.id.icon_login) {
             return new Intent(getApplicationContext(), Activity_UserSelection.class);
         }
@@ -565,7 +563,6 @@ public class Activity_Main extends AppCompatActivity {
 
         if((item.getItemId() == R.id.menu_UserManagement)
             || (item.getItemId() == R.id.menu_Settings)
-            || (item.getItemId() == R.id.menu_TagEditor)
             || (item.getItemId() == R.id.icon_login)){
 
             //Ask for pin code in order to allow access to feature if not admin:
@@ -590,7 +587,11 @@ public class Activity_Main extends AppCompatActivity {
 
         }
 
-        if(item.getItemId() == R.id.menu_DatabaseBackup) {
+        if(item.getItemId() == R.id.menu_TagEditor) {
+            Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
+            startActivity(intentTagEditor);
+            return true;
+        } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
             //Backup the database files (CatalogContents.dat):
             Toast.makeText(getApplicationContext(), "Initiating database backup.", Toast.LENGTH_SHORT).show();
             Service_Main.startActionCatalogBackup(this);

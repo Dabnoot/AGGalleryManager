@@ -268,38 +268,10 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         }
 
         TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        boolean bIsTagToBeRestricted = false;
-        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
-            //if (entry.getValue().bIsRestricted) {
-            if(globalClass.gicuCurrentUser != null) {
-                if (globalClass.gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating) {
-                    bIsTagToBeRestricted = true;
-                }
-            } else {
-                //If no user is selected or current user is somehow null, follow guidelines for
-                //  default user maturity rating.
-                if (entry.getValue().iMaturityRating <= globalClass.giDefaultUserMaturityRating) {
-                    bIsTagToBeRestricted = true;
-                }
-            }
-            if(!bIsTagToBeRestricted){
-                if(entry.getValue().alsTagApprovedUsers != null){
-                    if(entry.getValue().alsTagApprovedUsers.size() > 0){
-                        bIsTagToBeRestricted = true;
-                        for(String sApprovedUser: entry.getValue().alsTagApprovedUsers){
-                            if (globalClass.gicuCurrentUser.sUserName.equals(sApprovedUser)){
-                                bIsTagToBeRestricted = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (!bIsTagToBeRestricted) {
-                String sTagTextForSort = entry.getValue().sTagText + entry.getValue().iTagID;
-                tmTags.put(sTagTextForSort, entry.getValue());
-            }
-
+        boolean bIsTagToBeRestricted;
+        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
+            String sTagTextForSort = entry.getValue().sTagText + entry.getValue().iTagID;
+            tmTags.put(sTagTextForSort, entry.getValue());
         }
 
         ArrayList<ItemClass_Tag> alict_TagsListTags = new ArrayList<>();

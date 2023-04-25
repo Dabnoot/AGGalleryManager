@@ -80,11 +80,18 @@ public class Activity_UserSelection extends AppCompatActivity {
                     button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
+
+                            if(!globalClass.abTagsLoaded.get()){
+                                Toast.makeText(getApplicationContext(), "Await tag loading...", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
                             EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
                             String sPinEntered = editText_DialogInput.getText().toString();
 
                             if (sPinEntered.equals(icu.sPin)) {
                                 globalClass.gicuCurrentUser = icu;
+                                globalClass.populateApprovedTags();
                                 Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
                                 adConfirmationDialog.dismiss();
                                 closeActivity(getApplicationContext());
@@ -101,6 +108,7 @@ public class Activity_UserSelection extends AppCompatActivity {
                 } else {
                     //If this user record does not require a pin to log-in, merely log-in.
                     globalClass.gicuCurrentUser = icu;
+                    globalClass.populateApprovedTags();
                     Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
                     closeActivity(getApplicationContext());
                 }
