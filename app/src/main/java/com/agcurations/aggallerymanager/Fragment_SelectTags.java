@@ -384,7 +384,6 @@ public class Fragment_SelectTags extends Fragment {
             ictNew.iSelectionOrder = iSelectionOrder;
             ictNew.iMaturityRating = tmEntryTagReferenceItem.getValue().iMaturityRating;
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
-            ictNew.bIsRestricted = tmEntryTagReferenceItem.getValue().bIsRestricted;
             ictNew.alsTagApprovedUsers = new ArrayList<>(tmEntryTagReferenceItem.getValue().alsTagApprovedUsers);
 
             viewModel_fragment_selectTags.alTagsAll.add(ictNew);

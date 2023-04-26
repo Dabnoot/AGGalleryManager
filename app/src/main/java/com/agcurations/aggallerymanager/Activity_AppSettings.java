@@ -1,14 +1,19 @@
 package com.agcurations.aggallerymanager;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -32,6 +37,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
@@ -42,8 +48,9 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
     private static final String TITLE_TAG = "AG Gallery Manager Preferences";
 
-
     static GlobalClass globalClass;
+
+    static ActivityResultLauncher<Intent> garlPromptForDataFolder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,6 +91,87 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
 
         globalClass = (GlobalClass) getApplicationContext();
+
+        // Configure the thing that will allow the user to choose a directory using the system's file picker.
+        garlPromptForDataFolder = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @SuppressLint("WrongConstant")
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        // look for permissions before executing operations.
+                        if(getParent() == null){
+                            return;
+                        }
+
+                        //Check to make sure that we have read/write permission in the selected folder.
+                        //If we don't have permission, request it.
+                        if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                != PackageManager.PERMISSION_GRANTED) ||
+                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                                        != PackageManager.PERMISSION_GRANTED)) {
+
+                            // Permission is not granted
+                            // Should we show an explanation?
+                            if ((ActivityCompat.shouldShowRequestPermissionRationale(getParent(),
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
+                                    (ActivityCompat.shouldShowRequestPermissionRationale(getParent(),
+                                            Manifest.permission.READ_EXTERNAL_STORAGE))) {
+                                // Show an explanation to the user *asynchronously* -- don't block
+                                // this thread waiting for the user's response! After the user
+                                // sees the explanation, try again to request the permission.
+                                Toast.makeText(getApplicationContext(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
+                            } else {
+                                // No explanation needed; request the permission
+                                ActivityCompat.requestPermissions(getParent(),
+                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                                Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        Fragment_Import_1_StorageLocation.MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
+
+                                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                                // app-defined int constant. The callback method gets the
+                                // result of the request.
+                            }
+                            //} else {
+                            // Permission has already been granted
+                        }
+
+                        //The above code checked for permission, and if not granted, requested it.
+                        //  Check one more time to see if the permission was granted:
+
+                        if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                == PackageManager.PERMISSION_GRANTED) &&
+                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                                        == PackageManager.PERMISSION_GRANTED)) {
+                            //If we now have permission...
+                            //The result data contains a URI for the directory that
+                            //the user selected.
+
+                            //Put the import Uri into the intent (this could represent a folder OR a file:
+
+                            if(result.getData() == null) {
+                                return;
+                            }
+                            Intent data = result.getData();
+                            Uri treeUri = data.getData();
+                            if(treeUri == null) {
+                                return;
+                            }
+                            final int takeFlags = data.getFlags() &
+                                    (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                            //We must persist access to this folder or the user will be asked everytime to select a folder.
+                            //  Even then, they well still have to re-access the location on device restart.
+                            GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
+
+                            //Call a routine to initialize the data folder:
+                            Worker_Catalog_LoadData.initDataFolder(treeUri, getApplicationContext());
+
+
+                        }
+                    }
+                });
+
 
     }
 
@@ -135,7 +223,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
         }
     }
 
-    public class GeneralFragment extends PreferenceFragmentCompat {
+    public static class GeneralFragment extends PreferenceFragmentCompat {
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -146,87 +234,16 @@ public class Activity_AppSettings extends AppCompatActivity implements
                 preferenceDataFolderLocation.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
-
-                        //Configure a thing to allow a response to the user selecting a folder:
-                        ActivityResultLauncher<Intent> garlPromptForDataFolder = registerForActivityResult(
-                                new ActivityResultContracts.StartActivityForResult(),
-                                new ActivityResultCallback<ActivityResult>() {
-                                    @Override
-                                    public void onActivityResult(ActivityResult result) {
-                                        // look for permissions before executing operations.
-                                        if(getParent() == null){
-                                            return;
-                                        }
-
-                                        //Check to make sure that we have read/write permission in the selected folder.
-                                        //If we don't have permission, request it.
-                                        if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                                != PackageManager.PERMISSION_GRANTED) ||
-                                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                                        != PackageManager.PERMISSION_GRANTED)) {
-
-                                            // Permission is not granted
-                                            // Should we show an explanation?
-                                            if ((ActivityCompat.shouldShowRequestPermissionRationale(getParent(),
-                                                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
-                                                    (ActivityCompat.shouldShowRequestPermissionRationale(getParent(),
-                                                            Manifest.permission.READ_EXTERNAL_STORAGE))) {
-                                                // Show an explanation to the user *asynchronously* -- don't block
-                                                // this thread waiting for the user's response! After the user
-                                                // sees the explanation, try again to request the permission.
-                                                Toast.makeText(getApplicationContext(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
-                                            } else {
-                                                // No explanation needed; request the permission
-                                                ActivityCompat.requestPermissions(getParent(),
-                                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                                                Manifest.permission.READ_EXTERNAL_STORAGE},
-                                                        Fragment_Import_1_StorageLocation.MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
-
-                                                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                                                // app-defined int constant. The callback method gets the
-                                                // result of the request.
-                                            }
-                                            //} else {
-                                            // Permission has already been granted
-                                        }
-
-                                        //The above code checked for permission, and if not granted, requested it.
-                                        //  Check one more time to see if the permission was granted:
-
-                                        if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                                == PackageManager.PERMISSION_GRANTED) &&
-                                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                                        == PackageManager.PERMISSION_GRANTED)) {
-                                            //If we now have permission...
-                                            //The result data contains a URI for the directory that
-                                            //the user selected.
-
-                                            //Put the import Uri into the intent (this could represent a folder OR a file:
-
-                                            if(result.getData() == null) {
-                                                return;
-                                            }
-                                            Intent data = result.getData();
-                                            Uri treeUri = data.getData();
-                                            if(treeUri == null) {
-                                                return;
-                                            }
-
-                                            //Call a routine to validate the location and read data from it:
-                                            Worker_Catalog_LoadData.initDataFolder(treeUri, getApplicationContext());
-
-                                        }
-                                    }
-                                });
-
                         // Allow the user to choose a directory using the system's file picker.
-                        Intent intent_GetImportFromFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                        Intent intent_DetermineDataFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 
                         // Provide write access to files and sub-directories in the user-selected directory:
-                        intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
                         //Start the activity:
-                        garlPromptForDataFolder.launch(intent_GetImportFromFolder);
+                        garlPromptForDataFolder.launch(intent_DetermineDataFolder);
+
                         return true;
                     }
                 });
@@ -292,164 +309,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
             setPreferencesFromResource(R.xml.comics_preferences, rootKey);
         }
     }
-
-    public static class RestrictedFragment extends PreferenceFragmentCompat {
-
-        @Override
-        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-
-            setPreferencesFromResource(R.xml.restricted_preferences, rootKey);
-
-            //CONFIGURE THE PIN PREFERENCE:
-            final EditTextPreference pref_preferences_pin =
-                    findPreference(GlobalClass.gsPinPreference);
-
-            //Set keyboard to be numeric:
-            assert pref_preferences_pin != null;
-            pref_preferences_pin.setOnBindEditTextListener(new androidx.preference.EditTextPreference.OnBindEditTextListener() {
-                @Override
-                public void onBindEditText(@NonNull EditText editText) {
-                    editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
-                }
-            });
-
-            pref_preferences_pin.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-
-                    globalClass.gsPin = newValue.toString();
-
-                    return true;
-                }
-            });
-
-            //CONFIGURE THE RESTRICTED TAGS LIST PREFERENCES:
-
-            MultiSelectListPreference[] pref_restricted_tags =
-                    {findPreference("multi_select_list_videos_restricted_tags"),
-                            findPreference("multi_select_list_images_restricted_tags"),
-                            findPreference("multi_select_list_comics_restricted_tags")};
-
-            for(int i = 0; i < 3; i++) {
-
-                if(pref_restricted_tags != null) {  //This line is the lesser evil of two misleading code checks.
-
-                    //Populate the MultiSelectListPreference drop-down menu:
-                    CharSequence[] csTagTexts, csTagIDs;
-                    ArrayList<String> alTagTexts = new ArrayList<>();
-                    ArrayList<String> alTagIDs = new ArrayList<>();
-
-                    //Get a list of comic tags to populate the multiSelect dropdown list:
-                    for (Map.Entry<Integer, ItemClass_Tag>
-                            entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(i).entrySet()) {
-                        alTagIDs.add(entry.getValue().iTagID.toString());
-                        alTagTexts.add(entry.getValue().sTagText);
-                    }
-
-                    csTagIDs = alTagIDs.toArray(new CharSequence[0]);
-                    csTagTexts = alTagTexts.toArray(new CharSequence[0]);
-
-                    pref_restricted_tags[i].setEntries(csTagTexts);
-                    pref_restricted_tags[i].setEntryValues(csTagIDs);
-
-
-                    StringBuilder sbRestrictedTagTextInit = new StringBuilder();
-                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(i).entrySet()) {
-                        if (entry.getValue().bIsRestricted) {
-                            sbRestrictedTagTextInit.append(entry.getValue().sTagText);
-                            sbRestrictedTagTextInit.append(", ");
-                        }
-                    }
-                    String sRestrictedTagsTextInit = sbRestrictedTagTextInit.toString();
-
-                    if (sRestrictedTagsTextInit.length() > 2) {
-                        //Apply the new data to the summary:
-                        sRestrictedTagsTextInit = sRestrictedTagsTextInit.substring(0, sRestrictedTagsTextInit.lastIndexOf(", "));
-                        String sTemp = "Restricted tags: " + sRestrictedTagsTextInit;
-                        pref_restricted_tags[i].setSummary(sTemp);
-                    }
-
-                    //Configure the change listener for when the user modifies the selection:
-                    pref_restricted_tags[i].setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                        @Override
-                        public boolean onPreferenceChange(Preference preference, Object newValue) {
-                        //The user has modified the tag selection.
-                        //Build-out the summary text.
-
-                        int iMediaCategory = 0;
-                        switch (preference.getKey()) {
-                            case "multi_select_list_videos_restricted_tags":
-                                iMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
-                                break;
-                            case "multi_select_list_images_restricted_tags":
-                                iMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
-                                break;
-                            case "multi_select_list_comics_restricted_tags":
-                                iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
-                                break;
-                        }
-
-                        //First turn off all restricted tags, and then turn back on based on newValue:
-                        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                            entry.getValue().bIsRestricted = false;
-                        }
-
-                        StringBuilder sb = new StringBuilder();
-                        sb.append(newValue);
-                        String sTemp = sb.toString();
-                        if (sTemp.length() > 0) {
-                            //Get rid of brackets:
-                            sTemp = sTemp.substring(1, sTemp.length() - 1);
-
-                            if (sTemp.length() > 0) {
-                                //Get the tag text associated with each tag ID:
-                                ArrayList<Integer> aliTagIDs = GlobalClass.getIntegerArrayFromString(sTemp, ", ");
-                                ArrayList<String> alsTagTexts = globalClass.getTagTextsFromIDs(aliTagIDs, iMediaCategory);
-
-                                //Sort the strings:
-                                SortedSet<String> ssTemp = new TreeSet<>(alsTagTexts);
-
-                                //Format the strings:
-                                sb = new StringBuilder();
-                                Iterator<String> isIterator = ssTemp.iterator();
-                                sb.append(isIterator.next());
-                                while (isIterator.hasNext()) {
-                                    sb.append(", ");
-                                    sb.append(isIterator.next());
-                                }
-                                sTemp = sb.toString();
-
-                                //Apply the new data to the summary:
-                                if (!(sTemp.isEmpty())) {
-                                    sTemp = "Restricted tags: " + sTemp;
-                                    preference.setSummary(sTemp);
-                                }
-
-                                //Update the globalClass restricted tag listings:
-                                for (Integer iRestrictedTag : aliTagIDs) {
-                                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                                        if (entry.getValue().iTagID.equals(iRestrictedTag)) {
-                                            //If the restricted tag has been found, mark it as restricted:
-                                            entry.getValue().bIsRestricted = true;
-                                        }
-                                    }
-                                }
-                            } else {
-                                preference.setSummary("Select tags you wish to be restricted.");
-                            }
-                        }
-
-                        return true;
-                        }
-
-                    });
-                }
-            } //End for loop setting the 3 restricted tags listings.
-
-        }
-
-    }
-
 
 
 }

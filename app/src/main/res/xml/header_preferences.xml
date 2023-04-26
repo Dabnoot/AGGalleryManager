@@ -15,9 +15,4 @@
         app:key="comics_header"
         app:title="Comics" />
 
-    <Preference
-        app:fragment="com.agcurations.aggallerymanager.Activity_AppSettings$RestrictedFragment"
-        app:key="restricted_header"
-        app:title="Restricted Preferences" />
-
 </PreferenceScreen>
