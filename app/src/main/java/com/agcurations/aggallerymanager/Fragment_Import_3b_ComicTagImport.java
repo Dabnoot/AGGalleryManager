@@ -15,7 +15,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -142,7 +141,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
 
         GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
             alsTags.add(entry.getValue().sTagText);
         }
 
@@ -181,7 +180,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         for(String sTag: alsProspectiveUnidentifiedTags){
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
-        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
                 String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                 if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
                     bTagFound = true;

@@ -472,7 +472,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                                 for(String sTag: alsTags){
                                                     String sIncomingTagCleaned = sTag.toLowerCase().trim();
                                                     boolean bTagFound = false;
-                                                    for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+                                                    for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
                                                         String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                                                         if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
                                                             bTagFound = true;

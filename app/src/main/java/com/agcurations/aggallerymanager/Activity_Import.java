@@ -5,10 +5,8 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
@@ -23,7 +21,6 @@ import androidx.work.WorkManager;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -33,7 +30,6 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -53,7 +49,6 @@ import android.widget.VideoView;
 import com.bumptech.glide.Glide;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -1588,7 +1583,7 @@ public class Activity_Import extends AppCompatActivity {
                         for(String sTag: fi.alsUnidentifiedTags){
                             String sIncomingTagCleaned = sTag.toLowerCase().trim();
                             boolean bTagFound = false;
-                            for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+                            for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
                                 String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                                 if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
                                     bTagFound = true;

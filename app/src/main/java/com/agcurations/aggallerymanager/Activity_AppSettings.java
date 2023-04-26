@@ -341,7 +341,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
                     //Get a list of comic tags to populate the multiSelect dropdown list:
                     for (Map.Entry<Integer, ItemClass_Tag>
-                            entry : globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()) {
+                            entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(i).entrySet()) {
                         alTagIDs.add(entry.getValue().iTagID.toString());
                         alTagTexts.add(entry.getValue().sTagText);
                     }
@@ -354,7 +354,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
 
                     StringBuilder sbRestrictedTagTextInit = new StringBuilder();
-                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()) {
+                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(i).entrySet()) {
                         if (entry.getValue().bIsRestricted) {
                             sbRestrictedTagTextInit.append(entry.getValue().sTagText);
                             sbRestrictedTagTextInit.append(", ");
@@ -390,7 +390,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
                         }
 
                         //First turn off all restricted tags, and then turn back on based on newValue:
-                        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                             entry.getValue().bIsRestricted = false;
                         }
 
@@ -427,7 +427,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
                                 //Update the globalClass restricted tag listings:
                                 for (Integer iRestrictedTag : aliTagIDs) {
-                                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                                    for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                                         if (entry.getValue().iTagID.equals(iRestrictedTag)) {
                                             //If the restricted tag has been found, mark it as restricted:
                                             entry.getValue().bIsRestricted = true;
