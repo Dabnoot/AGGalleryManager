@@ -91,16 +91,6 @@ public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
             recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
         }
 
-        if(getActivity() != null) {
-            ArrayList<ItemClass_File> alfi = new ArrayList<>();
-            for (ItemClass_File fi : ((Activity_Import) getActivity()).recyclerViewComicPreviewAdapter.alFileItems) {
-                if (fi.bIsChecked) {
-                    alfi.add(fi);
-                }
-            }
-
-            viewModelImportActivity.alfiConfirmedFileImports = alfi;
-        }
         super.onPause();
 
     }

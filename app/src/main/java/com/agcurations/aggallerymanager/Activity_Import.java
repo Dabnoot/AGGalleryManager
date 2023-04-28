@@ -524,17 +524,50 @@ public class Activity_Import extends AppCompatActivity {
     }
 
     public void buttonNextClick_ItemSelectComplete(View v){
-        if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
-                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
-            || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
-            //If we are importing a video or comic from the web, allow the user to confirm import
-            // of tags that don't already exist in the list of tags.
-            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
-        } else {
-            //If this is an item selection for local import of videos, images, or comics...
+        //Need to decide whether to go on to "import detected tags", "confirm materials to delete"
+        // (if the user is only deleting items from internal storage), or "select tags".
 
-            //First do a quick check to see if the user is moving forward with only a selection of items to delete:
+        boolean bImportIsOnlineVideo = viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE;
+        boolean bImportIsOnlineComic = viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+
+        boolean bNewTagsFound = false;
+        if(bImportIsOnlineVideo){
+            //Get selected item(s) and assign it to the viewModel:
+            ArrayList<ItemClass_File> alfi = new ArrayList<>();
+            for (ItemClass_File fi : videoDownloadListCustomAdapter.alFileItems) {
+                if (fi.bIsChecked) {
+                    if (fi.alsUnidentifiedTags.size() > 0) {
+                        bNewTagsFound = true;
+                    }
+                    alfi.add(fi);
+                    break;
+                }
+            }
+            viewModelImportActivity.alfiConfirmedFileImports = alfi;
+        } else if(bImportIsOnlineComic) {
+            ArrayList<ItemClass_File> alfi = new ArrayList<>();
+            for (ItemClass_File fi : recyclerViewComicPreviewAdapter.alFileItems) {
+                if (fi.bIsChecked) {
+                    if (fi.alsUnidentifiedTags.size() > 0) {
+                        bNewTagsFound = true;
+                    }
+                    alfi.add(fi);
+                }
+            }
+            viewModelImportActivity.alfiConfirmedFileImports = alfi;
+        }
+
+        //Check to see if there are new tags:
+        if(bNewTagsFound) {
+                //If we found new tags to be imported from a web item, allow the user to confirm import
+                // of tags:
+                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3A_ITEM_DOWNLOAD_TAG_IMPORT, false);
+        } else {
+
+            //First do a quick check to see if the user is moving forward with only a selection of
+            // items to delete. This will not occur if the import is of a web item.
             boolean bDeleteOnly = false;
             for(ItemClass_File icf: fileListCustomAdapter.alFileItems){
                 if(icf.bIsChecked){

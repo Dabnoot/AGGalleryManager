@@ -77,18 +77,6 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
         ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_WebDownloadItems);
         ListViewState = listView_VideoDownloadItems.onSaveInstanceState();
 
-        //Get any single selected item and assign it to the viewModel:
-        if(getActivity() != null) {
-            ArrayList<ItemClass_File> alfi = new ArrayList<>();
-            for (ItemClass_File fi : ((Activity_Import) getActivity()).videoDownloadListCustomAdapter.alFileItems) {
-                if (fi.bIsChecked) {
-                    alfi.add(fi);
-                    break;
-                }
-            }
-
-            viewModelImportActivity.alfiConfirmedFileImports = alfi;
-        }
         super.onPause();
 
     }
