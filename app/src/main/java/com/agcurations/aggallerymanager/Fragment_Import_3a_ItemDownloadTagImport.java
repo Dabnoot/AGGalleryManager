@@ -83,6 +83,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if(getView() == null) return;
         gbutton_ImportTags = getView().findViewById(R.id.button_ImportTags);
 
         if(gbutton_ImportTags != null){
@@ -101,13 +102,20 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
                                         alsNewTagTexts.add(tc.sTagText);
                                     }
                                 }
-                                //Call the service to add the tags:
-                                //todo: prompt user for tag age rating before import
-                                Service_TagEditor.startActionAddTags(
-                                        getActivity().getApplicationContext(),
-                                        alsNewTagTexts,
-                                        viewModelImportActivity.iImportMediaCategory,
-                                        "Fragment_Import_3a_ItemDownloadTagImport.gbutton_ImportTags.onClick()");
+
+                                ArrayList<Integer> aliNewTags = GlobalClass.ImportNewTags(alsNewTagTexts, viewModelImportActivity.iImportMediaCategory);
+                                if(aliNewTags != null){
+                                    Toast.makeText(getContext(), "Tags added successfully as restricted to user and with user's maturity.", Toast.LENGTH_LONG).show();
+                                    initComponents();
+
+                                    //Add these new tags to the preselected list of tags:
+                                    viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags.addAll(aliNewTags);
+                                    viewModelImportActivity.alfiConfirmedFileImports.get(0).aliProspectiveTags.addAll(aliNewTags);
+
+                                } else {
+                                    Toast.makeText(getContext(), "Failed to add new tags.", Toast.LENGTH_LONG).show();
+                                }
+
                             }
                         }
 
@@ -122,7 +130,10 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        if(getActivity() == null) return;
+        if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        }
         initComponents();
     }
 
@@ -206,12 +217,11 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         }
 
         //Recalculate the list of tags that do not exist:
-        GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsConfirmedUnidentifiedTags = new ArrayList<>();
         for(String sTag: alsProspectiveUnidentifiedTags){
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
-        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModelImportActivity.iImportMediaCategory).entrySet()){
                 String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                 if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
                     bTagFound = true;

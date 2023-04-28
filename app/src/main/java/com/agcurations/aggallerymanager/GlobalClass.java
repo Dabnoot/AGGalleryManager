@@ -180,8 +180,8 @@ public class GlobalClass extends Application {
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
-    public ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
-    public int giDefaultUserMaturityRating = AdapterMaturityRatings.MATURITY_RATING_M; //todo: Setting - add to settings
+    public static ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
+    public static int giDefaultUserMaturityRating = AdapterMaturityRatings.MATURITY_RATING_M; //todo: Setting - add to settings
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
@@ -1321,10 +1321,89 @@ public class GlobalClass extends Application {
 
     }
 
-    public ItemClass_Tag TagDataFile_CreateNewRecord(ItemClass_Tag ictNewTag, int iMediaCategory){
+    public static ArrayList<Integer> ImportNewTags(ArrayList<String> alsNewTagNames, int iMediaCategory){
+
+        //Any searches related to avoiding tag text/maturity/user combinations that are already in
+        // the tag DB files must have already been completed.
+
+        //Get the leading tag ID:
+        int iNextRecordId = -1;
+
+        //Find the greatest tag ID:
+        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+            int iThisId;
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                iThisId = entry.getValue().iTagID;
+                if (iThisId >= iNextRecordId){
+                    iNextRecordId = iThisId + 1;
+                }
+            }
+        } else {
+            iNextRecordId = 0;
+        }
+
+        //Prepare tag items and records:
+        ArrayList<ItemClass_Tag> alict_NewTags = new ArrayList<>();
+        ArrayList<String> als_NewTagRecords = new ArrayList<>();
+        ArrayList<Integer> als_NewTagIDs = new ArrayList<>();
+
+        for(String sNewTagName: alsNewTagNames) {
+            ItemClass_Tag ictNewTag;
+            ictNewTag = new ItemClass_Tag(iNextRecordId, sNewTagName);
+            iNextRecordId++;
+
+            //Use the user's maturity level:
+            ictNewTag.iMaturityRating = gicuCurrentUser.iMaturityLevel;
+
+            //Restrict the tag to only this user:
+            ictNewTag.alsTagApprovedUsers = new ArrayList<>();
+            ictNewTag.alsTagApprovedUsers.add(gicuCurrentUser.sUserName);
+
+            //Add the tag item to the arraylist:
+            alict_NewTags.add(ictNewTag);
+
+            //Get a tag record to write to the catalog file and add it to the arraylist:
+            String sTagRecord = getTagRecordString(ictNewTag);
+            als_NewTagRecords.add(sTagRecord);
+        }
 
         //Get the tags file:
         Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
+        try {
+            //Open the tags file write-mode append.
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "wa"); //Open file in write-append mode.
+            if(osNewTagsFile == null){
+                return null;
+            }
+            StringBuilder sbNewTagsStringBuilder = new StringBuilder();
+
+            //Add the new record to the catalog file:
+            for(String sLine: als_NewTagRecords) {
+                sbNewTagsStringBuilder.append(sLine);
+                sbNewTagsStringBuilder.append("\n");
+            }
+
+            osNewTagsFile.write(sbNewTagsStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+            osNewTagsFile.flush();
+            osNewTagsFile.close();
+
+        } catch (Exception e) {
+            return null;
+        }
+
+        //If the database write was successful, add the tag items to working memory:
+        for(ItemClass_Tag ictNewTag: alict_NewTags) {
+            gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(ictNewTag.iTagID, ictNewTag);
+            gtmCatalogTagReferenceLists.get(iMediaCategory).put(ictNewTag.iTagID, ictNewTag);
+            als_NewTagIDs.add(ictNewTag.iTagID);
+        }
+
+        return als_NewTagIDs;
+
+    }
+
+
+    public ItemClass_Tag TagDataFile_CreateNewRecord(ItemClass_Tag ictNewTag, int iMediaCategory){
 
         int iNextRecordId = -1;
 
@@ -1341,8 +1420,10 @@ public class GlobalClass extends Application {
             iNextRecordId = 0;
         }
 
+        //Get the tags file:
+        Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
         try {
-            //Open the tags file write-mode append:
+            //Open the tags file write-mode append.
             OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "wa"); //Open file in write-append mode.
             if(osNewTagsFile == null){
                 return null;

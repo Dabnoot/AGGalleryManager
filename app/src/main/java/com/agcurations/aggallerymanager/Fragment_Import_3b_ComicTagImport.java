@@ -82,6 +82,8 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if(getView() == null) return;
+
         gbutton_ImportTags = getView().findViewById(R.id.button_ImportTags);
 
         if(gbutton_ImportTags != null){
@@ -100,13 +102,20 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
                                         alsNewTagTexts.add(tc.sTagText);
                                     }
                                 }
-                                //Call the service to add the tags:
-                                //todo: prompt user for tag age rating before import
-                                Service_TagEditor.startActionAddTags(
-                                        getActivity().getApplicationContext(),
-                                        alsNewTagTexts,
-                                        GlobalClass.MEDIA_CATEGORY_COMICS,
-                                        "Fragment_Import_3b_ComicTagImport.gbutton_ImportTags.onClick()");
+
+                                ArrayList<Integer> aliNewTags = GlobalClass.ImportNewTags(alsNewTagTexts, viewModelImportActivity.iImportMediaCategory);
+                                if(aliNewTags != null){
+                                    Toast.makeText(getContext(), "Tags added successfully as restricted to user and with user's maturity.", Toast.LENGTH_LONG).show();
+                                    initComponents();
+
+                                    //Add these new tags to the preselected list of tags:
+                                    viewModelImportActivity.alfiConfirmedFileImports.get(0).aliRecognizedTags.addAll(aliNewTags);
+                                    viewModelImportActivity.alfiConfirmedFileImports.get(0).aliProspectiveTags.addAll(aliNewTags);
+
+                                } else {
+                                    Toast.makeText(getContext(), "Failed to add new tags.", Toast.LENGTH_LONG).show();
+                                }
+
                             }
                         }
 
@@ -123,7 +132,9 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         super.onResume();
         //Instantiate the ViewModel sharing data between fragments:
         if(getActivity() != null) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+            if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
+                ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+            }
             alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
         }
         initComponents();
@@ -143,9 +154,8 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         }
         final ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
 
-        GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsTags = new ArrayList<>();
-        for(Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+        for(Map.Entry<Integer, ItemClass_Tag> entry : GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
             alsTags.add(entry.getValue().sTagText);
         }
 
@@ -179,12 +189,11 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
         }
 
         //Recalculate the list of tags that do not exist:
-        GlobalClass globalClass = (GlobalClass) getActivity().getApplicationContext();
         ArrayList<String> alsConfirmedUnidentifiedTags = new ArrayList<>();
         for(String sTag: alsProspectiveUnidentifiedTags){
             String sIncomingTagCleaned = sTag.toLowerCase().trim();
             boolean bTagFound = false;
-        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+            for(Map.Entry<Integer, ItemClass_Tag> TagEntry: GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
                 String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                 if (sExistingTagCleaned.equals(sIncomingTagCleaned)) {
                     bTagFound = true;
@@ -319,7 +328,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     }
 
     public static class tagCandidate{
-        String sTagText = "";
+        String sTagText;
         boolean bIsChecked = false;
 
         public tagCandidate(String sTT){
