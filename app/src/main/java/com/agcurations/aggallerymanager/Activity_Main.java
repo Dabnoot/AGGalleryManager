@@ -373,7 +373,7 @@ public class Activity_Main extends AppCompatActivity {
         icu_DefaultUser.iUserIconColor = R.color.colorStatusBar;
         icu_DefaultUser.iMaturityLevel = AdapterMaturityRatings.MATURITY_RATING_X;
         globalClass.galicu_Users.add(icu_DefaultUser);
-        globalClass.gicuCurrentUser = icu_DefaultUser;
+        GlobalClass.gicuCurrentUser = icu_DefaultUser;
         bSingleUserInUse = true;
 
         //Add data to preferences:
@@ -530,27 +530,15 @@ public class Activity_Main extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_menu, menu);
 
-        if(globalClass.gicuCurrentUser != null){
+        if(GlobalClass.gicuCurrentUser != null){
             MenuItem menuItemLogin = menu.findItem(R.id.icon_login);
             if(menuItemLogin != null){
-                setUserColor(menuItemLogin, globalClass.gicuCurrentUser.iUserIconColor);
+                setUserColor(menuItemLogin, GlobalClass.gicuCurrentUser.iUserIconColor);
             }
         }
 
         return true;
     }
-
-    private Intent getMenuIntent(MenuItem item){
-        if(item.getItemId() == R.id.menu_UserManagement) {
-            return new Intent(getApplicationContext(), Activity_UserManagement.class);
-        } else if(item.getItemId() == R.id.menu_Settings) {
-            return new Intent(getApplicationContext(), Activity_AppSettings.class);
-        } else if (item.getItemId() == R.id.icon_login) {
-            return new Intent(getApplicationContext(), Activity_UserSelection.class);
-        }
-        return null;
-    }
-
 
     private void setUserColor(MenuItem item, int iColor){
         Drawable drawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login).mutate();
@@ -561,33 +549,31 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        if((item.getItemId() == R.id.menu_UserManagement)
-            || (item.getItemId() == R.id.menu_Settings)
-            || (item.getItemId() == R.id.icon_login)){
+        if((item.getItemId() == R.id.menu_UserManagement)){
 
             //Ask for pin code in order to allow access to feature if not admin:
-            if (globalClass.gicuCurrentUser != null) {
-                if (!globalClass.gicuCurrentUser.bAdmin) {
-                    Toast.makeText(getApplicationContext(), "Feature requires admin credentials", Toast.LENGTH_SHORT).show();
+            if (GlobalClass.gicuCurrentUser != null) {
+                if (!GlobalClass.gicuCurrentUser.bAdmin) {
+                    Toast.makeText(getApplicationContext(), "User must be logged-in and have admin privileges to configure users.", Toast.LENGTH_LONG).show();
                 } else {
-                    Intent intent = getMenuIntent(item);
-                    if (intent != null) {
-                        startActivity(intent);
-                    }
+                    Intent intentUserManagement = new Intent(getApplicationContext(), Activity_UserManagement.class);
+                    startActivity(intentUserManagement);
                 }
             } else {
-                if(item.getItemId() == R.id.icon_login){
-                    //If the user has clicked the login icon, display the login screen:
-                    Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
-                    startActivity(intentUserSelection);
-                } else {
-                    Toast.makeText(getApplicationContext(), "Feature requires admin credentials", Toast.LENGTH_SHORT).show();
-                }
+                Toast.makeText(getApplicationContext(), "User must be logged-in and have admin privileges to configure users.", Toast.LENGTH_LONG).show();
             }
 
         }
 
-        if(item.getItemId() == R.id.menu_TagEditor) {
+        if(item.getItemId() == R.id.menu_Settings){
+            Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
+            startActivity(intentSettings);
+            return true;
+        } else if(item.getItemId() == R.id.icon_login){
+            Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
+            startActivity(intentUserSelection);
+            return true;
+        } else if(item.getItemId() == R.id.menu_TagEditor) {
             Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
             startActivity(intentTagEditor);
             return true;
