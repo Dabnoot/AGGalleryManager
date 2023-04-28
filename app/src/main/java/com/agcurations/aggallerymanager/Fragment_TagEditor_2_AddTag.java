@@ -177,16 +177,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
             //Initialize the user list:
             //Initialize the displayed list of users:
+            RefreshUserPools();
             ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
-            ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
-            gAdapterUserPool = new AdapterUserList(
-                    getActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
-            gAdapterUserPool.gbCompactMode = true;
-            int[] iSelectedUnselectedBGColors = {
-                    ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2),
-                    ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain)};
-            gAdapterUserPool.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
-            listView_UserPool.setAdapter(gAdapterUserPool);
             listView_UserPool.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -202,12 +194,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             }); //End ListView.setOnItemClickListener()
 
             ListView listView_ApprovedUsers = getView().findViewById(R.id.listView_ApprovedUsers);
-            ArrayList<ItemClass_User> alicu_EmptyUserList = new ArrayList<>();
-            gAdapterApprovedUsers = new AdapterUserList(
-                    getActivity().getApplicationContext(), R.layout.listview_useritem, alicu_EmptyUserList);
-            gAdapterApprovedUsers.gbCompactMode = true;
-            gAdapterApprovedUsers.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
-            listView_ApprovedUsers.setAdapter(gAdapterApprovedUsers);
             listView_ApprovedUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -268,8 +254,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         }
 
         TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        boolean bIsTagToBeRestricted;
-        for (Map.Entry<Integer, ItemClass_Tag> entry : globalClass.gtmApprovedCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> entry : GlobalClass.gtmApprovedCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             String sTagTextForSort = entry.getValue().sTagText + entry.getValue().iTagID;
             tmTags.put(sTagTextForSort, entry.getValue());
         }
@@ -324,7 +309,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         //Update data in storage and memory, and notify the user:
         boolean bTagSuccess = false;
-        if(gViewModelTagEditor.iTagAddOrEditMode == gViewModelTagEditor.TAG_EDIT_MODE) {
+        if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
             //Attempt to update the record:
             if(globalClass.TagDataFile_UpdateRecord(ictNewTag, gViewModelTagEditor.iTagEditorMediaCategory)){
                 RefreshTagListView();
@@ -394,14 +379,33 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ToggleRestrictToUserVisibility();
         giInitialMaturityRating = -1;
         galsInitialApprovedUsers = new ArrayList<>();
+        RefreshUserPools();
+    }
+
+    private void RefreshUserPools(){
         if(getActivity() == null) return;
+        if(getView() == null) return;
+        ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
         ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
         gAdapterUserPool = new AdapterUserList(
                 getActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
+        gAdapterUserPool.gbCompactMode = true;
+        int[] iSelectedUnselectedBGColors = {
+                ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2),
+                ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain)};
+        gAdapterUserPool.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
+        listView_UserPool.setAdapter(gAdapterUserPool);
+
+        ListView listView_ApprovedUsers = getView().findViewById(R.id.listView_ApprovedUsers);
         ArrayList<ItemClass_User> alicu_EmptyUserList = new ArrayList<>();
         gAdapterApprovedUsers = new AdapterUserList(
                 getActivity().getApplicationContext(), R.layout.listview_useritem, alicu_EmptyUserList);
+        gAdapterApprovedUsers.gbCompactMode = true;
+        gAdapterApprovedUsers.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
+        listView_ApprovedUsers.setAdapter(gAdapterApprovedUsers);
     }
+
+
 
 
 
@@ -432,7 +436,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
             checkedTextView_TagText.setText(tagItem.sTagText);
 
-            if(gViewModelTagEditor.iTagAddOrEditMode == gViewModelTagEditor.TAG_EDIT_MODE) {
+            if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
                 //Only allow the user to select items if we are in edit mode.
 
                 //Set the selection state (needed as views are recycled).

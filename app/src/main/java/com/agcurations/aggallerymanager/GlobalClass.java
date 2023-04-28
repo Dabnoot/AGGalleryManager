@@ -108,8 +108,8 @@ public class GlobalClass extends Application {
     public static ContentResolver gcrContentResolver;
 
     //Tag variables:
-    public final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
-    public final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
+    public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
+    public static final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
     public AtomicBoolean abTagsLoaded = new AtomicBoolean();
     public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
@@ -1329,9 +1329,9 @@ public class GlobalClass extends Application {
         int iNextRecordId = -1;
 
         //Find the greatest tag ID:
-        if(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
             int iThisId;
-            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
                 iThisId = entry.getValue().iTagID;
                 if (iThisId >= iNextRecordId){
                     iNextRecordId = iThisId + 1;
@@ -1350,8 +1350,8 @@ public class GlobalClass extends Application {
             StringBuilder sbNewTagsStringBuilder = new StringBuilder();
 
             boolean bTagAlreadyExists = false;
-            if (gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-                for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
+                for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
                     if (entry.getValue().sTagText.toLowerCase().equals(ictNewTag.sTagText.toLowerCase())) {
                         //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
@@ -1361,11 +1361,12 @@ public class GlobalClass extends Application {
                 }
             }
 
+            ItemClass_Tag ictNewNewTag = new ItemClass_Tag(iNextRecordId, ictNewTag.sTagText); //Tag ID in the tag item is final. Must update here with "newnew" item.
             if(!bTagAlreadyExists) {
                 //Add the tag to memory
-                ItemClass_Tag ictNewNewTag = new ItemClass_Tag(iNextRecordId, ictNewTag.sTagText); //Tag ID in the tag item is final. Must update here with "newnew" item.
                 ictNewNewTag.sTagDescription = ictNewTag.sTagDescription;
                 ictNewNewTag.iMaturityRating = ictNewTag.iMaturityRating;
+                ictNewNewTag.alsTagApprovedUsers = new ArrayList<>(ictNewTag.alsTagApprovedUsers);
 
                 gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
                 gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
@@ -1375,18 +1376,19 @@ public class GlobalClass extends Application {
                 sbNewTagsStringBuilder.append(sLine);
                 sbNewTagsStringBuilder.append("\n");
             } else {
-                ictNewTag = null;
+                ictNewNewTag = null;
             }
 
             osNewTagsFile.write(sbNewTagsStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
             osNewTagsFile.flush();
             osNewTagsFile.close();
+            return ictNewNewTag;
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + uriTagsFile + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+            return null;
 
-        return ictNewTag;
+        }
 
     }
 

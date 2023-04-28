@@ -32,7 +32,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
@@ -175,7 +174,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         stopWatch.Reset();
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            globalClass.gtmCatalogTagReferenceLists.add(InitTagData(iMediaCategory));
+            GlobalClass.gtmCatalogTagReferenceLists.add(InitTagData(iMediaCategory));
 
             /*//Get tag restrictions preferences:
             //SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(gContext);
@@ -742,8 +741,8 @@ public class Worker_Catalog_LoadData extends Worker {
                         //Update the tags histogram. As of 7/29/2022, this is used to show the user
                         //  how many tags are in use while they select tags to perform a tag filter.
                         for (int iCatalogItemTagID : ci.aliTags) {
-                            if (globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
-                                Objects.requireNonNull(globalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                            if (GlobalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                                Objects.requireNonNull(GlobalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
                             }
                         }
 

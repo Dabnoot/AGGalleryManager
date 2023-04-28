@@ -113,6 +113,15 @@ public class Fragment_SelectTags extends Fragment {
             //Hide the TagEditor button:
             button_TagEdit.setVisibility(View.INVISIBLE);
 
+        } else if(viewModel_fragment_selectTags.bShowModeXrefTagUse) {
+            //When bShowModeXrefTagUse is activated, we are using Fragment_SelectTags
+            //  for filtering. In this case, only show tags which are used, that is,
+            //  has a frequency count greater than zero. Don't give the option for the user to add
+            //  tags via the tag editor.
+
+            //Hide the TagEditor button:
+            button_TagEdit.setVisibility(View.INVISIBLE);
+
         } else {
             button_UncheckTags.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -336,7 +345,7 @@ public class Fragment_SelectTags extends Fragment {
 
         viewModel_fragment_selectTags.alTagsAll.clear();
 
-        TreeMap<Integer, ItemClass_Tag> tmTagPool = globalClass.gtmApprovedCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
+        TreeMap<Integer, ItemClass_Tag> tmTagPool = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
 
         ArrayList<ItemClass_Tag> alict_SelectedTagsViewModelReset = new ArrayList<>();
 
@@ -384,7 +393,11 @@ public class Fragment_SelectTags extends Fragment {
             ictNew.iSelectionOrder = iSelectionOrder;
             ictNew.iMaturityRating = tmEntryTagReferenceItem.getValue().iMaturityRating;
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
-            ictNew.alsTagApprovedUsers = new ArrayList<>(tmEntryTagReferenceItem.getValue().alsTagApprovedUsers);
+            if(tmEntryTagReferenceItem.getValue().alsTagApprovedUsers == null){
+                ictNew.alsTagApprovedUsers = new ArrayList<>();
+            } else {
+                ictNew.alsTagApprovedUsers = new ArrayList<>(tmEntryTagReferenceItem.getValue().alsTagApprovedUsers);
+            }
 
             viewModel_fragment_selectTags.alTagsAll.add(ictNew);
             if (ictNew.bIsChecked) {
