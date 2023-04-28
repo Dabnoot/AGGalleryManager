@@ -102,7 +102,11 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
                                 }
                                 //Call the service to add the tags:
                                 //todo: prompt user for tag age rating before import
-                                Service_TagEditor.startActionAddTags(getActivity().getApplicationContext(), alsNewTagTexts, GlobalClass.MEDIA_CATEGORY_COMICS);
+                                Service_TagEditor.startActionAddTags(
+                                        getActivity().getApplicationContext(),
+                                        alsNewTagTexts,
+                                        GlobalClass.MEDIA_CATEGORY_COMICS,
+                                        "Fragment_Import_3b_ComicTagImport.gbutton_ImportTags.onClick()");
                             }
                         }
 

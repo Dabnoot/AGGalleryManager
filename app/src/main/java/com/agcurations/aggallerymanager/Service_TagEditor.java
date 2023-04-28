@@ -11,7 +11,7 @@ import androidx.work.WorkManager;
 
 public class Service_TagEditor {
 
-    public static void startActionDeleteTag(Context context, ItemClass_Tag ict_TagToDelete, int iMediaCategory) {
+    public static void startActionDeleteTag(Context context, ItemClass_Tag ict_TagToDelete, int iMediaCategory, String sCaller) {
 
         String sTagRecord = GlobalClass.getTagRecordString(ict_TagToDelete);
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -28,7 +28,7 @@ public class Service_TagEditor {
         WorkManager.getInstance(context).enqueue(otwrDeleteTag);
     }
 
-    public static void startActionAddTags(Context context, ArrayList<String> alsTags, int iMediaCategory) {
+    public static void startActionAddTags(Context context, ArrayList<String> alsTags, int iMediaCategory, String sCaller) {
 
         String[] sTags = new String[alsTags.size()];
         int i = 0;
@@ -39,7 +39,7 @@ public class Service_TagEditor {
 
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataAddTag = new Data.Builder()
-                .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_4_DeleteTag:DeleteTag()")
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCaller)
                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                 .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
                 .putStringArray(GlobalClass.EXTRA_ARRAYLIST_STRING_TAGS_TO_ADD, sTags)

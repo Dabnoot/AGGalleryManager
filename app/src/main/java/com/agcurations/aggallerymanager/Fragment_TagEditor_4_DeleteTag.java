@@ -154,7 +154,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         ArrayList<ItemClass_Tag> alict_TagItems = new ArrayList<>();
 
         //Go through the tags treeMap and put the ListView together:
-        for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : globalClass.gtmCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : globalClass.gtmApprovedCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             alict_TagItems.add(tmEntryTagReferenceItem.getValue());
         }
 
@@ -211,9 +211,12 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     }
 
     private void DeleteTag(){
-        Service_TagEditor.startActionDeleteTag(getActivity(),
+        Service_TagEditor.startActionDeleteTag(
+                getActivity(),
                 gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected),
-                viewModelTagEditor.iTagEditorMediaCategory);
+                viewModelTagEditor.iTagEditorMediaCategory,
+                "Fragment_TagEditor_4_DeleteTag.DeleteTag()");
+        //todo: Update user permissions and maturity ratings for catalog items that had this tag.
         viewModelTagEditor.bTagDeleted = true;
     }
 
