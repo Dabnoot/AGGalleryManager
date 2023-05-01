@@ -188,17 +188,20 @@ public class Fragment_ItemDetails extends Fragment {
                     if(!gciCatalogItem.sTags.equals(gsNewTagIDs)) {
                         gciCatalogItem.sTags = gsNewTagIDs;
                         gciCatalogItem.aliTags = GlobalClass.getTagIDsFromTagIDString(gsNewTagIDs);
+                        //Recalc maturity rating for the item:
+                        gciCatalogItem.iMaturityRating = globalClass.getLowestTagMaturityRating(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
                         //Inform program of a need to update the tags histogram:
                         globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                     }
                     gciCatalogItem.iGrade = giNewGrade;
                     gsPreviousTagIDs = gsNewTagIDs;
                     giPreviousGrade = giNewGrade;
+                    Toast.makeText(getContext(), "Saving data...", Toast.LENGTH_SHORT).show();
+                    button_Save.setEnabled(false);
                         //Because the item assigned to gciCatalogItem was passed-in by reference,
                         //  this changes the CatalogItem set in the calling activity, too.
                     globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
                         //Write the modifications to file, and update official memory.
-                    button_Save.setEnabled(false);
                     Toast.makeText(getContext(), "Data saved.", Toast.LENGTH_SHORT).show();
 
                     if(getActivity() != null) {
