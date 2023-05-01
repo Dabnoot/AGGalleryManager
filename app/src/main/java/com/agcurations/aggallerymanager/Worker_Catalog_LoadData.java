@@ -280,7 +280,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //globalClass.CatalogDataFile_AddNewField();
 
-        //globalClass.UpdateAllCatalogItemMaturitiesBasedOnTags();
+        //globalClass.UpdateAllCatalogItemBasedOnTags();
 
         //VerifyVideoFilesIntegrity();
 

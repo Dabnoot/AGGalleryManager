@@ -1072,7 +1072,7 @@ public class GlobalClass extends Application {
         return bSuccess;
     }
 
-    public void CatalogDataFile_AddNewField(){
+    public void CatalogDataFile_UpdateCatalogFiles(){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
@@ -1890,25 +1890,17 @@ public class GlobalClass extends Application {
         return getLowestTagMaturityRating(alict_Tags);
     }
 
-    public void UpdateAllCatalogItemMaturitiesBasedOnTags(){
+    public void UpdateAllCatalogItemBasedOnTags(){
+        //Recalculates catalog item maturity rating and approved users.
+        //This routine is used during app development and testing.
 
         for(int i = 0; i < 3; i++){
             for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(i).entrySet()){
-                int iLowestMaturityRating = giDefaultUserMaturityRating;
-                for(int iTagID: icciCatalogItem.getValue().aliTags){
-                    ItemClass_Tag ictReferenceTag = gtmApprovedCatalogTagReferenceLists.get(i).get(iTagID);
-                    if(ictReferenceTag != null){
-                        if(iLowestMaturityRating < ictReferenceTag.iMaturityRating){
-                            iLowestMaturityRating = ictReferenceTag.iMaturityRating;
-                        }
-                    }
-                }
-                icciCatalogItem.getValue().iMaturityRating = iLowestMaturityRating;
+                icciCatalogItem.getValue().iMaturityRating = getLowestTagMaturityRating(icciCatalogItem.getValue().aliTags, i);
+                icciCatalogItem.getValue().alsApprovedUsers = getApprovedUsersForTagGrouping(icciCatalogItem.getValue().aliTags, i);
             }
         }
-
-        CatalogDataFile_AddNewField();
-
+        CatalogDataFile_UpdateCatalogFiles();
     }
 
 
@@ -1924,23 +1916,32 @@ public class GlobalClass extends Application {
 
         //Process each listed tag ID:
         for(Integer iTagID: aliTagIDs) {
-            ItemClass_Tag ict = gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
-            if(ict.alsTagApprovedUsers.size() > 0){
-                //Check to see if users are included:
-                ArrayList<ItemClass_User> alsApprovedUsers = new ArrayList<>();
-                for(ItemClass_User icu: alsApprovedUserPool){
-                    boolean bUserApproved = false;
-                    for(String sUserApprovedForTag: ict.alsTagApprovedUsers){
-                        if(sUserApprovedForTag.equals(icu.sUserName)){
-                            bUserApproved = true;
-                            break;
+            if(iTagID == -1) continue;//If an item has no tags, just move on without special approved users.
+            ItemClass_Tag ict = gtmCatalogTagReferenceLists.get(iMediaCategory).get(iTagID);
+            if(ict != null) {
+                if (ict.alsTagApprovedUsers != null) {
+                    if (ict.alsTagApprovedUsers.size() > 0) {
+                        //Check to see if users are included:
+                        ArrayList<ItemClass_User> alsApprovedUsers = new ArrayList<>();
+                        for (ItemClass_User icu : alsApprovedUserPool) {
+                            boolean bUserApproved = false;
+                            for (String sUserApprovedForTag : ict.alsTagApprovedUsers) {
+                                if (sUserApprovedForTag.equals(icu.sUserName)) {
+                                    bUserApproved = true;
+                                    break;
+                                }
+                            }
+                            if (bUserApproved) {
+                                alsApprovedUsers.add(icu);
+                            }
                         }
+                        alsApprovedUserPool = alsApprovedUsers;
                     }
-                    if(bUserApproved){
-                        alsApprovedUsers.add(icu);
-                    }
+                } else {
+                    Log.d("GlobalClass:getApprovedUsersForTagGrouping()", "alsTagApprovedUsers is null");
                 }
-                alsApprovedUserPool = alsApprovedUsers;
+            } else {
+                Log.d("GlobalClass:getApprovedUsersForTagGrouping()", "Tag item is null for tag ID " + iTagID);
             }
         }
         ArrayList<String> alsApprovedUsers = new ArrayList<>();
