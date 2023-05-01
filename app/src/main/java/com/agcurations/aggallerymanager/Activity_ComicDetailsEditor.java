@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -104,7 +105,9 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 gciCatalogItem.sComicCategories = editText_Categories.getText().toString();
 
                 //Update catalog item in memory and in storage:
+                Toast.makeText(getApplicationContext(), "Saving catalog record...", Toast.LENGTH_SHORT).show();
                 globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                Toast.makeText(getApplicationContext(), "Catalog record saved.", Toast.LENGTH_SHORT).show();
 
                 //Tell Activity_CatalogViewer to refresh its view:
                 globalClass.gbCatalogViewerRefresh = true;
