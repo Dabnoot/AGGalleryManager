@@ -897,7 +897,15 @@ public class GlobalClass extends Application {
 
         if(alci_CatalogItems != null){
             if(alci_CatalogItems.size() > 0){
-                iMediaCategory = alci_CatalogItems.get(0).iMediaCategory; //All items should have the same media category.
+                int iTempMediaCategory = -1;
+                for(ItemClass_CatalogItem icci: alci_CatalogItems){
+                    if(iTempMediaCategory == -1){
+                        iTempMediaCategory = icci.iMediaCategory; //All items should have the same media category.
+                    } else if (icci.iMediaCategory != iTempMediaCategory){
+                        return;
+                    }
+                }
+                iMediaCategory = iTempMediaCategory;
             } else {
                 return;
             }
@@ -1749,19 +1757,33 @@ public class GlobalClass extends Application {
 
         TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram = new TreeMap<>();
 
+        //Get a list of all tags not available to the current user because those tags are private to
+        // another user:
         ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
-        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-            //if (entry.getValue().bIsRestricted) {
+        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+            boolean bTagIsOutsideMaturityRating;
+            boolean bTagIsPrivateToOtherUsers;
             if(gicuCurrentUser != null) {
-                if (gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating) {
-                    aliRestrictedTagIDs.add(entry.getValue().iTagID);
+                //If a user is logged-in:
+                 bTagIsOutsideMaturityRating = gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating;
+                 bTagIsPrivateToOtherUsers = entry.getValue().alsTagApprovedUsers.size() > 0;
+                if(entry.getValue().alsTagApprovedUsers.size() > 0){
+                    for(String sApprovedUser: entry.getValue().alsTagApprovedUsers){
+                        if(sApprovedUser.equals(gicuCurrentUser.sUserName)){
+                            bTagIsPrivateToOtherUsers = false;
+                            break;
+                        }
+                    }
                 }
             } else {
                 //If no user is selected or current user is somehow null, follow guidelines for
                 //  default user maturity rating.
-                if (entry.getValue().iMaturityRating <= giDefaultUserMaturityRating) {
-                    aliRestrictedTagIDs.add(entry.getValue().iTagID);
-                }
+                bTagIsOutsideMaturityRating = giDefaultUserMaturityRating < entry.getValue().iMaturityRating;
+                bTagIsPrivateToOtherUsers = entry.getValue().alsTagApprovedUsers.size() > 0;
+            }
+            if (bTagIsOutsideMaturityRating ||
+                    bTagIsPrivateToOtherUsers) {
+                aliRestrictedTagIDs.add(entry.getValue().iTagID);
             }
         }
 
@@ -1994,6 +2016,20 @@ public class GlobalClass extends Application {
                     gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(entry.getKey(), entry.getValue());
                 }
             }
+
+            //Update the tags histogram. As of 7/29/2022, this is used to show the user
+            //  how many tags are in use while they select tags to perform a tag filter.
+            if(gtmCatalogLists.size() == 3) {
+                //If the catalogs are loaded...
+                for (Map.Entry<String, ItemClass_CatalogItem> icci : gtmCatalogLists.get(iMediaCategory).entrySet()) {
+                    for (int iCatalogItemTagID : icci.getValue().aliTags) {
+                        if (gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
+                            Objects.requireNonNull(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
+                        }
+                    }
+                }
+            }
+
         }
 
 
