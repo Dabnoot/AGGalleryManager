@@ -43,9 +43,10 @@
                     app:tabPaddingEnd="0dp"
                     android:background="@color/colorStatusBar">
 
-                    <com.google.android.material.tabs.TabItem
+                    <!--<com.google.android.material.tabs.TabItem
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
+                        This item was causing a rendering crash-->
 
                 </com.google.android.material.tabs.TabLayout>
 
