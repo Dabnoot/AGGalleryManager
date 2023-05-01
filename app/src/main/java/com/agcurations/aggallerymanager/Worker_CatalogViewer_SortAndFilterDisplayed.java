@@ -296,22 +296,24 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 }
             }*/
             int iMaturityRating = entry.getValue().iMaturityRating;
-            if (globalClass.gicuCurrentUser != null) {
-                if (iMaturityRating > globalClass.gicuCurrentUser.iMaturityLevel) {
+            if (GlobalClass.gicuCurrentUser != null) {
+                if (iMaturityRating > GlobalClass.gicuCurrentUser.iMaturityLevel) {
                     bIsRestricted = true;
                 }
             } else {
-                if (iMaturityRating > globalClass.giDefaultUserMaturityRating) {
+                if (iMaturityRating > GlobalClass.giDefaultUserMaturityRating) {
                     bIsRestricted = true;
                 }
             }
             boolean bApprovedForThisUser = false;
             ArrayList<String> alsAssignedUsers = entry.getValue().alsApprovedUsers;
             if(alsAssignedUsers.size() > 0){
-                for(String sAssignedUser: alsAssignedUsers){
-                    if(globalClass.gicuCurrentUser.sUserName.equals(sAssignedUser)){
-                        bApprovedForThisUser = true;
-                        break;
+                if(GlobalClass.gicuCurrentUser != null) {
+                    for (String sAssignedUser : alsAssignedUsers) {
+                        if (GlobalClass.gicuCurrentUser.sUserName.equals(sAssignedUser)) {
+                            bApprovedForThisUser = true;
+                            break;
+                        }
                     }
                 }
             } else {
