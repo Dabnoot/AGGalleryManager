@@ -91,6 +91,8 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 if(!gciCatalogItem.sTags.equals(gsNewTagIDs)) {
                     gciCatalogItem.sTags = gsNewTagIDs;
                     gciCatalogItem.aliTags = GlobalClass.getTagIDsFromTagIDString(gsNewTagIDs);
+                    //Recalc maturity rating for the item:
+                    gciCatalogItem.iMaturityRating = globalClass.getLowestTagMaturityRating(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
                     //Inform program of a need to update the tags histogram:
                     globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                 }
