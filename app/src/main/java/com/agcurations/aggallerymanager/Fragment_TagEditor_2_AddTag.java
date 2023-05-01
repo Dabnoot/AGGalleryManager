@@ -162,7 +162,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gCheckBox_SetApprovedUsers.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ToggleRestrictToUserVisibility();
+                    ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
                 }
             });
 
@@ -171,7 +171,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 @Override
                 public void onClick(View v) {
                     gCheckBox_SetApprovedUsers.setChecked(!gCheckBox_SetApprovedUsers.isChecked());
-                    ToggleRestrictToUserVisibility();
+                    ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
                 }
             });
 
@@ -236,10 +236,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         RefreshTagListView();
     }
 
-    private void ToggleRestrictToUserVisibility(){
-        if(getView() == null) return;
-        boolean bCheckedState = gCheckBox_SetApprovedUsers.isChecked();
-        if(bCheckedState){
+    private void ToggleRestrictToUserVisibility(boolean bNewCheckedState){
+        if(bNewCheckedState){
             gLayoutParams_UserSelection.height = RelativeLayout.LayoutParams.WRAP_CONTENT;
         } else {
             gLayoutParams_UserSelection.height = 0;
@@ -376,7 +374,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         gEditText_TagText.setText("");
         gEditText_TagDescription.setText("");
         gCheckBox_SetApprovedUsers.setChecked(false);
-        ToggleRestrictToUserVisibility();
+        ToggleRestrictToUserVisibility(false);
         giInitialMaturityRating = -1;
         galsInitialApprovedUsers = new ArrayList<>();
         RefreshUserPools();
@@ -465,7 +463,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                             giInitialMaturityRating = tagItem.iMaturityRating;
                             if(tagItem.alsTagApprovedUsers.size() > 0){
                                 gCheckBox_SetApprovedUsers.setChecked(true);
-                                ToggleRestrictToUserVisibility();
+                                ToggleRestrictToUserVisibility(true);
                                 ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
                                 ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
                                 ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>();
@@ -493,6 +491,19 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                                 gAdapterUserPool.AddUsers(alicuRemainingUserPool);
                                 gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
 
+                            } else {
+
+                                gCheckBox_SetApprovedUsers.setChecked(false);
+                                ToggleRestrictToUserVisibility(false);
+                                ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
+                                ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>(globalClass.galicu_Users);
+                                galsInitialApprovedUsers = new ArrayList<>();
+
+                                gAdapterUserPool.clear();
+                                gAdapterApprovedUsers.clear();
+
+                                gAdapterUserPool.AddUsers(alicuRemainingUserPool);
+                                gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
                             }
                             //Go through and uncheck anything but this tag:
                             for (ItemClass_Tag ict : alictTagItems) {
