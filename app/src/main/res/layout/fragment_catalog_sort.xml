@@ -52,7 +52,8 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:layout_toEndOf="@id/textView_labelSortBy"
-            android:layout_alignBottom="@id/textView_labelSortBy"/>
+            android:layout_alignBottom="@id/textView_labelSortBy"
+            android:layout_marginBottom="-10dp"/>
 
         <ImageButton
             android:id="@+id/imageButton_SortOrder"
@@ -109,7 +110,8 @@
             android:textColor="@color/colorTextColor"
             android:textSize="20sp"
             android:layout_alignEnd="@+id/textView_labelSearchKeyWords"
-            android:layout_below="@+id/editText_SearchKeywords"/>
+            android:layout_below="@+id/editText_SearchKeywords"
+            android:layout_marginTop="3dp"/>
 
         <Spinner
             android:id="@+id/spinner_SearchIn"
@@ -117,7 +119,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/textView_labelSearchField"
-            android:layout_alignBottom="@+id/textView_labelSearchField" />
+            android:layout_alignBottom="@+id/textView_labelSearchField"
+            android:layout_marginBottom="-10dp" />
 
         <!--Separator-->
         <View
@@ -147,7 +150,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/textView_labelFilter"
-            android:layout_alignBottom="@+id/textView_labelFilter" />
+            android:layout_alignBottom="@+id/textView_labelFilter"
+            android:layout_marginBottom="-10dp"
+            style="@style/SpinnerStyle"/>
 
         <!--Separator-->
         <View

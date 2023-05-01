@@ -39,6 +39,9 @@
         <!--<item name="android:itemBackground">@color/colorBlack</item>--> <!-- Can set BG color of menu items, context menu items, and perhaps also list items. -->
         <!--<item name="actionOverflowMenuStyle">@style/custom_optionsMenuStyle</item>--> <!-- Can set background of menu -->
 
+        <!--For the spinner style, specifically for item dividers-->
+        <item name="android:dropDownListViewStyle">@style/SpinnerStyle</item>
+
     </style>
 
     <style name="custom_optionsMenuStyle" parent="Widget.AppCompat.PopupMenu.Overflow">
@@ -115,5 +118,13 @@
         <item name="android:textAllCaps">false</item>
         <item name="android:textColor">@color/tab_textcolor</item>
     </style>
+
+    <!--For spinner item dividers:-->
+    <style name="SpinnerStyle" parent="Widget.AppCompat.ListView.DropDown">
+        <item name="android:divider">#d1d1d1</item>
+        <item name="android:dividerHeight">1dp</item>
+    </style>
+
+
 
 </resources>
