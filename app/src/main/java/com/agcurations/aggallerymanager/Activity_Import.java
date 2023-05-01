@@ -569,13 +569,15 @@ public class Activity_Import extends AppCompatActivity {
             //First do a quick check to see if the user is moving forward with only a selection of
             // items to delete. This will not occur if the import is of a web item.
             boolean bDeleteOnly = false;
-            for(ItemClass_File icf: fileListCustomAdapter.alFileItems){
-                if(icf.bIsChecked){
-                    bDeleteOnly = false;
-                    break;
-                }
-                if(icf.bMarkedForDeletion){
-                    bDeleteOnly = true;
+            if(fileListCustomAdapter != null) { //fileListCustomAdapter will be null for comics as comics uses recyclerViewComicPreviewAdapter.
+                for (ItemClass_File icf : fileListCustomAdapter.alFileItems) {
+                    if (icf.bIsChecked) {
+                        bDeleteOnly = false;
+                        break;
+                    }
+                    if (icf.bMarkedForDeletion) {
+                        bDeleteOnly = true;
+                    }
                 }
             }
 
