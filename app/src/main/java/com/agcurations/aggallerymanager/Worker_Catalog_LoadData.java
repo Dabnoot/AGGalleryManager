@@ -269,8 +269,6 @@ public class Worker_Catalog_LoadData extends Worker {
                 true, iProgressBarValue,
                 true, "Post Processing",
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
-        //todo: Below item removed as this should now be fully executed by the download post-processor worker
-        //globalClass.ExecuteDownloadManagerPostProcessing();
 
         iProgressNumerator++;
         /*iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -607,6 +605,8 @@ public class Worker_Catalog_LoadData extends Worker {
 
                     if(isCatalogReader != null) {
 
+
+
                         //Don't use InputStream.readAllBytes() if using a version of Java less than 9.
                         //byte[] bytesCatalogData = isCatalogReader.readAllBytes(); //Read all data at once as this is fastest.
                         byte[] bytesCatalogData = GlobalClass.readAllBytes(isCatalogReader);
@@ -623,6 +623,14 @@ public class Worker_Catalog_LoadData extends Worker {
                         return tmCatalogItems;
                     }
 
+                    int iProgressNumerator = 0;
+                    int iProgressDenominator = sCatalogRecords.length;
+                    int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                    globalClass.BroadcastProgress(false, "",
+                            true, iProgressBarValue,
+                            true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
+                            Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+
 
                     ItemClass_CatalogItem ci;
                     String sLine;
@@ -632,7 +640,6 @@ public class Worker_Catalog_LoadData extends Worker {
                             continue;
                         }
                         ci = GlobalClass.ConvertStringToCatalogItem(sLine);
-
 
                         if(ci.iSpecialFlag ==  ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
                             if(ci.sThumbnail_File.equals("")){
@@ -738,14 +745,14 @@ public class Worker_Catalog_LoadData extends Worker {
                             }
                         }
 
-                        //Update the tags histogram. As of 7/29/2022, this is used to show the user
-                        //  how many tags are in use while they select tags to perform a tag filter.
-                        for (int iCatalogItemTagID : ci.aliTags) {
-                            if (GlobalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID) != null) {
-                                Objects.requireNonNull(GlobalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID)).iHistogramCount++;
-                            }
+                        iProgressNumerator++;
+                        if(iProgressNumerator % 100 == 0) {
+                            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                            globalClass.BroadcastProgress(false, "",
+                                    true, iProgressBarValue,
+                                    true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
+                                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
                         }
-
                     }
 
 
@@ -760,7 +767,7 @@ public class Worker_Catalog_LoadData extends Worker {
                         }
                     }
                 }
-                stopWatch.PostDebugLogAndRestart("Processing catalog contents records and cross-referencing tags completed at duration ");
+                stopWatch.PostDebugLogAndRestart("Processing catalog contents records completed at duration ");
             }
             globalClass.gbTagHistogramRequiresUpdate[iMediaCategory] = false;
 
