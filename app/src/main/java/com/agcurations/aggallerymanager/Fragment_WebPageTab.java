@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -28,7 +30,9 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -38,6 +42,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -402,6 +407,48 @@ public class Fragment_WebPageTab extends Fragment {
                         }
                     }
 
+                }
+            });
+        }
+
+        ImageButton imageButton_ClearCache = getView().findViewById(R.id.imageButton_ClearCache);
+        if(imageButton_ClearCache != null){
+            imageButton_ClearCache.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String sConfirmationMessage = "Do you want to clear the cookies?";
+
+                    if(getContext() != null) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
+                        builder.setTitle("Clear Cookies");
+                        builder.setMessage(sConfirmationMessage);
+                        //builder.setIcon(R.drawable.ic_launcher);
+                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                                Toast.makeText(getContext(), "Clearing cookies...", Toast.LENGTH_SHORT).show();
+                                android.webkit.CookieManager cookieManager = CookieManager.getInstance();
+
+                                cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
+                                    // a callback which is executed when the cookies have been removed
+
+                                    public void onReceiveValue(Boolean aBoolean) {
+                                        Toast.makeText(getContext(), "Cookies cleared.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+
+                                //gWebView.clearCache(true);
+
+                            }
+                        });
+                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                            }
+                        });
+                        AlertDialog adConfirmationDialog = builder.create();
+                        adConfirmationDialog.show();
+                    }
                 }
             });
         }
