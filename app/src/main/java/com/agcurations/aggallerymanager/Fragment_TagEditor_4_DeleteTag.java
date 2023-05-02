@@ -184,7 +184,15 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
             return;
         }
 
-        String sConfirmationMessage = "Confirm tag deletion: ";
+        String sConfirmationMessage = "This action will delete the tag from the database. The tag will be" +
+                " removed from all catalog items. The user permissions and maturity rating for each" +
+                " catalog item previously holding the tag will be recalculated. If this tag has a" +
+                " high maturity rating and all other tags applied to the catalog item have a lower" +
+                " maturity, the lower maturity rating will be applied to the catalog item. If there" +
+                " are no remaining tags, the default maturity will be applied. This could result in" +
+                " mature content or content currently private to the current user being exposed to" +
+                " inappropriate users.\n" +
+                "Confirm tag deletion: ";
         sConfirmationMessage = sConfirmationMessage + Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)).sTagText;
 
         if (getActivity() == null) {
