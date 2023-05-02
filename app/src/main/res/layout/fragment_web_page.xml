@@ -83,17 +83,6 @@
                 />
 
             <ImageButton
-                android:id="@+id/imageButton_ClearCache"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginEnd="0dp"
-                android:padding="10dp"
-                android:background="?android:selectableItemBackground"
-                android:scaleType="center"
-                android:src="@drawable/baseline_cleaning_services_24" />
-
-            <ImageButton
                 android:id="@+id/imageButton_ImportContent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

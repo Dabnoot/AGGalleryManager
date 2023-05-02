@@ -8,4 +8,10 @@
         android:summary="Close all tabs. Clears out all tabs quickly, or clear any pages causing the browser to crash on open."
         />
 
+    <Preference
+        android:title="Clear All Cookies"
+        android:key="clear_all_cookies"
+        android:summary="Clears all cookies stored in relation to this app. Does not clear cookies related to other apps."
+        />
+
 </PreferenceScreen>

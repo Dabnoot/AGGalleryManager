@@ -411,48 +411,6 @@ public class Fragment_WebPageTab extends Fragment {
             });
         }
 
-        ImageButton imageButton_ClearCache = getView().findViewById(R.id.imageButton_ClearCache);
-        if(imageButton_ClearCache != null){
-            imageButton_ClearCache.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String sConfirmationMessage = "Do you want to clear the cookies?";
-
-                    if(getContext() != null) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
-                        builder.setTitle("Clear Cookies");
-                        builder.setMessage(sConfirmationMessage);
-                        //builder.setIcon(R.drawable.ic_launcher);
-                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                                Toast.makeText(getContext(), "Clearing cookies...", Toast.LENGTH_SHORT).show();
-                                android.webkit.CookieManager cookieManager = CookieManager.getInstance();
-
-                                cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
-                                    // a callback which is executed when the cookies have been removed
-
-                                    public void onReceiveValue(Boolean aBoolean) {
-                                        Toast.makeText(getContext(), "Cookies cleared.", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-
-                                //gWebView.clearCache(true);
-
-                            }
-                        });
-                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                            }
-                        });
-                        AlertDialog adConfirmationDialog = builder.create();
-                        adConfirmationDialog.show();
-                    }
-                }
-            });
-        }
-
         ImageButton imageButton_ImportContent = getView().findViewById(R.id.imageButton_ImportContent);
         if (imageButton_ImportContent != null) {
             imageButton_ImportContent.setOnClickListener(new View.OnClickListener() {

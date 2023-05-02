@@ -15,6 +15,8 @@ import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
+import android.webkit.ValueCallback;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -265,7 +267,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
 
                     //Confirm with the user that they are doing what they want to do:
                     AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
-                    builder.setTitle("AG Gallery Manager: Web Browser");
+                    builder.setTitle("AG Gallery Manager Web Browser");
                     builder.setMessage("Close all tabs?");
 
                     builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
@@ -283,6 +285,45 @@ public class Activity_AppSettings extends AppCompatActivity implements
                                     Toast.makeText(getContext(), "Could not delete file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();
                                 }
                             }
+
+                        }
+                    });
+                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+                    AlertDialog adConfirmationDialog = builder.create();
+                    adConfirmationDialog.show();
+
+                    return false;
+                }
+            });
+
+            Preference preference_clear_all_cookies = findPreference("clear_all_cookies");
+            preference_clear_all_cookies.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+
+                    //Confirm with the user that they are doing what they want to do:
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustomStyle);
+                    builder.setTitle("AG Gallery Manager Web Browser");
+                    builder.setMessage("Clear all Cookies?");
+
+                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+
+                            Toast.makeText(getContext(), "Clearing cookies...", Toast.LENGTH_SHORT).show();
+                            android.webkit.CookieManager cookieManager = CookieManager.getInstance();
+
+                            cookieManager.removeAllCookies(new ValueCallback<Boolean>() {
+                                // a callback which is executed when the cookies have been removed
+
+                                public void onReceiveValue(Boolean aBoolean) {
+                                    Toast.makeText(getContext(), "Cookies cleared.", Toast.LENGTH_SHORT).show();
+                                }
+                            });
 
                         }
                     });
