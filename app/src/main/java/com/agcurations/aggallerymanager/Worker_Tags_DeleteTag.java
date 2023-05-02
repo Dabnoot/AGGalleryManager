@@ -67,6 +67,12 @@ public class Worker_Tags_DeleteTag extends Worker {
                 }
                 tmEntryCatalogRecord.getValue().sTags = GlobalClass.formDelimitedString(aliNewTags, ",");
                 tmEntryCatalogRecord.getValue().aliTags = new ArrayList<>(aliNewTags);
+                //Recalculate permissions and approved users for this catalog item given the new tag
+                // set:
+                tmEntryCatalogRecord.getValue().iMaturityRating =
+                        globalClass.getLowestTagMaturityRating(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
+                tmEntryCatalogRecord.getValue().alsApprovedUsers =
+                        globalClass.getApprovedUsersForTagGrouping(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
                 //Update the record and the catalog file:
                 alci_CatalogItemsToUpdate.add(tmEntryCatalogRecord.getValue());
 
@@ -129,8 +135,8 @@ public class Worker_Tags_DeleteTag extends Worker {
         }
 
         //Remove the tag from memory:
-        globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
-        if(globalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.iTagID)){
+        globalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
+        if(globalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.iTagID)){
             String sMessage = "Unable to find tag in memory.";
             globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
             return Result.failure();

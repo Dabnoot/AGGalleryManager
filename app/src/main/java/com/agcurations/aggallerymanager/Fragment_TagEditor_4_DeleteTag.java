@@ -211,6 +211,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     }
 
     private void DeleteTag(){
+        Toast.makeText(getContext(), "Deleting tag...", Toast.LENGTH_SHORT).show();
         Service_TagEditor.startActionDeleteTag(
                 getActivity(),
                 gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected),
