@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -35,6 +36,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.provider.DocumentsContract;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -48,9 +50,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -80,6 +87,7 @@ public class Activity_Main extends AppCompatActivity {
 
     Activity_Main AM;
 
+    boolean gbDataFolderSettingIgnored = true;
 
 
     //Configure the thing that asks the user to select a data folder:
@@ -89,76 +97,35 @@ public class Activity_Main extends AppCompatActivity {
                 @SuppressLint("WrongConstant")
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    // look for permissions before executing operations.
-                    if(AM == null){
+
+                    //The result data contains a URI for the directory that
+                    //the user selected.
+
+                    //Put the import Uri into the intent (this could represent a folder OR a file:
+
+                    if(result.getData() == null) {
+                        Toast.makeText(getApplicationContext(),
+                                "No data folder selected. A storage location may be selected from the Settings menu.",
+                                Toast.LENGTH_LONG).show();
                         return;
                     }
-
-                    //Check to make sure that we have read/write permission in the selected folder.
-                    //If we don't have permission, request it.
-                    if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            != PackageManager.PERMISSION_GRANTED) ||
-                            (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                    != PackageManager.PERMISSION_GRANTED)) {
-
-                        // Permission is not granted
-                        // Should we show an explanation?
-                        if ((ActivityCompat.shouldShowRequestPermissionRationale(AM,
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
-                                (ActivityCompat.shouldShowRequestPermissionRationale(AM,
-                                        Manifest.permission.READ_EXTERNAL_STORAGE))) {
-                            // Show an explanation to the user *asynchronously* -- don't block
-                            // this thread waiting for the user's response! After the user
-                            // sees the explanation, try again to request the permission.
-                            Toast.makeText(getApplicationContext(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
-                        } else {
-                            // No explanation needed; request the permission
-                            ActivityCompat.requestPermissions(AM,
-                                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                            Manifest.permission.READ_EXTERNAL_STORAGE},
-                                    Fragment_Import_1_StorageLocation.MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
-
-                            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                            // app-defined int constant. The callback method gets the
-                            // result of the request.
-                        }
-                        //} else {
-                        // Permission has already been granted
+                    Intent data = result.getData();
+                    Uri treeUri = data.getData();
+                    if(treeUri == null) {
+                        return;
                     }
+                    final int takeFlags = data.getFlags() &
+                            (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    //We must persist access to this folder or the user will be asked everytime to select a folder.
+                    //  Even then, they well still have to re-access the location on device restart.
+                    GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
 
-                    //The above code checked for permission, and if not granted, requested it.
-                    //  Check one more time to see if the permission was granted:
-
-                    if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_GRANTED) &&
-                            (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                    == PackageManager.PERMISSION_GRANTED)) {
-                        //If we now have permission...
-                        //The result data contains a URI for the directory that
-                        //the user selected.
-
-                        //Put the import Uri into the intent (this could represent a folder OR a file:
-
-                        if(result.getData() == null) {
-                            return;
-                        }
-                        Intent data = result.getData();
-                        Uri treeUri = data.getData();
-                        if(treeUri == null) {
-                            return;
-                        }
-                        final int takeFlags = data.getFlags() &
-                                (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                        //We must persist access to this folder or the user will be asked everytime to select a folder.
-                        //  Even then, they well still have to re-access the location on device restart.
-                        GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
-
-                        //Call a routine to initialize the data folder:
-                        Worker_Catalog_LoadData.initDataFolder(treeUri, getApplicationContext());
+                    //Call a routine to initialize the data folder:
+                    initDataFolder(treeUri, getApplicationContext());
 
 
-                    }
+
                 }
             });
 
@@ -207,42 +174,6 @@ public class Activity_Main extends AppCompatActivity {
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-        //Get user listing right away:
-        //Clear the data (used during debugging):
-        /*{
-            Set<String> ssUserAccountData = new HashSet<>();
-            sharedPreferences.edit()
-                    .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountData)
-                    .apply();
-        }*/
-
-        globalClass.galicu_Users = new ArrayList<>();
-        Set<String> ssUserAccountData = sharedPreferences.getStringSet(GlobalClass.gsPreferenceName_UserAccountData, null);
-
-        if(ssUserAccountData != null){
-            if(ssUserAccountData.size() > 0) {
-                //If user account data is ok, populate:
-                for (String sUserAccountDataRecord : ssUserAccountData) {
-                    ItemClass_User icu = GlobalClass.ConvertRecordStringToUserItem(sUserAccountDataRecord);
-                    globalClass.galicu_Users.add(icu);
-                }
-                bSingleUserInUse = globalClass.galicu_Users.size() == 1;
-                if(bSingleUserInUse && globalClass.galicu_Users.get(0).sPin.equals("")){
-                    //If there is only one user and the pin is not set, log that user in.
-                    globalClass.gicuCurrentUser = globalClass.galicu_Users.get(0);
-                } else if(bSingleUserInUse && !globalClass.galicu_Users.get(0).sPin.equals("")){
-                    Toast.makeText(this, "Welcome guest", Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                AddDefaultAdminUser(sharedPreferences);
-            }
-        } else {
-            AddDefaultAdminUser(sharedPreferences);
-        }
-
-
-
-
         //Get the data storage location Preference:
         String sDataStorageLocationURI = sharedPreferences.getString(GlobalClass.gsPreference_DataStorageLocationUri, null);
         if(sDataStorageLocationURI != null){
@@ -277,6 +208,7 @@ public class Activity_Main extends AppCompatActivity {
         } else {
             bInitDataFolder = !GlobalClass.CheckIfFileExists(GlobalClass.gUriDataFolder );
         }
+        GlobalClass.galicu_Users = new ArrayList<>();
         if(bInitDataFolder){
             //If the storage location data does not exist, such as when the user has not yet selected a location,
             //  prompt the user to select a location.
@@ -288,12 +220,13 @@ public class Activity_Main extends AppCompatActivity {
             builder.setTitle("First Time Use - Please Select Data Folder");
             String sMessage = "Please select a folder in which to store data.\n" +
                     "We suggest you create a new folder called 'Archive' on an SD card if available.\n" +
-                    "A new storage location may be selected from the Settings menu.\n" +
-                    "This app will not run properly without a selected external data storage location, \n" +
+                    "A storage location may be selected from the Settings menu.\n" +
+                    "This app will not run properly without a selected external data storage location, " +
                     "otherwise data may be lost.";
             builder.setMessage(sMessage);
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
+                    gbDataFolderSettingIgnored = false;
                     dialog.dismiss();
 
                     // Allow the user to choose a directory using the system's file picker.
@@ -307,10 +240,49 @@ public class Activity_Main extends AppCompatActivity {
                     garlPromptForDataFolder.launch(intent_DetermineDataFolder);
                 }
             });
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    if(gbDataFolderSettingIgnored) {
+                        //If the user dismissed this dialog by not clicking the "ok" button, thus
+                        //  did not select a storage location, remind them of the directions to
+                        //  select a storage location.
+                        Toast.makeText(getApplicationContext(),
+                                "No data folder selected. A storage location may be selected from the Settings menu.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                }
+            });
             AlertDialog adConfirmationDialog = builder.create();
             adConfirmationDialog.show();
 
         } else {
+
+            /*try {
+                //This is for debug only - implementing the user data file for a not-new system.
+                GlobalClass.gUriUserDataFile = DocumentsContract.createDocument(
+                        GlobalClass.gcrContentResolver,
+                        GlobalClass.gUriDataFolder,
+                        MimeTypes.BASE_TYPE_TEXT,
+                        GlobalClass.gsUserDataFileName);
+            } catch (Exception e){
+                Log.d("asdfsadf", "asdfasdfasd");
+            }
+            GlobalClass.WriteUserDataFile();*/
+
+            //Get user list immediately to allow login while the rest of the data loads.
+            ReadUserData(getApplicationContext());
+            if(GlobalClass.galicu_Users.size() == 1){
+                bSingleUserInUse = true;
+            }
+
+            if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
+                //If the user has not set the option to auto-login a user, then show the user selection
+                //  activity:
+                Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
+                startActivity(intentUserSelection);
+            }
+
             //Call the MA Data Service, which will create a call to a service:
             Service_Main.startActionLoadData(this);
         }
@@ -347,42 +319,178 @@ public class Activity_Main extends AppCompatActivity {
         });
 
 
-        if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
-            //If the user has not set the option to auto-login a user, then show the user selection
-            //  activity:
-
-            Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
-            startActivity(intentUserSelection);
-
-        }
-
-
-
-
 
 
     }
 
+    public static void initDataFolder(Uri treeUri, Context context){
+        DocumentFile dfSelectedFolder = DocumentFile.fromTreeUri(context, treeUri);
+
+        if(dfSelectedFolder == null){
+            return;
+        }
+
+        String sUserFriendlyFolderPath = dfSelectedFolder.getUri().getPath();
+        //Do what you gotta do to reflect back to the user a friendly path that they
+        //  selected:
+        //https://www.dev2qa.com/how-to-get-real-file-path-from-android-uri/
+        Uri uriSelectedFolder = dfSelectedFolder.getUri();
+
+        String uriAuthority = uriSelectedFolder.getAuthority();
+        boolean isExternalStoreDoc = "com.android.externalstorage.documents".equals(uriAuthority);
+        if(isExternalStoreDoc) {
+            //Detect storage devices to determine if one is SD card:
+            ArrayList<Worker_Catalog_LoadData.Storage> alsStorages = Worker_Catalog_LoadData.getStorages(context);
+
+            String documentId = DocumentsContract.getDocumentId(uriSelectedFolder);
+
+            String[] idArr = documentId.split(":");
+            if(idArr.length == 2)
+            {
+                String type = idArr[0];
+                String realDocId = idArr[1];
+
+                String sStoragePrefix = "";
+                if("primary".equalsIgnoreCase(type))
+                {
+                    sStoragePrefix = "Internal storage";
+                } else {
+                    for (Worker_Catalog_LoadData.Storage storage : alsStorages) {
+                        if (storage.getName().contains(type)) {
+                            sStoragePrefix = storage.sName;
+                            break;
+                        }
+                    }
+                }
+                sUserFriendlyFolderPath = sStoragePrefix + "/" + realDocId;
+
+            }
+        }
+        //With the user having specified a folder, identify/create the data folder within:
+        Uri parentFolderUri = dfSelectedFolder.getUri();
+        DocumentFile parentFolder = DocumentFile.fromTreeUri(context, parentFolderUri);
+        if(parentFolder == null){
+            return;
+        }
+        DocumentFile dfDataFolder = parentFolder.findFile(GlobalClass.gsDataFolderBaseName);
+        if(dfDataFolder == null) {
+            boolean bWeAreInTheGalleryFolder = false;
+            if(parentFolder.getName() != null) {
+                if (parentFolder.getName().equals(GlobalClass.gsDataFolderBaseName)){
+                    bWeAreInTheGalleryFolder = true;
+                }
+            }
+            if(!bWeAreInTheGalleryFolder) {
+                dfDataFolder = parentFolder.createDirectory(GlobalClass.gsDataFolderBaseName);
+            } else {
+                dfDataFolder = parentFolder;
+            }
+        }
+
+        sUserFriendlyFolderPath = sUserFriendlyFolderPath + File.separator + GlobalClass.gsDataFolderBaseName;
+
+        if(dfDataFolder == null){
+            Toast.makeText(context, "Unable to create working folder in selected directory.", Toast.LENGTH_LONG).show();
+        } else {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+            String sDataStorageLocationURI = dfDataFolder.getUri().toString();
+            sharedPreferences.edit()
+                    .putString(GlobalClass.gsPreference_DataStorageLocationUri, sDataStorageLocationURI)
+                    .apply();
+            sharedPreferences.edit()
+                    .putString(GlobalClass.gsPreference_DataStorageLocationUriUF, sUserFriendlyFolderPath)
+                    .apply();
+
+            GlobalClass.gUriDataFolder = dfDataFolder.getUri();
 
 
-    private void AddDefaultAdminUser(SharedPreferences sharedPreferences){
-        ItemClass_User icu_DefaultUser = new ItemClass_User();
-        icu_DefaultUser.sUserName = "Admin";
-        icu_DefaultUser.sPin = "";
-        icu_DefaultUser.bAdmin = true;
-        icu_DefaultUser.iUserIconColor = R.color.colorStatusBar;
-        icu_DefaultUser.iMaturityLevel = AdapterMaturityRatings.MATURITY_RATING_X;
-        globalClass.galicu_Users.add(icu_DefaultUser);
-        GlobalClass.gicuCurrentUser = icu_DefaultUser;
-        bSingleUserInUse = true;
+            //Check to see if there is a user data file in the location:
+            if(GlobalClass.CheckIfFileExists(GlobalClass.gUriDataFolder, GlobalClass.gsUserDataFileName)){
 
-        //Add data to preferences:
-        String sUserRecord = GlobalClass.getUserAccountRecordString(icu_DefaultUser);
-        Set<String> ssUserAccountDataDefault = new HashSet<>();
-        ssUserAccountDataDefault.add(sUserRecord);
-        sharedPreferences.edit()
-                .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountDataDefault)
-                .apply();
+                GlobalClass.gUriUserDataFile = GlobalClass.FormChildUri(GlobalClass.gUriDataFolder.toString(), GlobalClass.gsUserDataFileName);
+
+                //If the user data file was found in the location specified to be used for data,
+                //  then there should be users already configured. Read in that data and then prompt
+                //  for user login if necessary:
+
+                ReadUserData(context);
+
+                boolean bSingleUserInUse = false;
+
+                if(GlobalClass.galicu_Users != null) {
+                    bSingleUserInUse = GlobalClass.galicu_Users.size() == 0;
+                }
+
+                if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
+                    //If the user has not set the option to auto-login a user, then show the user selection
+                    //  activity:
+                    Intent intentUserSelection = new Intent(context, Activity_UserSelection.class);
+                    context.startActivity(intentUserSelection);
+                }
+            } else {
+                try {
+                    GlobalClass.gUriUserDataFile = DocumentsContract.createDocument(
+                            GlobalClass.gcrContentResolver,
+                            GlobalClass.gUriDataFolder,
+                            MimeTypes.BASE_TYPE_TEXT,
+                            GlobalClass.gsUserDataFileName);
+                    if (GlobalClass.gUriUserDataFile == null) {
+                        Toast.makeText(context, "Could not create user data file.", Toast.LENGTH_LONG).show();
+                    } else {
+                        //If the user data file was just created, populate it with the default admin user:
+                        ItemClass_User icu_DefaultUser = new ItemClass_User();
+                        icu_DefaultUser.sUserName = "Admin";
+                        icu_DefaultUser.sPin = "";
+                        icu_DefaultUser.bAdmin = true;
+                        icu_DefaultUser.iUserIconColor = R.color.colorStatusBar;
+                        icu_DefaultUser.iMaturityLevel = AdapterMaturityRatings.MATURITY_RATING_X;
+                        GlobalClass.galicu_Users.add(icu_DefaultUser);
+                        GlobalClass.gicuCurrentUser = icu_DefaultUser;
+
+                        GlobalClass.WriteUserDataFile();
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(context, "Could not create user data file.", Toast.LENGTH_LONG).show();
+                }
+            }
+
+
+            //Start the worker found in Worker_Catalog_LoadData:
+            Service_Main.startActionLoadData(context);
+        }
+    }
+
+    public static void ReadUserData(Context context){
+        BufferedReader brReader;
+        InputStream isUserDataFile = null;
+        try {
+            GlobalClass.gUriUserDataFile = GlobalClass.FormChildUri(GlobalClass.gUriDataFolder.toString(), GlobalClass.gsUserDataFileName);
+            isUserDataFile = GlobalClass.gcrContentResolver.openInputStream(GlobalClass.gUriUserDataFile);
+            if (isUserDataFile != null) {
+                brReader = new BufferedReader(new InputStreamReader(isUserDataFile));
+                String sLine = brReader.readLine();
+                while (sLine != null) {
+                    ItemClass_User icu = GlobalClass.ConvertRecordStringToUserItem(sLine);
+                    GlobalClass.galicu_Users.add(icu);
+                    sLine = brReader.readLine();
+                }
+                brReader.close();
+            }
+        } catch (IOException e) {
+            Toast.makeText(context,
+                    "Trouble reading users from user data file at\n"
+                            + GlobalClass.gUriUserDataFile + "\n\n" + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        } finally {
+            if(isUserDataFile != null){
+                try {
+                    isUserDataFile.close();
+                } catch (Exception e){
+                    Log.d("Activity_Main:onCreate()", "Could not close user data file.");
+                }
+            }
+        }
     }
 
     private void AlertDialogTest2(){
@@ -541,7 +649,11 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     private void setUserColor(MenuItem item, int iColor){
-        Drawable drawable = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login).mutate();
+        Drawable d1 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login);
+        if(d1 == null){
+            return;
+        }
+        Drawable drawable = d1.mutate();
         drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
         item.setIcon(drawable);
     }
@@ -550,7 +662,9 @@ public class Activity_Main extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         if((item.getItemId() == R.id.menu_UserManagement)){
-
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
             //Ask for pin code in order to allow access to feature if not admin:
             if (GlobalClass.gicuCurrentUser != null) {
                 if (!GlobalClass.gicuCurrentUser.bAdmin) {
@@ -574,19 +688,30 @@ public class Activity_Main extends AppCompatActivity {
             startActivity(intentUserSelection);
             return true;
         } else if(item.getItemId() == R.id.menu_TagEditor) {
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
             Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
             startActivity(intentTagEditor);
             return true;
         } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
-            //Backup the database files (CatalogContents.dat):
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
             Toast.makeText(getApplicationContext(), "Initiating database backup.", Toast.LENGTH_SHORT).show();
             Service_Main.startActionCatalogBackup(this);
             return true;
         } else if(item.getItemId() == R.id.menu_WorkerConsole){
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
             Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
             startActivity(intentWorkerConsoleActivity);
             return true;
         } else if(item.getItemId() == R.id.menu_LogViewer) {
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
             Intent intentLogViewerActivity = new Intent(this, Activity_LogViewer.class);
             startActivity(intentLogViewerActivity);
             return true;
@@ -606,8 +731,8 @@ public class Activity_Main extends AppCompatActivity {
         if(optionsMenu != null) {
             MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
             if (menuItemLogin != null) {
-                if (globalClass.gicuCurrentUser != null) {
-                    setUserColor(menuItemLogin, globalClass.gicuCurrentUser.iUserIconColor);
+                if (GlobalClass.gicuCurrentUser != null) {
+                    setUserColor(menuItemLogin, GlobalClass.gicuCurrentUser.iUserIconColor);
                 }
             }
         }
@@ -674,8 +799,7 @@ public class Activity_Main extends AppCompatActivity {
     //=====================================================================================
 
     public void startVideoCatalogActivity(View v){
-        if(!gbDataLoadComplete){
-            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+        if(!dataStorageAndLoadOk()){
             return;
         }
         Toast.makeText(getApplicationContext(), "Opening Videos catalog...", Toast.LENGTH_SHORT).show();
@@ -686,8 +810,7 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startPicturesCatalogActivity(View v){
-        if(!gbDataLoadComplete){
-            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+        if(!dataStorageAndLoadOk()){
             return;
         }
         Toast.makeText(getApplicationContext(), "Opening Images catalog...", Toast.LENGTH_SHORT).show();
@@ -697,8 +820,7 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startComicsCatalogActivity(View v){
-        if(!gbDataLoadComplete){
-            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+        if(!dataStorageAndLoadOk()){
             return;
         }
         Toast.makeText(getApplicationContext(), "Opening Comics catalog...", Toast.LENGTH_SHORT).show();
@@ -708,8 +830,7 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startImportVideos(View v){
-        if(!gbDataLoadComplete){
-            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+        if(!dataStorageAndLoadOk()){
             return;
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
@@ -719,8 +840,7 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startImportImages(View v){
-        if(!gbDataLoadComplete){
-            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+        if(!dataStorageAndLoadOk()){
             return;
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
@@ -730,14 +850,28 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     public void startImportComics(View v){
-        if(!gbDataLoadComplete){
-            Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+        if(!dataStorageAndLoadOk()){
             return;
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
         intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS); //todo: Redundant
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentImportGuided);
+    }
+
+    private boolean dataStorageAndLoadOk(){
+        if(!gbDataLoadComplete){
+            if(GlobalClass.gUriDataFolder == null){
+                Toast.makeText(getApplicationContext(),
+                        "No data folder selected. A storage location may be selected from the Settings menu.",
+                        Toast.LENGTH_LONG).show();
+                return false;
+            } else {
+                Toast.makeText(getApplicationContext(), "Please wait for data to load.", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+        return true;
     }
 
 

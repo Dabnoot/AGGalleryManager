@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
@@ -366,92 +367,6 @@ public class Worker_Catalog_LoadData extends Worker {
         return uriDataFile;
     }
 
-
-    static public void initDataFolder(Uri treeUri, Context context){
-        DocumentFile dfSelectedFolder = DocumentFile.fromTreeUri(context, treeUri);
-
-        if(dfSelectedFolder == null){
-            return;
-        }
-
-        String sUserFriendlyFolderPath = dfSelectedFolder.getUri().getPath();
-        //Do what you gotta do to reflect back to the user a friendly path that they
-        //  selected:
-        //https://www.dev2qa.com/how-to-get-real-file-path-from-android-uri/
-        Uri uriSelectedFolder = dfSelectedFolder.getUri();
-
-        String uriAuthority = uriSelectedFolder.getAuthority();
-        boolean isExternalStoreDoc = "com.android.externalstorage.documents".equals(uriAuthority);
-        if(isExternalStoreDoc) {
-            //Detect storage devices to determine if one is SD card:
-            ArrayList<Storage> alsStorages = getStorages(context);
-
-            String documentId = DocumentsContract.getDocumentId(uriSelectedFolder);
-
-            String[] idArr = documentId.split(":");
-            if(idArr.length == 2)
-            {
-                String type = idArr[0];
-                String realDocId = idArr[1];
-
-                String sStoragePrefix = "";
-                if("primary".equalsIgnoreCase(type))
-                {
-                    sStoragePrefix = "Internal storage";
-                } else {
-                    for (Storage storage : alsStorages) {
-                        if (storage.getName().contains(type)) {
-                            sStoragePrefix = storage.sName;
-                            break;
-                        }
-                    }
-                }
-                sUserFriendlyFolderPath = sStoragePrefix + "/" + realDocId;
-
-            }
-        }
-        //With the user having specified a folder, identify/create the data folder within:
-        Uri parentFolderUri = dfSelectedFolder.getUri();
-        DocumentFile parentFolder = DocumentFile.fromTreeUri(context, parentFolderUri);
-        if(parentFolder == null){
-            return;
-        }
-        DocumentFile dfDataFolder = parentFolder.findFile(GlobalClass.gsDataFolderBaseName);
-        if(dfDataFolder == null) {
-            boolean bWeAreInTheGalleryFolder = false;
-            if(parentFolder.getName() != null) {
-                if (parentFolder.getName().equals(GlobalClass.gsDataFolderBaseName)){
-                    bWeAreInTheGalleryFolder = true;
-                }
-            }
-            if(!bWeAreInTheGalleryFolder) {
-                dfDataFolder = parentFolder.createDirectory(GlobalClass.gsDataFolderBaseName);
-            } else {
-                dfDataFolder = parentFolder;
-            }
-        }
-
-        sUserFriendlyFolderPath = sUserFriendlyFolderPath + File.separator + GlobalClass.gsDataFolderBaseName;
-
-        if(dfDataFolder == null){
-            Toast.makeText(context, "Unable to create working folder in selected directory.", Toast.LENGTH_LONG).show();
-        } else {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-
-            String sDataStorageLocationURI = dfDataFolder.getUri().toString();
-            sharedPreferences.edit()
-                    .putString(GlobalClass.gsPreference_DataStorageLocationUri, sDataStorageLocationURI)
-                    .apply();
-            sharedPreferences.edit()
-                    .putString(GlobalClass.gsPreference_DataStorageLocationUriUF, sUserFriendlyFolderPath)
-                    .apply();
-
-            GlobalClass.gUriDataFolder = dfDataFolder.getUri();
-
-            //Start the worker found in Worker_Catalog_LoadData:
-            Service_Main.startActionLoadData(context);
-        }
-    }
 
     public static class Storage extends File {
 

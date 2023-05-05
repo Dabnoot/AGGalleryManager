@@ -1,34 +1,19 @@
 package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import android.content.Context;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ArrayAdapter;
 import android.widget.RadioButton;
-import android.widget.TextView;
-
-import java.util.List;
 
 public class Activity_UserManagement extends AppCompatActivity {
-
-    private GlobalClass globalClass;
 
     public ViewPager2 viewPager2_UserManagement;
     FragmentUserMgmtViewPagerAdapter fragmentUserMgmtViewPagerAdapter;
@@ -49,8 +34,6 @@ public class Activity_UserManagement extends AppCompatActivity {
         //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE);
-
-        globalClass = (GlobalClass) getApplicationContext();
 
         setTitle("User Management");
 

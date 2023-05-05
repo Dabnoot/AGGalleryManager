@@ -5,8 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
@@ -68,8 +66,6 @@ public class Activity_Browser extends AppCompatActivity {
 
     ProgressBar gProgressBar_Progress;
     TextView gTextView_ProgressBarText;
-    Integer giProgressBarValue;
-    String gsProgressBarText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,10 +80,14 @@ public class Activity_Browser extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_SECURE);
 
         //Hide the Action Bar
-        getSupportActionBar().hide();
+        if(getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
         //Hide the Status Bar
         WindowInsetsController insetsController = getWindow().getInsetsController();
-        insetsController.hide(WindowInsets.Type.statusBars());
+        if(insetsController != null) {
+            insetsController.hide(WindowInsets.Type.statusBars());
+        }
         getWindow().setNavigationBarColor(Color.TRANSPARENT);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -99,7 +99,19 @@ public class Activity_Browser extends AppCompatActivity {
         gProgressBar_Progress = findViewById(R.id.progressBar_Progress);
         gProgressBar_Progress.setMax(100);
         gTextView_ProgressBarText = findViewById(R.id.textView_ProgressBarText);
-
+        if(GlobalClass.gUriDataFolder == null){
+            //No storage location has been specified. Tabs will not be loaded.
+            gProgressBar_Progress.setVisibility(View.INVISIBLE);
+            gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
+            Toast.makeText(getApplicationContext(),
+                    "No data folder selected." +
+                            " A storage location may be selected from the Settings menu.",
+                    Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(),
+                            "Browser will not be able to save open tabs or load previously" +
+                            " opened tabs.",
+                    Toast.LENGTH_LONG).show();
+        }
 
         try {
             ApplicationLogWriter("OnCreate Start, getting application context.");
@@ -294,7 +306,7 @@ public class Activity_Browser extends AppCompatActivity {
                 fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
                 fwLogFile.close();
             } catch (Exception e) {
-                Log.d("Log FileWriter", e.getMessage());
+                Log.d("Log FileWriter", "" + e.getMessage());
             }
         }
 
@@ -418,7 +430,10 @@ public class Activity_Browser extends AppCompatActivity {
                     //If the tab being closed is not the tab which has focus, make sure that the
                     //  focus tab retains focus.
                     int iFocusPosition = viewPager2_WebPages.getCurrentItem();
-                    int iMaxPosition = viewPager2_WebPages.getAdapter().getItemCount() - 1;
+                    int iMaxPosition = iFocusPosition;
+                    if(viewPager2_WebPages.getAdapter() != null){
+                        iMaxPosition = viewPager2_WebPages.getAdapter().getItemCount() - 1;
+                    }
                     //Make sure tab focus remains on the correct tab:
                     if(iFocusPosition != iPosition){
                         if(iFocusPosition < iPosition){
@@ -452,7 +467,10 @@ public class Activity_Browser extends AppCompatActivity {
 
                 }
             });
-            tabLayout_WebTabs.getTabAt(i).setCustomView(relativeLayout_custom_tab);
+            TabLayout.Tab tt = tabLayout_WebTabs.getTabAt(i);
+            if(tt != null) {
+                tt.setCustomView(relativeLayout_custom_tab);
+            }
         }
         //Scroll to center the selected tab:
         int iSelectedTabPosition = tabLayout_WebTabs.getSelectedTabPosition();

@@ -101,76 +101,31 @@ public class Activity_AppSettings extends AppCompatActivity implements
                     @SuppressLint("WrongConstant")
                     @Override
                     public void onActivityResult(ActivityResult result) {
-                        // look for permissions before executing operations.
-                        if(getParent() == null){
+
+                        //The result data contains a URI for the directory that
+                        //the user selected.
+
+                        if(result.getData() == null) {
+                            Toast.makeText(getApplicationContext(),
+                                    "No data folder selected. A storage location may be selected from the Settings menu.",
+                                    Toast.LENGTH_LONG).show();
                             return;
                         }
-
-                        //Check to make sure that we have read/write permission in the selected folder.
-                        //If we don't have permission, request it.
-                        if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                != PackageManager.PERMISSION_GRANTED) ||
-                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                        != PackageManager.PERMISSION_GRANTED)) {
-
-                            // Permission is not granted
-                            // Should we show an explanation?
-                            if ((ActivityCompat.shouldShowRequestPermissionRationale(getParent(),
-                                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
-                                    (ActivityCompat.shouldShowRequestPermissionRationale(getParent(),
-                                            Manifest.permission.READ_EXTERNAL_STORAGE))) {
-                                // Show an explanation to the user *asynchronously* -- don't block
-                                // this thread waiting for the user's response! After the user
-                                // sees the explanation, try again to request the permission.
-                                Toast.makeText(getApplicationContext(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
-                            } else {
-                                // No explanation needed; request the permission
-                                ActivityCompat.requestPermissions(getParent(),
-                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                                Manifest.permission.READ_EXTERNAL_STORAGE},
-                                        Fragment_Import_1_StorageLocation.MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
-
-                                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                                // app-defined int constant. The callback method gets the
-                                // result of the request.
-                            }
-                            //} else {
-                            // Permission has already been granted
+                        Intent data = result.getData();
+                        Uri treeUri = data.getData();
+                        if(treeUri == null) {
+                            return;
                         }
+                        final int takeFlags = data.getFlags() &
+                                (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                        | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        //We must persist access to this folder or the user will be asked everytime to select a folder.
+                        //  Even then, they well still have to re-access the location on device restart.
+                        GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
 
-                        //The above code checked for permission, and if not granted, requested it.
-                        //  Check one more time to see if the permission was granted:
-
-                        if ((ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                == PackageManager.PERMISSION_GRANTED) &&
-                                (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                        == PackageManager.PERMISSION_GRANTED)) {
-                            //If we now have permission...
-                            //The result data contains a URI for the directory that
-                            //the user selected.
-
-                            //Put the import Uri into the intent (this could represent a folder OR a file:
-
-                            if(result.getData() == null) {
-                                return;
-                            }
-                            Intent data = result.getData();
-                            Uri treeUri = data.getData();
-                            if(treeUri == null) {
-                                return;
-                            }
-                            final int takeFlags = data.getFlags() &
-                                    (Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                            | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                            //We must persist access to this folder or the user will be asked everytime to select a folder.
-                            //  Even then, they well still have to re-access the location on device restart.
-                            GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
-
-                            //Call a routine to initialize the data folder:
-                            Worker_Catalog_LoadData.initDataFolder(treeUri, getApplicationContext());
-
-
-                        }
+                        //Call a routine to initialize the data folder:
+                        Activity_Main.initDataFolder(treeUri, getApplicationContext());
+                        finish();
                     }
                 });
 

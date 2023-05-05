@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -15,7 +14,6 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
-import androidx.preference.PreferenceManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -37,9 +35,7 @@ import android.widget.Toast;
 import com.thebluealliance.spectrum.SpectrumDialog;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 
 public class Fragment_UserMgmt_1_Add_User extends Fragment {
@@ -54,7 +50,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         // Required empty public constructor
     }
 
-    public static Fragment_UserMgmt_1_Add_User newInstance(String param1, String param2) {
+    public static Fragment_UserMgmt_1_Add_User newInstance() {
         return new Fragment_UserMgmt_1_Add_User();
     }
 
@@ -80,9 +76,19 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         final Observer<Integer> observerColorSelection = new Observer<Integer>() {
             @Override
             public void onChanged(Integer iColorSelection) {
+                if(getView() == null){
+                    return;
+                }
+                if(getActivity() == null){
+                    return;
+                }
                 giSelectedColor = iColorSelection;
                 AppCompatImageView imageView_UserIcon = getView().findViewById(R.id.imageView_UserIcon);
-                Drawable drawable = AppCompatResources.getDrawable(getActivity().getApplicationContext(), R.drawable.login).mutate();
+                Drawable d1 = AppCompatResources.getDrawable(getActivity().getApplicationContext(), R.drawable.login);
+                if(d1 == null){
+                    return;
+                }
+                Drawable drawable = d1.mutate();
                 drawable.setColorFilter(new PorterDuffColorFilter(giSelectedColor, PorterDuff.Mode.SRC_IN));
                 imageView_UserIcon.setImageDrawable(drawable);
             }
@@ -169,6 +175,10 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                     alsTemp.add(sESRBRating);
                 }
             }
+
+            if(getContext() == null) {
+                return;
+            }
             AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
             spinner_ContentMaturity.setAdapter(atarSpinnerAdapter);
 
@@ -210,8 +220,11 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
     private void initUserList(){
         //Initialize the displayed list of users:
+        if(getView() == null){
+            return;
+        }
         ListView listView_UserList = getView().findViewById(R.id.listView_UserList);
-        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
+        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
         AdapterUserList adapterUserList = new AdapterUserList(
                         requireActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
         listView_UserList.setAdapter(adapterUserList);
@@ -223,7 +236,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         int iMaxWidthToBeAllowed = (int)(iWidthScreen * 0.25); //Only allow the listview to take up a quarter of the screen.
         int iDesiredListViewWidth = Math.min(iMaxWidthToBeAllowed, iWidthWidestUserItemView);
 
-        listView_UserList.getLayoutParams().width = (int) (iDesiredListViewWidth);
+        listView_UserList.getLayoutParams().width = iDesiredListViewWidth;
 
     }
 
@@ -256,7 +269,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         ArrayList<Integer> aliColorOptions = new ArrayList<>();
         for(int iColor: iColorsArray){
             boolean bColorIsTaken = false;
-            for(ItemClass_User icuUser: globalClass.galicu_Users){
+            for(ItemClass_User icuUser: GlobalClass.galicu_Users){
                 if(icuUser.iUserIconColor == iColor){
                     bColorIsTaken = true;
                     break;
@@ -275,21 +288,16 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     }
 
     private void validateData(){
+        if(getView() == null){
+            return;
+        }
         EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
         EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
         String sUserName = editText_UserName.getText().toString();
         String sPin = editText_AccessPinNumber.getText().toString();
         Button button_AddUser = getView().findViewById(R.id.button_AddUser);
         if(button_AddUser != null) {
-            if (sUserName != null && sPin != null) {
-                if (!sUserName.equals("") && !sPin.equals("")) {
-                    button_AddUser.setEnabled(true);
-                } else {
-                    button_AddUser.setEnabled(false);
-                }
-            } else {
-                button_AddUser.setEnabled(false);
-            }
+            button_AddUser.setEnabled(!sUserName.equals("") && !sPin.equals(""));
         }
 
 
@@ -308,10 +316,13 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             CheckBox checkBox_AdminUser = getView().findViewById(R.id.checkBox_AdminUser);
             boolean bAdmin = checkBox_AdminUser.isChecked();
 
-            int iColorSelection = mldiSelectedUserColor.getValue();
+            Integer iColorSelection = mldiSelectedUserColor.getValue();
+            if(iColorSelection == null){
+                return;
+            }
 
             Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
-            String sMaturityCode = "";
+            String sMaturityCode;
             int iMaturityLevel = -1;
             View viewSpinnerItemMaturityRating = spinner_ContentMaturity.getSelectedView();
             if(viewSpinnerItemMaturityRating != null){
@@ -334,22 +345,21 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             }
 
             //Make sure that the user name does not already exist:
-            GlobalClass globalClass = (GlobalClass) requireActivity().getApplicationContext();
-            for(ItemClass_User icu: globalClass.galicu_Users){
-                if(sUserName.toLowerCase().equals(icu.sUserName.toLowerCase())){
+            for(ItemClass_User icu: GlobalClass.galicu_Users){
+                if(sUserName.equalsIgnoreCase(icu.sUserName)){
                     Toast.makeText(requireContext(), "User name already exists. User addition aborted.", Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
 
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
+            /*SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
             Set<String> ssUserAccountData = sharedPreferences.getStringSet(GlobalClass.gsPreferenceName_UserAccountData, null);
             if(ssUserAccountData == null){
                 ssUserAccountData = new HashSet<>();
             } else {
                 ssUserAccountData = new HashSet<>(ssUserAccountData); //https://stackoverflow.com/questions/51001328/shared-preferences-not-saving-stringset-when-application-is-killed-its-a-featu
                 //It is said that we must not modify the StringSet returned by getStringSet. Consistency is not guaranteed.
-            }
+            }*/
 
             ItemClass_User icu = new ItemClass_User();
             icu.sUserName = sUserName;
@@ -359,18 +369,18 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             icu.iMaturityLevel = iMaturityLevel;
 
             //Add data to memory:
-            globalClass.galicu_Users.add(icu);
+            GlobalClass.galicu_Users.add(icu);
 
-            //Add data to preferences:
+            /*//Add data to preferences:
             String sUserRecord = GlobalClass.getUserAccountRecordString(icu);
             ssUserAccountData.add(sUserRecord);
             sharedPreferences.edit()
                     .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountData)
-                    .apply();
+                    .apply();*/
 
 
             //Add data to file storage so that it can be picked-up by a new device if the data is moved:
-            //todo.
+            GlobalClass.WriteUserDataFile();
 
             Toast.makeText(requireContext(), "User added successfully.", Toast.LENGTH_SHORT).show();
 

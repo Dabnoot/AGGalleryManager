@@ -180,6 +180,9 @@ public class GlobalClass extends Application {
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 
+    public static String gsUserDataFileName = "Data.dat";
+    public static Uri gUriUserDataFile;
+    public static ArrayList<ItemClass_User> galicu_Users;
     public static ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
     public static int giDefaultUserMaturityRating = AdapterMaturityRatings.MATURITY_RATING_M; //todo: Setting - add to settings
 
@@ -229,7 +232,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_CALLER_ID = "com.agcurations.aggallermanager.string_caller_id";
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
 
-    public ArrayList<ItemClass_User> galicu_Users;
+
 
 
     //=====================================================================================
@@ -2066,6 +2069,33 @@ public class GlobalClass extends Application {
         icu.iMaturityLevel = Integer.parseInt(JumbleStorageText(sRecordSplit[4]));
         return icu;
     }
+
+    public static boolean WriteUserDataFile(){
+
+        StringBuilder sbBuffer = new StringBuilder();
+        for(ItemClass_User icu: galicu_Users){
+            sbBuffer.append(getUserAccountRecordString(icu)).append("\n");
+        }
+
+        try {
+            //Write the data to the file:
+            OutputStream osUserDataFile = gcrContentResolver.openOutputStream(gUriUserDataFile, "wt"); //Open the file in overwrite mode.
+            if (osUserDataFile == null) {
+                return false;
+            }
+            osUserDataFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+            osUserDataFile.flush();
+            osUserDataFile.close();
+
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+
 
 
     //==================================================================================================
