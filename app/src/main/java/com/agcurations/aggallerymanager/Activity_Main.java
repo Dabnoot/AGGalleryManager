@@ -258,18 +258,6 @@ public class Activity_Main extends AppCompatActivity {
 
         } else {
 
-            /*try {
-                //This is for debug only - implementing the user data file for a not-new system.
-                GlobalClass.gUriUserDataFile = DocumentsContract.createDocument(
-                        GlobalClass.gcrContentResolver,
-                        GlobalClass.gUriDataFolder,
-                        MimeTypes.BASE_TYPE_TEXT,
-                        GlobalClass.gsUserDataFileName);
-            } catch (Exception e){
-                Log.d("asdfsadf", "asdfasdfasd");
-            }
-            GlobalClass.WriteUserDataFile();*/
-
             //Get user list immediately to allow login while the rest of the data loads.
             ReadUserData(getApplicationContext());
             if(GlobalClass.galicu_Users.size() == 1){
