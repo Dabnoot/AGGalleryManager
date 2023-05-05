@@ -194,7 +194,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
             String sDestinationFolder = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual destination comic folder name is the comic ID.
 
             //Prepare the data record:
-            ItemClass_CatalogItem ciNewComic = new ItemClass_CatalogItem();
+            ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
 
             //Comic page job file records creation. All of the file items in this loop belong to
             // the comic identified by the outer loop.
@@ -228,18 +228,18 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     continue; //Don't do anything else related to the comic import with this XML file.
                 }
 
-                ciNewComic.iFile_Count++;
-                ciNewComic.iComicPages++;
-                ciNewComic.iComic_Max_Page_ID++;
+                ciNew.iFile_Count++;
+                ciNew.iComicPages++;
+                ciNew.iComic_Max_Page_ID++;
 
                 String sSourceFileName = fileItem.sFileOrFolderName;
                 String sDestinationFileName = GlobalClass.JumbleFileName(sSourceFileName);
-                if (ciNewComic.sFilename.equals("")) {
+                if (ciNew.sFilename.equals("")) {
                     //Set the Thumbnail file to the first page:
-                    ciNewComic.sFilename = sDestinationFileName;
-                    ciNewComic.sThumbnail_File = sDestinationFileName;
+                    ciNew.sFilename = sDestinationFileName;
+                    ciNew.sThumbnail_File = sDestinationFileName;
                 }
-                ciNewComic.lSize += fileItem.lSizeBytes;
+                ciNew.lSize += fileItem.lSizeBytes;
 
                 //Write instruction to the job file buffer to import this comic page to the comic
                 //  folder:
@@ -280,26 +280,27 @@ public class Worker_Import_ImportComicFolders extends Worker {
             }
 
             //Build out the catalog record for this comic:
-            ciNewComic.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
-            ciNewComic.sItemID = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
-            ciNewComic.sTitle = sComicFolderName;
-            ciNewComic.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
-            ciNewComic.aliTags = GlobalClass.getTagIDsFromTagIDString(ciNewComic.sTags);
-            ciNewComic.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNewComic.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
-            ciNewComic.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
-            ciNewComic.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
-            ciNewComic.sFolder_Name = sDestinationFolder;
+            ciNew.iMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
+            ciNew.sItemID = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual comic folder is the comic ID.
+            ciNew.sTitle = sComicFolderName;
+            ciNew.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
+            ciNew.aliTags = GlobalClass.getTagIDsFromTagIDString(ciNew.sTags);
+            ciNew.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+            //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
+            ciNew.alsApprovedUsers = globalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
+            ciNew.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
+            ciNew.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
             Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-            ciNewComic.dDatetime_Last_Viewed_by_User = dTimeStamp;
-            ciNewComic.dDatetime_Import = dTimeStamp;
-            ciNewComic.sSource = tmEntryComic.getValue()[INDEX_COMIC_SOURCE];
-            ciNewComic.sComicParodies = tmEntryComic.getValue()[INDEX_COMIC_PARODY];
-            ciNewComic.sComicArtists = tmEntryComic.getValue()[INDEX_COMIC_ARTIST];
+            ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
+            ciNew.dDatetime_Import = dTimeStamp;
+            ciNew.sSource = tmEntryComic.getValue()[INDEX_COMIC_SOURCE];
+            ciNew.sComicParodies = tmEntryComic.getValue()[INDEX_COMIC_PARODY];
+            ciNew.sComicArtists = tmEntryComic.getValue()[INDEX_COMIC_ARTIST];
 
             //Add comic catalog record to arraylist for adding to the comics catalog once all
             // potential new comics are examined, job file is ready to go, etc:
-            alci_NewCatalogItems.add(ciNewComic);
+            alci_NewCatalogItems.add(ciNew);
 
         } //End NHComics (plural) Import Loop.
 
