@@ -53,6 +53,8 @@ public class Fragment_CatalogSort extends Fragment {
     final int SPINNER_SORTBY_ITEM_LAST_VIEWED_DATE = 1;
     final String[] gsSpinnerSortByItems ={"Import Date","Last Read Date"};
 
+    String[] gsSharedWithUsersNameArray = {""};
+
     boolean gbCatalogViewerSortAscending;
 
     final String[] gsSpinnerSearchInItems = {
@@ -185,6 +187,48 @@ public class Fragment_CatalogSort extends Fragment {
                     enableApply();
                 }
             });
+
+
+
+            //Configure the "Shared with User" sort spinner:
+            Spinner spinner_SharedWithUser = getView().findViewById(R.id.spinner_SharedWithUser);
+
+            //wrap the items in the Adapter
+            int iExtraUserNames = 1; //Used to populate extra selection fields
+            gsSharedWithUsersNameArray = new String[GlobalClass.galicu_Users.size() + iExtraUserNames];
+            gsSharedWithUsersNameArray[0] = ""; //The "Anyone" selection.
+            for(int i = iExtraUserNames; i < GlobalClass.galicu_Users.size() + iExtraUserNames; i++){
+                gsSharedWithUsersNameArray[i] = GlobalClass.galicu_Users.get(i - iExtraUserNames).sUserName;
+            }
+            ArrayAdapter<String> adapterSharedWithUser = new ArrayAdapter<>(getActivity(), R.layout.catalog_spinner_item_sort_search_filter, gsSharedWithUsersNameArray);
+            //assign adapter to the Spinner
+            spinner_SharedWithUser.setAdapter(adapterSharedWithUser);
+
+            //Initialize the spinner position:
+            //This is here because when onResume hits when the activity is first created,
+            //  the Spinner does not yet exist.
+            for(int i = 0; i < GlobalClass.galicu_Users.size(); i++){
+                if(GlobalClass.gsCatalogViewerSortBySharedWithUser.equals(gsSharedWithUsersNameArray[i])){
+                    spinner_SharedWithUser.setSelection(i);
+                    break;
+                }
+            }
+
+            spinner_SharedWithUser.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                boolean bInitialized = false;
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    if(bInitialized) {
+                        enableApply();
+                    }
+                    bInitialized = true;
+                }
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                    // no need to code here
+                }
+            });
+
 
 
 
@@ -425,8 +469,10 @@ public class Fragment_CatalogSort extends Fragment {
                     .apply();
         }
 
-        //Read SortOrder:
-        globalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory] = gbCatalogViewerSortAscending;
+        //Read SharedWithUser selection:
+        Spinner spinner_SharedWithUser = getView().findViewById(R.id.spinner_SharedWithUser);
+        int iSpinnerSharedWithUserPosition = spinner_SharedWithUser.getSelectedItemPosition();
+        GlobalClass.gsCatalogViewerSortBySharedWithUser = gsSharedWithUsersNameArray[iSpinnerSharedWithUserPosition];
 
 
         //Apply any text search to the search hold in globalClass:

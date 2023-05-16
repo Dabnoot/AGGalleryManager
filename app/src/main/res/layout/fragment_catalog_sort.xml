@@ -69,7 +69,7 @@
 
         <!--Separator-->
         <View
-            android:id="@+id/view_SortBySearchKeywordsSeparator"
+            android:id="@+id/view_SharedWithUserSeparator"
             android:layout_width="match_parent"
             android:layout_height="3dp"
             android:layout_marginTop="10dp"
@@ -77,6 +77,39 @@
             android:layout_marginEnd="10dp"
             android:background="@color/colorSeparator"
             android:layout_below="@id/textView_labelSortBy"/>
+
+        <TextView
+            android:id="@+id/textView_labelSharedWithUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:text="Shared with user:"
+            android:textColor="@color/colorTextColor"
+            android:textSize="20sp"
+            android:layout_below="@+id/view_SharedWithUserSeparator"/>
+
+        <Spinner
+            android:id="@+id/spinner_SharedWithUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/textView_labelSharedWithUser"
+            android:layout_alignEnd="@id/imageButton_SortOrder"
+            android:layout_alignBottom="@+id/textView_labelSharedWithUser"
+            android:layout_marginBottom="-10dp"
+            style="@style/SpinnerStyle"/>
+
+        <!--Separator-->
+        <View
+            android:id="@+id/view_SortBySearchKeywordsSeparator"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@color/colorSeparator"
+            android:layout_below="@id/textView_labelSharedWithUser"/>
 
 
         <TextView
@@ -119,6 +152,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/textView_labelSearchField"
+            android:layout_alignEnd="@id/imageButton_SortOrder"
             android:layout_alignBottom="@+id/textView_labelSearchField"
             android:layout_marginBottom="-10dp" />
 
@@ -150,6 +184,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/textView_labelFilter"
+            android:layout_alignEnd="@id/imageButton_SortOrder"
             android:layout_alignBottom="@+id/textView_labelFilter"
             android:layout_marginBottom="-10dp"
             style="@style/SpinnerStyle"/>

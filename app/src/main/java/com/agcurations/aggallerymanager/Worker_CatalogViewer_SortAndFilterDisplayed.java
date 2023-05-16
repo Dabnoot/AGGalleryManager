@@ -44,7 +44,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
         //Populate the Key field of the preSort TreeMap with SortBy field data, filtered and restricted if necessary:
         int iProgressNumerator = 1;
-        int iProgressDenominator = globalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() + 1;
+        int iProgressDenominator = GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() + 1;
         int iProgressBarValue;
 
         String sKey;
@@ -117,7 +117,19 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
 
         for (Map.Entry<String, ItemClass_CatalogItem>
-                entry : globalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).entrySet()) {
+                entry : GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).entrySet()) {
+
+            if(!GlobalClass.gsCatalogViewerSortBySharedWithUser.equals("")){
+                //The user has requested a sort including only catalog items that are shared with a
+                // specified user. This user could be theirself. If the ApprovedUsers list does not
+                // contain the requested user name, skip the rest of the loop.
+                String sRequestedUserNameShare = GlobalClass.gsCatalogViewerSortBySharedWithUser;
+                if(!entry.getValue().alsApprovedUsers.contains(sRequestedUserNameShare)){
+                    continue;
+                }
+
+            }
+
             sKey = "";
             //Create a unique key to identify the record in the TreeMap, which includes
             // the SortBy field. TreeMap automatically sorts by the Key field.
