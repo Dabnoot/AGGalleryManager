@@ -186,9 +186,9 @@ public class Worker_Import_VideoDownload extends Worker {
         ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
         ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
         ciNew.aliTags = new ArrayList<>(icfDownloadItem.aliProspectiveTags);
-        ciNew.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+        ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
         //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
-        ciNew.alsApprovedUsers = globalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
+        ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
         ciNew.dDatetime_Import = dTimeStamp;
@@ -541,7 +541,7 @@ public class Worker_Import_VideoDownload extends Worker {
                         //sErrorMessage = e.getMessage();
                         continue;
                     }
-                    ItemClass_Tag ict = globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(iTagID);
+                    ItemClass_Tag ict = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(iTagID);
                     if (ict != null) {
                         if (ict.bIsRestricted) {
                             bRestrictedTagInUse = true;
