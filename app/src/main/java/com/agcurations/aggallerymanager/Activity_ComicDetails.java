@@ -97,7 +97,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         //Look-up the item and grab a copy:
         if (!gsComicItemID.equals("")) {
-            gciCatalogItem = globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsComicItemID);
+            gciCatalogItem = GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).get(gsComicItemID);
         }
         if(gciCatalogItem == null){
             Toast.makeText(getApplicationContext(), "Could not find comic in catalog.", Toast.LENGTH_SHORT).show();
@@ -106,7 +106,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         String sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                + GlobalClass.gsFileSeparator + gciCatalogItem.sItemID;
+                + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name;
 
         if (gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
             //If this is a downloaded comic and the files from DownloadManager have not been moved as
@@ -114,7 +114,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                     + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                    + GlobalClass.gsFileSeparator + gciCatalogItem.sItemID
+                    + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name
                     + GlobalClass.gsFileSeparator + GlobalClass.gsDLTempFolderName;
         }
 

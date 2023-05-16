@@ -196,7 +196,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
         String sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                + GlobalClass.gsFileSeparator + gciCatalogItem.sItemID;
+                + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name;
 
         //Load the full path to each comic page into tmComicPages:
         if (gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
@@ -204,7 +204,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
             //  part of download post-processing, look in the [comic]\download folder for the files:
             sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                     + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                    + GlobalClass.gsFileSeparator + gciCatalogItem.sItemID
+                    + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name
                     + GlobalClass.gsFileSeparator + GlobalClass.gsDLTempFolderName;
         }
 
