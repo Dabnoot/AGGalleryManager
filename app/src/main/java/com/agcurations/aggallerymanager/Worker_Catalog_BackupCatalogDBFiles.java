@@ -39,29 +39,51 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         Intent broadcastIntent = new Intent();
         boolean bProblem = false;
 
+
+        int iProgressDenominator;
+        int iProgressNumerator;
+        int iProgressBarValue;
+
         Uri uriBackupFolder = GlobalClass.FormChildUri(GlobalClass.gUriDataFolder, "Backup");
 
         //Backup the catalog text files:
-        for(int i = 0; i < 3; i++){
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+            iProgressNumerator = 0;
+            iProgressDenominator = GlobalClass.gtmCatalogLists.get(iMediaCategory).size();
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            globalClass.BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    true, "Backing up catalog data files...",
+                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+
             StringBuilder sbBuffer = new StringBuilder();
             boolean bHeaderWritten = false;
-            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(i).entrySet()){
+            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: GlobalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
 
                 if(!bHeaderWritten) {
-                    sbBuffer.append(globalClass.getCatalogHeader()); //Append the header.
+                    sbBuffer.append(GlobalClass.getCatalogHeader()); //Append the header.
                     sbBuffer.append("\n");
                     bHeaderWritten = true;
                 }
 
                 sbBuffer.append(GlobalClass.getCatalogRecordString(tmEntry.getValue())); //Append the data.
                 sbBuffer.append("\n");
+
+                iProgressNumerator++;
+                if(iProgressNumerator % 100 == 0) {
+                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                    globalClass.BroadcastProgress(false, "",
+                            true, iProgressBarValue,
+                            true, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog data file.",
+                            Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                }
             }
 
             try {
                 //Write the catalog file:
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
 
-                String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents_" + sDateTimeStamp + ".dat";
+                String sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents_" + sDateTimeStamp + ".dat";
                 Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
                     OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
@@ -85,7 +107,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         for(int i = 0; i < 3; i++){
             StringBuilder sbBuffer = new StringBuilder();
             boolean bHeaderWritten = false;
-            for(Map.Entry<Integer, ItemClass_Tag> tmEntry: globalClass.gtmCatalogTagReferenceLists.get(i).entrySet()){
+            for(Map.Entry<Integer, ItemClass_Tag> tmEntry: GlobalClass.gtmCatalogTagReferenceLists.get(i).entrySet()){
 
                 if(!bHeaderWritten) {
                     sbBuffer.append(GlobalClass.getTagFileHeader()); //Append the header.
@@ -124,10 +146,16 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
             broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE, sMessage);
         }
 
-        //Send broadcast to the Import Activity:
+        //Send broadcast to the Main Activity:
         broadcastIntent.setAction(Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+        globalClass.BroadcastProgress(false, "",
+                true, 100,
+                true, "Catalog Backup Complete",
+                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+
         return Result.success();
     }
 
