@@ -117,9 +117,9 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ciNew.iComic_Max_Page_ID = alFileList.get(0).iComicPages;
         ciNew.sTags = GlobalClass.formDelimitedString(alFileList.get(0).aliProspectiveTags, ",");
         ciNew.aliTags = new ArrayList<>(alFileList.get(0).aliProspectiveTags);
-        ciNew.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+        ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
         //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
-        ciNew.alsApprovedUsers = globalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
+        ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
         //Inform program of a need to update the tags histogram:
         globalClass.gbTagHistogramRequiresUpdate[ciNew.iMediaCategory] = true;
 

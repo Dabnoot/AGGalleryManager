@@ -189,8 +189,8 @@ public class Fragment_ItemDetails extends Fragment {
                         gciCatalogItem.sTags = gsNewTagIDs;
                         gciCatalogItem.aliTags = GlobalClass.getTagIDsFromTagIDString(gsNewTagIDs);
                         //Recalc maturity rating and approved users for the item:
-                        gciCatalogItem.iMaturityRating = globalClass.getLowestTagMaturityRating(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
-                        gciCatalogItem.alsApprovedUsers = globalClass.getApprovedUsersForTagGrouping(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
+                        gciCatalogItem.iMaturityRating = GlobalClass.getHighestTagMaturityRating(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
+                        gciCatalogItem.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
                         //Inform program of a need to update the tags histogram:
                         globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                     }

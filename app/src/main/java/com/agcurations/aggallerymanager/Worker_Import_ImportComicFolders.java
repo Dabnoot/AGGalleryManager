@@ -2,7 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
@@ -73,9 +72,6 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
         ArrayList<ItemClass_CatalogItem> alci_NewCatalogItems = new ArrayList<>();
 
-        MediaMetadataRetriever mediaMetadataRetriever;
-        mediaMetadataRetriever = new MediaMetadataRetriever();
-
         globalClass.BroadcastProgress(true, "Preparing data for job file.\n",
                 false, iProgressBarValue,
                 true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
@@ -117,7 +113,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 }
                 String sComicTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 int iGrade = fileItem.iGrade;
-                Boolean bMarkedForDeletion = fileItem.bMarkedForDeletion;
+                boolean bMarkedForDeletion = fileItem.bMarkedForDeletion;
                 tmComics.put(sUriParent, new String[]{
                         sRecordID,
                         sComicName,
@@ -126,7 +122,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         sSource,
                         sParody,
                         sArtist,
-                        bMarkedForDeletion.toString()});
+                        Boolean.toString(bMarkedForDeletion)});
             }
         }
         //Comic folders identified.
@@ -285,9 +281,9 @@ public class Worker_Import_ImportComicFolders extends Worker {
             ciNew.sTitle = sComicFolderName;
             ciNew.sTags = tmEntryComic.getValue()[INDEX_COMIC_TAGS]; //Get the tags.
             ciNew.aliTags = GlobalClass.getTagIDsFromTagIDString(ciNew.sTags);
-            ciNew.iMaturityRating = globalClass.getLowestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+            ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
             //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
-            ciNew.alsApprovedUsers = globalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
+            ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
             ciNew.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNew.sFolder_Name = sDestinationFolder;
             //Create a timestamp to be used to create the data record:
