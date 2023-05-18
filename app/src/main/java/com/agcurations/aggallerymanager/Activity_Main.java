@@ -10,8 +10,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -21,7 +19,6 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,7 +26,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -61,9 +57,7 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -202,7 +196,7 @@ public class Activity_Main extends AppCompatActivity {
             }
         }
 
-        boolean bInitDataFolder = false;
+        boolean bInitDataFolder;
         if(GlobalClass.gUriDataFolder == null){
             bInitDataFolder = true;
         } else {
@@ -436,7 +430,9 @@ public class Activity_Main extends AppCompatActivity {
                         GlobalClass.galicu_Users.add(icu_DefaultUser);
                         GlobalClass.gicuCurrentUser = icu_DefaultUser;
 
-                        GlobalClass.WriteUserDataFile();
+                        if(!GlobalClass.WriteUserDataFile()){
+                            Toast.makeText(context, "Unable to update user data file.", Toast.LENGTH_LONG).show();
+                        }
                     }
                 } catch (Exception e) {
                     Toast.makeText(context, "Could not create user data file.", Toast.LENGTH_LONG).show();
@@ -589,10 +585,12 @@ public class Activity_Main extends AppCompatActivity {
                         gProgressBar_CatalogReadProgress.setProgress(iAmountComplete);
                     }
                     if (iAmountComplete == 100) {
+                        assert gProgressBar_CatalogReadProgress != null;
                         gProgressBar_CatalogReadProgress.setVisibility(View.INVISIBLE);
                         gTextView_CatalogReadProgressBarText.setVisibility(View.INVISIBLE);
                         gbDataLoadComplete = true;
                     } else {
+                        assert gProgressBar_CatalogReadProgress != null;
                         gProgressBar_CatalogReadProgress.setVisibility(View.VISIBLE);
                         gTextView_CatalogReadProgressBarText.setVisibility(View.VISIBLE);
                     }
@@ -763,7 +761,7 @@ public class Activity_Main extends AppCompatActivity {
             for(int i = 0; i < iWorkerCount; i++) {
                 WorkInfo.State stateWorkState = lfListWorkInfo.get().get(i).getState();
                 UUID UUIDWorkID = lfListWorkInfo.get().get(i).getId();
-                Log.d("Workstate", stateWorkState.toString() + ", ID " + UUIDWorkID.toString());
+                Log.d("Workstate", stateWorkState + ", ID " + UUIDWorkID);
                 if(stateWorkState == WorkInfo.State.RUNNING || stateWorkState == WorkInfo.State.ENQUEUED) {
 
                     WorkManager wm = WorkManager.getInstance(getApplicationContext());

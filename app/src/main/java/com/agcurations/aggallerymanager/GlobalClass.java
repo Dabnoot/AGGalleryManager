@@ -7,7 +7,6 @@ import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -18,14 +17,11 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.DocumentsContract;
 import android.text.Html;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.WindowInsets;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
@@ -53,12 +49,12 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.PreferenceManager;
 
 
 public class GlobalClass extends Application {
@@ -102,6 +98,7 @@ public class GlobalClass extends Application {
     public static File gfDownloadExternalStorageFolder;  //Destination root for DownloadManager Downloaded files. Android limits DL destination locations.
     public static File gfImageDownloadHoldingFolderTemp; //Used to hold download manager files temporarily, to be moved so that DLM can't find them for cleanup operations.
     public static String gsImageDownloadHoldingFolderTempRPath; //For coordinating file transfer from internal storage to SD card.
+    public static AtomicBoolean[] gAB_CatalogFileAvailable = {new AtomicBoolean(true), new AtomicBoolean(true), new AtomicBoolean(true)};
     public static final Uri[] gUriCatalogContentsFiles = new Uri[3];
     public static final Uri[] gUriCatalogTagsFiles = new Uri[3];
 
@@ -111,7 +108,7 @@ public class GlobalClass extends Application {
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
     public AtomicBoolean abTagsLoaded = new AtomicBoolean();
-    public final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
+    public static final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
     public int giLoadingState = LOADING_STATE_NOT_STARTED;
@@ -124,6 +121,7 @@ public class GlobalClass extends Application {
     public static final int SORT_BY_DATETIME_LAST_VIEWED = 0;
     public static final int SORT_BY_DATETIME_IMPORTED = 1;
     public int[] giCatalogViewerSortBySetting = {SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED};
+    public static String gsCatalogViewerSortBySharedWithUser = "";
     public static final String[] gsCatalogViewerPreferenceNameSortBy = {"VIDEOS_SORT_BY", "IMAGES_SORT_BY", "COMICS_SORT_BY"};
     public static final String[] gsCatalogViewerPreferenceNameSortAscending = {"VIDEOS_SORT_ASCENDING", "IMAGES_SORT_ASCENDING", "COMICS_SORT_ASCENDING"};
     public boolean[] gbCatalogViewerSortAscending = {true, true, true};
@@ -273,18 +271,9 @@ public class GlobalClass extends Application {
 
     public static Point getScreenWidth(@NonNull Activity activity) {
         Point pReturn = new Point();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
-            Insets insets = windowMetrics.getWindowInsets()
-                    .getInsetsIgnoringVisibility(WindowInsets.Type.systemBars());
-            pReturn.x = windowMetrics.getBounds().width();// - insets.left - insets.right;
-            pReturn.y = windowMetrics.getBounds().height();// - insets.top - insets.bottom;
-        } else {
-            DisplayMetrics displayMetrics = new DisplayMetrics();
-            activity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-            pReturn.y = displayMetrics.heightPixels;
-            pReturn.x = displayMetrics.widthPixels;
-        }
+        WindowMetrics windowMetrics = activity.getWindowManager().getCurrentWindowMetrics();
+        pReturn.x = windowMetrics.getBounds().width();// - insets.left - insets.right;
+        pReturn.y = windowMetrics.getBounds().height();// - insets.top - insets.bottom;
         return pReturn;
     }
 
@@ -653,9 +642,10 @@ public class GlobalClass extends Application {
     public static final String EXTRA_BOOL_DELETE_ITEM_RESULT = "com.agcurations.aggallerymanager.extra.delete_item_result";
     public static final String EXTRA_BOOL_REFRESH_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.extra.refresh_catalog_display";
     public static final String EXTRA_CATALOG_ITEM = "com.agcurations.aggallerymanager.extra.catalog_item";
+    public static final String EXTRA_DATA_FILE_URI_STRING = "com.agcurations.aggallerymanager.extra.data_file_uri_string";
 
-    public final int giCatalogFileVersion = 6;
-    public String getCatalogHeader(){
+    public static final int giCatalogFileVersion = 6;
+    public static String getCatalogHeader(){
         String sHeader = "";
         sHeader = sHeader + "MediaCategory";                        //Video, image, or comic.
         sHeader = sHeader + "\t" + "ItemID";                        //Video, image, comic id
@@ -1075,39 +1065,53 @@ public class GlobalClass extends Application {
         return bSuccess;
     }
 
-    public void CatalogDataFile_UpdateCatalogFiles(){
+    public static boolean CatalogDataFile_UpdateCatalogFiles(){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
-        for(int i = 0; i < 3; i++){
-            StringBuilder sbBuffer = new StringBuilder();
-            boolean bHeaderWritten = false;
-            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(i).entrySet()){
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
 
-                if(!bHeaderWritten) {
-                    sbBuffer.append(getCatalogHeader()); //Append the header.
-                    sbBuffer.append("\n");
-                    bHeaderWritten = true;
-                }
-
-                sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
-                sbBuffer.append("\n");
-            }
-
-            try {
-                //Write the catalog file:
-                OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[i], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
-                if(osNewCatalogContentsFile == null){
-                    throw new Exception();
-                }
-                osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
-                osNewCatalogContentsFile.flush();
-                osNewCatalogContentsFile.close();
-
-            } catch (Exception e) {
-                Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            boolean bSuccess = CatalogDataFile_UpdateCatalogFile(iMediaCategory);
+            if(!bSuccess){
+                return false;
             }
         }
+        return true;
+    }
+    public static boolean CatalogDataFile_UpdateCatalogFile(int iMediaCategory){
+        //If calling this routine to add a new field:
+        //  Update getCatalogRecordString before calling this routine.
+        //  Update ConvertStringToCatalogItem after calling this routine.
+
+        StringBuilder sbBuffer = new StringBuilder();
+        boolean bHeaderWritten = false;
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
+
+            if(!bHeaderWritten) {
+                sbBuffer.append(getCatalogHeader()); //Append the header.
+                sbBuffer.append("\n");
+                bHeaderWritten = true;
+            }
+
+            sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
+            sbBuffer.append("\n");
+        }
+
+        try {
+            //Write the catalog file:
+            OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            if(osNewCatalogContentsFile == null){
+                throw new Exception();
+            }
+            osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
+            osNewCatalogContentsFile.flush();
+            osNewCatalogContentsFile.close();
+
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
     }
 
     //Catalog backup handled in Service_Main.
@@ -1183,27 +1187,12 @@ public class GlobalClass extends Application {
         return ci;
     }
 
-    public String getNewCatalogRecordID(int iMediaCategory){
+        public static String getNewCatalogRecordID(int iMediaCategory){
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        int iCurrentMaxID = sharedPreferences.getInt(gsCurrentMaxItemIDStoredPreference[iMediaCategory], 0);
-        if(iCurrentMaxID == 0){
-            //Make sure that there has not been an error with the preferences by double-checking with the catalog:
-            int iThisId;
-            for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()) {
-                iThisId = Integer.parseInt(entry.getValue().sItemID);
-                if (iThisId > iCurrentMaxID) iCurrentMaxID = iThisId;
-            }
-        }
-
-        int iNewCatalogRecordID = iCurrentMaxID + 1;
-
-        sharedPreferences.edit()
-                .putInt(gsCurrentMaxItemIDStoredPreference[iMediaCategory], iNewCatalogRecordID)
-                .apply();
-
-        return String.valueOf(iNewCatalogRecordID);
+        return UUID.randomUUID().toString();
     }
+
+
 
     //=====================================================================================
     //===== Tag Subroutines Section ===================================================
@@ -1262,7 +1251,10 @@ public class GlobalClass extends Application {
         Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
 
 
-        int iNextRecordId = -1;
+        int iNextRecordId = -1; //Don't try to use UUID to create tag IDs. Some catalog items can
+        // have a couple of dozen tags, and the UUIDs are long: 1026d7dc93aa-44c8-bed4-6b48-a9e8dbb9
+        // 36 characters in the above example. At the time of this writing, a typical catalog record
+        // is 380 characters with 3 tags. File size increase would be about 20% or more.
 
         //Create an ArrayList to store the new tags:
         ArrayList<ItemClass_Tag> ictNewTags = new ArrayList<>();
@@ -1700,6 +1692,36 @@ public class GlobalClass extends Application {
 
     }
 
+    public static boolean WriteTagDataFile(int iMediaCategory){
+        //This routine used to re-write the tag data file from reference memory.
+
+        Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
+
+        try {
+            StringBuilder sbBuffer = new StringBuilder();
+            sbBuffer.append(getTagFileHeader()).append("\n");
+            for(Map.Entry<Integer, ItemClass_Tag> tagEntry: gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+                sbBuffer.append(getTagRecordString(tagEntry.getValue())).append("\n");
+            }
+
+            //Write the data to the file:
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "w"); //Open the tags file in write mode.
+            if (osNewTagsFile == null) {
+                return false;
+            }
+            osNewTagsFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
+            osNewTagsFile.flush();
+            osNewTagsFile.close();
+
+        } catch (Exception e) {
+            String sMessage =  "Problem updating Tags.dat.\n" + uriTagsFile + "\n" + e.getMessage();
+            Log.d("TagDataFileAddNewField", sMessage);
+        }
+
+        return true;
+
+    }
+
     public ArrayList<String> getTagTextsFromIDs(ArrayList<Integer> ali, int iMediaCategory){
         ArrayList<String> als = new ArrayList<>();
         for(Integer i : ali){
@@ -1866,7 +1888,7 @@ public class GlobalClass extends Application {
         return tmCompoundTagHistogram;
     }
 
-    public int getLowestTagMaturityRating(ArrayList<ItemClass_Tag> alict_Tags){
+    public static int getHighestTagMaturityRating(ArrayList<ItemClass_Tag> alict_Tags){
         int iLowestTagMaturityRating = giDefaultUserMaturityRating;
 
         for(ItemClass_Tag ict: alict_Tags){
@@ -1878,7 +1900,7 @@ public class GlobalClass extends Application {
         return iLowestTagMaturityRating;
     }
 
-    public int getLowestTagMaturityRating(ArrayList<Integer> ali_TagIDs, int iMediaCategory){
+    public static int getHighestTagMaturityRating(ArrayList<Integer> ali_TagIDs, int iMediaCategory){
 
         ArrayList<ItemClass_Tag> alict_Tags = new ArrayList<>();
         for(Integer iTagID: ali_TagIDs){
@@ -1890,32 +1912,35 @@ public class GlobalClass extends Application {
 
         }
 
-        return getLowestTagMaturityRating(alict_Tags);
+        return getHighestTagMaturityRating(alict_Tags);
     }
 
-    public void UpdateAllCatalogItemBasedOnTags(){
+    public static void UpdateAllCatalogItemBasedOnTags(){
         //Recalculates catalog item maturity rating and approved users.
         //This routine is used during app development and testing.
 
-        for(int i = 0; i < 3; i++){
-            for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(i).entrySet()){
-                icciCatalogItem.getValue().iMaturityRating = getLowestTagMaturityRating(icciCatalogItem.getValue().aliTags, i);
-                icciCatalogItem.getValue().alsApprovedUsers = getApprovedUsersForTagGrouping(icciCatalogItem.getValue().aliTags, i);
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+            for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(iMediaCategory).entrySet()){
+                icciCatalogItem.getValue().alsApprovedUsers = getApprovedUsersForTagGrouping(icciCatalogItem.getValue().aliTags, iMediaCategory); //This also takes into account the maturity rating of the tags.
+                icciCatalogItem.getValue().iMaturityRating = getHighestTagMaturityRating(icciCatalogItem.getValue().aliTags, iMediaCategory);
             }
+            CatalogDataFile_UpdateCatalogFile(iMediaCategory);
         }
-        CatalogDataFile_UpdateCatalogFiles();
+
     }
 
 
-    public ArrayList<String> getApprovedUsersForTagGrouping(ArrayList<Integer> aliTagIDs, int iMediaCategory){
+    public static ArrayList<String> getApprovedUsersForTagGrouping(ArrayList<Integer> aliTagIDs, int iMediaCategory){
 
         //If the group of tags has a single approved user, then only that user is approved for the
         // whole catalog item.
         //If the group of tags has two or more approved users, all users must be approved for
         //  each tag that is restricted to users.
+        //Further, users must have a maturity rating equal-to or greater-than the highest
+        //  maturity rating among the group of tags.
 
         //Start with a listing of all users:
-        ArrayList<ItemClass_User> alsApprovedUserPool = new ArrayList<>(galicu_Users);
+        ArrayList<ItemClass_User> alicuApprovedUserPool = new ArrayList<>(galicu_Users);
 
         //Process each listed tag ID:
         for(Integer iTagID: aliTagIDs) {
@@ -1926,7 +1951,7 @@ public class GlobalClass extends Application {
                     if (ict.alsTagApprovedUsers.size() > 0) {
                         //Check to see if users are included:
                         ArrayList<ItemClass_User> alsApprovedUsers = new ArrayList<>();
-                        for (ItemClass_User icu : alsApprovedUserPool) {
+                        for (ItemClass_User icu : alicuApprovedUserPool) {
                             boolean bUserApproved = false;
                             for (String sUserApprovedForTag : ict.alsTagApprovedUsers) {
                                 if (sUserApprovedForTag.equals(icu.sUserName)) {
@@ -1938,7 +1963,7 @@ public class GlobalClass extends Application {
                                 alsApprovedUsers.add(icu);
                             }
                         }
-                        alsApprovedUserPool = alsApprovedUsers;
+                        alicuApprovedUserPool = alsApprovedUsers;
                     }
                 } else {
                     Log.d("GlobalClass:getApprovedUsersForTagGrouping()", "alsTagApprovedUsers is null");
@@ -1947,8 +1972,18 @@ public class GlobalClass extends Application {
                 Log.d("GlobalClass:getApprovedUsersForTagGrouping()", "Tag item is null for tag ID " + iTagID);
             }
         }
+
+        //Remove users not approved for the tag grouping based on maturity rating:
+        int iHighestTagMaturityRating = getHighestTagMaturityRating(aliTagIDs, iMediaCategory);
+        ArrayList<ItemClass_User> alicuPreApprovedUsers = new ArrayList<>(alicuApprovedUserPool);
+        for(ItemClass_User icu_PreApprovedUser: alicuPreApprovedUsers){
+            if(icu_PreApprovedUser.iMaturityLevel < iHighestTagMaturityRating){
+                alicuApprovedUserPool.remove(icu_PreApprovedUser);
+            }
+        }
+
         ArrayList<String> alsApprovedUsers = new ArrayList<>();
-        for(ItemClass_User icu: alsApprovedUserPool){
+        for(ItemClass_User icu: alicuApprovedUserPool){
             alsApprovedUsers.add(icu.sUserName);
         }
         return alsApprovedUsers;
@@ -1968,7 +2003,7 @@ public class GlobalClass extends Application {
                 ArrayList<String> alsApprovedUsers = getApprovedUsersForTagGrouping(CatalogItemEntry.getValue().aliTags, iMediaCategory);
                 CatalogItemEntry.getValue().alsApprovedUsers = alsApprovedUsers;
 
-                int iMaturityRating = getLowestTagMaturityRating(CatalogItemEntry.getValue().aliTags, iMediaCategory);
+                int iMaturityRating = getHighestTagMaturityRating(CatalogItemEntry.getValue().aliTags, iMediaCategory);
                 CatalogItemEntry.getValue().iMaturityRating = iMaturityRating;
 
             }
@@ -1977,8 +2012,6 @@ public class GlobalClass extends Application {
         //Save the catalog file:
         WriteCatalogDataFile(iMediaCategory);
         Toast.makeText(getApplicationContext(), "Catalog records updated with user permissions and maturity ratings.", Toast.LENGTH_SHORT).show();
-
-
 
     }
 
@@ -2044,9 +2077,10 @@ public class GlobalClass extends Application {
 
 
     //==================================================================================================
-    //=========  USER ACCOUNT DATA STORAGE  ============================================================
+    //=========  USER SUBROUTINES SECTION  ============================================================
     //==================================================================================================
 
+    public static final String EXTRA_STRING_USERNAME = "com.agcurations.aggallerymanager.extra.string_username";
 
     public static String getUserAccountRecordString(ItemClass_User icu){
         String sUserRecord =
@@ -2054,7 +2088,8 @@ public class GlobalClass extends Application {
                         JumbleStorageText(icu.sPin) + "\t" +
                         JumbleStorageText(icu.iUserIconColor) + "\t" +
                         JumbleStorageText(icu.bAdmin) + "\t" +
-                        JumbleStorageText(icu.iMaturityLevel);
+                        JumbleStorageText(icu.iMaturityLevel) + "\t" +
+                        JumbleStorageText(icu.bToBeDeleted);
         return sUserRecord;
     }
 
@@ -2067,6 +2102,9 @@ public class GlobalClass extends Application {
         icu.iUserIconColor = Integer.parseInt(JumbleStorageText(sRecordSplit[2]));
         icu.bAdmin = Boolean.parseBoolean(JumbleStorageText(sRecordSplit[3]));
         icu.iMaturityLevel = Integer.parseInt(JumbleStorageText(sRecordSplit[4]));
+        if(sRecordSplit.length == 6){
+            icu.bToBeDeleted = Boolean.parseBoolean(JumbleStorageText(sRecordSplit[5]));
+        }
         return icu;
     }
 

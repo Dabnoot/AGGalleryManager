@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
@@ -12,7 +11,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,7 +30,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
@@ -230,7 +227,7 @@ public class Worker_Catalog_LoadData extends Worker {
         stopWatch.Reset();
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
 
-            globalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
+            GlobalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
             iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(false, "",
@@ -281,7 +278,9 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //globalClass.CatalogDataFile_AddNewField();
 
-        //globalClass.UpdateAllCatalogItemBasedOnTags();
+        //GlobalClass.UpdateAllCatalogItemBasedOnTags();
+
+        //GlobalClass.CatalogDataFile_UpdateCatalogFiles();
 
         //VerifyVideoFilesIntegrity();
 
@@ -488,7 +487,7 @@ public class Worker_Catalog_LoadData extends Worker {
                         throw new Exception();
                     }
                     //Write the activity_comic_details_header line to the file:
-                    osCatalogContentsFile.write(globalClass.getCatalogHeader().getBytes()); //Write the header.
+                    osCatalogContentsFile.write(GlobalClass.getCatalogHeader().getBytes()); //Write the header.
                     osCatalogContentsFile.write("\n".getBytes());
 
                 } catch (Exception e) {
@@ -805,7 +804,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
 
-            for(Map.Entry<String, ItemClass_CatalogItem> entry: globalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
+            for(Map.Entry<String, ItemClass_CatalogItem> entry: GlobalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
                 //Determine the full path to the file:
                 ItemClass_CatalogItem ci = entry.getValue();
                 String sFilePath = GlobalClass.gUriCatalogFolders[iMediaCategory].getPath() + File.separator
@@ -841,7 +840,7 @@ public class Worker_Catalog_LoadData extends Worker {
         //  relative. The segment files can't be found after copying all of the data over to an
         //  upgraded SD card because the Android storage device name changes in the path.
 
-        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: globalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
             ItemClass_CatalogItem ci = tmEntry.getValue();
             if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
                 //If this is an M3U8 file catalog item, locate the M3U8 file and update file paths.

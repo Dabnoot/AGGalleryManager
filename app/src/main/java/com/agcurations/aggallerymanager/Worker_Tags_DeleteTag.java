@@ -51,7 +51,7 @@ public class Worker_Tags_DeleteTag extends Worker {
 
         //Loop through all catalog items and look for items that contain the tag to delete:
         ArrayList<ItemClass_CatalogItem> alci_CatalogItemsToUpdate = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : globalClass.gtmCatalogLists.get(giMediaCategory).entrySet()){
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : GlobalClass.gtmCatalogLists.get(giMediaCategory).entrySet()){
             String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
 
@@ -70,9 +70,9 @@ public class Worker_Tags_DeleteTag extends Worker {
                 //Recalculate permissions and approved users for this catalog item given the new tag
                 // set:
                 tmEntryCatalogRecord.getValue().iMaturityRating =
-                        globalClass.getLowestTagMaturityRating(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
+                        GlobalClass.getHighestTagMaturityRating(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
                 tmEntryCatalogRecord.getValue().alsApprovedUsers =
-                        globalClass.getApprovedUsersForTagGrouping(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
+                        GlobalClass.getApprovedUsersForTagGrouping(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
                 //Update the record and the catalog file:
                 alci_CatalogItemsToUpdate.add(tmEntryCatalogRecord.getValue());
 
@@ -135,8 +135,8 @@ public class Worker_Tags_DeleteTag extends Worker {
         }
 
         //Remove the tag from memory:
-        globalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
-        if(globalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.iTagID)){
+        GlobalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
+        if(GlobalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.iTagID)){
             String sMessage = "Unable to find tag in memory.";
             globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
             return Result.failure();

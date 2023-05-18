@@ -1,14 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/constraintlayout_fragment_user_mgmt_3_delete_user"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Fragment_UserMgmt_3_Delete_User">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/relativeLayout_Progress">
 
-</FrameLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true">
+
+            <TextView
+                android:id="@+id/textView_DeleteUserTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete User"
+                android:textColor="@color/colorTextColor"
+                android:textSize="40sp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"/>
+
+            <TextView
+                android:id="@+id/textView_DeleteUserSubText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select a user from the drop down to delete."
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/textView_DeleteUserTitle"/>
+
+            <ListView
+                android:id="@+id/listView_UserDelete"
+                android:layout_width="400dp"
+                android:layout_height="0dp"
+                android:scrollbarSize="20dp"
+                android:layout_marginTop="15dp"
+                android:layout_below="@id/textView_DeleteUserSubText"
+                android:layout_centerHorizontal="true"
+                android:layout_above="@id/linearLayout_DeleteUserButtons"/>
+
+            <LinearLayout
+                android:id="@+id/linearLayout_DeleteUserButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true"
+                android:layout_marginTop="15dp"
+                android:paddingBottom="15dp">
+
+                <Button
+                    android:id="@+id/button_DeleteUser"
+                    android:layout_width="230dp"
+                    android:layout_height="67dp"
+                    android:text="Delete User"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorButton"
+                    android:enabled="false"/>
+
+                <Button
+                    android:id="@+id/button_Finish"
+                    android:layout_width="220dp"
+                    android:layout_height="67dp"
+                    android:layout_marginStart="30dp"
+                    android:text="Finish"
+                    android:textSize="24sp"
+                    app:backgroundTint="@color/colorButton" />
+
+            </LinearLayout>
+
+        </RelativeLayout>
+
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout_Progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progressBar_Progress"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:progressDrawable="@drawable/progressbar_colors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"/>
+
+        <TextView
+            android:id="@+id/textView_ProgressBarText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible"/>
+    </RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

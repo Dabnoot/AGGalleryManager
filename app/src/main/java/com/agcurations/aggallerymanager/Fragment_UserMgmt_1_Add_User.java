@@ -297,7 +297,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         String sPin = editText_AccessPinNumber.getText().toString();
         Button button_AddUser = getView().findViewById(R.id.button_AddUser);
         if(button_AddUser != null) {
-            button_AddUser.setEnabled(!sUserName.equals("") && !sPin.equals(""));
+            button_AddUser.setEnabled(!sUserName.equals(""));
         }
 
 
@@ -380,7 +380,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
 
             //Add data to file storage so that it can be picked-up by a new device if the data is moved:
-            GlobalClass.WriteUserDataFile();
+            if(!GlobalClass.WriteUserDataFile()){
+                Toast.makeText(getContext(), "Unable to update user data file.", Toast.LENGTH_LONG).show();
+            }
 
             Toast.makeText(requireContext(), "User added successfully.", Toast.LENGTH_SHORT).show();
 

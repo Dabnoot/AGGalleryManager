@@ -69,8 +69,16 @@ public class Activity_UserManagement extends AppCompatActivity {
         finish();
     }
 
+    @Override
+    protected void onDestroy() {
 
+        //Mark user items as unchecked so that they don't appear pre-selected in any user list:
+        for(ItemClass_User icu: GlobalClass.galicu_Users){
+            icu.bIsChecked = false;
+        }
 
+        super.onDestroy();
+    }
 
 
     //=============================================================================================

@@ -4,6 +4,9 @@ import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.text.Spannable;
+import android.text.Spanned;
+import android.text.style.StrikethroughSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +26,8 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
     public boolean gbSimplifiedView = false;
     public boolean gbCompactMode = false;
     int[] giSelectedUnselectedBGColors = null;
+
+    private static final StrikethroughSpan STRIKE_THROUGH_SPAN = new StrikethroughSpan();
 
     public AdapterUserList(@NonNull Context context, int resource, @NonNull List<ItemClass_User> objects) {
         super(context, resource, objects);
@@ -44,15 +49,26 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
         //Get user data for this row:
         final ItemClass_User icu = getItem(position);
 
+        if(icu == null) return row;
+
         //Set the icon color:
         AppCompatImageView imageView_UserIcon = row.findViewById(R.id.imageView_UserIcon);
-        Drawable drawable = AppCompatResources.getDrawable(getContext(), R.drawable.login).mutate();
-        drawable.setColorFilter(new PorterDuffColorFilter(icu.iUserIconColor, PorterDuff.Mode.SRC_IN));
-        imageView_UserIcon.setImageDrawable(drawable);
+        Drawable d1 = AppCompatResources.getDrawable(getContext(), R.drawable.login);
+        if(d1 != null) {
+            Drawable drawable = d1.mutate();
+            drawable.setColorFilter(new PorterDuffColorFilter(icu.iUserIconColor, PorterDuff.Mode.SRC_IN));
+            imageView_UserIcon.setImageDrawable(drawable);
+        }
 
         //Set the user name:
         TextView textView_UserName = row.findViewById(R.id.textView_UserName);
-        textView_UserName.setText(icu.sUserName);
+        if(!icu.bToBeDeleted) {
+            textView_UserName.setText(icu.sUserName);
+        } else {
+            textView_UserName.setText(icu.sUserName, TextView.BufferType.SPANNABLE);
+            Spannable spannable = (Spannable) textView_UserName.getText();
+            spannable.setSpan(STRIKE_THROUGH_SPAN, 0, icu.sUserName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
 
         //Set the maturity rating code text for the readout:
         TextView textView_Maturity = row.findViewById(R.id.textView_Maturity);
@@ -135,6 +151,16 @@ public class AdapterUserList extends ArrayAdapter<ItemClass_User> {
             }
         }
         return alsUserNames;
+    }
+
+    public void uncheckAll(){
+        for(int i = 0; i < getCount(); i++){
+            ItemClass_User icu = getItem(i);
+            if(icu != null) {
+                icu.bIsChecked = false;
+            }
+        }
+        notifyDataSetChanged();
     }
 
 

@@ -12,6 +12,7 @@ public class ItemClass_User implements Serializable {
     public boolean bAdmin = false;
     public int iMaturityLevel = 0;
     public boolean bIsChecked = false; //For listView purposes.
+    public boolean bToBeDeleted = false; //For continuity of a long-running user delete process (may delete privately-held files).
 
     public ItemClass_User() {
     }
