@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -22,6 +23,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowMetrics;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Adapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -97,6 +99,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
         if (getView() != null) {
 
+            //Call thing to hide the keyboard when somewhere other than an EditText is touched:
+            setupUI(getView().findViewById(R.id.linerLayout_AddUser));
+
             EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
             editText_UserName.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -114,6 +119,14 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
                 }
             });
+            editText_UserName.requestFocus();
+            if(getActivity() != null) {
+                InputMethodManager inputMethodManager =
+                        (InputMethodManager) getActivity().getSystemService(
+                                Activity.INPUT_METHOD_SERVICE);
+                inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+            }
+
 
             EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
             editText_AccessPinNumber.addTextChangedListener(new TextWatcher() {
@@ -401,6 +414,29 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             //Update listview of users:
             initUserList();
 
+        }
+    }
+
+    public void setupUI(View view) {
+        //https://stackoverflow.com/questions/4165414/how-to-hide-soft-keyboard-on-android-after-clicking-outside-edittext/19828165
+        // Set up touch listener for non-text box views to hide keyboard.
+        if (!(view instanceof EditText)) {
+            view.setOnTouchListener(new View.OnTouchListener() {
+                public boolean onTouch(View v, MotionEvent event) {
+                    if(getActivity() != null) {
+                        GlobalClass.hideSoftKeyboard(getActivity());
+                    }
+                    return false;
+                }
+            });
+        }
+
+        //If a layout container, iterate over children and seed recursion.
+        if (view instanceof ViewGroup) {
+            for (int i = 0; i < ((ViewGroup) view).getChildCount(); i++) {
+                View innerView = ((ViewGroup) view).getChildAt(i);
+                setupUI(innerView);
+            }
         }
     }
 
