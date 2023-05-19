@@ -96,7 +96,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
         for(ItemClass_File fileItem: alFileList) {
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
                 String sUriParent = fileItem.sUri;
-                String sRecordID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
+                String sRecordID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
                 String sComicName = fileItem.sFileOrFolderName;
                 if(!fileItem.sTitle.equals("")){
                     sComicName = fileItem.sTitle;
