@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
@@ -14,7 +13,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -30,9 +28,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.ValueCallback;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -42,7 +38,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -381,6 +376,7 @@ public class Fragment_WebPageTab extends Fragment {
                     // if the page is on any of the other fragments. If not, enter it into
                     //  the EditText, clear it from the clipboard, and navigate to the page.
                     String sPossibleAddress = "";
+                    if(getContext() == null) return;
                     ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
                     if(getContext() != null) {
                         ClipData clipData = clipboard.getPrimaryClip();
@@ -421,11 +417,11 @@ public class Fragment_WebPageTab extends Fragment {
                         return;
                     }
                     ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clipData = ClipData.newPlainText(Service_Browser.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
+                    ClipData clipData = ClipData.newPlainText(GlobalClass.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
                     clipboard.setPrimaryClip(clipData);
 
                     //Send the user to the Import Activity:
-                    globalClass.giSelectedCatalogMediaCategory = -1; //Don't know the type of media selected.
+                    GlobalClass.giSelectedCatalogMediaCategory = -1; //Don't know the type of media selected.
                     Intent intentImportGuided = new Intent(getActivity(), Activity_Import.class);
                     startActivity(intentImportGuided);
                 }
@@ -504,15 +500,19 @@ public class Fragment_WebPageTab extends Fragment {
     }
 
     private void BackButtonEnable(){
+        if(getActivity() == null) return;
         gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
     }
     private void BackButtonDisable(){
+        if(getActivity() == null) return;
         gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.tab_backcolor_selected, getActivity().getTheme())));
     }
     private void ForwardButtonEnable(){
+        if(getActivity() == null) return;
         gImageButton_Forward.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
     }
     private void ForwardButtonDisable(){
+        if(getActivity() == null) return;
         gImageButton_Forward.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.tab_backcolor_selected, getActivity().getTheme())));
     }
 
@@ -653,6 +653,7 @@ public class Fragment_WebPageTab extends Fragment {
                             if(!sTopofBackStack.equals(url)){
                                 icwptd.stackBackHistory.push(url);
                                 //Show the back button as enabled:
+                                if(getActivity() == null) return;
                                 gImageButton_Back.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.color_browser_fragment_button_enabled, getActivity().getTheme())));
                             }
                         } else {
@@ -664,7 +665,7 @@ public class Fragment_WebPageTab extends Fragment {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             globalClass.gal_WebPages.set(i, icwptd);
-                            Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageFinished()");
+                            Activity_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageFinished()");
 
                         }
                         break;
@@ -719,7 +720,7 @@ public class Fragment_WebPageTab extends Fragment {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
                             globalClass.gal_WebPages.set(i, icwptd);
-                            Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageStarted()");
+                            Activity_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageStarted()");
 
 
                         }
@@ -837,7 +838,7 @@ public class Fragment_WebPageTab extends Fragment {
                             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                                 icwptd.sFaviconAddress = sFaviconAddress;
                                 globalClass.gal_WebPages.set(i, icwptd);
-                                Service_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
+                                Activity_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
                                 break;
                             }
                         }
