@@ -635,6 +635,36 @@ public class GlobalClass extends Application {
         }
     }
 
+    public static String cleanFileNameViaTrim(String sFilename){
+        //Use when expecting the begining of the filename to be ok, but trailing data may have illegal chars.
+        //Useful when file is a download from a URL.
+        //Example:
+        //hls-480p-fe73881.ts?e=1622764694&l=0&h=1d7be9f2e81e3a2a2d1e8d3be7dff1bc
+        String sOutput = sFilename;
+        String[] sReservedChars = {
+                "|",
+                "\\",
+                "?",
+                "*",
+                "<",
+                "\"",
+                ":",
+                ">",
+                "+",
+                "[",
+                "]",
+                "'"};
+        for(String sReservedChar: sReservedChars) {
+            int iReservedCharLocation = sOutput.indexOf(sReservedChar);
+            if( iReservedCharLocation > 0){
+                sOutput = sOutput.substring(0, iReservedCharLocation);
+            }
+
+        }
+
+        return sOutput;
+    }
+
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
     //=====================================================================================
@@ -693,48 +723,53 @@ public class GlobalClass extends Application {
     }
 
     public static String getCatalogRecordString(ItemClass_CatalogItem ci){
+        StringBuilder sbRecord = new StringBuilder();
+        return getCatalogRecordString(ci, sbRecord);
+    }
 
-        String sRecord = "";  //To be used when writing the catalog file.
-        sRecord = sRecord + ci.iMediaCategory;                                            //Video, image, or comic.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sItemID);                         //Video, image, comic id
-        sRecord = sRecord + "\t" + ci.sFilename;                                          //Video or image filename
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sFolder_Name);                    //Name of the folder holding the video, image, or comic pages
-        sRecord = sRecord + "\t" + ci.sThumbnail_File;                                    //Name of the file used as the thumbnail for a video or comic
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.dDatetime_Import);                //Date of import. Used for sorting if desired
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.dDatetime_Last_Viewed_by_User);   //Date of last read by user. Used for sorting if desired
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sTags);                           //Tags given to the video, image, or comic
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iHeight);                         //Video or image dimension/resolution
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iWidth);                          //Video or image dimension/resolution
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.lDuration_Milliseconds);          //Duration of video in milliseconds
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sDuration_Text);                  //Duration of video text in 00:00:00 format
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sResolution);                     //Resolution for sorting at user request
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.lSize);                           //Size of video, image, or size of all files in the comic, in Bytes
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sCast);                           //For videos and images
+    public static String getCatalogRecordString(ItemClass_CatalogItem ci, StringBuilder sbRecord){
+
+        //StringBuilder sbRecord = new StringBuilder();  //To be used when writing the catalog file.
+        sbRecord.append(ci.iMediaCategory)                                            //Video, image, or comic.
+        .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
+        .append("\t").append(ci.sFilename)                                          //Video or image filename
+        .append("\t").append(JumbleStorageText(ci.sFolder_Name))                    //Name of the folder holding the video, image, or comic pages
+        .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
+        .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
+        .append("\t").append(JumbleStorageText(ci.dDatetime_Last_Viewed_by_User))   //Date of last read by user. Used for sorting if desired
+        .append("\t").append(JumbleStorageText(ci.sTags))                           //Tags given to the video, image, or comic
+        .append("\t").append(JumbleStorageText(ci.iHeight))                         //Video or image dimension/resolution
+        .append("\t").append(JumbleStorageText(ci.iWidth))                          //Video or image dimension/resolution
+        .append("\t").append(JumbleStorageText(ci.lDuration_Milliseconds))          //Duration of video in milliseconds
+        .append("\t").append(JumbleStorageText(ci.sDuration_Text))                  //Duration of video text in 00:00:00 format
+        .append("\t").append(JumbleStorageText(ci.sResolution))                     //Resolution for sorting at user request
+        .append("\t").append(JumbleStorageText(ci.lSize))                           //Size of video, image, or size of all files in the comic, in Bytes
+        .append("\t").append(JumbleStorageText(ci.sCast))                           //For videos and images
 
         //Comic-related variables:
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicArtists);                   //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicCategories);                //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicCharacters);                //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicGroups);                    //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicLanguages);                 //Language(s) found in the comic
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComicParodies);                  //Common comic tag category
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sTitle);                          //Comic name
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iComicPages);                     //Total number of pages as defined at the comic source
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iComic_Max_Page_ID);              //Max comic page id extracted from file names
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sComic_Missing_Pages);            //Missing page numbers
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iFile_Count);                     //Files included with the comic. Can be used for integrity check. Also used
-                                                                                          // for video M3U8 download completion check.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.bComic_Online_Data_Acquired);     //Typically used to gather tag data from an online comic source, if automatic.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.sSource);                         //Website, if relevant.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iGrade);                          //Grade.
-        sRecord = sRecord + "\t" + JumbleStorageText(ci.iSpecialFlag);                    //Code for required post-processing.
-        sRecord = sRecord + "\t" + ci.iAllVideoSegmentFilesDetected;                      //For verifying m3u8 segment file complex integrity.
+        .append("\t").append(JumbleStorageText(ci.sComicArtists))                   //Common comic tag category
+        .append("\t").append(JumbleStorageText(ci.sComicCategories))                //Common comic tag category
+        .append("\t").append(JumbleStorageText(ci.sComicCharacters))                //Common comic tag category
+        .append("\t").append(JumbleStorageText(ci.sComicGroups))                    //Common comic tag category
+        .append("\t").append(JumbleStorageText(ci.sComicLanguages))                 //Language(s) found in the comic
+        .append("\t").append(JumbleStorageText(ci.sComicParodies))                  //Common comic tag category
+        .append("\t").append(JumbleStorageText(ci.sTitle))                          //Comic name
+        .append("\t").append(JumbleStorageText(ci.iComicPages))                     //Total number of pages as defined at the comic source
+        .append("\t").append(JumbleStorageText(ci.iComic_Max_Page_ID))              //Max comic page id extracted from file names
+        .append("\t").append(JumbleStorageText(ci.sComic_Missing_Pages))            //Missing page numbers
+        .append("\t").append(JumbleStorageText(ci.iFile_Count))                     //Files included with the comic. Can be used for integrity check. Also used
+        // for video M3U8 download completion check.
+        .append("\t").append(JumbleStorageText(ci.bComic_Online_Data_Acquired))     //Typically used to gather tag data from an online comic source, if automatic.
+        .append("\t").append(JumbleStorageText(ci.sSource))                         //Website, if relevant.
+        .append("\t").append(JumbleStorageText(ci.iGrade))                          //Grade.
+        .append("\t").append(JumbleStorageText(ci.iSpecialFlag))                    //Code for required post-processing.
+        .append("\t").append(ci.iAllVideoSegmentFilesDetected)                      //For verifying m3u8 segment file complex integrity.
 
         //Append the Maturity Rating to the record:
-        sRecord = sRecord + "\t" + ci.iMaturityRating;
+        .append("\t").append(ci.iMaturityRating)
 
         //Append the list of approved users for this item to the record:
-        sRecord = sRecord + "\t" + "{";
+        .append("\t").append("{");
         StringBuilder sb = new StringBuilder();
         int iUserListSize = ci.alsApprovedUsers.size();
         for(int i = 0; i < iUserListSize; i++){
@@ -743,10 +778,9 @@ public class GlobalClass extends Application {
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb + "%%" + "}";
+        sbRecord.append(sb).append("%%}");
 
-
-        return sRecord;
+        return sbRecord.toString();
     }
     
     public static ItemClass_CatalogItem ConvertStringToCatalogItem(String[] sRecord){
@@ -815,6 +849,8 @@ public class GlobalClass extends Application {
         CatalogDataFile_CreateNewRecords(alci_CatalogItems);
     }
 
+    public static final String CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE";
+
     public void CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
 
         int iMediaCategory;
@@ -855,7 +891,7 @@ public class GlobalClass extends Application {
                 BroadcastProgress(true, sMessage,
                         false, 0,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
                 return;
             }
             //Write the activity_comic_details_header line to the file:
@@ -869,7 +905,7 @@ public class GlobalClass extends Application {
             BroadcastProgress(true, sMessage,
                     false, 0,
                     false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
 
         }
 
@@ -998,61 +1034,20 @@ public class GlobalClass extends Application {
     }
 
     public boolean deleteItemFromCatalogFile(ItemClass_CatalogItem ci, String sIntentActionFilter){
-        boolean bSuccess;
+        boolean bSuccess = true;
 
         gbTagHistogramRequiresUpdate[ci.iMediaCategory] = true;
 
         String sMessage;
 
         try {
-            InputStream isCatalogReader;
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            isCatalogReader = gcrContentResolver.openInputStream(gUriCatalogContentsFiles[ci.iMediaCategory]);
-            brReader = new BufferedReader(new InputStreamReader(isCatalogReader));
-            sbBuffer.append(brReader.readLine());
-            sbBuffer.append("\n");
-
-            String sLine = brReader.readLine();
-            bSuccess = false;
-            ItemClass_CatalogItem ciFromFile;
-            while (sLine != null) {
-                ciFromFile = GlobalClass.ConvertStringToCatalogItem(sLine);
-                if (!(ciFromFile.sItemID.equals(ci.sItemID))) {
-                    //If the line is not the comic we are trying to delete, transfer it over:
-                    sbBuffer.append(sLine);
-                    sbBuffer.append("\n");
-                } else {
-                    //Item record is located and we are skipping copying it into the buffer (thus deleting it).
-                    bSuccess = true;
-                }
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            if(!bSuccess){
-                sMessage = "Could not locate item data record (ID: " +
-                        GlobalClass.JumbleStorageText(ci.sItemID) +
-                        ") in CatalogContents.dat.\n" +
-                        gUriCatalogContentsFiles[ci.iMediaCategory];
-                problemNotificationConfig(sMessage, sIntentActionFilter);
-
-            }
-
-            //Re-write the CatalogContentsFile without the deleted item's data record:
-            OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[ci.iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
-            if(osNewCatalogContentsFile == null){
-                throw new Exception();
-            }
-            osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
-            osNewCatalogContentsFile.flush();
-            osNewCatalogContentsFile.close();
 
 
-            //Now update memory to no longer include the item:
+            //Update memory to no longer include the item:
             gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
+
+            //Update the catalog file from memory:
+            CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory);
 
             //Update the tags histogram:
             updateTagHistogramsIfRequired();
@@ -1085,6 +1080,7 @@ public class GlobalClass extends Application {
 
         StringBuilder sbBuffer = new StringBuilder();
         boolean bHeaderWritten = false;
+        StringBuilder sbRecord = new StringBuilder();
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
 
             if(!bHeaderWritten) {
@@ -1093,7 +1089,8 @@ public class GlobalClass extends Application {
                 bHeaderWritten = true;
             }
 
-            sbBuffer.append(getCatalogRecordString(tmEntry.getValue())); //Append the data.
+            sbBuffer.append(getCatalogRecordString(tmEntry.getValue(), sbRecord)); //Append the data.
+            sbRecord.setLength(0);
             sbBuffer.append("\n");
         }
 
@@ -2505,7 +2502,12 @@ public class GlobalClass extends Application {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
         globalClass.gsbImportExecutionLog.append(sLogLine);
 
-        if(sIntentActionFilter.equals(Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE)) {
+        if(sIntentActionFilter.equals(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE) ||
+                sIntentActionFilter.equals(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE) ||
+                sIntentActionFilter.equals(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE) ||
+                sIntentActionFilter.equals(Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE) ||
+                sIntentActionFilter.equals(Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE) ||
+                sIntentActionFilter.equals(GlobalClass.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE)) {
             if (bUpdatePercentComplete) {
                 globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
             }
@@ -2547,6 +2549,8 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Import Options ================================================================
     //=====================================================================================
+
+    public static final String IMPORT_REQUEST_FROM_INTERNAL_BROWSER = "com.agcurations.aggallerymanager.importurl";
 
     boolean gbUseDownloadManager = true;
 
