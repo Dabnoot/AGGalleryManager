@@ -17,6 +17,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -397,18 +400,17 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             ClipData clipData = clipboard.getPrimaryClip();
             if (clipData != null) {
                 String sClipLabel = clipData.getDescription().getLabel().toString();
-                if(sClipLabel.equals(Service_Browser.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                if(sClipLabel.equals(GlobalClass.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
                     ClipData.Item clipItem = clipData.getItemAt(0);
                     if(clipItem != null){
                         if(clipItem.getText() != null){
+                            if(getActivity() == null) return;
                             String sWebAddress = clipItem.coerceToText(getActivity().getApplicationContext()).toString();
-                            if( sWebAddress != null){
-                                gEditText_WebAddress.setText(sWebAddress);
-                                SetTextStatusMessage("Loading webpage...");
-                                galsRequestedResources = new ArrayList<>();
-                                gWebView.loadUrl(sWebAddress);
-                                clipboard.clearPrimaryClip();
-                            }
+                            gEditText_WebAddress.setText(sWebAddress);
+                            SetTextStatusMessage("Loading webpage...");
+                            galsRequestedResources = new ArrayList<>();
+                            gWebView.loadUrl(sWebAddress);
+                            clipboard.clearPrimaryClip();
                         }
                     }
 
@@ -450,7 +452,18 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     SetTextStatusMessage("Analyzing HTML...");
                     globalClass.gbWorkerVideoAnalysisInProgress = false; //Force capability to start
                                                     // analysis (even if a worker is in progress).
-                    Service_Import.startActionVideoAnalyzeHTML(getContext());
+                    if(getContext() == null) return;
+                    String sCallerID = "Service_Import:startActionVideoAnalyzeHTML()";
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataVideoAnalyzeHTML = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .build();
+                    OneTimeWorkRequest otwrVideoAnalyzeHTML = new OneTimeWorkRequest.Builder(Worker_Import_VideoAnalyzeHTML.class)
+                            .setInputData(dataVideoAnalyzeHTML)
+                            .addTag(Worker_Import_VideoAnalyzeHTML.TAG_WORKER_IMPORT_VIDEOANALYZEHTML) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(getContext()).enqueue(otwrVideoAnalyzeHTML);
 
                 }
             }

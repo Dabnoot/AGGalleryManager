@@ -28,6 +28,8 @@ public class Worker_Import_ImportFiles extends Worker {
 
     public static final String TAG_WORKER_IMPORT_IMPORTFILES = "com.agcurations.aggallermanager.tag_worker_import_importfiles";
 
+    public static final String IMPORT_FILES_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_FILES_ACTION_RESPONSE";
+    
     int giMoveOrCopy;
     int giMediaCategory;
 
@@ -81,7 +83,7 @@ public class Worker_Import_ImportFiles extends Worker {
         globalClass.BroadcastProgress(true, "Preparing data for job file.\n",
                 false, iProgressBarValue,
                 true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_FILES_ACTION_RESPONSE);
 
         //Loop and examine list of files to be imported, build a buffer of records to write to a job file,
         // and create catalog item records:
@@ -104,7 +106,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 globalClass.BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_FILES_ACTION_RESPONSE);
                 String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                         uriFileItem.toString(),
                         fileItem.sDestinationFolder,
@@ -150,7 +152,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 globalClass.BroadcastProgress(true, "Problem with source reference for " + fileItem.sFileOrFolderName + "\n",
                         false, iProgressBarValue,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_FILES_ACTION_RESPONSE);
                 lByteProgressNumerator += fileItem.lSizeBytes;
                 continue;
             }
@@ -183,7 +185,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 globalClass.BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_FILES_ACTION_RESPONSE);
 
                 String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                         uriFileItemSource.toString(),
@@ -210,7 +212,7 @@ public class Worker_Import_ImportFiles extends Worker {
                     globalClass.BroadcastProgress(true, " Obtaining metadata for file... ",
                             false, iProgressBarValue,
                             false, "",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_FILES_ACTION_RESPONSE);
 
                     if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
@@ -222,7 +224,7 @@ public class Worker_Import_ImportFiles extends Worker {
                                 globalClass.BroadcastProgress(true, "Could not get metadata for video.\n" + e.getMessage(),
                                         false, iProgressBarValue,
                                         false, "",
-                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                        IMPORT_FILES_ACTION_RESPONSE);
                             }
                             fileItem.sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
                             fileItem.sHeight = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
@@ -243,7 +245,7 @@ public class Worker_Import_ImportFiles extends Worker {
                                     globalClass.BroadcastProgress(true, "Could not get metadata for gif.\n" + e.getMessage(),
                                             false, iProgressBarValue,
                                             false, "",
-                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                            IMPORT_FILES_ACTION_RESPONSE);
                                 }
                             }
                         }
@@ -264,13 +266,13 @@ public class Worker_Import_ImportFiles extends Worker {
                             globalClass.BroadcastProgress(true, "Could not get metadata for image.\n" + e.getMessage(),
                                     false, iProgressBarValue,
                                     false, "",
-                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                    IMPORT_FILES_ACTION_RESPONSE);
                         }
                     }
                     globalClass.BroadcastProgress(true, "Metadata seek complete.\n",
                             false, iProgressBarValue,
                             false, "",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_FILES_ACTION_RESPONSE);
                 }
 
                 ciNew.lDuration_Milliseconds = fileItem.lVideoTimeInMilliseconds;
@@ -319,7 +321,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 globalClass.BroadcastProgress(true, "Problem with copy/move operation. Operation complete.\n" + e.getMessage(),
                         false, iProgressBarValue,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_FILES_ACTION_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
@@ -344,7 +346,7 @@ public class Worker_Import_ImportFiles extends Worker {
             globalClass.BroadcastProgress(true, sLogLine,
                     false, iProgressBarValue,
                     true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    IMPORT_FILES_ACTION_RESPONSE);
 
             //Create a file with a listing of the files to be copied/moved:
             Uri uriJobFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sJobFileName);
@@ -378,7 +380,7 @@ public class Worker_Import_ImportFiles extends Worker {
             globalClass.BroadcastProgress(true, "Problem with writing the job file.\n" + e.getMessage(),
                     false, iProgressBarValue,
                     false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    IMPORT_FILES_ACTION_RESPONSE);
             globalClass.gbImportExecutionRunning = false;
             globalClass.gbImportExecutionFinished = true;
             return Result.failure();
@@ -390,7 +392,7 @@ public class Worker_Import_ImportFiles extends Worker {
         globalClass.BroadcastProgress(true, sLogLine,
                 false, iProgressBarValue,
                 true, iFileCountProgressNumerator + "/" + iFileCountProgressDenominator + " files written to job file",
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_FILES_ACTION_RESPONSE);
 
         //Build-out data to send to the worker:
         Data dataLocalFileTransfer = new Data.Builder()
@@ -406,7 +408,7 @@ public class Worker_Import_ImportFiles extends Worker {
         globalClass.BroadcastProgress(true, "Job file creation worker operation complete.\n",
                 false, iProgressBarValue,
                 false, "",
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_FILES_ACTION_RESPONSE);
 
 
         globalClass.gbImportExecutionRunning = false;

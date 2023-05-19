@@ -48,6 +48,9 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 public class Activity_VideoPlayer extends AppCompatActivity {
 
@@ -117,13 +120,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         treeMapRecyclerViewVideos.putAll(hashMapTemp);*/
         treeMapRecyclerViewCatItems = globalClass.gtmCatalogViewerDisplayTreeMap;
 
-        int iVideoID = intentVideoPlayer.getIntExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID,0);
+        String sVideoID = intentVideoPlayer.getStringExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID);
 
         //Get the TreeMap key associated with the Video ID provided:
         giKey = 0;
         for (Map.Entry<Integer, ItemClass_CatalogItem>
                 entry : treeMapRecyclerViewCatItems.entrySet()) {
-            if(entry.getValue().sItemID.equals(Integer.toString(iVideoID))) {
+            if(entry.getValue().sItemID.equals(sVideoID)) {
                 giKey = entry.getKey();
             }
         }
@@ -397,7 +400,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
         });
 
-        if(globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS){
+        if(GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS){
             gbAutoHide = true;
         }
 
@@ -515,7 +518,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             /*gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
             if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
                 gVideoView_VideoPlayer.start();
@@ -599,7 +602,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private void initializePlayer() {
         String sMessage;
-        int iMediaCategory = globalClass.giSelectedCatalogMediaCategory;
+        int iMediaCategory = GlobalClass.giSelectedCatalogMediaCategory;
 
         if(treeMapRecyclerViewCatItems.containsKey(giKey)) {
             ItemClass_CatalogItem ci;
@@ -627,8 +630,18 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampDouble();
 
-                Service_CatalogViewer.startActionUpdateCatalogItem(this, ci, "Activity_VideoPlayer:initializePlayer()");
-
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                String sCatalogRecord = GlobalClass.getCatalogRecordString(ci);
+                Data dataCatalogUpdateItem = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_VideoPlayer:initializePlayer()")
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
+                        .build();
+                OneTimeWorkRequest otwrCatalogUpdateItem = new OneTimeWorkRequest.Builder(Worker_Catalog_UpdateItem.class)
+                        .setInputData(dataCatalogUpdateItem)
+                        .addTag(Worker_Catalog_UpdateItem.TAG_WORKER_CATALOG_UPDATEITEM) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogUpdateItem);
 
 
                 //Determine if this is a gif file, which the VideoView will not play:
@@ -1013,7 +1026,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             if (actionBar != null) {
                 actionBar.show();
             }
-            if(!bFileIsGif && (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
+            if(!bFileIsGif && (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
                 if(gbPlayingM3U8){
                     //gplayerView_ExoVideoPlayer.setUseController(true);
                 } else {

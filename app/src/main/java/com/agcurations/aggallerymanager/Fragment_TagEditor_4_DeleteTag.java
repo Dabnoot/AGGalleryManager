@@ -14,6 +14,9 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -221,12 +224,24 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     }
 
     private void DeleteTag(){
+        if(getContext() == null) return;
+        if(gListViewTagsAdapter == null) return;
+        if(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected) == null) return;
         Toast.makeText(getContext(), "Deleting tag...", Toast.LENGTH_SHORT).show();
-        Service_TagEditor.startActionDeleteTag(
-                getActivity(),
-                gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected),
-                viewModelTagEditor.iTagEditorMediaCategory,
-                "Fragment_TagEditor_4_DeleteTag.DeleteTag()");
+        String sTagRecord = GlobalClass.getTagRecordString(Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)));
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataDeleteTag = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_4_DeleteTag:DeleteTag()")
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelTagEditor.iTagEditorMediaCategory)
+                .putString(GlobalClass.EXTRA_TAG_TO_BE_DELETED, sTagRecord)
+                .build();
+        OneTimeWorkRequest otwrDeleteTag = new OneTimeWorkRequest.Builder(Worker_Tags_DeleteTag.class)
+                .setInputData(dataDeleteTag)
+                .addTag(Worker_Tags_DeleteTag.TAG_WORKER_TAGS_DELETETAG) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(getContext()).enqueue(otwrDeleteTag);
+
         //todo: Update user permissions and maturity ratings for catalog items that had this tag.
         viewModelTagEditor.bTagDeleted = true;
     }

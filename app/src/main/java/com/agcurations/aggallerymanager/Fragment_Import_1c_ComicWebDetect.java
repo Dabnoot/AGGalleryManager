@@ -35,6 +35,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 
 public class Fragment_Import_1c_ComicWebDetect extends Fragment {
@@ -287,10 +290,11 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
             ClipData clipData = clipboard.getPrimaryClip();
             if (clipData != null) {
                 String sClipLabel = clipData.getDescription().getLabel().toString();
-                if(sClipLabel.equals(Service_Browser.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
+                if(sClipLabel.equals(GlobalClass.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
                     ClipData.Item clipItem = clipData.getItemAt(0);
                     if(clipItem != null){
                         if(clipItem.getText() != null){
+                            if(getActivity() == null) return;
                             String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
                             if( sWebAddress != null){
                                 gEditText_WebAddress.setText(sWebAddress);
@@ -336,8 +340,19 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                         }
                     }
 
+                    if(getContext() == null) return;
                     SetTextStatusMessage("Analyzing HTML...");
-                    Service_Import.startActionComicAnalyzeHTML(getContext());
+                    String sCallerID = "Service_Import:startActionComicAnalyzeHTML()";
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataComicAnalyzeHTML = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .build();
+                    OneTimeWorkRequest otwrComicAnalyzeHTML = new OneTimeWorkRequest.Builder(Worker_Import_ComicAnalyzeHTML.class)
+                            .setInputData(dataComicAnalyzeHTML)
+                            .addTag(Worker_Import_ComicAnalyzeHTML.TAG_WORKER_IMPORT_COMICANALYZEHTML) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(getContext()).enqueue(otwrComicAnalyzeHTML);
 
                 }
             }

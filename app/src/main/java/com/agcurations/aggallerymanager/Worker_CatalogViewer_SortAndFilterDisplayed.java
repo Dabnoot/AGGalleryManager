@@ -16,6 +16,8 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
     public static final String TAG_WORKER_CATALOGVIEWER_SORTANDFILTERDISPLAYED = "com.agcurations.aggallermanager.tag_worker_catalogviewer_sortandfilterdisplayed";
 
+    public static final String CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE";
+    
     String gsIntentActionFilter;
 
     public Worker_CatalogViewer_SortAndFilterDisplayed(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -364,7 +366,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             globalClass.BroadcastProgress(false, "",
                     true, iProgressBarValue,
                     true, iProgressBarValue + "%",
-                    Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+                    CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE);
 
         }
 
@@ -402,7 +404,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
         //Broadcast the ready state of the SortAndFilterCatalogDisplay operation:
         Intent broadcastIntent_SortAndFilterCatalogDisplayResponse = new Intent();
         broadcastIntent_SortAndFilterCatalogDisplayResponse.putExtra(GlobalClass.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, true);
-        broadcastIntent_SortAndFilterCatalogDisplayResponse.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_SortAndFilterCatalogDisplayResponse.setAction(CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE);
         broadcastIntent_SortAndFilterCatalogDisplayResponse.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_SortAndFilterCatalogDisplayResponse);
 

@@ -443,7 +443,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
         Intent broadcastIntent_DeleteCatalogItemResponse = new Intent();
         broadcastIntent_DeleteCatalogItemResponse.putExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM, true);
         broadcastIntent_DeleteCatalogItemResponse.putExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, bUpdatedAllCatalogFiles);
-        broadcastIntent_DeleteCatalogItemResponse.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_DeleteCatalogItemResponse.setAction(DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
         broadcastIntent_DeleteCatalogItemResponse.addCategory(Intent.CATEGORY_DEFAULT);
         //sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);

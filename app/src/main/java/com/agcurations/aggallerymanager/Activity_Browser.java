@@ -10,6 +10,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -209,7 +212,7 @@ public class Activity_Browser extends AppCompatActivity {
             LocalBroadcastManager.getInstance(this).registerReceiver(webPageTabDataServiceResponseReceiver, filter);
 
 
-            Service_Browser.startAction_GetWebPageTabData(this);
+            startAction_GetWebPageTabData();
 
 
             /*Button button_testBrowser = findViewById(R.id.button_testBrowser);
@@ -253,8 +256,18 @@ public class Activity_Browser extends AppCompatActivity {
             viewPagerFragmentAdapter.insertFragment(iNewTabPosition, icwptd.sAddress);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
             viewPagerFragmentAdapter.notifyDataSetChanged();
             InitializeTabAppearance();
-            //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
-            Service_Browser.startAction_GetWebpageTitleFavicon(getApplicationContext(), icwptd); //This routine also calls the same routine as startAction_SetWebPageTabData.
+
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataBrowserGetWebPagePreview = new Data.Builder()
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .putString(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TABID, icwptd.sTabID)
+                    .putString(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_ADDRESS, icwptd.sAddress)
+                    .build();
+            OneTimeWorkRequest otwrGetWebPagePreview = new OneTimeWorkRequest.Builder(Worker_Browser_GetWebPagePreview.class)
+                    .setInputData(dataBrowserGetWebPagePreview)
+                    .addTag(Worker_Browser_GetWebPagePreview.TAG_WORKER_BROWSER_GETWEBPAGEPREVIEW) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrGetWebPagePreview);
 
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
@@ -264,7 +277,7 @@ public class Activity_Browser extends AppCompatActivity {
             InitializeTabAppearance();
             //Service_WebPageTabs.startAction_SetWebPageTabData(getApplicationContext(), icwptd);
             //Update stored data:
-            Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: CreateNewTab()");
+            Activity_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: CreateNewTab()");
             viewPager2_WebPages.setCurrentItem(iNewTabPosition, false);
         }
 
@@ -365,7 +378,7 @@ public class Activity_Browser extends AppCompatActivity {
             gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
         }
         if(!bTabsLoaded) {
-            Service_Browser.startAction_GetWebPageTabData(this);
+            startAction_GetWebPageTabData();
         }
         ApplicationLogWriter("onRestart.");
     }
@@ -457,7 +470,7 @@ public class Activity_Browser extends AppCompatActivity {
                     InitializeTabAppearance();
 
                     //Record the new web page tab lineup to the file:
-                    Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: imageButton_Close.onClick()");
+                    Activity_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: imageButton_Close.onClick()");
 
                     //Wake the newly-visible tab:
                     int iSelectedTab = tabLayout_WebTabs.getSelectedTabPosition();
@@ -693,7 +706,7 @@ public class Activity_Browser extends AppCompatActivity {
                             globalClass.gal_WebPages.get(iTabID).sFaviconAddress = sFaviconAddress;
 
                             //Write data to storage file:
-                            Service_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: WebPageTabDataServiceResponseReceiver().TITLE_AND_FAVICON_ACQUIRED");
+                            Activity_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: WebPageTabDataServiceResponseReceiver().TITLE_AND_FAVICON_ACQUIRED");
 
                             //Update views:
                             if(iHashCode != 0) {
@@ -723,6 +736,26 @@ public class Activity_Browser extends AppCompatActivity {
         return dp * context.getResources().getDisplayMetrics().density;
     }
 
+
+    public void startAction_GetWebPageTabData() {
+        OneTimeWorkRequest otwrGetWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_GetWebPageTabData.class)
+                .build();
+        WorkManager.getInstance(getApplicationContext()).enqueue(otwrGetWebPageTabData);
+    }
+
+    public static void startAction_WriteWebPageTabData(Context context, String sCallerID) {
+
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataBrowserWriteWebPageTabData = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .build();
+        OneTimeWorkRequest otwrWriteWebPageTabData = new OneTimeWorkRequest.Builder(Worker_Browser_WriteWebPageTabData.class)
+                .setInputData(dataBrowserWriteWebPageTabData)
+                .addTag(Worker_Browser_WriteWebPageTabData.TAG_WORKER_BROWSER_WRITEWEBPAGETABDATA) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrWriteWebPageTabData);
+    }
 
 }
 

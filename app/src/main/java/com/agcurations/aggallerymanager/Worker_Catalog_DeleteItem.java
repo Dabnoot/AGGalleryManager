@@ -20,12 +20,12 @@ public class Worker_Catalog_DeleteItem extends Worker {
 
     public static final String TAG_WORKER_CATALOG_DELETEITEM = "com.agcurations.aggallermanager.tag_worker_catalog_deleteitem";
 
-    String gsResponseActionFilter;
+    public static final String CATALOG_DELETE_ITEM_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_DELETE_ITEM_ACTION_RESPONSE";
+    
     ItemClass_CatalogItem ciToDelete;
 
     public Worker_Catalog_DeleteItem(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gsResponseActionFilter = getInputData().getString(GlobalClass.EXTRA_CALLER_ACTION_RESPONSE_FILTER);
 
         String sCatalogItemToDelete = getInputData().getString(GlobalClass.EXTRA_CATALOG_ITEM);
         if(sCatalogItemToDelete != null) {
@@ -56,7 +56,7 @@ public class Worker_Catalog_DeleteItem extends Worker {
         if(!GlobalClass.CheckIfFileExists(uriItemFolder)){
             //Could not find folder holding item to be deleted. Item must have failed to be integrated or deleted via
             //  some other method. Proceed with removing data from catalog.
-            bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
+            bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
         } else {
 
             boolean bSingleFileDeleteAndFileNotFound = false;
@@ -67,14 +67,14 @@ public class Worker_Catalog_DeleteItem extends Worker {
                 if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
                     try {
                         if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
-                            globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                             bSuccess = false;
                         }
                     } catch (FileNotFoundException e) {
-                        globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                        globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                     }
                 } else {
-                    globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", gsResponseActionFilter);
+                    globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                     bSuccess = false;
                     bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                 }
@@ -150,21 +150,20 @@ public class Worker_Catalog_DeleteItem extends Worker {
                     }
                     //End if the catalog item sourced as a download was a video item.
                 } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-
                     //Delete the single file...
                     Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
                     if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
                         try {
                             if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
-                                globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                                globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                 bSuccess = false;
                             }
                         } catch (FileNotFoundException e) {
-                            globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                             bSuccess = false;
                         }
                     } else {
-                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", gsResponseActionFilter);
+                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                         bSuccess = false;
                         bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                     }
@@ -207,7 +206,6 @@ public class Worker_Catalog_DeleteItem extends Worker {
                         }
 
                     }
-
                     //End if the catalog item sourced as a download was an image item.
                 } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                     //Delete folder:
@@ -235,15 +233,14 @@ public class Worker_Catalog_DeleteItem extends Worker {
                         Uri uriLogFileToDelete = GlobalClass.FormChildUri(uriLogFolder, sLogFileName);
                         try {
                             if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriLogFileToDelete)) {
-                                globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", gsResponseActionFilter);
+                                globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                             }
                         } catch (FileNotFoundException e) {
-                            globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                         }
                     }
 
                 }
-
             }
 
             if (bSuccess) {
@@ -252,16 +249,15 @@ public class Worker_Catalog_DeleteItem extends Worker {
                 if (GlobalClass.IsDirEmpty(uriItemFolder)) {
                     try {
                         if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
-                            globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                         }
                     } catch (FileNotFoundException e) {
-                        globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
+                        globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                     }
                 }
 
-
                 //Now delete the item record from the Catalog File:
-                bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
+                bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, CATALOG_DELETE_ITEM_ACTION_RESPONSE); //This item takes 4-5 seconds??
 
                 //End if for continuing after successful file deletion.
             } else {
@@ -272,7 +268,7 @@ public class Worker_Catalog_DeleteItem extends Worker {
                         (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
                                 (ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_NO_CODE || ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE))) {
                     if (bSingleFileDeleteAndFileNotFound) {
-                        bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
+                        bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                     }
                 }
             }
@@ -283,7 +279,7 @@ public class Worker_Catalog_DeleteItem extends Worker {
         Intent broadcastIntent_DeleteCatalogItemResponse = new Intent();
         broadcastIntent_DeleteCatalogItemResponse.putExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM, true);
         broadcastIntent_DeleteCatalogItemResponse.putExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, bSuccess);
-        broadcastIntent_DeleteCatalogItemResponse.setAction(Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_DeleteCatalogItemResponse.setAction(CATALOG_DELETE_ITEM_ACTION_RESPONSE);
         broadcastIntent_DeleteCatalogItemResponse.addCategory(Intent.CATEGORY_DEFAULT);
         //sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_DeleteCatalogItemResponse);

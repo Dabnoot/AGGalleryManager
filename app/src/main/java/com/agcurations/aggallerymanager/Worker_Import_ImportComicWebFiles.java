@@ -21,11 +21,10 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
     public static final String TAG_WORKER_IMPORT_IMPORTCOMICWEBFILES = "com.agcurations.aggallermanager.tag_worker_import_importcomicwebfiles";
 
-    String gsIntentActionFilter;
+    public static final String IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE";
 
     public Worker_Import_ImportComicWebFiles(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gsIntentActionFilter = getInputData().getString(GlobalClass.EXTRA_STRING_INTENT_ACTION_FILTER);
 
     }
 
@@ -81,7 +80,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        gsIntentActionFilter);
+                        IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
@@ -89,13 +88,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
-                        gsIntentActionFilter);
+                        IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
             }
         } else {
             globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestinationFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
-                    gsIntentActionFilter);
+                    IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
         }
 
         //Create a timestamp to be used to create the data record:
@@ -153,7 +152,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                     globalClass.BroadcastProgress(true, "Could not get download manager.",
                             false, iProgressBarValue,
                             true, "Halted.",
-                            gsIntentActionFilter);
+                            IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
@@ -186,7 +185,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         globalClass.BroadcastProgress(true, "Initiating download of file: " + icf.sURL + "...",
                                 false, iProgressBarValue,
                                 true, "Submitting download requests...",
-                                gsIntentActionFilter);
+                                IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
 
                         //Use the download manager to download the file:
                         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(icf.sURL));
@@ -211,7 +210,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                             globalClass.BroadcastProgress(true, "Could not identify external files dir.",
                                     false, iProgressBarValue,
                                     true, "Halted.",
-                                    gsIntentActionFilter);
+                                    IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
                             globalClass.gbImportExecutionRunning = false;
                             globalClass.gbImportExecutionFinished = true;
                             return Result.failure();
@@ -238,7 +237,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                     globalClass.BroadcastProgress(true, "\n",
                             true, iProgressBarValue,
                             false, "",
-                            gsIntentActionFilter);
+                            IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
 
 
                 }
@@ -280,7 +279,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.BroadcastProgress(true, "Operation complete.\nSome files may continue to download in the background. Comic will be available when downloads complete.",
                         true, iProgressBarValue,
                         false, "",
-                        gsIntentActionFilter);
+                        IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
 
             } catch (Exception e) {
                 if(e.getMessage() != null) {
@@ -289,7 +288,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        gsIntentActionFilter);
+                        IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
             }
 
         }

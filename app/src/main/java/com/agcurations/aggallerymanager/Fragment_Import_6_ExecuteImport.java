@@ -10,6 +10,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,7 +59,14 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
         }
 
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+        filter.addAction(Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
+        filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importDataServiceResponseReceiver = new ImportDataServiceResponseReceiver();
         //requireActivity().registerReceiver(importDataServiceResponseReceiver, filter);
@@ -119,23 +129,68 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             globalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                    Service_Import.startActionImportComicFolders(getContext(),
-                            viewModelImportActivity.iImportMethod);
-                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
-                    Service_Import.startActionImportComicWebFiles(getContext(),
-                            ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    if(getContext() == null) return;
+                    String sCallerID = "Service_Import:startActionImportComicFolders()";
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataImportComicFolders = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, viewModelImportActivity.iImportMethod)
+                            .build();
+                    OneTimeWorkRequest otwrImportComicFolders = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicFolders.class)
+                            .setInputData(dataImportComicFolders)
+                            .addTag(Worker_Import_ImportComicFolders.TAG_WORKER_IMPORT_IMPORTCOMICFOLDERS) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(getContext()).enqueue(otwrImportComicFolders);
 
+
+                } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
+                    if(getContext() == null) return;
+                    String sCallerID = "Service_Import:startActionImportComicWebFiles()";
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataImportComicWebFiles = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .build();
+                    OneTimeWorkRequest otwrImportComicWebFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicWebFiles.class)
+                            .setInputData(dataImportComicWebFiles)
+                            .addTag(Worker_Import_ImportComicWebFiles.TAG_WORKER_IMPORT_IMPORTCOMICWEBFILES) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(getContext()).enqueue(otwrImportComicWebFiles);
 
                 }
             } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                     && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
-                    //If this is a video download:
-                    Service_Import.startActionVideoDownload(getContext(), viewModelImportActivity.sWebAddress);
+                //If this is a video download:
+                if(getContext() == null) return;
+                String sCallerID = "Service_Import:startActionVideoDownload()";
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                Data dataVideoDownload = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, viewModelImportActivity.sWebAddress)
+                        .build();
+                OneTimeWorkRequest otwrVideoDownload = new OneTimeWorkRequest.Builder(Worker_Import_VideoDownload.class)
+                        .setInputData(dataVideoDownload)
+                        .addTag(Worker_Import_VideoDownload.TAG_WORKER_IMPORT_VIDEODOWNLOAD) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getContext()).enqueue(otwrVideoDownload);
 
             } else {
-                Service_Import.startActionImportFiles(getContext(),
-                        viewModelImportActivity.iImportMethod,
-                        viewModelImportActivity.iImportMediaCategory);
+                if(getContext() == null) return;
+                String sCallerID = "Service_Import:startActionImportFiles()";
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                Data dataImportFiles = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, viewModelImportActivity.iImportMethod)
+                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory)
+                        .build();
+                OneTimeWorkRequest otwrImportFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportFiles.class)
+                        .setInputData(dataImportFiles)
+                        .addTag(Worker_Import_ImportFiles.TAG_WORKER_IMPORT_IMPORTFILES) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getContext()).enqueue(otwrImportFiles);
             }
         } else {
             //If an import has been started...
@@ -165,7 +220,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
 
 
     public class ImportDataServiceResponseReceiver extends BroadcastReceiver {
-        public static final String IMPORT_DATA_SERVICE_EXECUTE_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE";
 
         @Override
         public void onReceive(Context context, Intent intent) {

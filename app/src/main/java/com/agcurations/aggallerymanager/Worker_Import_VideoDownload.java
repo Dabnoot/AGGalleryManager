@@ -33,6 +33,8 @@ public class Worker_Import_VideoDownload extends Worker {
 
     public static final String TAG_WORKER_IMPORT_VIDEODOWNLOAD = "com.agcurations.aggallermanager.tag_worker_import_videodownload";
 
+    public static final String IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE";
+    
     public static final String VIDEO_DLID_AND_SEQUENCE_FILE_NAME = "DLID_And_Sequence.txt";
     public static final int DOWNLOAD_TYPE_SINGLE = 1;
     public static final int DOWNLOAD_TYPE_M3U8 = 2;
@@ -58,8 +60,6 @@ public class Worker_Import_VideoDownload extends Worker {
                         false)
                 .apply();
 
-        String sIntentActionFilter = Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE;
-
         int iMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
 
         long lProgressNumerator = 0L;
@@ -78,7 +78,7 @@ public class Worker_Import_VideoDownload extends Worker {
         }
 
         //Find the next record ID:
-        String sNextRecordId = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        String sNextRecordId = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         if(icfDownloadItem.sDestinationFolder.equals("")) {
             icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
@@ -110,7 +110,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
                         true, "Operation halted.",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
@@ -118,13 +118,13 @@ public class Worker_Import_VideoDownload extends Worker {
                 globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
         } else {
             globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestinationFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
         }
 
         Uri uriWorkingFolder = null;
@@ -151,7 +151,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
                             true, "Operation halted.",
-                            sIntentActionFilter);
+                            IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
@@ -159,13 +159,13 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.BroadcastProgress(true, "Destination folder created: " + uriWorkingFolder + "\n",
                             false, iProgressBarValue,
                             false, "",
-                            sIntentActionFilter);
+                            IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                 }
             } else {
                 globalClass.BroadcastProgress(true, "Destination folder verified: " + uriWorkingFolder + "\n",
                         true, iProgressBarValue,
                         false, "",
-                        sIntentActionFilter);
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
         }
 
@@ -207,7 +207,7 @@ public class Worker_Import_VideoDownload extends Worker {
             ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_M3U8;
             //Form a name for the M3U8 file:
             String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
-            sTempFilename = Service_Import.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
+            sTempFilename = GlobalClass.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
             sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
             ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
@@ -216,11 +216,12 @@ public class Worker_Import_VideoDownload extends Worker {
             String sThumbnailURL = icfDownloadItem.sURLThumbnail;
             try{
                 String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
-                sThumbnailFileName = Service_Import.cleanFileNameViaTrim(sThumbnailFileName);
+                sThumbnailFileName = GlobalClass.cleanFileNameViaTrim(sThumbnailFileName);
                 ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
                 alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
+                lProgressDenominator++; //The thumbnail file will be one additional file to download.
             } catch (Exception e){
-                globalClass.problemNotificationConfig("Could not get thumbnail image.", sIntentActionFilter);
+                globalClass.problemNotificationConfig("Could not get thumbnail image.", IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
 
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;
@@ -265,7 +266,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 if(sFileName.contains("/")){
                     sFileName = sFileName.substring(sFileName.lastIndexOf("/") + 1);
                 }
-                String sNewFilename = ciNew.sItemID + "_" + Service_Import.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
+                String sNewFilename = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
 
                 if(sNewFilename.length() > 50){
                     //Limit the length of the filename:
@@ -320,7 +321,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 globalClass.BroadcastProgress(true, "Initiating download of file: " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS] + "...",
                         false, iProgressBarValue,
                         true, "Submitting download requests...",
-                        sIntentActionFilter);
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
 
                 //Use the download manager to download the file:
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
@@ -336,7 +337,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
                             true, "Halted.",
-                            sIntentActionFilter);
+                            IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
@@ -365,7 +366,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 globalClass.BroadcastProgress(true, "\n",
                         true, iProgressBarValue,
                         false, "",
-                        sIntentActionFilter);
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
 
 
             }
@@ -406,7 +407,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.BroadcastProgress(true, sMessage,
                             true, iProgressBarValue,
                             true, sMessage,
-                            sIntentActionFilter);
+                            IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
@@ -417,7 +418,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.BroadcastProgress(true, sMessage,
                             true, iProgressBarValue,
                             true, sMessage,
-                            sIntentActionFilter);
+                            IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
@@ -430,7 +431,7 @@ public class Worker_Import_VideoDownload extends Worker {
                         if (sLine.contains("/")) {
                             sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
                         }
-                        String sTSShortFileName = ciNew.sItemID + "_" + Service_Import.cleanFileNameViaTrim(sLine);
+                        String sTSShortFileName = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sLine);
                         String sJumbledTSShortFileName = GlobalClass.JumbleFileName(sTSShortFileName);
                         bwM3U8File.write(sJumbledTSShortFileName + "\n");
                     } else if (sLine.contains("ENDLIST")) {
@@ -557,7 +558,7 @@ public class Worker_Import_VideoDownload extends Worker {
             globalClass.BroadcastProgress(true, sMessage,
                     true, iProgressBarValue,
                     true, "All downloads started",
-                    sIntentActionFilter);
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
 
         } catch (Exception e) {
             if(e.getMessage() != null) {
@@ -566,7 +567,7 @@ public class Worker_Import_VideoDownload extends Worker {
             globalClass.BroadcastProgress(true, "Problem encountered:\n" + e.getMessage(),
                     false, iProgressBarValue,
                     true, "Operation halted.",
-                    sIntentActionFilter);
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
         }
         
         globalClass.gbImportExecutionRunning = false;

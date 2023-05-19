@@ -27,6 +27,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
 
     public static final String TAG_WORKER_IMPORT_IMPORTCOMICFOLDERS = "com.agcurations.aggallermanager.tag_worker_import_importcomicfolders";
 
+    public static final String IMPORT_COMIC_FOLDERS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE";
+    
     int giMoveOrCopy;
 
     public Worker_Import_ImportComicFolders(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -75,7 +77,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
         globalClass.BroadcastProgress(true, "Preparing data for job file.\n",
                 false, iProgressBarValue,
                 true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
         //Loop and examine list of files to be imported, build a buffer of records to write to a job file,
         // and create catalog item records:
@@ -159,7 +161,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     globalClass.BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
                             true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
                 }
                 //Write a record to tell the local file transfer worker to delete the comic source
@@ -179,7 +181,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 globalClass.BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
                 continue; //Don't process any more code for this comic, move to the next comic.
             }
@@ -220,7 +222,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     globalClass.BroadcastProgress(true, sLogLine,
                             false, iProgressBarValue,
                             true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
                     continue; //Don't do anything else related to the comic import with this XML file.
                 }
 
@@ -259,7 +261,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 globalClass.BroadcastProgress(true, sLogLine,
                         false, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
             } //End comic page collation Loop.
 
@@ -318,7 +320,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
             globalClass.BroadcastProgress(true, sLogLine,
                     false, iProgressBarValue,
                     true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
             //Create a file with a listing of the files to be copied/moved:
             Uri uriJobFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sJobFileName);
@@ -352,7 +354,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
             globalClass.BroadcastProgress(true, "Problem with writing the job file.\n" + e.getMessage(),
                     false, iProgressBarValue,
                     false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
             globalClass.gbImportExecutionRunning = false;
             globalClass.gbImportExecutionFinished = true;
             return Result.failure();
@@ -364,7 +366,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
         globalClass.BroadcastProgress(true, sLogLine,
                 false, iProgressBarValue,
                 true, iFileCountProgressNumerator + "/" + iFileCountProgressDenominator + " files written to job file",
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
         //Build-out data to send to the worker:
         Data dataLocalFileTransfer = new Data.Builder()
@@ -380,7 +382,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
         globalClass.BroadcastProgress(true, "Job file creation worker operation complete.\n\n",
                 false, iProgressBarValue,
                 false, "",
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
 
         globalClass.gbImportExecutionRunning = false;

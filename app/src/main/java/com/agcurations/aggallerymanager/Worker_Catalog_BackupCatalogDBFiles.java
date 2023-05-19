@@ -21,6 +21,8 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
     public static final String TAG_WORKER_CATALOG_BACKUPCATALOGDBFILES = "com.agcurations.aggallermanager.tag_worker_catalog_backupcatalogdbfiles";
 
+    public static final String CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE";
+
     String gsResponseActionFilter;
     GlobalClass globalClass;
 
@@ -54,7 +56,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
             globalClass.BroadcastProgress(false, "",
                     true, iProgressBarValue,
                     true, "Backing up catalog data files...",
-                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                    CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
 
             StringBuilder sbBuffer = new StringBuilder();
             boolean bHeaderWritten = false;
@@ -75,7 +77,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                     globalClass.BroadcastProgress(false, "",
                             true, iProgressBarValue,
                             true, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog data file.",
-                            Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                            CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
                 }
             }
 
@@ -147,14 +149,14 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         }
 
         //Send broadcast to the Main Activity:
-        broadcastIntent.setAction(Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+        broadcastIntent.setAction(CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
         globalClass.BroadcastProgress(false, "",
                 true, 100,
                 true, "Catalog Backup Complete",
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
 
         return Result.success();
     }

@@ -83,10 +83,10 @@ public class Activity_ComicDetails extends AppCompatActivity {
         loadComicPageData();
 
 
-        IntentFilter filter = new IntentFilter(ComicDetailsResponseReceiver.COMIC_DETAILS_DATA_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_DeleteItem.CATALOG_DELETE_ITEM_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         gComicDetailsResponseReceiver = new Activity_ComicDetails.ComicDetailsResponseReceiver();
-
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gComicDetailsResponseReceiver, filter);
 
         //See additional initialization in onCreateOptionsMenu().
@@ -249,7 +249,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_ComicDetails:DeleteComic()")
                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                 .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
-                .putString(GlobalClass.EXTRA_CALLER_ACTION_RESPONSE_FILTER, Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE)
                 .build();
         OneTimeWorkRequest otwrCatalogDeleteItem = new OneTimeWorkRequest.Builder(Worker_Catalog_DeleteItem.class)
                 .setInputData(dataCatalogDeleteItem)
@@ -603,7 +602,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     //=====================================================================================
 
     public class ComicDetailsResponseReceiver extends BroadcastReceiver {
-        public static final String COMIC_DETAILS_DATA_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.COMIC_DETAILS_DATA_ACTION_RESPONSE";
 
         @Override
         public void onReceive(Context context, Intent intent) {

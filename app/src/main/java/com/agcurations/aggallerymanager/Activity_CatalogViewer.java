@@ -11,6 +11,9 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -118,7 +121,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         ApplicationLogWriter("Creating ResponseReceiver");
 
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_DeleteItem.CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+        filter.addAction(Worker_CatalogViewer_SortAndFilterDisplayed.CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE);
+
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         catalogViewerServiceResponseReceiver = new CatalogViewerServiceResponseReceiver();
         //registerReceiver(importDataServiceResponseReceiver, filter);
@@ -261,7 +267,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
     public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {
-        public static final String CATALOG_VIEWER_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_CATALOG_VIEWER_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -679,12 +684,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Opening...", Toast.LENGTH_LONG).show();
 
                     if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                        StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
+                        StartVideoPlayerActivity(treeMap, ci_final.sItemID);
 
                     } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                         //Temporarily set the image catalog to use the video player activity to display images until the
                         // SeriesImageViewer activity is genericized (was previously comic page viewer):
-                        StartVideoPlayerActivity(treeMap, Integer.parseInt(ci_final.sItemID));
+                        StartVideoPlayerActivity(treeMap, ci_final.sItemID);
 
                     } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         StartComicViewerActivity(ci_final);
@@ -749,10 +754,19 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
                                 Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
-                                Service_CatalogViewer.startActionDeleteCatalogItem(
-                                        getApplicationContext(), ci_final,
-                                        "Activity_CatalogViewer:RecyclerViewCatalogAdapter.onBindViewHolder.btnDelete.OnClick",
-                                        Activity_CatalogViewer.CatalogViewerServiceResponseReceiver.CATALOG_VIEWER_SERVICE_ACTION_RESPONSE);
+
+                                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                                String sCatalogRecord = GlobalClass.getCatalogRecordString(ci_final);
+                                Data dataCatalogDeleteItem = new Data.Builder()
+                                        .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogViewer:btnDelete.OnClickListener.OnClick")
+                                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                                        .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
+                                        .build();
+                                OneTimeWorkRequest otwrCatalogDeleteItem = new OneTimeWorkRequest.Builder(Worker_Catalog_DeleteItem.class)
+                                        .setInputData(dataCatalogDeleteItem)
+                                        .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
+                                        .build();
+                                WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
                             }
                         });
                         builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -786,7 +800,17 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gProgressBar_CatalogSortProgress.setVisibility(View.VISIBLE);
             gTextView_CatalogSortProgressBarText.setVisibility(View.VISIBLE);
         }
-        Service_CatalogViewer.startActionSortAndFilterCatalogDisplay(this, "Activity_CatalogViewer:populate_RecyclerViewCatalogItems()");
+
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataSortAndFilterCatalogDisplay = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogViewer:populate_RecyclerViewCatalogItems()")
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .build();
+        OneTimeWorkRequest otwrSortAndFilterCatalogDisplay = new OneTimeWorkRequest.Builder(Worker_CatalogViewer_SortAndFilterDisplayed.class)
+                .setInputData(dataSortAndFilterCatalogDisplay)
+                .addTag(Worker_CatalogViewer_SortAndFilterDisplayed.TAG_WORKER_CATALOGVIEWER_SORTANDFILTERDISPLAYED) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(getApplicationContext()).enqueue(otwrSortAndFilterCatalogDisplay);
 
     }
 
@@ -796,7 +820,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     //=====================================================================================
 
     public final static String RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID = "RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_KEY";
-    private void StartVideoPlayerActivity(TreeMap<Integer, ItemClass_CatalogItem> treeMap, Integer iVideoID) {
+    private void StartVideoPlayerActivity(TreeMap<Integer, ItemClass_CatalogItem> treeMap, String sVideoID) {
         //Key is the TreeMap Key for the selected video.
 
         //A timestamp for last viewed is handled within the video player. This is because the
@@ -805,9 +829,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         //Start the video player:
         Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayer.class);
-        //intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_FILTERED, treeMap);
         globalClass.gtmCatalogViewerDisplayTreeMap = treeMap;
-        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, iVideoID);
+        intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, sVideoID);
         if(toastLastToastMessage != null){
             toastLastToastMessage.cancel(); //Hide any toast message that might be shown.
         }

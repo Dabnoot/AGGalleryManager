@@ -578,7 +578,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                         if(globalClass.gbLogM3U8Files) {
                             //Write the m3u8 master file to the logs folder for debugging purposes:
                             String sShortFileName = sURLM3U8VideoLink.substring(sURLM3U8VideoLink.lastIndexOf("/") + 1);
-                            sShortFileName = Service_Import.cleanFileNameViaTrim(sShortFileName);
+                            sShortFileName = GlobalClass.cleanFileNameViaTrim(sShortFileName);
                             String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
                             Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
                             if(uriM3U8 == null){
@@ -739,7 +739,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             String sM3U8Content = total.toString();
                             inputStream.close();
 
-                            String sShortFileName = Service_Import.cleanFileNameViaTrim(icM3U8_entry.sFileName);
+                            String sShortFileName = GlobalClass.cleanFileNameViaTrim(icM3U8_entry.sFileName);
                             if(globalClass.gbLogM3U8Files) {
                                 //Write the m3u8 file to the logs folder for debugging purposes:
 
@@ -884,7 +884,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                 }
                             }
                             //Create a file item to record the results:
-                            String sFilename = Service_Import.cleanFileNameViaTrim(icM3U8_entry.sFileName);
+                            String sFilename = GlobalClass.cleanFileNameViaTrim(icM3U8_entry.sFileName);
                             ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_M3U8, sFilename);
                             icf.ic_M3U8 = icM3U8_entry;
                             icf.lSizeBytes = icM3U8_entry.lTotalTSFileSetSize;

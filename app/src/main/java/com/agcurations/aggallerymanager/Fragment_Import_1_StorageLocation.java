@@ -27,6 +27,9 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
@@ -293,7 +296,18 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
             globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
 
-            Service_Import.startActionGetHoldingFolderDirectoryContents(getContext());
+            if(getContext() == null) return;
+            String sCallerID = "Service_Import:startActionGetHoldingFolderDirectoryContents()";
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataGetHoldingFolderDirectoryContents = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .build();
+            OneTimeWorkRequest otwrGetHoldingFolderDirectoryContents = new OneTimeWorkRequest.Builder(Worker_Import_GetHoldingFolderDirectoryContents.class)
+                    .setInputData(dataGetHoldingFolderDirectoryContents)
+                    .addTag(Worker_Import_GetHoldingFolderDirectoryContents.TAG_WORKER_IMPORT_GETHOLDINGFOLDERDIRECTORYCONTENTS) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getContext()).enqueue(otwrGetHoldingFolderDirectoryContents);
 
         }
 
@@ -390,13 +404,23 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                         GlobalClass.gbImportFolderAnalysisRunning = true;
                         globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
                         GlobalClass.gbImportFolderAnalysisFinished = false;
-                        Service_Import.startActionGetDirectoryContents(getContext(),
-                                Activity_Import.guriImportTreeURI,
-                                viewModelImportActivity.iImportMediaCategory,
-                                iFilesOrFolders,
-                                viewModelImportActivity.iComicImportSource); ////Flag used to indicate comic folder import.
 
-
+                        if(getContext() == null) return;
+                        String sCallerID = "Service_Import:startActionGetDirectoryContents()";
+                        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                        Data dataGetDirectoryContents = new Data.Builder()
+                                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                                .putString(GlobalClass.EXTRA_IMPORT_TREE_URI, Activity_Import.guriImportTreeURI.toString())
+                                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory)
+                                .putInt(GlobalClass.EXTRA_FILES_OR_FOLDERS, iFilesOrFolders)
+                                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, viewModelImportActivity.iComicImportSource)
+                                .build();
+                        OneTimeWorkRequest otwrGetDirectoryContents = new OneTimeWorkRequest.Builder(Worker_Import_GetDirectoryContents.class)
+                                .setInputData(dataGetDirectoryContents)
+                                .addTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS) //To allow finding the worker later.
+                                .build();
+                        WorkManager.getInstance(getContext()).enqueue(otwrGetDirectoryContents);
                     }
                 }
             });

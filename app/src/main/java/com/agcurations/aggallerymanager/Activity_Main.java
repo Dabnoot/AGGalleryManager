@@ -16,6 +16,7 @@ import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -158,9 +159,20 @@ public class Activity_Main extends AppCompatActivity {
         gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);
         gTextView_CatalogReadProgressBarText = findViewById(R.id.textView_CatalogReadProgressBarText);
 
-        //Configure a response receiver to listen for updates from the Main Activity (MA) Data Service:
+        //Configure a response receiver to listen for updates from the Main Activity (MA) Data Services:
         //  This will load the tags files for videos, pictures, and comics.
-        IntentFilter filter = new IntentFilter(MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_LoadData.CATALOG_LOAD_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+        filter.addAction(Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_BackupCatalogDBFiles.CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_DeleteMultipleItems.DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
+        filter.addAction(Worker_User_Delete.USER_DELETE_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_RecalcCatalogItemsApprovedUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
         //registerReceiver(mainActivityDataServiceResponseReceiver, filter);
@@ -266,7 +278,7 @@ public class Activity_Main extends AppCompatActivity {
             }
 
             //Call the MA Data Service, which will create a call to a service:
-            Service_Main.startActionLoadData(this);
+            startActionLoadData(getApplicationContext());
         }
 
         //AlertDialogTest2();
@@ -439,9 +451,7 @@ public class Activity_Main extends AppCompatActivity {
                 }
             }
 
-
-            //Start the worker found in Worker_Catalog_LoadData:
-            Service_Main.startActionLoadData(context);
+            startActionLoadData(context);
         }
     }
 
@@ -550,7 +560,6 @@ public class Activity_Main extends AppCompatActivity {
 
     public class MainActivityDataServiceResponseReceiver extends BroadcastReceiver {
         //MADataService = Main Activity Data Service
-        public static final String MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_MAIN_ACTIVITY_DATA_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -588,7 +597,6 @@ public class Activity_Main extends AppCompatActivity {
                         assert gProgressBar_CatalogReadProgress != null;
                         gProgressBar_CatalogReadProgress.setVisibility(View.INVISIBLE);
                         gTextView_CatalogReadProgressBarText.setVisibility(View.INVISIBLE);
-                        gbDataLoadComplete = true;
                     } else {
                         assert gProgressBar_CatalogReadProgress != null;
                         gProgressBar_CatalogReadProgress.setVisibility(View.VISIBLE);
@@ -604,6 +612,14 @@ public class Activity_Main extends AppCompatActivity {
                     }
                 }
             }
+
+            boolean bCatalogLoadComplete = intent.getBooleanExtra(Worker_Catalog_LoadData.CATALOG_LOAD_COMPLETE_NOTIFICATION_BOOLEAN,false);
+            if(bCatalogLoadComplete){
+                gbDataLoadComplete = true;
+            }
+
+
+
 
         }
     }
@@ -685,7 +701,17 @@ public class Activity_Main extends AppCompatActivity {
                 return true;
             }
             Toast.makeText(getApplicationContext(), "Initiating database backup.", Toast.LENGTH_SHORT).show();
-            Service_Main.startActionCatalogBackup(this);
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataCatalogBackupCatalogDBFiles = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .build();
+            OneTimeWorkRequest otwrCatalogBackupCatalogDBFiles = new OneTimeWorkRequest.Builder(Worker_Catalog_BackupCatalogDBFiles.class)
+                    .setInputData(dataCatalogBackupCatalogDBFiles)
+                    .addTag(Worker_Catalog_BackupCatalogDBFiles.TAG_WORKER_CATALOG_BACKUPCATALOGDBFILES) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBackupCatalogDBFiles);
+
             return true;
         } else if(item.getItemId() == R.id.menu_WorkerConsole){
             if(!dataStorageAndLoadOk()){
@@ -863,6 +889,20 @@ public class Activity_Main extends AppCompatActivity {
 
     public void buttonTestClick_Test(View v){
 
+    }
+
+    public static void startActionLoadData(Context context) {
+
+        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+        Data dataCatalogLoadData = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
+                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .build();
+        OneTimeWorkRequest otwrCatalogLoadData = new OneTimeWorkRequest.Builder(Worker_Catalog_LoadData.class)
+                .setInputData(dataCatalogLoadData)
+                .addTag(Worker_Catalog_LoadData.TAG_WORKER_CATALOG_LOADDATA) //To allow finding the worker later.
+                .build();
+        WorkManager.getInstance(context).enqueue(otwrCatalogLoadData);
     }
 
 

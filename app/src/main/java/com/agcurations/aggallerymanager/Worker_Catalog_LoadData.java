@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
@@ -34,6 +35,7 @@ import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -43,6 +45,11 @@ import com.google.android.exoplayer2.util.MimeTypes;
 public class Worker_Catalog_LoadData extends Worker {
 
     public static final String TAG_WORKER_CATALOG_LOADDATA = "com.agcurations.aggallermanager.tag_worker_catalog_loaddata";
+
+    public static final String CATALOG_LOAD_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_LOAD_ACTION_RESPONSE";
+
+    public static final String CATALOG_LOAD_COMPLETE_NOTIFICATION_BOOLEAN = "CATALOG_LOAD_COMPLETE_NOTIFICATION_BOOLEAN";
+
 
     String gsResponseActionFilter;
     Context gContext;
@@ -168,7 +175,7 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 true, "Reading Tags",
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                CATALOG_LOAD_ACTION_RESPONSE);
 
         stopWatch.Reset();
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
@@ -194,7 +201,7 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.BroadcastProgress(false, "",
                     true, iProgressBarValue,
                     false, "Reading Tags",
-                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                    CATALOG_LOAD_ACTION_RESPONSE);
         }
         globalClass.abTagsLoaded.set(true);
         globalClass.populateApprovedTags();
@@ -221,7 +228,7 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 true, "Reading Catalogs",
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                CATALOG_LOAD_ACTION_RESPONSE);
 
         //Read the catalog list files into memory:
         stopWatch.Reset();
@@ -233,7 +240,7 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.BroadcastProgress(false, "",
                     true, iProgressBarValue,
                     false, "Reading Catalogs",
-                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                    CATALOG_LOAD_ACTION_RESPONSE);
             stopWatch.PostDebugLogAndRestart("Catalog data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " initialized/read with duration ");
         }
         stopWatch.PostDebugLogAndRestart("Catalog data initialized/read with duration ");
@@ -266,7 +273,7 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 true, "Post Processing",
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                CATALOG_LOAD_ACTION_RESPONSE);
 
         iProgressNumerator++;
         /*iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -296,12 +303,19 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 true, "Data Load Complete",
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                CATALOG_LOAD_ACTION_RESPONSE);
 
 
         LogFilesMaintenance();
         stopWatch.PostDebugLogAndRestart("Log file maintenance completed with duration ");
         globalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
+
+        //Send a broadcast notifying that the data load operation is complete:
+        Intent broadcastIntent_CatalogLoadResponse = new Intent();
+        broadcastIntent_CatalogLoadResponse.putExtra(CATALOG_LOAD_COMPLETE_NOTIFICATION_BOOLEAN, true);
+        broadcastIntent_CatalogLoadResponse.setAction(CATALOG_LOAD_ACTION_RESPONSE);
+        broadcastIntent_CatalogLoadResponse.addCategory(Intent.CATEGORY_DEFAULT);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_CatalogLoadResponse);
 
         return Result.success();
     }
@@ -543,7 +557,7 @@ public class Worker_Catalog_LoadData extends Worker {
                     globalClass.BroadcastProgress(false, "",
                             true, iProgressBarValue,
                             true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
-                            Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                            CATALOG_LOAD_ACTION_RESPONSE);
 
 
                     ItemClass_CatalogItem ci;
@@ -665,7 +679,7 @@ public class Worker_Catalog_LoadData extends Worker {
                             globalClass.BroadcastProgress(false, "",
                                     true, iProgressBarValue,
                                     true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
-                                    Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                                    CATALOG_LOAD_ACTION_RESPONSE);
                         }
                     }
 
@@ -897,7 +911,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
     void problemNotificationConfig(String sMessage){
         globalClass.problemNotificationConfig(sMessage,
-                Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
+                CATALOG_LOAD_ACTION_RESPONSE);
     }
 
     private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
