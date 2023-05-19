@@ -1,7 +1,10 @@
 package com.agcurations.aggallerymanager;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
@@ -15,6 +18,7 @@ import androidx.appcompat.widget.AppCompatImageView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -30,6 +34,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -48,6 +53,11 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             new MutableLiveData<>();
     public Integer giSelectedColor = 0;
 
+    ProgressBar gProgressBar_Progress;
+    TextView gTextView_ProgressBarText;
+
+    AddUserResponseReceiver addUserResponseReceiver;
+
     public Fragment_UserMgmt_1_Add_User() {
         // Required empty public constructor
     }
@@ -60,6 +70,19 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         globalClass = (GlobalClass) requireActivity().getApplicationContext();
+
+
+        if(getView() != null) {
+            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
+            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
+        }
+
+        if(getContext() == null) return;
+        //Configure a response receiver to listen for updates user-delete related workers:
+        IntentFilter filter = new IntentFilter(Worker_Catalog_RecalcCatalogItemsApprovedUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        addUserResponseReceiver = new AddUserResponseReceiver();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(addUserResponseReceiver, filter);
     }
 
     @Override
@@ -229,6 +252,14 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
         }
 
+    }
+
+    @Override
+    public void onDestroy() {
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(addUserResponseReceiver);
+        }
+        super.onDestroy();
     }
 
     private void initUserList(){
@@ -437,6 +468,63 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 View innerView = ((ViewGroup) view).getChildAt(i);
                 setupUI(innerView);
             }
+        }
+    }
+
+    public class AddUserResponseReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                String sStatusMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE);
+                if(sStatusMessage != null){
+                    Toast.makeText(context, sStatusMessage, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            //Check to see if this is a response to update log or progress bar:
+            boolean 	bUpdatePercentComplete;
+            boolean 	bUpdateProgressBarText;
+
+            //Get booleans from the intent telling us what to update:
+            bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+            bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+            if(gProgressBar_Progress != null && gTextView_ProgressBarText != null) {
+                if (bUpdatePercentComplete) {
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if (gProgressBar_Progress != null) {
+                        gProgressBar_Progress.setProgress(iAmountComplete);
+                    }
+                    if (iAmountComplete == 100) {
+                        assert gProgressBar_Progress != null;
+                        gProgressBar_Progress.setVisibility(View.INVISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
+                    } else {
+                        assert gProgressBar_Progress != null;
+                        gProgressBar_Progress.setVisibility(View.VISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.VISIBLE);
+                    }
+
+                }
+                if (bUpdateProgressBarText) {
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if (gTextView_ProgressBarText != null) {
+                        gTextView_ProgressBarText.setText(sProgressBarText);
+                    }
+                }
+            }
+
         }
     }
 
