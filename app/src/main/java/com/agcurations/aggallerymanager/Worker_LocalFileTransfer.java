@@ -36,6 +36,8 @@ public class Worker_LocalFileTransfer extends Worker {
     //Define string used to identify this worker type:
     public static final String WORKER_LOCAL_FILE_TRANSFER_TAG = "WORKER_LOCAL_FILE_TRANSFER_TAG";
 
+    public static final String IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE";
+
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
     //=========================
@@ -148,7 +150,7 @@ public class Worker_LocalFileTransfer extends Worker {
                 globalClass.BroadcastProgress(true, sMessage,
                         false, 0,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
@@ -177,7 +179,7 @@ public class Worker_LocalFileTransfer extends Worker {
                     globalClass.BroadcastProgress(true, sMessage,
                             false, 0,
                             false, "",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
@@ -246,7 +248,7 @@ public class Worker_LocalFileTransfer extends Worker {
                         globalClass.BroadcastProgress(true, sMessage,
                                 false, 0,
                                 false, "",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                         globalClass.gbImportExecutionRunning = false;
                         globalClass.gbImportExecutionFinished = true;
                         return Result.failure(DataErrorMessage(sMessage));
@@ -281,7 +283,7 @@ public class Worker_LocalFileTransfer extends Worker {
                     globalClass.BroadcastProgress(true, "Background worker processing files...\n",
                             true, iProgressBarValue,
                             true, sNotificationText,
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                     //Read the data records in the job file and move/copy files:
                     do {
@@ -292,7 +294,7 @@ public class Worker_LocalFileTransfer extends Worker {
                         globalClass.BroadcastProgress(false, "",
                                 false, 0,
                                 true, giFilesProcessed + "/" + giFileCount,
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                         giFilesProcessed++;
                         if (!sLine.equals("")) {
@@ -340,7 +342,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     globalClass.BroadcastProgress(true, sMessage,
                                             false, 0,
                                             false, "",
-                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                     bProblemWithFileTransfer = true;
                                     continue; //Skip to the end of the loop and read the next line in the job file.
                                 }
@@ -369,7 +371,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,
                                             false, "",
-                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                                 } else {
                                     //If this item is not merely marked for deletion (this could be a move op, which would involve a deletion)...
@@ -395,7 +397,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         globalClass.BroadcastProgress(true, sMessage,
                                                 false, 0,
                                                 false, "",
-                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                         bProblemWithFileTransfer = true;
                                         continue; //Skip to the end of the loop and read the next line in the job file.
                                     }
@@ -409,7 +411,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     globalClass.BroadcastProgress(true, sLogLine,
                                             false, 0,
                                             false, "",
-                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                                     if (GlobalClass.CheckIfFileExists(uriDestinationFile)) {
                                         //The file copy has already been executed by a previous instance of this requested worker.
@@ -425,7 +427,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 globalClass.BroadcastProgress(true, sMessage + "\n",
                                                         false, 0,
                                                         false, "",
-                                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                        IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                                 bProblemWithFileTransfer = true;
                                             }
                                         }
@@ -479,7 +481,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                             globalClass.BroadcastProgress(true, sMessage + "\n",
                                                     false, 0,
                                                     false, "",
-                                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                    IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                             bProblemWithFileTransfer = true;
                                             glProgressNumerator = glProgressNumerator + lFileSize;
                                             continue;
@@ -497,7 +499,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         globalClass.BroadcastProgress(true, sMessage + "\n",
                                                 false, 0,
                                                 false, "",
-                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                         bProblemWithFileTransfer = true;
                                         glProgressNumerator = glProgressNumerator + lFileSize;
                                         continue;
@@ -510,7 +512,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         globalClass.BroadcastProgress(true, sLogLine,
                                                 false, 0,
                                                 false, "",
-                                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                                         //Attempt the delete operation:
                                         if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFile)){
@@ -520,7 +522,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                             globalClass.BroadcastProgress(true, sMessage + "\n",
                                                     false, 0,
                                                     false, "",
-                                                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                                    IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                             bProblemWithFileTransfer = true;
                                             continue;
                                         }
@@ -531,7 +533,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,
                                             false, "",
-                                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                                 }
                                 dataProgress = UpdateProgressOutput();
@@ -546,7 +548,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                 globalClass.BroadcastProgress(true, sMessage,
                                         false, 0,
                                         false, "",
-                                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                        IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                                 CloseNotification();
                                 globalClass.gbImportExecutionRunning = false;
                                 globalClass.gbImportExecutionFinished = true;
@@ -556,7 +558,7 @@ public class Worker_LocalFileTransfer extends Worker {
                         globalClass.BroadcastProgress(false, "",
                                 false, 0,
                                 true, giFilesProcessed + "/" + giFileCount,
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                     } while (true);
                     brReader.close();
@@ -574,7 +576,7 @@ public class Worker_LocalFileTransfer extends Worker {
                     globalClass.BroadcastProgress(true, sMessage,
                             false, 0,
                             false, "",
-                            Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                            IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
@@ -588,7 +590,7 @@ public class Worker_LocalFileTransfer extends Worker {
                         globalClass.BroadcastProgress(true, sMessage + "\n",
                                 false, 0,
                                 false, "",
-                                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                     }
                 }
 
@@ -602,7 +604,7 @@ public class Worker_LocalFileTransfer extends Worker {
                 globalClass.BroadcastProgress(true, sMessage,
                         false, 0,
                         false, "",
-                        Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                        IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
                 globalClass.gbImportExecutionRunning = false;
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure(DataErrorMessage(sMessage));
@@ -626,7 +628,7 @@ public class Worker_LocalFileTransfer extends Worker {
             globalClass.BroadcastProgress(true, sMessage + "\n",
                     false, 0,
                     false, "",
-                    Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                    IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
             globalClass.gbImportExecutionRunning = false;
             globalClass.gbImportExecutionFinished = true;
             return Result.failure(DataErrorMessage(sMessage));
@@ -652,7 +654,7 @@ public class Worker_LocalFileTransfer extends Worker {
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
                 false, "",
-                Fragment_Import_6_ExecuteImport.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_EXECUTE_RESPONSE);
+                IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
         //Update the progress data associated with this worker:
         Data dataProgress = new Data.Builder()
