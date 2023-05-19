@@ -41,6 +41,8 @@ public class Worker_DownloadPostProcessing  extends Worker {
     //Define string used to identify this worker type:
     public static final String WORKER_TAG_DOWNLOAD_POST_PROCESSING = "WORKER_TAG_DOWNLOAD_POST_PROCESSING";
 
+    public static final String DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE";
+
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
 
     final static boolean DEBUG = false;
@@ -136,6 +138,10 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         String sMessage;
 
+        long lProgressNumerator = 0L;
+        long lProgressDenominator;
+        int iProgressBarValue = 0;
+
         if(!GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
             return Result.failure(DataErrorMessage(sMessage));
@@ -161,6 +167,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                 sMessage = "Download ID(s) missing.";
                 return Result.failure(LogReturnWithFailure(sMessage));
             }
+            lProgressDenominator = glDownloadIDs.length;
 
             if( gsPathToMonitorForDownloads.equals("")){
                 sMessage = "No path to monitor for downloads provided.";
@@ -188,6 +195,11 @@ public class Worker_DownloadPostProcessing  extends Worker {
             if(bDebug) gbwLogFile.flush();
 
             DownloadManager downloadManager = (DownloadManager) getApplicationContext().getSystemService(Context.DOWNLOAD_SERVICE);
+
+            globalClass.BroadcastProgress(true, "\nBegin monitoring for downloads...\n",
+                    true, 0,
+                    true, lProgressNumerator + "/" + lProgressDenominator + " downloads completed.",
+                    DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
 
             while ((iElapsedWaitTime < GlobalClass.DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
 
@@ -373,6 +385,13 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                     } else {
                                         if(bDebug) gbwLogFile.write(" Source file successfully deleted.");
                                     }
+
+                                    lProgressNumerator++;
+                                    iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                    globalClass.BroadcastProgress(true, "\nDownload completed and file placed at URI: \n" + uriDestinationFile + "\n",
+                                            true, iProgressBarValue,
+                                            true, lProgressNumerator + "/" + lProgressDenominator + " downloads completed.",
+                                            DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
 
                                 } //End if fSource.exists. If it does not exist, we probably already moved it.
 
