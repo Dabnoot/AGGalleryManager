@@ -89,7 +89,7 @@
             android:onClick="buttonNextClick_ImportFinish"
             android:text="Finish"
             android:textSize="24sp"
-            android:enabled="false"
+            android:enabled="true"
             app:backgroundTint="@color/colorButton" />
 
     </LinearLayout>
