@@ -295,7 +295,7 @@ public class VideoEnabledWebView extends WebView
                         if(sFileNameRaw.contains("/")){
                             sFileNameRaw = gsNodeData_src.substring(gsNodeData_src.lastIndexOf("/") + 1);
                         }
-                        String sFileName = Service_Import.cleanFileNameViaTrim(sFileNameRaw);
+                        String sFileName = GlobalClass.cleanFileNameViaTrim(sFileNameRaw);
 
                         //Create a destination Uri for the file to be downloaded to, ensuring that the
                         //  file name is unique:
