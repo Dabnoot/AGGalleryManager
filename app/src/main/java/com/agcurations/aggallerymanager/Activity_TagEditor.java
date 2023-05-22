@@ -132,8 +132,18 @@ public class Activity_TagEditor extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(tagEditorServiceResponseReceiver);
+
+        //Mark user items as unchecked so that they don't appear pre-selected in any user list. The
+        // portion of this activity where a user can add or modify a tag to restrict it to certain
+        // users involves selecting a user.
+        for(ItemClass_User icu: GlobalClass.galicu_Users){
+            icu.bIsChecked = false;
+        }
+
         super.onDestroy();
     }
+
+
 
     //======================================================
     //======  FRAGMENT NAVIGATION ROUTINES  ================
