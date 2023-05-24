@@ -13,11 +13,14 @@ import android.os.Bundle;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.text.Editable;
@@ -29,6 +32,7 @@ import android.view.ViewGroup;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -48,6 +52,10 @@ import java.util.Random;
 public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
     GlobalClass globalClass;
+
+    private ViewModel_UserManagement gViewModelUserManagement;
+
+    String gsEditUser_OriginalUserName = "";
 
     public final MutableLiveData<Integer> mldiSelectedUserColor =
             new MutableLiveData<>();
@@ -79,10 +87,15 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
         if(getContext() == null) return;
         //Configure a response receiver to listen for updates user-delete related workers:
-        IntentFilter filter = new IntentFilter(Worker_Catalog_RecalcCatalogItemsApprovedUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         addUserResponseReceiver = new AddUserResponseReceiver();
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(addUserResponseReceiver, filter);
+
+        if(getActivity() == null) return;
+        //Instantiate the ViewModel sharing data between fragments:
+        gViewModelUserManagement = new ViewModelProvider(getActivity()).get(ViewModel_UserManagement.class);
+
     }
 
     @Override
@@ -125,6 +138,21 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             //Call thing to hide the keyboard when somewhere other than an EditText is touched:
             setupUI(getView().findViewById(R.id.linerLayout_AddUser));
 
+            final Button button_AddUser = getView().findViewById(R.id.button_AddUser);
+            button_AddUser.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    button_AddUser_Click(v);
+                }
+            });
+            TextView textView_AddUser = getView().findViewById(R.id.textView_AddUser);
+            if(gViewModelUserManagement.iUserAddOrEditMode == ViewModel_UserManagement.USER_EDIT_MODE){
+                button_AddUser.setText("Apply");
+                textView_AddUser.setText("Edit User");
+            } else {
+                button_AddUser.setText("Add User");
+                textView_AddUser.setText("New User");
+            }
+
             EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
             editText_UserName.addTextChangedListener(new TextWatcher() {
                 @Override
@@ -134,7 +162,30 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    validateData(); //Look to see if ok to enable the Add User button.
+                    boolean bEnableAddApply = true;
+                    String sUserName = "" + s;
+                    if(sUserName.equals("")){
+                        bEnableAddApply = false;
+                    } else {
+                        if(gViewModelUserManagement.iUserAddOrEditMode != ViewModel_UserManagement.USER_EDIT_MODE){
+                            //If we are not in user-edit mode:
+                            //Make sure that the user name does not already exist:
+                            for (ItemClass_User icu : GlobalClass.galicu_Users) {
+                                if (sUserName.equalsIgnoreCase(icu.sUserName)) {
+                                    //If the user name already exists, don't let the
+                                    //  user create this new user.
+                                    //There is opportunity to allow user name change in edit mode here,
+                                    //  but the user name would need to be changed on all of the associated
+                                    //  private tags and catalog items as well. Easier to let the user
+                                    //  create a new user with the corrected name, share tags with that user,
+                                    //  then delete the old user.
+                                    bEnableAddApply = false;
+                                }
+                            }
+                        }
+                    }
+
+                    button_AddUser.setEnabled(bEnableAddApply);
                 }
 
                 @Override
@@ -142,33 +193,20 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
                 }
             });
-            editText_UserName.requestFocus();
-            if(getActivity() != null) {
-                InputMethodManager inputMethodManager =
-                        (InputMethodManager) getActivity().getSystemService(
-                                Activity.INPUT_METHOD_SERVICE);
-                inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+
+            if(gViewModelUserManagement.iUserAddOrEditMode == ViewModel_UserManagement.USER_EDIT_MODE){
+                editText_UserName.setEnabled(false);
+            } else {
+                editText_UserName.setEnabled(true);
+                //Set focus on the user name editText and pop open the keyboard:
+                editText_UserName.requestFocus();
+                if(getActivity() != null) {
+                    InputMethodManager inputMethodManager =
+                            (InputMethodManager) getActivity().getSystemService(
+                                    Activity.INPUT_METHOD_SERVICE);
+                    inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                }
             }
-
-
-            EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
-            editText_AccessPinNumber.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    validateData(); //Look to see if ok to enable the Add User button.
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-
-                }
-            });
-
 
             //Initialize Icon Color:
             final int iAC = initColorIcon();
@@ -215,8 +253,8 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             if(getContext() == null) {
                 return;
             }
-            AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
-            spinner_ContentMaturity.setAdapter(atarSpinnerAdapter);
+            AdapterMaturityRatings amrSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
+            spinner_ContentMaturity.setAdapter(amrSpinnerAdapter);
 
             spinner_ContentMaturity.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -232,12 +270,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 }
             });
 
-            Button button_AddUser = getView().findViewById(R.id.button_AddUser);
-            button_AddUser.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    button_AddUser_Click(v);
-                }
-            });
+
 
             Button button_Finish = getView().findViewById(R.id.button_Finish);
             button_Finish.setOnClickListener(new View.OnClickListener() {
@@ -273,6 +306,104 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                         requireActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
         listView_UserList.setAdapter(adapterUserList);
         int iWidthWidestUserItemView = (int)(getWidestView(requireActivity().getApplicationContext(), adapterUserList) * 1.05);
+
+        if(gViewModelUserManagement.iUserAddOrEditMode == ViewModel_UserManagement.USER_EDIT_MODE) {
+            //If we are in User Edit Mode, configure a click listener to listen for selection of a
+            // user to edit.
+            final EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
+            final EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
+            final CheckBox checkBox_AdminUser = getView().findViewById(R.id.checkBox_AdminUser);
+            final Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
+
+            listView_UserList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+                    icu.bIsChecked = !icu.bIsChecked;
+                    if (getActivity() == null) return;
+                    if (icu.bIsChecked) {
+
+                        if(!icu.sPin.equals("")){
+                            //If this user record requires a pin to log-in, display the pin code popup
+                            // before allowing the user to edit this user. Otherwise the admin could
+                            // gain access to the user and view their stored contents.
+
+                            //Configure the AlertDialog that will gather the pin code:
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(parent.getContext(), R.style.AlertDialogCustomStyle);
+
+                            // set the custom layout
+                            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+                            final View customLayout = inflater.inflate(R.layout.dialog_layout_pin_code, null);
+                            builder.setView(customLayout);
+
+                            final AlertDialog adConfirmationDialog = builder.create();
+
+                            //Code action for the Cancel button:
+                            Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
+                            button_PinCodeCancel.setOnClickListener(view1 -> adConfirmationDialog.dismiss());
+
+                            //Code action for the OK button:
+                            Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
+
+                            //Code action for the OK button:
+                            button_PinCodeOK.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+
+                                    EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
+                                    String sPinEntered = editText_DialogInput.getText().toString();
+
+                                    if (sPinEntered.equals(icu.sPin)) {
+                                        gsEditUser_OriginalUserName = icu.sUserName;
+                                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                                        editText_UserName.setText(icu.sUserName);
+                                        editText_AccessPinNumber.setText(icu.sPin);
+                                        checkBox_AdminUser.setChecked(icu.bAdmin);
+                                        //Set Icon Color:
+                                        mldiSelectedUserColor.setValue(icu.iUserIconColor);
+                                        //Set maturity selection:
+                                        spinner_ContentMaturity.setSelection(icu.iMaturityLevel);
+                                    } else {
+                                        gsEditUser_OriginalUserName = "";
+                                        Toast.makeText(getContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
+                                        adConfirmationDialog.dismiss();
+                                    }
+
+                                }
+                            });
+
+                            adConfirmationDialog.show();
+
+                        } else {
+                            //If this user record does not require a pin to log-in, merely populate the data in the fields:
+                            gsEditUser_OriginalUserName = icu.sUserName;
+                            view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                            editText_UserName.setText(icu.sUserName);
+                            editText_AccessPinNumber.setText(icu.sPin);
+                            checkBox_AdminUser.setChecked(icu.bAdmin);
+                            //Set Icon Color:
+                            mldiSelectedUserColor.setValue(icu.iUserIconColor);
+                            //Set maturity selection:
+                            spinner_ContentMaturity.setSelection(icu.iMaturityLevel);
+                        }
+
+                    } else {
+                        //If the user is de-selecting a user from the user list while in edit-mode, un-highlight and clear data from the form:
+                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+                        gsEditUser_OriginalUserName = "";
+                        editText_UserName.setText("");
+                        editText_AccessPinNumber.setText("");
+                        checkBox_AdminUser.setChecked(false);
+                        //Initialize Icon Color:
+                        final int iAC = initColorIcon();
+                        mldiSelectedUserColor.setValue(iAC);
+                        //Reset maturity selection:
+                        spinner_ContentMaturity.setSelection(0);
+                    }
+
+                }
+            });
+        }
 
 
         WindowMetrics windowMetrics = requireActivity().getWindowManager().getCurrentWindowMetrics();
@@ -331,26 +462,13 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         return iAvailableColor;
     }
 
-    private void validateData(){
-        if(getView() == null){
-            return;
-        }
-        EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
-        EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
-        String sUserName = editText_UserName.getText().toString();
-        String sPin = editText_AccessPinNumber.getText().toString();
-        Button button_AddUser = getView().findViewById(R.id.button_AddUser);
-        if(button_AddUser != null) {
-            button_AddUser.setEnabled(!sUserName.equals(""));
-        }
 
-
-    }
 
     public void button_AddUser_Click(View v){
 
         if(getView() != null) {
-            //Validate data:
+
+            //Get data:
             EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
             String sUserName = editText_UserName.getText().toString();
 
@@ -388,23 +506,6 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 return;
             }
 
-            //Make sure that the user name does not already exist:
-            for(ItemClass_User icu: GlobalClass.galicu_Users){
-                if(sUserName.equalsIgnoreCase(icu.sUserName)){
-                    Toast.makeText(requireContext(), "User name already exists. User addition aborted.", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-
-            /*SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireActivity());
-            Set<String> ssUserAccountData = sharedPreferences.getStringSet(GlobalClass.gsPreferenceName_UserAccountData, null);
-            if(ssUserAccountData == null){
-                ssUserAccountData = new HashSet<>();
-            } else {
-                ssUserAccountData = new HashSet<>(ssUserAccountData); //https://stackoverflow.com/questions/51001328/shared-preferences-not-saving-stringset-when-application-is-killed-its-a-featu
-                //It is said that we must not modify the StringSet returned by getStringSet. Consistency is not guaranteed.
-            }*/
-
             ItemClass_User icu = new ItemClass_User();
             icu.sUserName = sUserName;
             icu.sPin = sPin;
@@ -412,15 +513,19 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             icu.iUserIconColor = iColorSelection;
             icu.iMaturityLevel = iMaturityLevel;
 
-            //Add data to memory:
+            //Modify data in memory:
+            if(gViewModelUserManagement.iUserAddOrEditMode == ViewModel_UserManagement.USER_EDIT_MODE){
+                //If we are editing an existing user, find the existing user for modification and
+                // remove the data as part of replacement:
+                for(int i = 0; i < GlobalClass.galicu_Users.size(); i++){
+                    if(GlobalClass.galicu_Users.get(i).sUserName.equals(gsEditUser_OriginalUserName)){
+                        GlobalClass.galicu_Users.remove(i);
+                        break;
+                    }
+                }
+            }
+            //Add user to memory:
             GlobalClass.galicu_Users.add(icu);
-
-            /*//Add data to preferences:
-            String sUserRecord = GlobalClass.getUserAccountRecordString(icu);
-            ssUserAccountData.add(sUserRecord);
-            sharedPreferences.edit()
-                    .putStringSet(GlobalClass.gsPreferenceName_UserAccountData, ssUserAccountData)
-                    .apply();*/
 
 
             //Add data to file storage so that it can be picked-up by a new device if the data is moved:
@@ -431,7 +536,8 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             Toast.makeText(requireContext(), "User added successfully.", Toast.LENGTH_SHORT).show();
 
 
-            //Reset text entries:
+            //Reset data entries:
+            gsEditUser_OriginalUserName = "";
             editText_UserName.setText("");
             editText_AccessPinNumber.setText("");
             //Reset admin selection:
