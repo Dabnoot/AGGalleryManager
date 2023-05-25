@@ -76,8 +76,6 @@ public class Activity_Main extends AppCompatActivity {
     ProgressBar gProgressBar_CatalogReadProgress;
     TextView gTextView_CatalogReadProgressBarText;
 
-    boolean gbDataLoadComplete = false;
-
     boolean bSingleUserInUse = false;
 
     Activity_Main AM;
@@ -171,7 +169,7 @@ public class Activity_Main extends AppCompatActivity {
         filter.addAction(Worker_Catalog_BackupCatalogDBFiles.CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
         filter.addAction(Worker_Catalog_DeleteMultipleItems.DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
         filter.addAction(Worker_User_Delete.USER_DELETE_ACTION_RESPONSE);
-        filter.addAction(Worker_Catalog_RecalcCatalogItemsApprovedUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
@@ -615,7 +613,7 @@ public class Activity_Main extends AppCompatActivity {
 
             boolean bCatalogLoadComplete = intent.getBooleanExtra(Worker_Catalog_LoadData.CATALOG_LOAD_COMPLETE_NOTIFICATION_BOOLEAN,false);
             if(bCatalogLoadComplete){
-                gbDataLoadComplete = true;
+                GlobalClass.gabDataLoaded.set(true);
             }
 
 
@@ -872,7 +870,7 @@ public class Activity_Main extends AppCompatActivity {
     }
 
     private boolean dataStorageAndLoadOk(){
-        if(!gbDataLoadComplete){
+        if(!GlobalClass.gabDataLoaded.get()){
             if(GlobalClass.gUriDataFolder == null){
                 Toast.makeText(getApplicationContext(),
                         "No data folder selected. A storage location may be selected from the Settings menu.",
