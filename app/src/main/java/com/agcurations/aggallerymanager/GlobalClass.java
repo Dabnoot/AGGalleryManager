@@ -11,7 +11,6 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -55,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.ListenableWorker;
 
 
 public class GlobalClass extends Application {
@@ -107,7 +107,8 @@ public class GlobalClass extends Application {
     //Tag variables:
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
-    public AtomicBoolean abTagsLoaded = new AtomicBoolean();
+    public AtomicBoolean gabTagsLoaded = new AtomicBoolean(false);
+    public static AtomicBoolean gabDataLoaded = new AtomicBoolean(false);
     public static final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
@@ -851,7 +852,9 @@ public class GlobalClass extends Application {
 
     public static final String CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE";
 
-    public void CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+    public String CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+
+        String sMessage;
 
         int iMediaCategory;
 
@@ -859,11 +862,25 @@ public class GlobalClass extends Application {
             if(alci_CatalogItems.size() > 0){
                 iMediaCategory = alci_CatalogItems.get(0).iMediaCategory; //All items should have the same media category.
             } else {
-                return;
+                return "No catalog items passed for creation of new records.";
             }
         } else {
-            return;
+            return "No catalog items passed for creation of new records.";
         }
+
+        //Wait for the catalog file to become available:
+        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
+            try {
+                Thread.sleep(250);
+            } catch (Exception e){
+                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
+                return sMessage;
+            }
+        }
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
+
+
+
 
         gbTagHistogramRequiresUpdate[iMediaCategory] = true;
 
@@ -886,13 +903,16 @@ public class GlobalClass extends Application {
 
             osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
             if(osNewCatalogContentsFile == null){
-                String sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory];
+                sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory];
 
                 BroadcastProgress(true, sMessage,
                         false, 0,
                         false, "",
                         CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
-                return;
+
+                //Set the catalog file to "available":
+                GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+                return sMessage;
             }
             //Write the activity_comic_details_header line to the file:
             osNewCatalogContentsFile.write(sbNewCatalogRecords.toString().getBytes());
@@ -900,18 +920,25 @@ public class GlobalClass extends Application {
             osNewCatalogContentsFile.close();
 
         } catch (Exception e) {
-            String sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory] + "\n\n" + e.getMessage();
+            sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory] + "\n\n" + e.getMessage();
 
             BroadcastProgress(true, sMessage,
                     false, 0,
                     false, "",
                     CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE);
 
+            //Set the catalog file to "available":
+            GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+            return sMessage;
         }
+
+        //Set the catalog file to "available":
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
 
         //Update the tags histogram:
         updateTagHistogramsIfRequired();
 
+        return "";
     }
 
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
@@ -921,7 +948,9 @@ public class GlobalClass extends Application {
     }
 
 
-    public void CatalogDataFile_UpdateRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+    public String CatalogDataFile_UpdateRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+        String sMessage;
+
         int iMediaCategory;
 
         if(alci_CatalogItems != null){
@@ -931,16 +960,27 @@ public class GlobalClass extends Application {
                     if(iTempMediaCategory == -1){
                         iTempMediaCategory = icci.iMediaCategory; //All items should have the same media category.
                     } else if (icci.iMediaCategory != iTempMediaCategory){
-                        return;
+                        return "Records for update do not have the same media category.";
                     }
                 }
                 iMediaCategory = iTempMediaCategory;
             } else {
-                return;
+                return "No records passed for update.";
             }
         } else {
-            return;
+            return "No records passed for update.";
         }
+
+        //Wait for the catalog file to become available:
+        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
+            try {
+                Thread.sleep(250);
+            } catch (Exception e){
+                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
+                return sMessage;
+            }
+        }
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
 
         TreeMap<String, ItemClass_CatalogItem> tmCatalogRecords = gtmCatalogLists.get(iMediaCategory);
 
@@ -982,7 +1022,9 @@ public class GlobalClass extends Application {
 
             osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
             if(osNewCatalogContentsFile == null){
-                throw new Exception();
+                //Set the catalog file to "available":
+                GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+                return "Issue with openning output stream to catalog file.";
             }
             //Write the activity_comic_details_header line to the file:
             osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
@@ -995,11 +1037,19 @@ public class GlobalClass extends Application {
                 isCatalogReader.close();
             }
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory] + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            sMessage = "Problem updating CatalogContents.dat.\n" + gUriCatalogContentsFiles[iMediaCategory] + "\n\n" + e.getMessage();
+            Toast.makeText(this, sMessage, Toast.LENGTH_LONG).show();
+            //Set the catalog file to "available":
+            GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+            return sMessage;
         }
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+        return "";
     }
 
-    public void WriteCatalogDataFile(int iMediaCategory) {
+    public String WriteCatalogDataFile(int iMediaCategory) {
+
+        String sMessage;
 
         StringBuilder sbBuffer = new StringBuilder();
         boolean bHeaderWritten = false;
@@ -1015,6 +1065,17 @@ public class GlobalClass extends Application {
             sbBuffer.append("\n");
         }
 
+        //Wait for the catalog file to become available:
+        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
+            try {
+                Thread.sleep(250);
+            } catch (Exception e){
+                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
+                return sMessage;
+            }
+        }
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
+
         try {
             //Write the catalog file:
 
@@ -1029,8 +1090,15 @@ public class GlobalClass extends Application {
             osNewCatalogContentsFile.close();
 
         } catch (Exception e) {
-            Toast.makeText(this, "Problem updating CatalogContents.dat.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+            sMessage = "Problem updating CatalogContents.dat.\n" + e.getMessage();
+            Toast.makeText(this, sMessage, Toast.LENGTH_LONG).show();
+            //Set the catalog file to "available":
+            GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+            return sMessage;
         }
+        //Set the catalog file to "available":
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+        return "";
     }
 
     public boolean deleteItemFromCatalogFile(ItemClass_CatalogItem ci, String sIntentActionFilter){
@@ -1060,24 +1128,21 @@ public class GlobalClass extends Application {
         return bSuccess;
     }
 
-    public static boolean CatalogDataFile_UpdateCatalogFiles(){
+    public static String CatalogDataFile_UpdateCatalogFiles(){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
+        String sResult = "";
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-
-            boolean bSuccess = CatalogDataFile_UpdateCatalogFile(iMediaCategory);
-            if(!bSuccess){
-                return false;
-            }
+            sResult = CatalogDataFile_UpdateCatalogFile(iMediaCategory);
         }
-        return true;
+        return sResult;
     }
-    public static boolean CatalogDataFile_UpdateCatalogFile(int iMediaCategory){
+    public static String CatalogDataFile_UpdateCatalogFile(int iMediaCategory){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
-
+        String sMessage;
         StringBuilder sbBuffer = new StringBuilder();
         boolean bHeaderWritten = false;
         StringBuilder sbRecord = new StringBuilder();
@@ -1094,6 +1159,17 @@ public class GlobalClass extends Application {
             sbBuffer.append("\n");
         }
 
+        //Wait for the catalog file to become available:
+        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
+            try {
+                Thread.sleep(250);
+            } catch (Exception e){
+                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
+                return sMessage;
+            }
+        }
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
+
         try {
             //Write the catalog file:
             OutputStream osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
@@ -1105,10 +1181,14 @@ public class GlobalClass extends Application {
             osNewCatalogContentsFile.close();
 
         } catch (Exception e) {
-            return false;
+            sMessage = "" + e.getMessage();
+            //Set the catalog file to "available":
+            GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+            return sMessage;
         }
 
-        return true;
+        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+        return "";
     }
 
     //Catalog backup handled in Service_Main.
@@ -1184,7 +1264,7 @@ public class GlobalClass extends Application {
         return ci;
     }
 
-        public static String getNewCatalogRecordID(int iMediaCategory){
+    public static String getNewCatalogRecordID(int iMediaCategory){
 
         return UUID.randomUUID().toString();
     }
@@ -1702,7 +1782,7 @@ public class GlobalClass extends Application {
             }
 
             //Write the data to the file:
-            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "w"); //Open the tags file in write mode.
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "wt"); //Open the tags file in write mode.
             if (osNewTagsFile == null) {
                 return false;
             }
@@ -1912,18 +1992,30 @@ public class GlobalClass extends Application {
         return getHighestTagMaturityRating(alict_Tags);
     }
 
-    public static void UpdateAllCatalogItemBasedOnTags(){
+    public static final String RECALC_CATALOG_ITEM_MATURITY_AND_USERS = "com.agcurations.aggallerymanager.intent.action.RECALC_CATALOG_ITEM_MATURITY_AND_USERS";
+    public void UpdateCatalogItemsBasedOnTags(int iMediaCategory){
         //Recalculates catalog item maturity rating and approved users.
-        //This routine is used during app development and testing.
 
-        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(iMediaCategory).entrySet()){
-                icciCatalogItem.getValue().alsApprovedUsers = getApprovedUsersForTagGrouping(icciCatalogItem.getValue().aliTags, iMediaCategory); //This also takes into account the maturity rating of the tags.
-                icciCatalogItem.getValue().iMaturityRating = getHighestTagMaturityRating(icciCatalogItem.getValue().aliTags, iMediaCategory);
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
+        int iProgressBarValue;
+
+        for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(iMediaCategory).entrySet()){
+            icciCatalogItem.getValue().alsApprovedUsers = getApprovedUsersForTagGrouping(icciCatalogItem.getValue().aliTags, iMediaCategory); //This also takes into account the maturity rating of the tags.
+            icciCatalogItem.getValue().iMaturityRating = getHighestTagMaturityRating(icciCatalogItem.getValue().aliTags, iMediaCategory);
+
+            iProgressNumerator++;
+
+            if(iProgressNumerator % 100 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(false, "",
+                        false, iProgressBarValue,
+                        true, "Updating " + gsCatalogFolderNames[iMediaCategory]
+                                + " catalog item maturity and users...",
+                        RECALC_CATALOG_ITEM_MATURITY_AND_USERS);
             }
-            CatalogDataFile_UpdateCatalogFile(iMediaCategory);
         }
-
+        CatalogDataFile_UpdateCatalogFile(iMediaCategory);
     }
 
 
@@ -2014,7 +2106,7 @@ public class GlobalClass extends Application {
 
 
     public void populateApprovedTags(){
-        if(!abTagsLoaded.get()){
+        if(!gabTagsLoaded.get()){
             return;
         }
         gtmApprovedCatalogTagReferenceLists.clear();
