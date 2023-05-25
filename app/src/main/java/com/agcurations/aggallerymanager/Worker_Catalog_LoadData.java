@@ -203,7 +203,7 @@ public class Worker_Catalog_LoadData extends Worker {
                     false, "Reading Tags",
                     CATALOG_LOAD_ACTION_RESPONSE);
         }
-        globalClass.abTagsLoaded.set(true);
+        globalClass.gabTagsLoaded.set(true);
         globalClass.populateApprovedTags();
         stopWatch.PostDebugLogAndRestart("Tag data initialized/read with duration ");
 
