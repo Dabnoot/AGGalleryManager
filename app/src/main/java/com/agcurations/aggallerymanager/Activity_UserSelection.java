@@ -10,9 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.WindowMetrics;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -41,7 +39,7 @@ public class Activity_UserSelection extends AppCompatActivity {
 
         //Initialize the displayed list of users:
         ListView listView_UserList = findViewById(R.id.listView_UserList);
-        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
+        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
         AdapterUserList adapterUserList = new AdapterUserList(
                 getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
         //adapterUserList.gbSimplifiedView = true;  //Hides the maturity rating and admin status
@@ -66,12 +64,7 @@ public class Activity_UserSelection extends AppCompatActivity {
 
                     //Code action for the Cancel button:
                     Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-                    button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-                        @Override
-                        public void onClick(View view) {
-                            adConfirmationDialog.dismiss();
-                        }
-                    });
+                    button_PinCodeCancel.setOnClickListener(view1 -> adConfirmationDialog.dismiss());
 
                     //Code action for the OK button:
                     Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
@@ -81,7 +74,7 @@ public class Activity_UserSelection extends AppCompatActivity {
                         @Override
                         public void onClick(View view) {
 
-                            if(!globalClass.abTagsLoaded.get()){
+                            if(!globalClass.gabTagsLoaded.get()){
                                 Toast.makeText(getApplicationContext(), "Await tag loading...", Toast.LENGTH_SHORT).show();
                                 return;
                             }
@@ -90,7 +83,7 @@ public class Activity_UserSelection extends AppCompatActivity {
                             String sPinEntered = editText_DialogInput.getText().toString();
 
                             if (sPinEntered.equals(icu.sPin)) {
-                                globalClass.gicuCurrentUser = icu;
+                                GlobalClass.gicuCurrentUser = icu;
                                 globalClass.populateApprovedTags();
                                 Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
                                 adConfirmationDialog.dismiss();
@@ -107,7 +100,7 @@ public class Activity_UserSelection extends AppCompatActivity {
 
                 } else {
                     //If this user record does not require a pin to log-in, merely log-in.
-                    globalClass.gicuCurrentUser = icu;
+                    GlobalClass.gicuCurrentUser = icu;
                     globalClass.populateApprovedTags();
                     Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
                     closeActivity(getApplicationContext());
