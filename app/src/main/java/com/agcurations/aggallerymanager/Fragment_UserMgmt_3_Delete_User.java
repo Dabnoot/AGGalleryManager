@@ -318,8 +318,6 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
 
                     if (sCodeEntered.equals("2468")) {
                         adConfirmationDialog.dismiss();
-                        //todo: Start a worker to execute the user delete operation to avoid blocking the UI thread.
-                        //todo: Set the data load boolean to false.
                         ExecuteUserDeleteOperations(icu_UserToDelete, lbPrivateCatalogItemsFound, lbPrivateTagItemsFound);
                     } else {
                         Toast.makeText(getContext(), "Incorrect code entered. Delete aborted.", Toast.LENGTH_SHORT).show();
@@ -332,9 +330,8 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
             adConfirmationDialog.show();
 
         } else {
-            //If there are no catalog items and no tags to be deleted, just delete the user record:
-            //todo: Start a worker to execute the user delete operation to avoid blocking the UI thread.
-            //todo: Set the data load boolean to false.
+            //If there are no catalog items and no tags to be deleted, just delete the user record.
+            //Start a worker to execute the user delete operation to avoid blocking the UI threa:
             ExecuteUserDeleteOperations(icu_UserToDelete, false, false);
         }
 
@@ -379,7 +376,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
                 }
             }
             try {
-                //Write the catalog file:
+                //Write the file containing a list of catalog records to delete:
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 String sFileName = "UserDeletionJobFile_" + sDateTimeStamp + ".dat";
                 String sDataFileUriString = GlobalClass.gUriJobFilesFolder + GlobalClass.gsFileSeparator + sFileName;
@@ -397,7 +394,6 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
 
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Problem writing file containing deletion job details.\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-                //todo: determine behavior at this point.
                 return;
             }
 
@@ -436,10 +432,11 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
 
         }
 
-        //todo: If the current user is the user to be deleted, log them out and into the "guest"
-        // account, and return to the main activity.
-        if(GlobalClass.gicuCurrentUser.sUserName.equals(icu_UserToDelete.sUserName)){
 
+        if(GlobalClass.gicuCurrentUser.sUserName.equals(icu_UserToDelete.sUserName)){
+            //If the current user is the user to be deleted, log them out and into the "guest"
+            // account, and return to the main activity.
+            GlobalClass.gicuCurrentUser = null;
         }
 
 
