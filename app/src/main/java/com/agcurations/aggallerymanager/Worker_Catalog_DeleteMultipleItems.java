@@ -27,7 +27,6 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
 
     public static final String DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE";
 
-    String gsResponseActionFilter;
     ArrayList<ItemClass_CatalogItem> galci_CatalogItemsToDelete;
 
     Uri gUriDataFile;
@@ -36,7 +35,6 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
 
     public Worker_Catalog_DeleteMultipleItems(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gsResponseActionFilter = getInputData().getString(GlobalClass.EXTRA_CALLER_ACTION_RESPONSE_FILTER);
 
         gsUserName = getInputData().getString(GlobalClass.EXTRA_STRING_USERNAME);
 
@@ -59,6 +57,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
         int iProgressBarValue = 0;
 
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        boolean[] bUpdateThisCatalog = {false, false, false};
 
         if (!GlobalClass.CheckIfFileExists(gUriDataFile)) {
             return Result.success();
@@ -130,12 +129,10 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
 
         boolean bAllFilesDeleted = true;
 
-        ArrayList<ItemClass_CatalogItem> alicci_VideoCatalogItemsToDelete = new ArrayList<>();
-        ArrayList<ItemClass_CatalogItem> alicci_ImageCatalogItemsToDelete = new ArrayList<>();
-        ArrayList<ItemClass_CatalogItem> alicci_ComicCatalogItemsToDelete = new ArrayList<>();
-
         //Delete the file(s):
         for(ItemClass_CatalogItem ciToDelete: galci_CatalogItemsToDelete) {
+            bUpdateThisCatalog[ciToDelete.iMediaCategory] = true;
+
             iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(false, "",
@@ -144,22 +141,13 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                     DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
 
             boolean bSuccess = true;
-            //Break out listing of items by media category here, for a non-repeat of this loop, to
-            //  facilitate a fast-update of the individual catalog data files:
-            if(ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-                alicci_VideoCatalogItemsToDelete.add(ciToDelete);
-            } else if(ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-                alicci_ImageCatalogItemsToDelete.add(ciToDelete);
-            } else if(ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                alicci_ComicCatalogItemsToDelete.add(ciToDelete);
-            }
 
             Uri uriItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[ciToDelete.iMediaCategory], ciToDelete.sFolder_Name);
 
             if (!GlobalClass.CheckIfFileExists(uriItemFolder)) {
                 //Could not find folder holding item to be deleted. Item must have failed to be integrated or deleted via
                 //  some other method. Proceed with removing data from catalog.
-                bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
+                bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
             } else {
 
                 boolean bSingleFileDeleteAndFileNotFound = false;
@@ -170,14 +158,14 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                     if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
                         try {
                             if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
-                                globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                                globalClass.problemNotificationConfig("Could not delete file.", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                                 bSuccess = false;
                             }
                         } catch (FileNotFoundException e) {
-                            globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Could not delete file.", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                         }
                     } else {
-                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", gsResponseActionFilter);
+                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                         bSuccess = false;
                         bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                     }
@@ -259,15 +247,15 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                         if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
                             try {
                                 if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
-                                    globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                                    globalClass.problemNotificationConfig("Could not delete file.", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                                     bSuccess = false;
                                 }
                             } catch (FileNotFoundException e) {
-                                globalClass.problemNotificationConfig("Could not delete file.", gsResponseActionFilter);
+                                globalClass.problemNotificationConfig("Could not delete file.", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                                 bSuccess = false;
                             }
                         } else {
-                            globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                             bSuccess = false;
                             bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                         }
@@ -338,10 +326,10 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                             Uri uriLogFileToDelete = GlobalClass.FormChildUri(uriLogFolder, sLogFileName);
                             try {
                                 if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriLogFileToDelete)) {
-                                    globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", gsResponseActionFilter);
+                                    globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                                 }
                             } catch (FileNotFoundException e) {
-                                globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", gsResponseActionFilter);
+                                globalClass.problemNotificationConfig("Could not delete log file associated with this item: " + sLogFileName + ".", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                             }
                         }
 
@@ -355,16 +343,16 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                     if (GlobalClass.IsDirEmpty(uriItemFolder)) {
                         try {
                             if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
-                                globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
+                                globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                             }
                         } catch (FileNotFoundException e) {
-                            globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", gsResponseActionFilter);
+                            globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                         }
                     }
 
 
                     //Now delete the item record from the Catalog File:
-                    bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
+                    bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
 
                     //End if for continuing after successful file deletion.
                 } else {
@@ -375,7 +363,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                             (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS &&
                                     (ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_NO_CODE || ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_SINGLE))) {
                         if (bSingleFileDeleteAndFileNotFound) {
-                            bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, gsResponseActionFilter);
+                            bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                         }
                     }
                 }
@@ -392,32 +380,28 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
         //Remove items from the catalog file(s):
         boolean bUpdatedAllCatalogFiles = true;
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            boolean bSuccess = false;
-            if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
-                try {
-                    Thread.sleep(250);
-                } catch (Exception e){
-                    sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
-                    LogThis("doWork()", sMessage, null);
-                    bSuccess = false;
-                    bUpdatedAllCatalogFiles &= bSuccess;
-                    continue;
-                }
+            if(bUpdateThisCatalog[iMediaCategory]) {
+                //If catalog items to be deleted were within this media category, update this catalog file:
+                String sResult = GlobalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory);
+                bUpdatedAllCatalogFiles &= sResult.equals("");
             }
-            GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
-
-            //Update this catalog file:
-            bSuccess = GlobalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory);
-
-            bUpdatedAllCatalogFiles &= bSuccess;
-            GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
         }
 
         if(!bUpdatedAllCatalogFiles){
             sMessage = "Unable to update all catalog data files.";
             LogThis("doWork()", sMessage, null);
+
         } else {
-            //todo: Prompt user to restart the program to complete the user deletion?
+            //Delete the file:
+            try {
+                if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, gUriDataFile)) {
+                    globalClass.problemNotificationConfig("Could not delete file guiding content removal:\n"+
+                            gUriDataFile, DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
+                }
+            } catch (Exception e){
+                globalClass.problemNotificationConfig("Could not delete file guiding content removal:\n"+
+                        gUriDataFile, DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
+            }
         }
 
         if(!gsUserName.equals("")) {
