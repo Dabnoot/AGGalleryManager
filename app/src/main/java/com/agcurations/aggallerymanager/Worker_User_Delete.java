@@ -7,6 +7,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -37,6 +39,10 @@ public class Worker_User_Delete extends Worker {
     @Override
     public Result doWork() {
 
+        if(gsUserName == null){
+            return Result.failure(DataErrorMessage("User name passed to Worker_User_Delete is null."));
+        }
+
         int iProgressNumerator = 0;
         int iProgressDenominator = 1;
         int iProgressBarValue;
@@ -44,7 +50,7 @@ public class Worker_User_Delete extends Worker {
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
 
-
+        //=============== IMPORTANT NOTE - THIS ROUTINE DOES NOT DELETE FILES. =====================
         //After any files that need to be removed (or not), execute final actions. File removal can
         // take time.
 
@@ -52,7 +58,6 @@ public class Worker_User_Delete extends Worker {
         // to-be-deleted-user. If there are private tag items to be deleted, delete those tags. If
         // the user name is on a tag, remove it.
         boolean bRewriteTagFileLoop = false;
-        boolean bRewriteTagFileFinal = false;
 
         for(int iMediaCategory = 0; iMediaCategory <= 2; iMediaCategory++){
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -83,10 +88,31 @@ public class Worker_User_Delete extends Worker {
                 }
             }
             if(bRewriteTagFileLoop){
-                bRewriteTagFileFinal = true;
                 bRewriteTagFileLoop = false; //Reset back to false state for next loop.
-                //Re-write the tag file:
+                //Re-write the tag file. No need to post a progress message before as the tag files are quite small and should not take much time.
                 GlobalClass.WriteTagDataFile(iMediaCategory);
+                //If there are no private catalog items, no private tags, and the user name has been removed
+                // from all tag records for this media category, remove the user from any shared catalog item records:
+                globalClass.BroadcastProgress(false, "",
+                        false, 0,
+                        true,
+                        "Updating " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog items based on tags...",
+                        USER_DELETE_ACTION_RESPONSE);
+
+                //Call a worker to go through this media category data file and recalc the maturity
+                //  rating and assigned users:
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, "Worker_User_Delete:doWork()")
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
+                        .build();
+                OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
+                        .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
+                        .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getApplicationContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
+
             }
             iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -96,21 +122,9 @@ public class Worker_User_Delete extends Worker {
                     USER_DELETE_ACTION_RESPONSE);
         }
 
-        if(bRewriteTagFileFinal) {
-            globalClass.BroadcastProgress(false, "",
-                    true, 100,
-                    true, "Updating catalog items based on tags...",
-                    USER_DELETE_ACTION_RESPONSE);
-
-            //If there are no private catalog items, no private tags, and the user name has been removed
-            // from all tag records, remove the user from any shared catalog item records.
-            GlobalClass.UpdateAllCatalogItemBasedOnTags();
-
-        }
-
         globalClass.BroadcastProgress(false, "",
                 true, 100,
-                true, "Catalog file and tag file processing complete.",
+                true, "Tag file processing complete.",
                 USER_DELETE_ACTION_RESPONSE);
 
 
