@@ -36,7 +36,7 @@
                     android:id="@+id/textView_AddUser"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Add User"
+                    android:text="New User"
                     android:textColor="@color/colorTextColor"
                     android:textSize="40sp"
                     android:layout_alignParentTop="true"
