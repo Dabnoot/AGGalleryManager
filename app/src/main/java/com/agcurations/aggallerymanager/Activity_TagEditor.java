@@ -202,6 +202,7 @@ public class Activity_TagEditor extends AppCompatActivity {
         //RadioButton rbMergeTags = findViewById(R.id.radioButton_MergeTags);
 
         if (rbAddTags.isChecked()){
+            viewModelTagEditor.iTagAddOrEditMode = ViewModel_TagEditor.TAG_ADD_MODE;
             ViewPager2_TagEditor.setCurrentItem(FRAGMENT_TAG_EDITOR_2_ID_ADD_TAG, false);
         } else if (rbEditTags.isChecked()){
             viewModelTagEditor.iTagAddOrEditMode = ViewModel_TagEditor.TAG_EDIT_MODE;
