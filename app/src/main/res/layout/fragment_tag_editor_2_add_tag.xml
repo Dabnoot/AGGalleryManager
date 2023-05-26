@@ -111,7 +111,7 @@
                     android:layout_below="@+id/relativeLayout_TagDetails"
                     android:layout_centerHorizontal="true"
                     android:layout_marginTop="30dp"
-                    android:text="Age rating:"
+                    android:text="Maturity rating:"
                     android:textColor="@color/colorTextColor"
                     android:textSize="22sp" />
 
