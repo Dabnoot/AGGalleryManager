@@ -22,6 +22,9 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -79,15 +82,10 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         super.onCreate(savedInstanceState);
         globalClass = (GlobalClass) requireActivity().getApplicationContext();
 
-
-        if(getView() != null) {
-            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
-            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
-        }
-
         if(getContext() == null) return;
         //Configure a response receiver to listen for updates user-delete related workers:
-        IntentFilter filter = new IntentFilter(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         addUserResponseReceiver = new AddUserResponseReceiver();
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(addUserResponseReceiver, filter);
@@ -134,6 +132,9 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         mldiSelectedUserColor.observe(requireActivity(), observerColorSelection);
 
         if (getView() != null) {
+
+            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
+            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
 
             //Call thing to hide the keyboard when somewhere other than an EditText is touched:
             setupUI(getView().findViewById(R.id.linerLayout_AddUser));
@@ -550,6 +551,28 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
             //Update listview of users:
             initUserList();
+
+            //Recalculate approved users for all items so that the new user is included. Recall that
+            // the approved users are pre-calculated to reduce time for catalog display.
+            if(getContext() == null) return;
+            for(int iMediaCategory = 0; iMediaCategory <= 2; iMediaCategory++){
+
+                //Call a worker to go through this media category data file and recalc the maturity
+                //  rating and assigned users:
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_UserMgmt_1_Add_User:button_AddUser_Click()")
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
+                        .build();
+                OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
+                        .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
+                        .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
+
+            }
+
 
         }
     }
