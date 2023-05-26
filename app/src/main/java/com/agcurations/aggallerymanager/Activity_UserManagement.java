@@ -26,10 +26,9 @@ public class Activity_UserManagement extends AppCompatActivity {
     //Fragment page indexes:
     public static final int FRAGMENT_USERMGMT_0_ADD_MODIFY_DELETE_USER = 0;
     public static final int FRAGMENT_USERMGMT_1_ADD_USER = 1;
-    public static final int FRAGMENT_USERMGMT_2_MODIFY_USER = 2;
-    public static final int FRAGMENT_USERMGMT_3_DELETE_USER = 3;
+    public static final int FRAGMENT_USERMGMT_3_DELETE_USER = 2;
 
-    public static final int FRAGMENT_COUNT = 4;
+    public static final int FRAGMENT_COUNT = 3;
 
     static Stack<Integer> stackFragmentOrder;
     private static int giStartingFragment;
@@ -113,6 +112,7 @@ public class Activity_UserManagement extends AppCompatActivity {
         RadioButton radioButton_ModifyUser = findViewById(R.id.radioButton_ModifyUser);
 
         if (radioButton_AddUser.isChecked()){
+            viewModelUserManagement.iUserAddOrEditMode = ViewModel_UserManagement.USER_ADD_MODE;
             viewPager2_UserManagement.setCurrentItem(FRAGMENT_USERMGMT_1_ADD_USER, false);
         } else if (radioButton_ModifyUser.isChecked()){
             viewModelUserManagement.iUserAddOrEditMode = ViewModel_UserManagement.USER_EDIT_MODE;
@@ -146,8 +146,6 @@ public class Activity_UserManagement extends AppCompatActivity {
             switch (position) {
                 case FRAGMENT_USERMGMT_1_ADD_USER:
                     return new Fragment_UserMgmt_1_Add_User();
-                /*case FRAGMENT_USERMGMT_2_MODIFY_USER:
-                    return new Fragment_UserMgmt_2_Modify_User();*/
                 case FRAGMENT_USERMGMT_3_DELETE_USER:
                     return new Fragment_UserMgmt_3_Delete_User();
                 default:
