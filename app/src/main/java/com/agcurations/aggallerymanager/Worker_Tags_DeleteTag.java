@@ -25,10 +25,11 @@ public class Worker_Tags_DeleteTag extends Worker {
 
     public static final String TAG_WORKER_TAGS_DELETETAG = "com.agcurations.aggallermanager.tag_worker_tags_deletetag";
 
+    public static final String DELETE_TAGS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.DELETE_TAGS_ACTION_RESPONSE";
+
     String gsResponseActionFilter;
     int giMediaCategory;
     ItemClass_Tag gict_TagToDelete;
-    String gsIntentActionFilter = Fragment_TagEditor_4_DeleteTag.TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE;
     Context gContext;
 
     public Worker_Tags_DeleteTag(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -49,15 +50,33 @@ public class Worker_Tags_DeleteTag extends Worker {
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
 
+        String sMessage;
+        int iProgressNumerator = 0;
+        int iProgressDenominator = 3;
+        int iProgressBarValue = 0;
+
+        boolean bUpdateCatalogFile = false;
+
         //Loop through all catalog items and look for items that contain the tag to delete:
         ArrayList<ItemClass_CatalogItem> alci_CatalogItemsToUpdate = new ArrayList<>();
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : GlobalClass.gtmCatalogLists.get(giMediaCategory).entrySet()){
+            iProgressNumerator++;
+            if(iProgressNumerator % 100 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                globalClass.BroadcastProgress(false, "",
+                        true, iProgressBarValue,
+                        true, "Examining " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " catalog...",
+                        DELETE_TAGS_ACTION_RESPONSE);
+            }
             String sTags = tmEntryCatalogRecord.getValue().sTags;
             ArrayList<Integer> aliTags = GlobalClass.getIntegerArrayFromString(sTags, ",");
 
             if(aliTags.contains(gict_TagToDelete.iTagID)){
                 //If this catalog item contains the tag...
                 //Delete the tag from the record.
+
+                bUpdateCatalogFile = true;
+
                 //Form the new Tag string:
                 ArrayList<Integer> aliNewTags = new ArrayList<>();
                 for (Integer iTagID : aliTags) {
@@ -79,99 +98,41 @@ public class Worker_Tags_DeleteTag extends Worker {
             } //End if the record contains the tag
 
         } //End for loop through catalog.
-        //Update the catalog file:
-        globalClass.CatalogDataFile_UpdateRecords(alci_CatalogItemsToUpdate);
 
-        //Inform program of a need to update the tags histogram:
-        globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
+        if(bUpdateCatalogFile) {
+            //Update the catalog file:
+            globalClass.BroadcastProgress(false, "",
+                    true, 0,
+                    true, "Writing " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " catalog file...",
+                    DELETE_TAGS_ACTION_RESPONSE);
 
-        //Remove tag from reference list:
-        Uri uriCatalogTagsFile = GlobalClass.gUriCatalogTagsFiles[giMediaCategory];
-        try {
-            StringBuilder sbBuffer = new StringBuilder();
-            BufferedReader brReader;
-            InputStream isCatalogTagsFile = GlobalClass.gcrContentResolver.openInputStream(uriCatalogTagsFile);
-            if(isCatalogTagsFile == null){
-                String sMessage = "Problem reading Tags.dat.\n" + uriCatalogTagsFile;
-                globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                return Result.failure();
-            }
-            brReader = new BufferedReader(new InputStreamReader(isCatalogTagsFile));
-            sbBuffer.append(brReader.readLine());  //Read the header. //todo: replace with getHeader().
-            sbBuffer.append("\n");
+            globalClass.CatalogDataFile_UpdateRecords(alci_CatalogItemsToUpdate);
 
-            String sLine = brReader.readLine();
-            while (sLine != null) {
-
-                ItemClass_Tag ict = GlobalClass.ConvertFileLineToTagItem(sLine);
-
-                if(!gict_TagToDelete.iTagID.equals(ict.iTagID)){
-                    //If this is not the tag to be deleted:
-                    sbBuffer.append(sLine);
-                    sbBuffer.append("\n");
-                }
-
-                // read next line
-                sLine = brReader.readLine();
-            }
-            brReader.close();
-
-            isCatalogTagsFile.close();
-
-            //Write the data to the file:
-            OutputStream osCatalogTagsFile = GlobalClass.gcrContentResolver.openOutputStream(uriCatalogTagsFile, "wt");
-            if (osCatalogTagsFile == null){
-                String sMessage = "Problem updating Tags.dat. Cannot open output stream for file \n" + uriCatalogTagsFile;
-                globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-                return Result.failure();
-            }
-            osCatalogTagsFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
-            osCatalogTagsFile.flush();
-            osCatalogTagsFile.close();
-        } catch (Exception e) {
-            String sMessage = "Problem updating Tags.dat.\n" + uriCatalogTagsFile + "\n\n" + e.getMessage();
-            globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
-            return Result.failure();
+            //Inform program of a need to update the tags histogram:
+            globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
         }
 
         //Remove the tag from memory:
+        GlobalClass.gtmCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
         GlobalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).remove(gict_TagToDelete.iTagID);
-        if(GlobalClass.gtmApprovedCatalogTagReferenceLists.get(giMediaCategory).containsKey(gict_TagToDelete.iTagID)){
-            String sMessage = "Unable to find tag in memory.";
-            globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
+
+
+        //Update the tag file:
+        if(!GlobalClass.WriteTagDataFile(giMediaCategory)){
+            sMessage = "Problem updating Tags data file.";
+            globalClass.problemNotificationConfig(sMessage, DELETE_TAGS_ACTION_RESPONSE);
             return Result.failure();
         }
 
-        //Check to see if the tag is included in the "restricted tags" listing for the media category,
-        //  and if so, remove it:
-        //Get tag restrictions preferences:
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(gContext);
-        Set<String> ssCatalogTagsRestricted = sharedPreferences.getStringSet(GlobalClass.gsRestrictedTagsPreferenceNames[giMediaCategory], null);
-        //Attempt to match the restricted tag text IDs from the preferences to the Tag ID:
-        boolean bUpdatePreference = false;
-        Set<String> ssNewRestrictedTags = new HashSet<>();
-        if(ssCatalogTagsRestricted != null) {
-            for (String sRestrictedTag : ssCatalogTagsRestricted) {
-                Integer iRestrictedTag = Integer.parseInt(sRestrictedTag);
-                if(gict_TagToDelete.iTagID.equals(iRestrictedTag)){
-                    //This tag to be deleted is one of the restricted tags. Remove this tag from the list of restricted tags:
-                    bUpdatePreference = true;
-                } else {
-                    ssNewRestrictedTags.add(sRestrictedTag);
-                }
-            }
-        }
-        if(bUpdatePreference) {
-            SharedPreferences.Editor sharedPreferencedEditor = sharedPreferences.edit();
-            sharedPreferencedEditor.putStringSet(GlobalClass.gsRestrictedTagsPreferenceNames[giMediaCategory], ssNewRestrictedTags);
-            sharedPreferencedEditor.apply();
-        }
-
+        globalClass.BroadcastProgress(false, "",
+                true, 100,
+                true, "Tag deletion complete.",
+                DELETE_TAGS_ACTION_RESPONSE);
 
         //Send a broadcast that this process is complete.
         Intent broadcastIntent_NotifyTagDeleteComplete = new Intent();
         broadcastIntent_NotifyTagDeleteComplete.putExtra(GlobalClass.EXTRA_TAG_DELETE_COMPLETE, true);
-        broadcastIntent_NotifyTagDeleteComplete.setAction(Fragment_TagEditor_4_DeleteTag.TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE);
+        broadcastIntent_NotifyTagDeleteComplete.setAction(DELETE_TAGS_ACTION_RESPONSE);
         broadcastIntent_NotifyTagDeleteComplete.addCategory(Intent.CATEGORY_DEFAULT);
         //sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_NotifyTagDeleteComplete);
