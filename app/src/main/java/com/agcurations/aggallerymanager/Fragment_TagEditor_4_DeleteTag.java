@@ -25,6 +25,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -49,6 +51,9 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
     Button button_DeleteTag = null;
 
+    ProgressBar gProgressBar_Progress;
+    TextView gTextView_ProgressBarText;
+
     public Fragment_TagEditor_4_DeleteTag() {
         // Required empty public constructor
     }
@@ -71,7 +76,8 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         viewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
 
         //Configure a response receiver to listen for updates from the Data Service:
-        IntentFilter filter = new IntentFilter(TagEditorServiceResponseReceiver.TAG_EDITOR_SERVICE_ACTION_RESPONSE);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Tags_DeleteTag.DELETE_TAGS_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         tagEditorServiceResponseReceiver = new TagEditorServiceResponseReceiver();
         //registerReceiver(tagEditorServiceResponseReceiver, filter);
@@ -89,8 +95,11 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
-
+        if(getView() != null) {
+            button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
+            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
+            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
+        }
     }
 
     @Override
@@ -157,7 +166,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         ArrayList<ItemClass_Tag> alict_TagItems = new ArrayList<>();
 
         //Go through the tags treeMap and put the ListView together:
-        for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : globalClass.gtmApprovedCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
+        for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
             alict_TagItems.add(tmEntryTagReferenceItem.getValue());
         }
 
@@ -221,14 +230,12 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         });
         AlertDialog adConfirmationDialog = builder.create();
         adConfirmationDialog.show();
-        //adConfirmationDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.YELLOW);
     }
 
     private void DeleteTag(){
         if(getContext() == null) return;
         if(gListViewTagsAdapter == null) return;
         if(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected) == null) return;
-        Toast.makeText(getContext(), "Deleting tag...", Toast.LENGTH_SHORT).show();
         String sTagRecord = GlobalClass.getTagRecordString(Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)));
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataDeleteTag = new Data.Builder()
@@ -250,16 +257,67 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
 
     public class TagEditorServiceResponseReceiver extends BroadcastReceiver {
-        public static final String TAG_EDITOR_SERVICE_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.FROM_TAG_EDITOR_SERVICE";
 
         @Override
         public void onReceive(Context context, Intent intent) {
             //Errors are checked for in Activity_TagEditor.
             //Check to see if this is a message indicating that a tag deletion is complete:
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                String sStatusMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE);
+                if(sStatusMessage != null){
+                    Toast.makeText(context, sStatusMessage, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            //Check to see if this is a response to update log or progress bar:
+            boolean 	bUpdatePercentComplete;
+            boolean 	bUpdateProgressBarText;
+
+            //Get booleans from the intent telling us what to update:
+            bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+            bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+            if(gProgressBar_Progress != null && gTextView_ProgressBarText != null) {
+                if (bUpdatePercentComplete) {
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if (gProgressBar_Progress != null) {
+                        gProgressBar_Progress.setProgress(iAmountComplete);
+                    }
+                    if (iAmountComplete == 100) {
+                        assert gProgressBar_Progress != null;
+                        gProgressBar_Progress.setVisibility(View.INVISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
+                    } else {
+                        assert gProgressBar_Progress != null;
+                        gProgressBar_Progress.setVisibility(View.VISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.VISIBLE);
+                    }
+
+                }
+                if (bUpdateProgressBarText) {
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if (gTextView_ProgressBarText != null) {
+                        gTextView_ProgressBarText.setText(sProgressBarText);
+                    }
+                }
+            }
+
+            //Check to see if this is a completion notification about a tag-delete operation:
+
             boolean bTagDeleteComplete = intent.getBooleanExtra(GlobalClass.EXTRA_TAG_DELETE_COMPLETE,false);
             if(bTagDeleteComplete){
                 RefreshTagListView();
-                Toast.makeText(context, "Tag deletion complete.", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Tag deletion complete.", Toast.LENGTH_SHORT).show();
             }
 
 
