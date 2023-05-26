@@ -1321,94 +1321,11 @@ public class GlobalClass extends Application {
         return ConvertFileLineToTagItem(sRecord2);
     }
 
-    public ArrayList<ItemClass_Tag> TagDataFile_CreateNewRecords(ArrayList<String> sNewTagNames, int iMediaCategory){
-
-        //Get the tags file:
-
-        Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
-
-
+    public static int getNewTagID(int iMediaCategory){
         int iNextRecordId = -1; //Don't try to use UUID to create tag IDs. Some catalog items can
         // have a couple of dozen tags, and the UUIDs are long: 1026d7dc93aa-44c8-bed4-6b48-a9e8dbb9
         // 36 characters in the above example. At the time of this writing, a typical catalog record
         // is 380 characters with 3 tags. File size increase would be about 20% or more.
-
-        //Create an ArrayList to store the new tags:
-        ArrayList<ItemClass_Tag> ictNewTags = new ArrayList<>();
-        ItemClass_Tag ictNewTag;
-
-        //Find the greatest tag ID:
-        if(gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-            int iThisId;
-            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                iThisId = entry.getValue().iTagID;
-                if (iThisId >= iNextRecordId){
-                    iNextRecordId = iThisId + 1;
-                }
-            }
-        } else {
-            iNextRecordId = 0;
-        }
-
-        try {
-            //Open the tags file write-mode append:
-
-            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "wa"); //Write-mode append.
-            if(osNewTagsFile == null){
-                return null;
-            }
-            StringBuilder sbNewTagsStringBuilder = new StringBuilder();
-
-            for(String sNewTagName: sNewTagNames) {
-                boolean bTagAlreadyExists = false;
-                if (gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-                    for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-
-                        if (entry.getValue().sTagText.equalsIgnoreCase(sNewTagName)) {
-                            //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
-                            bTagAlreadyExists = true;
-                            break;
-                        }
-                    }
-                    if(bTagAlreadyExists){
-                        continue; //Skip and process the next tag.
-                    }
-                }
-
-
-                ictNewTag = new ItemClass_Tag(iNextRecordId, sNewTagName);
-                gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewTag);
-
-                //Prep for return of new tag items to the caller:
-                ictNewTags.add(ictNewTag);
-
-                //Add the new record to the catalog file:
-                String sLine = getTagRecordString(ictNewTag);
-                sbNewTagsStringBuilder.append(sLine);
-                sbNewTagsStringBuilder.append("\n");
-                iNextRecordId++;
-            }
-
-            osNewTagsFile.write(sbNewTagsStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
-            osNewTagsFile.flush();
-            osNewTagsFile.close();
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Problem updating Tags.dat.\n" + uriTagsFile + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-
-        return ictNewTags;
-
-    }
-
-    public static ArrayList<Integer> ImportNewTags(ArrayList<String> alsNewTagNames, int iMediaCategory){
-
-        //Any searches related to avoiding tag text/maturity/user combinations that are already in
-        // the tag DB files must have already been completed.
-
-        //Get the leading tag ID:
-        int iNextRecordId = -1;
-
         //Find the greatest tag ID:
         if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
             int iThisId;
@@ -1421,6 +1338,17 @@ public class GlobalClass extends Application {
         } else {
             iNextRecordId = 0;
         }
+
+
+        return iNextRecordId;
+    }
+
+    public static ArrayList<Integer> ImportNewTags(ArrayList<String> alsNewTagNames, int iMediaCategory){
+
+        //Any searches related to avoiding tag text/maturity/user combinations that are already in
+        // the tag DB files must have already been completed.
+
+        int iNextRecordId = getNewTagID(iMediaCategory);
 
         //Prepare tag items and records:
         ArrayList<ItemClass_Tag> alict_NewTags = new ArrayList<>();
@@ -1482,23 +1410,68 @@ public class GlobalClass extends Application {
 
     }
 
+    public ArrayList<ItemClass_Tag> TagDataFile_CreateNewRecords(ArrayList<String> sNewTagNames, int iMediaCategory){
+
+        //Get the tags file:
+
+        Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
+
+        int iNextRecordId = getNewTagID(iMediaCategory);
+
+        //Create an ArrayList to store the new tags:
+        ArrayList<ItemClass_Tag> ictNewTags = new ArrayList<>();
+        ItemClass_Tag ictNewTag;
+
+        try {
+            //Open the tags file write-mode append:
+
+            OutputStream osNewTagsFile = gcrContentResolver.openOutputStream(uriTagsFile, "wa"); //Write-mode append.
+            if(osNewTagsFile == null){
+                return null;
+            }
+            StringBuilder sbNewTagsStringBuilder = new StringBuilder();
+
+            for(String sNewTagName: sNewTagNames) {
+
+                ictNewTag = new ItemClass_Tag(iNextRecordId, sNewTagName);
+                gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewTag);
+                boolean bTagApprovedForCurrentUser = true;
+                if(ictNewTag.alsTagApprovedUsers.size() > 0){
+                    if(!ictNewTag.alsTagApprovedUsers.contains(gicuCurrentUser.sUserName)){
+                        bTagApprovedForCurrentUser = false;
+                    }
+                }
+                if(bTagApprovedForCurrentUser) {
+                    gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewTag);
+                    //Prep for return of new tag items to the caller:
+                    ictNewTags.add(ictNewTag);
+                }
+
+                //Add the new record to the catalog file:
+                String sLine = getTagRecordString(ictNewTag);
+                sbNewTagsStringBuilder.append(sLine);
+                sbNewTagsStringBuilder.append("\n");
+                iNextRecordId++;
+            }
+
+            osNewTagsFile.write(sbNewTagsStringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+            osNewTagsFile.flush();
+            osNewTagsFile.close();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Problem updating Tags.dat.\n" + uriTagsFile + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+
+        return ictNewTags;
+
+    }
+
+
+
 
     public ItemClass_Tag TagDataFile_CreateNewRecord(ItemClass_Tag ictNewTag, int iMediaCategory){
 
-        int iNextRecordId = -1;
-
-        //Find the greatest tag ID:
-        if(gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
-            int iThisId;
-            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-                iThisId = entry.getValue().iTagID;
-                if (iThisId >= iNextRecordId){
-                    iNextRecordId = iThisId + 1;
-                }
-            }
-        } else {
-            iNextRecordId = 0;
-        }
+        int iNextRecordId = getNewTagID(iMediaCategory);
 
         //Get the tags file:
         Uri uriTagsFile = gUriCatalogTagsFiles[iMediaCategory];
@@ -1514,7 +1487,7 @@ public class GlobalClass extends Application {
             if (gtmCatalogTagReferenceLists.get(iMediaCategory).size() > 0) {
                 for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
 
-                    if (entry.getValue().sTagText.toLowerCase().equals(ictNewTag.sTagText.toLowerCase())) {
+                    if (entry.getValue().sTagText.equalsIgnoreCase(ictNewTag.sTagText)) {
                         //If the tag already exists, abort adding this tag. //todo: unless it is a user-private tag or age-rating is set differently.
                         bTagAlreadyExists = true;
                         break;
@@ -1529,8 +1502,17 @@ public class GlobalClass extends Application {
                 ictNewNewTag.iMaturityRating = ictNewTag.iMaturityRating;
                 ictNewNewTag.alsTagApprovedUsers = new ArrayList<>(ictNewTag.alsTagApprovedUsers);
 
-                gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
                 gtmCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
+
+                boolean bTagApprovedForCurrentUser = true;
+                if(ictNewNewTag.alsTagApprovedUsers.size() > 0){
+                    if(!ictNewNewTag.alsTagApprovedUsers.contains(gicuCurrentUser.sUserName)){
+                        bTagApprovedForCurrentUser = false;
+                    }
+                }
+                if(bTagApprovedForCurrentUser) {
+                    gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(iNextRecordId, ictNewNewTag);
+                }
 
                 //Add the new record to the catalog file:
                 String sLine = getTagRecordString(ictNewNewTag);
@@ -1594,8 +1576,21 @@ public class GlobalClass extends Application {
             osNewTagsFile.close();
 
             //Update memory:
-            gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).replace(ict_TagToUpdate.iTagID, ict_TagToUpdate);
+
+
             gtmCatalogTagReferenceLists.get(iMediaCategory).replace(ict_TagToUpdate.iTagID, ict_TagToUpdate);
+
+            boolean bTagApprovedForCurrentUser = true;
+            if(ict_TagToUpdate.alsTagApprovedUsers.size() > 0){
+                if(!ict_TagToUpdate.alsTagApprovedUsers.contains(gicuCurrentUser.sUserName)){
+                    bTagApprovedForCurrentUser = false;
+                }
+            }
+            if(bTagApprovedForCurrentUser) {
+                gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).replace(ict_TagToUpdate.iTagID, ict_TagToUpdate);
+            } else {
+                gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).remove(ict_TagToUpdate.iTagID);
+            }
 
         } catch (Exception e) {
             Toast.makeText(this, "Problem updating Tags.dat.\n" + uriTagsFile + "\n\n" + e.getMessage(), Toast.LENGTH_LONG).show();
