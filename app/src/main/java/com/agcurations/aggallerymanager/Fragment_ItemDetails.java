@@ -375,10 +375,15 @@ public class Fragment_ItemDetails extends Fragment {
             sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[gciCatalogItem.iMaturityRating][0];
             sMaturityRatingText += " - ";
             String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[gciCatalogItem.iMaturityRating][1];
-            int iMaxTextLength = 75;
-            sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
-            if(iMaxTextLength < sMatRatDesc.length()) {
-                sMaturityRatingText += "...";
+            boolean bLengthLimit = false;
+            if(bLengthLimit) {
+                int iMaxTextLength = 75;
+                sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
+                if (iMaxTextLength < sMatRatDesc.length()) {
+                    sMaturityRatingText += "...";
+                }
+            } else {
+                sMaturityRatingText += sMatRatDesc;
             }
             textView_MaturityRating.setText(sMaturityRatingText);
         }
@@ -390,7 +395,7 @@ public class Fragment_ItemDetails extends Fragment {
             if(gciCatalogItem.alsApprovedUsers.size() > 0) {
                 for (int i = 0; i < gciCatalogItem.alsApprovedUsers.size(); i++) {
                     sbApprovedUsersText.append(gciCatalogItem.alsApprovedUsers.get(i));
-                    if (i < gciCatalogItem.alsApprovedUsers.size()) {
+                    if (i < (gciCatalogItem.alsApprovedUsers.size() - 1)) {
                         sbApprovedUsersText.append(", ");
                     }
                 }
