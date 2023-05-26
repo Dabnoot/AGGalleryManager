@@ -285,7 +285,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.aliTags = new ArrayList<>(fileItem.aliProspectiveTags);
-                ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
+                ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, ciNew.iMediaCategory);
                 //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
                 ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
                 ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
