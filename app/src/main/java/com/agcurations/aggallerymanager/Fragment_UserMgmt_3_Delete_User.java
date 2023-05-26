@@ -8,6 +8,8 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -56,13 +58,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
         if(getContext() == null) return;
-
-        if(getView() != null) {
-            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
-            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
-        }
 
         //Configure a response receiver to listen for updates user-delete related workers:
         IntentFilter filter = new IntentFilter(Worker_User_Delete.USER_DELETE_ACTION_RESPONSE);
@@ -74,14 +70,6 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
     }
 
     @Override
-    public void onDestroy() {
-        if(getContext() != null) {
-            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(userDeleteResponseReceiver);
-        }
-        super.onDestroy();
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
@@ -89,9 +77,27 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        if(getView() != null) {
+            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
+            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         initComponents();
+    }
+
+    @Override
+    public void onDestroy() {
+        if(getContext() != null) {
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(userDeleteResponseReceiver);
+        }
+        super.onDestroy();
     }
 
     public void initComponents() {
