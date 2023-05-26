@@ -196,7 +196,8 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                 " mature content or content 'currently private to the current user' being exposed to" +
                 " inappropriate users, or in the case of this tag being the last tag and of a lower" +
                 " maturity than the default, the catalog item may \"disappear\" from view of some" +
-                " low maturity users as the higher default maturity is applied.\n" +
+                " low maturity users as the higher default maturity is applied. Use the filter feature" +
+                " of the Catalog Viewer to determine the content to which this tag has been applied.\n" +
                 "Confirm tag deletion: ";
         sConfirmationMessage = sConfirmationMessage + Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)).sTagText;
 
