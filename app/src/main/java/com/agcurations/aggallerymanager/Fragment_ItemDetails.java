@@ -251,7 +251,11 @@ public class Fragment_ItemDetails extends Fragment {
                 String sPreviousTagIDsTemp = SortTagIDString(gsPreviousTagIDs);
                 String sNewTagIDsTemp = SortTagIDString(gsNewTagIDs);
 
+                int iMaturityRating = GlobalClass.getHighestTagMaturityRating(aliTagIDs, gciCatalogItem.iMediaCategory);
+                updateMaturityText(iMaturityRating);
 
+                ArrayList<String> alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(aliTagIDs, gciCatalogItem.iMediaCategory);
+                updateApprovedUsersText(alsApprovedUsers);
 
 
                 if (!sNewTagIDsTemp.equals(sPreviousTagIDsTemp)) {
@@ -367,14 +371,28 @@ public class Fragment_ItemDetails extends Fragment {
             textView_Source.setText(sSource);
         }
 
+        updateMaturityText(gciCatalogItem.iMaturityRating);
 
+        updateApprovedUsersText(gciCatalogItem.alsApprovedUsers);
+
+
+        TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
+        if(textView_Tags != null){
+            String sTagText = "Tags: ";
+            sTagText += globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
+            textView_Tags.setText(sTagText);
+        }
+    }
+
+    private void updateMaturityText(int iMaturityRating){
+        if(getView() == null) return;
         TextView textView_MaturityRating = getView().findViewById(R.id.textView_MaturityRating);
         if(textView_MaturityRating != null){
             String sMaturityRatingText = "Maturity Rating: ";
 
-            sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[gciCatalogItem.iMaturityRating][0];
+            sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iMaturityRating][0];
             sMaturityRatingText += " - ";
-            String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[gciCatalogItem.iMaturityRating][1];
+            String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iMaturityRating][1];
             boolean bLengthLimit = false;
             if(bLengthLimit) {
                 int iMaxTextLength = 75;
@@ -387,29 +405,25 @@ public class Fragment_ItemDetails extends Fragment {
             }
             textView_MaturityRating.setText(sMaturityRatingText);
         }
+    }
 
+    private void updateApprovedUsersText(ArrayList<String> alsApprovedUsers){
+        if(getView() == null) return;
         TextView textView_ApprovedUsers = getView().findViewById(R.id.textView_ApprovedUsers);
         if(textView_ApprovedUsers != null){
             StringBuilder sbApprovedUsersText = new StringBuilder();
             sbApprovedUsersText.append("Approved Users: ");
-            if(gciCatalogItem.alsApprovedUsers.size() > 0) {
-                for (int i = 0; i < gciCatalogItem.alsApprovedUsers.size(); i++) {
-                    sbApprovedUsersText.append(gciCatalogItem.alsApprovedUsers.get(i));
-                    if (i < (gciCatalogItem.alsApprovedUsers.size() - 1)) {
+            if(alsApprovedUsers.size() > 0) {
+                for (int i = 0; i < alsApprovedUsers.size(); i++) {
+                    sbApprovedUsersText.append(alsApprovedUsers.get(i));
+                    if (i < (alsApprovedUsers.size() - 1)) {
                         sbApprovedUsersText.append(", ");
                     }
                 }
             } else {
-                sbApprovedUsersText.append("[Unrestricted]");
+                sbApprovedUsersText.append("[Unspecified]");
             }
             textView_ApprovedUsers.setText(sbApprovedUsersText);
-        }
-
-        TextView textView_Tags = getView().findViewById(R.id.textView_Tags);
-        if(textView_Tags != null){
-            String sTagText = "Tags: ";
-            sTagText += globalClass.getTagTextsFromTagIDsString(gciCatalogItem.sTags, gciCatalogItem.iMediaCategory);
-            textView_Tags.setText(sTagText);
         }
     }
 
