@@ -67,7 +67,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     ProgressBar gProgressBar_Progress;
     TextView gTextView_ProgressBarText;
 
-    AddUserResponseReceiver addUserResponseReceiver;
+    AddUserResponseReceiver gAddUserResponseReceiver;
 
     public Fragment_UserMgmt_1_Add_User() {
         // Required empty public constructor
@@ -88,8 +88,8 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        addUserResponseReceiver = new AddUserResponseReceiver();
-        LocalBroadcastManager.getInstance(getContext()).registerReceiver(addUserResponseReceiver, filter);
+        gAddUserResponseReceiver = new AddUserResponseReceiver();
+        LocalBroadcastManager.getInstance(getContext()).registerReceiver(gAddUserResponseReceiver, filter);
 
         if(getActivity() == null) return;
         //Instantiate the ViewModel sharing data between fragments:
@@ -292,7 +292,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     @Override
     public void onDestroy() {
         if(getContext() != null) {
-            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(addUserResponseReceiver);
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(gAddUserResponseReceiver);
         }
         super.onDestroy();
     }
