@@ -1,241 +1,250 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     android:id="@+id/linerLayout_AddUser"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:weightSum="100"
-    android:baselineAligned="false"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".Activity_UserManagement">
+    tools:context=".Activity_UserManagement"
+    android:layout_above="@+id/relativeLayout_Progress">
 
-
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="99">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="100"
+        android:baselineAligned="false">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:orientation="vertical"
-            android:gravity="center">
-
-            <RelativeLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="20dp">
-
-                <TextView
-                    android:id="@+id/textView_AddUser"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="New User"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="40sp"
-                    android:layout_alignParentTop="true"
-                    android:layout_centerHorizontal="true"/>
-
-                <TextView
-                    android:id="@+id/textView_AddUserSubText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Enter new user details below."
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="24sp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_below="@+id/textView_AddUser"/>
-
-                <LinearLayout
-                    android:id="@+id/linearLayout_LabelsAndData"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_below="@+id/textView_AddUserSubText"
-                    android:layout_marginTop="10dp"
-                    android:layout_centerHorizontal="true">
-
-                    <!--Labels-->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/textView_labelUserName"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="User name:"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp"
-                            android:layout_gravity="end"/>
-
-                        <TextView
-                            android:id="@+id/textView_labelAccessPinNumber"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:text="Access pin:"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp"
-                            android:layout_gravity="end"/>
-
-                        <TextView
-                            android:id="@+id/textView_labelAdmin"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="15dp"
-                            android:text="Admin user:"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp"
-                            android:layout_gravity="end"/>
-
-                        <TextView
-                            android:id="@+id/textView_labelUserIconColor"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="User icon color:"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp"
-                            android:layout_marginTop="20dp"
-                            android:layout_gravity="end"/>
-
-                    </LinearLayout>
-
-                    <!--Data Entry-->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <EditText
-                            android:id="@+id/editText_UserName"
-                            android:layout_width="wrap_content"
-                            android:minWidth="200dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginEnd="10dp"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp"
-                            android:background="@color/colorBlack"/>
-
-                        <EditText
-                            android:id="@+id/editText_AccessPinNumber"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginTop="10dp"
-                            android:textColor="@color/colorTextColor"
-                            android:background="@color/colorBlack"
-                            android:inputType="numberPassword"
-                            android:minWidth="200dp"
-                            android:textSize="22sp" />
-
-                        <CheckBox
-                            android:id="@+id/checkBox_AdminUser"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:buttonTint="@color/colorTextColor"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginTop="9dp"/>
-
-                        <androidx.appcompat.widget.AppCompatImageView
-                            android:id="@+id/imageView_UserIcon"
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
-                            android:layout_marginStart="10dp"
-                            android:src="@drawable/login"
-                            android:layout_marginTop="10dp"/>
-
-
-                    </LinearLayout>
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/textView_labelContentMaturity"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:text="Content Maturity:"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="22sp"
-                    android:layout_below="@+id/linearLayout_LabelsAndData"
-                    android:layout_alignParentStart="true"/>
-
-                <Spinner
-                    android:id="@+id/spinner_ContentMaturity"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:dropDownWidth="400dp"
-                    android:layout_alignTop="@+id/textView_labelContentMaturity"
-                    android:layout_toEndOf="@id/textView_labelContentMaturity"
-                    android:layout_marginStart="10dp"/>
-
-            </RelativeLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="99">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:orientation="vertical"
+                android:gravity="center">
 
-                <Button
-                    android:id="@+id/button_AddUser"
-                    android:layout_width="180dp"
-                    android:layout_height="67dp"
-                    android:text="Add User"
-                    android:enabled="false"
-                    android:textSize="24sp"
-                    app:backgroundTint="@color/colorButton"/>
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="20dp">
 
-                <Button
-                    android:id="@+id/button_Finish"
-                    android:layout_width="180dp"
-                    android:layout_height="67dp"
-                    android:layout_marginStart="20dp"
-                    android:text="Finish"
-                    android:textSize="24sp"
-                    android:onClick="buttonClick_Cancel"
-                    app:backgroundTint="@color/colorButton" />
+                    <TextView
+                        android:id="@+id/textView_AddUser"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="New User"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="40sp"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"/>
+
+                    <TextView
+                        android:id="@+id/textView_AddUserSubText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Enter new user details below."
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="24sp"
+                        android:layout_centerHorizontal="true"
+                        android:layout_below="@+id/textView_AddUser"/>
+
+                    <LinearLayout
+                        android:id="@+id/linearLayout_LabelsAndData"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_below="@+id/textView_AddUserSubText"
+                        android:layout_marginTop="10dp"
+                        android:layout_centerHorizontal="true">
+
+                        <!--Labels-->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/textView_labelUserName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="User name:"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp"
+                                android:layout_gravity="end"/>
+
+                            <TextView
+                                android:id="@+id/textView_labelAccessPinNumber"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:text="Access pin:"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp"
+                                android:layout_gravity="end"/>
+
+                            <TextView
+                                android:id="@+id/textView_labelAdmin"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="15dp"
+                                android:text="Admin user:"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp"
+                                android:layout_gravity="end"/>
+
+                            <TextView
+                                android:id="@+id/textView_labelUserIconColor"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="User icon color:"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp"
+                                android:layout_marginTop="20dp"
+                                android:layout_gravity="end"/>
+
+                        </LinearLayout>
+
+                        <!--Data Entry-->
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <EditText
+                                android:id="@+id/editText_UserName"
+                                android:layout_width="wrap_content"
+                                android:minWidth="200dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginEnd="10dp"
+                                android:textColor="@color/colorTextColor"
+                                android:textSize="22sp"
+                                android:background="@color/colorBlack"/>
+
+                            <EditText
+                                android:id="@+id/editText_AccessPinNumber"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="10dp"
+                                android:textColor="@color/colorTextColor"
+                                android:background="@color/colorBlack"
+                                android:inputType="numberPassword"
+                                android:minWidth="200dp"
+                                android:textSize="22sp" />
+
+                            <CheckBox
+                                android:id="@+id/checkBox_AdminUser"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:buttonTint="@color/colorTextColor"
+                                android:layout_marginStart="10dp"
+                                android:layout_marginTop="9dp"/>
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/imageView_UserIcon"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:layout_marginStart="10dp"
+                                android:src="@drawable/login"
+                                android:layout_marginTop="10dp"/>
+
+
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textView_labelContentMaturity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Content Maturity:"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp"
+                        android:layout_below="@+id/linearLayout_LabelsAndData"
+                        android:layout_alignParentStart="true"/>
+
+                    <Spinner
+                        android:id="@+id/spinner_ContentMaturity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:dropDownWidth="400dp"
+                        android:layout_alignTop="@+id/textView_labelContentMaturity"
+                        android:layout_toEndOf="@id/textView_labelContentMaturity"
+                        android:layout_marginStart="10dp"/>
+
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/button_AddUser"
+                        android:layout_width="180dp"
+                        android:layout_height="67dp"
+                        android:text="Add User"
+                        android:enabled="false"
+                        android:textSize="24sp"
+                        app:backgroundTint="@color/colorButton"/>
+
+                    <Button
+                        android:id="@+id/button_Finish"
+                        android:layout_width="180dp"
+                        android:layout_height="67dp"
+                        android:layout_marginStart="20dp"
+                        android:text="Finish"
+                        android:textSize="24sp"
+                        android:onClick="buttonClick_Cancel"
+                        app:backgroundTint="@color/colorButton" />
+
+                </LinearLayout>
 
             </LinearLayout>
 
-        </LinearLayout>
 
-        <RelativeLayout
-            android:id="@+id/relativeLayout_Progress"
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <ListView
+            android:id="@+id/listView_UserList"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:scrollbarSize="20dp"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout_Progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        >
+
+        <ProgressBar
+            android:id="@+id/progressBar_Progress"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:progressDrawable="@drawable/progressbar_colors"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:visibility="invisible"/>
 
-            <ProgressBar
-                android:id="@+id/progressBar_Progress"
-                style="@android:style/Widget.ProgressBar.Horizontal"
-                android:progressDrawable="@drawable/progressbar_colors"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="invisible"/>
+        <TextView
+            android:id="@+id/textView_ProgressBarText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible"/>
+    </RelativeLayout>
 
-            <TextView
-                android:id="@+id/textView_ProgressBarText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:visibility="invisible"/>
-        </RelativeLayout>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <ListView
-        android:id="@+id/listView_UserList"
-        android:layout_width="200dp"
-        android:layout_height="match_parent"
-        android:scrollbarSize="20dp"
-        android:layout_weight="1"/>
-
-</LinearLayout>
+</RelativeLayout>

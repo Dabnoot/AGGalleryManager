@@ -86,6 +86,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         //Configure a response receiver to listen for updates user-delete related workers:
         IntentFilter filter = new IntentFilter();
         filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         addUserResponseReceiver = new AddUserResponseReceiver();
         LocalBroadcastManager.getInstance(getContext()).registerReceiver(addUserResponseReceiver, filter);
@@ -555,24 +556,26 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             //Recalculate approved users for all items so that the new user is included. Recall that
             // the approved users are pre-calculated to reduce time for catalog display.
             if(getContext() == null) return;
+            int iMediaCategoriesToProcessBitSet = 0;
+            int[] iMediaCategoryBits = {1, 2, 4};
             for(int iMediaCategory = 0; iMediaCategory <= 2; iMediaCategory++){
-
+                iMediaCategoriesToProcessBitSet |= iMediaCategoryBits[iMediaCategory]; //Set a bit to indicate processing of catalog files.
+            }
+            if(iMediaCategoriesToProcessBitSet != 0) {
                 //Call a worker to go through this media category data file and recalc the maturity
                 //  rating and assigned users:
                 Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                 Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_UserMgmt_1_Add_User:button_AddUser_Click()")
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
+                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY_BIT_SET, iMediaCategoriesToProcessBitSet)
                         .build();
                 OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
                         .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
                         .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
                         .build();
                 WorkManager.getInstance(getContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
-
             }
-
 
         }
     }

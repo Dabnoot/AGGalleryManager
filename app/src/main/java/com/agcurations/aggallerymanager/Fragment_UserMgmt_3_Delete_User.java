@@ -18,6 +18,7 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import android.provider.DocumentsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +29,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -187,7 +190,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
         if (getView() == null) {
             return;
         }
-
+        v.setEnabled(false);
         ItemClass_User icuSelectedUser = gAdapterUserList.GetSelectedUsers().get(0);
 
         if(icuSelectedUser.bAdmin){
@@ -235,7 +238,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
     }
 
     private void DeleteUser_CheckItems(){
-        Toast.makeText(getContext(), "Examining catalog...", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getContext(), "Examining catalog...", Toast.LENGTH_SHORT).show();
         final ItemClass_User icu_UserToDelete = gAdapterUserList.GetSelectedUsers().get(0);
         String sUserNameToBeRemoved = icu_UserToDelete.sUserName;
 
@@ -381,13 +384,17 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
                     }
                 }
             }
+            Uri uriDataFile;
             try {
                 //Write the file containing a list of catalog records to delete:
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 String sFileName = "UserDeletionJobFile_" + sDateTimeStamp + ".dat";
-                String sDataFileUriString = GlobalClass.gUriJobFilesFolder + GlobalClass.gsFileSeparator + sFileName;
 
-                Uri uriDataFile = Uri.parse(sDataFileUriString);
+                uriDataFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                if (uriDataFile == null) {
+                    Toast.makeText(getContext(), "Problem writing file containing deletion job details.", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 OutputStream osUserDeletionJobFile;
 
                 osUserDeletionJobFile = GlobalClass.gcrContentResolver.openOutputStream(uriDataFile, "w"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
@@ -403,7 +410,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
                 return;
             }
 
-            //Deletion job file should now be done.
+            //Deletion job file should now be written to be picked up by the following worker.
             //Start deletion worker:
             if(getContext() == null) return;
             Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -411,6 +418,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
                     .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_UserMgmt_3_Delete_User:ExecuteUserDeleteOperations()")
                     .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                     .putString(GlobalClass.EXTRA_STRING_USERNAME, icu_UserToDelete.sUserName)
+                    .putString(GlobalClass.EXTRA_DATA_FILE_URI_STRING, uriDataFile.toString())
                     .build();
             OneTimeWorkRequest otwrCatalogDeleteContent = new OneTimeWorkRequest.Builder(Worker_Catalog_DeleteMultipleItems.class)
                     .setInputData(dataCatalogContentDeletion)

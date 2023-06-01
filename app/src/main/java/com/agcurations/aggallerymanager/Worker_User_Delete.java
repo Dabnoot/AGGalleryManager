@@ -58,6 +58,7 @@ public class Worker_User_Delete extends Worker {
         // to-be-deleted-user. If there are private tag items to be deleted, delete those tags. If
         // the user name is on a tag, remove it.
         boolean bRewriteTagFileLoop = false;
+        int iMediaCategoriesToProcessBitSet = 0;
 
         for(int iMediaCategory = 0; iMediaCategory <= 2; iMediaCategory++){
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -91,27 +92,9 @@ public class Worker_User_Delete extends Worker {
                 bRewriteTagFileLoop = false; //Reset back to false state for next loop.
                 //Re-write the tag file. No need to post a progress message before as the tag files are quite small and should not take much time.
                 GlobalClass.WriteTagDataFile(iMediaCategory);
-                //If there are no private catalog items, no private tags, and the user name has been removed
-                // from all tag records for this media category, remove the user from any shared catalog item records:
-                globalClass.BroadcastProgress(false, "",
-                        false, 0,
-                        true,
-                        "Updating " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog items based on tags...",
-                        USER_DELETE_ACTION_RESPONSE);
 
-                //Call a worker to go through this media category data file and recalc the maturity
-                //  rating and assigned users:
-                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-                Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
-                        .putString(GlobalClass.EXTRA_CALLER_ID, "Worker_User_Delete:doWork()")
-                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, iMediaCategory)
-                        .build();
-                OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
-                        .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
-                        .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
-                        .build();
-                WorkManager.getInstance(getApplicationContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
+                int[] iMediaCategoryBits = {1, 2, 4};
+                iMediaCategoriesToProcessBitSet |= iMediaCategoryBits[iMediaCategory];
 
             }
             iProgressNumerator++;
@@ -126,6 +109,22 @@ public class Worker_User_Delete extends Worker {
                 true, 100,
                 true, "Tag file processing complete.",
                 USER_DELETE_ACTION_RESPONSE);
+
+        if(iMediaCategoriesToProcessBitSet != 0){
+            //Call a worker to go through this media category data file and recalc the maturity
+            //  rating and assigned users:
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, "Worker_User_Delete:doWork()")
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY_BIT_SET, iMediaCategoriesToProcessBitSet)
+                    .build();
+            OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
+                    .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
+                    .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
+        }
 
 
         //If the to-be-deleted user does not have any private catalog items, private tag items,

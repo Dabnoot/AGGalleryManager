@@ -133,7 +133,6 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
         for(ItemClass_CatalogItem ciToDelete: galci_CatalogItemsToDelete) {
             bUpdateThisCatalog[ciToDelete.iMediaCategory] = true;
 
-            iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(false, "",
                     false, iProgressBarValue,
@@ -369,7 +368,14 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                 }
             }
             bAllFilesDeleted &= bSuccess;
+
+            iProgressNumerator++;
         }
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                false, iProgressBarValue,
+                true, "Deleting data for catalog item " + iProgressNumerator + "\\" + iProgressDenominator,
+                DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
 
         if(!bAllFilesDeleted){
             sMessage = "Unable to delete all files.";
@@ -381,8 +387,13 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
         boolean bUpdatedAllCatalogFiles = true;
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             if(bUpdateThisCatalog[iMediaCategory]) {
+                iProgressBarValue = Math.round((iMediaCategory / (float) iProgressDenominator) * 100);
+                globalClass.BroadcastProgress(false, "",
+                        true, iProgressBarValue,
+                        true, "Writing " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog file.",
+                        DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                 //If catalog items to be deleted were within this media category, update this catalog file:
-                String sResult = GlobalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory);
+                String sResult = globalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory);
                 bUpdatedAllCatalogFiles &= sResult.equals("");
             }
         }
@@ -394,6 +405,10 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
         } else {
             //Delete the file:
             try {
+                globalClass.BroadcastProgress(false, "",
+                        true, 0,
+                        true, "Deleting job file.",
+                        DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                 if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, gUriDataFile)) {
                     globalClass.problemNotificationConfig("Could not delete file guiding content removal:\n"+
                             gUriDataFile, DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
@@ -421,6 +436,11 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
 
 
         }
+
+        globalClass.BroadcastProgress(false, "",
+                true, 100,
+                true, "User deletion catalog file operations complete.",
+                DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
 
 
         //Broadcast the result of the delete item action:

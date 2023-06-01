@@ -1128,7 +1128,7 @@ public class GlobalClass extends Application {
         return bSuccess;
     }
 
-    public static String CatalogDataFile_UpdateCatalogFiles(){
+    public String CatalogDataFile_UpdateCatalogFiles(){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
@@ -1138,11 +1138,17 @@ public class GlobalClass extends Application {
         }
         return sResult;
     }
-    public static String CatalogDataFile_UpdateCatalogFile(int iMediaCategory){
+
+    public static final String BROADCAST_WRITE_CATALOG_FILE = "com.agcurations.aggallerymanager.intent.action.WRITE_CATALOG_FILE";
+    public String CatalogDataFile_UpdateCatalogFile(int iMediaCategory){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
         String sMessage;
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
+        int iProgressBarValue = 0;
+
         StringBuilder sbBuffer = new StringBuilder();
         boolean bHeaderWritten = false;
         StringBuilder sbRecord = new StringBuilder();
@@ -1157,6 +1163,15 @@ public class GlobalClass extends Application {
             sbBuffer.append(getCatalogRecordString(tmEntry.getValue(), sbRecord)); //Append the data.
             sbRecord.setLength(0);
             sbBuffer.append("\n");
+
+            iProgressNumerator++;
+            if (iProgressNumerator % 100 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(false, "",
+                        true, iProgressBarValue,
+                        true, "Writing " + gsCatalogFolderNames[iMediaCategory] + " catalog file...",
+                        BROADCAST_WRITE_CATALOG_FILE);
+            }
         }
 
         //Wait for the catalog file to become available:
@@ -1276,6 +1291,7 @@ public class GlobalClass extends Application {
     //=====================================================================================
     public static final String EXTRA_TAG_TO_BE_DELETED = "com.agcurations.aggallerymanager.extra.TAG_TO_BE_DELETED";
     public static final String EXTRA_MEDIA_CATEGORY = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY";
+    public static final String EXTRA_MEDIA_CATEGORY_BIT_SET = "com.agcurations.aggallerymanager.extra.MEDIA_CATEGORY_BIT_SET";
     public static final String EXTRA_TAG_DELETE_COMPLETE = "com.agcurations.aggallerymanager.extra.TAG_DELETE_COMPLETE";
     public static final String EXTRA_ARRAYLIST_STRING_TAGS_TO_ADD = "com.agcurations.aggallerymanager.extra.TAGS_TO_ADD";
     public static final String EXTRA_ARRAYLIST_ITEMCLASSTAGS_ADDED_TAGS = "com.agcurations.aggallerymanager.extra.ADDED_TAGS";
@@ -1988,6 +2004,7 @@ public class GlobalClass extends Application {
     }
 
     public static final String RECALC_CATALOG_ITEM_MATURITY_AND_USERS = "com.agcurations.aggallerymanager.intent.action.RECALC_CATALOG_ITEM_MATURITY_AND_USERS";
+
     public void UpdateCatalogItemsBasedOnTags(int iMediaCategory){
         //Recalculates catalog item maturity rating and approved users.
 
