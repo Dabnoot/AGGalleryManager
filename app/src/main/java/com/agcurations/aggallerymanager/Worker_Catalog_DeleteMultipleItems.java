@@ -135,7 +135,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
 
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(false, "",
-                    false, iProgressBarValue,
+                    true, iProgressBarValue,
                     true, "Deleting data for catalog item " + iProgressNumerator + "\\" + iProgressDenominator,
                     DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
 
@@ -393,7 +393,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                         true, "Writing " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog file.",
                         DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
                 //If catalog items to be deleted were within this media category, update this catalog file:
-                String sResult = globalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory);
+                String sResult = globalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory, "");
                 bUpdatedAllCatalogFiles &= sResult.equals("");
             }
         }

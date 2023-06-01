@@ -1115,7 +1115,7 @@ public class GlobalClass extends Application {
             gtmCatalogLists.get(ci.iMediaCategory).remove(ci.sItemID);
 
             //Update the catalog file from memory:
-            CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory);
+            CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Deleting item from catalog database file...");
 
             //Update the tags histogram:
             updateTagHistogramsIfRequired();
@@ -1128,22 +1128,28 @@ public class GlobalClass extends Application {
         return bSuccess;
     }
 
-    public String CatalogDataFile_UpdateCatalogFiles(){
+    public String CatalogDataFile_UpdateCatalogFiles(String sSpecialProgressMessage){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
         String sResult = "";
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            sResult = CatalogDataFile_UpdateCatalogFile(iMediaCategory);
+            sResult = CatalogDataFile_UpdateCatalogFile(iMediaCategory, sSpecialProgressMessage);
         }
         return sResult;
     }
 
     public static final String BROADCAST_WRITE_CATALOG_FILE = "com.agcurations.aggallerymanager.intent.action.WRITE_CATALOG_FILE";
-    public String CatalogDataFile_UpdateCatalogFile(int iMediaCategory){
+    public String CatalogDataFile_UpdateCatalogFile(int iMediaCategory, String sSpecialProgressMessage){
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
+
+        String sProgressMessage = "Writing " + gsCatalogFolderNames[iMediaCategory] + " catalog file...";
+        if(!sSpecialProgressMessage.equals("")){
+            sProgressMessage = sSpecialProgressMessage;
+        }
+
         String sMessage;
         int iProgressNumerator = 0;
         int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
@@ -1169,7 +1175,7 @@ public class GlobalClass extends Application {
                 iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
                 BroadcastProgress(false, "",
                         true, iProgressBarValue,
-                        true, "Writing " + gsCatalogFolderNames[iMediaCategory] + " catalog file...",
+                        true, sProgressMessage,
                         BROADCAST_WRITE_CATALOG_FILE);
             }
         }
@@ -2001,33 +2007,6 @@ public class GlobalClass extends Application {
         }
 
         return getHighestTagMaturityRating(alict_Tags);
-    }
-
-    public static final String RECALC_CATALOG_ITEM_MATURITY_AND_USERS = "com.agcurations.aggallerymanager.intent.action.RECALC_CATALOG_ITEM_MATURITY_AND_USERS";
-
-    public void UpdateCatalogItemsBasedOnTags(int iMediaCategory){
-        //Recalculates catalog item maturity rating and approved users.
-
-        int iProgressNumerator = 0;
-        int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
-        int iProgressBarValue;
-
-        for(Map.Entry<String, ItemClass_CatalogItem> icciCatalogItem: gtmCatalogLists.get(iMediaCategory).entrySet()){
-            icciCatalogItem.getValue().alsApprovedUsers = getApprovedUsersForTagGrouping(icciCatalogItem.getValue().aliTags, iMediaCategory); //This also takes into account the maturity rating of the tags.
-            icciCatalogItem.getValue().iMaturityRating = getHighestTagMaturityRating(icciCatalogItem.getValue().aliTags, iMediaCategory);
-
-            iProgressNumerator++;
-
-            if(iProgressNumerator % 100 == 0) {
-                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                BroadcastProgress(false, "",
-                        false, iProgressBarValue,
-                        true, "Updating " + gsCatalogFolderNames[iMediaCategory]
-                                + " catalog item maturity and users...",
-                        RECALC_CATALOG_ITEM_MATURITY_AND_USERS);
-            }
-        }
-        CatalogDataFile_UpdateCatalogFile(iMediaCategory);
     }
 
 

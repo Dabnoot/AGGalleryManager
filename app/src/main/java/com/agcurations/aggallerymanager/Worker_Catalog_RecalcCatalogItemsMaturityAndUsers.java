@@ -84,7 +84,8 @@ public class Worker_Catalog_RecalcCatalogItemsMaturityAndUsers extends Worker {
                         true, "Writing " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog file...",
                         WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
 
-                globalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory);
+                globalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory, "Applying permissions to " + GlobalClass.gsCatalogFolderNames[iMediaCategory] +
+                        " catalog records...");
             }
         }
         globalClass.BroadcastProgress(false, "",
