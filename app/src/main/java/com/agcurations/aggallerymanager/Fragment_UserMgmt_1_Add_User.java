@@ -230,9 +230,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                                     if (positiveResult) {
                                         //Toast.makeText(getContext(), "Color selected: #" + Integer.toHexString(color).toUpperCase(), Toast.LENGTH_SHORT).show();
                                         mldiSelectedUserColor.setValue(color);
-                                    } /*else {
-                                        Toast.makeText(getContext(), "Dialog cancelled", Toast.LENGTH_SHORT).show();
-                                    }*/
+                                    }
                                 }
                             }).build().show(getParentFragmentManager(), "dialog_demo_1");
                 }
@@ -306,6 +304,10 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
         AdapterUserList adapterUserList = new AdapterUserList(
                         requireActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
+        int[] iSelectedUnselectedBGColors = {
+                ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2),
+                ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain)};
+        adapterUserList.giSelectedUnselectedBGColors = iSelectedUnselectedBGColors;
         listView_UserList.setAdapter(adapterUserList);
         int iWidthWidestUserItemView = (int)(getWidestView(requireActivity().getApplicationContext(), adapterUserList) * 1.05);
 
@@ -356,15 +358,22 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                                     String sPinEntered = editText_DialogInput.getText().toString();
 
                                     if (sPinEntered.equals(icu.sPin)) {
+                                        adapterUserList.uncheckAll(); //If the user is selecting this item, unselect the other items.
+                                        icu.bIsChecked = true;
                                         gsEditUser_OriginalUserName = icu.sUserName;
-                                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                                        //view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                                         editText_UserName.setText(icu.sUserName);
                                         editText_AccessPinNumber.setText(icu.sPin);
                                         checkBox_AdminUser.setChecked(icu.bAdmin);
                                         //Set Icon Color:
                                         mldiSelectedUserColor.setValue(icu.iUserIconColor);
                                         //Set maturity selection:
-                                        spinner_ContentMaturity.setSelection(icu.iMaturityLevel);
+                                        int iAdjustedMaturityLevel = icu.iMaturityLevel;
+                                        if(iAdjustedMaturityLevel > 6) {
+                                            //User maturity level does not make use of level 6, which is "rating pending"
+                                            iAdjustedMaturityLevel -= 1;
+                                        }
+                                        spinner_ContentMaturity.setSelection(iAdjustedMaturityLevel);
                                     } else {
                                         gsEditUser_OriginalUserName = "";
                                         Toast.makeText(getContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
@@ -377,21 +386,30 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                             adConfirmationDialog.show();
 
                         } else {
-                            //If this user record does not require a pin to log-in, merely populate the data in the fields:
+                            adapterUserList.uncheckAll(); //If the user is selecting this item, unselect the other items.
+                            icu.bIsChecked = true;
+                                    //If this user record does not require a pin to log-in, merely populate the data in the fields:
                             gsEditUser_OriginalUserName = icu.sUserName;
-                            view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                            //view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                             editText_UserName.setText(icu.sUserName);
                             editText_AccessPinNumber.setText(icu.sPin);
                             checkBox_AdminUser.setChecked(icu.bAdmin);
                             //Set Icon Color:
                             mldiSelectedUserColor.setValue(icu.iUserIconColor);
                             //Set maturity selection:
-                            spinner_ContentMaturity.setSelection(icu.iMaturityLevel);
+                            int iAdjustedMaturityLevel = icu.iMaturityLevel;
+                            if(iAdjustedMaturityLevel > 6) {
+                                //User maturity level does not make use of level 6, which is "rating pending"
+                                iAdjustedMaturityLevel -= 1;
+                            }
+                            spinner_ContentMaturity.setSelection(iAdjustedMaturityLevel);
+
+
                         }
 
                     } else {
                         //If the user is de-selecting a user from the user list while in edit-mode, un-highlight and clear data from the form:
-                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+                        //view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
                         gsEditUser_OriginalUserName = "";
                         editText_UserName.setText("");
                         editText_AccessPinNumber.setText("");
@@ -402,7 +420,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                         //Reset maturity selection:
                         spinner_ContentMaturity.setSelection(0);
                     }
-
+                    adapterUserList.notifyDataSetChanged();
                 }
             });
         }
