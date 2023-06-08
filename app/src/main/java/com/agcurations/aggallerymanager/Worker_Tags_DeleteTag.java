@@ -58,7 +58,6 @@ public class Worker_Tags_DeleteTag extends Worker {
         boolean bUpdateCatalogFile = false;
 
         //Loop through all catalog items and look for items that contain the tag to delete:
-        ArrayList<ItemClass_CatalogItem> alci_CatalogItemsToUpdate = new ArrayList<>();
         for(Map.Entry<String, ItemClass_CatalogItem> tmEntryCatalogRecord : GlobalClass.gtmCatalogLists.get(giMediaCategory).entrySet()){
             iProgressNumerator++;
             if(iProgressNumerator % 100 == 0) {
@@ -92,8 +91,7 @@ public class Worker_Tags_DeleteTag extends Worker {
                         GlobalClass.getHighestTagMaturityRating(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
                 tmEntryCatalogRecord.getValue().alsApprovedUsers =
                         GlobalClass.getApprovedUsersForTagGrouping(tmEntryCatalogRecord.getValue().aliTags, giMediaCategory);
-                //Update the record and the catalog file:
-                alci_CatalogItemsToUpdate.add(tmEntryCatalogRecord.getValue());
+                //Catalog records are updated in memory by these memory reference operations.
 
             } //End if the record contains the tag
 
@@ -106,7 +104,7 @@ public class Worker_Tags_DeleteTag extends Worker {
                     true, "Writing " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " catalog file...",
                     DELETE_TAGS_ACTION_RESPONSE);
 
-            globalClass.CatalogDataFile_UpdateRecords(alci_CatalogItemsToUpdate);
+            globalClass.CatalogDataFile_UpdateCatalogFile(giMediaCategory, "Removing tag from catalog records...");
 
             //Inform program of a need to update the tags histogram:
             globalClass.gbTagHistogramRequiresUpdate[giMediaCategory] = true;
