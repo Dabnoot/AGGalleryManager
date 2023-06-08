@@ -9,6 +9,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -415,7 +418,26 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 }
 
                 if (bMaturityRatingChanged || bApprovedUserChanged) {
-                    globalClass.ReassessCatalogItemsForTagUserAndRating(ictTagToAddOrEdit, gViewModelTagEditor.iTagEditorMediaCategory);
+                    if(getContext() == null) return;
+                    int iMediaCategoriesToProcessBitSet = 0;
+                    int[] iMediaCategoryBits = {1, 2, 4};
+                    iMediaCategoriesToProcessBitSet |= iMediaCategoryBits[gViewModelTagEditor.iTagEditorMediaCategory]; //Set a bit to indicate processing of catalog files.
+                    if(iMediaCategoriesToProcessBitSet != 0) {
+                        //Call a worker to go through this media category data file and recalc the maturity
+                        //  rating and assigned users:
+                        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                        Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
+                                .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_2_AddTag:continueWithTagAddOrEditFinalize()")
+                                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY_BIT_SET, iMediaCategoriesToProcessBitSet)
+                                .build();
+                        OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
+                                .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
+                                .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
+                                .build();
+                        WorkManager.getInstance(getContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
+                    }
+
                 }
             }
 
