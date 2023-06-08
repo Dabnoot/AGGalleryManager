@@ -41,7 +41,7 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
             {"M",	"Mature - Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
             {"AO",	"Adults Only - Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
             {"RP",  "Rating Pending - Titles with the RP rating have not yet been assigned a final ESRB rating."},
-            {"IB",  "Implicit Bias - Associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW. content."},
+            {"IB",  "Implicit Bias - Associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW content."},
             {"X",  "X-Rated - Associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
              //DO NOT CHANGE ORDER OR INDEXING WITHOUT UPDATING STORED USER DATA.
     };
