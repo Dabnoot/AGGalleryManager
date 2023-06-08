@@ -1,7 +1,10 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,7 +18,9 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -48,6 +53,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -91,6 +97,16 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE);
+
+        //Create a response receiver to listen for catalog file writes, etc, to display progress to user.
+        gProgressResponseReceiver = new ProgressResponseReceiver();
+        gProgressResponseReceiver.progressBar_ProgressIndicator = findViewById(R.id.progressBar_Progress);
+        gProgressResponseReceiver.textView_ProgressText = findViewById(R.id.textView_ProgressBarText);
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gProgressResponseReceiver, filter);
 
         mVisible = true;
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
@@ -467,6 +483,14 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         initializePlayer();
     }
 
+    @Override
+    public void onDestroy() {
+        if(getApplicationContext() != null) {
+            LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(gProgressResponseReceiver);
+        }
+        super.onDestroy();
+    }
+
     private void PausePlayback(){
 
         if(gbPlayingM3U8) {
@@ -653,7 +677,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         + GlobalClass.gsFileSeparator + ci.sFilename;
                 Uri uriFileUri = Uri.parse(sFileUri);
 
-                if (bFileIsGif || (globalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
+                if (bFileIsGif || (GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
                     gbPlayingM3U8 = false;
 
                     Glide.with(getApplicationContext()).load(uriFileUri).into(gImageView_GifViewer);
@@ -678,7 +702,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     String sM3U8Uri = GlobalClass.gsUriAppRootPrefix
                             + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                             + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                            + GlobalClass.gsFileSeparator + ci.sItemID
+                            + GlobalClass.gsFileSeparator + ci.sItem_Folder
                             + GlobalClass.gsFileSeparator + ci.sFilename;
 
                     uriM3U8 = Uri.parse(sM3U8Uri);
@@ -705,7 +729,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sParentFolderUri = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                 + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                + GlobalClass.gsFileSeparator + ci.sItemID
+                                + GlobalClass.gsFileSeparator + ci.sItem_Folder
                                 + GlobalClass.gsFileSeparator + sNewFileName;
                         Uri uriParentFolderUri = Uri.parse(sParentFolderUri);
                         try {
@@ -732,7 +756,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                         sbUriString.append(GlobalClass.gsUriAppRootPrefix)
                                                 .append(GlobalClass.gsFileSeparator).append(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS])
                                                 .append(GlobalClass.gsFileSeparator).append(ci.sFolder_Name)
-                                                .append(GlobalClass.gsFileSeparator).append(ci.sItemID)
+                                                .append(GlobalClass.gsFileSeparator).append(ci.sItem_Folder)
                                                 .append(GlobalClass.gsFileSeparator).append(sLine);
                                         sLine = sbUriString.toString();
                                         sbUriString.setLength(0);
@@ -803,7 +827,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sUriM3U8_SAF = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                 + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                + GlobalClass.gsFileSeparator + ci.sItemID
+                                + GlobalClass.gsFileSeparator + ci.sItem_Folder
                                 + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
                         Uri uriM3U8_SAF = Uri.parse(sUriM3U8_SAF);
 
@@ -860,7 +884,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 String sParentUri = GlobalClass.gsUriAppRootPrefix
                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                         + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                        + GlobalClass.gsFileSeparator + ci.sItemID;
+                                        + GlobalClass.gsFileSeparator + ci.sItem_Folder;
                                 Uri uriParent = Uri.parse(sParentUri);
                                 //With the parent folder Uri identified, create the M3U8_SAF text file at that location:
                                 uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, MimeTypes.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
@@ -898,7 +922,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                                 sLine = GlobalClass.gsUriAppRootPrefix
                                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                                         + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                                        + GlobalClass.gsFileSeparator + ci.sItemID
+                                                        + GlobalClass.gsFileSeparator + ci.sItem_Folder
                                                         + GlobalClass.gsFileSeparator + sLine;
                                             } else {
                                                 sLine = "#Missing file: " + sLine;
@@ -1115,6 +1139,68 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             sMessage = sMessage + " " + sExtraErrorMessage;
         }
         Log.d("Activity_VideoPlayer:" + sRoutine, sMessage);
+    }
+
+    ProgressResponseReceiver gProgressResponseReceiver;
+
+    public class ProgressResponseReceiver extends BroadcastReceiver {
+
+        public ProgressBar progressBar_ProgressIndicator;
+        public TextView textView_ProgressText;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                String sStatusMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE);
+                if(sStatusMessage != null){
+                    Toast.makeText(context, sStatusMessage, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            //Check to see if this is a response to update log or progress bar:
+            boolean 	bUpdatePercentComplete;
+            boolean 	bUpdateProgressBarText;
+
+            //Get booleans from the intent telling us what to update:
+            bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+            bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+            if(progressBar_ProgressIndicator != null && textView_ProgressText != null) {
+                if (bUpdatePercentComplete) {
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if (progressBar_ProgressIndicator != null) {
+                        progressBar_ProgressIndicator.setProgress(iAmountComplete);
+                    }
+                    if (iAmountComplete == 100) {
+                        assert progressBar_ProgressIndicator != null;
+                        progressBar_ProgressIndicator.setVisibility(View.INVISIBLE);
+                        textView_ProgressText.setVisibility(View.INVISIBLE);
+                    } else {
+                        assert progressBar_ProgressIndicator != null;
+                        progressBar_ProgressIndicator.setVisibility(View.VISIBLE);
+                        textView_ProgressText.setVisibility(View.VISIBLE);
+                    }
+
+                }
+                if (bUpdateProgressBarText) {
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if (textView_ProgressText != null) {
+                        textView_ProgressText.setText(sProgressBarText);
+                    }
+                }
+            }
+
+        }
     }
 
 }

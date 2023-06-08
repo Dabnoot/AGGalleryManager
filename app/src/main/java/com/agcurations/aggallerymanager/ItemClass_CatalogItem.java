@@ -14,6 +14,7 @@ public class ItemClass_CatalogItem implements Serializable {
     public ArrayList<Integer> aliTags;                    //Tags passed around as integer to increase filter speed. Todo: Look to replace sTags.
     public String sFilename = "";                         //Video or image filename, comic thumbnail image filename
     public String sFolder_Name = "";                      //Name of the folder holding the video, image, or comic pages
+    public String sItem_Folder = "";                      //Subfolder name, used for m3u8 video folders.
     public String sCast = "";                             //For videos and images
     public Double dDatetime_Import = 0d;                  //Date of import. Used for sorting if desired
     public Double dDatetime_Last_Viewed_by_User = 0d;     //Date of last read by user. Used for sorting if desired

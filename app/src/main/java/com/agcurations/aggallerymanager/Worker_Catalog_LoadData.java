@@ -295,8 +295,8 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //fixM3U8InternalFilePaths();
 
-
-
+        //GlobalClass.correctCatalogData();
+        //globalClass.CatalogDataFile_UpdateCatalogFiles("Updating data...");
 
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
