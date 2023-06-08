@@ -209,7 +209,8 @@ public class Worker_Import_VideoDownload extends Worker {
             //Form a name for the M3U8 file:
             String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
             sTempFilename = GlobalClass.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
-            sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
+            //sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
+                                //Don't add item ID to create a unique filename as the filename might become too long.
             ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
 
@@ -267,7 +268,8 @@ public class Worker_Import_VideoDownload extends Worker {
                 if(sFileName.contains("/")){
                     sFileName = sFileName.substring(sFileName.lastIndexOf("/") + 1);
                 }
-                String sNewFilename = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
+                //String sNewFilename = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
+                String sNewFilename = GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
 
                 if(sNewFilename.length() > 50){
                     //Limit the length of the filename:
@@ -432,7 +434,8 @@ public class Worker_Import_VideoDownload extends Worker {
                         if (sLine.contains("/")) {
                             sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
                         }
-                        String sTSShortFileName = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sLine);
+                        //String sTSShortFileName = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sLine);
+                        String sTSShortFileName = GlobalClass.cleanFileNameViaTrim(sLine); //Don't add itemID to the filename or the filename might become too long.
                         String sJumbledTSShortFileName = GlobalClass.JumbleFileName(sTSShortFileName);
                         bwM3U8File.write(sJumbledTSShortFileName + "\n");
                     } else if (sLine.contains("ENDLIST")) {
