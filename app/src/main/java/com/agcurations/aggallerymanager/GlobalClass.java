@@ -799,7 +799,7 @@ public class GlobalClass extends Application {
         ci.dDatetime_Import = Double.parseDouble(JumbleStorageText(sRecord[iFieldIndex++]));                //Date of import. Used for sorting if desired
         ci.dDatetime_Last_Viewed_by_User = Double.parseDouble(JumbleStorageText(sRecord[iFieldIndex++]));   //Date of last read by user. Used for sorting if desired
         ci.sTags = JumbleStorageText(sRecord[iFieldIndex++]);                                       //Tags given to the video, image, or comic
-        ci.aliTags = getTagIDsFromTagIDString(JumbleStorageText(sRecord[iFieldIndex]));           //Should mirror sTags.
+        ci.aliTags = getTagIDsFromTagIDString(ci.sTags);                                            //Should mirror sTags.
         ci.iHeight = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));                   //Video or image dimension/resolution
         ci.iWidth = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));                    //Video or image dimension/resolution
         ci.lDuration_Milliseconds = Long.parseLong(JumbleStorageText(sRecord[iFieldIndex++]));     //Duration of video in milliseconds
