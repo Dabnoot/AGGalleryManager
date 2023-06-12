@@ -99,6 +99,12 @@ public class Fragment_SelectTags extends Fragment {
         }
 
         Button button_UncheckTags = getView().findViewById(R.id.button_UncheckTags);
+        button_UncheckTags.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gListViewTagsAdapter.uncheckAll();
+            }
+        });
 
         //Configure the button to start the tag editor:
         if (getView() == null) {
@@ -123,12 +129,6 @@ public class Fragment_SelectTags extends Fragment {
             button_TagEdit.setVisibility(View.INVISIBLE);
 
         } else {
-            button_UncheckTags.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    gListViewTagsAdapter.uncheckAll();
-                    }
-            });
 
             button_TagEdit.setOnClickListener(new View.OnClickListener() {
                 @Override
