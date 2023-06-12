@@ -34,7 +34,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class Base32 {
     private static final String base32Chars =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+            "abcdefghijklmnopqrstuvwxyz234567"; //"ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     private static final int[] base32Lookup =
             { 0xFF,0xFF,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F, // '0', '1', '2', '3', '4', '5', '6', '7'
                     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF, // '8', '9', ':', ';', '<', '=', '>', '?'
