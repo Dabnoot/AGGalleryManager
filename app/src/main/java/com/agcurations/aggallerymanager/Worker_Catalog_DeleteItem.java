@@ -58,36 +58,45 @@ public class Worker_Catalog_DeleteItem extends Worker {
             //  some other method. Proceed with removing data from catalog.
             bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
         } else {
-
             boolean bSingleFileDeleteAndFileNotFound = false;
-
-            if (!ciToDelete.sSource.startsWith("http")) {
-                //If the source is not from the web...
-                Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
-                if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
-                    try {
-                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
-                            globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
-                            bSuccess = false;
-                        }
-                    } catch (FileNotFoundException e) {
-                        globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+            if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                // If the user is attempting to delete a comic, merely delete the comic folder:
+                try {
+                    if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
+                        Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
                     }
-                } else {
-                    globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
-                    bSuccess = false;
-                    bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
+                } catch (FileNotFoundException e) {
+                    Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
                 }
             } else {
-                //If the source is from the web...
-                //Delete the temporary download folders, etc.
-                //Delete any working folders:
 
-                if(ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                    if(ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                if (!ciToDelete.sSource.startsWith("http")) {
+                    //If the source is not from the web...
+                    Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
+                    if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
+                        try {
+                            if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                                globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                bSuccess = false;
+                            }
+                        } catch (FileNotFoundException e) {
+                            globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                        }
+                    } else {
+                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                        bSuccess = false;
+                        bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
+                    }
+                } else {
+                    //If the source is from the web...
+                    //Delete the temporary download folders, etc.
+                    //Delete any working folders:
 
-                        Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sItemID);
-                        if (GlobalClass.CheckIfFileExists(uriVideoWorkingFolder)) {
+                    if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                        if (ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+
+                            Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sItemID);
+                            if (GlobalClass.CheckIfFileExists(uriVideoWorkingFolder)) {
 
                                 //Delete folder:
                                 try {
@@ -98,130 +107,120 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                     Log.d("File Deletion", "Unable to delete folder " + uriVideoWorkingFolder + ".");
                                 }
 
-                            //}
+                                //}
 
-                        }
-                    }
-
-                    //Check to see if the download folder exists as well and delete if it does:
-                    //Delete the download folder to which downloadManager downloaded the files:
-                    String sDownloadFolderRelativePath;
-                    sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
-                            File.separator + ciToDelete.sFolder_Name +
-                            File.separator + ciToDelete.sItemID;
-                    if (getApplicationContext().getExternalFilesDir(null) != null) {
-                        String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
-                        String sItemDownloadFolder = sExternalFilesDir +
-                                sDownloadFolderRelativePath;
-                        File fItemDownloadFolder = new File(sItemDownloadFolder);
-                        if (fItemDownloadFolder.exists()) {
-
-                            File[] fItemDownloadFolderContents = fItemDownloadFolder.listFiles();
-                            if (fItemDownloadFolderContents != null) {
-                                for (File f1 : fItemDownloadFolderContents) {
-                                    if (!f1.delete()) {
-                                        Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
-                                    }
-                                }
-                            } //End attempt to delete download folder contents for this video.
-
-                            if (!fItemDownloadFolder.delete()) {
-                                Log.d("File Deletion", "Unable to delete folder " + fItemDownloadFolder.getAbsolutePath());
                             }
+                        }
 
-                            //Delete the category folder on the temp storage if it is empty:
-                            String sDownloadCategoryFolderRelativePath;
-                            sDownloadCategoryFolderRelativePath = sExternalFilesDir +
-                                    File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
-                                    File.separator + ciToDelete.sFolder_Name;
-                            File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
-                            if (fCatFolder.exists()) {
-                                File[] fCatFolderContents = fCatFolder.listFiles();
-                                if (fCatFolderContents != null) {
-                                    if (fCatFolderContents.length == 0) {
-                                        if (!fCatFolder.delete()) {
-                                            Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
+                        //Check to see if the download folder exists as well and delete if it does:
+                        //Delete the download folder to which downloadManager downloaded the files:
+                        String sDownloadFolderRelativePath;
+                        sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
+                                File.separator + ciToDelete.sFolder_Name +
+                                File.separator + ciToDelete.sItemID;
+                        if (getApplicationContext().getExternalFilesDir(null) != null) {
+                            String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
+                            String sItemDownloadFolder = sExternalFilesDir +
+                                    sDownloadFolderRelativePath;
+                            File fItemDownloadFolder = new File(sItemDownloadFolder);
+                            if (fItemDownloadFolder.exists()) {
+
+                                File[] fItemDownloadFolderContents = fItemDownloadFolder.listFiles();
+                                if (fItemDownloadFolderContents != null) {
+                                    for (File f1 : fItemDownloadFolderContents) {
+                                        if (!f1.delete()) {
+                                            Log.d("File Deletion", "Unable to delete file " + f1.getAbsolutePath() + ".");
+                                        }
+                                    }
+                                } //End attempt to delete download folder contents for this video.
+
+                                if (!fItemDownloadFolder.delete()) {
+                                    Log.d("File Deletion", "Unable to delete folder " + fItemDownloadFolder.getAbsolutePath());
+                                }
+
+                                //Delete the category folder on the temp storage if it is empty:
+                                String sDownloadCategoryFolderRelativePath;
+                                sDownloadCategoryFolderRelativePath = sExternalFilesDir +
+                                        File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
+                                        File.separator + ciToDelete.sFolder_Name;
+                                File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
+                                if (fCatFolder.exists()) {
+                                    File[] fCatFolderContents = fCatFolder.listFiles();
+                                    if (fCatFolderContents != null) {
+                                        if (fCatFolderContents.length == 0) {
+                                            if (!fCatFolder.delete()) {
+                                                Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + ".");
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                    }
-                    //End if the catalog item sourced as a download was a video item.
-                } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                    //Delete the single file...
-                    Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
-                    if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
-                        try {
-                            if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                        }
+                        //End if the catalog item sourced as a download was a video item.
+                    } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                        //Delete the single file...
+                        Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
+                        if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
+                            try {
+                                if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                                    globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                    bSuccess = false;
+                                }
+                            } catch (FileNotFoundException e) {
                                 globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                 bSuccess = false;
                             }
-                        } catch (FileNotFoundException e) {
-                            globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                        } else {
+                            globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                             bSuccess = false;
+                            bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
                         }
-                    } else {
-                        globalClass.problemNotificationConfig("Could not find file at this location: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
-                        bSuccess = false;
-                        bSingleFileDeleteAndFileNotFound = true; //Used to provide easy delete for a single item.
-                    }
 
-                    //Check to see if the download folder exists as well and delete if it does:
-                    //Delete the download folder to which downloadManager downloaded the files:
-                    String sDownloadFolderRelativePath;
-                    sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
-                            File.separator + ciToDelete.sFolder_Name;
-                    if (getApplicationContext().getExternalFilesDir(null) != null) {
-                        String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
-                        String sItemDownloadFolder = sExternalFilesDir +
-                                sDownloadFolderRelativePath;
-                        File fItemDownloadFolder = new File(sItemDownloadFolder);
-                        if (fItemDownloadFolder.exists()) {
-                            File[] fItemDownloadFolderContents = fItemDownloadFolder.listFiles();
-                            if(fItemDownloadFolderContents != null) {
-                                if (fItemDownloadFolderContents.length == 0) {
-                                    if (!fItemDownloadFolder.delete()) {
-                                        Log.d("File Deletion", "Unable to delete folder " + fItemDownloadFolder.getAbsolutePath() + " which was tested to be empty.");
+                        //Check to see if the download folder exists as well and delete if it does:
+                        //Delete the download folder to which downloadManager downloaded the files:
+                        String sDownloadFolderRelativePath;
+                        sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
+                                File.separator + ciToDelete.sFolder_Name;
+                        if (getApplicationContext().getExternalFilesDir(null) != null) {
+                            String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
+                            String sItemDownloadFolder = sExternalFilesDir +
+                                    sDownloadFolderRelativePath;
+                            File fItemDownloadFolder = new File(sItemDownloadFolder);
+                            if (fItemDownloadFolder.exists()) {
+                                File[] fItemDownloadFolderContents = fItemDownloadFolder.listFiles();
+                                if (fItemDownloadFolderContents != null) {
+                                    if (fItemDownloadFolderContents.length == 0) {
+                                        if (!fItemDownloadFolder.delete()) {
+                                            Log.d("File Deletion", "Unable to delete folder " + fItemDownloadFolder.getAbsolutePath() + " which was tested to be empty.");
+                                        }
                                     }
                                 }
-                            }
 
-                            //Delete the category folder on the temp storage if it is empty:
-                            String sDownloadCategoryFolderRelativePath;
-                            sDownloadCategoryFolderRelativePath = sExternalFilesDir +
-                                    File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory];
-                            File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
-                            if (fCatFolder.exists()) {
-                                File[] fCatFolderContents = fCatFolder.listFiles();
-                                if (fCatFolderContents != null) {
-                                    if (fCatFolderContents.length == 0) {
-                                        if (!fCatFolder.delete()) {
-                                            Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + " which was tested to be empty.");
+                                //Delete the category folder on the temp storage if it is empty:
+                                String sDownloadCategoryFolderRelativePath;
+                                sDownloadCategoryFolderRelativePath = sExternalFilesDir +
+                                        File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory];
+                                File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
+                                if (fCatFolder.exists()) {
+                                    File[] fCatFolderContents = fCatFolder.listFiles();
+                                    if (fCatFolderContents != null) {
+                                        if (fCatFolderContents.length == 0) {
+                                            if (!fCatFolder.delete()) {
+                                                Log.d("File Deletion", "Unable to delete folder " + fCatFolder.getAbsolutePath() + " which was tested to be empty.");
+                                            }
                                         }
                                     }
                                 }
                             }
+
                         }
 
-                    }
-                    //End if the catalog item sourced as a download was an image item.
-                } else if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                    //Delete folder:
-                    try {
-                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
-                            Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
-                        }
-                    } catch (FileNotFoundException e) {
-                        Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
-                    }
-                }
+                    } //End if the catalog item sourced as a download was an image item.
 
+                } //End if the catalog item was sourced as a download.
 
-                //End if the catalog item was sourced as a download.
-
-            }
+            } //End if the catalog item is not a comic.
 
             Uri uriLogFolder = GlobalClass.gUriLogsFolder;
             if (GlobalClass.CheckIfFileExists(uriLogFolder)) {
@@ -244,18 +243,18 @@ public class Worker_Catalog_DeleteItem extends Worker {
             }
 
             if (bSuccess) {
-
-                //Delete the folder if the folder is now empty:
-                if (GlobalClass.IsDirEmpty(uriItemFolder)) {
-                    try {
-                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
+                if (ciToDelete.iMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Comic folder should already be deleted.
+                    //Delete the folder if the folder is now empty:
+                    if (GlobalClass.IsDirEmpty(uriItemFolder)) {
+                        try {
+                            if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
+                                globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                            }
+                        } catch (FileNotFoundException e) {
                             globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                         }
-                    } catch (FileNotFoundException e) {
-                        globalClass.problemNotificationConfig("Folder holding this item is empty, but could not delete folder. Folder name: " + uriItemFolder + ".", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                     }
                 }
-
                 //Now delete the item record from the Catalog File:
                 bSuccess = globalClass.deleteItemFromCatalogFile(ciToDelete, CATALOG_DELETE_ITEM_ACTION_RESPONSE); //This item takes 4-5 seconds??
 
