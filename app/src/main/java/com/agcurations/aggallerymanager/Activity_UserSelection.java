@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import android.content.BroadcastReceiver;
@@ -18,6 +19,8 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeSet;
 
 public class Activity_UserSelection extends AppCompatActivity {
 
@@ -85,6 +88,7 @@ public class Activity_UserSelection extends AppCompatActivity {
                             if (sPinEntered.equals(icu.sPin)) {
                                 GlobalClass.gicuCurrentUser = icu;
                                 globalClass.populateApprovedTags();
+                                resetContentSortAndFilterTags();
                                 Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
                                 adConfirmationDialog.dismiss();
                                 closeActivity(getApplicationContext());
@@ -102,6 +106,7 @@ public class Activity_UserSelection extends AppCompatActivity {
                     //If this user record does not require a pin to log-in, merely log-in.
                     GlobalClass.gicuCurrentUser = icu;
                     globalClass.populateApprovedTags();
+                    resetContentSortAndFilterTags();
                     Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
                     closeActivity(getApplicationContext());
                 }
@@ -110,6 +115,30 @@ public class Activity_UserSelection extends AppCompatActivity {
 
         }); //End ListView.setOnItemClickListener()
 
+    }
+
+    private void resetContentSortAndFilterTags(){
+        ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
+        viewModel_fragment_selectTags.setSelectedTags(new ArrayList<>());
+        //Unselect all tags:
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
+            for(Map.Entry<Integer, ItemClass_Tag> entry: GlobalClass.gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+                ItemClass_Tag ict = entry.getValue();
+                if(ict.bIsChecked) {
+                    ict.bIsChecked = false;
+                }
+            }
+            for(Map.Entry<Integer, ItemClass_Tag> entry: GlobalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+                ItemClass_Tag ict = entry.getValue();
+                if(ict.bIsChecked) {
+                    ict.bIsChecked = false;
+                }
+            }
+        }
+        GlobalClass.galtsiCatalogViewerFilterTags = new ArrayList<>();
+        GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Videos
+        GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Images
+        GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Comics
     }
 
     public static void closeActivity(Context context){

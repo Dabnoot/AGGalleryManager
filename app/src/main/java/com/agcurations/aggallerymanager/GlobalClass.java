@@ -156,7 +156,7 @@ public class GlobalClass extends Application {
     public long glMaxVideoDurationMS = 1; //For the filter range slider.
     public long glMinVideoDurationMSSelected = -1;
     public long glMaxVideoDurationMSSelected = -1;
-    public ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
+    public static ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     //public boolean gbGuestMode;
     public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
     //public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;

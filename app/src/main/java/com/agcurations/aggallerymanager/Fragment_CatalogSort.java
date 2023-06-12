@@ -120,10 +120,19 @@ public class Fragment_CatalogSort extends Fragment {
         gFragment_selectTags = new Fragment_SelectTags();
         Bundle fragment_selectTags_args = new Bundle();
         fragment_selectTags_args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, giMediaCategory);
+        //If there are any tags previously selected, such as user left the activity and then returned, restore them:
+        if(GlobalClass.galtsiCatalogViewerFilterTags != null) {
+            if (GlobalClass.galtsiCatalogViewerFilterTags.size() > 0) {
+                if (GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).size() > 0) {
+                    TreeSet<Integer> tsiTagIDs = GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory);
+                    ArrayList<Integer> aliTagIDs = new ArrayList<>(tsiTagIDs);
+                    fragment_selectTags_args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, aliTagIDs);
+                }
+            }
+        }
         gFragment_selectTags.setArguments(fragment_selectTags_args);
         fragmentTransaction.replace(R.id.child_fragment_tag_selector, gFragment_selectTags);
         fragmentTransaction.commit();
-
 
         //React to changes in the selected tag data in the ViewModel:
         final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = getNewTagObserver();
@@ -551,17 +560,11 @@ public class Fragment_CatalogSort extends Fragment {
         }
 
         //Apply any tag filters to the filter hold in globalClass:
-        if (globalClass.galtsiCatalogViewerFilterTags == null) {
-            globalClass.galtsiCatalogViewerFilterTags = new ArrayList<>();
-            globalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Videos
-            globalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Images
-            globalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Comics
-        }
-        globalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).clear();
+        GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).clear();
         if (gtsiSelectedTagIDs != null) {
             if(gtsiSelectedTagIDs.size() > 0) {
                 for (Integer iTagID : gtsiSelectedTagIDs) {
-                    globalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).add(iTagID);
+                    GlobalClass.galtsiCatalogViewerFilterTags.get(giMediaCategory).add(iTagID);
                 }
             }
         }

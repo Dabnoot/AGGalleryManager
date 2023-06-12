@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
@@ -70,6 +71,11 @@ public class Worker_Catalog_LoadData extends Worker {
         StopWatch stopWatch = new StopWatch(false);
 
         globalClass = (GlobalClass) getApplicationContext();
+
+        GlobalClass.galtsiCatalogViewerFilterTags = new ArrayList<>();
+        GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Videos
+        GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Images
+        GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Comics
 
         if(globalClass.giLoadingState == GlobalClass.LOADING_STATE_STARTED
             || globalClass.giLoadingState == GlobalClass.LOADING_STATE_FINISHED){
