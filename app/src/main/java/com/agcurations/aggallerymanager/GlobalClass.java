@@ -54,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.work.ListenableWorker;
+import com.google.common.io.BaseEncoding;
 
 
 public class GlobalClass extends Application {
@@ -1244,8 +1244,30 @@ public class GlobalClass extends Application {
     }
 
     public static String getNewCatalogRecordID(int iMediaCategory){
+        //Generate a randomUUID hash for a record ID. 50% possibility of a collision if every person
+        //  on earth owned 600 million UUIDs.
+        //This is not done in a sequence as users may wish to combine their catalogs or share data.
 
-        return UUID.randomUUID().toString();
+        String sUUID = UUID.randomUUID().toString(); //36 chars. Get random UUID, returns hex string, includes dashes.
+
+        //Compact the string of hex characters into a string of Base32 that includes filename-safe characters only (both Windows and Linux environments):
+        String sUUID_noDash = sUUID.replace("-", ""); //Get rid of dashes. 36 chars -> 32 chars
+
+        String sUUID_noDashUpper = sUUID_noDash.toUpperCase();          //Take to uppercase for conversion from representation of hex nibbles in chars to compacted chars.
+        // 0000 0000    =   a byte (8 bits) is a char represented by 2 nibbles (4 bits each).
+        // Each nibble is represented by a Hex character in the sUUID string, but the string does not use nibbles,
+        // a string uses chars. So each hex character is represented by 8 bits in the string.
+        // One nibble is wasted for each char representation in the string. There is opportunity to
+        // compact by converting to base 32, with file-safe characters.
+        byte[] bytes = BaseEncoding.base16().decode(sUUID_noDashUpper); //Convert the hex nibbles to chars (bytes).
+        //String sTest = BaseEncoding.base16().encode(bytes);             //Verify capability to convert from chars back to the hex nibbles.
+        //String sBase32UUIDEncoded = Base32.encodeOriginal(bytes);           //Encode the chars to base32.
+        //byte[] bytes_decoded = Base32.decode(sBase32UUIDEncoded);           //Test return from base32 to chars.
+        //String sUUID_noDashUpper_returned = BaseEncoding.base16().encode(bytes_decoded); //Verify capability to convert chars back to hex nibbles.
+        //int iLenOrig = sUUID.length(); //36 chars
+        //int iLenEncoded = sBase32UUIDEncoded.length(); //26 chars
+
+        return Base32.encodeOriginal(bytes); //26 chars
     }
 
 
