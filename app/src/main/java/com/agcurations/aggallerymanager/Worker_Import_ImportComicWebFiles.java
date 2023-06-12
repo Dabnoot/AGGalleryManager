@@ -55,7 +55,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
 
         //Create the comic folder.
-        ciNew.sItemID = globalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
+        ciNew.sItemID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
         ciNew.sFolder_Name = ciNew.sItemID;
         ciNew.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
 
@@ -163,7 +163,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 String sDownloadManagerDownloadFolder = "";
                 for(ItemClass_File icf: alFileList) {
 
-                    String sNewFilename = ciNew.sItemID + "_" + icf.sFileOrFolderName;
+                    String sNewFilename = icf.sFileOrFolderName;
                     //ciNew.iPostProcessingCode = ItemClass_CatalogItem.POST_PROCESSING_COMIC_DLM_MOVE; //Tell the app to move the files after download to avoid DLM-automated deletion.
                     //Above item no longer required as DownloadManager will not download to the final location on the SD Card, only to the emulated folder. However,
                     //  leave this item here in the even that testing without an SD Card reveals that we want to use this again.
