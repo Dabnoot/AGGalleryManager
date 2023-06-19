@@ -283,7 +283,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 true, "Examining catalog storage folders...",
                 CATALOG_LOAD_ACTION_RESPONSE);
         for(int iMediaCateogry = 0; iMediaCateogry < 3; iMediaCateogry++) {
-            globalClass.getAGGMStorageFolderAvailability(iMediaCateogry);
+            GlobalClass.getAGGMStorageFolderAvailability(iMediaCateogry);
         }
 
 
