@@ -441,7 +441,7 @@ public class GlobalClass extends Application {
                 c.close();
             }
         } catch (Exception e) {
-            Log.d("GlobalClass:GetDirFileNames()", "Problem querying folder.");
+            Log.d("GlobalClass:GetDirectoryFileNames()", "Problem querying folder.");
         }
         return alsFileNames;
     }
@@ -449,6 +449,36 @@ public class GlobalClass extends Application {
         //This routine does not return folder names!
         Uri uriParent = Uri.parse(sUriParent);
         return GetDirectoryFileNames(uriParent);
+    }
+    public static ArrayList<String> GetDirectorySubfolderNames(Uri uriParent){
+        //This routine does not return file names!
+        ArrayList<String> alsFileNames = new ArrayList<>();
+
+        if(!GlobalClass.CheckIfFileExists(uriParent)){
+            //The program will crash if the folder does not exist.
+            return alsFileNames; //Let it behave as if there are no files in the folder.
+        }
+        final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent,
+                DocumentsContract.getDocumentId(uriParent));
+        Cursor c = null;
+        try {
+            c = gcrContentResolver.query(childrenUri, new String[] {
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+            if(c != null) {
+                while (c.moveToNext()) {
+                    final String sFileName = c.getString(0);
+                    final String sMimeType = c.getString( 1);
+                    if(sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
+                        alsFileNames.add(sFileName);
+                    }
+                }
+                c.close();
+            }
+        } catch (Exception e) {
+            Log.d("GlobalClass:GetDirectorySubfolderNames()", "Problem querying folder.");
+        }
+        return alsFileNames;
     }
 
     public static boolean IsDirEmpty(Uri uriDirectory){
@@ -2324,7 +2354,7 @@ public class GlobalClass extends Application {
 
 
     //=====================================================================================
-    //===== Other Subroutines Section ===================================================
+    //===== File System Subroutines Section ===================================================
     //=====================================================================================
 
     public static String getUniqueFileName(Uri uriParent, String sOriginalFileName, boolean bReturnJumbledFileName){
@@ -2373,7 +2403,72 @@ public class GlobalClass extends Application {
         return sFinalFileName;
     }
 
+    //Subfolder structure.
+    // There are 3 catalogs at this time. All are media-based. If there are too many items in a folder
+    // it slows down indexing, especially during debugging. Therefore a subfolder system has been
+    // developed. As of 2023-06-13, videos and images were put into tag ID subfolders, but this
+    // is unbalanced. The user is likely to have rarely-used tags that have only a few items in the
+    // folder. The intention was that the user could retrieve their contents and they would
+    // be sorted by the first tag assigned to the item. However, the files have been renamed in such
+    // a way to prevent a global media app from finding the content and listing it in a gallery or
+    // offer previews of the content. The content may be later encryped in a future version.
+    // I have calculated that I'd like to have an approximate max of 250 items in a folder. The user
+    // could have 62,500 items before the concept is surpassed.
+    // The program must identify the current or next folder to fill with content..
 
+    public static final TreeMap<Integer, ItemClass_StorageFolderAvailability> gtmFolderAvailability = new TreeMap<>(); //MediaCategory, Folder data.
+
+    public void getAGGMStorageFolderAvailability(int iMediaCategory){
+        //Determine where files can be stored without over-loading folders at times when indexing actions are performed.
+        //  "Indexing actions" is just "general indexing actions", whether it be initiated by the user browsing the
+        //  file structure or other action.
+        gtmFolderAvailability.remove(iMediaCategory);
+
+        ArrayList<String> alsFolderNamesInUse = GetDirectorySubfolderNames(gUriCatalogFolders[iMediaCategory]);
+        int iGreatestFolderID = 0;
+        String sGreatestFolderID = "";
+        for(String sFolderName:alsFolderNamesInUse){
+            try{
+                int iFolderID = Integer.parseInt(sFolderName);
+                if(iFolderID > iGreatestFolderID){
+                    iGreatestFolderID = iFolderID;
+                    sGreatestFolderID = sFolderName; //To preserve any leading zeros that might be present.
+                }
+
+            } catch (Exception ignored){
+                //Likely case is folder has non-numeric folder name.
+            }
+        }
+        //Greatest folder ID should now be found, query for content count:
+        if(!sGreatestFolderID.equals("")) {
+            Uri uriFolder = FormChildUri(gUriCatalogFolders[iMediaCategory], sGreatestFolderID);
+            //Count the number of items in the folder:
+            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder,
+                    DocumentsContract.getDocumentId(uriFolder));
+            Cursor c;
+            try {
+                c = gcrContentResolver.query(childrenUri, new String[]{
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+                if (c != null) {
+                    int iItemCount = c.getCount();
+                    c.close();
+                    ItemClass_StorageFolderAvailability icsfa = new ItemClass_StorageFolderAvailability();
+                    icsfa.sFolderName = sGreatestFolderID;
+                    icsfa.iFileCount = iItemCount;
+                    gtmFolderAvailability.put(iMediaCategory, icsfa);
+                }
+            } catch (Exception e) {
+                Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
+            }
+        }
+
+
+    }
+
+    //=====================================================================================
+    //===== Other Subroutines Section ===================================================
+    //=====================================================================================
 
 
     public static String formDelimitedString(ArrayList<Integer> ali, String sDelimiter){

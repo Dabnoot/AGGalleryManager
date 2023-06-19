@@ -162,11 +162,13 @@ public class Worker_Import_ImportFiles extends Worker {
             try {
 
                 ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
-                ciNew.sItemID = globalClass.getNewCatalogRecordID(giMediaCategory);
+                ciNew.sItemID = GlobalClass.getNewCatalogRecordID(giMediaCategory);
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
+                //Isolate the incoming file name:
                 String sFileName = GlobalClass.GetFileName(uriFileItemSource);
-                String sTempFileName = ciNew.sItemID + "_" + sFileName; //Create unique filename. Using ID will allow database error checking.
+                //Make sure the file name is not too long. If it is too long, shorten it. "Too long" is arbitrary here.
+                String sTempFileName = sFileName;
                 if(sTempFileName.length() > 50){
                     //Limit the length of the filename:
                     String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sTempFileName);
@@ -175,7 +177,8 @@ public class Worker_Import_ImportFiles extends Worker {
                         sTempFileName = sTempFileName + "." + sBaseAndExtension[1];
                     }
                 }
-                sFileName = GlobalClass.JumbleFileName(sTempFileName);
+                //Create unique filename, then jumble:
+                sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, true);
 
 
                 //Write next behavior to the screen log:

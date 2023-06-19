@@ -95,18 +95,18 @@ public class Worker_Catalog_LoadData extends Worker {
         GlobalClass.gUriBackupFolder = initSubfolder(GlobalClass.gUriDataFolder, "Backup", "Could not create backup folder.");
 
         //Catalog Folder Structure:
-        for(int i = 0; i < 3; i++){
-            GlobalClass.gUriCatalogFolders[i] = initSubfolder(GlobalClass.gUriDataFolder, GlobalClass.gsCatalogFolderNames[i], "Could not create " + GlobalClass.gsCatalogFolderNames[i] + " folder.");
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+            GlobalClass.gUriCatalogFolders[iMediaCategory] = initSubfolder(GlobalClass.gUriDataFolder, GlobalClass.gsCatalogFolderNames[iMediaCategory], "Could not create " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " folder.");
 
             //Catalog/tag data files:
-            if(GlobalClass.gUriCatalogFolders[i] != null){
+            if(GlobalClass.gUriCatalogFolders[iMediaCategory] != null){
                 //Identify/create the CatalogContents.dat file:
-                String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_CatalogContents.dat";
-                GlobalClass.gUriCatalogContentsFiles[i] = getDataFileOrCreateIt(GlobalClass.gUriDataFolder, sFileName, "Could not create file " + sFileName + ".");
+                String sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents.dat";
+                GlobalClass.gUriCatalogContentsFiles[iMediaCategory] = getDataFileOrCreateIt(GlobalClass.gUriDataFolder, sFileName, "Could not create file " + sFileName + ".");
 
                 //Identify the tags file for the catalog:
-                sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags.dat";
-                GlobalClass.gUriCatalogTagsFiles[i] = getDataFileOrCreateIt(GlobalClass.gUriDataFolder, sFileName, "Could not create file " + sFileName + ".");
+                sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat";
+                GlobalClass.gUriCatalogTagsFiles[iMediaCategory] = getDataFileOrCreateIt(GlobalClass.gUriDataFolder, sFileName, "Could not create file " + sFileName + ".");
             }
         }
 
@@ -175,7 +175,7 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
-        int iProgressDenominator = 10;
+        int iProgressDenominator = 11;
         int iProgressNumerator = 0;
         int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
@@ -222,12 +222,6 @@ public class Worker_Catalog_LoadData extends Worker {
         globalClass.gtmVideoResolutions.put(3,  720);
         globalClass.gtmVideoResolutions.put(4, 1080);
         globalClass.gtmVideoResolutions.put(5, 2160);
-
-        //Prep tag histograms:
-        //globalClass.galtmTagHistogram = new ArrayList<>();
-        //globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Videos
-        //globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Images
-        //globalClass.galtmTagHistogram.add(new TreeMap<Integer, Integer>()); //Comics
 
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -280,6 +274,18 @@ public class Worker_Catalog_LoadData extends Worker {
                 true, iProgressBarValue,
                 true, "Post Processing",
                 CATALOG_LOAD_ACTION_RESPONSE);
+
+
+        iProgressNumerator++;
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, "Examining catalog storage folders...",
+                CATALOG_LOAD_ACTION_RESPONSE);
+        for(int iMediaCateogry = 0; iMediaCateogry < 3; iMediaCateogry++) {
+            globalClass.getAGGMStorageFolderAvailability(iMediaCateogry);
+        }
+
 
         iProgressNumerator++;
         /*iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
