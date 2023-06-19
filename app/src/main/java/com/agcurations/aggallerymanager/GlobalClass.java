@@ -2425,7 +2425,7 @@ public class GlobalClass extends Application {
         gtmFolderAvailability.remove(iMediaCategory);
 
         ArrayList<String> alsFolderNamesInUse = GetDirectorySubfolderNames(gUriCatalogFolders[iMediaCategory]);
-        int iGreatestFolderID = 0;
+        int iGreatestFolderID = -1;
         String sGreatestFolderID = "";
         for(String sFolderName:alsFolderNamesInUse){
             try{
@@ -2439,29 +2439,32 @@ public class GlobalClass extends Application {
                 //Likely case is folder has non-numeric folder name.
             }
         }
-        //Greatest folder ID should now be found, query for content count:
-        if(!sGreatestFolderID.equals("")) {
-            Uri uriFolder = FormChildUri(gUriCatalogFolders[iMediaCategory], sGreatestFolderID);
-            //Count the number of items in the folder:
-            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder,
-                    DocumentsContract.getDocumentId(uriFolder));
-            Cursor c;
-            try {
-                c = gcrContentResolver.query(childrenUri, new String[]{
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                        DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
-                if (c != null) {
-                    int iItemCount = c.getCount();
-                    c.close();
-                    ItemClass_StorageFolderAvailability icsfa = new ItemClass_StorageFolderAvailability();
-                    icsfa.sFolderName = sGreatestFolderID;
-                    icsfa.iFileCount = iItemCount;
-                    gtmFolderAvailability.put(iMediaCategory, icsfa);
-                }
-            } catch (Exception e) {
-                Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
-            }
+        if(sGreatestFolderID.equals("")){
+            //If there are no numeric folders, designate the first one.
+            sGreatestFolderID = "1000";
         }
+        //Greatest folder ID should now be found, query for content count:
+        Uri uriFolder = FormChildUri(gUriCatalogFolders[iMediaCategory], sGreatestFolderID);
+        //Count the number of items in the folder:
+        final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder,
+                DocumentsContract.getDocumentId(uriFolder));
+        Cursor c;
+        try {
+            c = gcrContentResolver.query(childrenUri, new String[]{
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+            if (c != null) {
+                int iItemCount = c.getCount();
+                c.close();
+                ItemClass_StorageFolderAvailability icsfa = new ItemClass_StorageFolderAvailability();
+                icsfa.sFolderName = sGreatestFolderID;
+                icsfa.iFileCount = iItemCount;
+                gtmFolderAvailability.put(iMediaCategory, icsfa);
+            }
+        } catch (Exception e) {
+            Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
+        }
+
 
 
     }
