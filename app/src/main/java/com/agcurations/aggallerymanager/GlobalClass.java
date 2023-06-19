@@ -765,7 +765,7 @@ public class GlobalClass extends Application {
         sbRecord.append(ci.iMediaCategory)                                            //Video, image, or comic.
         .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
         .append("\t").append(ci.sFilename)                                          //Video or image filename
-        .append("\t").append(JumbleStorageText(ci.sFolder_Name))                    //Name of the folder holding the video, image, or comic pages
+        .append("\t").append(JumbleStorageText(ci.sFolder_Name))                    //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         .append("\t").append(JumbleStorageText(ci.sItem_Folder))                    //Subfolder for m3u8 video files
         .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
         .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
@@ -2418,7 +2418,7 @@ public class GlobalClass extends Application {
 
     public static final TreeMap<Integer, ItemClass_StorageFolderAvailability> gtmFolderAvailability = new TreeMap<>(); //MediaCategory, Folder data.
 
-    public void getAGGMStorageFolderAvailability(int iMediaCategory){
+    public static void getAGGMStorageFolderAvailability(int iMediaCategory){
         //Determine where files can be stored without over-loading folders at times when indexing actions are performed.
         //  "Indexing actions" is just "general indexing actions", whether it be initiated by the user browsing the
         //  file structure or other action.
