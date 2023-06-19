@@ -206,7 +206,8 @@ public class Worker_LocalFileTransfer extends Worker {
                             throw new Exception("Data header missing data for media category in job file.");
                         }
                         if (sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[2])){
-                            iMediaCategory = 2; //Comics only if specifically coded to do so. This worker not designed for this at origin.
+                            iMediaCategory = 2; //Comics
+                            //Destination may be a combination of subfolder/comicfolder.
                         } else if(sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[0])){
                             iMediaCategory = 0; //Videos
                         } else {
@@ -434,7 +435,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         glProgressNumerator = glProgressNumerator + lFileSize;
                                         continue; //Skip to the end of the loop and read the next line in the job file.
                                     }
-                                    //Destination file does not exist.
+                                    //If we are here, then the destination file does not exist.
 
                                     // Execute the copy or move operation:
 
