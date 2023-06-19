@@ -127,11 +127,13 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                                                              // if the activity/fragment is restarted due to an orientation change, etc.
             //Initiate the file import via ImportActivityDataService:
             globalClass.galImportFileList = viewModelImportActivity.alfiConfirmedFileImports; //Transfer to globalClass to avoid transaction limit.
+
+            if(getContext() == null) return;
+            String sCallerID = "Fragment_Import_6_ExecuteImport:initComponents()";
+            double dTimeStamp = GlobalClass.GetTimeStampDouble();
+
             if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                    if(getContext() == null) return;
-                    String sCallerID = "Service_Import:startActionImportComicFolders()";
-                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                     Data dataImportComicFolders = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
@@ -145,9 +147,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
 
 
                 } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) {
-                    if(getContext() == null) return;
-                    String sCallerID = "Service_Import:startActionImportComicWebFiles()";
-                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                     Data dataImportComicWebFiles = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
@@ -162,9 +161,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
             } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                     && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE) {
                 //If this is a video download:
-                if(getContext() == null) return;
-                String sCallerID = "Service_Import:startActionVideoDownload()";
-                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                 Data dataVideoDownload = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
@@ -177,9 +173,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                 WorkManager.getInstance(getContext()).enqueue(otwrVideoDownload);
 
             } else {
-                if(getContext() == null) return;
-                String sCallerID = "Service_Import:startActionImportFiles()";
-                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                 Data dataImportFiles = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
