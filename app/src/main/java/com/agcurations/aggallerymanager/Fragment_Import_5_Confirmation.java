@@ -88,19 +88,38 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         long lRequiredStorageSpaceBytes = 0L;
         ArrayList<ItemClass_File> alicf_FileImports = new ArrayList<>();
         for(ItemClass_File fileItem: viewModelImportActivity.alfiConfirmedFileImports){
-
             if(!fileItem.bMarkedForDeletion) {
                 lRequiredStorageSpaceBytes += fileItem.lSizeBytes;
 
                 //Set the destination folder on each file item:
-                String sPrimaryTag;
-                if (fileItem.aliProspectiveTags.size() > 0) {
-                    sPrimaryTag = fileItem.aliProspectiveTags.get(0).toString();
-                } else {
-                    sPrimaryTag = GlobalClass.gsUnsortedFolderName;
+                ItemClass_StorageFolderAvailability icsfa = GlobalClass.gtmFolderAvailability.get(viewModelImportActivity.iImportMediaCategory);
+                if(icsfa == null){
+                    //Get the next folder:
+                    GlobalClass.getAGGMStorageFolderAvailability(viewModelImportActivity.iImportMediaCategory);
+                    icsfa = GlobalClass.gtmFolderAvailability.get(viewModelImportActivity.iImportMediaCategory);
                 }
-                fileItem.sDestinationFolder = sPrimaryTag;
-                alicf_FileImports.add(fileItem);
+                if(icsfa != null) {
+                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                        if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
+                            //If this is the comic folder fileItem, increase the file count by 1.
+                            //  The comic will be stored in a folder inside the subfolder. It is the
+                            //  subfolder count that is being increased.
+                            icsfa.iFileCount++;
+                        }
+                    } else {
+                        icsfa.iFileCount++;
+                    }
+                    if(icsfa.iFileCount >= 250){
+                        //Designate the next folder to hold content:
+                        int iFolderID = Integer.parseInt(icsfa.sFolderName); //Should not yield an exception as it should have already been caught in a prior process.
+                        iFolderID++;
+                        icsfa.iFileCount = 0;
+                        icsfa.sFolderName = "" + iFolderID;
+                    }
+
+                    fileItem.sDestinationFolder = icsfa.sFolderName;
+                    alicf_FileImports.add(fileItem);
+                }
             }
         }
 
