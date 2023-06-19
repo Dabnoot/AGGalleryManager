@@ -488,7 +488,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
                 sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
                         + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                        + GlobalClass.gsFileSeparator + ci.sItem_Folder
                         + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
             }
             String sThumbnailUri = GlobalClass.gsUriAppRootPrefix

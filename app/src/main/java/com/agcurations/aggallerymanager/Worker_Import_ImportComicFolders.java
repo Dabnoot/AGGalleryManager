@@ -293,7 +293,6 @@ public class Worker_Import_ImportComicFolders extends Worker {
             ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
             ciNew.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
             ciNew.sFolder_Name = sRelativePathofComicFolder;         //Path of the folder holding the comic relative to the catalog folder.
-            ciNew.sItem_Folder = sRelativePathofComicFolder;
             //Create a timestamp to be used to create the data record:
             Double dTimeStamp = GlobalClass.GetTimeStampDouble();
             ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;

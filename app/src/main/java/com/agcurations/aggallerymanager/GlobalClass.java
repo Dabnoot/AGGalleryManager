@@ -762,11 +762,10 @@ public class GlobalClass extends Application {
     public static String getCatalogRecordString(ItemClass_CatalogItem ci, StringBuilder sbRecord){
 
         //StringBuilder sbRecord = new StringBuilder();  //To be used when writing the catalog file.
-        sbRecord.append(ci.iMediaCategory)                                            //Video, image, or comic.
+        sbRecord.append(ci.iMediaCategory)                                          //Video, image, or comic.
         .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
         .append("\t").append(ci.sFilename)                                          //Video or image filename
         .append("\t").append(JumbleStorageText(ci.sFolder_Name))                    //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
-        .append("\t").append(JumbleStorageText(ci.sItem_Folder))                    //Subfolder for m3u8 video files
         .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
         .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
         .append("\t").append(JumbleStorageText(ci.dDatetime_Last_Viewed_by_User))   //Date of last read by user. Used for sorting if desired
@@ -823,8 +822,7 @@ public class GlobalClass extends Application {
         ci.iMediaCategory = Integer.parseInt(sRecord[iFieldIndex++]);                              //Video, image, or comic.
         ci.sItemID = JumbleStorageText(sRecord[iFieldIndex++]);                                     //Video, image, comic id
         ci.sFilename = sRecord[iFieldIndex++];                                                      //Video or image filename
-        ci.sFolder_Name = JumbleStorageText(sRecord[iFieldIndex++]);                                //Name of the folder holding the video, image, or comic pages
-        ci.sItem_Folder = JumbleStorageText(sRecord[iFieldIndex++]);                                //Name of the folder holding the video, image, or comic pages
+        ci.sFolder_Name = JumbleStorageText(sRecord[iFieldIndex++]);                                //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         ci.sThumbnail_File = sRecord[iFieldIndex++];                                                //Name of the file used as the thumbnail for a video or comic
         ci.dDatetime_Import = Double.parseDouble(JumbleStorageText(sRecord[iFieldIndex++]));                //Date of import. Used for sorting if desired
         ci.dDatetime_Last_Viewed_by_User = Double.parseDouble(JumbleStorageText(sRecord[iFieldIndex++]));   //Date of last read by user. Used for sorting if desired
@@ -1298,35 +1296,6 @@ public class GlobalClass extends Application {
         //int iLenEncoded = sBase32UUIDEncoded.length(); //26 chars
 
         return Base32.encodeOriginal(bytes); //26 chars
-    }
-
-
-    public static void correctCatalogData(){
-        //This routine used during debugging to process and correct some catalog data.
-        ArrayList<String> alsRecordIssues = new ArrayList<>();
-        for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(MEDIA_CATEGORY_VIDEOS).entrySet()) {
-            ItemClass_CatalogItem ci = entry.getValue();
-            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                if(!ci.sFilename.equals("")) {
-                    int iIndex_ = ci.sFilename.indexOf("_");
-                    if(iIndex_ > 0 && iIndex_ < 10) {
-                        ci.sItem_Folder = ci.sFilename.substring(0, iIndex_);
-                    } else {
-                        alsRecordIssues.add(entry.getKey());
-                        ci.sItem_Folder = ci.sItemID;
-                    }
-                } else {
-                    alsRecordIssues.add(entry.getKey());
-                }
-            }
-        }
-
-        if(alsRecordIssues.size() > 0){
-            for(String sRecordID: alsRecordIssues){
-                Log.d("Debug", "correctCatalogData: Found " + alsRecordIssues.size() + " records with issues.");
-            }
-        }
-
     }
 
 

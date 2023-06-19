@@ -299,7 +299,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //GlobalClass.UpdateAllCatalogItemBasedOnTags();
 
-        //GlobalClass.CatalogDataFile_UpdateCatalogFiles();
+        //globalClass.CatalogDataFile_UpdateCatalogFiles("Re-writing catalog files...");
 
         //VerifyVideoFilesIntegrity();
 

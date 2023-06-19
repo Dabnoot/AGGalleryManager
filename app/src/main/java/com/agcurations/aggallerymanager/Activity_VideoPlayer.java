@@ -702,7 +702,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     String sM3U8Uri = GlobalClass.gsUriAppRootPrefix
                             + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                             + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                            + GlobalClass.gsFileSeparator + ci.sItem_Folder
                             + GlobalClass.gsFileSeparator + ci.sFilename;
 
                     uriM3U8 = Uri.parse(sM3U8Uri);
@@ -729,7 +728,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sParentFolderUri = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                 + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                + GlobalClass.gsFileSeparator + ci.sItem_Folder
                                 + GlobalClass.gsFileSeparator + sNewFileName;
                         Uri uriParentFolderUri = Uri.parse(sParentFolderUri);
                         try {
@@ -756,7 +754,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                         sbUriString.append(GlobalClass.gsUriAppRootPrefix)
                                                 .append(GlobalClass.gsFileSeparator).append(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS])
                                                 .append(GlobalClass.gsFileSeparator).append(ci.sFolder_Name)
-                                                .append(GlobalClass.gsFileSeparator).append(ci.sItem_Folder)
+
                                                 .append(GlobalClass.gsFileSeparator).append(sLine);
                                         sLine = sbUriString.toString();
                                         sbUriString.setLength(0);
@@ -827,7 +825,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sUriM3U8_SAF = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                 + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                + GlobalClass.gsFileSeparator + ci.sItem_Folder
+
                                 + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
                         Uri uriM3U8_SAF = Uri.parse(sUriM3U8_SAF);
 
@@ -883,8 +881,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 //DocumentsContract.createDocument requires a Uri to the parent folder. Find the Uri:
                                 String sParentUri = GlobalClass.gsUriAppRootPrefix
                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                        + GlobalClass.gsFileSeparator + ci.sItem_Folder;
+                                        + GlobalClass.gsFileSeparator + ci.sFolder_Name;
                                 Uri uriParent = Uri.parse(sParentUri);
                                 //With the parent folder Uri identified, create the M3U8_SAF text file at that location:
                                 uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, MimeTypes.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
@@ -922,7 +919,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                                 sLine = GlobalClass.gsUriAppRootPrefix
                                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                                         + GlobalClass.gsFileSeparator + ci.sFolder_Name
-                                                        + GlobalClass.gsFileSeparator + ci.sItem_Folder
                                                         + GlobalClass.gsFileSeparator + sLine;
                                             } else {
                                                 sLine = "#Missing file: " + sLine;

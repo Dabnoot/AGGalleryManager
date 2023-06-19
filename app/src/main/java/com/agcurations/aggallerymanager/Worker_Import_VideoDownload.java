@@ -205,7 +205,7 @@ public class Worker_Import_VideoDownload extends Worker {
         } else {
             //M3U8.
             ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_M3U8;
-            ciNew.sItem_Folder = ciNew.sItemID;
+            ciNew.sFolder_Name = ciNew.sFolder_Name + GlobalClass.gsFileSeparator + ciNew.sItemID;
             //Form a name for the M3U8 file:
             String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
             sTempFilename = GlobalClass.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
