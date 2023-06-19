@@ -482,12 +482,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 sFileName = ci.sFilename;
             }
             String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
-                    + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                    + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                     + GlobalClass.gsFileSeparator + sFileName;
             if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                 //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
                 sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
-                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                         + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
             }
             String sThumbnailUri = GlobalClass.gsUriAppRootPrefix
@@ -498,7 +498,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             if(!bThumbnailQuickLookupSuccess) {
                 Uri uriCatalogItemFolder;
-                uriCatalogItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.giSelectedCatalogMediaCategory].toString(), ci.sFolder_Name);
+                uriCatalogItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.giSelectedCatalogMediaCategory].toString(), ci.sFolderRelativePath);
 
                 if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
                         ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
@@ -517,7 +517,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         uriThumbnailUri = null;
                     } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                         //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
-                        Uri uriVideoTagFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolder_Name);
+                        Uri uriVideoTagFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolderRelativePath);
 
                         if (uriVideoTagFolder != null) {
                             Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoTagFolder.toString(), ci.sItemID);
@@ -596,7 +596,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 boolean bFoundMissingComicThumbnail = false;
                 if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
                     //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
-                    Uri uriComicFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ci.sFolder_Name);
+                    Uri uriComicFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ci.sFolderRelativePath);
 
 
                     //Load the full path to each comic page into tmComicPages (sorts files):

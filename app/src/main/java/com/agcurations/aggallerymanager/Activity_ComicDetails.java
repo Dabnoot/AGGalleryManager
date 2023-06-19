@@ -36,7 +36,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -106,7 +105,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
         String sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name;
+                + GlobalClass.gsFileSeparator + gciCatalogItem.sFolderRelativePath;
 
         if (gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
             //If this is a downloaded comic and the files from DownloadManager have not been moved as
@@ -114,7 +113,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                     + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                    + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name
+                    + GlobalClass.gsFileSeparator + gciCatalogItem.sFolderRelativePath
                     + GlobalClass.gsFileSeparator + GlobalClass.gsDLTempFolderName;
         }
 

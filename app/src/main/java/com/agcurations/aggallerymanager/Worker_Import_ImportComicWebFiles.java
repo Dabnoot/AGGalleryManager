@@ -56,11 +56,11 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         //Create the comic folder.
         ciNew.sItemID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
-        ciNew.sFolder_Name = ciNew.sItemID;
+        ciNew.sFolderRelativePath = ciNew.sItemID;
         ciNew.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
 
 
-        Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ciNew.sFolder_Name);
+        Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ciNew.sFolderRelativePath);
 
 
         if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
@@ -75,7 +75,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
             if (uriDestinationFolder == null) {
                 //Unable to create directory
-                sMessage = "Unable to create destination folder " +  ciNew.sFolder_Name + " at: "
+                sMessage = "Unable to create destination folder " +  ciNew.sFolderRelativePath + " at: "
                         + GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS] + "\n";
                 globalClass.BroadcastProgress(true, sMessage,
                         false, iProgressBarValue,
@@ -201,7 +201,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
                         String sDownloadFolderRelativePath;
                         sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS] +
-                                File.separator + ciNew.sFolder_Name;
+                                File.separator + ciNew.sFolderRelativePath;
                         File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
                         if(fExternalFilesDir != null) {
                             sDownloadManagerDownloadFolder = fExternalFilesDir.getAbsolutePath() +
@@ -257,7 +257,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                         .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                         .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sDownloadManagerDownloadFolder)
-                        .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ciNew.sFolder_Name)
+                        .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ciNew.sFolderRelativePath)
                         .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS)
                         .putLongArray(Worker_DownloadPostProcessing.KEY_ARG_DOWNLOAD_IDS, lDownloadIDs)
                         .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID)

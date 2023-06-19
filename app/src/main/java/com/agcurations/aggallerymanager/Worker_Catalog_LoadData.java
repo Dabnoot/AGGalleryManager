@@ -834,7 +834,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 //Determine the full path to the file:
                 ItemClass_CatalogItem ci = entry.getValue();
                 String sFilePath = GlobalClass.gUriCatalogFolders[iMediaCategory].getPath() + File.separator
-                        + ci.sFolder_Name + File.separator
+                        + ci.sFolderRelativePath + File.separator
                         + ci.sFilename;
 
                 if(ci.sFilename.equals("")){
@@ -873,7 +873,7 @@ public class Worker_Catalog_LoadData extends Worker {
                 String sMessage = "Examining M3U8 video ID " + tmEntry.getKey();
                 Log.d("VideoFilesCheck", sMessage);
                 String sM3U8FilePath = GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                        File.separator + ci.sFolder_Name +
+                        File.separator + ci.sFolderRelativePath +
                         File.separator + ci.sItemID +
                         File.separator + ci.sFilename;
                 File fM3U8File = new File(sM3U8FilePath);

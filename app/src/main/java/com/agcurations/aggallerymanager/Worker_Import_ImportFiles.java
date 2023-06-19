@@ -284,7 +284,7 @@ public class Worker_Import_ImportFiles extends Worker {
                     ciNew.iWidth = Integer.parseInt(fileItem.sWidth);
                     ciNew.iHeight = Integer.parseInt(fileItem.sHeight);
                 }
-                ciNew.sFolder_Name = fileItem.sDestinationFolder;
+                ciNew.sFolderRelativePath = fileItem.sDestinationFolder;
                 ciNew.sSource = ItemClass_CatalogItem.FOLDER_SOURCE;
                 ciNew.sTags = GlobalClass.formDelimitedString(fileItem.aliProspectiveTags, ",");
                 ciNew.aliTags = new ArrayList<>(fileItem.aliProspectiveTags);

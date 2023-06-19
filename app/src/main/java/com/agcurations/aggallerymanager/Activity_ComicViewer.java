@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.documentfile.provider.DocumentFile;
 
 import android.content.Context;
 import android.content.Intent;
@@ -33,10 +32,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 
 /**
@@ -196,7 +193,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
         String sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name;
+                + GlobalClass.gsFileSeparator + gciCatalogItem.sFolderRelativePath;
 
         //Load the full path to each comic page into tmComicPages:
         if (gciCatalogItem.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
@@ -204,7 +201,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
             //  part of download post-processing, look in the [comic]\download folder for the files:
             sComicFolderUri = GlobalClass.gsUriAppRootPrefix
                     + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory]
-                    + GlobalClass.gsFileSeparator + gciCatalogItem.sFolder_Name
+                    + GlobalClass.gsFileSeparator + gciCatalogItem.sFolderRelativePath
                     + GlobalClass.gsFileSeparator + GlobalClass.gsDLTempFolderName;
         }
 

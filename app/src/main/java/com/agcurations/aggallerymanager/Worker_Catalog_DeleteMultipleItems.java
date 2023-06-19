@@ -141,7 +141,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
 
             boolean bSuccess = true;
 
-            Uri uriItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[ciToDelete.iMediaCategory], ciToDelete.sFolder_Name);
+            Uri uriItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[ciToDelete.iMediaCategory], ciToDelete.sFolderRelativePath);
 
             if (!GlobalClass.CheckIfFileExists(uriItemFolder)) {
                 //Could not find folder holding item to be deleted. Item must have failed to be integrated or deleted via
@@ -197,7 +197,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                         //Delete the download folder to which downloadManager downloaded the files:
                         String sDownloadFolderRelativePath;
                         sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
-                                File.separator + ciToDelete.sFolder_Name +
+                                File.separator + ciToDelete.sFolderRelativePath +
                                 File.separator + ciToDelete.sItemID;
                         if (getApplicationContext().getExternalFilesDir(null) != null) {
                             String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
@@ -223,7 +223,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                                 String sDownloadCategoryFolderRelativePath;
                                 sDownloadCategoryFolderRelativePath = sExternalFilesDir +
                                         File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
-                                        File.separator + ciToDelete.sFolder_Name;
+                                        File.separator + ciToDelete.sFolderRelativePath;
                                 File fCatFolder = new File(sDownloadCategoryFolderRelativePath);
                                 if (fCatFolder.exists()) {
                                     File[] fCatFolderContents = fCatFolder.listFiles();
@@ -263,7 +263,7 @@ public class Worker_Catalog_DeleteMultipleItems extends Worker {
                         //Delete the download folder to which downloadManager downloaded the files:
                         String sDownloadFolderRelativePath;
                         sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[ciToDelete.iMediaCategory] +
-                                File.separator + ciToDelete.sFolder_Name;
+                                File.separator + ciToDelete.sFolderRelativePath;
                         if (getApplicationContext().getExternalFilesDir(null) != null) {
                             String sExternalFilesDir = Objects.requireNonNull(getApplicationContext().getExternalFilesDir(null)).getAbsolutePath();
                             String sItemDownloadFolder = sExternalFilesDir +

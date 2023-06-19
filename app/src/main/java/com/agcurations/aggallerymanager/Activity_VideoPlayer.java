@@ -673,7 +673,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                 String sFileUri = GlobalClass.gsUriAppRootPrefix
                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
-                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                         + GlobalClass.gsFileSeparator + ci.sFilename;
                 Uri uriFileUri = Uri.parse(sFileUri);
 
@@ -701,7 +701,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                     String sM3U8Uri = GlobalClass.gsUriAppRootPrefix
                             + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                            + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                            + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                             + GlobalClass.gsFileSeparator + ci.sFilename;
 
                     uriM3U8 = Uri.parse(sM3U8Uri);
@@ -727,7 +727,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sNewFileName = sFileNameAndExtension[0] + "_new." + sFileNameAndExtension[1];
                         String sParentFolderUri = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                                 + GlobalClass.gsFileSeparator + sNewFileName;
                         Uri uriParentFolderUri = Uri.parse(sParentFolderUri);
                         try {
@@ -753,7 +753,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                         //Form the uri string:
                                         sbUriString.append(GlobalClass.gsUriAppRootPrefix)
                                                 .append(GlobalClass.gsFileSeparator).append(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS])
-                                                .append(GlobalClass.gsFileSeparator).append(ci.sFolder_Name)
+                                                .append(GlobalClass.gsFileSeparator).append(ci.sFolderRelativePath)
 
                                                 .append(GlobalClass.gsFileSeparator).append(sLine);
                                         sLine = sbUriString.toString();
@@ -824,7 +824,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         //If the global file indexing is complete, use fast-lookup:
                         String sUriM3U8_SAF = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
 
                                 + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
                         Uri uriM3U8_SAF = Uri.parse(sUriM3U8_SAF);
@@ -881,7 +881,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 //DocumentsContract.createDocument requires a Uri to the parent folder. Find the Uri:
                                 String sParentUri = GlobalClass.gsUriAppRootPrefix
                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                        + GlobalClass.gsFileSeparator + ci.sFolder_Name;
+                                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath;
                                 Uri uriParent = Uri.parse(sParentUri);
                                 //With the parent folder Uri identified, create the M3U8_SAF text file at that location:
                                 uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, MimeTypes.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
@@ -918,7 +918,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                             if(alsExistingFileNames.contains(sLine)) {
                                                 sLine = GlobalClass.gsUriAppRootPrefix
                                                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
-                                                        + GlobalClass.gsFileSeparator + ci.sFolder_Name
+                                                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                                                         + GlobalClass.gsFileSeparator + sLine;
                                             } else {
                                                 sLine = "#Missing file: " + sLine;

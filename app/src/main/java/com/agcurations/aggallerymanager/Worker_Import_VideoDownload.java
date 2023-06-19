@@ -183,7 +183,7 @@ public class Worker_Import_VideoDownload extends Worker {
             ciNew.iWidth = Integer.parseInt(icfDownloadItem.sWidth);
             ciNew.iHeight = Integer.parseInt(icfDownloadItem.sHeight);
         }
-        ciNew.sFolder_Name = icfDownloadItem.sDestinationFolder;
+        ciNew.sFolderRelativePath = icfDownloadItem.sDestinationFolder;
         ciNew.sTags = GlobalClass.formDelimitedString(icfDownloadItem.aliProspectiveTags, ",");
         ciNew.aliTags = new ArrayList<>(icfDownloadItem.aliProspectiveTags);
         ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
@@ -205,7 +205,7 @@ public class Worker_Import_VideoDownload extends Worker {
         } else {
             //M3U8.
             ciNew.iSpecialFlag = ItemClass_CatalogItem.FLAG_VIDEO_M3U8;
-            ciNew.sFolder_Name = ciNew.sFolder_Name + GlobalClass.gsFileSeparator + ciNew.sItemID;
+            ciNew.sFolderRelativePath = ciNew.sFolderRelativePath + GlobalClass.gsFileSeparator + ciNew.sItemID;
             //Form a name for the M3U8 file:
             String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
             sTempFilename = GlobalClass.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
@@ -330,7 +330,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
                 String sDownloadFolderRelativePath;
                 sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                        File.separator + ciNew.sFolder_Name +
+                        File.separator + ciNew.sFolderRelativePath +
                         File.separator + ciNew.sItemID;
                 File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
                 if(fExternalFilesDir != null) {
@@ -452,9 +452,9 @@ public class Worker_Import_VideoDownload extends Worker {
                 osM3U8File.flush();
                 osM3U8File.close();
 
-                Uri uriVideoFinalDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ciNew.sFolder_Name);
+                Uri uriVideoFinalDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ciNew.sFolderRelativePath);
                 if (uriVideoFinalDestinationFolder == null) {
-                    sMessage = "Could not locate video final destination folder " + ciNew.sFolder_Name + " in " +
+                    sMessage = "Could not locate video final destination folder " + ciNew.sFolderRelativePath + " in " +
                             GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
@@ -512,7 +512,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                     .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                     .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
-                    .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ciNew.sFolder_Name)  //Videos/<Tag folder>
+                    .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ciNew.sFolderRelativePath)  //Videos/<Tag folder>
                     .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS)
                     .putInt(Worker_DownloadPostProcessing.KEY_ARG_VIDEO_TYPE_SINGLE_M3U8, iSingleOrM3U8) //Used to tell if it should search for subfolder.
                     .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID) //Used if the type is M3U8 to find subfolder.

@@ -765,7 +765,7 @@ public class GlobalClass extends Application {
         sbRecord.append(ci.iMediaCategory)                                          //Video, image, or comic.
         .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
         .append("\t").append(ci.sFilename)                                          //Video or image filename
-        .append("\t").append(JumbleStorageText(ci.sFolder_Name))                    //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
+        .append("\t").append(JumbleStorageText(ci.sFolderRelativePath))                    //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
         .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
         .append("\t").append(JumbleStorageText(ci.dDatetime_Last_Viewed_by_User))   //Date of last read by user. Used for sorting if desired
@@ -822,7 +822,7 @@ public class GlobalClass extends Application {
         ci.iMediaCategory = Integer.parseInt(sRecord[iFieldIndex++]);                              //Video, image, or comic.
         ci.sItemID = JumbleStorageText(sRecord[iFieldIndex++]);                                     //Video, image, comic id
         ci.sFilename = sRecord[iFieldIndex++];                                                      //Video or image filename
-        ci.sFolder_Name = JumbleStorageText(sRecord[iFieldIndex++]);                                //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
+        ci.sFolderRelativePath = JumbleStorageText(sRecord[iFieldIndex++]);                                //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         ci.sThumbnail_File = sRecord[iFieldIndex++];                                                //Name of the file used as the thumbnail for a video or comic
         ci.dDatetime_Import = Double.parseDouble(JumbleStorageText(sRecord[iFieldIndex++]));                //Date of import. Used for sorting if desired
         ci.dDatetime_Last_Viewed_by_User = Double.parseDouble(JumbleStorageText(sRecord[iFieldIndex++]));   //Date of last read by user. Used for sorting if desired
@@ -1202,7 +1202,7 @@ public class GlobalClass extends Application {
 
     public ItemClass_CatalogItem analyzeComicReportMissingPages(ItemClass_CatalogItem ci){
 
-        String sFolderName = ci.sFolder_Name;
+        String sFolderName = ci.sFolderRelativePath;
         //Log.d("Comics", sFolderName);
         Uri uriComicFolder = FormChildUri(gUriCatalogFolders[MEDIA_CATEGORY_COMICS].toString(), sFolderName);
 
