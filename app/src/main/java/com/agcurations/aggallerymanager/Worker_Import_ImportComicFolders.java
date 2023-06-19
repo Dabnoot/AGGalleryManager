@@ -93,10 +93,12 @@ public class Worker_Import_ImportComicFolders extends Worker {
         int INDEX_COMIC_PARODY = 5;
         int INDEX_COMIC_ARTIST = 6;
         int INDEX_MARKED_FOR_DELETION = 7;
+        int INDEX_SUBFOLDER = 8;
         for(ItemClass_File fileItem: alFileList) {
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
                 String sUriParent = fileItem.sUri;
                 String sRecordID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
+                String sSubfolder = fileItem.sDestinationFolder;
                 String sComicName = fileItem.sFileOrFolderName;
                 if(!fileItem.sTitle.equals("")){
                     sComicName = fileItem.sTitle;
@@ -124,7 +126,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         sSource,
                         sParody,
                         sArtist,
-                        Boolean.toString(bMarkedForDeletion)});
+                        Boolean.toString(bMarkedForDeletion),
+                        sSubfolder});
             }
         }
         //Comic folders identified.
@@ -189,7 +192,9 @@ public class Worker_Import_ImportComicFolders extends Worker {
             //If we are here, this comic is not marked for deletion from the source.
 
             //Determine the folder which will be created to hold this comic:
-            String sDestinationFolder = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual destination comic folder name is the comic ID.
+            String sSubfolder = tmEntryComic.getValue()[INDEX_SUBFOLDER];
+            String sComicDestinationFolder = tmEntryComic.getValue()[INDEX_RECORD_ID]; //The individual destination comic folder name is the comic ID.
+            String sRelativePathofComicFolder = sSubfolder + GlobalClass.gsFileSeparator + sComicDestinationFolder;
 
             //Prepare the data record:
             ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
@@ -243,7 +248,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                 //  folder:
                 String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
                         fileItem.sUri,
-                        sDestinationFolder,
+                        sRelativePathofComicFolder,
                         sDestinationFileName,
                         fileItem.lSizeBytes,
                         false);
@@ -287,7 +292,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
             //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
             ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
             ciNew.iGrade = Integer.parseInt(tmEntryComic.getValue()[INDEX_COMIC_GRADE]); //Get the grade.
-            ciNew.sFolder_Name = sDestinationFolder;
+            ciNew.sFolder_Name = sRelativePathofComicFolder;         //Path of the folder holding the comic relative to the catalog folder.
+            ciNew.sItem_Folder = sRelativePathofComicFolder;
             //Create a timestamp to be used to create the data record:
             Double dTimeStamp = GlobalClass.GetTimeStampDouble();
             ciNew.dDatetime_Last_Viewed_by_User = dTimeStamp;
