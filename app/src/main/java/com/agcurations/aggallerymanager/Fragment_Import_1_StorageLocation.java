@@ -320,108 +320,72 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                 @SuppressLint("WrongConstant")
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    // look for permissions before executing operations.
-                    if(getActivity() == null){
+
+                    if(getContext() == null){
                         return;
                     }
 
-                    //Check to make sure that we have read/write permission in the selected folder.
-                    //If we don't have permission, request it.
-                    if ((ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            != PackageManager.PERMISSION_GRANTED) ||
-                            (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                    != PackageManager.PERMISSION_GRANTED)) {
+                    //The result data contains a URI for the directory that
+                    //the user selected.
 
-                        // Permission is not granted
-                        // Should we show an explanation?
-                        if ((ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                                Manifest.permission.WRITE_EXTERNAL_STORAGE)) ||
-                                (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-                                        Manifest.permission.READ_EXTERNAL_STORAGE))) {
-                            // Show an explanation to the user *asynchronously* -- don't block
-                            // this thread waiting for the user's response! After the user
-                            // sees the explanation, try again to request the permission.
-                            Toast.makeText(getActivity(), "Permission required for read/write operation.", Toast.LENGTH_LONG).show();
-                        } else {
-                            // No explanation needed; request the permission
-                            ActivityCompat.requestPermissions(getActivity(),
-                                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                            Manifest.permission.READ_EXTERNAL_STORAGE},
-                                    MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE);
+                    //Put the import Uri into the intent (this could represent a folder OR a file:
 
-                            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                            // app-defined int constant. The callback method gets the
-                            // result of the request.
-                        }
-                        //} else {
-                        // Permission has already been granted
+                    if(result.getData() == null) {
+                        Toast.makeText(getContext(),
+                                "No data folder selected. A storage location may be selected from the Settings menu.",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    Intent data = result.getData();
+                    Uri treeUri = data.getData();
+                    if(treeUri == null) {
+                        return;
+                    }
+                    final int takeFlags = data.getFlags() &
+                            (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    //We must persist access to this folder or the user will be asked everytime to select a folder.
+                    //  Even then, they well still have to re-access the location on device restart.
+                    GlobalClass.gcrContentResolver.takePersistableUriPermission(treeUri, takeFlags);
+
+
+                    Activity_Import.guriImportTreeURI = treeUri;
+
+                    DocumentFile df1 = DocumentFile.fromTreeUri(getContext(), Activity_Import.guriImportTreeURI);
+                    if(df1 == null){
+                        return; //todo: create message.
+                    }
+                    String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
+                    ShowFolderAnalysisViews(sTreeUriSourceName);
+
+
+                    int iFilesOrFolders = GlobalClass.FILES_ONLY;
+                    if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
+                            viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                        iFilesOrFolders = GlobalClass.FOLDERS_ONLY;
                     }
 
-                    //The above code checked for permission, and if not granted, requested it.
-                    //  Check one more time to see if the permission was granted:
+                    GlobalClass.gbImportFolderAnalysisRunning = true;
+                    globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
+                    GlobalClass.gbImportFolderAnalysisFinished = false;
 
-                    if ((ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_GRANTED) &&
-                            (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                                    == PackageManager.PERMISSION_GRANTED)) {
-                        //If we now have permission...
-                        //The result data contains a URI for the document or directory that
-                        //the user selected.
+                    if(getContext() == null) return;
+                    String sCallerID = "Service_Import:startActionGetDirectoryContents()";
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataGetDirectoryContents = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(GlobalClass.EXTRA_IMPORT_TREE_URI, Activity_Import.guriImportTreeURI.toString())
+                            .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory)
+                            .putInt(GlobalClass.EXTRA_FILES_OR_FOLDERS, iFilesOrFolders)
+                            .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, viewModelImportActivity.iComicImportSource)
+                            .build();
+                    OneTimeWorkRequest otwrGetDirectoryContents = new OneTimeWorkRequest.Builder(Worker_Import_GetDirectoryContents.class)
+                            .setInputData(dataGetDirectoryContents)
+                            .addTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(getContext()).enqueue(otwrGetDirectoryContents);
 
-                        //Put the import Uri into the intent (this could represent a folder OR a file:
-
-                        if(result.getData() == null) {
-                            return; //todo: create message.
-                        }
-                        Intent data = result.getData();
-                        Uri treeUri = data.getData();
-                        Activity_Import.guriImportTreeURI = treeUri;
-
-                        if(treeUri == null){
-                            return; //todo: create message.
-                        }
-
-                        final int takeFlags = data.getFlags() & (
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                        getActivity().getContentResolver().takePersistableUriPermission(treeUri,
-                                takeFlags);
-
-                        assert Activity_Import.guriImportTreeURI != null;
-                        DocumentFile df1 = DocumentFile.fromTreeUri(getActivity(), Activity_Import.guriImportTreeURI);
-                        if(df1 == null){
-                            return; //todo: create message.
-                        }
-                        String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
-                        ShowFolderAnalysisViews(sTreeUriSourceName);
-
-
-                        int iFilesOrFolders = GlobalClass.FILES_ONLY;
-                        if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
-                                viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
-                            iFilesOrFolders = GlobalClass.FOLDERS_ONLY;
-                        }
-
-                        GlobalClass.gbImportFolderAnalysisRunning = true;
-                        globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
-                        GlobalClass.gbImportFolderAnalysisFinished = false;
-
-                        if(getContext() == null) return;
-                        String sCallerID = "Service_Import:startActionGetDirectoryContents()";
-                        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-                        Data dataGetDirectoryContents = new Data.Builder()
-                                .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
-                                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                                .putString(GlobalClass.EXTRA_IMPORT_TREE_URI, Activity_Import.guriImportTreeURI.toString())
-                                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory)
-                                .putInt(GlobalClass.EXTRA_FILES_OR_FOLDERS, iFilesOrFolders)
-                                .putInt(GlobalClass.EXTRA_COMIC_IMPORT_SOURCE, viewModelImportActivity.iComicImportSource)
-                                .build();
-                        OneTimeWorkRequest otwrGetDirectoryContents = new OneTimeWorkRequest.Builder(Worker_Import_GetDirectoryContents.class)
-                                .setInputData(dataGetDirectoryContents)
-                                .addTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS) //To allow finding the worker later.
-                                .build();
-                        WorkManager.getInstance(getContext()).enqueue(otwrGetDirectoryContents);
-                    }
                 }
             });
 
