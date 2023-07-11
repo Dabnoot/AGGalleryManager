@@ -19,7 +19,6 @@ import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,7 +49,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
     //=========================
     // Define keys for arguments passed to this worker:
     public static final String KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS = "KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS";
-    public static final String KEY_ARG_WORKING_FOLDER_NAME = "KEY_ARG_WORKING_FOLDER_NAME";
+    public static final String KEY_ARG_RELATIVE_PATH_TO_FOLDER = "KEY_ARG_RELATIVE_PATH_TO_FOLDER";
     public static final String KEY_ARG_MEDIA_CATEGORY = "KEY_ARG_MEDIA_CATEGORY";
     public static final String KEY_ARG_VIDEO_TYPE_SINGLE_M3U8 = "KEY_ARG_VIDEO_TYPE_SINGLE_M3U8";
     public static final String KEY_ARG_DOWNLOAD_IDS = "KEY_ARG_DOWNLOAD_IDS";
@@ -98,35 +97,19 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         //Get the media category for the download.
         giMediaCategory = getInputData().getInt(KEY_ARG_MEDIA_CATEGORY, -1);
+
+        String sRelativePath = getInputData().getString(KEY_ARG_RELATIVE_PATH_TO_FOLDER); //If this is a comic, it will be the comic ID. If it is a video, it will be the tag folder.
+        if(sRelativePath != null){
+            uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[giMediaCategory], sRelativePath);
+        } else {
+            LogThis("Worker_DownloadPostProcessing Constructor:", "Relative path data not passed to worker.", null);
+        }
+
         if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-            //Image file will be in the image download holding folder on temporary storage
-            //  and will be transferred to the image download holding folder in the user-specified
-            //  application storage tree.
-            uriDestinationFolder = GlobalClass.gUriImageDownloadHoldingFolder;
             gsItemID = "Image"; //gsItemID is used in log name generation
             gbExpectDifferentFilesSameNames = true; //Some image files that are downloaded could
             // have the same name. Such as 001.jpg. Need to create a unique destination file name if
             // such a file already exists in the destination folder.
-        } else {
-            //If the download(s) are related to a comic, the calling routine will have
-            //  specified a particular folder for the destination:
-            String sSubFolderName = getInputData().getString(KEY_ARG_WORKING_FOLDER_NAME); //If this is a comic, it will be the comic ID. If it is a video, it will be the tag folder.
-            if(sSubFolderName != null){
-                uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[giMediaCategory], sSubFolderName);
-            } else {
-                LogThis("Worker_DownloadPostProcessing Constructor:", "Subfolder data not passed to worker.", null);
-                return;
-            }
-
-            if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                //If the download(s) are related to a video check to see if it is a M3U8
-                // download. If so, find the appropriate subfolder:
-                giSingleOrM3U8 = getInputData().getInt(KEY_ARG_VIDEO_TYPE_SINGLE_M3U8, -1);
-                if (giSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
-                    //If this is a M3U8, find the subfolder for the destination.
-                    uriDestinationFolder = GlobalClass.FormChildUri(uriDestinationFolder, gsItemID);
-                }
-            }
         }
     }
 
