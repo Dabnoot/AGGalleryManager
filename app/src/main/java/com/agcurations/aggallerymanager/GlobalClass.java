@@ -26,6 +26,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -54,6 +56,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.common.io.BaseEncoding;
 
 
@@ -946,7 +950,7 @@ public class GlobalClass extends Application {
                 GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
                 return sMessage;
             }
-            //Write the activity_comic_details_header line to the file:
+            //Write the data to the file:
             osNewCatalogContentsFile.write(sbNewCatalogRecords.toString().getBytes());
             osNewCatalogContentsFile.flush();
             osNewCatalogContentsFile.close();
@@ -1060,7 +1064,7 @@ public class GlobalClass extends Application {
                 GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
                 return "Issue with openning output stream to catalog file.";
             }
-            //Write the activity_comic_details_header line to the file:
+            //Write the data to the file:
             osNewCatalogContentsFile.write(sbBuffer.toString().getBytes());
             osNewCatalogContentsFile.flush();
             osNewCatalogContentsFile.close();
@@ -1136,15 +1140,14 @@ public class GlobalClass extends Application {
         int iProgressBarValue = 0;
 
         StringBuilder sbBuffer = new StringBuilder();
-        boolean bHeaderWritten = false;
-        StringBuilder sbRecord = new StringBuilder();
-        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
+        StringBuilder sbRecord = new StringBuilder(); //This is used in an attempt to increase the speed
+                                                        // at which a catalog's records are turned into a text string.
+                                                        // There may be other opportunities to increase the file-write speed.
 
-            if(!bHeaderWritten) {
-                sbBuffer.append(getCatalogHeader()); //Append the header.
-                sbBuffer.append("\n");
-                bHeaderWritten = true;
-            }
+        sbBuffer.append(getCatalogHeader()); //Append the header.
+        sbBuffer.append("\n");
+
+        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: gtmCatalogLists.get(iMediaCategory).entrySet()){
 
             sbBuffer.append(getCatalogRecordString(tmEntry.getValue(), sbRecord)); //Append the data.
             sbRecord.setLength(0);
@@ -2408,9 +2411,14 @@ public class GlobalClass extends Application {
                 //Likely case is folder has non-numeric folder name.
             }
         }
-        if(sGreatestFolderID.equals("")){
-            //If there are no numeric folders, designate the first one.
+        if(sGreatestFolderID.equals("") || iGreatestFolderID < 1000){
+            //If there are no numeric folders of proper use, designate the first one.
             sGreatestFolderID = "1000";
+            ItemClass_StorageFolderAvailability icsfa = new ItemClass_StorageFolderAvailability();
+            icsfa.sFolderName = sGreatestFolderID;
+            icsfa.iFileCount = 0;
+            gtmFolderAvailability.put(iMediaCategory, icsfa);
+            return;
         }
         //Greatest folder ID should now be found, query for content count:
         Uri uriFolder = FormChildUri(gUriCatalogFolders[iMediaCategory], sGreatestFolderID);
@@ -2428,15 +2436,544 @@ public class GlobalClass extends Application {
                 ItemClass_StorageFolderAvailability icsfa = new ItemClass_StorageFolderAvailability();
                 icsfa.sFolderName = sGreatestFolderID;
                 icsfa.iFileCount = iItemCount;
+
+                if (icsfa.iFileCount >= 250) {
+                    //Designate the next folder to hold content:
+                    iGreatestFolderID++; //Should not yield an exception as it should have already been caught in a prior process.
+                    icsfa.iFileCount = 0;
+                    icsfa.sFolderName = "" + iGreatestFolderID;
+
+                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[MEDIA_CATEGORY_COMICS], icsfa.sFolderName);
+                    if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
+                        try {
+                            uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+                        } catch (Exception e) {
+                            Log.d("AGGalleryManager", "" + e.getMessage());
+                        }
+                    }
+                }
+
                 gtmFolderAvailability.put(iMediaCategory, icsfa);
             }
         } catch (Exception e) {
-            Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
+            Log.d("AGGalleryManager", "Problem querying folder.");
         }
 
 
 
     }
+
+
+
+    public void arrangeComicFolders(){
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).size();
+        int iProgressBarValue = 0;
+
+        ItemClass_StorageFolderAvailability icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_COMICS);
+        if(icsfa == null){
+            //Get the next folder:
+            GlobalClass.getAGGMStorageFolderAvailability(MEDIA_CATEGORY_COMICS);
+            icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_COMICS);
+        }
+        //Plan and move comic:
+        for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()){
+            //Set the destination folder on each file item:
+            ItemClass_CatalogItem icci_Comic = entry.getValue();
+
+            iProgressNumerator++;
+            if (iProgressNumerator % 10 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(false, "",
+                        true, iProgressBarValue,
+                        true, "Moving comic ID " + icci_Comic.sItemID + "...",
+                        BROADCAST_WRITE_CATALOG_FILE);
+            }
+
+            if(!icci_Comic.sFolderRelativePath.contains(gsFileSeparator)) {
+                if (icsfa != null) {
+                    if (icsfa.iFileCount >= 250) {
+                        //Designate the next folder to hold content:
+                        int iFolderID = Integer.parseInt(icsfa.sFolderName); //Should not yield an exception as it should have already been caught in a prior process.
+                        iFolderID++;
+                        icsfa.iFileCount = 0;
+                        icsfa.sFolderName = "" + iFolderID;
+                    }
+
+                    if(icsfa.iFileCount == 0) {
+                        //If the file count is set to zero, check to see if the folder exists and create it if necessary:
+                        Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[MEDIA_CATEGORY_COMICS], icsfa.sFolderName);
+                        if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
+                            try {
+                                uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+                            } catch (Exception e) {
+                                Log.d("AGGalleryManager", "" + e.getMessage());
+                            }
+                        }
+                    }
+
+                    icci_Comic.sPlannedRelativePath = icsfa.sFolderName + gsFileSeparator + icci_Comic.sFolderRelativePath;
+                    icsfa.iFileCount++;
+
+                    //Execute the comic move:
+                    try {
+                        String sComicFolderUri = GlobalClass.gsUriAppRootPrefix
+                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_COMICS]
+                                + GlobalClass.gsFileSeparator + icci_Comic.sFolderRelativePath;
+                        Uri uriComicFolderUri = Uri.parse(sComicFolderUri);
+
+                        String sComicNewParentFolderUri = GlobalClass.gsUriAppRootPrefix
+                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_COMICS]
+                                + GlobalClass.gsFileSeparator + icsfa.sFolderName;
+
+                        Uri uriNewParentFolderUri = Uri.parse(sComicNewParentFolderUri);
+
+                        Uri uriMovedDocument = DocumentsContract.moveDocument(
+                                gcrContentResolver,
+                                uriComicFolderUri,
+                                GlobalClass.gUriCatalogFolders[MEDIA_CATEGORY_COMICS],
+                                uriNewParentFolderUri);
+
+                        icci_Comic.sFolderRelativePath = icci_Comic.sPlannedRelativePath;
+
+                    } catch (Exception e) {
+                        Log.d("AGGalleryManager", "" + e.getMessage());
+                    }
+
+                }
+
+            }
+
+        }
+
+        CatalogDataFile_UpdateCatalogFile(MEDIA_CATEGORY_COMICS, "Updating Comics catalog after content move...");
+
+
+    }
+
+    public void arrangeVideoFolders(){
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(MEDIA_CATEGORY_VIDEOS).size();
+        int iProgressBarValue = 0;
+
+
+        //Check folder/file distribution:
+        /*ArrayList<String> alsFolderNamesInUse = GetDirectorySubfolderNames(gUriCatalogFolders[MEDIA_CATEGORY_VIDEOS]);
+        TreeMap<String, Integer> tmFolderFileCount = new TreeMap<>();
+
+        iProgressDenominator = alsFolderNamesInUse.size();
+
+        for(String sFolderName: alsFolderNamesInUse){
+
+            iProgressNumerator++;
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    true, "Checking folder " + sFolderName + "...",
+                    BROADCAST_WRITE_CATALOG_FILE);
+
+
+            Uri uriFolder = FormChildUri(gUriCatalogFolders[MEDIA_CATEGORY_VIDEOS], sFolderName);
+            //Count the number of items in the folder:
+            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder,
+                    DocumentsContract.getDocumentId(uriFolder));
+            Cursor c;
+            try {
+                c = gcrContentResolver.query(childrenUri, new String[]{
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+                if (c != null) {
+                    int iItemCount = c.getCount();
+                    c.close();
+                    tmFolderFileCount.put(sFolderName, iItemCount);
+                }
+            } catch (Exception e) {
+                Log.d("AGGalleryManager", "Problem querying folder.");
+            }
+
+        }*/
+
+
+        ItemClass_StorageFolderAvailability icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_VIDEOS);
+        if (icsfa == null) {
+            //Get the next folder:
+            GlobalClass.getAGGMStorageFolderAvailability(MEDIA_CATEGORY_VIDEOS);
+            icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_VIDEOS);
+        }
+
+        //Sort the list by date imported:
+        TreeMap<Double, ItemClass_CatalogItem> tmCatalogSorted = new TreeMap<>();
+        for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(MEDIA_CATEGORY_VIDEOS).entrySet()){
+            double newKey = entry.getValue().dDatetime_Import;
+            int iSameKey = 0;
+            while(tmCatalogSorted.containsKey(newKey)){
+                newKey += 1.;
+                iSameKey++;
+            }
+            if(iSameKey != 0){
+                Log.d("AGGalleryManager", "Same key found " + iSameKey + " times.");
+            }
+            tmCatalogSorted.put(newKey, entry.getValue());
+        }
+
+        //Plan and move video:
+        for(Map.Entry<Double, ItemClass_CatalogItem> entry: tmCatalogSorted.entrySet()){
+
+            ItemClass_CatalogItem icci_Video = entry.getValue();
+
+            iProgressNumerator++;
+            if (iProgressNumerator % 10 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(false, "",
+                        true, iProgressBarValue,
+                        true, "Moving video ID " + icci_Video.sItemID + "...",
+                        BROADCAST_WRITE_CATALOG_FILE);
+            }
+
+            /*if(icci_Video.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
+                continue;
+            }*/
+
+            //Set the destination folder on each file item:
+            if (icsfa != null) {
+                if (icsfa.iFileCount >= 250) {
+                    //Designate the next folder to hold content:
+                    int iFolderID = Integer.parseInt(icsfa.sFolderName); //Should not yield an exception as it should have already been caught in a prior process.
+                    iFolderID++;
+                    icsfa.iFileCount = 0;
+                    icsfa.sFolderName = "" + iFolderID;
+                }
+
+                if(icsfa.iFileCount == 0) {
+                    //If the file count is set to zero, check to see if the folder exists and create it if necessary:
+                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[MEDIA_CATEGORY_VIDEOS], icsfa.sFolderName);
+                    if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
+                        try {
+                            uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+                        } catch (Exception e) {
+                            Log.d("AGGalleryManager", "" + e.getMessage());
+                        }
+                    }
+                }
+
+                String sVideoNewParentFolderUri = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_VIDEOS]
+                        + GlobalClass.gsFileSeparator + icsfa.sFolderName;
+                Uri uriNewParentFolderUri = Uri.parse(sVideoNewParentFolderUri);
+
+
+
+                String sVideoUri;
+                if(icci_Video.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
+                    String[] sOriginalM3U8FolderName = icci_Video.sFolderRelativePath.split(gsFileSeparator);
+                    if(sOriginalM3U8FolderName.length != 2){
+                        continue;
+                    }
+
+                    String sNewItemFolderName = getUniqueFileName(uriNewParentFolderUri, sOriginalM3U8FolderName[1], false);
+                    if(!sNewItemFolderName.equals(icci_Video.sFolderRelativePath)){
+                        sOriginalM3U8FolderName[1] = sNewItemFolderName;
+                    }
+
+                    icci_Video.sPlannedRelativePath = icsfa.sFolderName + gsFileSeparator + sOriginalM3U8FolderName[1];
+
+                    //A folder containing files related to this M3U8 will be moved:
+                    sVideoUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_VIDEOS]
+                            + GlobalClass.gsFileSeparator + icci_Video.sFolderRelativePath;
+                } else {
+                    icci_Video.sPlannedRelativePath = icsfa.sFolderName;
+
+                    String sNewFileName = getUniqueFileName(uriNewParentFolderUri, icci_Video.sFilename, false);
+                    if(!sNewFileName.equals(icci_Video.sFilename)){
+                        icci_Video.sFilename = sNewFileName;
+                    }
+
+                    //A single video file will be moved:
+                    sVideoUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_VIDEOS]
+                            + GlobalClass.gsFileSeparator + icci_Video.sFolderRelativePath
+                            + GlobalClass.gsFileSeparator + icci_Video.sFilename;
+                }
+                icsfa.iFileCount++;
+
+                Uri uriVideoUri = Uri.parse(sVideoUri);
+
+
+
+
+
+
+
+                //Execute the video move:
+                try {
+
+                    Uri uriMovedDocument = DocumentsContract.moveDocument(
+                            gcrContentResolver,
+                            uriVideoUri,
+                            GlobalClass.gUriCatalogFolders[MEDIA_CATEGORY_VIDEOS],
+                            uriNewParentFolderUri);
+
+                    icci_Video.sFolderRelativePath = icci_Video.sPlannedRelativePath;
+
+                } catch (Exception e) {
+                    Log.d("AGGalleryManager", "" + e.getMessage());
+                }
+
+            }
+
+
+
+        }
+
+        CatalogDataFile_UpdateCatalogFile(MEDIA_CATEGORY_VIDEOS, "Updating Comics catalog after content move...");
+
+    }
+
+    public void removeEmptyFolders(){
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(MEDIA_CATEGORY_VIDEOS).size();
+        int iProgressBarValue = 0;
+
+        ArrayList<String> alsFolderNamesInUse = GetDirectorySubfolderNames(gUriCatalogFolders[MEDIA_CATEGORY_VIDEOS]);
+
+        iProgressDenominator = alsFolderNamesInUse.size();
+
+        for(String sFolderName: alsFolderNamesInUse){
+
+            iProgressNumerator++;
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    true, "Checking folder " + sFolderName + "...",
+                    BROADCAST_WRITE_CATALOG_FILE);
+
+
+            Uri uriFolder = FormChildUri(gUriCatalogFolders[MEDIA_CATEGORY_VIDEOS], sFolderName);
+            //Count the number of items in the folder:
+            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder,
+                    DocumentsContract.getDocumentId(uriFolder));
+            Cursor c;
+            try {
+                c = gcrContentResolver.query(childrenUri, new String[]{
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+                if (c != null) {
+                    int iItemCount = c.getCount();
+                    c.close();
+                    if(iItemCount == 0){
+                        try{
+
+                            DocumentsContract.deleteDocument(gcrContentResolver, uriFolder);
+
+                        } catch (Exception e){
+                            Log.d("AGGalleryManager", "Trouble deleting empty folder: " + e.getMessage());
+                        }
+
+                    }
+
+                }
+            } catch (Exception e) {
+                Log.d("AGGalleryManager", "Problem querying folder.");
+            }
+
+        }
+
+    }
+
+    public void verifyCatalogItemsExist(int iMediaCategory, boolean bTrimMissingCatalogItems){
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
+        int iProgressBarValue = 0;
+
+        String sAnalysisStartDateTime = GlobalClass.GetTimeStampFileSafe();
+        BufferedWriter bwLogFile;
+        OutputStream osLogFile;
+
+        StringBuilder sbLogLines = new StringBuilder();
+
+        String sLogFileName = sAnalysisStartDateTime + "_" + gsCatalogFolderNames[iMediaCategory] + "CatalogVerification_.txt";
+        Uri uriLogFile;
+        try {
+            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+        } catch (FileNotFoundException e) {
+            return;
+        }
+        if(uriLogFile == null){
+            return;
+        }
+        try { //Required for the log file.
+            osLogFile = GlobalClass.gcrContentResolver.openOutputStream(uriLogFile, "wt");
+            if (osLogFile == null) {
+                return;
+            }
+            bwLogFile = new BufferedWriter(new OutputStreamWriter(osLogFile));
+
+
+            TreeMap<String, ItemClass_CatalogItem> tmCatalogItemsToTrim = new TreeMap<>();
+            for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(iMediaCategory).entrySet()) {
+
+                ItemClass_CatalogItem icci = entry.getValue();
+
+                iProgressNumerator++;
+                if (iProgressNumerator % 10 == 0) {
+                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                    BroadcastProgress(false, "",
+                            true, iProgressBarValue,
+                            true, "Verifying item ID " + icci.sItemID + "...",
+                            BROADCAST_WRITE_CATALOG_FILE);
+                }
+
+                String sUri = "";
+                if (iMediaCategory == MEDIA_CATEGORY_VIDEOS) {
+                    if (icci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                        //A folder containing files related to this M3U8:
+                        sUri = GlobalClass.gsUriAppRootPrefix
+                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
+                                + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
+                    } else {
+                        //A single file:
+                        sUri = GlobalClass.gsUriAppRootPrefix
+                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
+                                + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
+                                + GlobalClass.gsFileSeparator + icci.sFilename;
+                    }
+                } else if (iMediaCategory == MEDIA_CATEGORY_IMAGES) {
+                    //A single file:
+                    sUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
+                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
+                            + GlobalClass.gsFileSeparator + icci.sFilename;
+                } else if (iMediaCategory == MEDIA_CATEGORY_COMICS) {
+                    //A folder containing files related to this comic:
+                    sUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
+                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
+                }
+                Uri uriItem = Uri.parse(sUri);
+
+                if (!CheckIfFileExists(uriItem)) {
+                    String sMessage = "Item with ID " + icci.sItemID + " not found. Expected to be found in location "
+                            + sUri;
+                    sbLogLines.append(sMessage).append("\n");
+                    tmCatalogItemsToTrim.put(entry.getKey(), entry.getValue());
+                    Log.d("AGGalleryManager", sMessage);
+                }
+
+
+            }
+
+            if (bTrimMissingCatalogItems) {
+                for (Map.Entry<String, ItemClass_CatalogItem> entry : tmCatalogItemsToTrim.entrySet()) {
+                    gtmCatalogLists.get(iMediaCategory).remove(entry.getKey());
+                }
+                CatalogDataFile_UpdateCatalogFile(iMediaCategory, "Updating catalog after content trim...");
+            }
+
+
+            bwLogFile.write(sbLogLines.toString());
+            bwLogFile.flush();
+            bwLogFile.close();
+            osLogFile.flush();
+            osLogFile.close();
+
+        } catch (Exception ignored){
+
+        }
+
+    }
+
+    public void deJumbleOrphanedFiles(int iMediaCategory){
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(MEDIA_CATEGORY_VIDEOS).size();
+        int iProgressBarValue = 0;
+
+
+        //Check folders:
+        ArrayList<String> alsFolderNamesInUse = GetDirectorySubfolderNames(gUriCatalogFolders[iMediaCategory]);
+
+        iProgressDenominator = alsFolderNamesInUse.size();
+
+        for(String sFolderName: alsFolderNamesInUse){
+
+            iProgressNumerator++;
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            BroadcastProgress(false, "",
+                    true, iProgressBarValue,
+                    true, "Checking folder " + sFolderName + "...",
+                    BROADCAST_WRITE_CATALOG_FILE);
+
+            try{
+                //Check if this is an old-system folder:
+                int iFolderID = Integer.parseInt(sFolderName);
+                if(iFolderID >= 1000){
+                    continue;
+                }
+            } catch (Exception e){
+                Log.d("AGGalleryManager", e.getMessage() + "");
+            }
+
+            Uri uriFolder = FormChildUri(gUriCatalogFolders[iMediaCategory], sFolderName);
+            //Count the number of items in the folder:
+            final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriFolder,
+                    DocumentsContract.getDocumentId(uriFolder));
+            Cursor c;
+            try {
+                c = gcrContentResolver.query(childrenUri, new String[]{
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
+                if (c != null) {
+                    int iItemCount = c.getCount();
+                    while (c.moveToNext()) {
+                        final String sFileName = c.getString(0);
+                        final String sMimeType = c.getString( 1);
+                        if(!sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)){
+                            //If it is a file, de-jumble the filename so that it can be picked up and viewed.
+                            if(isJumbled(sFileName)) {
+                                String sNewFilename = JumbleFileName(sFileName);
+                                Uri uriFile = FormChildUri(uriFolder, sFileName);
+                                try {
+                                    DocumentsContract.renameDocument(gcrContentResolver, uriFile, sNewFilename);
+                                } catch (Exception e) {
+                                    Log.d("AGGalleryManager", "Trouble with file dejumble of orphaned file.");
+                                }
+                            }
+                        }
+
+                    }
+
+
+
+                    c.close();
+
+                }
+            } catch (Exception e) {
+                Log.d("AGGalleryManager", "Problem querying folder.");
+            }
+
+        }
+
+    }
+
+    public boolean isJumbled(String sFilename){
+
+        if(sFilename.endsWith(".mp4") ||
+                sFilename.endsWith(".webm") ||
+                sFilename.endsWith(".jpeg") ||
+                sFilename.endsWith(".gif") ||
+                sFilename.endsWith(".png")){
+            return false;
+        }
+        return true;
+    }
+
+
+
 
     //=====================================================================================
     //===== Other Subroutines Section ===================================================
