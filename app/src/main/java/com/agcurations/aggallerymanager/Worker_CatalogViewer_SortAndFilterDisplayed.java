@@ -267,10 +267,10 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             boolean bTagMatchApplicable = false;
             boolean bTagsMatch = false;
             //Check to see if the user wants to filter by tag:
-            if(globalClass.galtsiCatalogViewerFilterTags != null){
-                if(globalClass.galtsiCatalogViewerFilterTags.get(GlobalClass.giSelectedCatalogMediaCategory).size() > 0){
+            if(GlobalClass.galtsiCatalogViewerFilterTags != null){
+                if(GlobalClass.galtsiCatalogViewerFilterTags.get(GlobalClass.giSelectedCatalogMediaCategory).size() > 0){
                     bTagMatchApplicable = true;
-                    if(entry.getValue().aliTags.containsAll(globalClass.galtsiCatalogViewerFilterTags.get(GlobalClass.giSelectedCatalogMediaCategory))){
+                    if(entry.getValue().aliTags.containsAll(GlobalClass.galtsiCatalogViewerFilterTags.get(GlobalClass.giSelectedCatalogMediaCategory))){
                         bTagsMatch = true;
                     }
                 }
