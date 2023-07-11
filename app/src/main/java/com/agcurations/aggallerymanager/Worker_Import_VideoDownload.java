@@ -84,25 +84,25 @@ public class Worker_Import_VideoDownload extends Worker {
             icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
         }
 
-        Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
+        Uri uriSequenceFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
 
 
         String sMessage;
 
-        if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
-            uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
+        if (!GlobalClass.CheckIfFileExists(uriSequenceFolder)) {
+            uriSequenceFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
 
 
             try {
-                uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+                uriSequenceFolder = GlobalClass.CreateDirectory(uriSequenceFolder);
             } catch (Exception e){
-                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + uriDestinationFolder;
+                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + uriSequenceFolder;
                 LogThis("doWork()", sMessage, e.getMessage());
-                uriDestinationFolder = null;
+                uriSequenceFolder = null;
             }
 
 
-            if (uriDestinationFolder == null) {
+            if (uriSequenceFolder == null) {
                 //Unable to create directory
                 sMessage = "Unable to create destination folder " +
                         icfDownloadItem.sDestinationFolder + " at: "
@@ -115,39 +115,37 @@ public class Worker_Import_VideoDownload extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder created: " + uriSequenceFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestinationFolder + "\n",
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriSequenceFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
                     IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
         }
 
-        Uri uriWorkingFolder = null;
+        Uri uriDestinationFolder = null;
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) {
-            //Create a folder to serve as a working folder:
-            uriWorkingFolder = GlobalClass.FormChildUri(uriDestinationFolder.toString(), sNextRecordId);
-
-            //Create the temporary download folder (within the destination folder):
-            if (!GlobalClass.CheckIfFileExists(uriWorkingFolder)) {
+            //Create the destination folder:
+            uriDestinationFolder = GlobalClass.FormChildUri(uriSequenceFolder.toString(), sNextRecordId);
+            if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
 
                 try {
-                    uriWorkingFolder = GlobalClass.CreateDirectory(uriWorkingFolder);
+                    uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
                 } catch (Exception e) {
-                    sMessage = "Could not locate parent directory of destination folder in order to create working folder. Working folder: " + uriWorkingFolder;
+                    sMessage = "Could not locate parent directory of destination folder in order to create working folder. Working folder: " + uriDestinationFolder;
                     LogThis("doWork()", sMessage, e.getMessage());
-                    uriWorkingFolder = null;
+                    uriDestinationFolder = null;
                 }
 
-                if (uriWorkingFolder == null) {
+                if (uriDestinationFolder == null) {
                     //Unable to create directory
                     sMessage = "Unable to create working folder " +
                             sNextRecordId + " at: "
-                            + uriDestinationFolder + "\n";
+                            + uriSequenceFolder + "\n";
                     globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
                             true, "Operation halted.",
@@ -156,13 +154,14 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 } else {
-                    globalClass.BroadcastProgress(true, "Destination folder created: " + uriWorkingFolder + "\n",
+                    globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
                             false, iProgressBarValue,
                             false, "",
                             IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                 }
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder verified: " + uriWorkingFolder + "\n",
+                //todo: What to do if the destination folder already exists?
+                globalClass.BroadcastProgress(true, "Destination folder already exists (could be an issue): " + uriDestinationFolder + "\n",
                         true, iProgressBarValue,
                         false, "",
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
@@ -330,8 +329,13 @@ public class Worker_Import_VideoDownload extends Worker {
                 DownloadManager.Request request = new DownloadManager.Request(Uri.parse(sURLAndFileName[FILE_DOWNLOAD_ADDRESS]));
                 String sDownloadFolderRelativePath;
                 sDownloadFolderRelativePath = File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                        File.separator + ciNew.sFolderRelativePath +
-                        File.separator + ciNew.sItemID;
+                        File.separator + ciNew.sFolderRelativePath;
+
+                //Resolve issue of %2F in the relative path (a file separator):
+                String sDownloadMgrAcceptedFileSeparator = File.separator;
+                String sUriFileSeparator = GlobalClass.gsFileSeparator;
+                sDownloadFolderRelativePath = sDownloadFolderRelativePath.replace(sUriFileSeparator, sDownloadMgrAcceptedFileSeparator);
+
                 File fExternalFilesDir = getApplicationContext().getExternalFilesDir(null);
                 if(fExternalFilesDir != null) {
                     sVideoDownloadFolder = fExternalFilesDir.getAbsolutePath() + sDownloadFolderRelativePath;
@@ -404,7 +408,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 inputStream.close();
 
                 //Write the m3u8 file to the working folder:
-                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriWorkingFolder, MimeTypes.BASE_TYPE_TEXT, ciNew.sFilename);
+                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, MimeTypes.BASE_TYPE_TEXT, ciNew.sFilename);
                 if (uriM3U8 == null) {
                     sMessage = "Could not create M3U8 file.";
                     globalClass.BroadcastProgress(true, sMessage,
@@ -460,23 +464,15 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
                 }
-                Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoFinalDestinationFolder.toString(), ciNew.sItemID);
-                if (uriVideoWorkingFolder == null) {
-                    sMessage = "Could not locate video working folder " + ciNew.sItemID + " in " +
-                            uriVideoFinalDestinationFolder;
-                    globalClass.gbImportExecutionRunning = false;
-                    globalClass.gbImportExecutionFinished = true;
-                    return Result.failure(DataErrorMessage(sMessage));
-                }
                 //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
                 //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
                 //A file sequence string array can be too big to pass to a worker, so write it to a file:
 
-                Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoWorkingFolder, MimeTypes.BASE_TYPE_TEXT,
+                Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoFinalDestinationFolder, MimeTypes.BASE_TYPE_TEXT,
                         VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
                 if (uriDLIDFileSequenceFile == null) {
                     sMessage = "Could not create file to record download ID sequencing: " + VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +
-                            uriVideoWorkingFolder;
+                            uriVideoFinalDestinationFolder;
                     globalClass.gbImportExecutionRunning = false;
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
@@ -512,7 +508,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                     .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
                     .putString(Worker_DownloadPostProcessing.KEY_ARG_PATH_TO_MONITOR_FOR_DOWNLOADS, sVideoDownloadFolder)
-                    .putString(Worker_DownloadPostProcessing.KEY_ARG_WORKING_FOLDER_NAME, ciNew.sFolderRelativePath)  //Videos/<Tag folder>
+                    .putString(Worker_DownloadPostProcessing.KEY_ARG_RELATIVE_PATH_TO_FOLDER, ciNew.sFolderRelativePath)  //Videos/<Sequence folder>
                     .putInt(Worker_DownloadPostProcessing.KEY_ARG_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS)
                     .putInt(Worker_DownloadPostProcessing.KEY_ARG_VIDEO_TYPE_SINGLE_M3U8, iSingleOrM3U8) //Used to tell if it should search for subfolder.
                     .putString(Worker_DownloadPostProcessing.KEY_ARG_ITEM_ID, ciNew.sItemID) //Used if the type is M3U8 to find subfolder.
