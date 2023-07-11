@@ -310,6 +310,9 @@ public class Worker_Catalog_LoadData extends Worker {
         //GlobalClass.correctCatalogData();
         //globalClass.CatalogDataFile_UpdateCatalogFiles("Updating data...");
 
+        //globalClass.verifyCatalogItemsExist(GlobalClass.MEDIA_CATEGORY_VIDEOS, false);
+        //globalClass.deJumbleOrphanedFiles(GlobalClass.MEDIA_CATEGORY_VIDEOS);
+
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
