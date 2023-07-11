@@ -267,6 +267,11 @@ public class Activity_Main extends AppCompatActivity {
             ReadUserData(getApplicationContext());
             if(GlobalClass.galicu_Users.size() == 1){
                 bSingleUserInUse = true;
+                if(GlobalClass.galicu_Users.get(0).sPin.equals("")){
+                    //If there is only one user and the user does not have a pin assigned,
+                    //  auto-login that user:
+                    GlobalClass.gicuCurrentUser = GlobalClass.galicu_Users.get(0);
+                }
             }
 
             if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
@@ -412,12 +417,18 @@ public class Activity_Main extends AppCompatActivity {
                 boolean bSingleUserInUse = false;
 
                 if(GlobalClass.galicu_Users != null) {
-                    bSingleUserInUse = GlobalClass.galicu_Users.size() == 0;
+                    if(GlobalClass.galicu_Users.size() == 1){
+                        bSingleUserInUse = true;
+                        if(GlobalClass.galicu_Users.get(0).sPin.equals("")){
+                            //If there is only one user and the user does not have a pin assigned,
+                            //  auto-login that user:
+                            GlobalClass.gicuCurrentUser = GlobalClass.galicu_Users.get(0);
+                        }
+                    }
                 }
 
-                if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
-                    //If the user has not set the option to auto-login a user, then show the user selection
-                    //  activity:
+                if(!bSingleUserInUse){
+                    //show the user selection activity:
                     Intent intentUserSelection = new Intent(context, Activity_UserSelection.class);
                     context.startActivity(intentUserSelection);
                 }
