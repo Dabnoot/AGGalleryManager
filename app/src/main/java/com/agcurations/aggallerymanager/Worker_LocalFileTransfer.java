@@ -380,9 +380,25 @@ public class Worker_LocalFileTransfer extends Worker {
                                     String sDestinationFileName = sTemp[RECORD_FIELD_INDEX_DESTINATION_FILENAME];
 
                                     //todo: will there be a problem here if there is a file and a directory of the same name?
+
+                                    String sDestinationRelativePath = sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER];
+                                    sDestinationRelativePath = sDestinationRelativePath.replace("%2F", GlobalClass.gsFileSeparator);
+                                    if(sDestinationRelativePath.contains(GlobalClass.gsFileSeparator)){
+                                        //Ensure that the multiple folders of "relative path" exist:
+                                        String[] sRelativePathFolders = sDestinationRelativePath.split(GlobalClass.gsFileSeparator);
+                                        for(int i = 0; i < sRelativePathFolders.length - 1; i++){
+                                            //Don't analyze the last folder on this string. It is only the intermediary folders that we are worried about.
+                                            //Problem pops up for local-storage comic import. It would pop up for an m3u8 import if such a folder of files were on local storage,
+                                            //  but that's not typically how an m3u8 import is ancipicated to happen in this program.
+                                            Uri uriDestinationFolderParentA = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sRelativePathFolders[i]);
+                                            if(!GlobalClass.CheckIfFileExists(uriDestinationFolderParentA)){
+                                                GlobalClass.CreateDirectory(uriDestinationFolderParentA);
+                                            }
+                                        }
+                                    }
+
                                     Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER]);
                                     if(!GlobalClass.CheckIfFileExists(uriDestinationFolder)){
-                                        uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER]);
                                         uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
                                     }
 
@@ -529,7 +545,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         }
                                     }
 
-                                    sLogLine = "\nSuccess.";
+                                    sLogLine = "Success.\n";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,
