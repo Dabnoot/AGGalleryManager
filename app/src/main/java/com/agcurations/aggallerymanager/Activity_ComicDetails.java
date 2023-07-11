@@ -240,7 +240,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
             gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
         }
         globalClass.gbCatalogViewerRefresh = true;
-        Toast.makeText(getApplicationContext(), "Deleting comic...", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Deleting comic...", Toast.LENGTH_SHORT).show();
 
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         String sCatalogRecord = GlobalClass.getCatalogRecordString(gciCatalogItem);
@@ -546,7 +546,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     if (gbDebugTouch)
-                        Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_SHORT).show();
                     StartComicViewerActivity(position);
                 }
             });
