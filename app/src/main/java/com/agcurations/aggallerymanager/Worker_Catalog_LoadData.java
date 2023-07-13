@@ -175,7 +175,7 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
-        int iProgressDenominator = 11;
+        int iProgressDenominator = 10;
         int iProgressNumerator = 0;
         int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
@@ -272,16 +272,10 @@ public class Worker_Catalog_LoadData extends Worker {
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
                 true, iProgressBarValue,
-                true, "Post Processing",
+                true, "Analyzing storage folder availability...",
                 CATALOG_LOAD_ACTION_RESPONSE);
 
-
-        iProgressNumerator++;
-        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-        globalClass.BroadcastProgress(false, "",
-                true, iProgressBarValue,
-                true, "Examining catalog storage folders...",
-                CATALOG_LOAD_ACTION_RESPONSE);
+        //Examine catgalog storage folders (quick process):
         for(int iMediaCateogry = 0; iMediaCateogry < 3; iMediaCateogry++) {
             GlobalClass.getAGGMStorageFolderAvailability(iMediaCateogry);
         }
