@@ -172,7 +172,8 @@ public class Fragment_WebPageTab extends Fragment {
         gWebView.setBackgroundColor(Color.BLACK);
         WebSettings webSettings = gWebView.getSettings();
         //webSettings.setJavaScriptEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
-        webSettings.setDomStorageEnabled(true); //Required to load all graphics on some webpages.
+        GlobalClass.ConfigureWebSettings(webSettings);
+
 
         gWebView.setOpenLinkInNewTabHandler(handlerOpenLinkInNewTab);
 

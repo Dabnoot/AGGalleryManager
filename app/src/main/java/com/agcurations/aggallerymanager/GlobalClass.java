@@ -23,6 +23,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.WebSettings;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -2208,6 +2209,18 @@ public class GlobalClass extends Application {
     public static final String EXTRA_WEBPAGE_TAB_DATA_TITLE = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_TITLE";
     public static final String EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_FAVICON_ADDRESS";
     public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
+
+    public static String giWebViewSettings_UserAgentString;
+    public static void ConfigureWebSettings(WebSettings webSettings){
+        webSettings.setDomStorageEnabled(true); //Required to load all graphics on some webpages.
+        if(giWebViewSettings_UserAgentString != null){
+            if(!giWebViewSettings_UserAgentString.equals("")){
+                //User agent can be changed to request the "desktop version" of a web page, but might
+                //  throw off any server-side client authentication systems.
+                webSettings.setUserAgentString(giWebViewSettings_UserAgentString);
+            }
+        }
+    }
 
     public static final Queue<String> queueWebPageTabDataFileWriteRequests = new LinkedList<>();
     public static final int giMaxDelayForWriteRequestMS = 5000;

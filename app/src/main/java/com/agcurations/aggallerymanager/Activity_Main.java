@@ -153,6 +153,10 @@ public class Activity_Main extends AppCompatActivity {
             Log.d("Activity_Main:onCreate()", sMessage);
         }
 
+        String sAndroidUserAgent = "Mozilla/5.0 (Linux; Android 13; SM-X200) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
+        String sAndroidDesktopUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
+        String sWindowsUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
+        GlobalClass.giWebViewSettings_UserAgentString = "";
 
         gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);
         gTextView_CatalogReadProgressBarText = findViewById(R.id.textView_CatalogReadProgressBarText);
