@@ -13,4 +13,6 @@ public class ItemClass_WebPageTabData  implements Serializable {
     Stack<String> stackBackHistory = new Stack<>();
     Stack<String> stackForwardHistory = new Stack<>();
 
+    String sUserName = ""; //User name of the tab creator. Don't share tabs between users.
+
 }

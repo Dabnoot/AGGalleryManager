@@ -2229,6 +2229,7 @@ public class GlobalClass extends Application {
     public static String getWebPageTabDataFileHeader(){
         String sHeader = "";
         sHeader = sHeader + "ID";                       //Tab ID (unique).
+        sHeader = sHeader + "\t" + "User";             //User who created the tab. Tabs are not shared between users
         sHeader = sHeader + "\t" + "Title";             //Tab title (don't reload the page to get the title).
         sHeader = sHeader + "\t" + "Address";           //Current address for the tab.
         sHeader = sHeader + "\t" + "Favicon Filename";  //Filename of bitmap for tab icon.
@@ -2243,6 +2244,7 @@ public class GlobalClass extends Application {
 
         String sRecord = "";  //To be used when writing the catalog file.
         sRecord = sRecord + GlobalClass.JumbleStorageText(icwptd.sTabID);
+        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sUserName);
         sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sTabTitle);
         sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sAddress);
         sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sFaviconAddress);
@@ -2278,19 +2280,20 @@ public class GlobalClass extends Application {
         //Designed for interpreting a line as read from the WebPageTabData file.
         ItemClass_WebPageTabData icwptd =  new ItemClass_WebPageTabData();
         icwptd.sTabID = GlobalClass.JumbleStorageText(sRecord[0]);
-        icwptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[1]);
-        icwptd.sAddress = GlobalClass.JumbleStorageText(sRecord[2]);
+        icwptd.sUserName = GlobalClass.JumbleStorageText(sRecord[1]);
+        icwptd.sTabTitle = GlobalClass.JumbleStorageText(sRecord[2]);
+        icwptd.sAddress = GlobalClass.JumbleStorageText(sRecord[3]);
 
-
-        if(sRecord.length > 3) { //Length is 1-based
-            //Favicon filename might be empty, and if it is the last item on the record,
-            //  it will not be split-out via the split operation.
-            icwptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[3]); //Array index is 0-based.
-        }
 
         if(sRecord.length > 4) { //Length is 1-based
+            //Favicon filename might be empty, and if it is the last item on the record,
+            //  it will not be split-out via the split operation.
+            icwptd.sFaviconAddress = GlobalClass.JumbleStorageText(sRecord[4]); //Array index is 0-based.
+        }
+
+        if(sRecord.length > 5) { //Length is 1-based
             //Get the back-stack:
-            String sBackStackRaw = sRecord[4]; //Array index is 0-based.
+            String sBackStackRaw = sRecord[5]; //Array index is 0-based.
             sBackStackRaw = sBackStackRaw.substring(1, sBackStackRaw.length() - 1); //Remove '{' and '}'.
             String[] sBackStackArray = sBackStackRaw.split("%%");
             for (int i = 0; i < sBackStackArray.length; i++) {
@@ -2299,9 +2302,9 @@ public class GlobalClass extends Application {
             icwptd.stackBackHistory.addAll(Arrays.asList(sBackStackArray));
         }
 
-        if(sRecord.length > 5) { //Length is 1-based
+        if(sRecord.length > 6) { //Length is 1-based
             //Get the forward-stack:
-            String sForwardStackRaw = sRecord[5]; //Array index is 0-based.
+            String sForwardStackRaw = sRecord[6]; //Array index is 0-based.
             sForwardStackRaw = sForwardStackRaw.substring(1, sForwardStackRaw.length() - 1); //Remove '{' and '}'.
             String[] sForwardStackArray = sForwardStackRaw.split("%%");
             for (int i = 0; i < sForwardStackArray.length; i++) {
@@ -2319,7 +2322,7 @@ public class GlobalClass extends Application {
         String[] sRecord2 =  sRecord.split("\t");
         //Split will ignore empty data and not return a full-sized array.
         //  Correcting array...
-        int iRequiredFieldCount = 6;
+        int iRequiredFieldCount = 7;
         String[] sRecord3 = new String[iRequiredFieldCount];
         for(int i = 0; i < iRequiredFieldCount; i++){
             if(i < sRecord2.length){
