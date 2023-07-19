@@ -74,17 +74,17 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
                 brReader = new BufferedReader(new InputStreamReader(isWebPageTabDataFile));
                 brReader.readLine(); //Skip read of the file header.
 
-                if (globalClass.gal_WebPages == null) {
-                    globalClass.gal_WebPages = new ArrayList<>();
+                if (GlobalClass.gal_WebPages == null) {
+                    GlobalClass.gal_WebPages = new ArrayList<>();
                 } else {
-                    globalClass.gal_WebPages.clear();
+                    GlobalClass.gal_WebPages.clear();
                 }
 
                 String sLine = brReader.readLine();
                 while (sLine != null) {
                     ItemClass_WebPageTabData icwptd_DataRecordFromFile;
                     icwptd_DataRecordFromFile = GlobalClass.ConvertStringToWebPageTabData(sLine);
-                    globalClass.gal_WebPages.add(icwptd_DataRecordFromFile);
+                    GlobalClass.gal_WebPages.add(icwptd_DataRecordFromFile);
                     sLine = brReader.readLine();
                 }
                 brReader.close();

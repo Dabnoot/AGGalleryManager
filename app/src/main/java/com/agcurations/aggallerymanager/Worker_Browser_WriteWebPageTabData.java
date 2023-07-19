@@ -81,7 +81,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             sbBuffer.append(sHeader);
             sbBuffer.append("\n");
 
-            for(ItemClass_WebPageTabData icwptd: globalClass.gal_WebPages){
+            for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPages){
                 String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
                 sbBuffer.append(sLine);
                 sbBuffer.append("\n");
