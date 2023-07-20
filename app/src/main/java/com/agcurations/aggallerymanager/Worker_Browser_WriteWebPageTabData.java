@@ -7,6 +7,7 @@ import android.util.Log;
 import java.io.BufferedWriter;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
@@ -89,10 +90,18 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
                 sbBuffer.append("\n");
             }
 
+            ArrayList<String> alsCurrentUserNames = new ArrayList<>();
+            for(ItemClass_User icu: GlobalClass.galicu_Users){
+                alsCurrentUserNames.add(icu.sUserName);
+            }
+
             for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPagesForOtherUsers){
-                String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
-                sbBuffer.append(sLine);
-                sbBuffer.append("\n");
+                //Check to make sure that user still exists (automatically handle case of deleted user):
+                if(alsCurrentUserNames.contains(icwptd.sUserName)) {
+                    String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
+                    sbBuffer.append(sLine);
+                    sbBuffer.append("\n");
+                }
             }
 
             //Write the data to the file:
