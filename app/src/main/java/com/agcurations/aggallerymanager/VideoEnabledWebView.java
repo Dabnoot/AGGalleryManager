@@ -395,6 +395,7 @@ public class VideoEnabledWebView extends WebView
                             StringBuilder sb = new StringBuilder();
                             sb.append(sWebPageURL).append("\n");
                             sb.append(sOriginalFileName).append("\n");
+                            sb.append(GlobalClass.gicuCurrentUser.sUserName).append("\n");
                             osImageMetadataFile.write(sb.toString().getBytes(StandardCharsets.UTF_8));
 
                             osImageMetadataFile.flush();
