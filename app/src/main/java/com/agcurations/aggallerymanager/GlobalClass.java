@@ -98,7 +98,6 @@ public class GlobalClass extends Application {
     public static Uri gUriJobFilesFolder;
     public static Uri gUriBrowserDataFolder;
     public static Uri gUriWebpageTabDataFile;
-    public static Uri gUriWebpageFaviconBitmapFolder;
     public static Uri gUriImageDownloadHoldingFolder; //Used to hold individual images downloaded by the user from the browser prior to import.
     public static File gfDownloadExternalStorageFolder;  //Destination root for DownloadManager Downloaded files. Android limits DL destination locations.
     public static File gfImageDownloadHoldingFolderTemp; //Used to hold download manager files temporarily, to be moved so that DLM can't find them for cleanup operations.

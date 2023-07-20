@@ -152,9 +152,6 @@ public class Worker_Catalog_LoadData extends Worker {
         //Get file to hold web page tab data:
         GlobalClass.gUriWebpageTabDataFile = getDataFileOrCreateIt(GlobalClass.gUriBrowserDataFolder, "WebpageTabData.dat", "Could not create file WebpageTabData.dat.");
 
-        //Create Webpage Favicon folder if it does not exist:
-        GlobalClass.gUriWebpageFaviconBitmapFolder = initSubfolder(GlobalClass.gUriDataFolder, "TempFavicon", "Could not create TempFavicon folder.");
-
         stopWatch.PostDebugLogAndRestart("External folders built/verified with duration ");
 
         //Save the application-wide log filename to a preference so that it can be pulled if GlobalClass resets.
