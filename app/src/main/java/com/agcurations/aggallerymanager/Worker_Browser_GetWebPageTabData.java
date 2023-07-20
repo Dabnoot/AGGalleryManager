@@ -74,17 +74,27 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
                 brReader = new BufferedReader(new InputStreamReader(isWebPageTabDataFile));
                 brReader.readLine(); //Skip read of the file header.
 
-                if (GlobalClass.gal_WebPages == null) {
-                    GlobalClass.gal_WebPages = new ArrayList<>();
+                if (GlobalClass.gal_WebPagesForCurrentUser == null) {
+                    GlobalClass.gal_WebPagesForCurrentUser = new ArrayList<>();
                 } else {
-                    GlobalClass.gal_WebPages.clear();
+                    GlobalClass.gal_WebPagesForCurrentUser.clear();
+                }
+
+                if (GlobalClass.gal_WebPagesForOtherUsers == null) {
+                    GlobalClass.gal_WebPagesForOtherUsers = new ArrayList<>();
+                } else {
+                    GlobalClass.gal_WebPagesForOtherUsers.clear();
                 }
 
                 String sLine = brReader.readLine();
                 while (sLine != null) {
                     ItemClass_WebPageTabData icwptd_DataRecordFromFile;
                     icwptd_DataRecordFromFile = GlobalClass.ConvertStringToWebPageTabData(sLine);
-                    GlobalClass.gal_WebPages.add(icwptd_DataRecordFromFile);
+                    if(icwptd_DataRecordFromFile.sUserName.equals(GlobalClass.gicuCurrentUser.sUserName)){
+                        GlobalClass.gal_WebPagesForCurrentUser.add(icwptd_DataRecordFromFile);
+                    } else {
+                        GlobalClass.gal_WebPagesForOtherUsers.add(icwptd_DataRecordFromFile);
+                    }
                     sLine = brReader.readLine();
                 }
                 brReader.close();

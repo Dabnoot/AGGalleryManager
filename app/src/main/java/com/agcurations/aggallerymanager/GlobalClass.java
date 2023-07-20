@@ -180,7 +180,8 @@ public class GlobalClass extends Application {
 
     public boolean gbIsDarkModeOn = false;
 
-    public static ArrayList<ItemClass_WebPageTabData> gal_WebPages;
+    public static ArrayList<ItemClass_WebPageTabData> gal_WebPagesForCurrentUser;
+    public static ArrayList<ItemClass_WebPageTabData> gal_WebPagesForOtherUsers;
 
     public boolean gbWorkerVideoAnalysisInProgress = false;
 

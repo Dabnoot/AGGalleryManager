@@ -81,7 +81,15 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             sbBuffer.append(sHeader);
             sbBuffer.append("\n");
 
-            for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPages){
+            //Combine list of web pages for current user with list of web pages for other users:
+
+            for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPagesForCurrentUser){
+                String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
+                sbBuffer.append(sLine);
+                sbBuffer.append("\n");
+            }
+
+            for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPagesForOtherUsers){
                 String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
                 sbBuffer.append(sLine);
                 sbBuffer.append("\n");

@@ -390,7 +390,7 @@ public class Fragment_WebPageTab extends Fragment {
                     }
                     if(sPossibleAddress.startsWith("http")){
                         boolean bAddressInUse = false;
-                        for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPages){
+                        for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPagesForCurrentUser){
                             if(sPossibleAddress.equals(icwptd.sAddress)){
                                 bAddressInUse = true;
                                 break;
@@ -439,18 +439,18 @@ public class Fragment_WebPageTab extends Fragment {
                     }*/
                     int i = getWebPageTabDataIndex();
                     if(i >= 0){
-                        int iStackBackHistorySize = GlobalClass.gal_WebPages.get(i).stackBackHistory.size();
+                        int iStackBackHistorySize = GlobalClass.gal_WebPagesForCurrentUser.get(i).stackBackHistory.size();
                         if(iStackBackHistorySize > 1) {
                             //The top of the back stack should be equal to the currenly displayed webpage.
-                            String sCurrentAddress = GlobalClass.gal_WebPages.get(i).stackBackHistory.pop();
-                            GlobalClass.gal_WebPages.get(i).stackForwardHistory.push(sCurrentAddress);
+                            String sCurrentAddress = GlobalClass.gal_WebPagesForCurrentUser.get(i).stackBackHistory.pop();
+                            GlobalClass.gal_WebPagesForCurrentUser.get(i).stackForwardHistory.push(sCurrentAddress);
                             //Show the forward button as enabled:
                             ForwardButtonEnable();
                             if(iStackBackHistorySize == 2){
                                 //If we are now at the top of the stack, show the back button as disabled:
                                 BackButtonDisable();
                             }
-                            String sBackURL = GlobalClass.gal_WebPages.get(i).stackBackHistory.peek();
+                            String sBackURL = GlobalClass.gal_WebPagesForCurrentUser.get(i).stackBackHistory.peek();
                             gWebView.loadUrl(sBackURL);
                             //onPageStarted will handle setting sAddress variables.
                             //don't worry about writing the updated back and finish stacks to the file here.
@@ -475,9 +475,9 @@ public class Fragment_WebPageTab extends Fragment {
                     }*/
                     int i = getWebPageTabDataIndex();
                     if(i >= 0){
-                        if(GlobalClass.gal_WebPages.get(i).stackForwardHistory.size() > 0) {
-                            String sForwardURL = GlobalClass.gal_WebPages.get(i).stackForwardHistory.pop();
-                            GlobalClass.gal_WebPages.get(i).stackBackHistory.push(sForwardURL);
+                        if(GlobalClass.gal_WebPagesForCurrentUser.get(i).stackForwardHistory.size() > 0) {
+                            String sForwardURL = GlobalClass.gal_WebPagesForCurrentUser.get(i).stackForwardHistory.pop();
+                            GlobalClass.gal_WebPagesForCurrentUser.get(i).stackBackHistory.push(sForwardURL);
                             //Show the back button as enabled:
                             BackButtonEnable();
 
@@ -546,11 +546,11 @@ public class Fragment_WebPageTab extends Fragment {
         Activity_Browser activity_browser = (Activity_Browser) getActivity();
         if(activity_browser == null) return;
         int iSelectedTab = activity_browser.tabLayout_WebTabs.getSelectedTabPosition();
-        int iSelectedTabHashID = GlobalClass.gal_WebPages.get(iSelectedTab).iTabFragmentHashID;
+        int iSelectedTabHashID = GlobalClass.gal_WebPagesForCurrentUser.get(iSelectedTab).iTabFragmentHashID;
 
 
         //Load data and webpage:
-        for (ItemClass_WebPageTabData icwptd : GlobalClass.gal_WebPages) {
+        for (ItemClass_WebPageTabData icwptd : GlobalClass.gal_WebPagesForCurrentUser) {
             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                 if (icwptd.sAddress != null) {
                     if (!icwptd.sAddress.equals("")) {
@@ -579,8 +579,8 @@ public class Fragment_WebPageTab extends Fragment {
     }
 
     private int getWebPageTabDataIndex(){
-        for (int i = 0; i < GlobalClass.gal_WebPages.size(); i++) {
-            ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPages.get(i);
+        for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
+            ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                 return i;
             }
@@ -645,8 +645,8 @@ public class Fragment_WebPageTab extends Fragment {
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
 
                 String sTitle = view.getTitle();
-                for (int i = 0; i < GlobalClass.gal_WebPages.size(); i++) {
-                    ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPages.get(i);
+                for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
+                    ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                         icwptd.sTabTitle = sTitle;
                         if(icwptd.stackBackHistory.size() > 0){
@@ -665,7 +665,7 @@ public class Fragment_WebPageTab extends Fragment {
                         if (activity_browser != null) {
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
-                            GlobalClass.gal_WebPages.set(i, icwptd);
+                            GlobalClass.gal_WebPagesForCurrentUser.set(i, icwptd);
                             Activity_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageFinished()");
 
                         }
@@ -681,8 +681,8 @@ public class Fragment_WebPageTab extends Fragment {
 
                 //Update the recorded webpage history for this tab:
                 //Find the associated WebPageTabData:
-                for (int i = 0; i < GlobalClass.gal_WebPages.size(); i++) {
-                    ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPages.get(i);
+                for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
+                    ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                             /*if (icwptd.sAddress == null) {
                                 icwptd.sAddress = new ArrayList<>();
@@ -720,7 +720,7 @@ public class Fragment_WebPageTab extends Fragment {
 
                             //Update memory and page storage file.
                             //Service_WebPageTabs.startAction_SetWebPageTabData(getContext(), icwptd);
-                            GlobalClass.gal_WebPages.set(i, icwptd);
+                            GlobalClass.gal_WebPagesForCurrentUser.set(i, icwptd);
                             Activity_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: getNewWebViewClient.onPageStarted()");
 
 
@@ -834,11 +834,11 @@ public class Fragment_WebPageTab extends Fragment {
                     Activity_Browser activity_browser = (Activity_Browser) getActivity();
                     if(activity_browser != null) {
                         //Update the favicon Address in the WebPageTabData:
-                        for (int i = 0; i < GlobalClass.gal_WebPages.size(); i++) {
-                            ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPages.get(i);
+                        for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
+                            ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
                             if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {
                                 icwptd.sFaviconAddress = sFaviconAddress;
-                                GlobalClass.gal_WebPages.set(i, icwptd);
+                                GlobalClass.gal_WebPagesForCurrentUser.set(i, icwptd);
                                 Activity_Browser.startAction_WriteWebPageTabData(getContext(), "Fragment_WebPageTab: ConfigureHTMLWtacher.Observer.onChanged()");
                                 break;
                             }

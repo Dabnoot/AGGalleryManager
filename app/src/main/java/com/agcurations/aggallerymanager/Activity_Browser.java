@@ -121,7 +121,7 @@ public class Activity_Browser extends AppCompatActivity {
 
             globalClass = (GlobalClass) getApplicationContext();
 
-            GlobalClass.gal_WebPages = new ArrayList<>();
+            GlobalClass.gal_WebPagesForCurrentUser = new ArrayList<>();
 
             viewPager2_WebPages = findViewById(R.id.viewPager2_WebPages);
             //Set the number of pages that should be retained to either side of the current page
@@ -253,7 +253,7 @@ public class Activity_Browser extends AppCompatActivity {
         if(gsNewTabSequenceHelper != null){
             String sNewTabPostion = gsNewTabSequenceHelper[1];
             iNewTabPosition = Integer.parseInt(sNewTabPostion);
-            GlobalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
+            GlobalClass.gal_WebPagesForCurrentUser.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
             viewPagerFragmentAdapter.insertFragment(iNewTabPosition, icwptd.sAddress);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
             viewPagerFragmentAdapter.notifyDataSetChanged();
             InitializeTabAppearance();
@@ -272,7 +272,7 @@ public class Activity_Browser extends AppCompatActivity {
 
         } else {
             iNewTabPosition = viewPagerFragmentAdapter.getItemCount(); //Put the tab at the end.
-            GlobalClass.gal_WebPages.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
+            GlobalClass.gal_WebPagesForCurrentUser.add(iNewTabPosition, icwptd); //This action must be done before createFragment (cannot be in SetWebPageData due to race condition)
             viewPagerFragmentAdapter.createFragment(iNewTabPosition);   //Call CreateFragment before SetWebPageTabData to get Hash code. SetWebPageTabData will update globalClass.galWebPages, which will wipe the Hash code from memory.
             viewPagerFragmentAdapter.notifyDataSetChanged();
             InitializeTabAppearance();
@@ -407,11 +407,11 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("InitializeTabAppearance start.");
         for(int i =0; i<tabLayout_WebTabs.getTabCount(); i++)
         {
-            if(tabLayout_WebTabs.getTabCount() > GlobalClass.gal_WebPages.size()){
+            if(tabLayout_WebTabs.getTabCount() > GlobalClass.gal_WebPagesForCurrentUser.size()){
                 this.finish(); //Close this activity if the sizes are out-of-sync.
                 return;
             }
-            String sTitle = GlobalClass.gal_WebPages.get(i).sTabTitle;
+            String sTitle = GlobalClass.gal_WebPagesForCurrentUser.get(i).sTabTitle;
             if(sTitle.equals("")){
                 sTitle = "New Tab";
             }
@@ -423,7 +423,7 @@ public class Activity_Browser extends AppCompatActivity {
 
             ImageView imageView_Favicon = relativeLayout_custom_tab.findViewById(R.id.imageView_Favicon);
             if(imageView_Favicon != null) {
-                String sFaviconAddress = GlobalClass.gal_WebPages.get(i).sFaviconAddress;
+                String sFaviconAddress = GlobalClass.gal_WebPagesForCurrentUser.get(i).sFaviconAddress;
                 if(!sFaviconAddress.equals("")){
                     Glide.with(this)
                             .load(sFaviconAddress)
@@ -465,7 +465,7 @@ public class Activity_Browser extends AppCompatActivity {
                     //Perform operations to remove the tab:
                     viewPagerFragmentAdapter.removeItem(iPosition);
 
-                    GlobalClass.gal_WebPages.remove(iPosition);
+                    GlobalClass.gal_WebPagesForCurrentUser.remove(iPosition);
 
                     //Update the tab notch views:
                     InitializeTabAppearance();
@@ -508,8 +508,8 @@ public class Activity_Browser extends AppCompatActivity {
         ApplicationLogWriter("updateSingleTabNotchFavicon start.");
         int iTabIndex = -1;
         //Find the tab index matching the supplied HashCode.
-        for(int i = 0; i < GlobalClass.gal_WebPages.size(); i++){
-            if(iHashCode == GlobalClass.gal_WebPages.get(i).iTabFragmentHashID){
+        for(int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++){
+            if(iHashCode == GlobalClass.gal_WebPagesForCurrentUser.get(i).iTabFragmentHashID){
                 iTabIndex = i;
                 break;
             }
@@ -524,7 +524,7 @@ public class Activity_Browser extends AppCompatActivity {
             if(view != null) {
                 TextView textView_TabText = view.findViewById(R.id.text);
                 if (textView_TabText != null) {
-                    String sTitle = GlobalClass.gal_WebPages.get(iTabIndex).sTabTitle;
+                    String sTitle = GlobalClass.gal_WebPagesForCurrentUser.get(iTabIndex).sTabTitle;
                     if (sTitle.equals("")) {
                         sTitle = "New Tab";
                     }
@@ -533,7 +533,7 @@ public class Activity_Browser extends AppCompatActivity {
 
                 ImageView imageView_Favicon = view.findViewById(R.id.imageView_Favicon);
                 if(imageView_Favicon != null) {
-                    String sFaviconAddress = GlobalClass.gal_WebPages.get(iTabIndex).sFaviconAddress;
+                    String sFaviconAddress = GlobalClass.gal_WebPagesForCurrentUser.get(iTabIndex).sFaviconAddress;
                     if(!sFaviconAddress.equals("")){
                         Glide.with(this)
                                 .load(sFaviconAddress)
@@ -575,7 +575,7 @@ public class Activity_Browser extends AppCompatActivity {
 
                 //Add the hashCode of the new fragment to the WebPageTabData for tracking.
                 //  WebPageTabData must be added before this createFragment routine is called.
-                GlobalClass.gal_WebPages.get(position).iTabFragmentHashID = fwp.hashCode();
+                GlobalClass.gal_WebPagesForCurrentUser.get(position).iTabFragmentHashID = fwp.hashCode();
 
                 return fwp;
             } else {
@@ -592,7 +592,7 @@ public class Activity_Browser extends AppCompatActivity {
             alFragment_WebPages.add(index, fwp);
             //Add the hashCode of the new fragment to the WebPageTabData for tracking.
             //  WebPageTabData must be added before this createFragment routine is called.
-            GlobalClass.gal_WebPages.get(index).iTabFragmentHashID = fwp.hashCode();
+            GlobalClass.gal_WebPagesForCurrentUser.get(index).iTabFragmentHashID = fwp.hashCode();
         }
 
 
@@ -661,13 +661,13 @@ public class Activity_Browser extends AppCompatActivity {
 
                         //Initialize the tabs:
                         GlobalClass globalClass = (GlobalClass) getApplicationContext();
-                        for(int i = 0; i < GlobalClass.gal_WebPages.size(); i++){
+                        for(int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++){
                             //NO PROGRESS BAR TO BE IMPLEMENTED HERE.
                             //  This onReceive blocks the UI thread, and so no progress bar drawing
                             //  will occur.
-                            String sAddress = GlobalClass.gal_WebPages.get(i).sAddress;
+                            String sAddress = GlobalClass.gal_WebPagesForCurrentUser.get(i).sAddress;
                             if(!sAddress.equals("")) {
-                                viewPagerFragmentAdapter.insertFragment(i, GlobalClass.gal_WebPages.get(i).sAddress);
+                                viewPagerFragmentAdapter.insertFragment(i, GlobalClass.gal_WebPagesForCurrentUser.get(i).sAddress);
                             } else {
                                 viewPagerFragmentAdapter.createFragment(i);
                             }
@@ -693,9 +693,9 @@ public class Activity_Browser extends AppCompatActivity {
                             //Find the hash for the fragment with the matching tab ID:
                             int iHashCode = 0;
                             int iTabID = -1;
-                            for (int i = 0; i < GlobalClass.gal_WebPages.size(); i++) {
-                                if (sTabID.equals(GlobalClass.gal_WebPages.get(i).sTabID)) {
-                                    iHashCode = GlobalClass.gal_WebPages.get(i).iTabFragmentHashID;
+                            for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
+                                if (sTabID.equals(GlobalClass.gal_WebPagesForCurrentUser.get(i).sTabID)) {
+                                    iHashCode = GlobalClass.gal_WebPagesForCurrentUser.get(i).iTabFragmentHashID;
                                     iTabID = i;
                                     break;
                                 }
@@ -703,8 +703,8 @@ public class Activity_Browser extends AppCompatActivity {
                             //Update memory:
                             String sTitle = intent.getStringExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TITLE);
                             String sFaviconAddress = intent.getStringExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS);
-                            GlobalClass.gal_WebPages.get(iTabID).sTabTitle = sTitle;
-                            GlobalClass.gal_WebPages.get(iTabID).sFaviconAddress = sFaviconAddress;
+                            GlobalClass.gal_WebPagesForCurrentUser.get(iTabID).sTabTitle = sTitle;
+                            GlobalClass.gal_WebPagesForCurrentUser.get(iTabID).sFaviconAddress = sFaviconAddress;
 
                             //Write data to storage file:
                             Activity_Browser.startAction_WriteWebPageTabData(getApplicationContext(), "Activity_Browser: WebPageTabDataServiceResponseReceiver().TITLE_AND_FAVICON_ACQUIRED");
