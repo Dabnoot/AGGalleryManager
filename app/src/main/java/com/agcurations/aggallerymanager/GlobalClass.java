@@ -2479,7 +2479,9 @@ public class GlobalClass extends Application {
 
     }
 
-
+    //=====================================================================================
+    //===== Catalog Maintenance Subroutines Section ===================================================
+    //=====================================================================================
 
     public void verifyCatalogItemsExist(int iMediaCategory, boolean bTrimMissingCatalogItems){
 
@@ -2583,6 +2585,61 @@ public class GlobalClass extends Application {
         }
 
     }
+
+    public void rectifyRogueComicCatalogItemLocations(){
+
+        String sFolderToMoveItemsTo = "319549";
+
+        for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
+
+            ItemClass_CatalogItem icci = entry.getValue();
+
+            if(!icci.sFolderRelativePath.contains(gsFileSeparator)) {
+
+                String sUri = "";
+
+                //Define the uri to the comic folder:
+                sUri = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_COMICS]
+                        + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
+                Uri uriComicFolder = Uri.parse(sUri);
+
+                //Verify folder location:
+                if (!CheckIfFileExists(uriComicFolder)) {
+                    continue;
+                }
+
+
+                //Define target parent uri:
+                sUri = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_COMICS]
+                        + GlobalClass.gsFileSeparator + sFolderToMoveItemsTo;
+                Uri uriTargetParentUri = Uri.parse(sUri);
+                //Verify folder location:
+                if (!CheckIfFileExists(uriTargetParentUri)) {
+                    continue;
+                }
+
+                try {
+                    DocumentsContract.moveDocument(gcrContentResolver, uriComicFolder, gUriCatalogFolders[MEDIA_CATEGORY_COMICS], uriTargetParentUri);
+                } catch (Exception e){
+                    Log.d("Comic folder move", "" + e.getMessage());
+                }
+
+                //Update memory:
+                icci.sFolderRelativePath = sFolderToMoveItemsTo + gsFileSeparator + icci.sFolderRelativePath;
+
+
+            }
+
+
+        }
+
+        //Write the Catalog data file:
+        CatalogDataFile_UpdateCatalogFile(MEDIA_CATEGORY_COMICS, "Updating catalog after rogue comic folder location correction...");
+
+    }
+
 
     public void deJumbleOrphanedFiles(int iMediaCategory){
 

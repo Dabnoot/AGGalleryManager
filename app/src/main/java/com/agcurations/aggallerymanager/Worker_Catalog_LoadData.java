@@ -298,10 +298,12 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //fixM3U8InternalFilePaths();
 
-        //GlobalClass.correctCatalogData();
         //globalClass.CatalogDataFile_UpdateCatalogFiles("Updating data...");
 
         //globalClass.verifyCatalogItemsExist(GlobalClass.MEDIA_CATEGORY_VIDEOS, false);
+
+        //globalClass.rectifyRogueComicCatalogItemLocations();
+
         //globalClass.deJumbleOrphanedFiles(GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         iProgressNumerator++;
