@@ -85,7 +85,7 @@ public class Worker_Import_VideoDownload extends Worker {
         }
 
         Uri uriSequenceFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
-
+        String sUserFriendlySequenceFolder = GlobalClass.cleanHTMLCodedCharacters(uriSequenceFolder.toString());
 
         String sMessage;
 
@@ -96,7 +96,7 @@ public class Worker_Import_VideoDownload extends Worker {
             try {
                 uriSequenceFolder = GlobalClass.CreateDirectory(uriSequenceFolder);
             } catch (Exception e){
-                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + uriSequenceFolder;
+                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + sUserFriendlySequenceFolder;
                 LogThis("doWork()", sMessage, e.getMessage());
                 uriSequenceFolder = null;
             }
@@ -115,13 +115,13 @@ public class Worker_Import_VideoDownload extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + uriSequenceFolder + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlySequenceFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriSequenceFolder + "\n",
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + sUserFriendlySequenceFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
                     IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
@@ -145,7 +145,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     //Unable to create directory
                     sMessage = "Unable to create working folder " +
                             sNextRecordId + " at: "
-                            + uriSequenceFolder + "\n";
+                            + sUserFriendlySequenceFolder + "\n";
                     globalClass.BroadcastProgress(true, sMessage,
                             false, iProgressBarValue,
                             true, "Operation halted.",

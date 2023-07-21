@@ -331,6 +331,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
                                     //}
                                     Uri uriDestinationFile = GlobalClass.FormChildUri(uriDestinationFolder, sFileName);
+                                    String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
 
                                     //Move the file to the destination folder:
                                     if (!GlobalClass.CheckIfFileExists(uriDestinationFile)) {
@@ -371,7 +372,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
                                     lProgressNumerator++;
                                     iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
-                                    globalClass.BroadcastProgress(true, "\nDownload completed and file placed at URI: \n" + uriDestinationFile + "\n",
+                                    globalClass.BroadcastProgress(true, "\nDownload completed and file placed at URI: \n" + sUserFriendlyDestinationFolder + "\n",
                                             true, iProgressBarValue,
                                             true, lProgressNumerator + "/" + lProgressDenominator + " downloads completed.",
                                             DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
