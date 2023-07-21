@@ -167,7 +167,7 @@ public class GlobalClass extends Application {
     public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
-    public static final String gsUnsortedFolderName = "etc";  //Used when imports are placed in a folder based on their assigned tags.
+    public static final String gsUnsortedFolderName = "etc";  //Todo: this folder should not be used anymore. Was used when a tag was not assigned to an item.
 
     ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
     ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
