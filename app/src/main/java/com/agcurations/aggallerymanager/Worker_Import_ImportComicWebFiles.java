@@ -56,7 +56,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
         //Create the comic folder.
         ciNew.sItemID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
-        ciNew.sFolderRelativePath = ciNew.sItemID;
+        ciNew.sFolderRelativePath = alFileList.get(0).sDestinationFolder + GlobalClass.gsFileSeparator + ciNew.sItemID;
         ciNew.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
 
 
@@ -68,7 +68,8 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
             try {
                 uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
             } catch (Exception e){
-                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + uriDestinationFolder;
+                String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
+                sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + sUserFriendlyDestinationFolder;
                 LogThis("doWork()", sMessage, e.getMessage());
                 uriDestinationFolder = null;
             }
@@ -85,13 +86,15 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
+                String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
+                globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlyDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
             }
         } else {
-            globalClass.BroadcastProgress(true, "Destination folder verified: " + uriDestinationFolder + "\n",
+            String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
+            globalClass.BroadcastProgress(true, "Destination folder verified: " + sUserFriendlyDestinationFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
                     IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
