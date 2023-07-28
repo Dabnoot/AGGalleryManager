@@ -399,8 +399,9 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                             bGetOnlineSize = false;
                         }
                         iFileSizeLoopCount++;
-                        if(iFileSizeLoopCount == 5){  //Use a sample set of images to project the size of the comic.
-
+                        if(iFileSizeLoopCount == 2){  //Use a sample set of images to project the size of the comic.
+                                                      //  Larger loop creates a longer delay before the user can move on
+                                                      //  to the next step of an import process.
                             bGetOnlineSize = false;
                         }
                         connection.disconnect();
