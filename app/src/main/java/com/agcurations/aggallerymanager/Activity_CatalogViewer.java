@@ -667,9 +667,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail text set. ");
 
-            if (holder.btnDelete != null) {
-                holder.btnDelete.setVisibility(View.VISIBLE);
-            }
 
 
             holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
@@ -727,21 +724,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
 
             if(holder.btnDelete != null) {
-                if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                    holder.btnDelete.setVisibility(View.INVISIBLE);
-                } else {
-                    holder.btnDelete.setVisibility(View.VISIBLE);
-                }
 
                 final String sItemNameToDelete = sItemName;
                 holder.btnDelete.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         //Present confirmation that the user wishes to delete this item.
-                        if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                            //Please use comic details view to delete comic.
-                            Toast.makeText(getApplicationContext(), "Select comic and delete from comic preview.", Toast.LENGTH_SHORT).show();
-                        }
                         String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogViewer.this, R.style.AlertDialogCustomStyle);
