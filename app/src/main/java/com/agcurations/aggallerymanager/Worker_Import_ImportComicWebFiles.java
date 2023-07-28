@@ -61,14 +61,13 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
 
         Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ciNew.sFolderRelativePath);
-
+        String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
 
         if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
 
             try {
                 uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
             } catch (Exception e){
-                String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
                 sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + sUserFriendlyDestinationFolder;
                 LogThis("doWork()", sMessage, e.getMessage());
                 uriDestinationFolder = null;
@@ -86,14 +85,12 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
-                String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
                 globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlyDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
                         IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
             }
         } else {
-            String sUserFriendlyDestinationFolder = GlobalClass.cleanHTMLCodedCharacters(uriDestinationFolder.toString());
             globalClass.BroadcastProgress(true, "Destination folder verified: " + sUserFriendlyDestinationFolder + "\n",
                     true, iProgressBarValue,
                     false, "",
