@@ -2910,8 +2910,14 @@ public class GlobalClass extends Application {
     public ArrayList<String> alsUriFilesToDelete;
 
     public static String cleanHTMLCodedCharacters(String sInput){
+        String sResult;
+        sResult = Html.fromHtml(sInput,0).toString();
+        try {
+            sResult = URLDecoder.decode(sResult, "UTF-8");
+        } catch (Exception ignored){
 
-        return Html.fromHtml(sInput,0).toString();
+        }
+        return sResult;
 
     }
 
