@@ -176,6 +176,7 @@ public class Activity_Main extends AppCompatActivity {
         filter.addAction(Worker_User_Delete.USER_DELETE_ACTION_RESPONSE);
         filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.BROADCAST_CATALOG_FILES_MAINTENANCE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
         //registerReceiver(mainActivityDataServiceResponseReceiver, filter);

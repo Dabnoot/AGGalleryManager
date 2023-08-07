@@ -304,6 +304,8 @@ public class Worker_Catalog_LoadData extends Worker {
 
         //globalClass.rectifyRogueComicCatalogItemLocations();
 
+        //globalClass.refolderizeImages();
+
         //globalClass.deJumbleOrphanedFiles(GlobalClass.MEDIA_CATEGORY_VIDEOS);
 
         iProgressNumerator++;

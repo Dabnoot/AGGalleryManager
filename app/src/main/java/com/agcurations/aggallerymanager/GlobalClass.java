@@ -2459,7 +2459,7 @@ public class GlobalClass extends Application {
                     icsfa.iFileCount = 0;
                     icsfa.sFolderName = "" + iGreatestFolderID;
 
-                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[MEDIA_CATEGORY_COMICS], icsfa.sFolderName);
+                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], icsfa.sFolderName);
                     if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
                         try {
                             uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
@@ -2482,6 +2482,8 @@ public class GlobalClass extends Application {
     //=====================================================================================
     //===== Catalog Maintenance Subroutines Section ===================================================
     //=====================================================================================
+
+    public static final String BROADCAST_CATALOG_FILES_MAINTENANCE = "com.agcurations.aggallerymanager.intent.action.CATALOG_FILES_MAINTENANCE";
 
     public void verifyCatalogItemsExist(int iMediaCategory, boolean bTrimMissingCatalogItems){
 
@@ -2640,6 +2642,106 @@ public class GlobalClass extends Application {
 
     }
 
+
+    public void refolderizeImages(){
+        //Routine to move images in "tags" folders to folders in a numerical sequence.
+
+        int iProgressNumerator = 0;
+        int iProgressDenominator = gtmCatalogLists.get(MEDIA_CATEGORY_IMAGES).size();
+        int iProgressBarValue = 0;
+
+        for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(MEDIA_CATEGORY_IMAGES).entrySet()) {
+
+            ItemClass_CatalogItem icci = entry.getValue();
+
+            iProgressNumerator++;
+            if (iProgressNumerator % 10 == 0) {
+                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                BroadcastProgress(false, "",
+                        true, iProgressBarValue,
+                        true, "Verifying item ID " + icci.sItemID + "...",
+                        BROADCAST_CATALOG_FILES_MAINTENANCE);
+            }
+
+            //Check to see if the item is in one of the old folders, either folder number
+            // < 1000 or in the 'etc' folder:
+            boolean bItemOkToMove = false;
+            bItemOkToMove = icci.sFolderRelativePath.equals("etc");
+            try{
+                int iFolderValue;
+                iFolderValue = Integer.parseInt(icci.sFolderRelativePath);
+                //Don't move items that are already in an acceptable folder.
+                bItemOkToMove = iFolderValue < 1000;
+            } catch (Exception ignored){}
+
+
+            if(bItemOkToMove){
+                ItemClass_StorageFolderAvailability icsfa = gtmFolderAvailability.get(MEDIA_CATEGORY_IMAGES);
+                if(icsfa == null){
+                    //If current storage folder is unknown (unlikely), get the next folder by looking at current directory contents:
+                    GlobalClass.getAGGMStorageFolderAvailability(MEDIA_CATEGORY_IMAGES); //This creates the folder if it does not exist.
+                    icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_IMAGES);
+                }
+                if(icsfa != null) {
+                    icsfa.iFileCount++;
+                    if(icsfa.iFileCount > 250){
+                        //Designate the next folder to hold content:
+                        GlobalClass.getAGGMStorageFolderAvailability(MEDIA_CATEGORY_IMAGES); //This creates the folder if it does not exist.
+                        icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_IMAGES);
+                    }
+
+                    //Identify the paths:
+
+                    String sSourceParentDocumentUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES]
+                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
+                    Uri uriSourceParentDocumentUri = Uri.parse(sSourceParentDocumentUri);
+
+
+                    String sImageUri = "";
+
+                    //Define the uri to the image item:
+                    sImageUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES]
+                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
+                            + GlobalClass.gsFileSeparator + icci.sFilename;
+                    Uri uriImageUri = Uri.parse(sImageUri);
+
+                    //Verify source file exists:
+                    if (!CheckIfFileExists(uriImageUri)) {
+                        continue;
+                    }
+
+                    String sFolderToMoveItemsTo = icsfa.sFolderName;
+
+                    //Define target parent uri:
+                    String sTargetFolderUri = GlobalClass.gsUriAppRootPrefix
+                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES]
+                            + GlobalClass.gsFileSeparator + sFolderToMoveItemsTo;
+                    Uri uriTargetParentFolderUri = Uri.parse(sTargetFolderUri);
+                    //Verify destination folder location:
+                    if (!CheckIfFileExists(uriTargetParentFolderUri)) {
+                        continue;
+                    }
+
+
+                    try {
+                        DocumentsContract.moveDocument(gcrContentResolver, uriImageUri, uriSourceParentDocumentUri, uriTargetParentFolderUri);
+                    } catch (Exception e){
+                        Log.d("Comic folder move", "" + e.getMessage());
+                    }
+
+
+                    icci.sFolderRelativePath = icsfa.sFolderName;
+
+                }
+            }
+
+        } //End loop
+
+        CatalogDataFile_UpdateCatalogFile(MEDIA_CATEGORY_IMAGES, "Updating Images Catalog File with New Locations...");
+        //Update 8/1/2023 5:44 PM: Ready to test...
+    }
 
     public void deJumbleOrphanedFiles(int iMediaCategory){
 
