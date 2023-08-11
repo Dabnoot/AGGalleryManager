@@ -54,6 +54,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -2485,106 +2486,15 @@ public class GlobalClass extends Application {
 
     public static final String BROADCAST_CATALOG_FILES_MAINTENANCE = "com.agcurations.aggallerymanager.intent.action.CATALOG_FILES_MAINTENANCE";
 
+    static AtomicInteger aiCatalogVerificationRunning = new AtomicInteger(0);
+    public static final int STOPPED = 0;
+    public static final int RUNNING = 1;
+    public static final int STOP_REQUESTED = 2;
+
+
     public void verifyCatalogItemsExist(int iMediaCategory, boolean bTrimMissingCatalogItems){
 
-        int iProgressNumerator = 0;
-        int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
-        int iProgressBarValue = 0;
 
-        String sAnalysisStartDateTime = GlobalClass.GetTimeStampFileSafe();
-        BufferedWriter bwLogFile;
-        OutputStream osLogFile;
-
-        StringBuilder sbLogLines = new StringBuilder();
-
-        String sLogFileName = sAnalysisStartDateTime + "_" + gsCatalogFolderNames[iMediaCategory] + "CatalogVerification_.txt";
-        Uri uriLogFile;
-        try {
-            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
-        } catch (FileNotFoundException e) {
-            return;
-        }
-        if(uriLogFile == null){
-            return;
-        }
-        try { //Required for the log file.
-            osLogFile = GlobalClass.gcrContentResolver.openOutputStream(uriLogFile, "wt");
-            if (osLogFile == null) {
-                return;
-            }
-            bwLogFile = new BufferedWriter(new OutputStreamWriter(osLogFile));
-
-
-            TreeMap<String, ItemClass_CatalogItem> tmCatalogItemsToTrim = new TreeMap<>();
-            for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(iMediaCategory).entrySet()) {
-
-                ItemClass_CatalogItem icci = entry.getValue();
-
-                iProgressNumerator++;
-                if (iProgressNumerator % 10 == 0) {
-                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                    BroadcastProgress(false, "",
-                            true, iProgressBarValue,
-                            true, "Verifying item ID " + icci.sItemID + "...",
-                            BROADCAST_WRITE_CATALOG_FILE);
-                }
-
-                String sUri = "";
-                if (iMediaCategory == MEDIA_CATEGORY_VIDEOS) {
-                    if (icci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                        //A folder containing files related to this M3U8:
-                        sUri = GlobalClass.gsUriAppRootPrefix
-                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
-                                + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
-                    } else {
-                        //A single file:
-                        sUri = GlobalClass.gsUriAppRootPrefix
-                                + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
-                                + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
-                                + GlobalClass.gsFileSeparator + icci.sFilename;
-                    }
-                } else if (iMediaCategory == MEDIA_CATEGORY_IMAGES) {
-                    //A single file:
-                    sUri = GlobalClass.gsUriAppRootPrefix
-                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
-                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
-                            + GlobalClass.gsFileSeparator + icci.sFilename;
-                } else if (iMediaCategory == MEDIA_CATEGORY_COMICS) {
-                    //A folder containing files related to this comic:
-                    sUri = GlobalClass.gsUriAppRootPrefix
-                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[iMediaCategory]
-                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
-                }
-                Uri uriItem = Uri.parse(sUri);
-
-                if (!CheckIfFileExists(uriItem)) {
-                    String sMessage = "Item with ID " + icci.sItemID + " not found. Expected to be found in location "
-                            + sUri;
-                    sbLogLines.append(sMessage).append("\n");
-                    tmCatalogItemsToTrim.put(entry.getKey(), entry.getValue());
-                    Log.d("AGGalleryManager", sMessage);
-                }
-
-
-            }
-
-            if (bTrimMissingCatalogItems) {
-                for (Map.Entry<String, ItemClass_CatalogItem> entry : tmCatalogItemsToTrim.entrySet()) {
-                    gtmCatalogLists.get(iMediaCategory).remove(entry.getKey());
-                }
-                CatalogDataFile_UpdateCatalogFile(iMediaCategory, "Updating catalog after content trim...");
-            }
-
-
-            bwLogFile.write(sbLogLines.toString());
-            bwLogFile.flush();
-            bwLogFile.close();
-            osLogFile.flush();
-            osLogFile.close();
-
-        } catch (Exception ignored){
-
-        }
 
     }
 

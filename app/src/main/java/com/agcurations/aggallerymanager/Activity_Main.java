@@ -728,13 +728,6 @@ public class Activity_Main extends AppCompatActivity {
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBackupCatalogDBFiles);
 
             return true;
-        } else if(item.getItemId() == R.id.menu_WorkerConsole){
-            if(!dataStorageAndLoadOk()){
-                return true;
-            }
-            Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
-            startActivity(intentWorkerConsoleActivity);
-            return true;
         } else if(item.getItemId() == R.id.menu_LogViewer) {
             if(!dataStorageAndLoadOk()){
                 return true;
@@ -743,6 +736,21 @@ public class Activity_Main extends AppCompatActivity {
             startActivity(intentLogViewerActivity);
             return true;
 
+        } else if(item.getItemId() == R.id.menu_CatalogVerification){
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
+            Intent intentCatalogVerificationActivity = new Intent(this, Activity_CatalogVerification.class);
+            startActivity(intentCatalogVerificationActivity);
+            return true;
+
+        } else if(item.getItemId() == R.id.menu_WorkerConsole){
+            if(!dataStorageAndLoadOk()){
+                return true;
+            }
+            Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
+            startActivity(intentWorkerConsoleActivity);
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }

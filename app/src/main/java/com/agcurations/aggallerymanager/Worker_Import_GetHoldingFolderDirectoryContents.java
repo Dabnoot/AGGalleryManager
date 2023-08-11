@@ -267,6 +267,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                         brReader = new BufferedReader(new InputStreamReader(isImageMetadataFile));
                         icfFileItem.sURL = brReader.readLine();
                         icfFileItem.sTitle = brReader.readLine();
+                        icfFileItem.sUserName = brReader.readLine();
                         brReader.close();
                         isImageMetadataFile.close();
                     } catch (Exception e) {

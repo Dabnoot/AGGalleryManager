@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:name=".GlobalClass"
         android:allowBackup="true"
@@ -12,8 +17,12 @@
         android:roundIcon="@mipmap/app_book_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Activity_UserSelection"
-            android:theme="@style/Theme.AppCompat.Dialog"/>
+        <activity
+            android:name=".Activity_CatalogVerification"
+            android:exported="false" />
+        <activity
+            android:name=".Activity_UserSelection"
+            android:theme="@style/Theme.AppCompat.Dialog" />
         <activity android:name=".Activity_UserManagement" />
         <activity android:name=".Activity_Browser" />
         <activity android:name=".Activity_WorkerConsole" />
@@ -57,10 +66,5 @@
             android:theme="@style/AppTheme" />
         <activity android:name=".Activity_ImportFilePreview" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

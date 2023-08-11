@@ -28,6 +28,10 @@ public class ItemClass_File implements Serializable {
     public boolean bDataUpdateFlag = false; //Flag used to reduce excess processing
     public String sVideoTimeText = "";
 
+    public String sUserName = ""; //Populated when bringing in data from the image holding folder. A specific user
+                                  //  will have downloaded a folder via the browser, and we don't want other
+                                  //  users to be able to import or view those files.
+
     public boolean bMarkedForDeletion = false;
 
     //Items for comic folder import:
