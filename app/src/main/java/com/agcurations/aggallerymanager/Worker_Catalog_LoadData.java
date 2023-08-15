@@ -129,7 +129,7 @@ public class Worker_Catalog_LoadData extends Worker {
         }
         GlobalClass.gsImageDownloadHoldingFolderTempRPath = File.separator +
                 GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES] +
-                File.separator + "HoldingTemp";
+                File.separator + GlobalClass.gsImageDownloadHoldingTempFolderName;
         String sDLExternalTempCatFolder = GlobalClass.gfDownloadExternalStorageFolder + File.separator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_IMAGES];
         File fDLExternalTempCatFolder = new File(sDLExternalTempCatFolder);
         if(!fDLExternalTempCatFolder.exists()){
@@ -138,12 +138,12 @@ public class Worker_Catalog_LoadData extends Worker {
                 Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
             }
         }
-        GlobalClass.gfImageDownloadHoldingFolderTemp = initSubfolder(fDLExternalTempCatFolder,"HoldingTemp", "Could not create image download temp holding folder.");
+        GlobalClass.gfImageDownloadHoldingFolderTemp = initSubfolder(fDLExternalTempCatFolder,GlobalClass.gsImageDownloadHoldingTempFolderName, "Could not create image download temp holding folder.");
         stopWatch.PostDebugLogAndRestart("Internal folders built/verified with duration ");
 
         //Create image downloading holding folder if it does not exist:
         //  The user will import these files into the catalog at their leisure.
-        GlobalClass.gUriImageDownloadHoldingFolder = initSubfolder(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_IMAGES],"Holding", "Could not create image download holding folder.");
+        GlobalClass.gUriImageDownloadHoldingFolder = initSubfolder(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_IMAGES],GlobalClass.gsImageDownloadHoldingFolderName, "Could not create image download holding folder.");
 
 
         //Create folder to hold Browser data:
