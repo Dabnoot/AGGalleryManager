@@ -740,8 +740,8 @@ public class Activity_Main extends AppCompatActivity {
             if(!dataStorageAndLoadOk()){
                 return true;
             }
-            Intent intentCatalogVerificationActivity = new Intent(this, Activity_CatalogVerification.class);
-            startActivity(intentCatalogVerificationActivity);
+            Intent intentCatalogAnalysisActivity = new Intent(this, Activity_CatalogAnalysis.class);
+            startActivity(intentCatalogAnalysisActivity);
             return true;
 
         } else if(item.getItemId() == R.id.menu_WorkerConsole){

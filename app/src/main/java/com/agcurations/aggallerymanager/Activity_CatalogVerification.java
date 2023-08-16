@@ -16,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,6 +26,7 @@ public class Activity_CatalogVerification extends AppCompatActivity {
     int giSpinnerPosition = -1;
 
     TextView gTextView_Log;
+    ScrollView gScrollView_Log;
 
     ProgressBar gProgressBar_CatalogVerificationProgress;
     TextView gTextView_CatalogVerificationProgressBarText;
@@ -52,6 +54,7 @@ public class Activity_CatalogVerification extends AppCompatActivity {
         });
 
         gTextView_Log = findViewById(R.id.textView_Log);
+        gScrollView_Log = findViewById(R.id.scrollView_Log);
 
         gProgressBar_CatalogVerificationProgress = findViewById(R.id.progressBar_CatalogVerificationProgress);
         gTextView_CatalogVerificationProgressBarText = findViewById(R.id.textView_CatalogVerificationProgressBarText);
@@ -60,6 +63,12 @@ public class Activity_CatalogVerification extends AppCompatActivity {
         button_AnalysisStartStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                String sMode = button_AnalysisStartStop.getText().toString();
+                if(sMode.equals("START")){
+                    button_AnalysisStartStop.setText("STOP");
+                } else {
+                    button_AnalysisStartStop.setText("START");
+                }
                 Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                 Data dataCatalogVerification = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogVerification:button_AnalysisStartStop.onClick()")
@@ -118,7 +127,12 @@ public class Activity_CatalogVerification extends AppCompatActivity {
 
                 if(bUpdateLog){
                     String sLogLine = intent.getStringExtra(GlobalClass.LOG_LINE_STRING);
-                    gTextView_Log.append(sLogLine);
+                    if (gTextView_Log != null) {
+                        gTextView_Log.append(sLogLine);
+                        if(gScrollView_Log != null){
+                            gScrollView_Log.fullScroll(View.FOCUS_DOWN);
+                        }
+                    }
                 }
 
                 if(bUpdatePercentComplete){
@@ -126,6 +140,15 @@ public class Activity_CatalogVerification extends AppCompatActivity {
                     iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
                     if(gProgressBar_CatalogVerificationProgress != null) {
                         gProgressBar_CatalogVerificationProgress.setProgress(iAmountComplete);
+                    }
+                    if (iAmountComplete == 100) {
+                        assert gProgressBar_CatalogVerificationProgress != null;
+                        gProgressBar_CatalogVerificationProgress.setVisibility(View.INVISIBLE);
+                        gTextView_CatalogVerificationProgressBarText.setVisibility(View.INVISIBLE);
+                    } else {
+                        assert gProgressBar_CatalogVerificationProgress != null;
+                        gProgressBar_CatalogVerificationProgress.setVisibility(View.VISIBLE);
+                        gTextView_CatalogVerificationProgressBarText.setVisibility(View.VISIBLE);
                     }
                 }
                 if(bUpdateProgressBarText){
@@ -135,6 +158,8 @@ public class Activity_CatalogVerification extends AppCompatActivity {
                         gTextView_CatalogVerificationProgressBarText.setText(sProgressBarText);
                     }
                 }
+
+
 
             } //End if not an error message.
 

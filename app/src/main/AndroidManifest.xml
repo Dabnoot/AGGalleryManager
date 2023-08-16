@@ -18,6 +18,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".Activity_CatalogAnalysis"
+            android:exported="false" />
+        <activity
             android:name=".Activity_CatalogVerification"
             android:exported="false" />
         <activity
@@ -39,10 +42,12 @@
         <activity
             android:name=".Activity_PinCodePopup"
             android:theme="@style/AppTheme.PinCodePopup" />
-        <activity android:name=".Activity_Main"
+        <activity
+            android:name=".Activity_Main"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
