@@ -165,14 +165,14 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                 Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
 
-                        final String docId = cImport.getString(0);
-                        final String docName = cImport.getString(1);
-                        final String mimeType = cImport.getString(2);
+                        final String sDocId = cImport.getString(0);
+                        final String sDocName = cImport.getString(1);
+                        final String sMimeType = cImport.getString(2);
                         final long lLastModified = cImport.getLong(3); //milliseconds since January 1, 1970 00:00:00.0 UTC.
                         final String sFileSize = cImport.getString(4);
 
                         boolean isDirectory;
-                        isDirectory = (mimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
+                        isDirectory = (sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR));
                         int iTypeFileOrFolder = (isDirectory) ? ItemClass_File.TYPE_FOLDER : ItemClass_File.TYPE_FILE;
 
                         if ((giFilesOrFolders == GlobalClass.FILES_ONLY) && (isDirectory)) {
@@ -190,7 +190,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                         String sHeight = "";
 
                         //Get a Uri for this individual document:
-                        final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri, docId);
+                        final Uri docUri = DocumentsContract.buildDocumentUriUsingTree(childrenUri, sDocId);
 
                         /*GlobalClass globalClass = (GlobalClass) getApplicationContext();
                         File fStorageDir = Environment.getExternalStorageDirectory();
@@ -231,7 +231,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                         if (!isDirectory) {
 
                             //Record the file extension:
-                            fileExtension = docName.contains(".") ? docName.substring(docName.lastIndexOf(".")) : "";
+                            fileExtension = sDocName.contains(".") ? sDocName.substring(sDocName.lastIndexOf(".")) : "";
                             //If the file extension does not match the file extension regex, skip the remainder of the loop.
                             if (!fileExtension.matches(".+")) {
                                 continue;  //skip the rest of the loop if the file extension does not match.
@@ -241,17 +241,17 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                             lFileSize = Long.parseLong(sFileSize); //size in Bytes
 
                             //If this is a file, check to see if it is a video or an image and if we are looking for videos or images.
-                            if (mimeType.startsWith("video") || fileExtension.equals(".gif") ||
-                                    (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
+                            if (sMimeType.startsWith("video") || fileExtension.equals(".gif") ||
+                                    (sMimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                                 //If video...
                                 if ((giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES)
                                         || (giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS)) {
-                                    continue; //If requesting images or comics, and mimeType is video or the file a gif, go to next loop.
+                                    continue; //If requesting images or comics, and sMimeType is video or the file a gif, go to next loop.
                                 }
                             } else {
                                 //If not video...
                                 if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                                    continue; //If requesting videos, and mimeType is not video nor is the file a gif, go to next loop.
+                                    continue; //If requesting videos, and sMimeType is not video nor is the file a gif, go to next loop.
                                 }
                             }
 
@@ -259,12 +259,12 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                             if(bIncludeGraphicsAttributesInFileQuery) {
                                 bMetadataDetected = true;
                                 if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                                    if (mimeType.startsWith("video") ||
-                                            (mimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
+                                    if (sMimeType.startsWith("video") ||
+                                            (sMimeType.equals("application/octet-stream") && fileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                                         try {
                                             mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                                         } catch (Exception e) {
-                                            //problemNotificationConfig(e.getMessage() + "\n" + docName, RECEIVER_STORAGE_LOCATION);
+                                            //problemNotificationConfig(e.getMessage() + "\n" + sDocName, RECEIVER_STORAGE_LOCATION);
                                             continue; //Skip the rest of this loop.
                                         }
                                         sWidth = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
@@ -283,7 +283,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                                 sWidth = "" + gd.getIntrinsicWidth();
                                                 sHeight = "" + gd.getIntrinsicHeight();
                                             } catch (Exception e) {
-                                                globalClass.problemNotificationConfig(e.getMessage() + "\n" + docName, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
+                                                globalClass.problemNotificationConfig(e.getMessage() + "\n" + sDocName, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                                                 continue; //Skip the rest of this loop.
                                             }
                                         }
@@ -312,7 +312,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                             String sUri = docUri.toString();
 
                             //create the file model and initialize:
-                            ItemClass_File icfFileItem = new ItemClass_File(iTypeFileOrFolder, docName);
+                            ItemClass_File icfFileItem = new ItemClass_File(iTypeFileOrFolder, sDocName);
                             icfFileItem.sExtension = fileExtension;
                             icfFileItem.lSizeBytes = lFileSize;
                             icfFileItem.dateLastModified = dateLastModified;
@@ -320,7 +320,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                             icfFileItem.sWidth = sWidth;
                             icfFileItem.sHeight = sHeight;
                             icfFileItem.sUri = sUri;
-                            icfFileItem.sMimeType = mimeType;
+                            icfFileItem.sMimeType = sMimeType;
                             icfFileItem.lVideoTimeInMilliseconds = lDurationInMilliseconds;
 
                             //Add the ItemClass_File to the ArrayList:
@@ -344,7 +344,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
 
                                 //Get a list of files in the folder:
                                 //Uri uriComicPages = DocumentsContract.buildChildDocumentsUriUsingTree(docUri, DocumentsContract.getTreeDocumentId(docUri));
-                                Uri uriComicPages = DocumentsContract.buildChildDocumentsUriUsingTree(guriImportTreeUri, docId);
+                                Uri uriComicPages = DocumentsContract.buildChildDocumentsUriUsingTree(guriImportTreeUri, sDocId);
                                 List<Uri> luriComicPages = new LinkedList<>();
                                 luriComicPages.add(uriComicPages);
                                 uriComicPages = luriComicPages.remove(0); // get the item from top
@@ -523,7 +523,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                     cComicPages.close();
 
                                     //Create a file item to track this comic folder:
-                                    ItemClass_File icf_ComicFolderItem = new ItemClass_File(ItemClass_File.TYPE_FOLDER, docName);
+                                    ItemClass_File icf_ComicFolderItem = new ItemClass_File(ItemClass_File.TYPE_FOLDER, sDocName);
                                     icf_ComicFolderItem.sUri = docUri.toString();
 
                                     icf_ComicFolderItem.dateLastModified = dateLastModified;
@@ -556,7 +556,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                                 bQtyNumBlocksOk = false;
                                                 //Report a problem with this file:
                                                 String sMessage = "Problem identifying page number for comic in folder \"" +
-                                                        docName + "\", file \"" + file.sFileOrFolderName +
+                                                        sDocName + "\", file \"" + file.sFileOrFolderName +
                                                         "\". Note that the system uses alphabetization to sort comic pages.\n";
                                                 globalClass.gsbImportFolderAnalysisLog.append(sMessage);
                                                 globalClass.problemNotificationConfig(sMessage, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
