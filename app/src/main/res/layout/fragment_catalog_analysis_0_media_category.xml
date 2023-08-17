@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_catalog_analysis"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activity_CatalogAnalysis">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <RadioGroup
+            android:id="@+id/radioGroup_MediaCategory"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="60dp">
+
+            <RadioButton
+                android:id="@+id/radioButton_ImportVideos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:checked="true"
+                android:text="Analyze videos catalog"
+                android:textColor="@color/colorTextColor"
+                android:textSize="24sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <RadioButton
+                android:id="@+id/radioButton_ImportImages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:text="Analyze images catalog"
+                android:textColor="@color/colorTextColor"
+                android:textSize="24sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <RadioButton
+                android:id="@+id/radioButton_ImportComics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:text="Analyze comics catalog"
+                android:textColor="@color/colorTextColor"
+                android:textSize="24sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/linearLayout_ButtonBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <Button
+                android:id="@+id/button_Cancel"
+                android:layout_width="149dp"
+                android:layout_height="67dp"
+                android:layout_marginEnd="20dp"
+                android:text="Cancel"
+                android:textSize="24sp"
+                android:onClick="buttonClick_Cancel"
+                app:backgroundTint="@color/colorButton" />
+
+            <Button
+                android:id="@+id/button_NextStep"
+                android:layout_width="149dp"
+                android:layout_height="67dp"
+                android:text="Next"
+                android:textSize="24sp"
+                android:onClick="buttonNextClick_MediaCategorySelected"
+                app:backgroundTint="@color/colorButton" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
