@@ -214,15 +214,19 @@ public class Worker_Import_VideoDownload extends Worker {
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
 
             //Configure thumbnail file for M3U8:
-            String sThumbnailURL = icfDownloadItem.sURLThumbnail;
-            try{
-                String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
-                sThumbnailFileName = GlobalClass.cleanFileNameViaTrim(sThumbnailFileName);
-                ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
-                alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
-                lProgressDenominator++; //The thumbnail file will be one additional file to download.
-            } catch (Exception e){
-                globalClass.problemNotificationConfig("Could not get thumbnail image.", IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            if(!icfDownloadItem.sURLThumbnail.equals("")) {
+                String sThumbnailURL = icfDownloadItem.sURLThumbnail;
+                try {
+                    String sThumbnailFileName = sThumbnailURL.substring(sThumbnailURL.lastIndexOf("/") + 1);
+                    sThumbnailFileName = GlobalClass.cleanFileNameViaTrim(sThumbnailFileName);
+                    ciNew.sThumbnail_File = GlobalClass.JumbleFileName(sThumbnailFileName);
+                    alsDownloadURLsAndDestFileNames.add(new String[]{sThumbnailURL, ciNew.sThumbnail_File});
+                    lProgressDenominator++; //The thumbnail file will be one additional file to download.
+                } catch (Exception e) {
+                    globalClass.problemNotificationConfig("Could not get thumbnail image.", IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+                }
+            } else {
+                globalClass.problemNotificationConfig("Could not find a thumbnail image.", IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
 
             ciNew.sVideoLink = icfDownloadItem.ic_M3U8.sBaseURL + "/" + icfDownloadItem.ic_M3U8.sFileName;

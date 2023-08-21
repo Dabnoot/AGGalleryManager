@@ -386,9 +386,9 @@ public class Worker_DownloadPostProcessing  extends Worker {
                         }
                     } while (cursor.moveToNext() && bFileDownloadsComplete && !bDownloadProblem); //End loop through download query results.
 
-
-
                 } //End if cursor has a record.
+
+                cursor.close();
 
             } //End loop waiting for download completion.
 
