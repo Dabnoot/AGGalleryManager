@@ -130,7 +130,9 @@ public class Activity_Import extends AppCompatActivity {
     Point gpDisplayDims;
 
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
+
     @Override
+    @SuppressWarnings("unchecked")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_import);
@@ -213,9 +215,10 @@ public class Activity_Import extends AppCompatActivity {
             giStartingFragment = FRAGMENT_IMPORT_0_ID_MEDIA_CATEGORY;
             //Check to see if this activity has been started by an activity desiring mods to a
             //  particular media category:
-            Intent iStartingIntent = getIntent();
-            if(iStartingIntent != null){
-                int iMediaCategory = iStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
+            Intent intentStartingIntent = getIntent();
+            if(intentStartingIntent != null){
+
+                int iMediaCategory = intentStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
                 if(iMediaCategory != -1){
                     viewModelImportActivity.iImportMediaCategory = iMediaCategory;
 
@@ -226,7 +229,19 @@ public class Activity_Import extends AppCompatActivity {
                     } else {
                         giStartingFragment = FRAGMENT_IMPORT_0C_ID_COMIC_SOURCE;
                     }
-                    gotoMediaCategorySelectedFragment(iMediaCategory);
+                    //Check to see if this start is related to a catalog verification test looking for
+                    //  orphaned files:
+                    boolean bImportOrphanedFiles = intentStartingIntent.getBooleanExtra(Activity_CatalogAnalysis.EXTRA_BOOL_IMPORT_ORPHANED_FILES, false);
+                    if(bImportOrphanedFiles){
+                        ArrayList<ItemClass_File> alFileList = new ArrayList<>(GlobalClass.galf_Orphaned_Files);
+                        fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
+                        giStartingFragment = FRAGMENT_IMPORT_2_ID_SELECT_ITEMS;
+                        ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
+                        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+
+                    } else {
+                        gotoMediaCategorySelectedFragment(iMediaCategory);
+                    }
                 } else {
                     stackFragmentOrder.push(giStartingFragment);
                 }

@@ -53,6 +53,7 @@
         android:layout_below="@+id/linearLayout_Progress"
         android:layout_above="@+id/linearLayout_ButtonBar"
         android:scrollbarSize="20dp">
+
         <TextView
             android:id="@+id/textView_AnalysisLog"
             android:layout_width="match_parent"
@@ -81,6 +82,18 @@
             />
 
         <Button
+            android:id="@+id/button_AnalysisImportSelect"
+            android:layout_width="149dp"
+            android:layout_height="67dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginStart="20dp"
+            android:onClick="buttonNextClick_AnalysisImportSelect"
+            android:text="Next"
+            android:textSize="24sp"
+            android:enabled="false"
+            app:backgroundTint="@color/colorButton" />
+
+        <Button
             android:id="@+id/button_AnalysisFinish"
             android:layout_width="149dp"
             android:layout_height="67dp"
@@ -93,6 +106,5 @@
             app:backgroundTint="@color/colorButton" />
 
     </LinearLayout>
-
 
 </RelativeLayout>

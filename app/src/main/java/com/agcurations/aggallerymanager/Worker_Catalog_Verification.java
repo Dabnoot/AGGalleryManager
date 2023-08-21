@@ -221,53 +221,61 @@ public class Worker_Catalog_Verification extends Worker {
 
                         if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
 
-                            ArrayList<String> alsFileNamesInFolder = GlobalClass.GetDirectoryFileNames(uriFolderUri);
-                            for (String sFileName : alsFileNamesInFolder) {
-                                if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
-                                    sMessage = "'STOP' command received from user.\n";
-                                    SendLogLine(sMessage);
-                                    sbLogLines.append(sMessage);
-                                    break;
-                                }
+                            ArrayList<ItemClass_File> alicf_FileItemsInFolder = GlobalClass.GetDirectoryFileNamesData(uriFolderUri);
+                            if(alicf_FileItemsInFolder != null) {
+                                for (ItemClass_File icf_FileItem : alicf_FileItemsInFolder) {
+                                    if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
+                                        sMessage = "'STOP' command received from user.\n";
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+                                        break;
+                                    }
 
-                                iProgressNumerator++;
-                                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                                globalClass.BroadcastProgress(false, "",
-                                        true, iProgressBarValue,
-                                        true, "Verifying item " + iProgressNumerator + " of " + iProgressDenominator + " known catalog items...",
-                                        CATALOG_VERIFICATION_ACTION_RESPONSE);
+                                    iProgressNumerator++;
+                                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+                                    globalClass.BroadcastProgress(false, "",
+                                            true, iProgressBarValue,
+                                            true, "Verifying item " + iProgressNumerator + " of " + iProgressDenominator + " known catalog items...",
+                                            CATALOG_VERIFICATION_ACTION_RESPONSE);
 
-                                //Look for the folder and filename combination in memory:
-                                String sItemRelativePath = sFolderName +
-                                        GlobalClass.gsFileSeparator + sFileName;
-                                if (!alsCatalogRelativePaths.contains(sItemRelativePath)) {
-                                    //Item is not identified in memory. Note the occurrence:
-                                    alsOrphanedFiles.add(sItemRelativePath);
-                                    sMessage = "Item not found in catalog: " + GlobalClass.cleanHTMLCodedCharacters(sItemRelativePath) + "\n";
-                                    SendLogLine(sMessage);
-                                    sbLogLines.append(sMessage);
+                                    //Look for the folder and filename combination in memory:
+                                    String sItemRelativePath = sFolderName +
+                                            GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;
+                                    if (!alsCatalogRelativePaths.contains(sItemRelativePath)) {
+                                        //Item is not identified in memory. Note the occurrence:
+                                        alsOrphanedFiles.add(sItemRelativePath);
+                                        sMessage = "Item not found in catalog: " + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
+                                                "/" + GlobalClass.cleanHTMLCodedCharacters(sItemRelativePath) + "\n";
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
 
-                                    //create the file model and initialize:
-                                    ItemClass_File icfFileItem = new ItemClass_File(0, "");
-                                    icfFileItem.sExtension = "";
-                                    icfFileItem.lSizeBytes = 0;
-                                    icfFileItem.dateLastModified = null;
-                                    icfFileItem.bMetadataDetected = false;
-                                    icfFileItem.sWidth = "";
-                                    icfFileItem.sHeight = "";
-                                    icfFileItem.sUri = "";
-                                    icfFileItem.sMimeType = "";
-                                    icfFileItem.lVideoTimeInMilliseconds = 0;
+                                        //create the file model and initialize:
+                                        String sfileExtension = icf_FileItem.sFileOrFolderName.contains(".") ? icf_FileItem.sFileOrFolderName.substring(icf_FileItem.sFileOrFolderName.lastIndexOf(".")) : "";
+                                        //If the file extension does not match the file extension regex, skip the remainder of the loop.
+                                        if (!sfileExtension.matches(".+")) {
+                                            icf_FileItem.sExtension = "";
+                                        } else {
+                                            icf_FileItem.sExtension = sfileExtension;
+                                        }
+                                        icf_FileItem.bMetadataDetected = false;
+                                        icf_FileItem.sWidth = "";
+                                        icf_FileItem.sHeight = "";
+                                        String sUri = sFolderUri +
+                                                GlobalClass.gsFileSeparator + sItemRelativePath;
+                                        icf_FileItem.sUri = sFolderUri +
+                                                GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;;
+                                        icf_FileItem.lVideoTimeInMilliseconds = 0;
 
-                                    //Add the ItemClass_File to the ArrayList:
-                                    alOrphanedFileList.add(icfFileItem);
+                                        //Add the ItemClass_File to the ArrayList:
+                                        alOrphanedFileList.add(icf_FileItem);
 
-                                }
+                                    } // End if item not identified in memory.
 
-                            }
-                        }
+                                } // End looping through files in folder.
+                            } //End if arraylist is not null.
+                        } //End if verifying images.
 
-                    }
+                    } //End looping through catalog subfolders.
 
                     sMessage = "Orphaned file analysis observed " + iProgressNumerator + " file items for " + iProgressDenominator + " catalog items.\n";
                     SendLogLine(sMessage);
@@ -275,6 +283,14 @@ public class Worker_Catalog_Verification extends Worker {
                     sMessage = "A total of " + alsOrphanedFiles.size() + " files were not identified as belonging to a catalog item.\n";
                     SendLogLine(sMessage);
                     sbLogLines.append(sMessage);
+
+                    //Broadcast a message with the list of files so that they can be presented to the user:
+                    Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();
+                    broadcastIntent_GetDirectoryContentsResponse.putExtra(GlobalClass.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, true);
+                    broadcastIntent_GetDirectoryContentsResponse.putExtra(GlobalClass.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE, alOrphanedFileList);
+                    broadcastIntent_GetDirectoryContentsResponse.setAction(CATALOG_VERIFICATION_ACTION_RESPONSE);
+                    broadcastIntent_GetDirectoryContentsResponse.addCategory(Intent.CATEGORY_DEFAULT);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
 
                 }
             } //End analysis of orphaned files.

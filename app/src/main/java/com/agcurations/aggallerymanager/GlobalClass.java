@@ -43,6 +43,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -123,6 +125,8 @@ public class GlobalClass extends Application {
     public static final int LOADING_STATE_NOT_STARTED = 0;
     public static final int LOADING_STATE_STARTED = 1;
     public static final int LOADING_STATE_FINISHED = 2;
+
+    public static ArrayList<ItemClass_File> galf_Orphaned_Files;
 
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
     public TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
@@ -440,20 +444,20 @@ public class GlobalClass extends Application {
         }
         final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent,
                 DocumentsContract.getDocumentId(uriParent));
-        Cursor c = null;
+        Cursor cursor = null;
         try {
-            c = gcrContentResolver.query(childrenUri, new String[] {
+            cursor = gcrContentResolver.query(childrenUri, new String[] {
                     DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                     DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
-            if(c != null) {
-                while (c.moveToNext()) {
-                    final String sFileName = c.getString(0);
-                    final String sMimeType = c.getString( 1);
+            if(cursor != null) {
+                while (cursor.moveToNext()) {
+                    final String sFileName = cursor.getString(0);
+                    final String sMimeType = cursor.getString( 1);
                     if(!sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
                         alsFileNames.add(sFileName);
                     }
                 }
-                c.close();
+                cursor.close();
             }
         } catch (Exception e) {
             Log.d("GlobalClass:GetDirectoryFileNames()", "Problem querying folder.");
@@ -464,6 +468,58 @@ public class GlobalClass extends Application {
         //This routine does not return folder names!
         Uri uriParent = Uri.parse(sUriParent);
         return GetDirectoryFileNames(uriParent);
+    }
+    public static ArrayList<ItemClass_File> GetDirectoryFileNamesData(Uri uriParent){
+        //This routine does not return folder names!
+        ArrayList<ItemClass_File> alicf_Files = new ArrayList<>();
+
+        if(!GlobalClass.CheckIfFileExists(uriParent)){
+            //The program will crash if the folder does not exist.
+            return null;
+        }
+        final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent,
+                DocumentsContract.getDocumentId(uriParent));
+        Cursor cursor = null;
+        try {
+            cursor = gcrContentResolver.query(childrenUri, new String[] {
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE,
+                    DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                    DocumentsContract.Document.COLUMN_SIZE}, null, null, null);
+            if(cursor != null) {
+                Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                while (cursor.moveToNext()) {
+
+                    final String sMimeType = cursor.getString( 1);
+
+                    if(!sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
+                        final String sFileName = cursor.getString(0);
+                        final long lLastModified = cursor.getLong(2); //milliseconds since January 1, 1970 00:00:00.0 UTC.
+                        final String sFileSize = cursor.getString(3);
+
+                        ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_FILE, sFileName);
+
+                        icf.sMimeType = sMimeType;
+
+                        cal.setTimeInMillis(lLastModified);
+                        icf.dateLastModified = cal.getTime();
+
+                        icf.lSizeBytes = Long.parseLong(sFileSize);
+
+                        alicf_Files.add(icf);
+                    }
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Log.d("GlobalClass:GetDirectoryFileNamesData()", "Problem querying folder.");
+        }
+        return alicf_Files;
+    }
+    public static ArrayList<ItemClass_File> GetDirectoryFileNamesData(String sUriParent){
+        //This routine does not return folder names!
+        Uri uriParent = Uri.parse(sUriParent);
+        return GetDirectoryFileNamesData(uriParent);
     }
     public static ArrayList<String> GetDirectorySubfolderNames(Uri uriParent){
         //This routine does not return file names!

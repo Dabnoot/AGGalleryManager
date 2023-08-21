@@ -736,7 +736,7 @@ public class Activity_Main extends AppCompatActivity {
             startActivity(intentLogViewerActivity);
             return true;
 
-        } else if(item.getItemId() == R.id.menu_CatalogVerification){
+        } else if(item.getItemId() == R.id.menu_CatalogAnalysis){
             if(!dataStorageAndLoadOk()){
                 return true;
             }

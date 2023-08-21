@@ -6,19 +6,21 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.work.WorkManager;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.RadioButton;
 
+import java.util.ArrayList;
 import java.util.Stack;
 
 public class Activity_CatalogAnalysis extends AppCompatActivity {
+
+    public static final String EXTRA_BOOL_IMPORT_ORPHANED_FILES = "com.agcurations.aggallerymanager.intent.extra.BOOL_IMPORT_ORPHANED_FILES";
 
     //Fragment page indexes:
     public static final int FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY = 0;
@@ -99,13 +101,16 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         gotoFinish();
     }
 
+    public void buttonNextClick_AnalysisFinish(View v) {
+        gotoFinish();
+    }
+
     public void gotoFinish(){
         //Code any pre-finish operations here.
         //Kill any file indexing workers that might be running:
         WorkManager.getInstance(getApplicationContext())
-                .cancelAllWorkByTag(Worker_Import_GetHoldingFolderDirectoryContents.TAG_WORKER_IMPORT_GETHOLDINGFOLDERDIRECTORYCONTENTS);
-        WorkManager.getInstance(getApplicationContext())
-                .cancelAllWorkByTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS);
+                .cancelAllWorkByTag(Worker_Catalog_Verification.TAG_WORKER_CATALOG_VERIFICATION);
+        GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
 
         finish();
     }
@@ -142,6 +147,17 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         globalClass.gbAnalysisExecutionFinished = false;
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
 
+    }
+
+    public void buttonNextClick_AnalysisImportSelect(View v){
+
+        Intent intentImportGuided = new Intent(getApplicationContext(), Activity_Import.class);
+        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, viewModel_catalogAnalysis.iMediaCategory); //todo: Redundant?
+        intentImportGuided.putExtra(EXTRA_BOOL_IMPORT_ORPHANED_FILES, true);
+        GlobalClass.galf_Orphaned_Files = new ArrayList<>(viewModel_catalogAnalysis.alFileList);
+        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;//todo: Redundant?
+        startActivity(intentImportGuided);
+        finish();
     }
 
     public static class FragmentCatalogAnalysisViewPagerAdapter extends FragmentStateAdapter {

@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +24,7 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 
@@ -33,6 +36,8 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
     TextView gTextView_AnalysisProgressBarText;
     TextView gtextView_AnalysisLog;
     ScrollView gScrollView_AnalysisLog;
+
+    Button gButton_AnalysisImportSelect;
 
     GlobalClass globalClass;
 
@@ -109,6 +114,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         gtextView_AnalysisLog = getView().findViewById(R.id.textView_AnalysisLog);
         gScrollView_AnalysisLog = getView().findViewById(R.id.scrollView_AnalysisLog);
 
+        gButton_AnalysisImportSelect = getView().findViewById(R.id.button_AnalysisImportSelect);
 
         if(globalClass.gbAnalysisExecutionStarted && !globalClass.gbAnalysisExecutionRunning) {
             gProgressBar_AnalysisProgress.setProgress(0);
@@ -164,7 +170,9 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
     public class AnalysisDataServiceResponseReceiver extends BroadcastReceiver {
 
+
         @Override
+        @SuppressWarnings("unchecked")
         public void onReceive(Context context, Intent intent) {
 
             boolean bError;
@@ -191,9 +199,20 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     if(sLogLine != null) {
                         if (gtextView_AnalysisLog != null) {
                             gtextView_AnalysisLog.append(sLogLine);
-                            if(gScrollView_AnalysisLog != null){
+                            /*if(gScrollView_AnalysisLog != null){
                                 gScrollView_AnalysisLog.fullScroll(View.FOCUS_DOWN);
-                            }
+                            }*/
+                            //Execute delayed scroll down since this broadcast listener is not on the UI thread?:
+                            final Handler handler = new Handler(Looper.getMainLooper());
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    //Do something after 100ms
+                                    if(gScrollView_AnalysisLog != null){
+                                        gScrollView_AnalysisLog.fullScroll(View.FOCUS_DOWN);
+                                    }
+                                }
+                            }, 100);
                         }
                         if (sLogLine.toLowerCase(Locale.ROOT).contains("operation complete.")) {
                             if(getView() != null) {
@@ -222,6 +241,13 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     if(gTextView_AnalysisProgressBarText != null) {
                         gTextView_AnalysisProgressBarText.setText(sProgressBarText);
                     }
+                }
+
+                //Check to see if this is a response to request to get directory contents:
+                boolean bGetDirContentsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
+                if (bGetDirContentsResponse) {
+                    gButton_AnalysisImportSelect.setEnabled(true);
+                    viewModel_catalogAnalysis.alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
                 }
 
             }
