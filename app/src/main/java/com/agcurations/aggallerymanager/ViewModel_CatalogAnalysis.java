@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel;
 
 public class ViewModel_CatalogAnalysis extends ViewModel {
 
+    static final String EXTRA_ANALYSIS_TYPE = "com.agcurations.aggallerymanager.extra.EXTRA_ANALYSIS_TYPE";
+
     int iMediaCategory = -1;
     int iAnalysisType = -1;
 

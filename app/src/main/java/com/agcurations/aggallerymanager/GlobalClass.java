@@ -219,6 +219,13 @@ public class GlobalClass extends Application {
     public StringBuilder gsbImportExecutionLog = new StringBuilder();
     public int giImportExecutionProgressBarPercent = 0;
     public String gsImportExecutionProgressBarText = "";
+    //Variables to control starting of catalog analysis:
+    public boolean gbAnalysisExecutionStarted = false;
+    public boolean gbAnalysisExecutionRunning = false;
+    public boolean gbAnalysisExecutionFinished = false;
+    public StringBuilder gsbAnalysisExecutionLog = new StringBuilder();
+    public int giAnalysisExecutionProgressBarPercent = 0;
+    public String gsAnalysisExecutionProgressBarText = "";
     //Variables to control starting of comic web address analysis:
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.

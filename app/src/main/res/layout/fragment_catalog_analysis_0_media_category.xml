@@ -18,6 +18,13 @@
         android:orientation="vertical"
         android:gravity="center">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select media category to analyze:"
+            android:textColor="@color/colorTextColor"
+            android:textSize="24sp"/>
+
         <RadioGroup
             android:id="@+id/radioGroup_MediaCategory"
             android:layout_width="wrap_content"
@@ -25,35 +32,34 @@
             android:layout_marginBottom="60dp">
 
             <RadioButton
-                android:id="@+id/radioButton_ImportVideos"
+                android:id="@+id/radioButton_AnalyzeVideos"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
                 android:checked="true"
-                android:text="Analyze videos catalog"
+                android:text="Videos"
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <RadioButton
-                android:id="@+id/radioButton_ImportImages"
+                android:id="@+id/radioButton_AnalyzeImages"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
-                android:text="Analyze images catalog"
+                android:text="Images"
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <RadioButton
-                android:id="@+id/radioButton_ImportComics"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
-                android:text="Analyze comics catalog"
+                android:text="Comics"
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"

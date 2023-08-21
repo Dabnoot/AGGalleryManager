@@ -23,7 +23,8 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     //Fragment page indexes:
     public static final int FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY = 0;
     public static final int FRAGMENT_CAT_ANALYSIS_1_ANALYSIS_TYPE = 1;
-    public static final int FRAGMENT_COUNT = 2;
+    public static final int FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS = 2;
+    public static final int FRAGMENT_COUNT = 3;
 
     public ViewPager2 ViewPager2_CatalogAnalysis;
     FragmentCatalogAnalysisViewPagerAdapter catalogAnalysisViewPagerAdapter;
@@ -110,8 +111,8 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     }
 
     public void buttonNextClick_MediaCategorySelected(View v){
-        RadioButton radioButton_ImportVideos = findViewById(R.id.radioButton_ImportVideos);
-        RadioButton radioButton_ImportImages = findViewById(R.id.radioButton_ImportImages);
+        RadioButton radioButton_ImportVideos = findViewById(R.id.radioButton_AnalyzeVideos);
+        RadioButton radioButton_ImportImages = findViewById(R.id.radioButton_AnalyzeImages);
 
         int iNewImportMediaCatagory;
         if (radioButton_ImportVideos.isChecked()){
@@ -131,14 +132,13 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     public void buttonNextClick_AnalysisTypeSelected(View v){
         RadioButton radioButton_MissingFileIdentification = findViewById(R.id.radioButton_MissingFileIdentification);
 
-        int iNewImportMediaCatagory;
         if (radioButton_MissingFileIdentification.isChecked()){
             viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_MISSING_FILES;
         } else {
             viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_ORPHANED_FILES;
         }
 
-        //ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_1_ANALYSIS_TYPE, false);
+        ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
 
     }
 
@@ -154,7 +154,8 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
             switch (position) {
                 case FRAGMENT_CAT_ANALYSIS_1_ANALYSIS_TYPE:
                     return new Fragment_CatalogAnalysis_1_AnalysisType();
-
+                case FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS:
+                    return new Fragment_CatalogAnalysis_2_PerformAnalysis();
                 default:
                     return new Fragment_CatalogAnalysis_0_MediaCategory();
             }
@@ -162,7 +163,7 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return Activity_Import.FRAGMENT_COUNT;
+            return Activity_CatalogAnalysis.FRAGMENT_COUNT;
         }
 
     }

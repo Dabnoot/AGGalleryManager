@@ -18,6 +18,13 @@
         android:orientation="vertical"
         android:gravity="center">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select type of analysis to perform:"
+            android:textColor="@color/colorTextColor"
+            android:textSize="24sp"/>
+
         <RadioGroup
             android:id="@+id/radioGroup_MediaCategory"
             android:layout_width="wrap_content"
