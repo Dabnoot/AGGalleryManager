@@ -184,10 +184,7 @@ public class Worker_Catalog_Verification extends Worker {
                     sMessage = "Looking for orphaned files...\n";
                     LogThis("doWork()", sMessage, null);
 
-                    iProgressNumerator = 0;
                     iProgressDenominator = GlobalClass.gtmCatalogLists.get(giMediaCategory).size();
-                    iProgressBarValue = 0;
-
 
                     //Start with a listing of all folders in the selected media folder:
                     ArrayList<String> alsFolderNamesInUse = GlobalClass.GetDirectorySubfolderNames(GlobalClass.gUriCatalogFolders[giMediaCategory]);
@@ -246,7 +243,7 @@ public class Worker_Catalog_Verification extends Worker {
                                 if (!alsCatalogRelativePaths.contains(sItemRelativePath)) {
                                     //Item is not identified in memory. Note the occurrence:
                                     alsOrphanedFiles.add(sItemRelativePath);
-                                    sMessage = "Item not found in catalog: " + sItemRelativePath + "\n";
+                                    sMessage = "Item not found in catalog: " + GlobalClass.cleanHTMLCodedCharacters(sItemRelativePath) + "\n";
                                     SendLogLine(sMessage);
                                     sbLogLines.append(sMessage);
 

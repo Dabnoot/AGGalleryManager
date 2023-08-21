@@ -137,7 +137,9 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         } else {
             viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_ORPHANED_FILES;
         }
-
+        GlobalClass globalClass = (GlobalClass) getApplicationContext();
+        globalClass.gbAnalysisExecutionStarted = true;
+        globalClass.gbAnalysisExecutionFinished = false;
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
 
     }
