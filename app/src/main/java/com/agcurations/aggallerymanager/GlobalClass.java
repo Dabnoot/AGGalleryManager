@@ -514,7 +514,7 @@ public class GlobalClass extends Application {
                     c.close();
                     return NOT_EMPTY;
                 }
-
+                c.close();
             }
         } catch (Exception e) {
             Log.d("GlobalClass:IsDirEmpty()", "Problem querying folder.");
@@ -2721,11 +2721,7 @@ public class GlobalClass extends Application {
                         }
 
                     }
-
-
-
                     c.close();
-
                 }
             } catch (Exception e) {
                 Log.d("AGGalleryManager", "Problem querying folder.");
