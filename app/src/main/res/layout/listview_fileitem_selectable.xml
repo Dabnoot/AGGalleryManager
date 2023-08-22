@@ -19,7 +19,7 @@
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:contentDescription="Thumbnail icon"
-        android:src="@drawable/baseline_file_white_18dp"
+        android:src="@drawable/baseline_image_vector_24"
         android:layout_toEndOf="@id/checkBox_StorageItemSelect"
         android:layout_centerVertical="true"/>
 
