@@ -14,6 +14,8 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -241,9 +243,17 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     if(sLogLine != null) {
                         if (gtextView_ImportLog != null) {
                             gtextView_ImportLog.append(sLogLine);
-                            if(gScrollView_ImportLog != null){
-                                gScrollView_ImportLog.fullScroll(View.FOCUS_DOWN);
-                            }
+                            //Execute delayed scroll down since this broadcast listener is not on the UI thread:
+                            final Handler handler = new Handler(Looper.getMainLooper());
+                            handler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    //Do something after 100ms
+                                    if(gScrollView_ImportLog != null){
+                                        gScrollView_ImportLog.fullScroll(View.FOCUS_DOWN);
+                                    }
+                                }
+                            }, 100);
                         }
                         if (sLogLine.toLowerCase(Locale.ROOT).contains("operation complete.")) {
                             if(getView() != null) {
