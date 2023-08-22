@@ -17,7 +17,7 @@
     <ImageView
         android:id="@+id/imageView_StorageItemIcon"
         android:layout_width="100dp"
-        android:layout_height="wrap_content"
+        android:layout_height="100dp"
         android:contentDescription="Thumbnail icon"
         android:src="@drawable/baseline_file_white_18dp"
         android:layout_toEndOf="@id/checkBox_StorageItemSelect"
