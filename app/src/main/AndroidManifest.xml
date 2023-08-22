@@ -21,9 +21,6 @@
             android:name=".Activity_CatalogAnalysis"
             android:exported="false" />
         <activity
-            android:name=".Activity_CatalogVerification"
-            android:exported="false" />
-        <activity
             android:name=".Activity_UserSelection"
             android:theme="@style/Theme.AppCompat.Dialog" />
         <activity android:name=".Activity_UserManagement" />
