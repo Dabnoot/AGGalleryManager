@@ -223,10 +223,7 @@ public class GlobalClass extends Application {
     public StringBuilder gsbImportExecutionLog = new StringBuilder();
     public int giImportExecutionProgressBarPercent = 0;
     public String gsImportExecutionProgressBarText = "";
-    //Variables to control starting of catalog analysis:
-    public boolean gbAnalysisExecutionStarted = false;
-    public boolean gbAnalysisExecutionRunning = false;
-    public boolean gbAnalysisExecutionFinished = false;
+    //Variables related to catalog analysis:
     public StringBuilder gsbAnalysisExecutionLog = new StringBuilder();
     public int giAnalysisExecutionProgressBarPercent = 0;
     public String gsAnalysisExecutionProgressBarText = "";
@@ -2553,8 +2550,10 @@ public class GlobalClass extends Application {
 
     static AtomicInteger aiCatalogVerificationRunning = new AtomicInteger(0);
     public static final int STOPPED = 0;
-    public static final int RUNNING = 1;
-    public static final int STOP_REQUESTED = 2;
+    public static final int START_REQUESTED = 1;
+    public static final int RUNNING = 2;
+    public static final int STOP_REQUESTED = 3;
+    public static final int FINISHED = 4;
 
 
     public void verifyCatalogItemsExist(int iMediaCategory, boolean bTrimMissingCatalogItems){

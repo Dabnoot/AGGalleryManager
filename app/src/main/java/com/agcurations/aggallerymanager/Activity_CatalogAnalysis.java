@@ -109,7 +109,7 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         //Code any pre-finish operations here.
         //Kill any file indexing workers that might be running:
         WorkManager.getInstance(getApplicationContext())
-                .cancelAllWorkByTag(Worker_Catalog_Verification.TAG_WORKER_CATALOG_VERIFICATION);
+                .cancelAllWorkByTag(Worker_Catalog_Analysis.TAG_WORKER_CATALOG_VERIFICATION);
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
 
         finish();
@@ -143,8 +143,7 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
             viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_ORPHANED_FILES;
         }
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        globalClass.gbAnalysisExecutionStarted = true;
-        globalClass.gbAnalysisExecutionFinished = false;
+        GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.START_REQUESTED);
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
 
     }

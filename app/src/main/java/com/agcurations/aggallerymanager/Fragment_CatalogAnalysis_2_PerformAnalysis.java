@@ -64,7 +64,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Worker_Catalog_Verification.CATALOG_VERIFICATION_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_Analysis.CATALOG_VERIFICATION_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         analysisDataServiceResponseReceiver = new AnalysisDataServiceResponseReceiver();
 
@@ -116,14 +116,11 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
         gButton_AnalysisImportSelect = getView().findViewById(R.id.button_AnalysisImportSelect);
 
-        if(globalClass.gbAnalysisExecutionStarted && !globalClass.gbAnalysisExecutionRunning) {
+        if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.START_REQUESTED) {
             gProgressBar_AnalysisProgress.setProgress(0);
             gTextView_AnalysisProgressBarText.setText("0/0");
             gtextView_AnalysisLog.setText("");
             globalClass.gsbAnalysisExecutionLog = new StringBuilder();
-            globalClass.gbAnalysisExecutionStarted = false;
-            globalClass.gbAnalysisExecutionRunning = true;//This prevents Analysis from starting again
-                                                             // if the activity/fragment is restarted due to an orientation change, etc.
 
             if(getContext() == null) return;
             String sCallerID = "Fragment_CatalogAnalysis_2_PerformAnalysis:initComponents()";
@@ -135,9 +132,9 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     .putInt(ViewModel_CatalogAnalysis.EXTRA_ANALYSIS_TYPE, viewModel_catalogAnalysis.iAnalysisType)
                     .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModel_catalogAnalysis.iMediaCategory)
                     .build();
-            OneTimeWorkRequest otwrAnalysisFiles = new OneTimeWorkRequest.Builder(Worker_Catalog_Verification.class)
+            OneTimeWorkRequest otwrAnalysisFiles = new OneTimeWorkRequest.Builder(Worker_Catalog_Analysis.class)
                     .setInputData(dataAnalysisFiles)
-                    .addTag(Worker_Catalog_Verification.TAG_WORKER_CATALOG_VERIFICATION) //To allow finding the worker later.
+                    .addTag(Worker_Catalog_Analysis.TAG_WORKER_CATALOG_VERIFICATION) //To allow finding the worker later.
                     .build();
             WorkManager.getInstance(getContext()).enqueue(otwrAnalysisFiles);
 
@@ -149,7 +146,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
             gtextView_AnalysisLog.setText(globalClass.gsbAnalysisExecutionLog.toString());
 
 
-            if(globalClass.gbAnalysisExecutionFinished){
+            if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.FINISHED){
                 //If the user has returned to this fragment and the Analysis is finished,
                 //  enable the buttons:
                 if(getView() != null) {
@@ -199,10 +196,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     if(sLogLine != null) {
                         if (gtextView_AnalysisLog != null) {
                             gtextView_AnalysisLog.append(sLogLine);
-                            /*if(gScrollView_AnalysisLog != null){
-                                gScrollView_AnalysisLog.fullScroll(View.FOCUS_DOWN);
-                            }*/
-                            //Execute delayed scroll down since this broadcast listener is not on the UI thread?:
+                            //Execute delayed scroll down since this broadcast listener is not on the UI thread:
                             final Handler handler = new Handler(Looper.getMainLooper());
                             handler.postDelayed(new Runnable() {
                                 @Override

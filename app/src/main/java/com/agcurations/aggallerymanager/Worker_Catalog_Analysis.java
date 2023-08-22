@@ -18,11 +18,10 @@ import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Worker_Catalog_Verification extends Worker {
+public class Worker_Catalog_Analysis extends Worker {
 
     public static final String TAG_WORKER_CATALOG_VERIFICATION = "com.agcurations.aggallermanager.tag_worker_catalog_verification";
 
@@ -31,7 +30,7 @@ public class Worker_Catalog_Verification extends Worker {
     int giMediaCategory;
     int giAnalysisType;
 
-    public Worker_Catalog_Verification(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public Worker_Catalog_Analysis(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
 
         giMediaCategory = getInputData().getInt(GlobalClass.EXTRA_MEDIA_CATEGORY, -1);
@@ -49,6 +48,7 @@ public class Worker_Catalog_Verification extends Worker {
         if(giMediaCategory == -1){
             sMessage = "No catalog specified.";
             LogThis("doWork()", sMessage, null);
+            GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
             return Result.failure();
         }
 
@@ -76,14 +76,17 @@ public class Worker_Catalog_Verification extends Worker {
         try {
             uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
         } catch (FileNotFoundException e) {
+            GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
             return Result.failure();
         }
         if(uriLogFile == null){
+            GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
             return Result.failure();
         }
         try { //Required for the log file.
             osLogFile = GlobalClass.gcrContentResolver.openOutputStream(uriLogFile, "wt");
             if (osLogFile == null) {
+                GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
                 return Result.failure();
             }
             bwLogFile = new BufferedWriter(new OutputStreamWriter(osLogFile));
@@ -309,7 +312,7 @@ public class Worker_Catalog_Verification extends Worker {
 
         sMessage = "Catalog Verification complete.";
         LogThis("doWork()", sMessage, null);
-        GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
+        GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.FINISHED);
         globalClass.BroadcastProgress(false, "",
                 true, 100,
                 true, "Complete.",
