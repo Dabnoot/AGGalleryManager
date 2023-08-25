@@ -105,6 +105,7 @@ public class Activity_Import extends AppCompatActivity {
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
     public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
     public static final String MEDIA_CATEGORY = "MEDIA_CATEGORY";
+    public static final String IMPORT_ALIGN_ADJACENCIES = "IMPORT_ALIGN_ADJACENCIES";
 
     public static final String EXTRA_INT_MEDIA_CATEGORY = "EXTRA_INT_MEDIA_CATEGORY";
     //If the import routine is being started from somewhere other than
@@ -233,13 +234,14 @@ public class Activity_Import extends AppCompatActivity {
                     //  orphaned files:
                     boolean bImportOrphanedFiles = intentStartingIntent.getBooleanExtra(Activity_CatalogAnalysis.EXTRA_BOOL_IMPORT_ORPHANED_FILES, false);
                     if(bImportOrphanedFiles){
+                        viewModelImportActivity.bImportingOrphanedFiles = true;
                         ArrayList<ItemClass_File> alFileList = new ArrayList<>(GlobalClass.galf_Orphaned_Files);
                         fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
                         giStartingFragment = FRAGMENT_IMPORT_2_ID_SELECT_ITEMS;
                         ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_2_ID_SELECT_ITEMS, false);
                         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
-
                     } else {
+                        viewModelImportActivity.bImportingOrphanedFiles = false; //todo: might not be needed here. Test.
                         gotoMediaCategorySelectedFragment(iMediaCategory);
                     }
                 } else {
@@ -1153,6 +1155,10 @@ public class Activity_Import extends AppCompatActivity {
                             viewModelImportActivity.iImportMediaCategory); //viewModel not intended
                     // to be used between Activities. Therefore, pass media category via bundle in
                     // intent.
+
+                    if(viewModelImportActivity.bImportingOrphanedFiles){
+                        b.putBoolean(IMPORT_ALIGN_ADJACENCIES, true);
+                    }
 
                     ArrayList<ItemClass_File> alPreviewFileList = new ArrayList<>();
                     if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||

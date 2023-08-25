@@ -37,4 +37,6 @@ public class ViewModel_ImportActivity extends ViewModel {
     public ItemClass_CatalogItem ci; //Used for import of web item, as the details
                                      // are gathered before the import takes place.
 
+    public boolean bImportingOrphanedFiles = false;
+
 }

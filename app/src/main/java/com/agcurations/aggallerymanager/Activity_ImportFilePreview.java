@@ -1,6 +1,10 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -11,22 +15,31 @@ import android.os.Looper;
 import android.os.PersistableBundle;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +49,12 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 public class Activity_ImportFilePreview extends AppCompatActivity {
 
@@ -49,6 +68,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private Fragment_SelectTags fragment_selectTags; //Used to reset tags when swiping to the next file.
 
     private int giMediaCategory;
+
+    private boolean gbLookForFileAdjacencies = false;
 
     VideoView gVideoView_VideoPlayer;
     MediaController gMediaController;
@@ -66,6 +87,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     ArrayList<Integer> galiLastAssignedTags;
     boolean gbFreezeLastAssignedReset = false;
     boolean gbPastingTags = false;
+
+    ImportFilePreviewResponseReceiver importFilePreviewResponseReceiver;
+    RelativeLayout gRelativeLayout_Adjacency_Analysis_Progress;
+    ProgressBar gProgressBar_AnalysisProgress;
+    TextView gTextView_AnalysisProgressBarText;
+    RecyclerView gRecyclerView_Adjacencies;
+
 
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
@@ -215,6 +243,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             giFileItemIndex = b.getInt(Activity_Import.PREVIEW_FILE_ITEMS_POSITION, 0);
             giFileItemLastIndex = giFileItemIndex;
             giMediaCategory = b.getInt(Activity_Import.MEDIA_CATEGORY, 0);
+
+            gbLookForFileAdjacencies = b.getBoolean(Activity_Import.IMPORT_ALIGN_ADJACENCIES, false);
 
             //Start the tag selection fragment:
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -419,6 +449,14 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
             }
         }*/
+
+        //Add a response receiver to listen for responses from the adjacency analyzer worker.
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJACENCY_ANALYZER_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        importFilePreviewResponseReceiver = new ImportFilePreviewResponseReceiver();
+        LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(importFilePreviewResponseReceiver, filter);
+
 
         initializeFile();
         //displayGrade();
@@ -686,6 +724,72 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             });
         }
 
+        if(gbLookForFileAdjacencies){
+
+            //Include the import location:
+            sFileNameTextLine = GlobalClass.cleanHTMLCodedCharacters(galFileItems.get(giFileItemIndex).sUri);
+            textView_FileName.setText(sFileNameTextLine);
+
+            RelativeLayout relativeLayout_Adjacencies = findViewById(R.id.relativeLayout_Adjacencies);
+            relativeLayout_Adjacencies.setVisibility(View.VISIBLE);
+
+            gRecyclerView_Adjacencies = findViewById(R.id.recyclerView_Adjacencies);
+
+            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext(),
+                    LinearLayoutManager.HORIZONTAL, false);
+            gRecyclerView_Adjacencies.setLayoutManager(linearLayoutManager);
+
+            gRelativeLayout_Adjacency_Analysis_Progress = findViewById(R.id.relativeLayout_Adjacency_Analysis_Progress);
+
+            gProgressBar_AnalysisProgress = findViewById(R.id.progressBar_AnalysisProgress);
+            gProgressBar_AnalysisProgress.setMax(100);
+            gTextView_AnalysisProgressBarText = findViewById(R.id.textView_AnalysisProgressBarText);
+
+            //Before starting the adjacency analyzer, clear the adjacency RecyclerView so that
+            //  the user is not stuck looking at old results while the worker does its job:
+            GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap = new TreeMap<>();
+            RecyclerViewCatalogAdjacencyAdapter gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdjacencyAdapter(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap);
+            gRecyclerView_Adjacencies.setAdapter(gRecyclerViewCatalogAdapter);
+
+            //Start the adjacency analyzer:
+            int[] iarray = new int[galFileItems.get(giFileItemIndex).aliProspectiveTags.size()];
+            for(int i = 0; i < galFileItems.get(giFileItemIndex).aliProspectiveTags.size(); i++){
+                iarray[i] = galFileItems.get(giFileItemIndex).aliProspectiveTags.get(i);
+            }
+            int iHeight = -1;
+            int iWidth = -1;
+            try {
+                iHeight = Integer.parseInt(galFileItems.get(giFileItemIndex).sHeight);
+                iWidth = Integer.parseInt(galFileItems.get(giFileItemIndex).sWidth);
+            } catch (Exception ignored){}
+            double dDateLastModified = -1d;
+            if(galFileItems.get(giFileItemIndex).dateLastModified != null){
+                dDateLastModified = GlobalClass.GetTimeStampDouble(galFileItems.get(giFileItemIndex).dateLastModified);
+            }
+            String sCallerID = "Activity_ImportFilePreview.ImportFilePreviewResponseReceiver.onReceive()";
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataStartAdjacencyAnalyzer = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+
+                    .putString(Worker_Catalog_Adjaceny_Analyzer.EXTRA_STRING_FILENAME, galFileItems.get(giFileItemIndex).sFileOrFolderName)
+                    .putString(Worker_Catalog_Adjaceny_Analyzer.EXTRA_STRING_FILENAME_FILTER, "")
+                    .putInt(Worker_Catalog_Adjaceny_Analyzer.EXTRA_INT_HEIGHT, iHeight)
+                    .putInt(Worker_Catalog_Adjaceny_Analyzer.EXTRA_INT_WIDTH, iWidth)
+                    .putLong(Worker_Catalog_Adjaceny_Analyzer.EXTRA_LONG_DURATION, galFileItems.get(giFileItemIndex).lVideoTimeInMilliseconds)
+                    .putDouble(Worker_Catalog_Adjaceny_Analyzer.EXTRA_DOUBLE_FILE_MODIFIED_DATE, dDateLastModified)
+                    .putLong(Worker_Catalog_Adjaceny_Analyzer.EXTRA_LONG_FILE_SIZE, galFileItems.get(giFileItemIndex).lSizeBytes)
+                    .putIntArray(Worker_Catalog_Adjaceny_Analyzer.EXTRA_ARRAY_INT_TAGS, iarray)
+
+                    .build();
+            OneTimeWorkRequest otwrStartAdjacencyAnalyzer = new OneTimeWorkRequest.Builder(Worker_Catalog_Adjaceny_Analyzer.class)
+                    .setInputData(dataStartAdjacencyAnalyzer)
+                    .addTag(Worker_Catalog_Adjaceny_Analyzer.TAG_WORKER_CATALOG_ADJACENCY_ANALYZER) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getApplicationContext()).enqueue(otwrStartAdjacencyAnalyzer);
+
+        }
+
     }
 
 
@@ -798,6 +902,342 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             galFileItems.get(giFileItemIndex).iGrade = iGrade;
             displayGrade();
         }
+    }
+
+
+    @Override
+    protected void onDestroy() {
+        LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(importFilePreviewResponseReceiver);
+        super.onDestroy();
+    }
+
+
+    public class ImportFilePreviewResponseReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            //Get boolean indicating that an error may have occurred:
+            boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+
+            if (bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                //Check to see if this is a response to update progress bar:
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+                if(bUpdatePercentComplete || bUpdateProgressBarText){
+                    gRelativeLayout_Adjacency_Analysis_Progress.setVisibility(View.VISIBLE);
+                }
+
+                if(bUpdatePercentComplete){
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+
+                    final Handler handler = new Handler(Looper.getMainLooper());
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            //Do something after 100ms
+                            if(gProgressBar_AnalysisProgress != null) {
+                                gProgressBar_AnalysisProgress.setProgress(iAmountComplete);
+                            }
+                        }
+                    }, 100);
+                }
+                if(bUpdateProgressBarText){
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if(gTextView_AnalysisProgressBarText != null) {
+                        gTextView_AnalysisProgressBarText.setText(sProgressBarText);
+                    }
+                }
+
+                //Check to see if this is a response indicating adjacencies analysis is complete:
+                boolean bAdjacencyAnalyzerComplete = intent.getBooleanExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJACENCY_ANALYZER_EXTRA_BOOL_COMPLETE, false);
+                if (bAdjacencyAnalyzerComplete) {
+                    gRelativeLayout_Adjacency_Analysis_Progress.setVisibility(View.INVISIBLE);
+                    if(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap.size() == 0){
+                        gRecyclerView_Adjacencies.setVisibility(View.INVISIBLE);
+                    } else {
+                        //Initiate the RecyclerView:
+                        gRecyclerView_Adjacencies.setVisibility(View.VISIBLE);
+                        RecyclerViewCatalogAdjacencyAdapter gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdjacencyAdapter(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap);
+                        gRecyclerView_Adjacencies.setAdapter(gRecyclerViewCatalogAdapter);
+                    }
+                }
+
+            }
+
+        }
+    }
+
+
+
+
+    //The below RecyclerView is only for finding item adjacencies. That is, items that are similar to the prospective import image:
+    public class RecyclerViewCatalogAdjacencyAdapter extends RecyclerView.Adapter<RecyclerViewCatalogAdjacencyAdapter.ViewHolder> {
+
+        private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
+        private final Integer[] mapKeys;
+
+        // Provide a reference to the views for each data item
+        // Complex data items may need more than one view per item, and
+        // you provide access to all the views for a data item in a view holder
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            // each data item is just a string in this case
+            public final ImageView ivThumbnail;
+            public final TextView tvThumbnailText;
+
+            public ViewHolder(View v) {
+                super(v);
+                ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                tvThumbnailText = v.findViewById(R.id.textView_Title);
+            }
+        }
+
+        public RecyclerViewCatalogAdjacencyAdapter(TreeMap<Integer, ItemClass_CatalogItem> data) {
+            this.treeMap = data;
+            mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
+        }
+
+        public int getCount() {
+            return treeMap.size();
+        }
+
+        // Create new views (invoked by the layout manager)
+        @NonNull
+        @Override
+        public RecyclerViewCatalogAdjacencyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
+                                                                                               int viewType) {
+            // create a new view
+            View v;
+            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            v = inflater.inflate(R.layout.recycler_catalog_adjacencies_grid, parent, false);
+
+
+            return new RecyclerViewCatalogAdjacencyAdapter.ViewHolder(v);
+        }
+
+        // Replace the contents of a view (invoked by the layout manager)
+        @Override
+        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdjacencyAdapter.ViewHolder holder, final int position) {
+            // - get element from your data set at this position
+            // - replace the contents of the view with that element
+
+            //Get the data for the row:
+            ItemClass_CatalogItem ci;
+            ci = treeMap.get(mapKeys[position]);
+            final ItemClass_CatalogItem ci_final = ci;
+            assert ci_final != null;
+
+            String sItemName = "";
+
+
+            //Load the non-obfuscated image into the RecyclerView ViewHolder:
+
+            Uri uriThumbnailUri;
+            boolean bThumbnailQuickLookupSuccess;
+
+            String sFileName = ci.sThumbnail_File;
+            if(sFileName.equals("")){
+                sFileName = ci.sFilename;
+            }
+            String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                    + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
+                    + GlobalClass.gsFileSeparator + sFileName;
+            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
+                sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
+                        + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
+            }
+            String sThumbnailUri = GlobalClass.gsUriAppRootPrefix
+                    + GlobalClass.gsFileSeparator + sPath;
+            uriThumbnailUri = Uri.parse(sThumbnailUri);
+
+            bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
+
+            if(!bThumbnailQuickLookupSuccess) {
+                Uri uriCatalogItemFolder;
+                uriCatalogItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.giSelectedCatalogMediaCategory].toString(), ci.sFolderRelativePath);
+
+                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
+                        ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
+                    //If this is a comic, and the files from DownloadManager have not been moved as
+                    //  part of download post-processing, look in the [comic]\download folder for the files:
+                    if (uriCatalogItemFolder != null) {
+                        Uri uriDLTempFolder = GlobalClass.FormChildUri(uriCatalogItemFolder.toString(), GlobalClass.gsDLTempFolderName);
+                        if (uriDLTempFolder != null) {
+                            uriThumbnailUri = GlobalClass.FormChildUri(uriDLTempFolder.toString(), ci.sFilename);
+                        }
+                    }
+                }
+                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
+                        //We are not doing anything with this item.
+                        uriThumbnailUri = null;
+                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                        //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
+                        Uri uriVideoTagFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolderRelativePath);
+
+                        if (uriVideoTagFolder != null) {
+                            Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoTagFolder.toString(), ci.sItemID);
+
+                            if (uriVideoWorkingFolder != null) {
+                                Uri uriDownloadedThumbnailFile = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sThumbnail_File);
+
+                                if (uriDownloadedThumbnailFile != null) { //isDir if ci.sThum=="".
+                                    uriThumbnailUri = uriDownloadedThumbnailFile;
+                                } else {
+                                    //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                                    boolean bVideoFileFound = false;
+                                    Uri uriM3U8File = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sFilename);
+                                    if (uriM3U8File != null) {
+                                        try {
+                                            InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(uriM3U8File);
+                                            if (isM3U8File != null) {
+                                                BufferedReader brReader;
+                                                brReader = new BufferedReader(new InputStreamReader(isM3U8File));
+                                                String sLine = brReader.readLine();
+                                                while (sLine != null) {
+                                                    if (!sLine.startsWith("#") && sLine.contains(".st")) {
+                                                        Uri uriThumbnailFileCandidate = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), sLine);
+                                                        if (uriThumbnailFileCandidate != null) {
+                                                            uriThumbnailUri = uriThumbnailFileCandidate;
+                                                            bVideoFileFound = true;
+                                                            break;
+                                                        }
+                                                    }
+                                                    // read next line
+                                                    sLine = brReader.readLine();
+                                                }
+                                                brReader.close();
+                                                isM3U8File.close();
+                                            }
+
+                                        } catch (Exception e) {
+                                            //Probably a file IO exception.
+                                            bVideoFileFound = false; //redundant, but don't want special behavior.
+                                        }
+                                    }
+
+
+                                }  //End if we had to look for a .ts file to serve as a thumbnail file.
+                            } //End if unable to find video working folder DocumentFile.
+                        } //End if unable to find video tag folder DocumentFile.
+                    } //End if video is m3u8 style.
+
+                }
+                if(uriThumbnailUri != null) {
+                    if (!GlobalClass.CheckIfFileExists(uriThumbnailUri)) {
+                        uriThumbnailUri = null;
+                    }
+                }
+            }
+
+
+            if(uriThumbnailUri != null) {
+                Glide.with(getApplicationContext())
+                        .load(uriThumbnailUri)
+                        .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                        .into(holder.ivThumbnail);
+            } else {
+                //Special behavior if this is a comic.
+                boolean bFoundMissingComicThumbnail = false;
+                if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+                    //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
+                    Uri uriComicFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ci.sFolderRelativePath);
+
+
+                    //Load the full path to each comic page into tmComicPages (sorts files):
+                    TreeMap<String, String> tmSortByFileName = new TreeMap<>();
+                    if(uriComicFolder != null){
+                        ArrayList<String> sComicPages = GlobalClass.GetDirectoryFileNames(uriComicFolder);
+                        if(sComicPages.size() > 0) {
+                            for (String sComicPage : sComicPages) {
+                                tmSortByFileName.put(GlobalClass.JumbleFileName(sComicPage), GlobalClass.FormChildUriString(uriComicFolder.toString(), sComicPage)); //de-jumble to get proper alphabetization.
+                            }
+                        }
+                        //Assign the existing file to be the new thumbnail file:
+                        if(tmSortByFileName.size() > 0) {
+                            Map.Entry<String, String> mapNewComicThumbnail = tmSortByFileName.firstEntry();
+                            if(mapNewComicThumbnail != null) {
+                                ci.sFilename = GlobalClass.JumbleFileName(mapNewComicThumbnail.getKey()); //re-jumble to get actual file name.
+                                uriThumbnailUri = Uri.parse(mapNewComicThumbnail.getValue());
+                                bFoundMissingComicThumbnail = true;
+                            }
+                        }
+                    }
+
+                }
+
+                if(bFoundMissingComicThumbnail){
+                    Glide.with(getApplicationContext())
+                            .load(uriThumbnailUri)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.ivThumbnail);
+                } else {
+                    Glide.with(getApplicationContext())
+                            .load(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.ivThumbnail);
+                }
+            }
+
+            String sThumbnailText = "";
+            switch (GlobalClass.giSelectedCatalogMediaCategory) {
+                case GlobalClass.MEDIA_CATEGORY_VIDEOS:
+                    String sTemp = ci.sFilename;
+                    sItemName = GlobalClass.JumbleFileName(sTemp);
+                    if(!ci.sTitle.equals("")){
+                        sItemName = ci.sTitle;
+                    }
+                    sThumbnailText = sItemName;
+                    if(!ci.sDuration_Text.equals("")){
+                        sThumbnailText = sThumbnailText  + ", " + ci.sDuration_Text;
+                    }
+                    break;
+                case GlobalClass.MEDIA_CATEGORY_IMAGES:
+                    sItemName = GlobalClass.JumbleFileName(ci.sFilename);
+                    sThumbnailText = sItemName;
+                    break;
+                case GlobalClass.MEDIA_CATEGORY_COMICS:
+                    sItemName = ci.sTitle;
+                    sThumbnailText = sItemName;
+                    break;
+            }
+
+            if(sThumbnailText.length() > 100){
+                sThumbnailText = sThumbnailText.substring(0, 100) + "...";
+            }
+
+            holder.tvThumbnailText.setText(sThumbnailText);
+
+            holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    //Apply the tags associated with this catalog item to the potential import item.
+
+                    fragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(ci.aliTags);
+                }
+            });
+
+
+        }
+
+        // Return the size of the data set (invoked by the layout manager)
+        @Override
+        public int getItemCount() {
+            return treeMap.size();
+        }
+
     }
 
 

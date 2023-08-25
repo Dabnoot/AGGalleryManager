@@ -2,6 +2,7 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
@@ -15,6 +16,7 @@ import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
@@ -260,14 +262,35 @@ public class Worker_Catalog_Analysis extends Worker {
                                         } else {
                                             icf_FileItem.sExtension = sfileExtension;
                                         }
-                                        icf_FileItem.bMetadataDetected = false;
-                                        icf_FileItem.sWidth = "";
-                                        icf_FileItem.sHeight = "";
+
                                         String sUri = sFolderUri +
                                                 GlobalClass.gsFileSeparator + sItemRelativePath;
                                         icf_FileItem.sUri = sFolderUri +
                                                 GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;;
                                         icf_FileItem.lVideoTimeInMilliseconds = 0;
+
+                                        icf_FileItem.bMetadataDetected = false;
+                                        String sWidth = "";  //We are not doing math with the width and height. Therefore no need to convert to int.
+                                        String sHeight = "";
+                                        //Get the width and height of the image:
+                                        try {
+                                            Uri uriDocUri = Uri.parse(icf_FileItem.sUri);
+                                            InputStream input = getApplicationContext().getContentResolver().openInputStream(uriDocUri);
+                                            if (input != null) {
+                                                BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+                                                onlyBoundsOptions.inJustDecodeBounds = true;
+                                                BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+                                                input.close();
+                                                sWidth = "" + onlyBoundsOptions.outWidth;
+                                                sHeight = "" + onlyBoundsOptions.outHeight;
+                                                icf_FileItem.bMetadataDetected = true;
+                                            }
+
+                                        } catch (Exception ignored) {
+                                        }
+
+                                        icf_FileItem.sWidth = sWidth;
+                                        icf_FileItem.sHeight = sHeight;
 
                                         //Add the ItemClass_File to the ArrayList:
                                         alOrphanedFileList.add(icf_FileItem);
@@ -277,7 +300,7 @@ public class Worker_Catalog_Analysis extends Worker {
                                 } // End looping through files in folder.
                             } //End if arraylist is not null.
                         } //End if verifying images.
-
+                        if(alOrphanedFileList.size() > 100) break;
                     } //End looping through catalog subfolders.
 
                     sMessage = "Orphaned file analysis observed " + iProgressNumerator + " file items for " + iProgressDenominator + " catalog items.\n";

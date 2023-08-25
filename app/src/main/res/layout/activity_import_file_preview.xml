@@ -35,6 +35,48 @@
         </RelativeLayout>
 
         <RelativeLayout
+            android:id="@+id/relativeLayout_Adjacencies"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_above="@id/relativeLayout_BottomData"
+            android:visibility="visible">
+
+            <!--This layout used for bringing in orphaned files-->
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView_Adjacencies"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"/>
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_Adjacency_Analysis_Progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_alignParentBottom="true"
+                android:visibility="visible">
+
+                <ProgressBar
+                    android:id="@+id/progressBar_AnalysisProgress"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:progressDrawable="@drawable/progressbar_colors"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"/>
+
+                <TextView
+                    android:id="@+id/textView_AnalysisProgressBarText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorTextColor"
+                    android:layout_centerInParent="true"/>
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+        <RelativeLayout
             android:id="@+id/relativeLayout_BottomData"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
