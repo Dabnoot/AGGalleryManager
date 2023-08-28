@@ -79,7 +79,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     //ExoPlayer is used for playback of local M3U8 files:
     private ExoPlayer gExoPlayer;
     private StyledPlayerView gplayerView_ExoVideoPlayer;
-    private StyledPlayerControlView gPlayerControlView_ExoPlayerControls;
+    //private StyledPlayerControlView gPlayerControlView_ExoPlayerControls;
 
     private Fragment_ItemDetails gFragment_itemDetails;
 
@@ -111,7 +111,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         mVisible = true;
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
         gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
-        gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
+        //gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gDrawerLayout = findViewById(R.id.drawer_layout);
         gDrawerLayout.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
@@ -471,7 +471,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gExoPlayer = new ExoPlayer.Builder(this).build();
 
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
-        gPlayerControlView_ExoPlayerControls.setPlayer(gExoPlayer);
+        //gPlayerControlView_ExoPlayerControls.setPlayer(gExoPlayer);
 
         gplayerView_ExoVideoPlayer.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -687,14 +687,14 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         gVideoView_VideoPlayer.setZOrderOnTop(false);
                         gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                         gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                        gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                        //gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
                     }
                 } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                     gbPlayingM3U8 = true;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
-                    gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
+                    //gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
 
                     //Find the M3U8 file:
                     Uri uriM3U8;
@@ -967,7 +967,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     gbPlayingM3U8 = false;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                    gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
+                    //gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
                     gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
                     gVideoView_VideoPlayer.setVideoURI(uriFileUri);
 
