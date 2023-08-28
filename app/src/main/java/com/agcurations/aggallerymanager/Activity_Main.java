@@ -179,7 +179,6 @@ public class Activity_Main extends AppCompatActivity {
         filter.addAction(GlobalClass.BROADCAST_CATALOG_FILES_MAINTENANCE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         mainActivityDataServiceResponseReceiver = new MainActivityDataServiceResponseReceiver();
-        //registerReceiver(mainActivityDataServiceResponseReceiver, filter);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(mainActivityDataServiceResponseReceiver, filter);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);

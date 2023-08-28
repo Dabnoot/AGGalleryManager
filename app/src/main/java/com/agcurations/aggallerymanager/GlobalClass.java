@@ -35,11 +35,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +62,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.common.io.BaseEncoding;
 
 
@@ -129,7 +129,8 @@ public class GlobalClass extends Application {
     public static ArrayList<ItemClass_File> galf_Orphaned_Files;
 
     //Activity_CatalogViewer variables shared with Service_CatalogViewer:
-    public TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
+    public static TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
+    public static TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogAdjacencyAnalysisTreeMap;
     public static final int SORT_BY_DATETIME_LAST_VIEWED = 0;
     public static final int SORT_BY_DATETIME_IMPORTED = 1;
     public int[] giCatalogViewerSortBySetting = {SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED};
@@ -369,6 +370,15 @@ public class GlobalClass extends Application {
         //Get an easily-comparable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort);
         String sTimeStamp = gdtfDateFormatter.format(LocalDateTime.now());
+        return Double.parseDouble(sTimeStamp);
+    }
+
+    public static Double GetTimeStampDouble(Date dateInput){
+        //Get an easily-comparable time stamp.
+        gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort)
+                .withZone( ZoneId.systemDefault() );;
+        Instant instant = dateInput.toInstant();
+        String sTimeStamp = gdtfDateFormatter.format(instant);
         return Double.parseDouble(sTimeStamp);
     }
 
@@ -2430,7 +2440,14 @@ public class GlobalClass extends Application {
 
         String sFinalFileName = sOriginalFileName;
         if(bReturnJumbledFileName) {
-            sFinalFileName = JumbleFileName(sOriginalFileName);
+            //Jumble the file name before confirming there are no file duplicates.
+
+            //Check to see if the file name is already jumbled. This may be the case particularly
+            //  if the user is re-importing orphaned files. If it is already jumbled, don't jumble
+            //  again:
+            if(!isJumbled(sOriginalFileName)) {
+                sFinalFileName = JumbleFileName(sOriginalFileName);
+            }
         }
 
         int iOutputFolderRetryIterator = 0;
@@ -2786,16 +2803,28 @@ public class GlobalClass extends Application {
 
     }
 
-    public boolean isJumbled(String sFilename){
+    public static boolean isJumbled(String sFilename){
 
-        if(sFilename.endsWith(".mp4") ||
-                sFilename.endsWith(".webm") ||
-                sFilename.endsWith(".jpeg") ||
-                sFilename.endsWith(".gif") ||
-                sFilename.endsWith(".png")){
-            return false;
+        ArrayList<String> alsRecognizedFileExtensions = new ArrayList<>();
+        boolean bExtensionRecognized = false;
+
+        alsRecognizedFileExtensions.add(".mp4");
+        alsRecognizedFileExtensions.add(".webm");
+        alsRecognizedFileExtensions.add(".jpg");
+        alsRecognizedFileExtensions.add(".jpeg");
+        alsRecognizedFileExtensions.add(".gif");
+        alsRecognizedFileExtensions.add(".tiff");
+        alsRecognizedFileExtensions.add(".png");
+        alsRecognizedFileExtensions.add(".ts");
+
+        for(String sExtension: alsRecognizedFileExtensions){
+            if(sFilename.toLowerCase(Locale.ROOT).endsWith(sExtension.toLowerCase(Locale.ROOT))){
+                bExtensionRecognized = true;
+                break;
+            }
         }
-        return true;
+
+        return bExtensionRecognized;
     }
 
 
