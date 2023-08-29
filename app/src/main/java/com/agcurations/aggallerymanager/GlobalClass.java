@@ -788,6 +788,7 @@ public class GlobalClass extends Application {
         String sHeader = "";
         sHeader = sHeader + "MediaCategory";                        //Video, image, or comic.
         sHeader = sHeader + "\t" + "ItemID";                        //Video, image, comic id
+        sHeader = sHeader + "\t" + "GroupID";                        //Video, image, comic id
         sHeader = sHeader + "\t" + "Filename";                      //Video or image filename
         sHeader = sHeader + "\t" + "Folder_Name";                   //Name of the folder holding the video, image, or comic pages
         sHeader = sHeader + "\t" + "Item_Folder_Name";              //m3u8 video folder
@@ -842,8 +843,9 @@ public class GlobalClass extends Application {
         //StringBuilder sbRecord = new StringBuilder();  //To be used when writing the catalog file.
         sbRecord.append(ci.iMediaCategory)                                          //Video, image, or comic.
         .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
+        .append("\t").append(JumbleStorageText(ci.sGroupID))                        //Group ID to identify explict related items related much more closely than generic tags.
         .append("\t").append(ci.sFilename)                                          //Video or image filename
-        .append("\t").append(JumbleStorageText(ci.sFolderRelativePath))                    //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
+        .append("\t").append(JumbleStorageText(ci.sFolderRelativePath))             //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
         .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
         .append("\t").append(JumbleStorageText(ci.dDatetime_Last_Viewed_by_User))   //Date of last read by user. Used for sorting if desired
@@ -897,8 +899,9 @@ public class GlobalClass extends Application {
         //Designed for interpretting a line as read from a catalog file.
         ItemClass_CatalogItem ci =  new ItemClass_CatalogItem();
         int iFieldIndex = 0; // Allows insertion of a field in the middle of the sequence
-        ci.iMediaCategory = Integer.parseInt(sRecord[iFieldIndex++]);                              //Video, image, or comic.
+        ci.iMediaCategory = Integer.parseInt(sRecord[iFieldIndex++]);                               //Video, image, or comic.
         ci.sItemID = JumbleStorageText(sRecord[iFieldIndex++]);                                     //Video, image, comic id
+        ci.sGroupID = JumbleStorageText(sRecord[iFieldIndex++]);                                    //Group ID to identify explict related items related much more closely than generic tags.
         ci.sFilename = sRecord[iFieldIndex++];                                                      //Video or image filename
         ci.sFolderRelativePath = JumbleStorageText(sRecord[iFieldIndex++]);                                //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         ci.sThumbnail_File = sRecord[iFieldIndex++];                                                //Name of the file used as the thumbnail for a video or comic
@@ -908,29 +911,29 @@ public class GlobalClass extends Application {
         ci.aliTags = getTagIDsFromTagIDString(ci.sTags);                                            //Should mirror sTags.
         ci.iHeight = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));                   //Video or image dimension/resolution
         ci.iWidth = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));                    //Video or image dimension/resolution
-        ci.lDuration_Milliseconds = Long.parseLong(JumbleStorageText(sRecord[iFieldIndex++]));     //Duration of video in milliseconds
-        ci.sDuration_Text = JumbleStorageText(sRecord[iFieldIndex++]);                             //Duration of video text in 00:00:00 format
-        ci.sResolution = JumbleStorageText(sRecord[iFieldIndex++]);                                //Resolution for sorting at user request
-        ci.lSize = Long.parseLong(JumbleStorageText(sRecord[iFieldIndex++]));                      //Size of video, image, or size of all files in the comic, in Bytes
-        ci.sCast = JumbleStorageText(sRecord[iFieldIndex++]);                                      //For videos and images
+        ci.lDuration_Milliseconds = Long.parseLong(JumbleStorageText(sRecord[iFieldIndex++]));      //Duration of video in milliseconds
+        ci.sDuration_Text = JumbleStorageText(sRecord[iFieldIndex++]);                              //Duration of video text in 00:00:00 format
+        ci.sResolution = JumbleStorageText(sRecord[iFieldIndex++]);                                 //Resolution for sorting at user request
+        ci.lSize = Long.parseLong(JumbleStorageText(sRecord[iFieldIndex++]));                       //Size of video, image, or size of all files in the comic, in Bytes
+        ci.sCast = JumbleStorageText(sRecord[iFieldIndex++]);                                       //For videos and images
 
         //Comic-related variables:
-        ci.sComicArtists = JumbleStorageText(sRecord[iFieldIndex++]);                              //Common comic tag category
-        ci.sComicCategories = JumbleStorageText(sRecord[iFieldIndex++]);                           //Common comic tag category
-        ci.sComicCharacters = JumbleStorageText(sRecord[iFieldIndex++]);                           //Common comic tag category
-        ci.sComicGroups = JumbleStorageText(sRecord[iFieldIndex++]);                               //Common comic tag category
-        ci.sComicLanguages = JumbleStorageText(sRecord[iFieldIndex++]);                            //Language(s = sRecord[0] found in the comic
-        ci.sComicParodies = JumbleStorageText(sRecord[iFieldIndex++]);                             //Common comic tag category
-        ci.sTitle = JumbleStorageText(sRecord[iFieldIndex++]);                                 //Comic name
-        ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));              //Total number of pages as defined at the comic source
-        ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));       //Max comic page id extracted from file names
-        ci.sComic_Missing_Pages = JumbleStorageText(sRecord[iFieldIndex++]);                       //Missing page numbers
-        ci.iFile_Count = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));              //Files included with the comic. Can be used for integrity check. Also used
-                                                                                        // for video M3U8 download completion check.
+        ci.sComicArtists = JumbleStorageText(sRecord[iFieldIndex++]);                               //Common comic tag category
+        ci.sComicCategories = JumbleStorageText(sRecord[iFieldIndex++]);                            //Common comic tag category
+        ci.sComicCharacters = JumbleStorageText(sRecord[iFieldIndex++]);                            //Common comic tag category
+        ci.sComicGroups = JumbleStorageText(sRecord[iFieldIndex++]);                                //Common comic tag category
+        ci.sComicLanguages = JumbleStorageText(sRecord[iFieldIndex++]);                             //Language(s = sRecord[0] found in the comic
+        ci.sComicParodies = JumbleStorageText(sRecord[iFieldIndex++]);                              //Common comic tag category
+        ci.sTitle = JumbleStorageText(sRecord[iFieldIndex++]);                                      //Comic name
+        ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));               //Total number of pages as defined at the comic source
+        ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));        //Max comic page id extracted from file names
+        ci.sComic_Missing_Pages = JumbleStorageText(sRecord[iFieldIndex++]);                        //Missing page numbers
+        ci.iFile_Count = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));               //Files included with the comic. Can be used for integrity check. Also used
+                                                                                                    // for video M3U8 download completion check.
         ci.bComic_Online_Data_Acquired = Boolean.parseBoolean(JumbleStorageText(sRecord[iFieldIndex++]));  //Typically used to gather tag data from an online comic source, if automatic.
-        ci.sSource = JumbleStorageText(sRecord[iFieldIndex++]);                                    //Website, if relevant. Originally for comics also used for video.
-        ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));               //Grade, supplied by user.
-        ci.iSpecialFlag = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));  //Code for required post-processing.
+        ci.sSource = JumbleStorageText(sRecord[iFieldIndex++]);                                     //Website, if relevant. Originally for comics also used for video.
+        ci.iGrade = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));                    //Grade, supplied by user.
+        ci.iSpecialFlag = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));              //Code for required post-processing.
 
         ci.iAllVideoSegmentFilesDetected = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++])); //For verifying m3u8 segment file complex integrity.
 
@@ -1797,7 +1800,7 @@ public class GlobalClass extends Application {
     }
 
     public void TagDataFileAddNewField(){
-        //Execute these steps to add a new field to the tags files.
+        //Execute these steps to add a new field (adding a new field) to the tags files.
         //  .01. Create a backup of the tags files.
         //  .02. Verify that the backup was successful by confirming the files exist and are not empty.
         //  .03. Update ItemClass_Tag.java to include the new data item, perhaps with an initial value.

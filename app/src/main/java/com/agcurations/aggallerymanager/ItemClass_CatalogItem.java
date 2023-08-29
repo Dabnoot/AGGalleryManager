@@ -68,5 +68,6 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iMaturityRating = AdapterMaturityRatings.MATURITY_RATING_RP;
     public ArrayList<String> alsApprovedUsers = new ArrayList<>();
 
+    public String sGroupID = "";        //Group ID to identify explict related items related much more closely than generic tags.
 
 }
