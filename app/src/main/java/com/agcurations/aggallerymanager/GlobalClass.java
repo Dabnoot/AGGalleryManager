@@ -1351,10 +1351,15 @@ public class GlobalClass extends Application {
         return ci;
     }
 
-    public static String getNewCatalogRecordID(int iMediaCategory){
+    public static String getNewCatalogRecordID(){
         //Generate a randomUUID hash for a record ID. 50% possibility of a collision if every person
         //  on earth owned 600 million UUIDs.
         //This is not done in a sequence as users may wish to combine their catalogs or share data.
+
+        //Catalog record ID must be unique and compact as it is in some cases used as the file or folder name for an item.
+        //  This is due to simple accomodation for future ability to merge catalogs with catalogs held on
+        //  other devices.
+        //todo: Work catalog merge system to obviate need for UUID-generated file/folder names.
 
         String sUUID = UUID.randomUUID().toString(); //36 chars. Get random UUID, returns hex string, includes dashes.
 
@@ -1376,6 +1381,14 @@ public class GlobalClass extends Application {
         //int iLenEncoded = sBase32UUIDEncoded.length(); //26 chars
 
         return Base32.encodeOriginal(bytes); //26 chars
+    }
+
+    public static String getNewGroupID(){
+        //Generate a randomUUID hash for a record ID. 50% possibility of a collision if every person
+        //  on earth owned 600 million UUIDs.
+        //This is not done in a sequence as users may wish to combine their catalogs or share data.
+
+        return UUID.randomUUID().toString(); //36 chars. Get random UUID, returns hex string, includes dashes.
     }
 
 
