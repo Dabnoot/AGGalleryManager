@@ -60,6 +60,48 @@
                 android:scrollbars="vertical"
                 android:scrollbarSize="20dp"/>
 
+            <LinearLayout
+                android:id="@+id/linearLayout_GroupingModeNotifier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_margin="10dp"
+                android:background="@drawable/group_mode_notifier_bg"
+                android:orientation="horizontal"
+                android:visibility="invisible">
+
+                <TextView
+                    android:id="@+id/textView_GroupIDClipboardLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Group ID on Clipboard: "
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="18sp"
+                    android:layout_margin="10dp"
+                    android:layout_gravity="center_vertical"/>
+
+                <TextView
+                    android:id="@+id/textView_GroupIDClipboard"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="----"
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="18sp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_gravity="center_vertical"/>
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/imageButton_ClearGroupingClipboard"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/baseline_close_24"
+                    android:tooltipText="Close Grouping controls"
+                    android:layout_gravity="center_vertical"
+                    android:background="@android:color/transparent" />
+
+            </LinearLayout>
+
             <RelativeLayout
                 android:id="@+id/linearLayout_Progress"
                 android:layout_width="match_parent"

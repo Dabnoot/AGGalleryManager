@@ -55,7 +55,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
 
         //Create the comic folder.
-        ciNew.sItemID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
+        ciNew.sItemID = GlobalClass.getNewCatalogRecordID();
         ciNew.sFolderRelativePath = alFileList.get(0).sDestinationFolder + GlobalClass.gsFileSeparator + ciNew.sItemID;
         ciNew.iMediaCategory = ItemClass_CatalogItem.MEDIA_CATEGORY_COMICS;
 
@@ -121,6 +121,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
         //Inform program of a need to update the tags histogram:
         globalClass.gbTagHistogramRequiresUpdate[ciNew.iMediaCategory] = true;
+        ciNew.sGroupID = alFileList.get(0).sGroupID; //todo: This line added during rough-draft implementation of catalog item grouping. Comic grouping not really thought-out, but putting it here might make things magically work later as a bonus.
 
         //The below call should add the record to both the catalog contents file
         //  and memory. Create the record in the system before downloading the files for the event that

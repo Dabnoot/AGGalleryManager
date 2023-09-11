@@ -633,6 +633,56 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         checkBox_MarkForDeletion.setChecked(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
         CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
 
+
+        //GROUP ID Buttons:
+
+        TextView textView_GroupID = findViewById(R.id.textView_GroupID);
+        if(galFileItems.get(giFileItemIndex).sGroupID.equals("")){
+            textView_GroupID.setText("----");
+        }
+
+        ImageButton imageButton_GroupIDNew = findViewById(R.id.imageButton_GroupIDNew);
+        imageButton_GroupIDNew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.getNewGroupID();
+                textView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
+            }
+        });
+
+        ImageButton imageButton_GroupIDCopy = findViewById(R.id.imageButton_GroupIDCopy);
+        imageButton_GroupIDCopy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
+                Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        ImageButton imageButton_GroupIDPaste = findViewById(R.id.imageButton_GroupIDPaste);
+        imageButton_GroupIDPaste.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!GlobalClass.gsGroupIDClip.equals("")){
+                    galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.gsGroupIDClip;
+                    textView_GroupID.setText(GlobalClass.gsGroupIDClip);
+                }
+            }
+        });
+
+        ImageButton imageButton_GroupIDRemove = findViewById(R.id.imageButton_GroupIDRemove);
+        imageButton_GroupIDRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                galFileItems.get(giFileItemIndex).sGroupID = "";
+                textView_GroupID.setText("----");
+            }
+        });
+
+        //END GROUP ID BUTTONS.
+
+
+
         TextView textView_FileName = findViewById(R.id.textView_FileName);
         String sFileNameTextLine = galFileItems.get(giFileItemIndex).sFileOrFolderName;
         if(!galFileItems.get(giFileItemIndex).sHeight.equals("")){ //Add resolution data to display if available:

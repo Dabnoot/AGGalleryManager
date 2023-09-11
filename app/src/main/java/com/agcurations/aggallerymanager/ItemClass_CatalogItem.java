@@ -69,5 +69,6 @@ public class ItemClass_CatalogItem implements Serializable {
     public ArrayList<String> alsApprovedUsers = new ArrayList<>();
 
     public String sGroupID = "";        //Group ID to identify explict related items related much more closely than generic tags.
+    public boolean bShowGroupingControls = false; //Flag used by Catalog Viewer to indicate that the controls for this item should be shown.
 
 }

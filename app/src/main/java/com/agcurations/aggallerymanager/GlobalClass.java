@@ -248,7 +248,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_CALLER_ID = "com.agcurations.aggallermanager.string_caller_id";
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
 
-
+    public static String gsGroupIDClip = "";
 
 
     //=====================================================================================

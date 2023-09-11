@@ -78,7 +78,7 @@ public class Worker_Import_VideoDownload extends Worker {
         }
 
         //Find the next record ID:
-        String sNextRecordId = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_VIDEOS);
+        String sNextRecordId = GlobalClass.getNewCatalogRecordID();
 
         if(icfDownloadItem.sDestinationFolder.equals("")) {
             icfDownloadItem.sDestinationFolder = GlobalClass.gsUnsortedFolderName;
@@ -194,6 +194,7 @@ public class Worker_Import_VideoDownload extends Worker {
         ciNew.iGrade = icfDownloadItem.iGrade;
         ciNew.sSource = gsAddress;
         ciNew.sTitle = icfDownloadItem.sTitle;
+        ciNew.sGroupID = icfDownloadItem.sGroupID;
 
         ArrayList<String[]> alsDownloadURLsAndDestFileNames = new ArrayList<>();
         if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){

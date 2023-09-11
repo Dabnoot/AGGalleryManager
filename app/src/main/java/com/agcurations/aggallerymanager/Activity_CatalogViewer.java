@@ -32,7 +32,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -69,6 +71,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     private Fragment_CatalogSort gFragment_CatalogSort;
     private Fragment_CatalogDataEditor gFragment_CatalogDataEditor;
+
+    RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter;
+
+    LinearLayout gLinearLayout_GroupingModeNotifier;
+    TextView gTextView_GroupIDClipboard;
+
+    int giGroupControlImageButtonWidth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +126,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
         configure_RecyclerViewCatalogItems();
+
+        gLinearLayout_GroupingModeNotifier = findViewById(R.id.linearLayout_GroupingModeNotifier);
+        gTextView_GroupIDClipboard = findViewById(R.id.textView_GroupIDClipboard);
+        ImageButton imageButton_ClearGroupingClipboard = findViewById(R.id.imageButton_ClearGroupingClipboard);
+        imageButton_ClearGroupingClipboard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                GlobalClass.gsGroupIDClip = "";
+                updateVisibleRecyclerItems();
+                gLinearLayout_GroupingModeNotifier.setVisibility(View.INVISIBLE);
+            }
+        });
 
         ApplicationLogWriter("Creating ResponseReceiver");
 
@@ -180,6 +201,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         }, 1500);
 
         populate_RecyclerViewCatalogItems();
+
+        float factor = getResources().getDisplayMetrics().density;
+        giGroupControlImageButtonWidth = (int)(40 * factor);
 
 
     ApplicationLogWriter("OnCreate End");
@@ -306,7 +330,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
 
                     //Apply the new TreeMap to the RecyclerView:
-                    RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap);
+                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap);
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
                     gRecyclerViewCatalogAdapter.notifyDataSetChanged();
                     if(giRecyclerViewLastSelectedPosition > -1){
@@ -399,23 +423,42 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         // you provide access to all the views for a data item in a view holder
         public class ViewHolder extends RecyclerView.ViewHolder {
             // each data item is just a string in this case
-            public final ImageView ivThumbnail;
+            public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
             public final TextView textView_AttentionNote;
-            public final Button btnDelete;
-            public final TextView tvThumbnailText;
-            public final TextView tvDetails;
+            public final Button button_Delete;
+            public final ImageButton imageButton_OpenGroupingControls;
+            public final TextView textView_Title;
+            public final TextView textView_Details;
             public final TextView textView_CatalogItemNotification;
+            LinearLayout linearLayout_GroupingControls;
+            TextView textView_GroupID;
+            ImageButton imageButton_GroupIDNew;
+            ImageButton imageButton_GroupIDCopy;
+            ImageButton imageButton_GroupIDPaste;
+            ImageButton imageButton_GroupIDRemove;
+            ImageButton imageButton_GroupIDFilter;
+            ImageButton imageButton_CloseGroupingControls;
 
             public ViewHolder(View v) {
                 super(v);
-                ivThumbnail = v.findViewById(R.id.imageView_Thumbnail);
+                imageView_Thumbnail = v.findViewById(R.id.imageView_Thumbnail);
                 imageView_Attention = v.findViewById(R.id.imageView_Attention);
                 textView_AttentionNote = v.findViewById(R.id.textView_AttentionNote);
-                btnDelete = v.findViewById(R.id.button_Delete);
-                tvThumbnailText = v.findViewById(R.id.textView_Title);
-                tvDetails = v.findViewById(R.id.textView_Details);
+                button_Delete = v.findViewById(R.id.button_Delete);
+                textView_Title = v.findViewById(R.id.textView_Title);
+                textView_Details = v.findViewById(R.id.textView_Details);
                 textView_CatalogItemNotification = v.findViewById(R.id.textView_CatalogItemNotification);
+
+                imageButton_OpenGroupingControls = v.findViewById(R.id.imageButton_OpenGroupingControls);
+                linearLayout_GroupingControls = v.findViewById(R.id.linearLayout_GroupingControls);
+                textView_GroupID = v.findViewById(R.id.textView_GroupID);
+                imageButton_GroupIDNew = v.findViewById(R.id.imageButton_GroupIDNew);
+                imageButton_GroupIDCopy = v.findViewById(R.id.imageButton_GroupIDCopy);
+                imageButton_GroupIDPaste = v.findViewById(R.id.imageButton_GroupIDPaste);
+                imageButton_GroupIDRemove = v.findViewById(R.id.imageButton_GroupIDRemove);
+                imageButton_GroupIDFilter = v.findViewById(R.id.imageButton_GroupIDFilter);
+                imageButton_CloseGroupingControls = v.findViewById(R.id.imageButton_CloseGroupingControls);
             }
         }
 
@@ -589,7 +632,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 Glide.with(getApplicationContext())
                         .load(uriThumbnailUri)
                         .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                        .into(holder.ivThumbnail);
+                        .into(holder.imageView_Thumbnail);
                 stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail load complete. ");
             } else {
                 //Special behavior if this is a comic.
@@ -625,13 +668,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     Glide.with(getApplicationContext())
                             .load(uriThumbnailUri)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.ivThumbnail);
+                            .into(holder.imageView_Thumbnail);
                     globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
                 } else {
                     Glide.with(getApplicationContext())
                             .load(R.drawable.baseline_image_white_18dp_wpagepad)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.ivThumbnail);
+                            .into(holder.imageView_Thumbnail);
                 }
             }
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail image loaded. ");
@@ -663,13 +706,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 sThumbnailText = sThumbnailText.substring(0, 100) + "...";
             }
 
-            holder.tvThumbnailText.setText(sThumbnailText);
+            holder.textView_Title.setText(sThumbnailText);
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail text set. ");
 
 
 
-            holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
+            holder.imageView_Thumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
@@ -723,10 +766,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             }
 
-            if(holder.btnDelete != null) {
+            if(holder.button_Delete != null) {
 
                 final String sItemNameToDelete = sItemName;
-                holder.btnDelete.setOnClickListener(new View.OnClickListener() {
+                holder.button_Delete.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         //Present confirmation that the user wishes to delete this item.
@@ -767,6 +810,131 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                 });
             }
+
+
+
+            if(holder.linearLayout_GroupingControls != null &&
+                    holder.imageButton_OpenGroupingControls != null &&
+                    holder.textView_GroupID != null &&
+                    holder.imageButton_GroupIDNew != null &&
+                    holder.imageButton_GroupIDCopy!= null &&
+                    holder.imageButton_GroupIDPaste!= null &&
+                    holder.imageButton_GroupIDRemove!= null) {
+
+                //Controls for:
+                //  -Group ID Shown
+                //  -Group ID new button
+                //  -Group ID copy button
+                //  -Group ID paste button
+                //  -Group ID remove button
+                //  -Group ID filter button
+                //  -Group ID clear filter button
+
+                //Logic:
+                /*
+                * If the user has clicked the group icon, show group control panel for the item.
+                * If the user has copied a group ID, show group control panel for all items.
+                *
+                *
+                * */
+
+                if(ci.bShowGroupingControls || !GlobalClass.gsGroupIDClip.equals("")){
+                    //If the user has opened the grouping controls for this item or if the user
+                    //  has copied a GroupID to the internal clipboard, show the grouping controls.
+                    holder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
+                    holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
+                } else {
+                    holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                    holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
+                }
+
+                holder.imageButton_OpenGroupingControls.setOnClickListener(new View.OnClickListener() {
+                    //This is the button that the user clicks to show the grouping controls
+                    @Override
+                    public void onClick(View v) {
+                        holder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
+                        holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
+                        ci.bShowGroupingControls = true;
+                    }
+                });
+
+
+                if (ci.sGroupID.equals("")) {
+                    holder.textView_GroupID.setText("----");
+                    setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
+                    setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
+                    setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
+                } else {
+                    holder.textView_GroupID.setText(ci.sGroupID);
+                    setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                    setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                    setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                }
+
+                holder.imageButton_GroupIDNew.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ci.sGroupID = GlobalClass.getNewGroupID();
+                        holder.textView_GroupID.setText(ci.sGroupID);
+                        setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                        setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                        setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                        Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
+                        globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+                    }
+                });
+
+                holder.imageButton_GroupIDCopy.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        GlobalClass.gsGroupIDClip = ci.sGroupID;
+                        gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
+                        gTextView_GroupIDClipboard.setText(GlobalClass.gsGroupIDClip);
+                        updateVisibleRecyclerItems();
+                        Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                holder.imageButton_GroupIDPaste.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (!GlobalClass.gsGroupIDClip.equals("")) {
+                            ci.sGroupID = GlobalClass.gsGroupIDClip;
+                            holder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
+                            Toast.makeText(getApplicationContext(), "Group ID pasted.", Toast.LENGTH_SHORT).show();
+                            globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+                        }
+                    }
+                });
+
+                holder.imageButton_GroupIDRemove.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        ci.sGroupID = "";
+                        holder.textView_GroupID.setText("----");
+                        Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
+                        globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+                    }
+                });
+
+                holder.imageButton_GroupIDFilter.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                    }
+                });
+
+                holder.imageButton_CloseGroupingControls.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                        holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
+                        ci.bShowGroupingControls = false;
+                    }
+                });
+
+            }
+
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "onBindViewHolder finished. ");
             stopWatch.Stop();
             stopWatch.Reset();
@@ -779,6 +947,14 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         }
 
     }
+
+    public void setGroupControlSize(ImageButton imageButton, int iSize){
+        ViewGroup.LayoutParams params = imageButton.getLayoutParams();
+        params.width = iSize;
+        imageButton.setLayoutParams(params);
+    }
+
+
 
     public void populate_RecyclerViewCatalogItems(){
         globalClass.gbCatalogViewerRefresh = false;
@@ -844,6 +1020,18 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
 
+    private void updateVisibleRecyclerItems() {
+        RecyclerView.LayoutManager layoutManager = gRecyclerView.getLayoutManager();
+        if (layoutManager instanceof LinearLayoutManager) {
+            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+            int first = linearLayoutManager.findFirstVisibleItemPosition();
+            int last = linearLayoutManager.findLastVisibleItemPosition();
+            RecyclerView.ViewHolder viewHolder;
+            for (int i = first; i <= last; i++) {
+                gRecyclerViewCatalogAdapter.notifyItemChanged(i);
+            }
+        }
+    }
 
 
 }

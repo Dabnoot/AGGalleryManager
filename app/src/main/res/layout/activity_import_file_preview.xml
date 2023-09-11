@@ -204,6 +204,75 @@
                     android:textSize="16sp"/>
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/linearLayout_GroupID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_alignParentEnd="true"
+                android:layout_alignBottom="@+id/linearLayout_MaturityRating"
+                android:layout_marginEnd="10dp">
+
+                <TextView
+                    android:id="@+id/textView_LabelGroupID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:text="Group ID:"
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="16sp"/>
+
+                <TextView
+                    android:id="@+id/textView_GroupID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginEnd="5dp"
+                    android:text="----"
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="16sp"/>
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/imageButton_GroupIDNew"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    android:src="@drawable/baseline_refresh_24"
+                    android:tooltipText="Create new Group ID"
+                    android:background="@color/colorBlack" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/imageButton_GroupIDCopy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    android:src="@drawable/baseline_content_copy_24"
+                    android:tooltipText="Copy Group ID"
+                    android:background="@color/colorBlack" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/imageButton_GroupIDPaste"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    android:src="@drawable/baseline_content_paste_24"
+                    android:tooltipText="Paste Group ID"
+                    android:background="@color/colorBlack" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/imageButton_GroupIDRemove"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:padding="5dp"
+                    android:src="@drawable/baseline_remove_circle_outline_24"
+                    android:tooltipText="Remove Group ID"
+                    android:background="@color/colorBlack" />
+
+            </LinearLayout>
+
         </RelativeLayout>
 
         <RelativeLayout

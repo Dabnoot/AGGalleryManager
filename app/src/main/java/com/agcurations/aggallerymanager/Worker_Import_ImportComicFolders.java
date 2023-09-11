@@ -97,7 +97,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
         for(ItemClass_File fileItem: alFileList) {
             if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER){
                 String sUriParent = fileItem.sUri;
-                String sRecordID = GlobalClass.getNewCatalogRecordID(GlobalClass.MEDIA_CATEGORY_COMICS);
+                String sRecordID = GlobalClass.getNewCatalogRecordID();
                 String sSubfolder = fileItem.sDestinationFolder;
                 String sComicName = fileItem.sFileOrFolderName;
                 if(!fileItem.sTitle.equals("")){
@@ -241,6 +241,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     //Set the Thumbnail file to the first page:
                     ciNew.sFilename = sDestinationFileName;
                     ciNew.sThumbnail_File = sDestinationFileName;
+                    ciNew.sGroupID = fileItem.sGroupID; //todo: This line added during rough-draft implementation of catalog item grouping. Comic grouping not really thought-out, but putting it here might make things magically work later as a bonus.
                 }
                 ciNew.lSize += fileItem.lSizeBytes;
 

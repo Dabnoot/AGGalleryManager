@@ -162,7 +162,7 @@ public class Worker_Import_ImportFiles extends Worker {
             try {
 
                 ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
-                ciNew.sItemID = GlobalClass.getNewCatalogRecordID(giMediaCategory);
+                ciNew.sItemID = GlobalClass.getNewCatalogRecordID();
 
                 //Reverse the text on the file so that the file does not get picked off by a search tool:
                 //Isolate the incoming file name:
@@ -295,6 +295,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 ciNew.dDatetime_Import = dTimeStamp;
                 ciNew.iGrade = fileItem.iGrade;
                 ciNew.sTitle = "" + fileItem.sTitle; //If this is a file from the holding folder, it may have an original, unshortened file name.
+                ciNew.sGroupID = fileItem.sGroupID;
 
                 if(!fileItem.sURL.equals("")){
                     ciNew.sSource = fileItem.sURL;

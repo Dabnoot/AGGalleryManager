@@ -320,7 +320,7 @@ public class Activity_Main extends AppCompatActivity {
             }
         });
 
-
+        GlobalClass.gsGroupIDClip = ""; //Reset GroupID when switching between catalogs.
 
 
     }
