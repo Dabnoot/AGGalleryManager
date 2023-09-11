@@ -27,7 +27,7 @@
         android:layout_width="50dp"
         android:layout_height="40dp"
         android:drawableLeft="@drawable/baseline_delete_white_18dp"
-        android:layout_alignTGop="@id/imageView_Thumbnail"
+        android:layout_alignTop="@id/imageView_Thumbnail"
         android:layout_alignEnd="@id/imageView_Thumbnail"
         android:background="@android:color/transparent"/>
 

@@ -22,6 +22,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -40,13 +42,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.common.io.BaseEncoding;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -848,6 +853,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
                 }
 
+                if(!ci.sGroupID.equals("")){
+                    updateGroupControlColor(holder.linearLayout_GroupingControls, ci.sGroupID);
+                }
+
                 holder.imageButton_OpenGroupingControls.setOnClickListener(new View.OnClickListener() {
                     //This is the button that the user clicks to show the grouping controls
                     @Override
@@ -879,6 +888,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                        updateGroupControlColor(holder.linearLayout_GroupingControls, ci.sGroupID);
                         Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
                         globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                     }
@@ -946,13 +956,37 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             return treeMap.size();
         }
 
+        public void setGroupControlSize(ImageButton imageButton, int iSize){
+            ViewGroup.LayoutParams params = imageButton.getLayoutParams();
+            params.width = iSize;
+            imageButton.setLayoutParams(params);
+        }
+
+        public void updateGroupControlColor(LinearLayout linearLayout_GroupingControls, String sUUID){
+            //Use the UUID group ID to generate a color for the group control box so that the user can easily
+            //  see which items are grouped together.
+
+            //Ensure that the color is not too bright so that the text can be viewed:
+            /*String sRR = sUUID.substring(0,2);
+            byte[] bytes = BaseEncoding.base16().decode(sRR.toUpperCase());
+            byte bRR = bytes[0];
+            byte byteThreshold = 0x7F;
+
+            sRR = String.format("%02X", (int) bRR);*/
+
+            String sRR = sUUID.substring(0,2);
+            String sGG = sUUID.substring(2,4);
+            String sBB = sUUID.substring(4,6);
+
+            String sColorID = "#" + sRR + sGG + sBB;
+
+            Log.d("Color Change", sColorID);
+            linearLayout_GroupingControls.setBackground(new ColorDrawable(Color.parseColor(sColorID))); //"#FF0000"
+            /*  Color.parseColor string can be RRGGBB or AARRGGBB */
+        }
+
     }
 
-    public void setGroupControlSize(ImageButton imageButton, int iSize){
-        ViewGroup.LayoutParams params = imageButton.getLayoutParams();
-        params.width = iSize;
-        imageButton.setLayoutParams(params);
-    }
 
 
 
