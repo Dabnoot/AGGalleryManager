@@ -4,6 +4,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import android.util.Log;
+
+import com.google.common.io.BaseEncoding;
+
 /**
  * Example local unit test, which will execute on the development machine (host).
  *

@@ -864,6 +864,20 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         holder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
                         holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
                         ci.bShowGroupingControls = true;
+                        //Open the grouping controls for all other items with the same group ID:
+                        boolean bOtherGroupItemsFound = false;
+                        for(Map.Entry<Integer, ItemClass_CatalogItem> entry: treeMap.entrySet()){
+                            ItemClass_CatalogItem icci = entry.getValue();
+                            if(!icci.sGroupID.equals("")){
+                                if(icci.sGroupID.equals(ci.sGroupID)){
+                                    icci.bShowGroupingControls = true;
+                                    bOtherGroupItemsFound = true;
+                                }
+                            }
+                        }
+                        if(bOtherGroupItemsFound){
+                            updateVisibleRecyclerItems();
+                        }
                     }
                 });
 
@@ -967,18 +981,31 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             //  see which items are grouped together.
 
             //Ensure that the color is not too bright so that the text can be viewed:
-            /*String sRR = sUUID.substring(0,2);
-            byte[] bytes = BaseEncoding.base16().decode(sRR.toUpperCase());
-            byte bRR = bytes[0];
-            byte byteThreshold = 0x7F;
+            String[] sColors = new String[]{sUUID.substring(0, 2),
+                    sUUID.substring(2,4),
+                    sUUID.substring(4,6)};
+            byte[] bytes;
+            byte[] bColors = new byte[3];
+            for(int i = 0; i < 3; i++){
+                bytes = BaseEncoding.base16().decode(sColors[i].toUpperCase());
+                bColors[i] = bytes[0];
+            }
 
-            sRR = String.format("%02X", (int) bRR);*/
+            StringBuilder sbColorString = new StringBuilder();
+            sbColorString.append("#");
+            for(int i = 0; i < 3; i++){
+                //Convert the values to integer and then work with them:
+                int iColor = bColors[i];
+                if(iColor < 0) {
+                    //Too bright, cut brightness in half:
+                    iColor += 128;
+                }
+                bColors[i] = (byte) iColor;
+                sbColorString.append(String.format("%02X", (short) bColors[i]));
+            }
 
-            String sRR = sUUID.substring(0,2);
-            String sGG = sUUID.substring(2,4);
-            String sBB = sUUID.substring(4,6);
 
-            String sColorID = "#" + sRR + sGG + sBB;
+            String sColorID = sbColorString.toString();
 
             Log.d("Color Change", sColorID);
             linearLayout_GroupingControls.setBackground(new ColorDrawable(Color.parseColor(sColorID))); //"#FF0000"
