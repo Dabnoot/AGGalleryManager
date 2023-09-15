@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,9 +50,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -437,6 +436,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             public final TextView textView_Details;
             public final TextView textView_CatalogItemNotification;
             LinearLayout linearLayout_GroupingControls;
+            TextView textView_LabelGroupID;
             TextView textView_GroupID;
             ImageButton imageButton_GroupIDNew;
             ImageButton imageButton_GroupIDCopy;
@@ -457,6 +457,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                 imageButton_OpenGroupingControls = v.findViewById(R.id.imageButton_OpenGroupingControls);
                 linearLayout_GroupingControls = v.findViewById(R.id.linearLayout_GroupingControls);
+                textView_LabelGroupID = v.findViewById(R.id.textView_LabelGroupID);
                 textView_GroupID = v.findViewById(R.id.textView_GroupID);
                 imageButton_GroupIDNew = v.findViewById(R.id.imageButton_GroupIDNew);
                 imageButton_GroupIDCopy = v.findViewById(R.id.imageButton_GroupIDCopy);
@@ -843,6 +844,20 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 *
                 * */
 
+                ImageButton[] ibGroupingControls = new ImageButton[]{
+                        holder.imageButton_GroupIDNew,
+                        holder.imageButton_GroupIDCopy,
+                        holder.imageButton_GroupIDPaste,
+                        holder.imageButton_GroupIDRemove,
+                        holder.imageButton_GroupIDFilter,
+                        holder.imageButton_CloseGroupingControls
+                };
+                TextView[] tvGroupingTextViews = new TextView[]{
+                        holder.textView_LabelGroupID,
+                        holder.textView_GroupID
+                };
+
+
                 if(ci.bShowGroupingControls || !GlobalClass.gsGroupIDClip.equals("")){
                     //If the user has opened the grouping controls for this item or if the user
                     //  has copied a GroupID to the internal clipboard, show the grouping controls.
@@ -854,7 +869,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
 
                 if(!ci.sGroupID.equals("")){
-                    updateGroupControlColor(holder.linearLayout_GroupingControls, ci.sGroupID);
+                    updateGroupingControlsColor(
+                            holder.linearLayout_GroupingControls,
+                            ci.sGroupID,
+                            ibGroupingControls,
+                            tvGroupingTextViews);
                 }
 
                 holder.imageButton_OpenGroupingControls.setOnClickListener(new View.OnClickListener() {
@@ -902,7 +921,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
-                        updateGroupControlColor(holder.linearLayout_GroupingControls, ci.sGroupID);
+                        updateGroupingControlsColor(
+                                holder.linearLayout_GroupingControls,
+                                ci.sGroupID,
+                                ibGroupingControls,
+                                tvGroupingTextViews);
+                        //holder.imageButton_GroupIDCopy.setColorFilter(Color.argb(255, 255, 0, 0));
                         Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
                         globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                     }
@@ -976,41 +1000,164 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             imageButton.setLayoutParams(params);
         }
 
-        public void updateGroupControlColor(LinearLayout linearLayout_GroupingControls, String sUUID){
+        public void updateGroupingControlsColor(LinearLayout linearLayout_GroupingControls, String sUUID, ImageButton[] imageButtons, TextView[] textViews){
             //Use the UUID group ID to generate a color for the group control box so that the user can easily
             //  see which items are grouped together.
+            String sOriginalColors = "#" + sUUID.substring(0,6);
 
             //Ensure that the color is not too bright so that the text can be viewed:
             String[] sColors = new String[]{sUUID.substring(0, 2),
                     sUUID.substring(2,4),
                     sUUID.substring(4,6)};
             byte[] bytes;
-            byte[] bColors = new byte[3];
+            byte[] byteColors = new byte[3];
             for(int i = 0; i < 3; i++){
                 bytes = BaseEncoding.base16().decode(sColors[i].toUpperCase());
-                bColors[i] = bytes[0];
+                byteColors[i] = bytes[0];
+            }
+            //Bytes for colors acquired.
+
+            //Convert to scale 0-255:
+            int[] iColors = new int[3];
+            for(int i = 0; i < 3; i++){
+                if(byteColors[i] < 0){
+                    iColors[i] = byteColors[i] + 256;
+                } else {
+                    iColors[i] = byteColors[i];
+                }
             }
 
+            //Normalize the colors:
+            float[] fColorsNormalized = new float[3];
+            for(int i = 0; i < 3; i++){
+                fColorsNormalized[i] = iColors[i] / 255f;
+            }
+
+            //Determine the min and max values:
+            float fMin = Math.min(fColorsNormalized[0], Math.min(fColorsNormalized[1], fColorsNormalized[2] ));
+            float fMax = Math.max(fColorsNormalized[0], Math.max(fColorsNormalized[1], fColorsNormalized[2] ));
+
+            /*
+            The Hue formula is depending on what RGB color channel is the max value. The three different formulas are:
+            If Red is max, then Hue = (G-B)/(max-min)
+            If Green is max, then Hue = 2.0 + (B-R)/(max-min)
+            If Blue is max, then Hue = 4.0 + (R-G)/(max-min)
+            */
+            float fR = fColorsNormalized[0];
+            float fG = fColorsNormalized[1];
+            float fB = fColorsNormalized[2];
+            float fHue;
+            float fDelta = fMax - fMin;
+            if(fR > fG && fR > fB) {
+                //Red is max
+                fHue = 60 * ( ( (fG - fB) / fDelta) % 6);
+            } else if(fG > fR && fG > fB) {
+                //Green is Max
+                fHue = 60 * (2f + (fB - fR) / fDelta);
+            } else {
+                //Blue is Max
+                fHue = 60 * (4f + (fR - fG) / fDelta);
+            }
+            if(fHue < 0){
+                fHue += 360;
+            } else if (fHue > 360) {
+                fHue -= 360;
+            }
+
+
+            //Ignore potential to derive the luminance from the original RGB and set the luminance hard
+            // so that the coloring is not too dim:
+            //* When 0 ≤ L ≤ 1:
+            float fLum = .50f;
+
+            //Ignore potential to derive the saturation from the original RGB values and set the
+            //  saturation so that it is not ugly:
+            //* When 0 ≤ S ≤ 1:
+            float fSat = 1.0f;
+
+            //Get color for controls' background:
+            String sBackgroundColor = getRGBString(fHue, fSat, fLum);
+            /*  Color.parseColor string can be RRGGBB or AARRGGBB */
+            //Set colors for controls' background:
+            linearLayout_GroupingControls.setBackground(new ColorDrawable(Color.parseColor(sBackgroundColor))); //"#FF0000"
+
+            //Get colors for foreground controls:
+            int iContrastColor = getContrastColor(Color.parseColor(sBackgroundColor));
+
+            //Set colors for foreground controls:
+            for(ImageButton imageButton: imageButtons){
+                imageButton.setColorFilter(iContrastColor);
+            }
+            for(TextView textView: textViews){
+                textView.setTextColor(iContrastColor);
+            }
+
+        }
+
+        private String getRGBString(float fHue, float fSat, float fLum){
+            //Calculate RGB:
+            /*https://www.rapidtables.com/convert/color/hsl-to-rgb.html
+            * When 0 ≤ H < 360, 0 ≤ S ≤ 1 and 0 ≤ L ≤ 1:
+                C = (1 - |2L - 1|) × S
+                X = C × (1 - |(H / 60°) mod 2 - 1|)
+                m = L - C/2
+                (R,G,B) = ((R'+m)×255, (G'+m)×255,(B'+m)×255)
+            * */
+            float fC, fX, fm;
+            fC = (1 - Math.abs(2*fLum - 1)) * fSat;
+            fX = fC * (1 - Math.abs((fHue / 60) % 2 - 1));
+            fm = fLum - fC / 2;
+            float[] fP = new float[3];
+            if( fHue >= 0 && fHue < 60){
+                fP = new float[]{fC, fX, 0};
+            } else if( fHue >= 60 && fHue < 120){
+                fP = new float[]{fX, fC, 0};
+            } else if( fHue >= 120 && fHue < 180){
+                fP = new float[]{0, fC, fX};
+            } else if( fHue >= 180 && fHue < 240){
+                fP = new float[]{0, fX, fC};
+            } else if( fHue >= 240 && fHue < 300){
+                fP = new float[]{fX, 0, fC};
+            } else if( fHue >= 300 && fHue < 360){
+                fP = new float[]{fC, 0, fX};
+            }
+            int[] iColors = new int[]{(int)((fP[0]+fm)*255),
+                    (int)((fP[1]+fm)*255),
+                    (int)((fP[2]+fm)*255)};
+
+            //Convert the values to byte:
+            //Convert to scale 0 to 127 : -128 to 0:
+            byte[] byteColors = new byte[3];
+            for(int i = 0; i < 3; i++){
+                if(iColors[i] >= 128){
+                    iColors[i] = iColors[i] - 256;
+                }
+                byteColors[i] = (byte) iColors[i];
+            }
+
+            //Form the color scheme:
             StringBuilder sbColorString = new StringBuilder();
             sbColorString.append("#");
             for(int i = 0; i < 3; i++){
-                //Convert the values to integer and then work with them:
-                int iColor = bColors[i];
-                if(iColor < 0) {
-                    //Too bright, cut brightness in half:
-                    iColor += 128;
+                String sColor = String.format("%02X", (short) byteColors[i]);
+                if(sColor.length() > 2){
+                    sColor = sColor.substring(2);
                 }
-                bColors[i] = (byte) iColor;
-                sbColorString.append(String.format("%02X", (short) bColors[i]));
+                sbColorString.append(sColor);
             }
 
-
-            String sColorID = sbColorString.toString();
-
-            Log.d("Color Change", sColorID);
-            linearLayout_GroupingControls.setBackground(new ColorDrawable(Color.parseColor(sColorID))); //"#FF0000"
-            /*  Color.parseColor string can be RRGGBB or AARRGGBB */
+            return sbColorString.toString();
         }
+
+        @ColorInt
+        public int getContrastColor(@ColorInt int color) {
+            // Counting the perceptive luminance - human eye favors green color...
+            double a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255;
+            return a < 0.5 ? Color.BLACK : Color.WHITE;
+        }
+
+
+
 
     }
 
