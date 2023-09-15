@@ -152,6 +152,7 @@ public class GlobalClass extends Application {
     public static final int FILTER_BY_FOLDERSOURCE = 2;
     public static final int FILTER_BY_NOTAGS = 3;
     public static final int FILTER_BY_ITEMPROBLEM = 4;
+    public static String[] gsCatalogViewerSearchByGroupID = {"", "", ""};
     public int[] giCatalogViewerFilterBySelection = {SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION};
     //Variables for the Sort & Filter resolution/pagecount RangeSlider:
     public TreeMap<Integer, Integer> gtmVideoResolutions;

@@ -70,5 +70,11 @@ public class ItemClass_CatalogItem implements Serializable {
 
     public String sGroupID = "";        //Group ID to identify explict related items related much more closely than generic tags.
     public boolean bShowGroupingControls = false; //Flag used by Catalog Viewer to indicate that the controls for this item should be shown.
+    public boolean bSearchByGroupID = false; //If true, then the user is using this item to search by group ID. //Technically it is a search, but we are using the filter icon.
+    public boolean bColorsCalculated = false; //If the integer color values below have been calculated, don't recalc.
+    public int iGroupingControlsColor;
+    public int iGroupingControlsContrastColor;
+    public int iGroupingControlHighlight;
+    public int iGroupingControlHighlightContrastColor;
 
 }

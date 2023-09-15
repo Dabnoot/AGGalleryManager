@@ -280,35 +280,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //Check to see if the record needs to be skipped due to restriction settings:
             boolean bIsRestricted = false;
 
-            /*String sRecordTags = entry.getValue().sTags;
-            if(sRecordTags.length() > 0) {
-                String[] saRecordTags = sRecordTags.split(",");
-                for (String s : saRecordTags) {
-                    //if list of restricted tags contains this particular record tag, mark as restricted item:
-                    int iTagID;
-                    //String sErrorMessage;
-                    try {
-                        iTagID = Integer.parseInt(s);
-                    } catch (Exception e){
-                        //sErrorMessage = e.getMessage();
-                        continue;
-                    }
-                    ItemClass_Tag ict = globalClass.gtmCatalogTagReferenceLists.get(GlobalClass.giSelectedCatalogMediaCategory).get(iTagID);
-                    if (ict != null) {
-                        if (globalClass.gicuCurrentUser != null) {
-                            if (ict.iMaturityRating > globalClass.gicuCurrentUser.iMaturityLevel) {
-                                bIsRestricted = true;
-                                break;
-                            }
-                        } else {
-                            if (ict.iMaturityRating > globalClass.giDefaultUserMaturityRating) {
-                                bIsRestricted = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }*/
+
             int iMaturityRating = entry.getValue().iMaturityRating;
             if (GlobalClass.gicuCurrentUser != null) {
                 if (iMaturityRating > GlobalClass.gicuCurrentUser.iMaturityLevel) {
@@ -334,6 +306,17 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 bApprovedForThisUser = true;
             }
 
+            boolean bGroupIDFilterApplicable = false;
+            boolean bGroupIDMatch = false;
+            //If the global group ID filter for this media category has data, turn on this filter:
+            bGroupIDFilterApplicable = !GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory].equals("");
+            if(bGroupIDFilterApplicable){
+                if(entry.getValue().sGroupID.equals(GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory])){
+                    bGroupIDMatch = true;
+                }
+            }
+
+
             if(!bIsRestricted && bApprovedForThisUser){
                 boolean bIsMatch = true;
 
@@ -351,6 +334,9 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 }
                 if(bTagMatchApplicable){
                     bIsMatch = bIsMatch && bTagsMatch;
+                }
+                if(bGroupIDFilterApplicable){
+                    bIsMatch = bIsMatch && bGroupIDMatch;
                 }
 
                 if(bIsMatch){

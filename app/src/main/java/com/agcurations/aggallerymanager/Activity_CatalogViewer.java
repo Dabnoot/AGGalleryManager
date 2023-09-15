@@ -869,11 +869,23 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 }
 
                 if(!ci.sGroupID.equals("")){
-                    updateGroupingControlsColor(
+                    //initiate grouping controls coloring:
+                    if(!ci.bColorsCalculated){
+                        int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                        ci.iGroupingControlsColor = iColors[0];
+                        ci.iGroupingControlsContrastColor = iColors[1];
+                        ci.iGroupingControlHighlight = iColors[2];
+                        ci.iGroupingControlHighlightContrastColor = iColors[3];
+                    }
+                    applyGroupingControlsColor(
+                            ci,
                             holder.linearLayout_GroupingControls,
-                            ci.sGroupID,
                             ibGroupingControls,
                             tvGroupingTextViews);
+                    if(ci.bSearchByGroupID){
+                        holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
+                        holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                    }
                 }
 
                 holder.imageButton_OpenGroupingControls.setOnClickListener(new View.OnClickListener() {
@@ -921,9 +933,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
-                        updateGroupingControlsColor(
+                        applyGroupingControlsColor(
+                                ci,
                                 holder.linearLayout_GroupingControls,
-                                ci.sGroupID,
                                 ibGroupingControls,
                                 tvGroupingTextViews);
                         Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
@@ -951,9 +963,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                             setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
                             setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
-                            updateGroupingControlsColor(
+                            applyGroupingControlsColor(
+                                    ci,
                                     holder.linearLayout_GroupingControls,
-                                    ci.sGroupID,
                                     ibGroupingControls,
                                     tvGroupingTextViews);
                             Toast.makeText(getApplicationContext(), "Group ID pasted.", Toast.LENGTH_SHORT).show();
@@ -975,7 +987,22 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 holder.imageButton_GroupIDFilter.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+                        if(ci.bSearchByGroupID){ //Technically it is a search, but we are using the filter icon.
+                            //Filter is on, turn it off.
+                            holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlsColor);
+                            holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlsContrastColor);
+                            ci.bSearchByGroupID = false;
+                            holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_24);
+                            GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = "";
+                        } else {
+                            //Filter is off, turn it on.
+                            holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
+                            holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                            ci.bSearchByGroupID = true;
+                            holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_off_24);
+                            GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = ci.sGroupID;
+                        }
+                        populate_RecyclerViewCatalogItems();
                     }
                 });
 
@@ -1007,12 +1034,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             imageButton.setLayoutParams(params);
         }
 
-        public void updateGroupingControlsColor(LinearLayout linearLayout_GroupingControls, String sUUID, ImageButton[] imageButtons, TextView[] textViews){
-            //Use the UUID group ID to generate a color for the group control box so that the user can easily
-            //  see which items are grouped together.
-            String sOriginalColors = "#" + sUUID.substring(0,6);
-
-            //Ensure that the color is not too bright so that the text can be viewed:
+        public int[] calculateGroupingControlsColors(String sUUID){
+            int[] iReturnColors = new int[4];
             String[] sColors = new String[]{sUUID.substring(0, 2),
                     sUUID.substring(2,4),
                     sUUID.substring(4,6)};
@@ -1084,19 +1107,37 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             //Get color for controls' background:
             String sBackgroundColor = getRGBString(fHue, fSat, fLum);
-            /*  Color.parseColor string can be RRGGBB or AARRGGBB */
-            //Set colors for controls' background:
-            linearLayout_GroupingControls.setBackground(new ColorDrawable(Color.parseColor(sBackgroundColor))); //"#FF0000"
-
             //Get colors for foreground controls:
             int iContrastColor = getContrastColor(Color.parseColor(sBackgroundColor));
+            iReturnColors[0] = Color.parseColor(sBackgroundColor); //iGroupingControlsColor
+            iReturnColors[1] = iContrastColor; //iGroupingControlsContrastColor
+
+            //Get color for control highlight (specifically for when the 'filter by group ID' feature is activated):
+            float fGroupingControlHighlight = fHue + 180;
+            if(fGroupingControlHighlight > 360){
+                fGroupingControlHighlight -= 360;
+            }
+            String sGCHColor = getRGBString(fGroupingControlHighlight, fSat, fLum);
+            int iGCHContrastColor = getContrastColor(Color.parseColor(sGCHColor));
+            iReturnColors[2] = Color.parseColor(sGCHColor); //iGroupingControlsHighlightColor
+            iReturnColors[3] = iGCHContrastColor; //iGroupingControlsHighlightContrastColor
+
+            return iReturnColors;
+        }
+
+        public void applyGroupingControlsColor(ItemClass_CatalogItem ci,
+                                               LinearLayout linearLayout_GroupingControls,
+                                               ImageButton[] imageButtons,
+                                               TextView[] textViews){
+
+            linearLayout_GroupingControls.setBackground(new ColorDrawable(ci.iGroupingControlsColor)); //"#FF0000"
 
             //Set colors for foreground controls:
             for(ImageButton imageButton: imageButtons){
-                imageButton.setColorFilter(iContrastColor);
+                imageButton.setColorFilter(ci.iGroupingControlsContrastColor);
             }
             for(TextView textView: textViews){
-                textView.setTextColor(iContrastColor);
+                textView.setTextColor(ci.iGroupingControlsContrastColor);
             }
 
         }
@@ -1158,6 +1199,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         @ColorInt
         public int getContrastColor(@ColorInt int color) {
+            //https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
             // Counting the perceptive luminance - human eye favors green color...
             double a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255;
             return a < 0.5 ? Color.BLACK : Color.WHITE;
