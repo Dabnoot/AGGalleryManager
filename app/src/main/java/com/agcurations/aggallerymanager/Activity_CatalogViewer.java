@@ -926,7 +926,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                 ci.sGroupID,
                                 ibGroupingControls,
                                 tvGroupingTextViews);
-                        //holder.imageButton_GroupIDCopy.setColorFilter(Color.argb(255, 255, 0, 0));
                         Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
                         globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                     }
@@ -949,6 +948,14 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         if (!GlobalClass.gsGroupIDClip.equals("")) {
                             ci.sGroupID = GlobalClass.gsGroupIDClip;
                             holder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
+                            setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                            setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                            setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                            updateGroupingControlsColor(
+                                    holder.linearLayout_GroupingControls,
+                                    ci.sGroupID,
+                                    ibGroupingControls,
+                                    tvGroupingTextViews);
                             Toast.makeText(getApplicationContext(), "Group ID pasted.", Toast.LENGTH_SHORT).show();
                             globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                         }
