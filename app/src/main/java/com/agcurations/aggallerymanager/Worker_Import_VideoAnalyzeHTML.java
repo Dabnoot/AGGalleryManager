@@ -468,6 +468,9 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             sTitle = icWebDataLocator.sWebPageTitle;
                         }
                         icf.sTitle = sTitle;
+                        icf.sTitle = icf.sTitle.replace("\n","");
+                        icf.sTitle = icf.sTitle.replace("\r","");
+                        icf.sTitle = icf.sTitle.trim();
                         icf.sURLThumbnail = sURLThumbnail;
                         icf.alsUnidentifiedTags = alsUnidentifiedTags; //Assign textual string of tags. Will digest and convert/import new tags if user chooses to continue import.
                         icf.aliRecognizedTags = aliIdentifiedTags; //todo: redundant?
@@ -896,6 +899,9 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                 sTitle = icWebDataLocator.sWebPageTitle;
                             }
                             icf.sTitle = sTitle;
+                            icf.sTitle = icf.sTitle.replace("\n","");
+                            icf.sTitle = icf.sTitle.replace("\r","");
+                            icf.sTitle = icf.sTitle.trim();
                             alicf_VideoDownloadFileItems.add(icf); //Add item to list of file items to return;
 
                         }
