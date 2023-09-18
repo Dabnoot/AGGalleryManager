@@ -31,6 +31,17 @@
         android:layout_alignEnd="@id/imageView_Thumbnail"
         android:background="@android:color/transparent"/>
 
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/imageButton_OpenGroupingControls"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="5dp"
+        android:layout_alignStart="@id/imageView_Thumbnail"
+        android:layout_alignBottom="@id/imageView_Thumbnail"
+        android:src="@drawable/baseline_collections_24"
+        android:tooltipText="Open Grouping controls"
+        android:background="@android:color/transparent" />
+
     <LinearLayout
         android:id="@+id/linearLayout_GroupingControls"
         android:layout_width="wrap_content"
