@@ -355,7 +355,7 @@ public class Fragment_ItemDetails extends Fragment {
 
         TextView textView_StorageLocation = getView().findViewById(R.id.textView_StorageLocation);
         if(textView_StorageLocation != null){
-            String sStorageLocation = "Storage Location: " + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory] + File.separator + gciCatalogItem.sFolderRelativePath;
+            String sStorageLocation = "Storage Location: " + GlobalClass.gsCatalogFolderNames[gciCatalogItem.iMediaCategory] + File.separator + GlobalClass.cleanHTMLCodedCharacters(gciCatalogItem.sFolderRelativePath);
             textView_StorageLocation.setText(sStorageLocation);
         }
 
