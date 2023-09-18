@@ -21,10 +21,8 @@ import android.webkit.WebView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -52,6 +50,8 @@ public class VideoEnabledWebView extends WebView
 {
     WebView webView;
     Context gcContext;
+
+    boolean gbEnableNewTabLinkage = false;
 
     public class JavascriptInterface
     {
@@ -432,19 +432,38 @@ public class VideoEnabledWebView extends WebView
         }
         menu.setHeaderTitle(sTitle);
 
-        if (result.getType() == HitTestResult.IMAGE_TYPE ||
-                result.getType() == HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
-            // Menu options for an image.
-            menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
-            menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
-            menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image to holding folder (visit Import to complete)").setOnMenuItemClickListener(handler);
+        if(gbEnableNewTabLinkage) {
+            //If this is configured in such a way to allow the user to open new tabs...
+            if (result.getType() == HitTestResult.IMAGE_TYPE ||
+                    result.getType() == HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+                // Menu options for an image.
+                menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
+                menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+                menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image to holding folder (visit Import to complete)").setOnMenuItemClickListener(handler);
 
-        } else if (result.getType() == HitTestResult.SRC_ANCHOR_TYPE) {
-            // Menu options for a hyperlink.
-            menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
-            menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
-            if(gsNodeData_title != null) {
-                menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
+            } else if (result.getType() == HitTestResult.SRC_ANCHOR_TYPE) {
+                // Menu options for a hyperlink.
+                menu.add(0, ID_OPEN_LINK_NEW_TAB, 0, "Open in new tab").setOnMenuItemClickListener(handler);
+                menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+                if (gsNodeData_title != null) {
+                    menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
+                }
+            }
+        } else {
+            //If this video-enabled web view is not implemented in a manner to allow new tabs,
+            //  don't give the option to 'Open link in new tab.'
+            if (result.getType() == HitTestResult.IMAGE_TYPE ||
+                    result.getType() == HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+                // Menu options for an image.
+                menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+                menu.add(0, ID_DOWNLOAD_IMAGE, 0, "Download image to holding folder (visit Import to complete)").setOnMenuItemClickListener(handler);
+
+            } else if (result.getType() == HitTestResult.SRC_ANCHOR_TYPE) {
+                // Menu options for a hyperlink.
+                menu.add(0, ID_COPY_LINK_ADDRESS, 0, "Copy link address").setOnMenuItemClickListener(handler);
+                if (gsNodeData_title != null) {
+                    menu.add(0, ID_COPY_LINK_TEXT, 0, "Copy link text").setOnMenuItemClickListener(handler);
+                }
             }
         }
 

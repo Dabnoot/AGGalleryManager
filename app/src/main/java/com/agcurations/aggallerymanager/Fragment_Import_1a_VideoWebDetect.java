@@ -27,6 +27,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -55,7 +57,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     private Button gButton_Go;
     private Button gButton_Detect;
     private TextView gTextView_StatusInstructions;
-    private WebView gWebView;
+    private VideoEnabledWebView gWebView;
     private Button gButton_Next;
 
     public static ViewModel_ImportActivity viewModelImportActivity;
@@ -119,7 +121,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
             gButton_Go = getView().findViewById(R.id.button_Go);
             gButton_Detect = getView().findViewById(R.id.button_Detect);
             gTextView_StatusInstructions = getView().findViewById((R.id.textView_StatusInstructions));
-            gWebView = getView().findViewById(R.id.webView);
+            gWebView = getView().findViewById(R.id.videoEnabledWebView_webView);
             gButton_Next = getView().findViewById(R.id.button_NextStep);
 
         }
@@ -156,13 +158,46 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         }
         //End configuration of "Paste Address" button.
 
+        // Initialize the VideoEnabledWebChromeClient and set event handlers
+        if(getActivity() == null){
+            return;
+        }
+        View nonVideoLayout = getActivity().findViewById(R.id.nonVideoLayout); // Your own view, read class comments
+        ViewGroup videoLayout = getActivity().findViewById(R.id.videoLayout); // Your own view, read class comments
+        //noinspection all
+        View loadingView = getLayoutInflater().inflate(R.layout.view_loading_video, null); // Your own view, read class comments
 
+        VideoEnabledWebChromeClient gWebChromeClient = new VideoEnabledWebChromeClient(nonVideoLayout, videoLayout, loadingView, gWebView);
+        gWebChromeClient.setOnToggledFullscreen(new VideoEnabledWebChromeClient.ToggledFullscreenCallback() {
+            @Override
+            public void toggledFullscreen(boolean fullscreen) {
+                if (getActivity() == null) {
+                    return;
+                }
+                // Your code to handle the full-screen change, for example showing and hiding the title bar. Example:
+                WindowInsetsController insetsController = getActivity().getWindow().getInsetsController();
+                if (insetsController != null) {
+                    if (fullscreen) {
+                        insetsController.hide(WindowInsets.Type.systemBars());
+                        getActivity().getWindow().setNavigationBarColor(Color.TRANSPARENT);
+
+                    } else {
+                        insetsController.show(WindowInsets.Type.systemBars());
+                        getActivity().getWindow().setNavigationBarColor(getResources().getColor(R.color.colorNavigationBar, getActivity().getTheme()));
+
+                    }
+                }
+
+            }
+        });
 
         //Configure the WebView:
         gWebView.setBackgroundColor(Color.BLACK);
         WebSettings webSettings = gWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
+        //webSettings.setJavaScriptEnabled(true);
         GlobalClass.ConfigureWebSettings(webSettings);
+
+        gWebView.setWebChromeClient(gWebChromeClient);
 
         //Add a JavaScript interface to get the HTML from the WebView:
         gWebView.addJavascriptInterface(new MyJavaScriptInterfaceGetHTML(), "HtmlViewer");

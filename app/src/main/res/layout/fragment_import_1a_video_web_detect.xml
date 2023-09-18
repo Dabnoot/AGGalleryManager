@@ -6,14 +6,21 @@
     android:layout_height="match_parent"
     tools:context=".Activity_Import">
 
+    <com.agcurations.aggallerymanager.VideoEnabledWebView
+        android:id="@+id/videoEnabledWebView_webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <TextView
         android:id="@+id/textView_Label_WebAddress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Address:"
         android:textColor="@color/colorTextColor"
+        android:background="@color/black_overlay"
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
+        android:padding="5dp"
         android:textSize="20sp"
         android:layout_alignBaseline="@id/editText_WebAddress"/>
 
@@ -23,46 +30,53 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
+        android:padding="5dp"
         android:textColor="@color/colorTextColor"
-        android:layout_toStartOf="@id/button_PasteAddress"
+        android:background="@color/black_overlay"
+        android:layout_toStartOf="@id/linearLayout_WebNavDetectControls"
         android:layout_toEndOf="@id/textView_Label_WebAddress"
         android:singleLine="true"
         android:textSize="20sp" />
 
-    <Button
-        android:id="@+id/button_PasteAddress"
+    <LinearLayout
+        android:id="@+id/linearLayout_WebNavDetectControls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Paste"
-        android:textSize="20sp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="20dp"
-        android:layout_toStartOf="@id/button_Go"
-        android:backgroundTint="@color/colorButton"
-        android:enabled="false"/>
+        android:layout_marginTop="5dp"
+        android:layout_alignParentEnd="true">
 
-    <Button
-        android:id="@+id/button_Go"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Go"
-        android:textSize="20sp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="20dp"
-        android:layout_toStartOf="@id/button_Detect"
-        android:backgroundTint="@color/colorButton"/>
+        <Button
+            android:id="@+id/button_PasteAddress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Paste"
+            android:textSize="20sp"
+            android:layout_marginEnd="20dp"
+            android:layout_toStartOf="@id/button_Go"
+            android:backgroundTint="@color/colorButton"
+            android:enabled="false"/>
 
-    <Button
-        android:id="@+id/button_Detect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Detect"
-        android:textSize="20sp"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="20dp"
-        android:layout_alignParentEnd="true"
-        android:backgroundTint="@color/colorButton"
-        android:enabled="false"/>
+        <Button
+            android:id="@+id/button_Go"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Go"
+            android:textSize="20sp"
+            android:layout_marginEnd="20dp"
+            android:layout_toStartOf="@id/button_Detect"
+            android:backgroundTint="@color/colorButton"/>
+
+        <Button
+            android:id="@+id/button_Detect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Detect"
+            android:textSize="20sp"
+            android:layout_marginEnd="20dp"
+            android:backgroundTint="@color/colorButton"
+            android:enabled="false"/>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/textView_StatusInstructions"
@@ -71,19 +85,24 @@
         android:layout_marginStart="20dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
+        android:padding="5dp"
         android:text="Enter an address and click 'Go'."
         android:textColor="@color/colorTextColor"
+        android:background="@color/black_overlay"
         android:layout_below="@id/editText_WebAddress"
         android:layout_alignParentEnd="true"/>
 
-    <WebView
-        android:id="@+id/webView"
+    <!--<com.agcurations.aggallerymanager.VideoEnabledWebView
+        android:id="@+id/videoEnabledWebView_webView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:layout_below="@id/textView_StatusInstructions"
         android:layout_above="@id/linearLayout_ButtonBar"
-        />
+        android:layout_below="@id/textView_StatusInstructions"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp" />-->
+
 
     <LinearLayout
         android:id="@+id/linearLayout_ButtonBar"

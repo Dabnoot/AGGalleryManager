@@ -134,15 +134,16 @@ public class Fragment_WebPageTab extends Fragment {
         gWebView = getView().findViewById(R.id.videoEnabledWebView_tabWebView);
         gEditText_Address = getView().findViewById(R.id.editText_Address);
 
+        if(giThisFragmentHashCode == 0){
+            giThisFragmentHashCode = this.hashCode();
+        }
+
         // Initialize the VideoEnabledWebChromeClient and set event handlers
         View nonVideoLayout = getActivity().findViewById(R.id.nonVideoLayout); // Your own view, read class comments
         ViewGroup videoLayout = getActivity().findViewById(R.id.videoLayout); // Your own view, read class comments
         //noinspection all
         View loadingView = getLayoutInflater().inflate(R.layout.view_loading_video, null); // Your own view, read class comments
 
-        if(giThisFragmentHashCode == 0){
-            giThisFragmentHashCode = this.hashCode();
-        }
         VideoEnabledWebChromeClient gWebChromeClient = new VideoEnabledWebChromeClient(nonVideoLayout, videoLayout, loadingView, gWebView);
         gWebChromeClient.setOnToggledFullscreen(new VideoEnabledWebChromeClient.ToggledFullscreenCallback() {
             @Override
@@ -174,6 +175,7 @@ public class Fragment_WebPageTab extends Fragment {
         //webSettings.setJavaScriptEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
         GlobalClass.ConfigureWebSettings(webSettings);
 
+        gWebView.gbEnableNewTabLinkage = true; //Allow a context menu popup that contains "Open link in new tab."
 
         gWebView.setOpenLinkInNewTabHandler(handlerOpenLinkInNewTab);
 
