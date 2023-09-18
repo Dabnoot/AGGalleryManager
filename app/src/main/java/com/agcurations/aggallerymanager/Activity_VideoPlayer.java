@@ -634,7 +634,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             if (ci != null) {
                 String sFileName = ci.sFilename;
 
-                setTitle(GlobalClass.JumbleFileName(sFileName));
+                if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
+                    setTitle(sFileName); //Filename of the m3u8 file will not be jumbled in order to allow the media player to understand what it's receiving.
+                } else {
+                    setTitle(GlobalClass.JumbleFileName(sFileName));
+                }
 
                 //Populate the item details fragment:
                 if(gFragment_itemDetails == null) {
@@ -811,14 +815,18 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         //todo: what to do if the user has transferred files to another device? This file will need to be recreated.
                         // todo: Perhaps check to see if the file exists. If it exists, test the first valid file URI link and see if it is good.
                         // todo:   if not, recreate the file.
-                        String[] sFileNameAndExtension = ci.sFilename.split("\\.");
-                        if(sFileNameAndExtension.length != 2){
-                            sMessage = "Problem with filename: " + ci.sFilename;
+
+                        if(!ci.sFilename.contains(".")){
+                            sMessage = "Problem with filename '" + ci.sFilename + "': cannot determine extension.";
                             Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
                             return;
                         }
+
+                        String sFileNameBase = ci.sFilename.substring(0, ci.sFilename.lastIndexOf("."));
+                        String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1, ci.sFilename.length());
+
                         //Determine the name of the SAF-adapted M3U8 file:
-                        String sM3U8_SAF_FileName = sFileNameAndExtension[0] + "_SAF_Adapted." + sFileNameAndExtension[1];
+                        String sM3U8_SAF_FileName = sFileNameBase + "_SAF_Adapted" + "." + sFileNameExt;
 
                         //Check to see indexing of the files for the app is complete. If not, return.
                         //If the global file indexing is complete, use fast-lookup:
