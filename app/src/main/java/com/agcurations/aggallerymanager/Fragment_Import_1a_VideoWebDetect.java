@@ -6,6 +6,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -205,6 +206,49 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         gWebView.addJavascriptInterface(new MyClickJsToAndroid(), "my"); //todo: clarify the coding. Who names a routine 'my'??
 
         gWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageStarted (WebView view,
+                                       String url,
+                                       Bitmap favicon){
+                InitializeWebDataLocators(); //Wipe data regarding detected media.
+
+                boolean bAddressOK = false;
+                String sAddressCandidate = gEditText_WebAddress.getText().toString();
+                if(sAddressCandidate.length() > 0) {
+
+                    //Evaluate if an address matches a pattern:
+                    boolean bWebVideoDataLocatorNotFound = true;
+                    for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
+                        String sNonExplicitAddress = icWVDL.sHostnameRegEx;
+                        String sRegexExpression = sNonExplicitAddress.replace("%", "");
+                        if (sAddressCandidate.matches(sRegexExpression)) {
+                            bWebVideoDataLocatorNotFound = false;
+                            bAddressOK = true;
+                            icWVDL.bHostNameMatchFound = true;
+                            break;
+                        }
+                    }
+                    if(bWebVideoDataLocatorNotFound){
+                        //Set the "unknown" WebVideoDataLocator as "the one".
+                        for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
+                            if (icWVDL.sHostnameRegEx.matches(gsUnknownAddress)) {
+                                bAddressOK = true;
+                                icWVDL.bHostNameMatchFound = true;
+                                break;
+                            }
+                        }
+                    }
+
+                }
+                if(bAddressOK) {
+                    viewModelImportActivity.sWebAddress = sAddressCandidate;
+                } else {
+                    viewModelImportActivity.sWebAddress = "";
+                }
+
+            }
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 gWebView.evaluateJavascript(addMyClickCallBackJs(),null);
@@ -377,32 +421,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         });
 
 
-        //String sTestAddress = "";
-        //gEditText_WebAddress.setText(sTestAddress);
-
-        if(gEditText_WebAddress != null){
-
-            gEditText_WebAddress.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    RecordWebAddress();
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-
-                }
-            });
-
-
-        }
-
-
         gButton_Go.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -471,16 +489,12 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                     if(globalClass == null){
                         globalClass = (GlobalClass) getActivity().getApplicationContext();
                     }
-                    if(viewModelImportActivity.sWebAddress.equals("")){
-                        RecordWebAddress(); //We usually end up here during testing because I have
-                                            //  pre-loaded the editText with data, so onChanged for the editText
-                                            //  never fires.
-                    }
+
                     String sTitle = gWebView.getTitle();
                     for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
                         if (icWVDL.bHostNameMatchFound) {
                             icWVDL.sHTML = sHTML;
-                            icWVDL.sWebPageTitle = sTitle;
+                            icWVDL.sWebPageTitle = GlobalClass.cleanHTMLCodedCharacters(sTitle);
                             break;
                         }
                     }
@@ -536,9 +550,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
     @Override
     public void onPause() {
-        if(viewModelImportActivity.sWebAddress.equals("")) {
-            RecordWebAddress();
-        }
         super.onPause();
     }
 
@@ -550,49 +561,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         super.onDestroy();
     }
 
-
-    private void RecordWebAddress(){
-
-        if(getActivity() == null){
-            return;
-        }
-
-        boolean bAddressOK = false;
-        String sAddressCandidate = gEditText_WebAddress.getText().toString();
-        if(sAddressCandidate.length() > 0) {
-
-            InitializeWebDataLocators();
-
-            //Evaluate if an address matches a pattern:
-            boolean bWebVideoDataLocatorNotFound = true;
-            for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
-                String sNonExplicitAddress = icWVDL.sHostnameRegEx;
-                String sRegexExpression = sNonExplicitAddress.replace("%", "");
-                if (sAddressCandidate.matches(sRegexExpression)) {
-                    bWebVideoDataLocatorNotFound = false;
-                    bAddressOK = true;
-                    icWVDL.bHostNameMatchFound = true;
-                    break;
-                }
-            }
-            if(bWebVideoDataLocatorNotFound){
-                //Set the "unknown" WebVideoDataLocator as "the one".
-                for(ItemClass_WebVideoDataLocator icWVDL: globalClass.galWebVideoDataLocators) {
-                    if (icWVDL.sHostnameRegEx.matches(gsUnknownAddress)) {
-                        bAddressOK = true;
-                        icWVDL.bHostNameMatchFound = true;
-                        break;
-                    }
-                }
-            }
-
-        }
-        if(bAddressOK) {
-            viewModelImportActivity.sWebAddress = sAddressCandidate;
-        } else {
-            viewModelImportActivity.sWebAddress = "";
-        }
-    }
 
     private void InitializeWebDataLocators(){
         //Re-Populate video data locator structure (clears any previously-found data):
