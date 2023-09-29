@@ -66,7 +66,7 @@ dependencies {
     //implementation 'com.arthenica:ffmpeg-kit-full:4.4.LTS'
 
     //ExoPlayer, for playing local m3u8 playlists:
-    implementation 'com.google.android.exoplayer:exoplayer:2.18.5'
+    implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
 
     //For adding recently-used tags:
     implementation 'co.lujun:androidtagview:1.1.7'
