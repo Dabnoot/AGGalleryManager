@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -51,13 +50,13 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
@@ -79,7 +78,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private DrawerLayout gDrawerLayout;
     private VideoView gVideoView_VideoPlayer;
     private ImageView gImageView_GifViewer;
-    private MediaController gMediaController;
 
     TreeMap<Integer, ItemClass_M3U8_TS_Entry> gtmM3U8_TS_File_Sequence; //Not used as of Sept. 29, 2023, but leaving in place for potential video-editor or other utility.
     ImageView gImageView_VideoFrameImage;
@@ -120,33 +118,20 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gProgressResponseReceiver, filter);
 
-        mVisible = true;
         gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
         gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
         //gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gDrawerLayout = findViewById(R.id.drawer_layout);
         gDrawerLayout.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
-        gDrawerLayout.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
-            @Override
-            public void run() {
-                closeDrawer();
-            }
-        }, 1500);
+        //Configure a runnable to close the drawer after a timeout.
+        gDrawerLayout.postDelayed(this::closeDrawer, 1500);
 
         globalClass = (GlobalClass) getApplicationContext();
 
         //Get the treeMap and the key identifying the treeMap data to use for the first video to show:
         Intent intentVideoPlayer = this.getIntent();
-        /*HashMap<Integer, ItemClass_CatalogItem> hashMapTemp = (HashMap<Integer, ItemClass_CatalogItem>)
-                intentVideoPlayer.getSerializableExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_FILTERED);
-        treeMapRecyclerViewVideos = new TreeMap<>();
-        if(hashMapTemp == null){
-            finish();
-            return;
-        }
-        treeMapRecyclerViewVideos.putAll(hashMapTemp);*/
-        treeMapRecyclerViewCatItems = globalClass.gtmCatalogViewerDisplayTreeMap;
+        treeMapRecyclerViewCatItems = GlobalClass.gtmCatalogViewerDisplayTreeMap;
 
         String sVideoID = intentVideoPlayer.getStringExtra(Activity_CatalogViewer.RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID);
 
@@ -163,17 +148,14 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             glCurrentVideoPosition = savedInstanceState.getLong(PLAYBACK_TIME);
         }
 
-        gMediaController = new MediaController(this);
-        gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
-            @Override
-            public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
-                //Handle BACK button
-                if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                    onBackPressed();
-                    return true;
-                }
-                return false;
+        MediaController gMediaController = new MediaController(this);
+        gMediaController.addOnUnhandledKeyEventListener((view, keyEvent) -> {
+            //Handle BACK button
+            if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                onBackPressed();
+                return true;
             }
+            return false;
         });
 
         gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
@@ -185,42 +167,31 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             //Here is the method for double tap
             @Override
-            public boolean onDoubleTap(MotionEvent e) {
+            public boolean onDoubleTap(@NonNull MotionEvent e) {
                 return true;
             }
 
             @Override
-            public void onLongPress(MotionEvent e) {
+            public void onLongPress(@NonNull MotionEvent e) {
                 super.onLongPress(e);
             }
 
             @Override
-            public boolean onDoubleTapEvent(MotionEvent e) {
+            public boolean onDoubleTapEvent(@NonNull MotionEvent e) {
                 return true;
             }
 
             @Override
-            public boolean onDown(MotionEvent e) {
+            public boolean onDown(@NonNull MotionEvent e) {
 
-                if (gbAutoHide) {
-                    //Delay hide while the user is interacting with controls
-                    delayedHide();
-                }
-
-                if(gbPlayingM3U8) {
-                    return false;
-                } else {
-                    return true; //The other player does not trigger onSingleTapConfirmed without
-                    // this item true.
-                }
+                //The other player does not trigger onSingleTapConfirmed without
+                // this item true.
+                return !gbPlayingM3U8;
             }
 
             @Override
-            public boolean onSingleTapConfirmed(MotionEvent e) {
+            public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                 toggle();
-                if (mVisible && gbAutoHide) {
-                    delayedHide();
-                }
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -228,7 +199,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
             @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            public boolean onFling(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float velocityX, float velocityY) {
                 boolean result = false;
                 try {
                     float diffY = e2.getY() - e1.getY();
@@ -278,22 +249,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
 
             public void onSwipeUp() {
-                //The user is likely attempting to bring up the navigation bar.
-                // If the navigation bar is shown, hide it.
-                /*ActionBar actionBar = getSupportActionBar();
-                if (actionBar != null) {
-                    actionBar.show();
-                }
-                if(!bFileIsGif && (globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
-                    //Figure out which video player is active, and hide its media controls:
-                    if (gbPlayingM3U8) {
-                        gPlayerControlView_ExoPlayerControls.hide();
-                    } else {
-                        gMediaController.hide();
-                    }
 
-                }
-                mVisible = false;*/
             }
 
             public void onSwipeDown() {
@@ -301,30 +257,17 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         });
 
-        gVideoView_VideoPlayer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return gdVideoView.onTouchEvent(event);
-            }
-        });
+        gVideoView_VideoPlayer.setOnTouchListener((v, event) -> gdVideoView.onTouchEvent(event));
 
-        gVideoView_VideoPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                mp.setLooping(true);
-            }
-        });
+        gVideoView_VideoPlayer.setOnPreparedListener(mp -> mp.setLooping(true));
 
         RelativeLayout frameLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
-        frameLayout_VideoPlayer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                //This handles the case when the VideoView has resized to fit a video and
-                //  left touch-insensitive deadzones to the left and right of the playing video.
-                //  This typically happens when playing portrait-oriented videos in a landscape
-                //  screen orientation.
-                return gdVideoView.onTouchEvent(event);
-            }
+        frameLayout_VideoPlayer.setOnTouchListener((v, event) -> {
+            //This handles the case when the VideoView has resized to fit a video and
+            //  left touch-insensitive deadzones to the left and right of the playing video.
+            //  This typically happens when playing portrait-oriented videos in a landscape
+            //  screen orientation.
+            return gdVideoView.onTouchEvent(event);
         });
 
         //Prepare the Gif image viewer to accept swipe to go to next or previous file:
@@ -334,31 +277,28 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             //Here is the method for double tap
             @Override
-            public boolean onDoubleTap(MotionEvent e) {
+            public boolean onDoubleTap(@NonNull MotionEvent e) {
                 return true;
             }
 
             @Override
-            public void onLongPress(MotionEvent e) {
+            public void onLongPress(@NonNull MotionEvent e) {
                 super.onLongPress(e);
             }
 
             @Override
-            public boolean onDoubleTapEvent(MotionEvent e) {
+            public boolean onDoubleTapEvent(@NonNull MotionEvent e) {
                 return true;
             }
 
             @Override
-            public boolean onDown(MotionEvent e) {
+            public boolean onDown(@NonNull MotionEvent e) {
                 return true;
             }
 
             @Override
-            public boolean onSingleTapConfirmed(MotionEvent e) {
+            public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                 toggle();
-                if (mVisible && gbAutoHide) {
-                    delayedHide();
-                }
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -366,7 +306,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
             @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            public boolean onFling(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float velocityX, float velocityY) {
                 boolean result = false;
                 try {
                     float diffY = e2.getY() - e1.getY();
@@ -382,11 +322,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         }
                     }
                     else if (Math.abs(diffY) > SWIPE_THRESHOLD && Math.abs(velocityY) > SWIPE_VELOCITY_THRESHOLD) {
-                        /*if (diffY > 0) {
-                            onSwipeBottom();
-                        } else {
-                            onSwipeTop();
-                        }*/
                         result = true;
                     }
                 } catch (Exception exception) {
@@ -413,53 +348,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 }
             }
 
-//            public void onSwipeTop() {
-//            }
-
-            /*public void onSwipeBottom() {
-            }*/
-
         });
 
-        gImageView_GifViewer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                return gdImageView.onTouchEvent(event);
-            }
-        });
-
-        if(GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS){
-            gbAutoHide = true;
-        }
-
-        //Instantiate the ViewModel tracking tag data from the tag selector fragment.
-        //  We need to observe and track any request from the TagEditor to reload the file.
-        //  This would occur if the user deletes the tag folder holding the file, in which case
-        //  the file would be moved.
-        ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
-        //React to if the TagEditor is called and TagEditor requests that we reload the file:
-        final Observer<Boolean> observerTagDeleted = new Observer<Boolean>() {
-            @Override
-            public void onChanged(Boolean bTagDeleted) {
-                if(bTagDeleted) {
-                    //If a tag is deleted, the video file may have been moved.
-                    //  On import, items are copied into folders matching the first tag selected by the user.
-                    //  If that 'primary tag' needs to be deleted at the users request, then the file gets moved
-                    //  to its next tag folder. If the user merely reassigns a first tag, thus reordering or removing all
-                    //  assigned tags, the file does not get moved. Only on tag delete would a file be moved.
-                    //  Update 11/14/2021 - I'm not sure if the above is still true. Will need to test again. (todo).
-                    initializePlayer();
-                    if(gbPlayingM3U8){
-                        gExoPlayer.seekTo(glCurrentVideoPosition);
-                        gExoPlayer.play();
-                    } else {
-                        gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-                        gVideoView_VideoPlayer.start();
-                    }
-                }
-            }
-        };
-        viewModel_fragment_selectTags.bTagDeleted.observe(this, observerTagDeleted);
+        gImageView_GifViewer.setOnTouchListener((v, event) -> gdImageView.onTouchEvent(event));
 
         //Create the ExoPlayer.
         //The next few lines are specifically to control the buffering.
@@ -483,14 +374,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gExoPlayer = new ExoPlayer.Builder(this).build();
 
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
-        //gPlayerControlView_ExoPlayerControls.setPlayer(gExoPlayer);
 
-        gplayerView_ExoVideoPlayer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-               return gdVideoView.onTouchEvent(event);
-            }
-        });
+        gplayerView_ExoVideoPlayer.setOnTouchListener((v, event) -> gdVideoView.onTouchEvent(event));
 
         gImageView_VideoFrameImage = findViewById(R.id.imageView_VideoFrameImage);
         gButton_GetVideoFrameImage = findViewById(R.id.button_GetVideoFrameImage);
@@ -518,6 +403,26 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
 
         });
+
+        //Hide the system bar:
+        WindowInsetsControllerCompat windowInsetsController =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        // Configure the behavior of the hidden system bars.
+        windowInsetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
+        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars());
+        windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars());
+
+        
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            bControlsAreVisible = true;
+            if (gButton_GetVideoFrameImage != null) {
+                gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
+            }
+            if (gImageView_VideoFrameImage != null) {
+                gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
+            }
+        }
 
         initializePlayer();
     }
@@ -584,7 +489,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
 
             //Figure out which video player is active, and resume that object.
-            if(gbPlayingM3U8) {
+            if (gbPlayingM3U8) {
                 gExoPlayer.seekTo(glCurrentVideoPosition);
                 if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
                     gExoPlayer.setPlayWhenReady(true);
@@ -598,9 +503,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 }
             }
 
-
-
         }
+
     }
 
     @Override
@@ -612,9 +516,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        /*if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            gVideoView_VideoPlayer.stopPlayback();
-        }*/
 
         //Figure out which video player is active, and stop that object.
         StopPlayback();
@@ -627,9 +528,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        /*if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            outState.putInt(PLAYBACK_TIME, gVideoView_VideoPlayer.getCurrentPosition());
-        }*/
 
         //Figure out which video player is active, and save the position.
         if(gbPlayingM3U8) {
@@ -645,8 +543,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     //==============================================================================================
     //  Video-affecting routines
     //==============================================================================================
-
-    private boolean bFileIsGif;
 
     private void initializePlayer() {
         String sMessage;
@@ -698,7 +594,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
 
                 //Determine if this is a gif file, which the VideoView will not play:
-                bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
+                boolean bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");
 
                 String sFileUri = GlobalClass.gsUriAppRootPrefix
                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
@@ -839,7 +735,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         //  play an SAF-adapted M3U8 file. That is, a file with video listings
                         //  of Android Storage Access Framework Uris.
 
-                        MediaItem mediaItem = null;
+                        MediaItem mediaItem;
                         //todo: Create a flow chart to map this logic.
 
                         //Check to see if the SAF-aligned M3U8 file exists, and if not, create it.
@@ -854,7 +750,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         }
 
                         String sFileNameBase = ci.sFilename.substring(0, ci.sFilename.lastIndexOf("."));
-                        String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1, ci.sFilename.length());
+                        String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1);
 
                         //Determine the name of the SAF-adapted M3U8 file:
                         String sM3U8_SAF_FileName = sFileNameBase + "_SAF_Adapted" + "." + sFileNameExt;
@@ -1022,7 +918,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     }
 
-    private void getM3U8CurrentTSFile(){
+    private Uri getM3U8CurrentTSFile(){
         long lContentPosition = gExoPlayer.getContentPosition(); //returns milliseconds.
         Log.d("Video frame calc", "Current position is: " + lContentPosition + " ms.");
         ItemClass_CatalogItem ci;
@@ -1069,6 +965,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 uriMediaUri = Uri.parse(sFileUri);
             }
         }
+        return uriMediaUri;
     }
 
     private void createM3U8Sequencing(){
@@ -1080,7 +977,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             ci = treeMapRecyclerViewCatItems.get(giKey);
             if (ci != null) {
                 String sFileNameBase = ci.sFilename.substring(0, ci.sFilename.lastIndexOf("."));
-                String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1, ci.sFilename.length());
+                String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1);
                 //Determine the name of the SAF-adapted M3U8 file:
                 String sM3U8_SAF_FileName = sFileNameBase + "_SAF_Adapted" + "." + sFileNameExt;
                 String sUriM3U8 = GlobalClass.gsUriAppRootPrefix
@@ -1126,7 +1023,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                     if(sTemp.length > 0){
                                         String sTemp2 = sTemp[0].replace(",","");
                                         String sDuration = sTemp2.trim();
-                                        float fDuration = -1;
+                                        float fDuration;
                                         try{
                                             fDuration = Float.parseFloat(sDuration);
                                             itemClass_m3U8_ts_entry.fDuration = fDuration;
@@ -1160,7 +1057,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     } //End createM3U8Sequencing().
 
-
     public void closeDrawer(){
         gDrawerLayout.closeDrawer(GravityCompat.START);
     }
@@ -1168,93 +1064,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     //==============================================================================================
     //==============================================================================================
     //==============================================================================================
-    // Full-Screen Activity Functions (Auto-Created)
 
-    /*
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static boolean gbAutoHide = false;  //Turn off auto-hide for videos. When the user is dragging the
-    //   seek bar, the background navigation bar remains, but the MediaController relocates. This causes
-    //   uncomfortable user interaction.
-
-    /*
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-    /**
-     * Some older devices needs a small delay between UI widget updates
-     * and a change of the status and navigation bar.
-     */
-    private static final int UI_ANIMATION_DELAY = 300;
-    private final Handler mHideHandler = new Handler();
-
-    private final Runnable mHidePart2Runnable = new Runnable() {
-        @SuppressLint("InlinedApi")
-        @Override
-        public void run() {
-            // Delayed removal of status and navigation bar
-
-            // Note that some of these constants are new as of API 16 (Jelly Bean)
-            // and API 19 (KitKat). It is safe to use them, as they are inlined
-            // at compile-time and do nothing on earlier devices.
-            gDrawerLayout.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-
-        }
-    };
-
-    private final Runnable mShowPart2Runnable = new Runnable() {
-        @Override
-        public void run() {
-            // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.show();
-            }
-            if(!bFileIsGif && (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS)){
-                if(gbPlayingM3U8){
-                    //gplayerView_ExoVideoPlayer.setUseController(true);
-                } else {
-                    if(active) {
-                        gMediaController.show(); //This mediaController needs this merely for how the touches
-                        // are handled between the ExoPlayer and the VideoView.
-                    }
-                }
-            }
-        }
-    };
-    private boolean mVisible;
-    private final Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if(active) {
-                hide();
-            }
-        }
-    };
-
-
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, 500);
-    }
+    private boolean bControlsAreVisible;
 
     private void toggle() {
-        if (mVisible) {
+        if (bControlsAreVisible) {
             hide();
         } else {
             show();
@@ -1262,13 +1076,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     }
 
     private void hide() {
-        // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-        }
-
-        mVisible = false;
+        // Hide UI
+        bControlsAreVisible = false;
 
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             if (gButton_GetVideoFrameImage != null) {
@@ -1278,17 +1087,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
             }
         }
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
     }
 
     private void show() {
-        // Clear system visibility settings:
-        gDrawerLayout.setSystemUiVisibility(0);
-
-        mVisible = true;
+        bControlsAreVisible = true;
 
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             if (gButton_GetVideoFrameImage != null) {
@@ -1299,21 +1101,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
         }
 
-        // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable);
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
     }
 
-     /*
-     * Schedules a call to hide() in delay milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide() {
-        //Use with caution. It makes trouble for the user when combined with a mediaController.
-        //  Above note from AGGalleryManager author, WRC.
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, Activity_VideoPlayer.AUTO_HIDE_DELAY_MILLIS);
-    }
 
     private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
         String sMessage = sMainMessage;
@@ -1391,8 +1180,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         gImageView_VideoFrameImage.setImageBitmap(gBitmapVideoFrame);
                         float fHWRatio = gBitmapVideoFrame.getHeight() / (float) gBitmapVideoFrame.getWidth();
                         int iVideoFrameImageWidth = gImageView_VideoFrameImage.getLayoutParams().width;
-                        int iVideoFrameImageHeight = (int) (iVideoFrameImageWidth * fHWRatio);
-                        gImageView_VideoFrameImage.getLayoutParams().height = iVideoFrameImageHeight;
+                        gImageView_VideoFrameImage.getLayoutParams().height = (int) (iVideoFrameImageWidth * fHWRatio);
                         gImageView_VideoFrameImage.requestLayout();
 
                         //Save the Bitmap as a png file:
