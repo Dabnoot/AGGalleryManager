@@ -69,16 +69,29 @@ public class Worker_Catalog_DeleteItem extends Worker {
                     Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
                 }
             } else {
-
+                //If not a comic...
                 if (!ciToDelete.sSource.startsWith("http")) {
-                    //If the source is not from the web...
+                    //If the source is not from the web and not a comic, then it is a single video or image file.
                     //todo: Opportunity for refactoring with web-sourced single-file delete.
                     Uri uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sFilename);
                     if (GlobalClass.CheckIfFileExists(uriFileToBeDeleted)) {
                         try {
                             if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
-                                globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                globalClass.problemNotificationConfig("Could not delete file: " + GlobalClass.cleanHTMLCodedCharacters(uriFileToBeDeleted.toString()), CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                 bSuccess = false;
+                            }
+                            if(bSuccess) {
+                                //Check to see if there is a thumbnail file to delete:
+                                if (!ciToDelete.sThumbnail_File.equals("")) {
+                                    if(!ciToDelete.sFilename.equals(ciToDelete.sThumbnail_File)){
+                                        //If the identified Thumbnail file is not the same as the single-item file, attempt to delete the Thumbnail file:
+                                        uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sThumbnail_File);
+                                        if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                                            globalClass.problemNotificationConfig("Could not delete thumbnail file: " + GlobalClass.cleanHTMLCodedCharacters(uriFileToBeDeleted.toString()), CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                            bSuccess = false;
+                                        }
+                                    }
+                                }
                             }
                         } catch (FileNotFoundException e) {
                             globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
@@ -113,6 +126,19 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                     if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
                                         globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                         bSuccess = false;
+                                    }
+                                    if(bSuccess) {
+                                        //Check to see if there is a thumbnail file to delete:
+                                        if (!ciToDelete.sThumbnail_File.equals("")) {
+                                            if(!ciToDelete.sFilename.equals(ciToDelete.sThumbnail_File)){
+                                                //If the identified Thumbnail file is not the same as the single-item file, attempt to delete the Thumbnail file:
+                                                uriFileToBeDeleted = GlobalClass.FormChildUri(uriItemFolder, ciToDelete.sThumbnail_File);
+                                                if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
+                                                    globalClass.problemNotificationConfig("Could not delete thumbnail file: " + GlobalClass.cleanHTMLCodedCharacters(uriFileToBeDeleted.toString()), CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                                    bSuccess = false;
+                                                }
+                                            }
+                                        }
                                     }
                                 } catch (FileNotFoundException e) {
                                     globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);

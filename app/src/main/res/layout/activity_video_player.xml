@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
@@ -69,6 +70,28 @@
                 android:layout_centerInParent="true"
                 android:visibility="invisible"/>
         </RelativeLayout>
+
+        <Button
+            android:id="@+id/button_GetVideoFrameImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:text="Update Thumbnail"
+            android:visibility="invisible"
+            app:backgroundTint="@color/colorButton" />
+
+        <ImageView
+            android:id="@+id/imageView_VideoFrameImage"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_below="@+id/button_GetVideoFrameImage"
+            android:layout_alignParentEnd="true"
+            android:visibility="invisible"/>
 
     </RelativeLayout>
 

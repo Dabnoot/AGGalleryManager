@@ -199,6 +199,9 @@ public class GlobalClass extends Application {
     public static ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
     public static int giDefaultUserMaturityRating = AdapterMaturityRatings.MATURITY_RATING_M; //todo: Setting - add to settings
 
+    public static String gsRefreshCatalogViewerThumbnail = ""; //Used to refresh thumbnail.
+
+
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
     //=====================================================================================
@@ -1136,7 +1139,7 @@ public class GlobalClass extends Application {
             //Write the data to the file:
             OutputStream osNewCatalogContentsFile;
 
-            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wt"); //Mode w = write. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+            osNewCatalogContentsFile = gcrContentResolver.openOutputStream(gUriCatalogContentsFiles[iMediaCategory], "wt"); //Mode wt = write and truncate. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
             if(osNewCatalogContentsFile == null){
                 //Set the catalog file to "available":
                 GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);

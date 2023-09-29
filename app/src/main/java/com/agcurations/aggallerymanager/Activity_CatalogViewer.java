@@ -43,6 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.common.io.BaseEncoding;
 
 import java.io.BufferedReader;
@@ -241,7 +242,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Update TextView to show 0 items if applicable:
         TextView textView_CatalogStatus = findViewById(R.id.textView_CatalogStatus);
         try {
-            if (globalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() == 0) {
+            if (GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() == 0) {
                 textView_CatalogStatus.setVisibility(View.VISIBLE);
                 String s = "Catalog contains 0 items.";
                 textView_CatalogStatus.setText(s);
@@ -278,6 +279,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         if(globalClass.gbCatalogViewerRefresh){
             //Typically enter here if data has been edited.
             populate_RecyclerViewCatalogItems();
+        } else if (!GlobalClass.gsRefreshCatalogViewerThumbnail.equals("")) {
+            //Cause an update of the thumbnail for the specified item.
+            gRecyclerViewCatalogAdapter.updateItem(GlobalClass.gsRefreshCatalogViewerThumbnail);
         }
 
     }
@@ -635,10 +639,29 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
             if(uriThumbnailUri != null) {
-                Glide.with(getApplicationContext())
-                        .load(uriThumbnailUri)
-                        .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                        .into(holder.imageView_Thumbnail);
+                if(!GlobalClass.gsRefreshCatalogViewerThumbnail.equals(ci.sItemID)) {
+                    //If a command to refresh a thumbnail is "" or not equal to a specified item,
+                    // let Glide load the image using whatever disk strategy it has been using.
+                    Glide.with(getApplicationContext())
+                            .load(uriThumbnailUri)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.imageView_Thumbnail);
+                } else {
+                    //Ignore cache. Used when the user updates a thumbnail.
+                    Glide.with(getApplicationContext())
+                            .load(uriThumbnailUri)
+                            .diskCacheStrategy(DiskCacheStrategy.NONE ) //This will only affect this one call.
+                            .skipMemoryCache(true)
+                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                            .into(holder.imageView_Thumbnail);
+
+                    //IF Glide is misbehaving, provide the option to clear the cache and memory:
+                    //https://bumptech.github.io/glide/doc/caching.html#cache-configuration
+                    //Glide.get(context).clearMemory();
+                    //Glide.get(applicationContext).clearDiskCache();
+
+                    GlobalClass.gsRefreshCatalogViewerThumbnail = "";
+                }
                 stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail load complete. ");
             } else {
                 //Special behavior if this is a comic.
@@ -1205,7 +1228,17 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             return a < 0.5 ? Color.BLACK : Color.WHITE;
         }
 
-
+        public void updateItem(String sItemID){
+            //Created for enabling the update of thumbnail image created by user action in Activity_VideoPlayer.
+            for (int i = 0; i <= mapKeys.length; i++) {
+                if(treeMap.get(i) != null) {
+                    if (treeMap.get(mapKeys[i]).sItemID.equals(sItemID)) {
+                        gRecyclerViewCatalogAdapter.notifyItemChanged(i);
+                        break;
+                    }
+                }
+            }
+        }
 
 
     }
@@ -1248,7 +1281,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         //Start the video player:
         Intent intentVideoPlayer = new Intent(this, Activity_VideoPlayer.class);
-        globalClass.gtmCatalogViewerDisplayTreeMap = treeMap;
+        GlobalClass.gtmCatalogViewerDisplayTreeMap = treeMap;
         intentVideoPlayer.putExtra(RECYCLERVIEW_VIDEO_TREEMAP_SELECTED_VIDEO_ID, sVideoID);
         if(toastLastToastMessage != null){
             toastLastToastMessage.cancel(); //Hide any toast message that might be shown.

@@ -5,17 +5,22 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.PixelCopy;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
@@ -31,11 +36,11 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.ui.StyledPlayerControlView;
 import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -76,6 +81,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private ImageView gImageView_GifViewer;
     private MediaController gMediaController;
 
+    TreeMap<Integer, ItemClass_M3U8_TS_Entry> gtmM3U8_TS_File_Sequence; //Not used as of Sept. 29, 2023, but leaving in place for potential video-editor or other utility.
+    ImageView gImageView_VideoFrameImage;
+    Button gButton_GetVideoFrameImage;
+    Bitmap gBitmapVideoFrame = null;
+    public static final String COPY_PIXEL_VIDEO_PLAYER_FRAME_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.COPY_PIXEL_VIDEO_PLAYER_FRAME_RESPONSE";
+
     //ExoPlayer is used for playback of local M3U8 files:
     private ExoPlayer gExoPlayer;
     private StyledPlayerView gplayerView_ExoVideoPlayer;
@@ -105,6 +116,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
+        filter.addAction(COPY_PIXEL_VIDEO_PLAYER_FRAME_ACTION_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gProgressResponseReceiver, filter);
 
@@ -480,6 +492,33 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             }
         });
 
+        gImageView_VideoFrameImage = findViewById(R.id.imageView_VideoFrameImage);
+        gButton_GetVideoFrameImage = findViewById(R.id.button_GetVideoFrameImage);
+        gButton_GetVideoFrameImage.setOnClickListener(v -> {
+            SurfaceView surfaceView;
+            if(gbPlayingM3U8) {
+                surfaceView = (SurfaceView) gplayerView_ExoVideoPlayer.getVideoSurfaceView();
+            } else {
+                surfaceView = gVideoView_VideoPlayer;
+            }
+
+            if(surfaceView != null) {
+                final Bitmap bitmap = Bitmap.createBitmap(surfaceView.getWidth(), surfaceView.getHeight(), Bitmap.Config.ARGB_8888);
+                PixelCopy.request(surfaceView, bitmap, (int result) -> {
+                    if (result != PixelCopy.SUCCESS) {
+                        return;
+                    }
+                    gBitmapVideoFrame = bitmap;
+                    Intent broadcastIntent = new Intent();
+                    broadcastIntent.setAction(COPY_PIXEL_VIDEO_PLAYER_FRAME_ACTION_RESPONSE);
+                    broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
+                    broadcastIntent.putExtra(ProgressResponseReceiver.EXTRA_VIDEO_FRAME_SCREENSHOT_UPDATE, true);
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+                }, new Handler(Looper.getMainLooper()));
+            }
+
+        });
+
         initializePlayer();
     }
 
@@ -543,10 +582,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            /*gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-            if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
-                gVideoView_VideoPlayer.start();
-            }*/
 
             //Figure out which video player is active, and resume that object.
             if(gbPlayingM3U8) {
@@ -570,17 +605,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        /*glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
-        if(globalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
-            if (gVideoView_VideoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gVideoView_VideoPlayer.pause();
-        }*/
-
         //Figure out which video player is active, and pause that object.
         PausePlayback();
         super.onPause();
@@ -626,7 +650,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private void initializePlayer() {
         String sMessage;
-        int iMediaCategory = GlobalClass.giSelectedCatalogMediaCategory;
+
+        gtmM3U8_TS_File_Sequence = null;
 
         if(treeMapRecyclerViewCatItems.containsKey(giKey)) {
             ItemClass_CatalogItem ci;
@@ -710,7 +735,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                     uriM3U8 = Uri.parse(sM3U8Uri);
 
-                    TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
+
 
                     if(GlobalClass.gbOptionIndividualizeM3U8VideoSegmentPlayback) {
                         //If the option to individualize M3U8 video segment playback is selected,
@@ -734,6 +759,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
                                 + GlobalClass.gsFileSeparator + sNewFileName;
                         Uri uriParentFolderUri = Uri.parse(sParentFolderUri);
+
+                        //Read the M3U8 file and sequence the transport stream entries:
+                        TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
+
                         try {
                             Uri uriNewM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolderUri,MimeTypes.BASE_TYPE_TEXT, sNewFileName);
                             if(uriNewM3U8 == null){
@@ -753,6 +782,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 String sLine = brM3U8.readLine();
                                 StringBuilder sbUriString = new StringBuilder();
                                 while (sLine != null) {
+                                    //#EXTINF:<DURATION> [<KEY>="<VALUE>"]*,<TITLE>
+                                    //Uri string
                                     if (!sLine.startsWith("#") && sLine.endsWith("st")) {
                                         //Form the uri string:
                                         sbUriString.append(GlobalClass.gsUriAppRootPrefix)
@@ -833,7 +864,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sUriM3U8_SAF = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                                 + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
-
                                 + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
                         Uri uriM3U8_SAF = Uri.parse(sUriM3U8_SAF);
 
@@ -992,9 +1022,143 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     }
 
-    public void HideObfuscationImageButton(View v){
-        v.setVisibility(View.INVISIBLE);
+    private void getM3U8CurrentTSFile(){
+        long lContentPosition = gExoPlayer.getContentPosition(); //returns milliseconds.
+        Log.d("Video frame calc", "Current position is: " + lContentPosition + " ms.");
+        ItemClass_CatalogItem ci;
+        ci = treeMapRecyclerViewCatItems.get(giKey);
+
+        Uri uriMediaUri = null;
+        if(ci != null) {
+            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                //Get the m3u8 file and determine which transport stream (TS) file is relevant to the
+                //  current playback time.
+                if (gtmM3U8_TS_File_Sequence == null) {
+                    createM3U8Sequencing();
+                }
+                if (gtmM3U8_TS_File_Sequence != null) {
+                    if (gtmM3U8_TS_File_Sequence.size() > 0) {
+                        //Determine the TS file at the content position:
+                        long lCummulativeDuration = 0L;
+                        ItemClass_M3U8_TS_Entry itemClass_m3U8_ts_entry_last = gtmM3U8_TS_File_Sequence.get(0);
+                        if (itemClass_m3U8_ts_entry_last != null) {
+                            long lNextCummulativeDuration = (long) (itemClass_m3U8_ts_entry_last.fDuration * 1000f);
+                            for (int i = 1; i < gtmM3U8_TS_File_Sequence.size(); i++) {
+                                if (lNextCummulativeDuration >= lContentPosition) {
+                                    uriMediaUri = Uri.parse(itemClass_m3U8_ts_entry_last.sUri);
+                                    Log.d("Video frame calc", "Transport Stream File " + i + ", " + itemClass_m3U8_ts_entry_last.sUri);
+                                    break;
+                                }
+                                lCummulativeDuration = lNextCummulativeDuration;
+                                itemClass_m3U8_ts_entry_last = gtmM3U8_TS_File_Sequence.get(i);
+                                if (itemClass_m3U8_ts_entry_last != null) {
+                                    lNextCummulativeDuration += (long) (itemClass_m3U8_ts_entry_last.fDuration * 1000L);
+                                }
+                            }
+                        }
+                        lContentPosition -= lCummulativeDuration;
+                        Log.d("Video frame calc", "Content position: " + lContentPosition + "ms.");
+                    }
+
+                }
+            } else {
+                String sFileUri = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
+                        + GlobalClass.gsFileSeparator + ci.sFilename;
+                uriMediaUri = Uri.parse(sFileUri);
+            }
+        }
     }
+
+    private void createM3U8Sequencing(){
+        //Read the M3U8 file and sequence the transport stream entries:
+        gtmM3U8_TS_File_Sequence = new TreeMap<>();
+
+        if(treeMapRecyclerViewCatItems.containsKey(giKey)) {
+            ItemClass_CatalogItem ci;
+            ci = treeMapRecyclerViewCatItems.get(giKey);
+            if (ci != null) {
+                String sFileNameBase = ci.sFilename.substring(0, ci.sFilename.lastIndexOf("."));
+                String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1, ci.sFilename.length());
+                //Determine the name of the SAF-adapted M3U8 file:
+                String sM3U8_SAF_FileName = sFileNameBase + "_SAF_Adapted" + "." + sFileNameExt;
+                String sUriM3U8 = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
+                        + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
+                        + GlobalClass.gsFileSeparator + sM3U8_SAF_FileName;
+                Uri uriM3U8 = Uri.parse(sUriM3U8);
+
+                if(GlobalClass.CheckIfFileExists(uriM3U8)){
+                    try {
+
+                        InputStream isM3U8 = GlobalClass.gcrContentResolver.openInputStream(uriM3U8);
+                        if(isM3U8 != null) {
+                            byte[] byteM3U8File = GlobalClass.readAllBytes(isM3U8);
+                            isM3U8.close();
+                            String sM3U8File = new String(byteM3U8File);
+                            String[] sM3U8FileRecords = sM3U8File.split("\n");
+
+                            float fTargetDuration = -1;
+                            int iSequence = 0;
+                            ItemClass_M3U8_TS_Entry itemClass_m3U8_ts_entry = null;
+                            for (String sLine : sM3U8FileRecords) {
+
+                                if(sLine.startsWith("#EXT-X-TARGETDURATION:")){
+                                    //Target duration
+                                    String sTemp = sLine.replace("#EXT-X-TARGETDURATION:", "");
+                                    sTemp = sTemp.trim();
+                                    try{
+                                        fTargetDuration = Float.parseFloat(sTemp);
+                                    } catch (Exception ignored){
+                                        //Could not determine target duration.
+                                    }
+
+                                } else if (sLine.startsWith("#EXTINF:")) {
+                                    //#EXTINF:<DURATION> [<KEY>="<VALUE>"]*,<TITLE>
+                                    //Uri string
+                                    //Get transport stream (TS) metadata:
+                                    itemClass_m3U8_ts_entry = new ItemClass_M3U8_TS_Entry();
+                                    String sMetadata = sLine;
+                                    sMetadata = sMetadata.replace("#EXTINF:","");
+                                    sMetadata = sMetadata.trim();
+                                    String[] sTemp = sMetadata.split(" ");
+                                    if(sTemp.length > 0){
+                                        String sTemp2 = sTemp[0].replace(",","");
+                                        String sDuration = sTemp2.trim();
+                                        float fDuration = -1;
+                                        try{
+                                            fDuration = Float.parseFloat(sDuration);
+                                            itemClass_m3U8_ts_entry.fDuration = fDuration;
+                                        } catch (Exception e){
+                                            //Could not determine duration from metadata. Opportunity to use default duration if stated at the top of the file.
+                                            itemClass_m3U8_ts_entry.fDuration = fTargetDuration;
+                                        }
+                                    }
+
+                                } else if (!sLine.startsWith("#") && sLine.endsWith("st")) {
+                                    if(itemClass_m3U8_ts_entry != null) {
+                                        itemClass_m3U8_ts_entry.sUri = sLine;
+                                        gtmM3U8_TS_File_Sequence.put(iSequence, itemClass_m3U8_ts_entry);
+                                        iSequence++;
+                                        itemClass_m3U8_ts_entry = null;
+                                    }
+                                } //End if for types of lines in the M3U8 file.
+
+                            } //End loop processing data from teh M3U8 file.
+
+                        } //End if the M3U8 file was found.
+
+                    } catch (Exception e){
+                        String sMessage = "" + e.getMessage();
+                        Log.d("M3U8 File Processing", sMessage);
+                    }
+
+                }
+            }
+        }
+
+    } //End createM3U8Sequencing().
 
 
     public void closeDrawer(){
@@ -1106,8 +1270,13 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         mVisible = false;
 
-        if(gbPlayingM3U8){
-            //gplayerView_ExoVideoPlayer.setUseController(false);
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            if (gButton_GetVideoFrameImage != null) {
+                gButton_GetVideoFrameImage.setVisibility(View.INVISIBLE);
+            }
+            if (gImageView_VideoFrameImage != null) {
+                gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
+            }
         }
 
         // Schedule a runnable to remove the status and navigation bar after a delay
@@ -1120,6 +1289,15 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gDrawerLayout.setSystemUiVisibility(0);
 
         mVisible = true;
+
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            if (gButton_GetVideoFrameImage != null) {
+                gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
+            }
+            if (gImageView_VideoFrameImage != null) {
+                gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
+            }
+        }
 
         // Schedule a runnable to display UI elements after a delay
         mHideHandler.removeCallbacks(mHidePart2Runnable);
@@ -1148,6 +1326,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     ProgressResponseReceiver gProgressResponseReceiver;
 
     public class ProgressResponseReceiver extends BroadcastReceiver {
+
+        public static final String EXTRA_VIDEO_FRAME_SCREENSHOT_UPDATE  = "com.agcurations.aggallerymanager.extra.FRAME_SCREENSHOT_UPDATE";
 
         public ProgressBar progressBar_ProgressIndicator;
         public TextView textView_ProgressText;
@@ -1202,6 +1382,81 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         textView_ProgressText.setText(sProgressBarText);
                     }
                 }
+            }
+
+            boolean bUpdateVideoFrameScreenshot = intent.getBooleanExtra(EXTRA_VIDEO_FRAME_SCREENSHOT_UPDATE,false);
+            if(bUpdateVideoFrameScreenshot) {
+                if(gImageView_VideoFrameImage != null) {
+                    if (gBitmapVideoFrame != null) {
+                        gImageView_VideoFrameImage.setImageBitmap(gBitmapVideoFrame);
+                        float fHWRatio = gBitmapVideoFrame.getHeight() / (float) gBitmapVideoFrame.getWidth();
+                        int iVideoFrameImageWidth = gImageView_VideoFrameImage.getLayoutParams().width;
+                        int iVideoFrameImageHeight = (int) (iVideoFrameImageWidth * fHWRatio);
+                        gImageView_VideoFrameImage.getLayoutParams().height = iVideoFrameImageHeight;
+                        gImageView_VideoFrameImage.requestLayout();
+
+                        //Save the Bitmap as a png file:
+                        ItemClass_CatalogItem ci = treeMapRecyclerViewCatItems.get(giKey);
+                        if (ci != null) {
+                            String sThumbnailFilename;
+                            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                                //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
+                                sThumbnailFilename = GlobalClass.JumbleFileName("Thumbnail.png");
+                            } else {
+                                sThumbnailFilename = "lianbmuhT_" + ci.sFilename.substring(0, ci.sFilename.lastIndexOf("."))
+                                        + ".gnp";
+                            }
+                            String sThumbnailFolder = GlobalClass.gsUriAppRootPrefix
+                                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                                            + GlobalClass.gsFileSeparator + ci.sFolderRelativePath;
+
+                            try {
+                                Uri uriNewThumbnailFile = Uri.parse(sThumbnailFolder
+                                        + GlobalClass.gsFileSeparator + sThumbnailFilename);
+                                if(!GlobalClass.CheckIfFileExists(uriNewThumbnailFile)) {
+                                    //If the file does not exist, create it:
+                                    Uri uriThumbnailFolder = Uri.parse(sThumbnailFolder);
+                                    uriNewThumbnailFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriThumbnailFolder, MimeTypes.BASE_TYPE_TEXT, sThumbnailFilename);
+                                }
+                                if(uriNewThumbnailFile != null) {
+                                    OutputStream osNewThumbnailFile;
+                                    osNewThumbnailFile = GlobalClass.gcrContentResolver.openOutputStream(uriNewThumbnailFile, "wt"); //Mode wt = write and truncate. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                                    if (osNewThumbnailFile != null) {
+                                        //Write the data to the file:
+                                        gBitmapVideoFrame.compress(Bitmap.CompressFormat.PNG, 100, osNewThumbnailFile); // PNG is a lossless format, the compression factor (100) is ignored
+                                        osNewThumbnailFile.close();
+                                        ci.sThumbnail_File = sThumbnailFilename;
+                                        GlobalClass.gsRefreshCatalogViewerThumbnail = ci.sItemID; //Used to cause thumbnail file refresh.
+                                        //Update in true memory, not just the copy passed to this activity:
+                                        ItemClass_CatalogItem icci = GlobalClass.gtmCatalogLists.get(ci.iMediaCategory).get(ci.sItemID);
+                                        if(icci != null){
+                                            icci.sThumbnail_File = sThumbnailFilename;
+                                        }
+                                        //Update the catalog file:
+                                        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                                        String sCatalogRecord = GlobalClass.getCatalogRecordString(ci);
+                                        Data dataCatalogUpdateItem = new Data.Builder()
+                                                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_VideoPlayer:ProgressResponseReceiver()")
+                                                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                                                .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
+                                                .build();
+                                        OneTimeWorkRequest otwrCatalogUpdateItem = new OneTimeWorkRequest.Builder(Worker_Catalog_UpdateItem.class)
+                                                .setInputData(dataCatalogUpdateItem)
+                                                .addTag(Worker_Catalog_UpdateItem.TAG_WORKER_CATALOG_UPDATEITEM) //To allow finding the worker later.
+                                                .build();
+                                        WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogUpdateItem);
+
+
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                    }
+                }
+
             }
 
         }

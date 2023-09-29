@@ -27,7 +27,9 @@ public class Worker_Catalog_UpdateItem extends Worker {
         if(ciToUpdate != null) {
             GlobalClass globalClass;
             globalClass = (GlobalClass) getApplicationContext();
-            globalClass.CatalogDataFile_UpdateRecord(ciToUpdate);
+            globalClass.CatalogDataFile_UpdateCatalogFile(
+                    ciToUpdate.iMediaCategory,
+                    "Updating " + GlobalClass.gsCatalogFolderNames[ciToUpdate.iMediaCategory] + " catalog...");
             return Result.success();
         } else {
             return Result.failure();
