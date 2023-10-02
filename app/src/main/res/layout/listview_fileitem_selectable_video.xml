@@ -63,7 +63,7 @@
 
     </LinearLayout>
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/relativeLayout_AdaptiveButtons"
         android:layout_width="wrap_content"
         android:layout_height="67dp"
@@ -73,25 +73,23 @@
         android:layout_centerVertical="true">
 
         <Button
+            android:id="@+id/button_ReviewM3U8"
+            android:layout_width="wrap_content"
+            android:layout_height="67dp"
+            android:layout_marginEnd="10dp"
+            android:text="View M3U8"
+            android:textSize="16sp"
+            android:backgroundTint="@color/colorButton"/>
+
+        <Button
             android:id="@+id/button_MediaPreview"
             android:layout_width="wrap_content"
             android:layout_height="67dp"
             android:text="Preview"
             android:textSize="16sp"
-            android:backgroundTint="@color/colorButton"
-            android:layout_alignStart="@id/button_TagImport"
-            android:layout_alignEnd="@id/button_TagImport"/>
+            android:backgroundTint="@color/colorButton" />
 
-        <Button
-            android:id="@+id/button_TagImport"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:text="Tag Import"
-            android:textSize="16sp"
-            android:backgroundTint="@color/colorButton"
-            android:layout_below="@id/button_MediaPreview"/>
-
-    </RelativeLayout>
+    </LinearLayout>
 
     <Button
         android:id="@+id/button_Delete"

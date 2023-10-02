@@ -891,17 +891,19 @@ public class Activity_Import extends AppCompatActivity {
                     relativeLayout_AdaptiveButtons.setLayoutParams(params);
 
                     //Set the action for the "Tag Import" button:
-                    button_TagImport.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
+                    if(button_TagImport != null) {
+                        button_TagImport.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
 
-                            viewModelImportActivity.alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
+                                viewModelImportActivity.alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
 
-                            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT, false);
-                            stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+                                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT, false);
+                                stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
 
-                        }
-                    });
+                            }
+                        });
+                    }
 
                 } else {
                     //Make sure the "Tag Import" button is not shown: //todo: is this used anymore?
@@ -1776,25 +1778,34 @@ public class Activity_Import extends AppCompatActivity {
             });
 
 
+
+            Button button_ReviewM3U8 = row.findViewById(R.id.button_ReviewM3U8);
+            if(button_ReviewM3U8 != null){
+                button_ReviewM3U8.setOnClickListener(view -> {
+
+
+                });
+
+
+            }
+
+
+
+
             //If the file item is video mimeType, set the preview button visibility to visible:
             Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
             boolean bItemIsVideo = alFileItems.get(position).sMimeType.startsWith("video")  ||
                     (alFileItems.get(position).sMimeType.equals("application/octet-stream") &&
                             alFileItems.get(position).sExtension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
 
-            //button_MediaPreview.setVisibility(View.INVISIBLE); //For now, disable preview of web-detected video.
 
-            //button_MediaPreview.setVisibility(Button.VISIBLE);
-            button_MediaPreview.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View view) {
-                    if(vvPreview.isPlaying()){
-                        vvPreview.pause();
-                    } else {
-                        vvPreview.start();
-                    }
-
+            button_MediaPreview.setOnClickListener(view -> {
+                if(vvPreview.isPlaying()){
+                    vvPreview.pause();
+                } else {
+                    vvPreview.start();
                 }
+
             });
 
             //Hide the delete button since this is a download (delete doesn't make sense):

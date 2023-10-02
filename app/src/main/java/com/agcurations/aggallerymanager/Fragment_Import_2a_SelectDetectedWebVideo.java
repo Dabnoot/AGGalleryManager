@@ -96,7 +96,9 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
             listView_WebDownloadItems.setAdapter(((Activity_Import) getActivity()).videoDownloadListCustomAdapter);
         }
 
-        ((Activity_Import) getActivity()).videoDownloadListCustomAdapter.recalcButtonNext();
+        if(getActivity() != null) {
+            ((Activity_Import) getActivity()).videoDownloadListCustomAdapter.recalcButtonNext();
+        }
 
     }
 
