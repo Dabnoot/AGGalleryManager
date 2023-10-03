@@ -16,15 +16,6 @@
         android:background="@color/black_overlay"
         tools:context=".Activity_VideoPlayer">
 
-        <VideoView
-            android:id="@+id/videoView_VideoPlayer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerInParent="true"
-            android:backgroundTint="@color/colorBlack"
-            android:layout_gravity="center"
-            android:visibility="invisible"/>
-
         <com.google.android.exoplayer2.ui.StyledPlayerView
             android:id="@+id/playerView_ExoVideoPlayer"
             android:layout_width="match_parent"

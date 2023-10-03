@@ -23,10 +23,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -76,7 +74,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private static final String PLAYBACK_TIME = "play_time";
 
     private DrawerLayout gDrawerLayout;
-    private VideoView gVideoView_VideoPlayer;
     private ImageView gImageView_GifViewer;
 
     TreeMap<Integer, ItemClass_M3U8_TS_Entry> gtmM3U8_TS_File_Sequence; //Not used as of Sept. 29, 2023, but leaving in place for potential video-editor or other utility.
@@ -93,8 +90,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     private Fragment_ItemDetails gFragment_itemDetails;
 
     private boolean gbPlayingM3U8;
-
-    static boolean active = false; //Used to keep a runnable from doing stuff after the activity closes.
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -118,7 +113,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(gProgressResponseReceiver, filter);
 
-        gVideoView_VideoPlayer = findViewById(R.id.videoView_VideoPlayer);
+
         gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
         //gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
@@ -158,8 +153,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             return false;
         });
 
-        gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
-        gVideoView_VideoPlayer.setMediaController(gMediaController);
+
 
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
         //  double-tap, as well as swipe to go to the next video:
@@ -257,18 +251,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         });
 
-        gVideoView_VideoPlayer.setOnTouchListener((v, event) -> gdVideoView.onTouchEvent(event));
-
-        gVideoView_VideoPlayer.setOnPreparedListener(mp -> mp.setLooping(true));
-
-        RelativeLayout frameLayout_VideoPlayer = findViewById(R.id.frameLayout_VideoPlayer);
-        frameLayout_VideoPlayer.setOnTouchListener((v, event) -> {
-            //This handles the case when the VideoView has resized to fit a video and
-            //  left touch-insensitive deadzones to the left and right of the playing video.
-            //  This typically happens when playing portrait-oriented videos in a landscape
-            //  screen orientation.
-            return gdVideoView.onTouchEvent(event);
-        });
 
         //Prepare the Gif image viewer to accept swipe to go to next or previous file:
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
@@ -380,12 +362,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gImageView_VideoFrameImage = findViewById(R.id.imageView_VideoFrameImage);
         gButton_GetVideoFrameImage = findViewById(R.id.button_GetVideoFrameImage);
         gButton_GetVideoFrameImage.setOnClickListener(v -> {
-            SurfaceView surfaceView;
-            if(gbPlayingM3U8) {
-                surfaceView = (SurfaceView) gplayerView_ExoVideoPlayer.getVideoSurfaceView();
-            } else {
-                surfaceView = gVideoView_VideoPlayer;
-            }
+            SurfaceView surfaceView = (SurfaceView) gplayerView_ExoVideoPlayer.getVideoSurfaceView();
 
             if(surfaceView != null) {
                 final Bitmap bitmap = Bitmap.createBitmap(surfaceView.getWidth(), surfaceView.getHeight(), Bitmap.Config.ARGB_8888);
@@ -437,90 +414,59 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private void PausePlayback(){
 
-        if(gbPlayingM3U8) {
-            glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
-            if (gExoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gExoPlayer.pause();
+        glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
+        if (gExoPlayer.isPlaying()) {
+            giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
         } else {
-            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
-            if (gVideoView_VideoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gVideoView_VideoPlayer.pause();
+            giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
         }
+        gExoPlayer.pause();
+
     }
 
     private void StopPlayback(){
 
-        if(gbPlayingM3U8) {
-            glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
-            if (gExoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gExoPlayer.stop();
+        glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
+        if (gExoPlayer.isPlaying()) {
+            giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
         } else {
-            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
-            if (gVideoView_VideoPlayer.isPlaying()) {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PLAYING;
-            } else {
-                giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
-            }
-            gVideoView_VideoPlayer.stopPlayback();
+            giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
         }
+        gExoPlayer.stop();
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        active = true;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-
-            //Figure out which video player is active, and resume that object.
-            if (gbPlayingM3U8) {
-                gExoPlayer.seekTo(glCurrentVideoPosition);
-                if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
-                    gExoPlayer.setPlayWhenReady(true);
-                    //gSimpleExoPlayer.play();
-                }
-                gExoPlayer.pause();
-            } else {
-                gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-                if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
-                    gVideoView_VideoPlayer.start();
-                }
+            gExoPlayer.seekTo(glCurrentVideoPosition);
+            if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                gExoPlayer.setPlayWhenReady(true);
             }
-
+            gExoPlayer.pause();
         }
 
     }
 
     @Override
     protected void onPause() {
-        //Figure out which video player is active, and pause that object.
-        PausePlayback();
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            PausePlayback();
+        }
         super.onPause();
     }
 
     @Override
     protected void onStop() {
-
-        //Figure out which video player is active, and stop that object.
-        StopPlayback();
-
-        active = false;
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            StopPlayback();
+        }
 
         super.onStop();
     }
@@ -529,14 +475,10 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        //Figure out which video player is active, and save the position.
-        if(gbPlayingM3U8) {
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             glCurrentVideoPosition = gExoPlayer.getCurrentPosition();
-        } else {
-            glCurrentVideoPosition = gVideoView_VideoPlayer.getCurrentPosition();
+            outState.putLong(PLAYBACK_TIME, glCurrentVideoPosition);
         }
-
-        outState.putLong(PLAYBACK_TIME, glCurrentVideoPosition);
 
     }
 
@@ -603,23 +545,19 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 Uri uriFileUri = Uri.parse(sFileUri);
 
                 if (bFileIsGif || (GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
+                    //This will cause the load of gif image or other images.
                     gbPlayingM3U8 = false;
 
                     Glide.with(getApplicationContext()).load(uriFileUri).into(gImageView_GifViewer);
 
                     if (!gImageView_GifViewer.isShown()) {
                         gImageView_GifViewer.setVisibility(View.VISIBLE);
-                        gVideoView_VideoPlayer.setZOrderOnTop(false);
-                        gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                         gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                        //gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
                     }
                 } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                     gbPlayingM3U8 = true;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
-                    gVideoView_VideoPlayer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
-                    //gPlayerControlView_ExoPlayerControls.setVisibility(View.VISIBLE);
 
                     //Find the M3U8 file:
                     Uri uriM3U8;
@@ -898,18 +836,20 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
 
                 } else {
+                    //Last case is if this is a non-M3U8 video.
                     gbPlayingM3U8 = false;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
-                    gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
-                    //gPlayerControlView_ExoPlayerControls.setVisibility(View.INVISIBLE);
-                    gVideoView_VideoPlayer.setVisibility(View.VISIBLE);
-                    gVideoView_VideoPlayer.setVideoURI(uriFileUri);
+                    gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
+                    MediaItem mediaItem = MediaItem.fromUri(uriFileUri);
+                    gExoPlayer.setMediaItem(mediaItem);
+                    gExoPlayer.prepare();
+                    //gExoPlayer.setPlayWhenReady(true);
 
-                    if (gVideoView_VideoPlayer.getDuration() > glCurrentVideoPosition) {
-                        glCurrentVideoPosition = 1;
+                    gExoPlayer.seekTo(glCurrentVideoPosition);
+                    if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                        gExoPlayer.setPlayWhenReady(true);
                     }
-                    gVideoView_VideoPlayer.seekTo((int) glCurrentVideoPosition);
-                    gVideoView_VideoPlayer.start();
+                    gExoPlayer.pause();
                 }
 
             } //End if our catalog item is not null.
@@ -1153,12 +1093,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     if (progressBar_ProgressIndicator != null) {
                         progressBar_ProgressIndicator.setProgress(iAmountComplete);
                     }
+                    assert progressBar_ProgressIndicator != null;
                     if (iAmountComplete == 100) {
-                        assert progressBar_ProgressIndicator != null;
                         progressBar_ProgressIndicator.setVisibility(View.INVISIBLE);
                         textView_ProgressText.setVisibility(View.INVISIBLE);
                     } else {
-                        assert progressBar_ProgressIndicator != null;
                         progressBar_ProgressIndicator.setVisibility(View.VISIBLE);
                         textView_ProgressText.setVisibility(View.VISIBLE);
                     }
