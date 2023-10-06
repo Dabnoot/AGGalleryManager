@@ -33,9 +33,9 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation 'androidx.appcompat:appcompat:1.7.0-alpha01'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.preference:preference:1.2.0'
+    implementation 'androidx.preference:preference:1.2.1'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
@@ -51,7 +51,7 @@ dependencies {
     implementation group: 'net.sourceforge.htmlcleaner', name: 'htmlcleaner', version: '2.6'
 
     //ViewPager:
-    implementation "androidx.viewpager2:viewpager2:1.1.0-beta01"
+    implementation "androidx.viewpager2:viewpager2:1.1.0-beta02"
 
     //GifDrawable:
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
