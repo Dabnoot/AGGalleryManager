@@ -440,7 +440,7 @@ public class Activity_Main extends AppCompatActivity {
                     GlobalClass.gUriUserDataFile = DocumentsContract.createDocument(
                             GlobalClass.gcrContentResolver,
                             GlobalClass.gUriDataFolder,
-                            MimeTypes.BASE_TYPE_TEXT,
+                            GlobalClass.BASE_TYPE_TEXT,
                             GlobalClass.gsUserDataFileName);
                     if (GlobalClass.gUriUserDataFile == null) {
                         Toast.makeText(context, "Could not create user data file.", Toast.LENGTH_LONG).show();

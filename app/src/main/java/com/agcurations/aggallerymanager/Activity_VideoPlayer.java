@@ -27,14 +27,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.DefaultRenderersFactory;
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.ui.StyledPlayerView;
-import com.google.android.exoplayer2.util.MimeTypes;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,6 +40,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.core.view.WindowCompat;
@@ -56,6 +49,10 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -84,8 +81,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     //ExoPlayer is used for playback of local M3U8 files:
     private ExoPlayer gExoPlayer;
-    private StyledPlayerView gplayerView_ExoVideoPlayer;
-    //private StyledPlayerControlView gPlayerControlView_ExoPlayerControls;
+    private PlayerView gplayerView_ExoVideoPlayer;
 
     private Fragment_ItemDetails gFragment_itemDetails;
 
@@ -93,6 +89,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
+    @OptIn(markerClass = {UnstableApi.class, UnstableApi.class})
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -115,7 +112,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
 
         gplayerView_ExoVideoPlayer = findViewById(R.id.playerView_ExoVideoPlayer);
-        //gPlayerControlView_ExoPlayerControls = findViewById(R.id.playerControlView_ExoPlayerControls);
         gImageView_GifViewer = findViewById(R.id.imageView_GifViewer);
         gDrawerLayout = findViewById(R.id.drawer_layout);
         gDrawerLayout.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
@@ -335,24 +331,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gImageView_GifViewer.setOnTouchListener((v, event) -> gdImageView.onTouchEvent(event));
 
         //Create the ExoPlayer.
-        //The next few lines are specifically to control the buffering.
-        //  In the switch to Android SAF, I had to code the M3U8 files to include full Uri strings
-        //    to each video segment file. When the player started buffering, I believe that it
-        //    overloaded the memory and froze the tablet. A hard reset was required.
-        //    The case may be that higher-resolution video files may require the buffer duration
-        //    to be reduced.
-        DefaultRenderersFactory renderersFactory;
-        DefaultLoadControl loadControl = new DefaultLoadControl.Builder().setBufferDurationsMs(5000, 20000, 1500, 2000).build();
-        @DefaultRenderersFactory.ExtensionRendererMode int extensionRendererMode = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER;
-        renderersFactory = new DefaultRenderersFactory(this) .setExtensionRendererMode(extensionRendererMode);
-        TrackSelector trackSelector = new DefaultTrackSelector(this);
-        //End code addition to control buffer size.
-
-        gExoPlayer = new ExoPlayer.Builder(this, renderersFactory)
-                .setTrackSelector(trackSelector)
-                .setLoadControl(loadControl)
-                .build();
-
         gExoPlayer = new ExoPlayer.Builder(this).build();
 
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
