@@ -44,23 +44,11 @@
         android:drawableLeft="@drawable/outline_unpublished_white_24"
         style="?android:attr/borderlessButtonStyle"/>
 
-    <!--<co.lujun.androidtagview.TagContainerLayout-->
-    <com.agcurations.aggallerymanager.TagContainerLayoutWithID
-        android:id="@+id/tagContainerLayout_SuggestedTags"
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroup_SuggestedTags"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="10dp"
-        app:container_enable_drag="false"
-        app:horizontal_interval="10dp"
-        app:vertical_interval="10dp"
-        app:tag_clickable="true"
-        app:tag_selectable="true"
-        app:tag_enable_cross="true"
-        app:tag_cross_area_padding="10dp"
-        app:tag_theme="none"
-        app:tag_text_color="@color/colorTextColor"
-        app:tag_border_color="@color/colorButton"
-        app:tag_background_color="@color/colorButton"
         android:layout_below="@+id/button_UncheckTags"/>
 
     <ListView
@@ -69,7 +57,7 @@
         android:layout_height="match_parent"
         android:defaultValue="@array/empty_array"
         android:scrollbarSize="20dp"
-        android:layout_below="@+id/tagContainerLayout_SuggestedTags"
+        android:layout_below="@+id/chipGroup_SuggestedTags"
         />
 
 </RelativeLayout>
