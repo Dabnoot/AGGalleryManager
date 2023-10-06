@@ -27,11 +27,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.media3.common.MimeTypes;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import com.google.android.exoplayer2.util.MimeTypes;
 
 /**
  * <a href="https://github.com/cprcrack/VideoEnabledWebView">...</a>
@@ -372,7 +372,7 @@ public class VideoEnabledWebView extends WebView
                             uriImageMetadataFile = DocumentsContract.createDocument(
                                     GlobalClass.gcrContentResolver,
                                     GlobalClass.gUriImageDownloadHoldingFolder,
-                                    MimeTypes.BASE_TYPE_TEXT, sMetadataFileName);
+                                    GlobalClass.BASE_TYPE_TEXT, sMetadataFileName);
                         } catch (Exception e) {
                             Log.d("MenuItemClick", "Could not create metadata file for downloaded item.");
                             return true;

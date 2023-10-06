@@ -598,7 +598,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         TreeMap<Integer, String> tmFileSequence = new TreeMap<>();
 
                         try {
-                            Uri uriNewM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolderUri,MimeTypes.BASE_TYPE_TEXT, sNewFileName);
+                            Uri uriNewM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolderUri, GlobalClass.BASE_TYPE_TEXT, sNewFileName);
                             if(uriNewM3U8 == null){
                                 LogThis("inintializePlayer", "Could not create new M3U8 file.", null);
                                 return;
@@ -756,7 +756,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                         + GlobalClass.gsFileSeparator + ci.sFolderRelativePath;
                                 Uri uriParent = Uri.parse(sParentUri);
                                 //With the parent folder Uri identified, create the M3U8_SAF text file at that location:
-                                uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, MimeTypes.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
+                                uriM3U8_SAF = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParent, GlobalClass.BASE_TYPE_TEXT, sM3U8_SAF_FileName);
                                 if(uriM3U8_SAF == null){
                                     sMessage = "Problem creating updated M3U8 file with SAF paths with parent uri " + sParentUri;
                                     Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
@@ -1143,7 +1143,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                                 if(!GlobalClass.CheckIfFileExists(uriNewThumbnailFile)) {
                                     //If the file does not exist, create it:
                                     Uri uriThumbnailFolder = Uri.parse(sThumbnailFolder);
-                                    uriNewThumbnailFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriThumbnailFolder, MimeTypes.BASE_TYPE_TEXT, sThumbnailFilename);
+                                    uriNewThumbnailFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriThumbnailFolder, GlobalClass.BASE_TYPE_TEXT, sThumbnailFilename);
                                 }
                                 if(uriNewThumbnailFile != null) {
                                     OutputStream osNewThumbnailFile;

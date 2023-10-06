@@ -15,8 +15,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
     public static final String TAG_WORKER_CATALOG_BACKUPCATALOGDBFILES = "com.agcurations.aggallermanager.tag_worker_catalog_backupcatalogdbfiles";
@@ -86,7 +84,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
 
                 String sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents_" + sDateTimeStamp + ".dat";
-                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
                     OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
                     if(osBackupFile != null) {
@@ -126,7 +124,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
 
                 String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat";
-                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
                     OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
                     if(osBackupFile != null) {

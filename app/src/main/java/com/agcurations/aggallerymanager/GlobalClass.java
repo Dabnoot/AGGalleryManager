@@ -61,6 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.media3.common.MimeTypes;
 
 import com.google.common.io.BaseEncoding;
 
@@ -254,6 +255,12 @@ public class GlobalClass extends Application {
 
     public static String gsGroupIDClip = "";
 
+
+    //=====================================================================================
+    //===== MIME TYPES ====================================================================
+    //=====================================================================================
+
+    public static final String BASE_TYPE_TEXT = "text";
 
     //=====================================================================================
     //===== Network Monitoring ============================================================

@@ -15,8 +15,6 @@ import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -135,7 +133,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         try {
             if(bDebug) {
-                Uri uriLog = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+                Uri uriLog = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sLogFileName);
                 if(uriLog == null){
                     bDebug = false;
                 } else {
@@ -336,7 +334,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                     //Move the file to the destination folder:
                                     if (!GlobalClass.CheckIfFileExists(uriDestinationFile)) {
                                         //If the destination file does not exist...
-                                        uriDestinationFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                                        uriDestinationFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                                         if(uriDestinationFile != null) {
                                             try {
                                                 InputStream inputStream;

@@ -32,7 +32,7 @@ public class Worker_FFMPEG_Operation extends Worker {
         /*if(giDownloadTypeSingleOrM3U8 != DOWNLOAD_TYPE_M3U8_LOCAL) {
             //Create a file listing the files which are to be concatenated:
             String sFFMPEGInputFilename = "FFMPEGInputFileName.txt";
-            DocumentFile dfFFMPEGInputFile = dfOutputFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sFFMPEGInputFilename);
+            DocumentFile dfFFMPEGInputFile = dfOutputFolder.createFile(GlobalClass.BASE_TYPE_TEXT, sFFMPEGInputFilename);
             if(dfFFMPEGInputFile == null){
                 sMessage = "Unable to create FFMPEG input file.";
                 LogReturnWithFailure(sMessage, osLogFile, bwLogFile);
@@ -103,7 +103,7 @@ public class Worker_FFMPEG_Operation extends Worker {
 
                         *//*final String sConcatIntermediateOutputFilePath = sOutputFolderPath + File.separator + gsVideoOutputFilename;
                         String sFFMPEGLogFileName = gsItemID + "_" + GlobalClass.GetTimeStampFileSafe() + "_Video_FFMPEGLog.txt";
-                        final DocumentFile dfFFMPEGLogFile = globalClass.gdfLogsFolder.createFile(MimeTypes.BASE_TYPE_TEXT, sFFMPEGLogFileName);
+                        final DocumentFile dfFFMPEGLogFile = globalClass.gdfLogsFolder.createFile(GlobalClass.BASE_TYPE_TEXT, sFFMPEGLogFileName);
                         if(dfFFMPEGLogFile == null){
                             Toast.makeText(getApplicationContext(), "Unable to create log file to monitor FFMPEG file merge operation", Toast.LENGTH_SHORT).show();
                             flush

@@ -29,8 +29,6 @@ import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 public class Worker_LocalFileTransfer extends Worker {
 
     //Define string used to identify this worker type:
@@ -116,7 +114,7 @@ public class Worker_LocalFileTransfer extends Worker {
         String sLogFileName = gsJobRequestDateTime + "_" + GlobalClass.GetTimeStampFileSafe() + "_LocalFileTransfer_WorkerLog.txt";
         Uri uriLogFile;
         try {
-            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sLogFileName);
         } catch (FileNotFoundException e) {
             sMessage = "Could not create log file at location " + GlobalClass.gUriLogsFolder + ".";
             globalClass.gbImportExecutionRunning = false;

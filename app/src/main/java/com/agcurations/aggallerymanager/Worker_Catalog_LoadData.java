@@ -41,8 +41,6 @@ import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 public class Worker_Catalog_LoadData extends Worker {
 
     public static final String TAG_WORKER_CATALOG_LOADDATA = "com.agcurations.aggallermanager.tag_worker_catalog_loaddata";
@@ -378,7 +376,7 @@ public class Worker_Catalog_LoadData extends Worker {
             uriDataFile = GlobalClass.FormChildUri(uriParentFolder.toString(), sFileName);
         } else {
             try {
-                uriDataFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                uriDataFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriParentFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if (uriDataFile == null) {
                     problemNotificationConfig(sFailMessage);
                 }

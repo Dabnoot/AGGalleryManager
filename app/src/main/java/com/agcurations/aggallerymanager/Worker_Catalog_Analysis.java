@@ -12,8 +12,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -76,7 +74,7 @@ public class Worker_Catalog_Analysis extends Worker {
         String sLogFileName = sAnalysisStartDateTime + "_" + GlobalClass.gsCatalogFolderNames[giMediaCategory] + "CatalogVerification_.txt";
         Uri uriLogFile;
         try {
-            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sLogFileName);
+            uriLogFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sLogFileName);
         } catch (FileNotFoundException e) {
             GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.STOPPED);
             return Result.failure();

@@ -21,8 +21,6 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 public class Worker_Import_ImportComicFolders extends Worker {
 
     public static final String TAG_WORKER_IMPORT_IMPORTCOMICFOLDERS = "com.agcurations.aggallermanager.tag_worker_import_importcomicfolders";
@@ -329,7 +327,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                     IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
 
             //Create a file with a listing of the files to be copied/moved:
-            Uri uriJobFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sJobFileName);
+            Uri uriJobFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, GlobalClass.BASE_TYPE_TEXT, sJobFileName);
             if(uriJobFile == null){
                 sMessage = "Could not create job file.";
                 LogThis("doWork()", sMessage, null);

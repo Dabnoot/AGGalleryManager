@@ -27,8 +27,6 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 public class Worker_Import_VideoDownload extends Worker {
 
     public static final String TAG_WORKER_IMPORT_VIDEODOWNLOAD = "com.agcurations.aggallermanager.tag_worker_import_videodownload";
@@ -413,7 +411,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 inputStream.close();
 
                 //Write the m3u8 file to the working folder:
-                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, MimeTypes.BASE_TYPE_TEXT, ciNew.sFilename);
+                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, GlobalClass.BASE_TYPE_TEXT, ciNew.sFilename);
                 if (uriM3U8 == null) {
                     sMessage = "Could not create M3U8 file.";
                     globalClass.BroadcastProgress(true, sMessage,
@@ -473,7 +471,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
                 //A file sequence string array can be too big to pass to a worker, so write it to a file:
 
-                Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoFinalDestinationFolder, MimeTypes.BASE_TYPE_TEXT,
+                Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoFinalDestinationFolder, GlobalClass.BASE_TYPE_TEXT,
                         VIDEO_DLID_AND_SEQUENCE_FILE_NAME);
                 if (uriDLIDFileSequenceFile == null) {
                     sMessage = "Could not create file to record download ID sequencing: " + VIDEO_DLID_AND_SEQUENCE_FILE_NAME + " in " +

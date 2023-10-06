@@ -34,8 +34,6 @@ import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL;
 import static com.agcurations.aggallerymanager.ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 public class Worker_Import_VideoAnalyzeHTML extends Worker {
 
     public static final String TAG_WORKER_IMPORT_VIDEOANALYZEHTML = "com.agcurations.aggallermanager.tag_worker_import_videoanalyzehtml";
@@ -583,7 +581,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             String sShortFileName = sURLM3U8VideoLink.substring(sURLM3U8VideoLink.lastIndexOf("/") + 1);
                             sShortFileName = GlobalClass.cleanFileNameViaTrim(sShortFileName);
                             String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                            Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
+                            Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sM3U8FileName);
                             if(uriM3U8 == null){
                                 String sMessage = "Could not create M3U8 file for debugging purposes at location " + GlobalClass.gUriLogsFolder;
                                 Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);
@@ -747,7 +745,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                                 //Write the m3u8 file to the logs folder for debugging purposes:
 
                                 String sM3U8FileName = GlobalClass.GetTimeStampFileSafe() + "_" + sShortFileName + ".txt";
-                                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, MimeTypes.BASE_TYPE_TEXT, sM3U8FileName);
+                                Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriLogsFolder, GlobalClass.BASE_TYPE_TEXT, sM3U8FileName);
                                 if(uriM3U8 == null){
                                     String sMessage = "Could not create M3U8 file for debugging purposes at location " + GlobalClass.gUriLogsFolder;
                                     Log.d("Worker_Import_VideoAnalyzeHTML", sMessage);

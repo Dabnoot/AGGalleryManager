@@ -30,8 +30,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.exoplayer2.util.MimeTypes;
-
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
@@ -390,7 +388,7 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
                 String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
                 String sFileName = "UserDeletionJobFile_" + sDateTimeStamp + ".dat";
 
-                uriDataFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, MimeTypes.BASE_TYPE_TEXT, sFileName);
+                uriDataFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriJobFilesFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if (uriDataFile == null) {
                     Toast.makeText(getContext(), "Problem writing file containing deletion job details.", Toast.LENGTH_LONG).show();
                     return;
