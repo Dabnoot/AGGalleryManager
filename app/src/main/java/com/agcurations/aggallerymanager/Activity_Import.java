@@ -48,8 +48,6 @@ import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -101,9 +99,7 @@ public class Activity_Import extends AppCompatActivity {
     public VideoDownloadListCustomAdapter videoDownloadListCustomAdapter; //For the video download selector.
     public RecyclerViewComicPreviewAdapter recyclerViewComicPreviewAdapter; //For comic download.
 
-    public static final String PREVIEW_FILE_ITEMS = "PREVIEW_FILE_ITEMS";
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
-    public static final String TAG_SELECTION_RESULT_BUNDLE = "TAG_SELECTION_RESULT_BUNDLE";
     public static final String MEDIA_CATEGORY = "MEDIA_CATEGORY";
     public static final String IMPORT_ALIGN_ADJACENCIES = "IMPORT_ALIGN_ADJACENCIES";
 
@@ -133,7 +129,6 @@ public class Activity_Import extends AppCompatActivity {
     ImportDataServiceResponseReceiver importDataServiceResponseReceiver;
 
     @Override
-    @SuppressWarnings("unchecked")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_import);
@@ -155,7 +150,6 @@ public class Activity_Import extends AppCompatActivity {
         globalClass = (GlobalClass) getApplicationContext();
 
         if(GlobalClass.giSelectedCatalogMediaCategory == null){
-            ApplicationLogWriter("Selected media category is null. Returning to Main Activity.");
             finish();
             return;
         }
@@ -253,20 +247,6 @@ public class Activity_Import extends AppCompatActivity {
 
     }
 
-    private void ApplicationLogWriter(String sMessage){
-        if(gbWriteApplicationLog){
-            try {
-                File fLog = new File(gsApplicationLogFilePath);
-                FileWriter fwLogFile = new FileWriter(fLog, true);
-                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
-                fwLogFile.close();
-            } catch (Exception e) {
-                Log.d("Log FileWriter", e.getMessage());
-            }
-        }
-
-    }
-
     @Override
     protected void onDestroy() {
         if(mediaMetadataRetriever != null) {
@@ -330,11 +310,11 @@ public class Activity_Import extends AppCompatActivity {
 
     ActivityResultLauncher<Intent> garlGetTagsForImportItems = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
+            new ActivityResultCallback<>() {
                 //This ActivityResultLauncher gathers results of tag selection from a preview operation.
                 @Override
                 public void onActivityResult(ActivityResult result) {
-                    if(result.getResultCode() == RESULT_OK){
+                    if (result.getResultCode() == RESULT_OK) {
                         fileListCustomAdapter.updateFileItemDetails(globalClass.galPreviewFileList);
                         globalClass.galPreviewFileList = null; //Release memory.
                     }
@@ -479,7 +459,7 @@ public class Activity_Import extends AppCompatActivity {
         } else if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
 
-        } else if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_WEBPAGE) { //Allow user to import web address of iamges to import.
+        } else {// if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_WEBPAGE) { //Allow user to import web address of iamges to import.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT, false);
         }
 
@@ -503,12 +483,11 @@ public class Activity_Import extends AppCompatActivity {
             viewModelImportActivity.iComicImportSource = iNewComicSource;
         }
 
-
         //Go to the import folder selection fragment:
         if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
 
-        } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) { //Allow user to import web address of a comic to import.
+        } else {// if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) { //Allow user to import web address of a comic to import.
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT, false);
 
         }
@@ -754,7 +733,7 @@ public class Activity_Import extends AppCompatActivity {
                 row = inflater.inflate(R.layout.listview_fileitem_selectable, parent, false);
             }
 
-            CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
+            CheckBox checkBox_StorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
             ImageView ivFileType =  row.findViewById(R.id.imageView_StorageItemIcon);
             TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
@@ -794,7 +773,9 @@ public class Activity_Import extends AppCompatActivity {
                             Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                             mediaMetadataRetriever.setDataSource(getApplicationContext(), docUri);
                             String time = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                            durationInMilliseconds = Long.parseLong(time);
+                            if(time != null) {
+                                durationInMilliseconds = Long.parseLong(time);
+                            }
                         } else { //if it's not a video file, check to see if it's a gif:
                             if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
                                 //Get the duration of the gif image:
@@ -892,16 +873,13 @@ public class Activity_Import extends AppCompatActivity {
 
                     //Set the action for the "Tag Import" button:
                     if(button_TagImport != null) {
-                        button_TagImport.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
+                        button_TagImport.setOnClickListener(view -> {
 
-                                viewModelImportActivity.alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
+                            viewModelImportActivity.alsUnidentifiedTags = alFileItemsDisplay.get(position).alsUnidentifiedTags;
 
-                                ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT, false);
-                                stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+                            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_3B_COMIC_TAG_IMPORT, false);
+                            stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
 
-                            }
                         });
                     }
 
@@ -938,7 +916,7 @@ public class Activity_Import extends AppCompatActivity {
             }
 
 
-            cbStorageItemSelect.setChecked(alFileItemsDisplay.get(position).bIsChecked);
+            checkBox_StorageItemSelect.setChecked(alFileItemsDisplay.get(position).bIsChecked);
 
             final Button button_Delete = row.findViewById(R.id.button_Delete);
             UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
@@ -949,193 +927,179 @@ public class Activity_Import extends AppCompatActivity {
             row.setMinimumWidth(SelectItemsListViewWidth);
 
             //Set the onClickListener for the row to toggle the checkbox:
-            row.setOnClickListener(new View.OnClickListener(){
-
-                @Override
-                public void onClick(View view) {
-                    CheckBox checkBox_StorageItemSelect = view.findViewById(R.id.checkBox_StorageItemSelect);
-                    boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
-                    checkBox_StorageItemSelect.setChecked(bNewCheckedState);
-                    alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
-                    if(bNewCheckedState){
-                        alFileItemsDisplay.get(position).bMarkedForDeletion = false;
-                        button_Delete.setPressed(false);
-                        UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
-                    }
-                    toggleItemChecked(position, bNewCheckedState);
+            row.setOnClickListener(view -> {
+                boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
+                checkBox_StorageItemSelect.setChecked(bNewCheckedState);
+                alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
+                if(bNewCheckedState){
+                    alFileItemsDisplay.get(position).bMarkedForDeletion = false;
+                    button_Delete.setPressed(false);
+                    UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
                 }
+                toggleItemChecked(position, bNewCheckedState);
             });
 
 
             //Set the onClickListener for the checkbox to toggle the checkbox:
-            CheckBox checkBox_StorageItemSelect = row.findViewById(R.id.checkBox_StorageItemSelect);
-            checkBox_StorageItemSelect.setOnClickListener(new View.OnClickListener(){
-
-                @Override
-                public void onClick(View view) {
-                    CheckBox checkBox_StorageItemSelect = (CheckBox) view;
-                    boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
-                    alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
-                    if(bNewCheckedState){
-                        alFileItemsDisplay.get(position).bMarkedForDeletion = false;
-                        button_Delete.setPressed(false);
-                        UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
-                    }
-                    toggleItemChecked(position, bNewCheckedState);
-
+            checkBox_StorageItemSelect.setOnClickListener(view -> {
+                CheckBox checkBox_StorageItemSelect1 = (CheckBox) view;
+                boolean bNewCheckedState = checkBox_StorageItemSelect1.isChecked();
+                alFileItemsDisplay.get(position).bIsChecked = bNewCheckedState;
+                if(bNewCheckedState){
+                    alFileItemsDisplay.get(position).bMarkedForDeletion = false;
+                    button_Delete.setPressed(false);
+                    UpdateRowDeleteIcon(button_Delete, alFileItemsDisplay.get(position).bMarkedForDeletion);
                 }
+                toggleItemChecked(position, bNewCheckedState);
+
             });
 
             //Code the button to delete a file in the ListView:
+            button_Delete.setOnClickListener(viewButton -> {
+                /*AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
+                builder.setTitle("Delete Item");
+                builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).sFileOrFolderName);
+                //builder.setIcon(R.drawable.ic_launcher);
+                builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                        if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
+                            String sMessage = "";
+                            boolean bFileDeleted = false;
 
-            button_Delete.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View viewButton) {
-                    /*AlertDialog.Builder builder = new AlertDialog.Builder(Activity_Import.this, R.style.AlertDialogCustomStyle);
-                    builder.setTitle("Delete Item");
-                    builder.setMessage("Are you sure you want to delete this item?\n" + alFileItemsDisplay.get(position).sFileOrFolderName);
-                    //builder.setIcon(R.drawable.ic_launcher);
-                    builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.dismiss();
-                            if(viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) {
-                                String sMessage = "";
-                                boolean bFileDeleted = false;
+                            Uri uriSourceFileUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
+                            if(GlobalClass.CheckIfFileExists(uriSourceFileUri)){
+                                try {
+                                    if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFileUri)){
+                                        sMessage = "Could not delete file.";
+                                    } else {
+                                        sMessage = "File deleted.";
+                                        bFileDeleted = true;
+                                    }
+                                } catch (FileNotFoundException e) {
+                                    sMessage = "Could not delete file.";
+                                }
+                            }
 
-                                Uri uriSourceFileUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
-                                if(GlobalClass.CheckIfFileExists(uriSourceFileUri)){
+                            if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER) {
+                                //Deleting from the holding folder. Check to see if the metadata file is there and if so delete it.
+                                Uri uriMetadataFileUri = getHoldingFolderItemMetadataFileUri(uriSourceFileUri);
+                                if(GlobalClass.CheckIfFileExists(uriMetadataFileUri)){
                                     try {
-                                        if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFileUri)){
-                                            sMessage = "Could not delete file.";
+                                        if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriMetadataFileUri)){
+                                            sMessage = sMessage + "\nCould not delete metadata file.";
                                         } else {
-                                            sMessage = "File deleted.";
-                                            bFileDeleted = true;
+                                            sMessage = sMessage + "\nMetadata file deleted.";
                                         }
                                     } catch (FileNotFoundException e) {
-                                        sMessage = "Could not delete file.";
+                                        sMessage = sMessage + "\nCould not delete metadata file.";
                                     }
                                 }
+                            }
 
-                                if(viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER) {
-                                    //Deleting from the holding folder. Check to see if the metadata file is there and if so delete it.
-                                    Uri uriMetadataFileUri = getHoldingFolderItemMetadataFileUri(uriSourceFileUri);
-                                    if(GlobalClass.CheckIfFileExists(uriMetadataFileUri)){
-                                        try {
-                                            if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriMetadataFileUri)){
-                                                sMessage = sMessage + "\nCould not delete metadata file.";
-                                            } else {
-                                                sMessage = sMessage + "\nMetadata file deleted.";
-                                            }
-                                        } catch (FileNotFoundException e) {
-                                            sMessage = sMessage + "\nCould not delete metadata file.";
-                                        }
-                                    }
-                                }
+                            Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
 
-                                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
-
-                                if(bFileDeleted) {
-                                    //Find the item in the alFileItems list and delete it:
-                                    ItemClass_File fiSelected = alFileItemsDisplay.get(position);
-                                    ItemClass_File fiSource;
-                                    for (int i = 0; i < alFileItems.size(); i++) {
-                                        fiSource = alFileItems.get(i);
-                                        if (fiSelected.sFileOrFolderName.equals(fiSource.sFileOrFolderName)) {
-                                            alFileItems.remove(i);
-                                            break;
-                                        }
-                                    }
-                                    alFileItemsDisplay.remove(position);
-                                    notifyDataSetChanged();
-                                }
-                            } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-
-                                String sComicParentUri = alFileItemsDisplay.get(position).sUri;
-
-                                ArrayList<String> alsUriFilesToDelete = new ArrayList<>();
+                            if(bFileDeleted) {
+                                //Find the item in the alFileItems list and delete it:
+                                ItemClass_File fiSelected = alFileItemsDisplay.get(position);
                                 ItemClass_File fiSource;
-
-                                //Mark comic page files for deletion, and remove from alFileItems:
-                                String sMessage;
                                 for (int i = 0; i < alFileItems.size(); i++) {
                                     fiSource = alFileItems.get(i);
-                                    if(fiSource.sUriParent.equals(sComicParentUri)){
-                                        alsUriFilesToDelete.add(fiSource.sUri);
+                                    if (fiSelected.sFileOrFolderName.equals(fiSource.sFileOrFolderName)) {
                                         alFileItems.remove(i);
+                                        break;
                                     }
                                 }
-
-                                //Mark comic folder for deletion and remove from alFileItemsDisplay:
-                                alsUriFilesToDelete.add(alFileItemsDisplay.get(position).sUri);
                                 alFileItemsDisplay.remove(position);
-
-                                //Refresh the listView:
                                 notifyDataSetChanged();
-
-                                //Start the file delete service:
-                                Service_Import.startActionDeleteFiles(getApplicationContext(), alsUriFilesToDelete,
-                                        Fragment_Import_2_SelectItems.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
-
-
                             }
-                        }
-                    });
-                    builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            //if the user has selected not to delete this item, unmark it for deletion if it is marked such.
-                            if(alFileItemsDisplay.get(position).bMarkedForDeletion){
-                                alFileItemsDisplay.get(position).bMarkedForDeletion = false;
-                                for(ItemClass_File icf: alFileItems){
-                                    if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(position).sFileOrFolderName)){
-                                        icf.bMarkedForDeletion = false;
-                                        break; //Break, as only one item should match.
-                                    }
+                        } else if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+
+                            String sComicParentUri = alFileItemsDisplay.get(position).sUri;
+
+                            ArrayList<String> alsUriFilesToDelete = new ArrayList<>();
+                            ItemClass_File fiSource;
+
+                            //Mark comic page files for deletion, and remove from alFileItems:
+                            String sMessage;
+                            for (int i = 0; i < alFileItems.size(); i++) {
+                                fiSource = alFileItems.get(i);
+                                if(fiSource.sUriParent.equals(sComicParentUri)){
+                                    alsUriFilesToDelete.add(fiSource.sUri);
+                                    alFileItems.remove(i);
                                 }
                             }
-                            dialog.dismiss();
-                        }
-                    });
-                    AlertDialog alert = builder.create();
-                    alert.show();*/
+
+                            //Mark comic folder for deletion and remove from alFileItemsDisplay:
+                            alsUriFilesToDelete.add(alFileItemsDisplay.get(position).sUri);
+                            alFileItemsDisplay.remove(position);
+
+                            //Refresh the listView:
+                            notifyDataSetChanged();
+
+                            //Start the file delete service:
+                            Service_Import.startActionDeleteFiles(getApplicationContext(), alsUriFilesToDelete,
+                                    Fragment_Import_2_SelectItems.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_SELECT_ITEMS_RESPONSE);
 
 
-
-                    //Mark items for deletion:
-                    boolean bNewDeleteStateIsYesDelete = !alFileItemsDisplay.get(position).bMarkedForDeletion;
-
-                    if(bNewDeleteStateIsYesDelete) {
-                        checkBox_StorageItemSelect.setChecked(false);
-                        alFileItemsDisplay.get(position).bIsChecked = false;
-                        toggleItemChecked(position, false);
-                    }
-
-                    alFileItemsDisplay.get(position).bMarkedForDeletion = bNewDeleteStateIsYesDelete;
-                    if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                        //Special behavior for comic imports as we only show the comic cover page.
-                        //The folder is marked for deletion/not-deletion by the display item.
-
-                        //Mark comic page files for deletion/not-deletion:
-                        String sComicParentUri = alFileItemsDisplay.get(position).sUri;
-                        for (ItemClass_File icf: alFileItems) {
-                            if(icf.sUriParent.equals(sComicParentUri)){
-                                icf.bMarkedForDeletion = bNewDeleteStateIsYesDelete;
-                            }
-                        }
-
-                    } else {
-                        //Find the single item in alFileItems and apply the new 'marked for deletion state:
-                        for(ItemClass_File icf: alFileItems){
-                            if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(position).sFileOrFolderName)){
-                                icf.bMarkedForDeletion = bNewDeleteStateIsYesDelete;
-                                break; //Break, as only one item should match.
-                            }
                         }
                     }
+                });
+                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //if the user has selected not to delete this item, unmark it for deletion if it is marked such.
+                        if(alFileItemsDisplay.get(position).bMarkedForDeletion){
+                            alFileItemsDisplay.get(position).bMarkedForDeletion = false;
+                            for(ItemClass_File icf: alFileItems){
+                                if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(position).sFileOrFolderName)){
+                                    icf.bMarkedForDeletion = false;
+                                    break; //Break, as only one item should match.
+                                }
+                            }
+                        }
+                        dialog.dismiss();
+                    }
+                });
+                AlertDialog alert = builder.create();
+                alert.show();*/
 
-                    UpdateRowDeleteIcon(viewButton, bNewDeleteStateIsYesDelete);
-                    recalcButtonNext();
 
+
+                //Mark items for deletion:
+                boolean bNewDeleteStateIsYesDelete = !alFileItemsDisplay.get(position).bMarkedForDeletion;
+
+                if(bNewDeleteStateIsYesDelete) {
+                    checkBox_StorageItemSelect.setChecked(false);
+                    alFileItemsDisplay.get(position).bIsChecked = false;
+                    toggleItemChecked(position, false);
                 }
+
+                alFileItemsDisplay.get(position).bMarkedForDeletion = bNewDeleteStateIsYesDelete;
+                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                    //Special behavior for comic imports as we only show the comic cover page.
+                    //The folder is marked for deletion/not-deletion by the display item.
+
+                    //Mark comic page files for deletion/not-deletion:
+                    String sComicParentUri = alFileItemsDisplay.get(position).sUri;
+                    for (ItemClass_File icf: alFileItems) {
+                        if(icf.sUriParent.equals(sComicParentUri)){
+                            icf.bMarkedForDeletion = bNewDeleteStateIsYesDelete;
+                        }
+                    }
+
+                } else {
+                    //Find the single item in alFileItems and apply the new 'marked for deletion state:
+                    for(ItemClass_File icf: alFileItems){
+                        if(icf.sFileOrFolderName.equals(alFileItemsDisplay.get(position).sFileOrFolderName)){
+                            icf.bMarkedForDeletion = bNewDeleteStateIsYesDelete;
+                            break; //Break, as only one item should match.
+                        }
+                    }
+                }
+
+                UpdateRowDeleteIcon(viewButton, bNewDeleteStateIsYesDelete);
+                recalcButtonNext();
+
             });
 
             if(alFileItemsDisplay.get(position).bMarkedForDeletion){
@@ -1144,66 +1108,63 @@ public class Activity_Import extends AppCompatActivity {
 
 
             Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
-            button_MediaPreview.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View view) {
-                    //Start the preview popup activity:
-                    Intent intentImportFilePreview;
-                    intentImportFilePreview = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
+            button_MediaPreview.setOnClickListener(view -> {
+                //Start the preview popup activity:
+                Intent intentImportFilePreview;
+                intentImportFilePreview = new Intent(Activity_Import.this, Activity_ImportFilePreview.class);
 
 
-                    Bundle b = new Bundle();
-                    b.putInt(MEDIA_CATEGORY,
-                            viewModelImportActivity.iImportMediaCategory); //viewModel not intended
-                    // to be used between Activities. Therefore, pass media category via bundle in
-                    // intent.
+                Bundle b = new Bundle();
+                b.putInt(MEDIA_CATEGORY,
+                        viewModelImportActivity.iImportMediaCategory); //viewModel not intended
+                // to be used between Activities. Therefore, pass media category via bundle in
+                // intent.
 
-                    if(viewModelImportActivity.bImportingOrphanedFiles){
-                        b.putBoolean(IMPORT_ALIGN_ADJACENCIES, true);
+                if(viewModelImportActivity.bImportingOrphanedFiles){
+                    b.putBoolean(IMPORT_ALIGN_ADJACENCIES, true);
+                }
+
+                ArrayList<ItemClass_File> alPreviewFileList = new ArrayList<>();
+                if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
+                        viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+
+                    //Send all of the video and image file items that are shown to the preview, and tell position.
+                    //  That way the user can swipe to the next video or image and apply tags to that one as well.
+                    alPreviewFileList = alFileItemsDisplay;
+                    b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
+
+                } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) { //If comic...
+                    //If this is a comic, put together all of the page fileItems for the preview.
+
+                    //Sort the files for this comic by putting them into a TreeMap:
+                    TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
+                    String sParentComic = alFileItemsDisplay.get(position).sUri;
+                    for (ItemClass_File icf : alFileItems) {
+                        if (icf.sUriParent.equals(sParentComic)) {
+                            tmFiles.put(icf.sFileOrFolderName, icf);
+                        }
+                    }
+                    //Put the files into a standard array:
+                    for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
+                        alPreviewFileList.add(entry.getValue()); //todo: simplify?
+                    }
+                    //Put the tags into the first item in the file array. This is only
+                    // for comics. The item selected by the user is a "folder" item and is not
+                    // transferred to preview, but this is the item holding the tags.
+                    if(alPreviewFileList.size() > 0){
+                        alPreviewFileList.get(0).aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags; //todo: simplify?
                     }
 
-                    ArrayList<ItemClass_File> alPreviewFileList = new ArrayList<>();
-                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
-                            viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
 
-                        //Send all of the video and image file items that are shown to the preview, and tell position.
-                        //  That way the user can swipe to the next video or image and apply tags to that one as well.
-                        alPreviewFileList = alFileItemsDisplay;
-                        b.putInt(PREVIEW_FILE_ITEMS_POSITION, position);
-
-                    } else if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) { //If comic...
-                        //If this is a comic, put together all of the page fileItems for the preview.
-
-                        //Sort the files for this comic by putting them into a TreeMap:
-                        TreeMap<String, ItemClass_File> tmFiles = new TreeMap<>();
-                        String sParentComic = alFileItemsDisplay.get(position).sUri;
-                        for (ItemClass_File icf : alFileItems) {
-                            if (icf.sUriParent.equals(sParentComic)) {
-                                tmFiles.put(icf.sFileOrFolderName, icf);
-                            }
-                        }
-                        //Put the files into a standard array:
-                        for(Map.Entry<String, ItemClass_File> entry: tmFiles.entrySet()){
-                            alPreviewFileList.add(entry.getValue()); //todo: simplify?
-                        }
-                        //Put the tags into the first item in the file array. This is only
-                        // for comics. The item selected by the user is a "folder" item and is not
-                        // transferred to preview, but this is the item holding the tags.
-                        if(alPreviewFileList.size() > 0){
-                            alPreviewFileList.get(0).aliProspectiveTags = alFileItemsDisplay.get(position).aliProspectiveTags; //todo: simplify?
-                        }
-
-
-
-                    }
-
-                    globalClass.galPreviewFileList = alPreviewFileList;
-
-                    intentImportFilePreview.putExtras(b);
-
-                    garlGetTagsForImportItems.launch(intentImportFilePreview);
 
                 }
+
+                globalClass.galPreviewFileList = alPreviewFileList;
+
+                intentImportFilePreview.putExtras(b);
+
+                garlGetTagsForImportItems.launch(intentImportFilePreview);
+
             });
 
 
@@ -1549,35 +1510,35 @@ public class Activity_Import extends AppCompatActivity {
         private final int SORT_METHOD_DURATION_ASC = 7;
         private final int SORT_METHOD_DURATION_DESC = 8;
         public void SortByFileNameAsc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileNameAscComparator());
+            alFileItemsDisplay.sort(new FileNameAscComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_ASC;
         }
         public void SortByFileNameDesc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileNameDescComparator());
+            alFileItemsDisplay.sort(new FileNameDescComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_DESC;
         }
         public void SortByDateModifiedAsc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileModifiedDateAscComparator());
+            alFileItemsDisplay.sort(new FileModifiedDateAscComparator());
             iCurrentSortMethod = SORT_METHOD_MODIFIED_DATE_ASC;
         }
         public void SortByDateModifiedDesc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileModifiedDateDescComparator());
+            alFileItemsDisplay.sort(new FileModifiedDateDescComparator());
             iCurrentSortMethod = SORT_METHOD_MODIFIED_DATE_DESC;
         }
         public void SortByResolutionAsc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileResolutionAscComparator());
+            alFileItemsDisplay.sort(new FileResolutionAscComparator());
             iCurrentSortMethod = SORT_METHOD_RESOLUTION_ASC;
         }
         public void SortByResolutionDesc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileResolutionDescComparator());
+            alFileItemsDisplay.sort(new FileResolutionDescComparator());
             iCurrentSortMethod = SORT_METHOD_RESOLUTION_DESC;
         }
         public void SortByDurationAsc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileDurationAscComparator());
+            alFileItemsDisplay.sort(new FileDurationAscComparator());
             iCurrentSortMethod = SORT_METHOD_DURATION_ASC;
         }
         public void SortByDurationDesc(){
-            Collections.sort(alFileItemsDisplay, new FileListCustomAdapter.FileDurationDescComparator());
+            alFileItemsDisplay.sort(new FileDurationDescComparator());
             iCurrentSortMethod = SORT_METHOD_DURATION_DESC;
         }
         public boolean reverseSort(){
@@ -1590,7 +1551,6 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 case SORT_METHOD_FILENAME_DESC:
                     SortByFileNameAsc();
-                    bSortOrderIsAscending =  true;
                     break;
                 case SORT_METHOD_MODIFIED_DATE_ASC:
                     SortByDateModifiedDesc();
@@ -1598,7 +1558,6 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 case SORT_METHOD_MODIFIED_DATE_DESC:
                     SortByDateModifiedAsc();
-                    bSortOrderIsAscending =  true;
                     break;
                 case SORT_METHOD_RESOLUTION_ASC:
                     SortByResolutionDesc();
@@ -1606,7 +1565,6 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 case SORT_METHOD_RESOLUTION_DESC:
                     SortByResolutionAsc();
-                    bSortOrderIsAscending =  true;
                     break;
                 case SORT_METHOD_DURATION_ASC:
                     SortByDurationDesc();
@@ -1614,7 +1572,6 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 case SORT_METHOD_DURATION_DESC:
                     SortByDurationAsc();
-                    bSortOrderIsAscending =  true;
                     break;
             }
             return bSortOrderIsAscending;
@@ -1641,7 +1598,7 @@ public class Activity_Import extends AppCompatActivity {
                         for(String sTag: fi.alsUnidentifiedTags){
                             String sIncomingTagCleaned = sTag.toLowerCase().trim();
                             boolean bTagFound = false;
-                            for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
+                            for(Map.Entry<Integer, ItemClass_Tag> TagEntry: GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_COMICS).entrySet()){
                                 String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                                 if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
                                     bTagFound = true;
@@ -1700,7 +1657,7 @@ public class Activity_Import extends AppCompatActivity {
                 row = inflater.inflate(R.layout.listview_fileitem_selectable_video, parent, false);
             }
 
-            CheckBox cbStorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
+            CheckBox checkBox_StorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
             final VideoView vvPreview =  row.findViewById(R.id.videoView_Preview);
             TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
@@ -1741,7 +1698,7 @@ public class Activity_Import extends AppCompatActivity {
 
 
 
-            cbStorageItemSelect.setChecked(alFileItems.get(position).bIsChecked);
+            checkBox_StorageItemSelect.setChecked(alFileItems.get(position).bIsChecked);
 
             //Expand the width of the listItem to the width of the ListView.
             //  This makes it so that the listItem responds to the click even when
@@ -1749,32 +1706,22 @@ public class Activity_Import extends AppCompatActivity {
             row.setMinimumWidth(SelectItemsListViewWidth);
 
             //Set the onClickListener for the row to toggle the checkbox:
-            row.setOnClickListener(new View.OnClickListener(){
+            row.setOnClickListener(view -> {
+                boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
+                checkBox_StorageItemSelect.setChecked(bNewCheckedState);
+                alFileItems.get(position).bIsChecked = bNewCheckedState;
+                toggleItemChecked(position, bNewCheckedState);
 
-                @Override
-                public void onClick(View view) {
-                    CheckBox checkBox_StorageItemSelect = view.findViewById(R.id.checkBox_StorageItemSelect);
-                    boolean bNewCheckedState = !checkBox_StorageItemSelect.isChecked();
-                    checkBox_StorageItemSelect.setChecked(bNewCheckedState);
-                    alFileItems.get(position).bIsChecked = bNewCheckedState;
-                    toggleItemChecked(position, bNewCheckedState);
-
-                }
             });
 
 
             //Set the onClickListener for the checkbox to toggle the checkbox:
-            CheckBox checkBox_StorageItemSelect = row.findViewById(R.id.checkBox_StorageItemSelect);
-            checkBox_StorageItemSelect.setOnClickListener(new View.OnClickListener(){
+            checkBox_StorageItemSelect.setOnClickListener(view -> {
+                CheckBox checkBox_StorageItemSelect1 = (CheckBox) view;
+                boolean bNewCheckedState = checkBox_StorageItemSelect1.isChecked();
+                alFileItems.get(position).bIsChecked = bNewCheckedState;
+                toggleItemChecked(position, bNewCheckedState);
 
-                @Override
-                public void onClick(View view) {
-                    CheckBox checkBox_StorageItemSelect = (CheckBox) view;
-                    boolean bNewCheckedState = checkBox_StorageItemSelect.isChecked();
-                    alFileItems.get(position).bIsChecked = bNewCheckedState;
-                    toggleItemChecked(position, bNewCheckedState);
-
-                }
             });
 
 
@@ -1790,15 +1737,7 @@ public class Activity_Import extends AppCompatActivity {
             }
 
 
-
-
-            //If the file item is video mimeType, set the preview button visibility to visible:
             Button button_MediaPreview = row.findViewById(R.id.button_MediaPreview);
-            boolean bItemIsVideo = alFileItems.get(position).sMimeType.startsWith("video")  ||
-                    (alFileItems.get(position).sMimeType.equals("application/octet-stream") &&
-                            alFileItems.get(position).sExtension.equals(".mp4"));//https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid)
-
-
             button_MediaPreview.setOnClickListener(view -> {
                 if(vvPreview.isPlaying()){
                     vvPreview.pause();
@@ -2017,8 +1956,7 @@ public class Activity_Import extends AppCompatActivity {
                     if (iImageWidth < iGridWidth) {
                         float fThumbnailAspectRatio = alFileItems.get(position).iThumbnailURLImageHeight /
                                 (float) alFileItems.get(position).iThumbnailURLImageWidth;
-                        int iFinalImageViewHeightTemp = (int) (iGridWidth * fThumbnailAspectRatio);
-                        holder.imageView_Thumbnail.getLayoutParams().height = iFinalImageViewHeightTemp;
+                        holder.imageView_Thumbnail.getLayoutParams().height = (int) (iGridWidth * fThumbnailAspectRatio);
                         holder.imageView_Thumbnail.requestLayout();
                     }
                 }
@@ -2026,9 +1964,9 @@ public class Activity_Import extends AppCompatActivity {
 
             } catch (Exception e) {
                 String sMessage = e.getMessage();
-                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT);
+                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
             }
-            /**/
+
 
             Glide.with(getApplicationContext())
                     .load(sImageURL)
@@ -2038,29 +1976,6 @@ public class Activity_Import extends AppCompatActivity {
             String sThumbnailText = alFileItems.get(position).sFileOrFolderName;
 
             holder.textView_ThumbnailText.setText(sThumbnailText);
-
-
-
-
-            holder.imageView_Thumbnail.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    //giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
-                    if (false)
-                        Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
-
-                }
-            });
-
-            holder.imageView_Thumbnail.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View view) {
-                    if (false)
-                        Toast.makeText(getApplicationContext(), "Long press detected", Toast.LENGTH_SHORT).show();
-                    return true;// returning true instead of false, works for me
-                }
-            });
-
 
 
         }
