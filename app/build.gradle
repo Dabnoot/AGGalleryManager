@@ -50,9 +50,6 @@ dependencies {
     // https://mvnrepository.com/artifact/net.sourceforge.htmlcleaner/htmlcleaner
     implementation group: 'net.sourceforge.htmlcleaner', name: 'htmlcleaner', version: '2.6'
 
-    //AndroidTagGroup Widget:
-    implementation 'me.gujun.android.taggroup:library:1.4@aar'
-
     //ViewPager:
     implementation "androidx.viewpager2:viewpager2:1.1.0-beta01"
 
@@ -68,18 +65,11 @@ dependencies {
     //ExoPlayer, for playing local m3u8 playlists:
     implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
 
-    //For adding recently-used tags:
-    implementation 'co.lujun:androidtagview:1.1.7'
-
-    //For slider on sort/filter fragment:
-    /*implementation 'com.google.android.material:material:1.9.0-alpha01'*/
-
     //For Color Picker:
     implementation 'com.thebluealliance:spectrum:0.7.1'
 
     //For image blurring, specifically to blur background for user selection popup:
     implementation 'jp.wasabeef:blurry:4.0.1'
-
 
     // Unit Testing dependencies copied from https://developer.android.com/training/testing/local-tests
     // Required -- JUnit 4 framework
