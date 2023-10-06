@@ -65,6 +65,7 @@
         android:background="@color/colorBlack"
         android:layout_alignStart="@id/imageView_Thumbnail"
         android:layout_alignBottom="@id/imageView_Thumbnail"
+        android:visibility="invisible"
         android:orientation="vertical">
 
         <LinearLayout
