@@ -89,7 +89,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
-    @OptIn(markerClass = {UnstableApi.class, UnstableApi.class})
+    @OptIn(markerClass = {UnstableApi.class, UnstableApi.class}) //todo: remove
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -336,6 +336,16 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
 
         gplayerView_ExoVideoPlayer.setOnTouchListener((v, event) -> gdVideoView.onTouchEvent(event));
+
+        gplayerView_ExoVideoPlayer.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) visibility -> {
+            if(visibility == PlayerView.INVISIBLE ||
+                visibility == PlayerView.GONE){
+                //This is here to hide these particular views because there is a timeout on the controls that needs to be caught.
+                gButton_GetVideoFrameImage.setVisibility(View.INVISIBLE);
+                gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
+                bControlsAreVisible = false;
+            }
+        });
 
         gImageView_VideoFrameImage = findViewById(R.id.imageView_VideoFrameImage);
         gButton_GetVideoFrameImage = findViewById(R.id.button_GetVideoFrameImage);
@@ -985,40 +995,38 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private boolean bControlsAreVisible;
 
+    @OptIn(markerClass = UnstableApi.class) //todo: remove
     private void toggle() {
         if (bControlsAreVisible) {
-            hide();
+            // Hide UI
+            bControlsAreVisible = false;
+
+            if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                if (gButton_GetVideoFrameImage != null) {
+                    gButton_GetVideoFrameImage.setVisibility(View.INVISIBLE);
+                }
+                if (gImageView_VideoFrameImage != null) {
+                    gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
+                }
+                if(gplayerView_ExoVideoPlayer != null) {
+                    gplayerView_ExoVideoPlayer.hideController();
+                }
+            }
         } else {
-            show();
-        }
-    }
+            bControlsAreVisible = true;
 
-    private void hide() {
-        // Hide UI
-        bControlsAreVisible = false;
-
-        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            if (gButton_GetVideoFrameImage != null) {
-                gButton_GetVideoFrameImage.setVisibility(View.INVISIBLE);
-            }
-            if (gImageView_VideoFrameImage != null) {
-                gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
+            if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                if (gButton_GetVideoFrameImage != null) {
+                    gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
+                }
+                if (gImageView_VideoFrameImage != null) {
+                    gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
+                }
+                if(gplayerView_ExoVideoPlayer != null) {
+                    gplayerView_ExoVideoPlayer.showController();
+                }
             }
         }
-    }
-
-    private void show() {
-        bControlsAreVisible = true;
-
-        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            if (gButton_GetVideoFrameImage != null) {
-                gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
-            }
-            if (gImageView_VideoFrameImage != null) {
-                gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
-            }
-        }
-
     }
 
 
