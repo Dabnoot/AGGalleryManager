@@ -207,6 +207,18 @@ public class Activity_Browser extends AppCompatActivity {
             //Configure a response receiver to listen for updates from the Data Service:
             IntentFilter filter = new IntentFilter(WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
             filter.addCategory(Intent.CATEGORY_DEFAULT);
+            filter.addAction(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+            filter.addAction(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE);
+            filter.addAction(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+            filter.addAction(Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            filter.addAction(Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
+            filter.addAction(Worker_Catalog_BackupCatalogDBFiles.CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
+            filter.addAction(Worker_Catalog_DeleteMultipleItems.DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
+            filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
+            filter.addAction(Worker_User_Delete.USER_DELETE_ACTION_RESPONSE);
+            filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+            filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
+            filter.addAction(GlobalClass.BROADCAST_CATALOG_FILES_MAINTENANCE);
             webPageTabDataServiceResponseReceiver = new WebPageTabDataServiceResponseReceiver();
             //registerReceiver(importDataServiceResponseReceiver, filter);
             LocalBroadcastManager.getInstance(this).registerReceiver(webPageTabDataServiceResponseReceiver, filter);
