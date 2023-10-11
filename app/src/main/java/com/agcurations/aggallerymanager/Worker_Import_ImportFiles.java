@@ -52,8 +52,6 @@ public class Worker_Import_ImportFiles extends Worker {
                         false)
                 .apply();
 
-        long lByteProgressNumerator = 0L;
-        long lByteProgressDenominator;
         int iFileCountProgressNumerator = 0;
         int iFileCountProgressDenominator;
         int iProgressBarValue = 0;
@@ -65,7 +63,7 @@ public class Worker_Import_ImportFiles extends Worker {
         for(ItemClass_File fi: alFileList){
             lTotalImportSize = lTotalImportSize + fi.lSizeBytes;
         }
-        lByteProgressDenominator = lTotalImportSize;
+
         iFileCountProgressDenominator = alFileList.size();
 
         String sMessage;
@@ -99,10 +97,9 @@ public class Worker_Import_ImportFiles extends Worker {
                 //Write next behavior to the screen log:
                 sLogLine = fileItem.sFileOrFolderName + " will be deleted.\n";
                 iFileCountProgressNumerator++;
-                lByteProgressNumerator += fileItem.lSizeBytes;
-                iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
+                iProgressBarValue = Math.round((iFileCountProgressNumerator / (float) iFileCountProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
-                        false, iProgressBarValue,
+                        true, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         IMPORT_FILES_ACTION_RESPONSE);
                 String sLine = Worker_LocalFileTransfer.CreateJobFileRecord(
@@ -151,7 +148,6 @@ public class Worker_Import_ImportFiles extends Worker {
                         false, iProgressBarValue,
                         false, "",
                         IMPORT_FILES_ACTION_RESPONSE);
-                lByteProgressNumerator += fileItem.lSizeBytes;
                 continue;
             }
 
@@ -182,9 +178,9 @@ public class Worker_Import_ImportFiles extends Worker {
                 //Write next behavior to the screen log:
                 sLogLine = fileItem.sFileOrFolderName + " will be imported.";
                 iFileCountProgressNumerator++;
-                iProgressBarValue = Math.round((lByteProgressNumerator / (float) lByteProgressDenominator) * 100);
+                iProgressBarValue = Math.round((iFileCountProgressNumerator / (float) iFileCountProgressDenominator) * 100);
                 globalClass.BroadcastProgress(true, sLogLine,
-                        false, iProgressBarValue,
+                        true, iProgressBarValue,
                         true, "File " + iFileCountProgressNumerator + "/" + iFileCountProgressDenominator,
                         IMPORT_FILES_ACTION_RESPONSE);
 
