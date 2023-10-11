@@ -4,6 +4,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
@@ -886,28 +887,45 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     //  has copied a GroupID to the internal clipboard, show the grouping controls.
                     holder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
                     holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
-                } else {
-                    holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
-                    holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
-                }
 
-                if(!ci.sGroupID.equals("")){
-                    //initiate grouping controls coloring:
-                    if(!ci.bColorsCalculated){
-                        int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
-                        ci.iGroupingControlsColor = iColors[0];
-                        ci.iGroupingControlsContrastColor = iColors[1];
-                        ci.iGroupingControlHighlight = iColors[2];
-                        ci.iGroupingControlHighlightContrastColor = iColors[3];
+                    //If controls are shown, you must calc the colors every time otherwise it will recycle colors.
+                    if(!ci.bColorsCalculated) {
+                        if (!ci.sGroupID.equals("")) {
+                            int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                            ci.iGroupingControlsColor = iColors[0];
+                            ci.iGroupingControlsContrastColor = iColors[1];
+                            ci.iGroupingControlHighlight = iColors[2];
+                            ci.iGroupingControlHighlightContrastColor = iColors[3];
+                            ci.bColorsCalculated = true;
+                        } else {
+                            //Specify "no-group" colors:
+                            ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
+                            ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+                            ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
+                            ci.iGroupingControlHighlightContrastColor = 0;
+                        }
                     }
                     applyGroupingControlsColor(
                             ci,
                             holder.linearLayout_GroupingControls,
                             ibGroupingControls,
                             tvGroupingTextViews);
-                    if(ci.bSearchByGroupID){
-                        holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
-                        holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                } else {
+                    holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                    holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
+                }
+
+                if(!ci.sGroupID.equals("")){
+                    if(!GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory].equals("")) {
+                        //If a filter is on for a given group ID, all of the shown items should be items belonging to a group
+                        //  with the filter icon showing.
+                        if (ci.sGroupID.equals(GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory])) {
+                            //ci.bSearchByGroupID = true;
+                            holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
+                            holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                        }
+                    } else {
+                        //ci.bSearchByGroupID = false;
                     }
                 }
 
@@ -952,6 +970,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         ci.sGroupID = GlobalClass.getNewGroupID();
+                        int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                        ci.iGroupingControlsColor = iColors[0];
+                        ci.iGroupingControlsContrastColor = iColors[1];
+                        ci.iGroupingControlHighlight = iColors[2];
+                        ci.iGroupingControlHighlightContrastColor = iColors[3];
                         holder.textView_GroupID.setText(ci.sGroupID);
                         setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
@@ -982,6 +1005,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     public void onClick(View v) {
                         if (!GlobalClass.gsGroupIDClip.equals("")) {
                             ci.sGroupID = GlobalClass.gsGroupIDClip;
+                            int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                            ci.iGroupingControlsColor = iColors[0];
+                            ci.iGroupingControlsContrastColor = iColors[1];
+                            ci.iGroupingControlHighlight = iColors[2];
+                            ci.iGroupingControlHighlightContrastColor = iColors[3];
                             holder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
                             setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                             setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
@@ -1001,7 +1029,19 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         ci.sGroupID = "";
+                        ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
+                        ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+                        ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
+                        ci.iGroupingControlHighlightContrastColor = 0;
+                        applyGroupingControlsColor(
+                                ci,
+                                holder.linearLayout_GroupingControls,
+                                ibGroupingControls,
+                                tvGroupingTextViews);
                         holder.textView_GroupID.setText("----");
+                        setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
+                        setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
+                        setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
                         Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
                         globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                     }
@@ -1017,6 +1057,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             ci.bSearchByGroupID = false;
                             holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_24);
                             GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = "";
+                            //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
                         } else {
                             //Filter is off, turn it on.
                             holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
@@ -1024,8 +1065,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             ci.bSearchByGroupID = true;
                             holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_off_24);
                             GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = ci.sGroupID;
+                            //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
                         }
-                        populate_RecyclerViewCatalogItems();
+                        populate_RecyclerViewCatalogItems(); //This will cause a set all of the shown items' ci.bSearchByGroupID members.
                     }
                 });
 
@@ -1035,6 +1077,25 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
                         holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
                         ci.bShowGroupingControls = false;
+                        if(!ci.sGroupID.equals("")){
+                            //If this item has a group ID, then if it is open it is likely that there are other items
+                            //  of the same group that are showing their group controls. If the user
+                            //  is hiding this item's grouping controls, then they likely want the other group
+                            //  items' controls hidden as well. Hide them.
+                            boolean bOtherGroupItemsFound = false;
+                            for(Map.Entry<Integer, ItemClass_CatalogItem> entry: treeMap.entrySet()){
+                                ItemClass_CatalogItem icci = entry.getValue();
+                                if(!icci.sGroupID.equals("")){
+                                    if(icci.sGroupID.equals(ci.sGroupID)){
+                                        icci.bShowGroupingControls = false;
+                                        bOtherGroupItemsFound = true;
+                                    }
+                                }
+                            }
+                            if(bOtherGroupItemsFound){
+                                updateVisibleRecyclerItems();
+                            }
+                        }
                     }
                 });
 
@@ -1153,7 +1214,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                                ImageButton[] imageButtons,
                                                TextView[] textViews){
 
-            linearLayout_GroupingControls.setBackground(new ColorDrawable(ci.iGroupingControlsColor)); //"#FF0000"
+            linearLayout_GroupingControls.setBackground(new ColorDrawable(ci.iGroupingControlsColor));
 
             //Set colors for foreground controls:
             for(ImageButton imageButton: imageButtons){

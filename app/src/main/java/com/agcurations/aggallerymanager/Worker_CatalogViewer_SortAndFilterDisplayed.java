@@ -313,6 +313,11 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             if(bGroupIDFilterApplicable){
                 if(entry.getValue().sGroupID.equals(GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory])){
                     bGroupIDMatch = true;
+                    entry.getValue().bSearchByGroupID = true;
+                }
+            } else {
+                if(entry.getValue().bSearchByGroupID){
+                    entry.getValue().bSearchByGroupID = false;
                 }
             }
 
