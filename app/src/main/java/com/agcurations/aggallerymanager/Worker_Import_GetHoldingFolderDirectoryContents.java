@@ -187,11 +187,13 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                     s ="sad";
                 }
                 if (sMimeType.startsWith("video") ||
-                        sMediaFileExtension.equals(".gif") ||
+                        //sMediaFileExtension.equals(".gif") ||
                         sMediaFileExtension.equals(".txt") ||
                         (sMimeType.equals("application/octet-stream") && sMediaFileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                     //If not a file that we want to analyze...
-                    continue; //If requesting images and mimeType is video or the file a gif, go to next loop.
+                    continue; //If requesting images and mimeType is video or the file is text, go to next loop.
+                    //Choosing to classify gifs as images as they are generally very limited in size.
+                    //Leave it up to the user to decide whether to import gifs from the holding folder to the videos catalog.
                 }
 
                 long lMediaFileLastModified = Long.parseLong(HoldingFolderEntry.getValue()[MEDIA_FILE_LAST_MODIFIED_INDEX]);// //milliseconds since January 1, 1970 00:00:00.0 UTC.
