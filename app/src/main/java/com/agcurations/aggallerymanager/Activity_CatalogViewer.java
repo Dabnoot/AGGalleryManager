@@ -4,6 +4,8 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -25,7 +27,11 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -81,7 +87,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter;
 
     LinearLayout gLinearLayout_GroupingModeNotifier;
+    TextView gTextView_GroupIDClipboardLabel;
     TextView gTextView_GroupIDClipboard;
+    ImageButton gImageButton_ClearGroupingClipboard;
 
     int giGroupControlImageButtonWidth;
 
@@ -134,9 +142,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         configure_RecyclerViewCatalogItems();
 
         gLinearLayout_GroupingModeNotifier = findViewById(R.id.linearLayout_GroupingModeNotifier);
+        gTextView_GroupIDClipboardLabel = findViewById(R.id.textView_GroupIDClipboardLabel);
         gTextView_GroupIDClipboard = findViewById(R.id.textView_GroupIDClipboard);
-        ImageButton imageButton_ClearGroupingClipboard = findViewById(R.id.imageButton_ClearGroupingClipboard);
-        imageButton_ClearGroupingClipboard.setOnClickListener(new View.OnClickListener() {
+        gImageButton_ClearGroupingClipboard = findViewById(R.id.imageButton_ClearGroupingClipboard);
+        gImageButton_ClearGroupingClipboard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 GlobalClass.gsGroupIDClip = "";
@@ -850,7 +859,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     holder.imageButton_GroupIDCopy!= null &&
                     holder.imageButton_GroupIDPaste!= null &&
                     holder.imageButton_GroupIDRemove!= null) {
-
+                //Todo: Map the logic for this section and reorganize. Showing the controls, partial controls,
+                //   applying coloring, is complicated logic.
                 //Controls for:
                 //  -Group ID Shown
                 //  -Group ID new button
@@ -992,11 +1002,34 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 holder.imageButton_GroupIDCopy.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        boolean bGroupControlsAlreadyOpen = !GlobalClass.gsGroupIDClip.equals("");
                         GlobalClass.gsGroupIDClip = ci.sGroupID;
                         gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
+
+                        //Set the colors of the grouping mode notifier to match the calculated colors from the group ID:
+                        int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                        gTextView_GroupIDClipboardLabel.setTextColor(iColors[1]);
+                        gTextView_GroupIDClipboard.setTextColor(iColors[1]);
+                        //Change the color of the 'close' icon for proper contrast:
+                        Drawable drawable_Baseline_Close_24 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.baseline_close_24);
+                        if(drawable_Baseline_Close_24 != null) {
+                            Drawable drawable = drawable_Baseline_Close_24.mutate();
+                            drawable.setColorFilter(new PorterDuffColorFilter(iColors[1], PorterDuff.Mode.SRC_IN));
+                            gImageButton_ClearGroupingClipboard.setImageDrawable(drawable);
+                        }
+                        //Set the grouping mode notifier background and border colors:
+                        GradientDrawable drawable = (GradientDrawable)gLinearLayout_GroupingModeNotifier.getBackground();
+                        //drawable.mutate(); // only change this instance of the xml, not all components using this xml
+                        drawable.setStroke(globalClass.ConvertDPtoPX(1), iColors[1]); // set stroke width and stroke color
+                        drawable.setColor(iColors[0]); //Don't use .setTint for this, as it will override the stroke (border).
+
                         gTextView_GroupIDClipboard.setText(GlobalClass.gsGroupIDClip);
-                        updateVisibleRecyclerItems();
-                        Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
+
+                        if(!bGroupControlsAlreadyOpen){
+                            updateVisibleRecyclerItems();
+                        }
+
+                        //Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
                     }
                 });
 
