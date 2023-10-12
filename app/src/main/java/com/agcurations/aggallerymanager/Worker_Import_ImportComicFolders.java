@@ -152,7 +152,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                             "",
                             "",
                             entryComicFile.getValue().lSizeBytes,
-                            true);                 //Item marked for deletion?
+                            true,
+                            false);                 //Item marked for deletion?
                     sbJobFileRecords.append(sLine);
 
                     //Write progress to the screen log:
@@ -172,7 +173,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         "",
                         "",
                         0,
-                        true);                 //Item marked for deletion?
+                        true,
+                        false);                 //Item marked for deletion?
                 sbJobFileRecords.append(sLine);
 
                 //Write progress to the screen log:
@@ -215,7 +217,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                                 "",
                                 "",
                                 fileItem.lSizeBytes,
-                                true);                 //Item marked for deletion?
+                                true,
+                                true);
                         sbJobFileRecords.append(sLine);
                     }
                     //Write progress to the screen log:
@@ -250,6 +253,7 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         sRelativePathofComicFolder,
                         sDestinationFileName,
                         fileItem.lSizeBytes,
+                        false,
                         false);
                 sbJobFileRecords.append(sLine);
 
@@ -277,7 +281,8 @@ public class Worker_Import_ImportComicFolders extends Worker {
                         "",
                         "",
                         0,
-                        true);                 //Item marked for deletion?
+                        true,
+                        false);                 //Item marked for deletion?
                 sbJobFileRecords.append(sLine);
             }
 

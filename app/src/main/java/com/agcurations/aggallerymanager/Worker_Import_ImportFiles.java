@@ -57,6 +57,8 @@ public class Worker_Import_ImportFiles extends Worker {
         int iProgressBarValue = 0;
         long lTotalImportSize = 0L;
 
+        int iMetadata_File_Count = 0;
+
         ArrayList<ItemClass_File> alFileList = (ArrayList<ItemClass_File>)globalClass.galImportFileList.clone();
 
         //Calculate total size of all files to import:
@@ -107,7 +109,8 @@ public class Worker_Import_ImportFiles extends Worker {
                         fileItem.sDestinationFolder,
                         fileItem.sFileOrFolderName,
                         fileItem.lSizeBytes,
-                        true);                 //Item marked for deletion?
+                        true,
+                        false);                 //Item marked for deletion?
                 sbJobFileRecords.append(sLine);
 
                 if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
@@ -127,10 +130,12 @@ public class Worker_Import_ImportFiles extends Worker {
                             fileItem.sDestinationFolder,
                             fileItem.sFileOrFolderName,
                             fileItem.lSizeBytes,
+                            true,
                             true);
 
                     sbJobFileRecords.append(sLine);
 
+                    iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
                 }
 
                 continue; //jump to next item in import list.
@@ -189,6 +194,7 @@ public class Worker_Import_ImportFiles extends Worker {
                         fileItem.sDestinationFolder,
                         sFileName,
                         fileItem.lSizeBytes,
+                        false,
                         false);
 
                 sbJobFileRecords.append(sLine);
@@ -306,9 +312,12 @@ public class Worker_Import_ImportFiles extends Worker {
                                 fileItem.sDestinationFolder,
                                 fileItem.sFileOrFolderName,
                                 100, //Size should be quite small.
+                                true,
                                 true);
 
                         sbJobFileRecords.append(sLine);
+
+                        iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
                     }
                 }
 
@@ -364,7 +373,7 @@ public class Worker_Import_ImportFiles extends Worker {
             String sConfig = "MediaCategory:" + GlobalClass.gsCatalogFolderNames[giMediaCategory] + "\t"
                     + "MoveOrCopy:" + sMoveOrCopy + "\t"
                     + "TotalSize:" + lTotalImportSize + "\t"
-                    + "FileCount:" + alFileList.size() + "\n";
+                    + "FileCount:" + (alFileList.size() + iMetadata_File_Count) + "\n";
             bwJobFile.write(sConfig);
             bwJobFile.write(sbJobFileRecords.toString());
             bwJobFile.flush();
@@ -403,7 +412,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 .build();
         WorkManager.getInstance(getApplicationContext()).enqueue(otwrLocalFileTransfer);
 
-        globalClass.BroadcastProgress(true, "Job file creation worker operation complete.\n",
+        globalClass.BroadcastProgress(true, "Job file creation worker operation complete.\n\n",
                 false, iProgressBarValue,
                 false, "",
                 IMPORT_FILES_ACTION_RESPONSE);

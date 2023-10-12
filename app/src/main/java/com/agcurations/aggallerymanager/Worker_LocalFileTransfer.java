@@ -60,7 +60,8 @@ public class Worker_LocalFileTransfer extends Worker {
     public static final int RECORD_FIELD_INDEX_DESTINATION_FILENAME = 2;
     public static final int RECORD_FIELD_INDEX_SOURCE_FILE_SIZE_BYTES = 3;
     public static final int RECORD_FIELD_INDEX_SOURCE_FILE_DELETE_ONLY = 4; //If the user is not importing this item and has marked it for deletion.
-    public static final int RECORD_FIELD_COUNT = 5; //Number of fields to expect per record in a job file.
+    public static final int RECORD_FIELD_INDEX_METADATA_FILE_FLAG = 5;
+    public static final int RECORD_FIELD_COUNT = 6; //Number of fields to expect per record in a job file.
 
 
     //=========================
@@ -292,16 +293,16 @@ public class Worker_LocalFileTransfer extends Worker {
                         }
                         globalClass.BroadcastProgress(false, "",
                                 false, 0,
-                                true, giFilesProcessed + "/" + giFileCount,
+                                true, "Files processed: " + giFilesProcessed + "/" + giFileCount,
                                 IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                         giFilesProcessed++;
                         if (!sLine.equals("")) {
-                            String[] sTemp = sLine.split("\t");
-                            if (sTemp.length == RECORD_FIELD_COUNT) {
+                            String[] sJobFileRecordFields = sLine.split("\t");
+                            if (sJobFileRecordFields.length == RECORD_FIELD_COUNT) {
 
                                 //Get a user-friendly version of the source file path + filename:
-                                String sSourceFileUri = sTemp[RECORD_FIELD_INDEX_SOURCE_FILE_URI_INDEX];
+                                String sSourceFileUri = sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_URI_INDEX];
                                 Uri uriSourceFile = Uri.parse(sSourceFileUri);
                                 String sUserFriendlySourceFileUri = sSourceFileUri;
                                 for(Map.Entry<String, String> entryStorageDef: GlobalClass.gtmStorageDeviceNames.entrySet()){
@@ -326,7 +327,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                 }
 
 
-                                long lFileSize = Long.parseLong(sTemp[RECORD_FIELD_INDEX_SOURCE_FILE_SIZE_BYTES]);
+                                long lFileSize = Long.parseLong(sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_SIZE_BYTES]);
 
 
                                 //Check if source file exists:
@@ -346,11 +347,11 @@ public class Worker_LocalFileTransfer extends Worker {
                                     continue; //Skip to the end of the loop and read the next line in the job file.
                                 }
 
-                                boolean bMarkedForDeletion = Boolean.parseBoolean(sTemp[RECORD_FIELD_INDEX_SOURCE_FILE_DELETE_ONLY]);
+                                boolean bMarkedForDeletion = Boolean.parseBoolean(sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_DELETE_ONLY]);
+
+                                boolean bMetadataFile = Boolean.parseBoolean((sJobFileRecordFields[RECORD_FIELD_INDEX_METADATA_FILE_FLAG]));
 
                                 String sLogLine;
-
-                                String sSourceFileName = GlobalClass.GetFileName(uriSourceFile);
 
                                 if(bMarkedForDeletion) {
                                     //If this source item is marked for deletion (no move or copy op to be performed), delete the source file:
@@ -361,10 +362,16 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                     UpdateProgressOutput();
 
+                                    String sSpecialFileMessage = " ";
+                                    if(bMetadataFile){
+                                        //Give a special notification to the user if this is a
+                                        // metadata file - user might be confused as to what's going on.
+                                        sSpecialFileMessage = " metadata ";
+                                    }
                                     if (!bDeleteSuccess) {
-                                        sLogLine = "Could not delete file marked for deletion: " + sUserFriendlySourceFileUri;
+                                        sLogLine = "Could not delete" + sSpecialFileMessage + "file marked for deletion: " + sUserFriendlySourceFileUri;
                                     } else {
-                                        sLogLine = "Success deleting file marked for deletion: " + sUserFriendlySourceFileUri;
+                                        sLogLine = "Success deleting" + sSpecialFileMessage + "file marked for deletion: " + sUserFriendlySourceFileUri;
                                     }
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
@@ -375,11 +382,11 @@ public class Worker_LocalFileTransfer extends Worker {
                                 } else {
                                     //If this item is not merely marked for deletion (this could be a move op, which would involve a deletion)...
 
-                                    String sDestinationFileName = sTemp[RECORD_FIELD_INDEX_DESTINATION_FILENAME];
+                                    String sDestinationFileName = sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FILENAME];
 
                                     //todo: will there be a problem here if there is a file and a directory of the same name?
 
-                                    String sDestinationRelativePath = sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER];
+                                    String sDestinationRelativePath = sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FOLDER];
                                     sDestinationRelativePath = sDestinationRelativePath.replace("%2F", GlobalClass.gsFileSeparator);
                                     if(sDestinationRelativePath.contains(GlobalClass.gsFileSeparator)){
                                         //Ensure that the multiple folders of "relative path" exist:
@@ -395,7 +402,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         }
                                     }
 
-                                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER]);
+                                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FOLDER]);
                                     if(!GlobalClass.CheckIfFileExists(uriDestinationFolder)){
                                         uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
                                     }
@@ -406,7 +413,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                     }
 
                                     if(uriDestinationFolder == null){
-                                        sMessage = "Could not create destination folder \"" + sTemp[RECORD_FIELD_INDEX_DESTINATION_FOLDER] + "\" for file \""
+                                        sMessage = "Could not create destination folder \"" + sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FOLDER] + "\" for file \""
                                                 + sUserFriendlyDestinationFolderUri + "\", line " + giFilesProcessed + ": " + uriJobFile;
                                         gbwLogFile.write(sMessage + "\n");
                                         globalClass.BroadcastProgress(true, sMessage,
@@ -420,7 +427,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                     Uri uriDestinationFile = GlobalClass.FormChildUri(uriDestinationFolder, sDestinationFileName);
 
-                                    sLogLine = GlobalClass.gsMoveOrCopy[iMoveOrCopy + 2]
+                                    sLogLine = "\n" + GlobalClass.gsMoveOrCopy[iMoveOrCopy + 2]
                                             + " file " + sUserFriendlySourceFileUri + " to " + sUserFriendlyDestinationFolderUri + ".\n";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine,
@@ -453,10 +460,6 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                     // Execute the copy or move operation:
 
-
-
-
-
                                     //Copy the document first. DocumentsContract.Copy and .Move are finicky and don't always do the job.
                                     Uri uriOutputFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, "none", sDestinationFileName);
                                     if(uriOutputFile != null) {
@@ -466,8 +469,6 @@ public class Worker_LocalFileTransfer extends Worker {
                                         try {
                                             isSourceFile = GlobalClass.gcrContentResolver.openInputStream(uriSourceFile);
                                             osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriOutputFile);
-
-
 
                                             if (isSourceFile != null && osDestinationFile != null) {
                                                 byte[] bucket = new byte[32 * 1024];
@@ -543,7 +544,7 @@ public class Worker_LocalFileTransfer extends Worker {
                                         }
                                     }
 
-                                    sLogLine = "Success.\n";
+                                    sLogLine = "Success.";
                                     gbwLogFile.write(sLogLine + "\n");
                                     globalClass.BroadcastProgress(true, sLogLine + "\n",
                                             false, 0,
@@ -572,7 +573,7 @@ public class Worker_LocalFileTransfer extends Worker {
                         }
                         globalClass.BroadcastProgress(false, "",
                                 false, 0,
-                                true, giFilesProcessed + "/" + giFileCount,
+                                true, "Files processed: " + giFilesProcessed + "/" + giFileCount,
                                 IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
                     } while (true);
@@ -756,6 +757,7 @@ public class Worker_LocalFileTransfer extends Worker {
      * @param sDestinationFileOrFolderName      The destination file name.
      * @param lSizeInBytes                      The size of the file for progress display to user.
      * @param bMarkForDeletion                  A flag to mark if this file should be deleted rather than copied
+     * @param bMetadataFile                     A flag to indicate that this is a metadata file. Used to notify user during logging of the file deletion.
      *                                          or moved.
      * @return sJobFileRecord                   A string is returned to be written to the job file.
      */
@@ -763,13 +765,15 @@ public class Worker_LocalFileTransfer extends Worker {
                                               String sDestinationFolderName,
                                               String sDestinationFileOrFolderName,
                                               long lSizeInBytes,
-                                              boolean bMarkForDeletion){
+                                              boolean bMarkForDeletion,
+                                              boolean bMetadataFile){
 
         return sSourceUri + "\t" +
                 sDestinationFolderName + "\t" +
                 sDestinationFileOrFolderName + "\t" +
                 lSizeInBytes + "\t" +
-                bMarkForDeletion + "\n";
+                bMarkForDeletion + "\t" +
+                bMetadataFile + "\n";
     }
 
 
