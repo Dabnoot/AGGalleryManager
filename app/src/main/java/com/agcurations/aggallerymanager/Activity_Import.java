@@ -51,7 +51,6 @@ import com.bumptech.glide.Glide;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
@@ -1923,7 +1922,6 @@ public class Activity_Import extends AppCompatActivity {
 
             //Adjust the height of the grid item to minimize dead space between the grid items:
             try {
-                int iGridHeight = holder.itemView.getHeight();
                 if(iFinalImageViewHeight < 0) {
                     int iImageWidth = alFileItems.get(position).iThumbnailURLImageWidth;
 
