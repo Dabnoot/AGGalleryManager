@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".Activity_Import">
+    tools:context=".Activity_Import"
+    android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout_FolderSelect"
+    <LinearLayout
+        android:id="@+id/LinearLayout_FolderSelect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        >
+        android:orientation="vertical"
+        android:layout_centerVertical="true">
 
         <Button
             android:id="@+id/button_SelectFolder"
@@ -24,19 +22,16 @@
             android:text="Select Folder"
             android:textSize="24sp"
             app:backgroundTint="@color/colorButton"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:onClick="buttonNextClick_StorageImportFromLocation"/>
+            android:onClick="buttonNextClick_StorageImportFromLocation"
+            android:layout_gravity="center_horizontal"/>
 
         <RelativeLayout
             android:id="@+id/relativeLayout_GraphicsAttributesInclusion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/button_SelectFolder"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:layout_gravity="center_horizontal">
 
             <CheckBox
                 android:id="@+id/checkBox_IncludeGraphicsAttributes"
@@ -83,36 +78,26 @@
             android:text="Selected Folder:"
             android:textColor="@color/colorTextColor"
             android:textSize="24sp"
-            android:layout_margin="20dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/relativeLayout_GraphicsAttributesInclusion"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:visibility="invisible" />
+            android:layout_margin="10dp"
+            android:layout_gravity="center_horizontal"/>
 
         <TextView
             android:id="@+id/textView_Selected_Import_Folder"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
             android:textColor="@color/colorTextColor"
             android:textSize="24sp"
             android:layout_margin="10dp"
             android:textAlignment="center"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView_Label_Selected_Folder"
-            android:visibility="invisible"/>
+            android:layout_gravity="center_horizontal"/>
 
         <LinearLayout
             android:id="@+id/linearLayout_Progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView_Selected_Import_Folder"
-            android:orientation="vertical"
-            android:visibility="invisible">
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/textView_AnalyzingFolder"
@@ -152,10 +137,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textView_Selected_Import_Folder"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            android:layout_gravity="center_horizontal">
 
             <Button
                 android:id="@+id/button_Cancel"
@@ -178,23 +160,23 @@
                 android:enabled="false"/>
         </LinearLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
     <TextView
         android:id="@+id/textView_FileAnalysisDebugLog"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_margin="15dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/constraintLayout_FolderSelect"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:textColor="@color/colorTextColor"
-        android:scrollbars="vertical"
+        android:layout_height="30dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="15dp"
         android:scrollbarSize="20dp"
-        android:gravity="bottom"
+        android:scrollbars="vertical"
+        android:text=""
+        android:textColor="@color/colorTextColor"
         android:visibility="invisible"/>
 
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

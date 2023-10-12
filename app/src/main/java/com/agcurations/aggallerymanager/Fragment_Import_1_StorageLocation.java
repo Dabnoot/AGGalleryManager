@@ -1,13 +1,11 @@
 package com.agcurations.aggallerymanager;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -20,8 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -39,12 +35,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class Fragment_Import_1_StorageLocation extends Fragment {
-
-    public static final int MY_PERMISSIONS_READWRITE_EXTERNAL_STORAGE = 2002;
 
     GlobalClass globalClass;
 
@@ -54,7 +49,10 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
     TextView gTextView_FileAnalysisProgressBarText;
     TextView gTextView_FileAnalysisDebugLog;
     LinearLayout gLinearLayout_Progress;
+    Button gButton_SelectFolder;
     Button gbutton_FolderSelectComplete;
+
+    RelativeLayout gRelativeLayout_GraphicsAttributesInclusion;
 
     boolean gbIncludeGraphicsAttributesInFileQuery = false;
 
@@ -116,61 +114,45 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         }
         final CheckBox checkBox_IncludeGraphicsAttributes = getView().findViewById(R.id.checkBox_IncludeGraphicsAttributes);
         checkBox_IncludeGraphicsAttributes.setChecked(gbIncludeGraphicsAttributesInFileQuery);
-        checkBox_IncludeGraphicsAttributes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                gbIncludeGraphicsAttributesInFileQuery = ((CheckBox) v).isChecked();
-                if(getActivity() != null) {
-                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
-                    sharedPreferences.edit()
-                            .putBoolean(GlobalClass.gsPreference_Import_IncludeGraphicsFileData, gbIncludeGraphicsAttributesInFileQuery)
-                            .apply();
-                }
+        checkBox_IncludeGraphicsAttributes.setOnClickListener(v -> {
+            gbIncludeGraphicsAttributesInFileQuery = ((CheckBox) v).isChecked();
+            if(getActivity() != null) {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                sharedPreferences.edit()
+                        .putBoolean(GlobalClass.gsPreference_Import_IncludeGraphicsFileData, gbIncludeGraphicsAttributesInFileQuery)
+                        .apply();
             }
         });
         TextView textView_Label_IncludeGraphicsAttributes = getView().findViewById(R.id.textView_Label_IncludeGraphicsAttributes);
-        textView_Label_IncludeGraphicsAttributes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                flipGraphicsCheckboxState(checkBox_IncludeGraphicsAttributes);
-            }
-        });
+        textView_Label_IncludeGraphicsAttributes.setOnClickListener(v -> flipGraphicsCheckboxState(checkBox_IncludeGraphicsAttributes));
         TextView textView_Label_IncludeGraphicsAttributes_SubText = getView().findViewById(R.id.textView_Label_IncludeGraphicsAttributes_SubText);
-        textView_Label_IncludeGraphicsAttributes_SubText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                flipGraphicsCheckboxState(checkBox_IncludeGraphicsAttributes);
+        textView_Label_IncludeGraphicsAttributes_SubText.setOnClickListener(v -> flipGraphicsCheckboxState(checkBox_IncludeGraphicsAttributes));
+
+
+
+
+
+        gButton_SelectFolder = getView().findViewById(R.id.button_SelectFolder);
+        gButton_SelectFolder.setOnClickListener(v -> {
+
+            if(GlobalClass.gbImportFolderAnalysisRunning){
+                GlobalClass.gbImportFolderAnalysisStop = true;
             }
-        });
 
 
-
-
-
-        Button button_SelectFolder = getView().findViewById(R.id.button_SelectFolder);
-        button_SelectFolder.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                if(GlobalClass.gbImportFolderAnalysisRunning){
-                    GlobalClass.gbImportFolderAnalysisStop = true;
-                }
-
-
-                if(gTextView_FileAnalysisDebugLog != null){
-                    gTextView_FileAnalysisDebugLog.setText("");
-                }
-
-                // Allow the user to choose a directory using the system's file picker.
-                Intent intent_GetImportFromFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-
-                // Provide write access to files and sub-directories in the user-selected directory:
-                intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                //Start the activity:
-                garlGetImportFolder.launch(intent_GetImportFromFolder);
-
+            if(gTextView_FileAnalysisDebugLog != null){
+                gTextView_FileAnalysisDebugLog.setText("");
             }
+
+            // Allow the user to choose a directory using the system's file picker.
+            Intent intent_GetImportFromFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+            // Provide write access to files and sub-directories in the user-selected directory:
+            intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent_GetImportFromFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            //Start the activity:
+            garlGetImportFolder.launch(intent_GetImportFromFolder);
+
         });
 
 
@@ -178,6 +160,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         gProgressBar_FileAnalysisProgress.setMax(1000);
         gTextView_FileAnalysisProgressBarText = getView().findViewById(R.id.textView_FileAnalysisProgressBarText);
         gbutton_FolderSelectComplete = getView().findViewById(R.id.button_FolderSelectComplete);
+
+        gRelativeLayout_GraphicsAttributesInclusion = getView().findViewById(R.id.relativeLayout_GraphicsAttributesInclusion);
 
         gTextView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
         if (gTextView_FileAnalysisDebugLog != null) {
@@ -291,6 +275,19 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         } else {
             GlobalClass.gbImportHoldingFolderAnalysisAutoStart = false;
             //If the user has selected to import from the holding folder, move forward with processing.
+
+
+            //Hide irrelevant UI items:
+            gButton_SelectFolder.setLayoutParams(new LinearLayout.LayoutParams(0,0));
+            gRelativeLayout_GraphicsAttributesInclusion.setLayoutParams(new LinearLayout.LayoutParams(0,0));
+            /*gButton_SelectFolder.setVisibility(View.VISIBLE);
+
+            gRelativeLayout_GraphicsAttributesInclusion.setVisibility(View.VISIBLE);
+            gRelativeLayout_GraphicsAttributesInclusion.getLayoutParams().height = 0;
+            gRelativeLayout_GraphicsAttributesInclusion.requestLayout();*/
+
+
+
             String sHoldingFolderPath = GlobalClass.gUriImageDownloadHoldingFolder.toString();
             ShowFolderAnalysisViews(sHoldingFolderPath);
 
@@ -316,12 +313,12 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
     ActivityResultLauncher<Intent> garlGetImportFolder = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
+            new ActivityResultCallback<>() {
                 @SuppressLint("WrongConstant")
                 @Override
                 public void onActivityResult(ActivityResult result) {
 
-                    if(getContext() == null){
+                    if (getContext() == null) {
                         return;
                     }
 
@@ -330,7 +327,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
                     //Put the import Uri into the intent (this could represent a folder OR a file:
 
-                    if(result.getData() == null) {
+                    if (result.getData() == null) {
                         Toast.makeText(getContext(),
                                 "No data folder selected. A storage location may be selected from the Settings menu.",
                                 Toast.LENGTH_LONG).show();
@@ -338,7 +335,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     }
                     Intent data = result.getData();
                     Uri treeUri = data.getData();
-                    if(treeUri == null) {
+                    if (treeUri == null) {
                         return;
                     }
                     final int takeFlags = data.getFlags() &
@@ -352,7 +349,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     Activity_Import.guriImportTreeURI = treeUri;
 
                     DocumentFile df1 = DocumentFile.fromTreeUri(getContext(), Activity_Import.guriImportTreeURI);
-                    if(df1 == null){
+                    if (df1 == null) {
                         return; //todo: create message.
                     }
                     String sTreeUriSourceName = df1.getName(); //Get name of the selected folder for display purposes.
@@ -360,8 +357,8 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
 
                     int iFilesOrFolders = GlobalClass.FILES_ONLY;
-                    if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
-                            viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER){
+                    if ((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) &&
+                            viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
                         iFilesOrFolders = GlobalClass.FOLDERS_ONLY;
                     }
 
@@ -369,7 +366,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
                     globalClass.gsbImportFolderAnalysisLog = new StringBuilder();
                     GlobalClass.gbImportFolderAnalysisFinished = false;
 
-                    if(getContext() == null) return;
+                    if (getContext() == null) return;
                     String sCallerID = "Service_Import:startActionGetDirectoryContents()";
                     Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                     Data dataGetDirectoryContents = new Data.Builder()
@@ -406,7 +403,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
         //Make some more space to show the progress bar:
         LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-        ConstraintLayout.LayoutParams lp =  (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
+        LinearLayout.LayoutParams lp =  (LinearLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
         lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
         linearLayout_ButtonBar.setLayoutParams(lp);
     }
