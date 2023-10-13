@@ -277,15 +277,18 @@ public class Activity_Main extends AppCompatActivity {
                 }
             }
 
-            if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse){
+            if(!GlobalClass.gbOptionUserAutoLogin && !bSingleUserInUse && GlobalClass.gicuCurrentUser == null){
                 //If the user has not set the option to auto-login a user, then show the user selection
-                //  activity:
+                //  activity. Don't show the user selection activity if this activity is restarted but
+                //  a current user is logged-in.
                 Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
                 startActivity(intentUserSelection);
             }
 
-            //Call the MA Data Service, which will create a call to a service:
-            startActionLoadData(getApplicationContext());
+            if(!GlobalClass.gabDataLoaded.get()) { //Don't reload the data just because the main activity was restarted.
+                //Call the MA Data Service, which will create a call to a service:
+                startActionLoadData(getApplicationContext());
+            }
         }
 
         //AlertDialogTest2();
