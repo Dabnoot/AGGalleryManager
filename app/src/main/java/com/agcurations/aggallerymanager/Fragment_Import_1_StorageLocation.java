@@ -221,11 +221,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
                 gbutton_FolderSelectComplete.setEnabled(false);
 
-                //Make less space to cover the hidden progress bar:
-                LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-                ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
-                lp.setMargins(0, 0, 0, 0); // left, top, right, bottom
-                linearLayout_ButtonBar.setLayoutParams(lp);
+                //Reduce space occupied by the "Folder Results" section to improve visible balance:
+                LinearLayout linearLayout_SelectedFolderResults = getView().findViewById(R.id.linearLayout_SelectedFolderResults);
+                linearLayout_SelectedFolderResults.getLayoutParams().height = 0;
 
                 TextView textView_FileAnalysisDebugLog = getView().findViewById(R.id.textView_FileAnalysisDebugLog);
                 if (textView_FileAnalysisDebugLog != null) {
@@ -236,11 +234,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             } else {
                 if (GlobalClass.gbImportFolderAnalysisRunning || GlobalClass.gbImportFolderAnalysisFinished) {
 
-                    //Make some more space to show the progress bar:
-                    LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-                    ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
-                    lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
-                    linearLayout_ButtonBar.setLayoutParams(lp);
+                    //Show the "Folder Results" section previously reduced to improve visible balance:
+                    LinearLayout linearLayout_SelectedFolderResults = getView().findViewById(R.id.linearLayout_SelectedFolderResults);
+                    linearLayout_SelectedFolderResults.getLayoutParams().height = LinearLayout.LayoutParams.WRAP_CONTENT;
 
                     TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
                     textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
@@ -401,11 +397,9 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         gLinearLayout_Progress = getView().findViewById(R.id.linearLayout_Progress);
         gLinearLayout_Progress.setVisibility(View.VISIBLE);
 
-        //Make some more space to show the progress bar:
-        LinearLayout linearLayout_ButtonBar = getView().findViewById(R.id.linearLayout_ButtonBar);
-        LinearLayout.LayoutParams lp =  (LinearLayout.LayoutParams) linearLayout_ButtonBar.getLayoutParams();
-        lp.setMargins(0, 130, 0, 0); // left, top, right, bottom
-        linearLayout_ButtonBar.setLayoutParams(lp);
+        //Show the "Folder Results" section previously reduced to improve visible balance:
+        LinearLayout linearLayout_SelectedFolderResults = getView().findViewById(R.id.linearLayout_SelectedFolderResults);
+        linearLayout_SelectedFolderResults.getLayoutParams().height = LinearLayout.LayoutParams.WRAP_CONTENT;
     }
 
 

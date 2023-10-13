@@ -71,65 +71,72 @@
 
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/textView_Label_Selected_Folder"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Selected Folder:"
-            android:textColor="@color/colorTextColor"
-            android:textSize="24sp"
-            android:layout_margin="10dp"
-            android:layout_gravity="center_horizontal"/>
-
-        <TextView
-            android:id="@+id/textView_Selected_Import_Folder"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text=""
-            android:textColor="@color/colorTextColor"
-            android:textSize="24sp"
-            android:layout_margin="10dp"
-            android:textAlignment="center"
-            android:layout_gravity="center_horizontal"/>
-
         <LinearLayout
-            android:id="@+id/linearLayout_Progress"
+            android:id="@+id/linearLayout_SelectedFolderResults"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/textView_AnalyzingFolder"
+                android:id="@+id/textView_Label_Selected_Folder"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="5dp"
-                android:text="Analyzing folder contents..."
+                android:text="Selected Folder:"
                 android:textColor="@color/colorTextColor"
+                android:textSize="24sp"
+                android:layout_margin="10dp"
                 android:layout_gravity="center_horizontal"/>
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <TextView
+                android:id="@+id/textView_Selected_Import_Folder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/colorTextColor"
+                android:textSize="24sp"
+                android:layout_margin="10dp"
+                android:textAlignment="center"
+                android:layout_gravity="center_horizontal"/>
 
-                <ProgressBar
-                    android:id="@+id/progressBar_FileAnalysisProgress"
-                    style="@android:style/Widget.ProgressBar.Horizontal"
-                    android:progressDrawable="@drawable/progressbar_colors"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+            <LinearLayout
+                android:id="@+id/linearLayout_Progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/textView_FileAnalysisProgressBarText"
+                    android:id="@+id/textView_AnalyzingFolder"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="0/?"
+                    android:layout_marginBottom="5dp"
+                    android:text="Analyzing folder contents..."
                     android:textColor="@color/colorTextColor"
-                    android:layout_centerHorizontal="true"/>
+                    android:layout_gravity="center_horizontal"/>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ProgressBar
+                        android:id="@+id/progressBar_FileAnalysisProgress"
+                        style="@android:style/Widget.ProgressBar.Horizontal"
+                        android:progressDrawable="@drawable/progressbar_colors"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/textView_FileAnalysisProgressBarText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0/?"
+                        android:textColor="@color/colorTextColor"
+                        android:layout_centerHorizontal="true"/>
 
 
-            </RelativeLayout>
+                </RelativeLayout>
 
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
