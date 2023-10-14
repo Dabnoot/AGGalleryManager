@@ -83,7 +83,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                                         //  before creating the file, but the metadata text file that the program creates would retain those characters.
                                         //  Characters such as '%20' for 'SPACE' character.
                             String sFileExtension = sFileName.substring(sFileName.lastIndexOf("."));
-                            if(sFileExtension.equals(".txt")){
+                            if(sFileExtension.equals(".tad")){
                                 //The base name of this file will include the media file name with the media file extension. Get the base file name again.
                                 sFileBaseName = sFileBaseName.substring(0, sFileBaseName.lastIndexOf("."));
 
@@ -104,7 +104,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                             if(!tmHoldingFolderRecordData.containsKey(sFileBaseName)){
                                 //If we have not yet processed this FileBaseName, start it:
                                 String[] sDataRecord = new String[iFieldCount];
-                                if(sFileExtension.equals(".txt")){
+                                if(sFileExtension.equals(".tad")){
                                     //Prepare the Metadata entry
                                     String sMetadataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sFileName);
                                     sDataRecord[METADATA_FILE_URI_STRING_INDEX] = sMetadataFileUri;
@@ -125,7 +125,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                                     //This should never happen, but Android Studio complains that it could.
                                     sDataRecord = new String[5];
                                 }
-                                if(sFileExtension.equals(".txt")){
+                                if(sFileExtension.equals(".tad")){
                                     //Prepare the Metadata entry
                                     String sMetadataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sFileName);
                                     sDataRecord[METADATA_FILE_URI_STRING_INDEX] = sMetadataFileUri;
@@ -188,8 +188,8 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 }
                 if (sMimeType.startsWith("video") ||
                         //sMediaFileExtension.equals(".gif") ||
-                        sMediaFileExtension.equals(".txt") ||
-                        (sMimeType.equals("application/octet-stream") && sMediaFileExtension.equals(".mp4"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
+                        sMediaFileExtension.equals(".tad") || //.dat but reversed as for a jumbled file name.
+                        (sMimeType.equals("application/octet-stream") && sMediaFileExtension.equals(".4pm"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                     //If not a file that we want to analyze...
                     continue; //If requesting images and mimeType is video or the file is text, go to next loop.
                     //Choosing to classify gifs as images as they are generally very limited in size.

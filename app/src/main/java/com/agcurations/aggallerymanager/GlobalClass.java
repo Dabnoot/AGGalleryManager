@@ -27,7 +27,6 @@ import android.webkit.WebSettings;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,7 +60,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.media3.common.MimeTypes;
 
 import com.google.common.io.BaseEncoding;
 
@@ -1216,6 +1214,7 @@ public class GlobalClass extends Application {
         //If calling this routine to add a new field:
         //  Update getCatalogRecordString before calling this routine.
         //  Update ConvertStringToCatalogItem after calling this routine.
+        //  Update the validateCatalogItemData routine to ensure no illegal characters appear in the data file.
 
         String sProgressMessage = "Writing " + gsCatalogFolderNames[iMediaCategory] + " catalog file...";
         if(!sSpecialProgressMessage.equals("")){
@@ -2445,12 +2444,12 @@ public class GlobalClass extends Application {
     //===== File System Subroutines Section ===================================================
     //=====================================================================================
 
-    public static String getUniqueFileName(Uri uriParent, String sOriginalFileName, boolean bReturnJumbledFileName){
+    public static String getUniqueFileName(Uri uriParent, String sOriginalFileName, boolean bReturnUniqueJumbledFileName){
         //This routine is used to check to see if a file name is in-use, and if so, return an alternate.
         ArrayList<String> alsFileNamesInUse = GetDirectoryFileNames(uriParent);
-        return getUniqueFileName(alsFileNamesInUse, sOriginalFileName, bReturnJumbledFileName);
+        return getUniqueFileName(alsFileNamesInUse, sOriginalFileName, bReturnUniqueJumbledFileName);
     }
-    public static String getUniqueFileName(File fileParent, String sOriginalFileName, boolean bReturnJumbledFileName) {
+    public static String getUniqueFileNameAppInternalTempStorage(File fileParent, String sOriginalFileName, boolean bReturnUniqueJumbledFileName) {
         //This routine is used to check to see if a file name is in-use, and if so, return an alternate.
         File[] fileFolderChildren = fileParent.listFiles();
         ArrayList<String> alsFileNamesInUse = new ArrayList<>();
@@ -2459,14 +2458,14 @@ public class GlobalClass extends Application {
                 alsFileNamesInUse.add(f.getName());
             }
         }
-        return getUniqueFileName(alsFileNamesInUse, sOriginalFileName, bReturnJumbledFileName);
+        return getUniqueFileName(alsFileNamesInUse, sOriginalFileName, bReturnUniqueJumbledFileName);
     }
 
-    public static String getUniqueFileName(ArrayList<String> alsFileNamesInUse, String sOriginalFileName, boolean bReturnJumbledFileName){
+    public static String getUniqueFileName(ArrayList<String> alsFileNamesInUse, String sOriginalFileName, boolean bReturnUniqueJumbledFileName){
         //This routine is used to check to see if a file name is in-use, and if so, return an alternate.
 
         String sFinalFileName = sOriginalFileName;
-        if(bReturnJumbledFileName) {
+        if(bReturnUniqueJumbledFileName) {
             //Jumble the file name before confirming there are no file duplicates.
 
             //Check to see if the file name is already jumbled. This may be the case particularly
@@ -2488,7 +2487,7 @@ public class GlobalClass extends Application {
             String sFileNameExtension = sOriginalFileName.substring(sOriginalFileName.lastIndexOf(".") + 1);
             sNewFileName = sNewFileName + "." + sFileNameExtension;
 
-            if(bReturnJumbledFileName) {
+            if(bReturnUniqueJumbledFileName) {
                 sNewFileName = JumbleFileName(sNewFileName);
             }
 
@@ -2837,11 +2836,18 @@ public class GlobalClass extends Application {
 
         alsRecognizedFileExtensions.add(".mp4");
         alsRecognizedFileExtensions.add(".webm");
+        alsRecognizedFileExtensions.add(".wmv");
+        alsRecognizedFileExtensions.add(".avi");
+        alsRecognizedFileExtensions.add(".mov");
+        alsRecognizedFileExtensions.add(".mkv");
+        alsRecognizedFileExtensions.add(".flv");
+        alsRecognizedFileExtensions.add(".ogg");
         alsRecognizedFileExtensions.add(".jpg");
         alsRecognizedFileExtensions.add(".jpeg");
         alsRecognizedFileExtensions.add(".gif");
         alsRecognizedFileExtensions.add(".tiff");
         alsRecognizedFileExtensions.add(".png");
+        alsRecognizedFileExtensions.add(".bmp");
         alsRecognizedFileExtensions.add(".ts");
 
         for(String sExtension: alsRecognizedFileExtensions){
@@ -2851,7 +2857,7 @@ public class GlobalClass extends Application {
             }
         }
 
-        return bExtensionRecognized;
+        return !bExtensionRecognized;
     }
 
 

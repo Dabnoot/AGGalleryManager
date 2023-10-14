@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
-import androidx.media3.common.MimeTypes;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -320,7 +319,43 @@ public class VideoEnabledWebView extends WebView
 
 
                         }
-                        sFileName = GlobalClass.getUniqueFileName(GlobalClass.gfImageDownloadHoldingFolderTemp, sFileName, false);
+                        //Two locations must be checked to confirm that the filename is unique. The file's final
+                        //  destination is the Holding folder. The file's intermediate destination is
+                        //  the App-internal storage directory, as an app can only download files to their
+                        //  own storage location. This app will move the file from HoldingTemp to Holding
+                        //  to prevent Android DL cleanup from removing "unused files". Therefore, the
+                        //  file name must be unique to both locations.
+
+                        String sFileNameCandidate = sFileName; //FileName is non-jumbled at this point.
+                        String sMetadataFileName = "";
+
+                        boolean bFileNamesAreUnique = false;
+                        int iMaxIterations = 10000;
+                        int iIteration = 0;
+                        while(!bFileNamesAreUnique) {
+                            iIteration++;
+                            sFileNameCandidate = GlobalClass.getUniqueFileName(GlobalClass.gUriImageDownloadHoldingFolder, sFileNameCandidate, true);
+                            sFileNameCandidate = GlobalClass.getUniqueFileNameAppInternalTempStorage(GlobalClass.gfImageDownloadHoldingFolderTemp, sFileNameCandidate, false);
+
+                            //The metadata filename must also be available and have a base name of the media file:
+                            sMetadataFileName = sFileNameCandidate + ".tad";  //.dat extension but jumbled.
+                            sMetadataFileName = GlobalClass.getUniqueFileName(GlobalClass.gUriImageDownloadHoldingFolder, sMetadataFileName, false);
+                            sMetadataFileName = GlobalClass.getUniqueFileNameAppInternalTempStorage(GlobalClass.gfImageDownloadHoldingFolderTemp, sMetadataFileName, false);
+
+                            String sMetadataFileNameCompareString = sMetadataFileName.substring(0, sMetadataFileName.lastIndexOf("."));
+                            if(sMetadataFileNameCompareString.equals(sFileNameCandidate)){
+                                bFileNamesAreUnique = true;
+                            } else {
+                                sFileNameCandidate = sFileName + "_" + iIteration;
+                            }
+                            if(iIteration > iMaxIterations){
+                                String sMessage = "Too many files of the same name in holding folder or holding folder temporary storage.";
+                                Toast.makeText(getContext(), sMessage, Toast.LENGTH_SHORT).show();
+                                return true;
+                            }
+
+                        }
+                        sFileName = sFileNameCandidate;
 
                         String sDownloadFolderRelativePath = GlobalClass.gsImageDownloadHoldingFolderTempRPath; //Android will DL to internal storage only.
                         String sDownloadManagerDownloadFolder;
@@ -368,7 +403,7 @@ public class VideoEnabledWebView extends WebView
 
                         Uri uriImageMetadataFile;
                         try {
-                            String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+
                             uriImageMetadataFile = DocumentsContract.createDocument(
                                     GlobalClass.gcrContentResolver,
                                     GlobalClass.gUriImageDownloadHoldingFolder,

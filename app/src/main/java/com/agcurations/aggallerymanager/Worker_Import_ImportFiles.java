@@ -116,7 +116,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
                     //If this file is in the image download holding folder, mark the metadata file for deletion as well.
                     String sFileName = GlobalClass.GetFileName(uriFileItem);
-                    String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+                    String sMetadataFileName = sFileName + ".tad"; //The file will have two extensions.
 
                     Uri uriMetadataFile = GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
                     if (!GlobalClass.CheckIfFileExists(uriMetadataFile)) {
@@ -177,8 +177,12 @@ public class Worker_Import_ImportFiles extends Worker {
                     }
                 }
                 //Create unique filename, then jumble:
-                sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, true);
-
+                if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
+                    //File name will already be jumbled, as this program place the file in the holding folder.
+                    sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, false);
+                } else {
+                    sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, true);
+                }
 
                 //Write next behavior to the screen log:
                 sLogLine = fileItem.sFileOrFolderName + " will be imported.";

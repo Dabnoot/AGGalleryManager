@@ -62,7 +62,7 @@ public class Fragment_Import_0b_ImageSource extends Fragment {
 
         for(String sFileName: sImageHoldingFolderFiles){
             String sExtension = sFileName.substring(sFileName.lastIndexOf("."));
-            if(!sExtension.equals(".txt")){
+            if(!sExtension.equals(".tad")){
                 iFileCount++;
             }
             iTotalFileCount++;

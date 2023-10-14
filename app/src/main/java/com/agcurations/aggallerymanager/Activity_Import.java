@@ -2060,7 +2060,7 @@ public class Activity_Import extends AppCompatActivity {
 
     static public Uri getHoldingFolderItemMetadataFileUri(String sFileNameUri){
         String sFileName = GlobalClass.GetFileName(sFileNameUri);
-        String sMetadataFileName = sFileName + ".txt"; //The file will have two extensions.
+        String sMetadataFileName = sFileName + ".tad"; //The file will have two extensions. tad is jumbled .dat.
         return GlobalClass.FormChildUri(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
     }
     static public Uri getHoldingFolderItemMetadataFileUri(Uri uriFileNameUri){
