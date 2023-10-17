@@ -506,7 +506,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdapter.ViewHolder holder, final int position) { //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
+        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdapter.ViewHolder holder, final int position) {
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
@@ -742,9 +742,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
             holder.imageView_Thumbnail.setOnClickListener(v -> {
-                giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
+                giRecyclerViewLastSelectedPosition = holder.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
+                //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
+
                 if (gbDebugTouch)
-                    Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Click Item Number " + holder.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
                 else
                     Toast.makeText(getApplicationContext(), "Opening...", Toast.LENGTH_LONG).show();
 
