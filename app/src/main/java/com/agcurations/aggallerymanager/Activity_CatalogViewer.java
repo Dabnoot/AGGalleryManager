@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -145,13 +144,10 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         gTextView_GroupIDClipboardLabel = findViewById(R.id.textView_GroupIDClipboardLabel);
         gTextView_GroupIDClipboard = findViewById(R.id.textView_GroupIDClipboard);
         gImageButton_ClearGroupingClipboard = findViewById(R.id.imageButton_ClearGroupingClipboard);
-        gImageButton_ClearGroupingClipboard.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                GlobalClass.gsGroupIDClip = "";
-                updateVisibleRecyclerItems();
-                gLinearLayout_GroupingModeNotifier.setVisibility(View.INVISIBLE);
-            }
+        gImageButton_ClearGroupingClipboard.setOnClickListener(v -> {
+            GlobalClass.gsGroupIDClip = "";
+            updateVisibleRecyclerItems();
+            gLinearLayout_GroupingModeNotifier.setVisibility(View.INVISIBLE);
         });
 
         ApplicationLogWriter("Creating ResponseReceiver");
@@ -187,12 +183,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
         drawer_layout_sort.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
-        drawer_layout_sort.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
-            @Override
-            public void run() {
-                drawer_layout_sort.closeDrawer(GravityCompat.START);
-            }
-        }, 1500);
+        //Configure a runnable to close the drawer after a timeout.
+        drawer_layout_sort.postDelayed(() ->
+                drawer_layout_sort.closeDrawer(GravityCompat.START), 1500);
 
         //Populate the CatalogDataEditor fragment:
         if(gFragment_CatalogDataEditor == null) {
@@ -208,12 +201,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         final DrawerLayout drawer_layout_data = findViewById(R.id.drawer_layout_data);
         drawer_layout_data.openDrawer(GravityCompat.END); //Start the drawer open so that the user knows it's there.
-        drawer_layout_data.postDelayed(new Runnable() { //Configure a runnable to close the drawer after a timeout.
-            @Override
-            public void run() {
-                drawer_layout_data.closeDrawer(GravityCompat.END);
-            }
-        }, 1500);
+        //Configure a runnable to close the drawer after a timeout.
+        drawer_layout_data.postDelayed(() ->
+                drawer_layout_data.closeDrawer(GravityCompat.END), 1500);
 
         populate_RecyclerViewCatalogItems();
 
@@ -297,7 +287,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(final MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
         //Display a message showing the name of the item selected.
         return super.onOptionsItemSelected(item);
     }
@@ -348,7 +338,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
 
                     //Apply the new TreeMap to the RecyclerView:
-                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(globalClass.gtmCatalogViewerDisplayTreeMap);
+                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(GlobalClass.gtmCatalogViewerDisplayTreeMap);
                     gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
                     gRecyclerViewCatalogAdapter.notifyDataSetChanged();
                     if(giRecyclerViewLastSelectedPosition > -1){
@@ -516,7 +506,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdapter.ViewHolder holder, final int position) {
+        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdapter.ViewHolder holder, final int position) { //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
@@ -751,26 +741,23 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
 
-            holder.imageView_Thumbnail.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
-                    if (gbDebugTouch)
-                        Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
-                    else
-                        Toast.makeText(getApplicationContext(), "Opening...", Toast.LENGTH_LONG).show();
+            holder.imageView_Thumbnail.setOnClickListener(v -> {
+                giRecyclerViewLastSelectedPosition = position; //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
+                if (gbDebugTouch)
+                    Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_LONG).show();
+                else
+                    Toast.makeText(getApplicationContext(), "Opening...", Toast.LENGTH_LONG).show();
 
-                    if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                        StartVideoPlayerActivity(treeMap, ci_final.sItemID);
+                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    StartVideoPlayerActivity(treeMap, ci_final.sItemID);
 
-                    } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                        //Temporarily set the image catalog to use the video player activity to display images until the
-                        // SeriesImageViewer activity is genericized (was previously comic page viewer):
-                        StartVideoPlayerActivity(treeMap, ci_final.sItemID);
+                } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                    //Temporarily set the image catalog to use the video player activity to display images until the
+                    // SeriesImageViewer activity is genericized (was previously comic page viewer):
+                    StartVideoPlayerActivity(treeMap, ci_final.sItemID);
 
-                    } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                        StartComicViewerActivity(ci_final);
-                    }
+                } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    StartComicViewerActivity(ci_final);
                 }
             });
 
@@ -808,45 +795,36 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             if(holder.button_Delete != null) {
 
                 final String sItemNameToDelete = sItemName;
-                holder.button_Delete.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        //Present confirmation that the user wishes to delete this item.
-                        String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
+                holder.button_Delete.setOnClickListener(view -> {
+                    //Present confirmation that the user wishes to delete this item.
+                    String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogViewer.this, R.style.AlertDialogCustomStyle);
-                        builder.setTitle("Delete Item");
-                        builder.setMessage(sConfirmationMessage);
-                        //builder.setIcon(R.drawable.ic_launcher);
-                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                                Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogViewer.this, R.style.AlertDialogCustomStyle);
+                    builder.setTitle("Delete Item");
+                    builder.setMessage(sConfirmationMessage);
+                    //builder.setIcon(R.drawable.ic_launcher);
+                    builder.setPositiveButton("Yes", (dialog, id) -> {
+                        dialog.dismiss();
+                        Toast.makeText(getApplicationContext(), "Deleting item...", Toast.LENGTH_LONG).show();
 
-                                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-                                String sCatalogRecord = GlobalClass.getCatalogRecordString(ci_final);
-                                Data dataCatalogDeleteItem = new Data.Builder()
-                                        .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogViewer:btnDelete.OnClickListener.OnClick")
-                                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                                        .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
-                                        .build();
-                                OneTimeWorkRequest otwrCatalogDeleteItem = new OneTimeWorkRequest.Builder(Worker_Catalog_DeleteItem.class)
-                                        .setInputData(dataCatalogDeleteItem)
-                                        .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
-                                        .build();
-                                WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
-                            }
-                        });
-                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                            }
-                        });
-                        AlertDialog adConfirmationDialog = builder.create();
-                        adConfirmationDialog.show();
+                        Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                        String sCatalogRecord = GlobalClass.getCatalogRecordString(ci_final);
+                        Data dataCatalogDeleteItem = new Data.Builder()
+                                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogViewer:btnDelete.OnClickListener.OnClick")
+                                .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                                .putString(GlobalClass.EXTRA_CATALOG_ITEM, sCatalogRecord)
+                                .build();
+                        OneTimeWorkRequest otwrCatalogDeleteItem = new OneTimeWorkRequest.Builder(Worker_Catalog_DeleteItem.class)
+                                .setInputData(dataCatalogDeleteItem)
+                                .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
+                                .build();
+                        WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
+                    });
+                    builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                    AlertDialog adConfirmationDialog = builder.create();
+                    adConfirmationDialog.show();
 
 
-                    }
                 });
             }
 
@@ -976,16 +954,66 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
                 }
 
-                holder.imageButton_GroupIDNew.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ci.sGroupID = GlobalClass.getNewGroupID();
+                holder.imageButton_GroupIDNew.setOnClickListener(v -> {
+                    ci.sGroupID = GlobalClass.getNewGroupID();
+                    int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                    ci.iGroupingControlsColor = iColors[0];
+                    ci.iGroupingControlsContrastColor = iColors[1];
+                    ci.iGroupingControlHighlight = iColors[2];
+                    ci.iGroupingControlHighlightContrastColor = iColors[3];
+                    holder.textView_GroupID.setText(ci.sGroupID);
+                    setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                    setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                    setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                    applyGroupingControlsColor(
+                            ci,
+                            holder.linearLayout_GroupingControls,
+                            ibGroupingControls,
+                            tvGroupingTextViews);
+                    Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
+                    globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+                });
+
+                holder.imageButton_GroupIDCopy.setOnClickListener(v -> {
+                    boolean bGroupControlsAlreadyOpen = !GlobalClass.gsGroupIDClip.equals("");
+                    GlobalClass.gsGroupIDClip = ci.sGroupID;
+                    gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
+
+                    //Set the colors of the grouping mode notifier to match the calculated colors from the group ID:
+                    int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
+                    gTextView_GroupIDClipboardLabel.setTextColor(iColors[1]);
+                    gTextView_GroupIDClipboard.setTextColor(iColors[1]);
+                    //Change the color of the 'close' icon for proper contrast:
+                    Drawable drawable_Baseline_Close_24 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.baseline_close_24);
+                    if(drawable_Baseline_Close_24 != null) {
+                        Drawable drawable = drawable_Baseline_Close_24.mutate();
+                        drawable.setColorFilter(new PorterDuffColorFilter(iColors[1], PorterDuff.Mode.SRC_IN));
+                        gImageButton_ClearGroupingClipboard.setImageDrawable(drawable);
+                    }
+                    //Set the grouping mode notifier background and border colors:
+                    GradientDrawable drawable = (GradientDrawable)gLinearLayout_GroupingModeNotifier.getBackground();
+                    //drawable.mutate(); // only change this instance of the xml, not all components using this xml
+                    drawable.setStroke(globalClass.ConvertDPtoPX(1), iColors[1]); // set stroke width and stroke color
+                    drawable.setColor(iColors[0]); //Don't use .setTint for this, as it will override the stroke (border).
+
+                    gTextView_GroupIDClipboard.setText(GlobalClass.gsGroupIDClip);
+
+                    if(!bGroupControlsAlreadyOpen){
+                        updateVisibleRecyclerItems();
+                    }
+
+                    //Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
+                });
+
+                holder.imageButton_GroupIDPaste.setOnClickListener(v -> {
+                    if (!GlobalClass.gsGroupIDClip.equals("")) {
+                        ci.sGroupID = GlobalClass.gsGroupIDClip;
                         int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
                         ci.iGroupingControlsColor = iColors[0];
                         ci.iGroupingControlsContrastColor = iColors[1];
                         ci.iGroupingControlHighlight = iColors[2];
                         ci.iGroupingControlHighlightContrastColor = iColors[3];
-                        holder.textView_GroupID.setText(ci.sGroupID);
+                        holder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
                         setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
                         setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
@@ -994,140 +1022,72 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                 holder.linearLayout_GroupingControls,
                                 ibGroupingControls,
                                 tvGroupingTextViews);
-                        Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "Group ID pasted.", Toast.LENGTH_SHORT).show();
                         globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                     }
                 });
 
-                holder.imageButton_GroupIDCopy.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        boolean bGroupControlsAlreadyOpen = !GlobalClass.gsGroupIDClip.equals("");
-                        GlobalClass.gsGroupIDClip = ci.sGroupID;
-                        gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
-
-                        //Set the colors of the grouping mode notifier to match the calculated colors from the group ID:
-                        int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
-                        gTextView_GroupIDClipboardLabel.setTextColor(iColors[1]);
-                        gTextView_GroupIDClipboard.setTextColor(iColors[1]);
-                        //Change the color of the 'close' icon for proper contrast:
-                        Drawable drawable_Baseline_Close_24 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.baseline_close_24);
-                        if(drawable_Baseline_Close_24 != null) {
-                            Drawable drawable = drawable_Baseline_Close_24.mutate();
-                            drawable.setColorFilter(new PorterDuffColorFilter(iColors[1], PorterDuff.Mode.SRC_IN));
-                            gImageButton_ClearGroupingClipboard.setImageDrawable(drawable);
-                        }
-                        //Set the grouping mode notifier background and border colors:
-                        GradientDrawable drawable = (GradientDrawable)gLinearLayout_GroupingModeNotifier.getBackground();
-                        //drawable.mutate(); // only change this instance of the xml, not all components using this xml
-                        drawable.setStroke(globalClass.ConvertDPtoPX(1), iColors[1]); // set stroke width and stroke color
-                        drawable.setColor(iColors[0]); //Don't use .setTint for this, as it will override the stroke (border).
-
-                        gTextView_GroupIDClipboard.setText(GlobalClass.gsGroupIDClip);
-
-                        if(!bGroupControlsAlreadyOpen){
-                            updateVisibleRecyclerItems();
-                        }
-
-                        //Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
-                    }
+                holder.imageButton_GroupIDRemove.setOnClickListener(v -> {
+                    ci.sGroupID = "";
+                    ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
+                    ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+                    ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
+                    ci.iGroupingControlHighlightContrastColor = 0;
+                    applyGroupingControlsColor(
+                            ci,
+                            holder.linearLayout_GroupingControls,
+                            ibGroupingControls,
+                            tvGroupingTextViews);
+                    holder.textView_GroupID.setText("----");
+                    setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
+                    setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
+                    setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
+                    Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
+                    globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                 });
 
-                holder.imageButton_GroupIDPaste.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (!GlobalClass.gsGroupIDClip.equals("")) {
-                            ci.sGroupID = GlobalClass.gsGroupIDClip;
-                            int[] iColors = calculateGroupingControlsColors(ci.sGroupID);
-                            ci.iGroupingControlsColor = iColors[0];
-                            ci.iGroupingControlsContrastColor = iColors[1];
-                            ci.iGroupingControlHighlight = iColors[2];
-                            ci.iGroupingControlHighlightContrastColor = iColors[3];
-                            holder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
-                            setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
-                            setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
-                            setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
-                            applyGroupingControlsColor(
-                                    ci,
-                                    holder.linearLayout_GroupingControls,
-                                    ibGroupingControls,
-                                    tvGroupingTextViews);
-                            Toast.makeText(getApplicationContext(), "Group ID pasted.", Toast.LENGTH_SHORT).show();
-                            globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
-                        }
+                holder.imageButton_GroupIDFilter.setOnClickListener(v -> {
+                    if(ci.bSearchByGroupID){ //Technically it is a search, but we are using the filter icon.
+                        //Filter is on, turn it off.
+                        holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlsColor);
+                        holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlsContrastColor);
+                        ci.bSearchByGroupID = false;
+                        holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_24);
+                        GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = "";
+                        //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
+                    } else {
+                        //Filter is off, turn it on.
+                        holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
+                        holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                        ci.bSearchByGroupID = true;
+                        holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_off_24);
+                        GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = ci.sGroupID;
+                        //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
                     }
+                    populate_RecyclerViewCatalogItems(); //This will cause a set all of the shown items' ci.bSearchByGroupID members.
                 });
 
-                holder.imageButton_GroupIDRemove.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ci.sGroupID = "";
-                        ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
-                        ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
-                        ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
-                        ci.iGroupingControlHighlightContrastColor = 0;
-                        applyGroupingControlsColor(
-                                ci,
-                                holder.linearLayout_GroupingControls,
-                                ibGroupingControls,
-                                tvGroupingTextViews);
-                        holder.textView_GroupID.setText("----");
-                        setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
-                        setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
-                        setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
-                        Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
-                        globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
-                    }
-                });
-
-                holder.imageButton_GroupIDFilter.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if(ci.bSearchByGroupID){ //Technically it is a search, but we are using the filter icon.
-                            //Filter is on, turn it off.
-                            holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlsColor);
-                            holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlsContrastColor);
-                            ci.bSearchByGroupID = false;
-                            holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_24);
-                            GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = "";
-                            //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
-                        } else {
-                            //Filter is off, turn it on.
-                            holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
-                            holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
-                            ci.bSearchByGroupID = true;
-                            holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_off_24);
-                            GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = ci.sGroupID;
-                            //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
-                        }
-                        populate_RecyclerViewCatalogItems(); //This will cause a set all of the shown items' ci.bSearchByGroupID members.
-                    }
-                });
-
-                holder.imageButton_CloseGroupingControls.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
-                        holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
-                        ci.bShowGroupingControls = false;
-                        if(!ci.sGroupID.equals("")){
-                            //If this item has a group ID, then if it is open it is likely that there are other items
-                            //  of the same group that are showing their group controls. If the user
-                            //  is hiding this item's grouping controls, then they likely want the other group
-                            //  items' controls hidden as well. Hide them.
-                            boolean bOtherGroupItemsFound = false;
-                            for(Map.Entry<Integer, ItemClass_CatalogItem> entry: treeMap.entrySet()){
-                                ItemClass_CatalogItem icci = entry.getValue();
-                                if(!icci.sGroupID.equals("")){
-                                    if(icci.sGroupID.equals(ci.sGroupID)){
-                                        icci.bShowGroupingControls = false;
-                                        bOtherGroupItemsFound = true;
-                                    }
+                holder.imageButton_CloseGroupingControls.setOnClickListener(v -> {
+                    holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                    holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
+                    ci.bShowGroupingControls = false;
+                    if(!ci.sGroupID.equals("")){
+                        //If this item has a group ID, then if it is open it is likely that there are other items
+                        //  of the same group that are showing their group controls. If the user
+                        //  is hiding this item's grouping controls, then they likely want the other group
+                        //  items' controls hidden as well. Hide them.
+                        boolean bOtherGroupItemsFound = false;
+                        for(Map.Entry<Integer, ItemClass_CatalogItem> entry: treeMap.entrySet()){
+                            ItemClass_CatalogItem icci = entry.getValue();
+                            if(!icci.sGroupID.equals("")){
+                                if(icci.sGroupID.equals(ci.sGroupID)){
+                                    icci.bShowGroupingControls = false;
+                                    bOtherGroupItemsFound = true;
                                 }
                             }
-                            if(bOtherGroupItemsFound){
-                                updateVisibleRecyclerItems();
-                            }
+                        }
+                        if(bOtherGroupItemsFound){
+                            updateVisibleRecyclerItems();
                         }
                     }
                 });
@@ -1324,14 +1284,24 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         public void updateItem(String sItemID){
             //Created for enabling the update of thumbnail image created by user action in Activity_VideoPlayer.
-            for (int i = 0; i <= mapKeys.length; i++) {
-                if(treeMap.get(i) != null) {
-                    if (treeMap.get(mapKeys[i]).sItemID.equals(sItemID)) {
-                        gRecyclerViewCatalogAdapter.notifyItemChanged(i);
-                        break;
+            try {
+                for (int i = 0; i <= mapKeys.length; i++) {
+                    //TreeMap<Integer, ItemClass_CatalogItem>
+                    ItemClass_CatalogItem icci = treeMap.get(mapKeys[i]);
+                    if(icci != null) {
+                        if (icci.sItemID.equals(sItemID)) {
+                            gRecyclerViewCatalogAdapter.notifyItemChanged(i);
+                            return;
+                        }
                     }
                 }
+            } catch (Exception e){
+                String sMessage = "Trouble finding item ID " + sItemID + ".\n" +
+                        "Error: " + e.getMessage();
+                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                return;
             }
+            Toast.makeText(getApplicationContext(), "Could not find item ID " + sItemID, Toast.LENGTH_SHORT).show();
         }
 
 
@@ -1410,7 +1380,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
             int first = linearLayoutManager.findFirstVisibleItemPosition();
             int last = linearLayoutManager.findLastVisibleItemPosition();
-            RecyclerView.ViewHolder viewHolder;
             for (int i = first; i <= last; i++) {
                 gRecyclerViewCatalogAdapter.notifyItemChanged(i);
             }
