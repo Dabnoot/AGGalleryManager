@@ -92,6 +92,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     RelativeLayout gRelativeLayout_Adjacency_Analysis_Progress;
     ProgressBar gProgressBar_AnalysisProgress;
     TextView gTextView_AnalysisProgressBarText;
+    RelativeLayout gRelativeLayout_Adjacencies;
     RecyclerView gRecyclerView_Adjacencies;
 
 
@@ -774,13 +775,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             });
         }
 
+        RelativeLayout relativeLayout_Adjacencies = findViewById(R.id.relativeLayout_Adjacencies);
         if(gbLookForFileAdjacencies){
 
             //Include the import location:
             sFileNameTextLine = GlobalClass.cleanHTMLCodedCharacters(galFileItems.get(giFileItemIndex).sUri);
             textView_FileName.setText(sFileNameTextLine);
 
-            RelativeLayout relativeLayout_Adjacencies = findViewById(R.id.relativeLayout_Adjacencies);
             relativeLayout_Adjacencies.setVisibility(View.VISIBLE);
 
             gRecyclerView_Adjacencies = findViewById(R.id.recyclerView_Adjacencies);
@@ -838,6 +839,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     .build();
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrStartAdjacencyAnalyzer);
 
+        } else {
+            relativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
         }
 
     }
@@ -1014,10 +1017,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 if (bAdjacencyAnalyzerComplete) {
                     gRelativeLayout_Adjacency_Analysis_Progress.setVisibility(View.INVISIBLE);
                     if(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap.size() == 0){
-                        gRecyclerView_Adjacencies.setVisibility(View.INVISIBLE);
+                        gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
                     } else {
                         //Initiate the RecyclerView:
-                        gRecyclerView_Adjacencies.setVisibility(View.VISIBLE);
+                        gRelativeLayout_Adjacencies.setVisibility(View.VISIBLE);
                         RecyclerViewCatalogAdjacencyAdapter gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdjacencyAdapter(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap);
                         gRecyclerView_Adjacencies.setAdapter(gRecyclerViewCatalogAdapter);
                     }
