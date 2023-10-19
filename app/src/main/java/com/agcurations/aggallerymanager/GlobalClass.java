@@ -112,6 +112,13 @@ public class GlobalClass extends Application {
 
     public static ContentResolver gcrContentResolver;
 
+    public static int PRINTABLE = 0;
+    public static int CHECKABLE = 1;
+    public static final String[][] gsIllegalRecordStrings = {
+            {"%%", "%%"},
+            {"\\n", "\n"},
+            {"\\r", "\r"}}; //{Printable notification, actual illegal string/character}
+
     //Tag variables:
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
@@ -1288,6 +1295,121 @@ public class GlobalClass extends Application {
         return "";
     }
 
+    static public ItemClass_CatalogItem validateCatalogItemData(ItemClass_CatalogItem icci){
+
+        //There are some characters and or character sequences that are not allowed in the
+        //  catalog file.
+        //  -Double percent symbol. This is used to indicate start of text.
+        //  -Newline character.
+        //  -Carriage return character.
+
+        //Check all string fields to ensure that there are no illegal strings.
+        boolean bIllegalString = false;
+
+        //Note: It would be nice to create an array of objects representing the Strings so that
+        //  an array can be formed and the array can be processed in such a way that a modification
+        //  can be done on the icci memory location, but this is not possible. Any changes to those
+        //  strings do not occur on the memory locations in icci. It is possible to change the
+        //  variable type in ItemClass_CatalogItem, but that would require sweeping modifications
+        //  across the application and lots of testing to ensure that unintended changes do not
+        //  occur.
+
+        /*Object[][] oExaminationItems = {
+                {"", ((Object) icci.sTags					)},
+                {"", ((Object) icci.sFilename				)},
+                {"", ((Object) icci.sFolderRelativePath		)},
+                {"", ((Object) icci.sCast					)},
+                {"", ((Object) icci.sDuration_Text			)},
+                {"", ((Object) icci.sResolution				)},
+                {"", ((Object) icci.sThumbnail_File			)},
+                {"", ((Object) icci.sComicArtists			)},
+                {"", ((Object) icci.sComicCategories		)},
+                {"", ((Object) icci.sComicCharacters		)},
+                {"", ((Object) icci.sComicGroups			)},
+                {"", ((Object) icci.sComicLanguages			)},
+                {"", ((Object) icci.sComicParodies			)},
+                {"", ((Object) icci.sTitle					)},
+                {"", ((Object) icci.sComic_Missing_Pages	)},
+                {"", ((Object) icci.sSource					)},
+                {"", ((Object) icci.sVideoLink				)}};*/
+
+        String[][] sFieldsAndData = {
+                {"Tags"						,icci.sTags						},
+                {"Filename"					,icci.sFilename					},
+                {"FolderRelativePath"		,icci.sFolderRelativePath		},
+                {"Cast"						,icci.sCast						},
+                {"Duration_Text"			,icci.sDuration_Text			},
+                {"Resolution"				,icci.sResolution				},
+                {"Thumbnail_File"			,icci.sThumbnail_File			},
+                {"ComicArtists"				,icci.sComicArtists				},
+                {"ComicCategories"			,icci.sComicCategories			},
+                {"ComicCharacters"			,icci.sComicCharacters			},
+                {"ComicGroups"				,icci.sComicGroups				},
+                {"ComicLanguages"			,icci.sComicLanguages			},
+                {"ComicParodies"			,icci.sComicParodies			},
+                {"Title"					,icci.sTitle					},
+                {"Comic_Missing_Pages"		,icci.sComic_Missing_Pages		},
+                {"Source"					,icci.sSource					},
+                {"VideoLink"				,icci.sVideoLink				}};
+
+        StringBuilder sbDataIssueNarrative = new StringBuilder();
+
+        for(String[] sIllegalStringSet: gsIllegalRecordStrings) {
+            for(int i = 0; i < sFieldsAndData.length; i++){
+                bIllegalString = sFieldsAndData[i][CHECKABLE].contains(sIllegalStringSet[CHECKABLE]);
+                if(bIllegalString) {
+                    icci.bIllegalDataFound = true;
+                    sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[PRINTABLE]).append(" found in ").append(sFieldsAndData[i][PRINTABLE]).append(" field.\n");
+                    sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n");
+                    sFieldsAndData[i][CHECKABLE] = sFieldsAndData[i][CHECKABLE].replace(sIllegalStringSet[CHECKABLE],"");
+                    sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n\n");
+                }
+                switch (i){
+                    case 0: icci.sTags                   = sFieldsAndData[i][1]; break;
+                    case 1: icci.sFilename               = sFieldsAndData[i][1]; break;
+                    case 2: icci.sFolderRelativePath     = sFieldsAndData[i][1]; break;
+                    case 3: icci.sCast                   = sFieldsAndData[i][1]; break;
+                    case 4: icci.sDuration_Text          = sFieldsAndData[i][1]; break;
+                    case 5: icci.sResolution             = sFieldsAndData[i][1]; break;
+                    case 6: icci.sThumbnail_File         = sFieldsAndData[i][1]; break;
+                    case 7: icci.sComicArtists           = sFieldsAndData[i][1]; break;
+                    case 8: icci.sComicCategories        = sFieldsAndData[i][1]; break;
+                    case 9: icci.sComicCharacters        = sFieldsAndData[i][1]; break;
+                    case 10: icci.sComicGroups           = sFieldsAndData[i][1]; break;
+                    case 11: icci.sComicLanguages        = sFieldsAndData[i][1]; break;
+                    case 12: icci.sComicParodies         = sFieldsAndData[i][1]; break;
+                    case 13: icci.sTitle                 = sFieldsAndData[i][1]; break;
+                    case 14: icci.sComic_Missing_Pages   = sFieldsAndData[i][1]; break;
+                    case 15: icci.sSource                = sFieldsAndData[i][1]; break;
+                    case 16: icci.sVideoLink             = sFieldsAndData[i][1]; break;
+                }
+            }
+        }
+
+        if(icci.bIllegalDataFound){
+            icci.sIllegalDataNarrative = sbDataIssueNarrative.toString();
+        }
+
+        //Verify user names are acceptable.
+        for (String[] sIllegalStringSet : gsIllegalRecordStrings) {
+            for (String sApprovedUser : icci.alsApprovedUsers) {
+                bIllegalString = sApprovedUser.contains(sIllegalStringSet[CHECKABLE]);
+                if (bIllegalString) {
+                    //If there is a user name containing an illegal character, null the icci as this
+                    // is an unacceptable condition at any time. A corrected username would cause
+                    // the item to disappear within the program as there would be no matching username.
+                    icci = null;
+                    break;
+                }
+            }
+            if (bIllegalString) break;
+        }
+
+        return icci;
+    }
+
+
+
     //Catalog backup handled in Service_Main.
 
     public ItemClass_CatalogItem analyzeComicReportMissingPages(ItemClass_CatalogItem ci){
@@ -2236,7 +2358,61 @@ public class GlobalClass extends Application {
 
     }
 
+    static public ItemClass_Tag validateTagData(ItemClass_Tag ict){
 
+        //There are some characters and or character sequences that are not allowed in the
+        //  tag file.
+        //  -Double percent symbol. This is used to indicate start of text.
+        //  -Newline character.
+        //  -Carriage return character.
+
+        //Check all string fields to ensure that there are no illegal strings.
+        boolean bIllegalString = false;
+
+        String[][] sFieldsAndData = {
+                {"TagText"		    	,ict.sTagText			},
+                {"TagDescription"		,ict.sTagDescription	}};
+
+        StringBuilder sbDataIssueNarrative = new StringBuilder();
+
+        for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+            for(int i = 0; i < sFieldsAndData.length; i++){
+                bIllegalString = sFieldsAndData[i][GlobalClass.CHECKABLE].contains(sIllegalStringSet[GlobalClass.CHECKABLE]);
+                if(bIllegalString) {
+                    ict.bIllegalDataFound = true;
+                    sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[GlobalClass.PRINTABLE]).append(" found in ").append(sFieldsAndData[i][GlobalClass.PRINTABLE]).append(" field.\n");
+                    sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n");
+                    sFieldsAndData[i][GlobalClass.CHECKABLE] = sFieldsAndData[i][GlobalClass.CHECKABLE].replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                    sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n\n");
+                }
+                switch (i){
+                    case 0: ict.sTagText            = sFieldsAndData[i][1]; break;
+                    case 1: ict.sTagDescription     = sFieldsAndData[i][1]; break;
+                }
+            }
+        }
+
+        if(ict.bIllegalDataFound){
+            ict.sIllegalDataNarrative = sbDataIssueNarrative.toString();
+        }
+
+        //Verify user names are acceptable.
+        for (String[] sIllegalStringSet : GlobalClass.gsIllegalRecordStrings) {
+            for (String sApprovedUser : ict.alsTagApprovedUsers) {
+                bIllegalString = sApprovedUser.contains(sIllegalStringSet[GlobalClass.CHECKABLE]);
+                if (bIllegalString) {
+                    //If there is a user name containing an illegal character, null the ict as this
+                    // is an unacceptable condition at any time. A corrected username would cause
+                    // the item to disappear within the program as there would be no matching username.
+                    ict = null;
+                    break;
+                }
+            }
+            if (bIllegalString) break;
+        }
+
+        return ict;
+    }
 
 
     //==================================================================================================

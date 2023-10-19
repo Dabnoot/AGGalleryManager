@@ -234,6 +234,22 @@ public class Worker_Import_VideoDownload extends Worker {
         }
 
         try {
+            //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
+            ciNew = GlobalClass.validateCatalogItemData(ciNew);
+            if(ciNew == null){
+                //If we are here, validateCatalogItemData found a critical error, such as illegal character in user name;
+                globalClass.BroadcastProgress(true, "Critical error with formation of data record. Download aborted. Record creation aborted.",
+                        false, 0,
+                        false, "",
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+                return Result.failure();
+            }
+            if(ciNew.bIllegalDataFound){
+                globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
+                        false, 0,
+                        false, "",
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            }
             globalClass.CatalogDataFile_CreateNewRecord(ciNew);
         } catch (Exception e) {
             e.printStackTrace();
@@ -290,7 +306,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     if(ciNew.sThumbnail_File.equals("")){
                         //If there is no thumbnail file marked for download, specify the file name of the first .ts file
                         //  as the file name for the thumbnail file to be used by the catalog:
-                        ciNew.sThumbnail_File = sNewFilename;
+                        ciNew.sThumbnail_File = sNewFilename; //todo: Does this line actually get hit? And if so, is the data recorded with the creation of the data record?
                     }
                 }
 

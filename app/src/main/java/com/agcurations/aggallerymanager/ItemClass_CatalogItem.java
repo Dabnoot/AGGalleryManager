@@ -77,4 +77,6 @@ public class ItemClass_CatalogItem implements Serializable {
     public int iGroupingControlHighlight;               //Does not matter without an assigned group ID - used to indicate that the filter is on.
     public int iGroupingControlHighlightContrastColor;  //Does not matter without an assigned group ID - used to indicate that the filter is on.
 
+    public boolean bIllegalDataFound = false; //Used during import.
+    public String sIllegalDataNarrative = "";
 }

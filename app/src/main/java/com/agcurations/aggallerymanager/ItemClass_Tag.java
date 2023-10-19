@@ -1,5 +1,7 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.annotation.NonNull;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -24,7 +26,10 @@ public class ItemClass_Tag implements Serializable {
 
     int iHistogramCount = 0;            //To count the number of times this tag is used.
 
-    public ItemClass_Tag(int _iTagID, String _sTagText) {
+    public boolean bIllegalDataFound = false; //Used during tag creation or editing.
+    public String sIllegalDataNarrative = "";
+
+    public ItemClass_Tag(int _iTagID, @NonNull String _sTagText) {
         this.iTagID = _iTagID;
         this.sTagText = _sTagText;
     }

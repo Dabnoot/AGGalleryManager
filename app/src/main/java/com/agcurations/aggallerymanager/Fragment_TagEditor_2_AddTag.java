@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -17,7 +16,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -142,18 +140,12 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 button_AddTag.setText("Add Tag");
                 textView_NewTagTitle.setText("New Tag");
             }
-            button_AddTag.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    button_AddTag_Click(v);
-                }
-            });
+            button_AddTag.setOnClickListener(this::button_AddTag_Click);
 
             Button button_Finish = getView().findViewById(R.id.button_Finish);
-            button_Finish.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    if(getActivity() != null) {
-                        ((Activity_TagEditor) getActivity()).callForFinish();
-                    }
+            button_Finish.setOnClickListener(v -> {
+                if(getActivity() != null) {
+                    ((Activity_TagEditor) getActivity()).callForFinish();
                 }
             });
 
@@ -167,76 +159,58 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
 
             gCheckBox_SetApprovedUsers = getView().findViewById(R.id.checkBox_SetApprovedUsers);
-            gCheckBox_SetApprovedUsers.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
-                }
-            });
+            gCheckBox_SetApprovedUsers.setOnClickListener(v -> ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked()));
 
             TextView textView_labelRestrictTagToUserIDs = getView().findViewById(R.id.textView_labelRestrictToUsers);
-            textView_labelRestrictTagToUserIDs.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    gCheckBox_SetApprovedUsers.setChecked(!gCheckBox_SetApprovedUsers.isChecked());
-                    ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
-                }
+            textView_labelRestrictTagToUserIDs.setOnClickListener(v -> {
+                gCheckBox_SetApprovedUsers.setChecked(!gCheckBox_SetApprovedUsers.isChecked());
+                ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
             });
 
             //Initialize the user list:
             //Initialize the displayed list of users:
             RefreshUserPools();
             ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
-            listView_UserPool.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
-                    icu.bIsChecked = !icu.bIsChecked;
-                    if(getActivity() == null) return;
-                    if(icu.bIsChecked){
-                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                    } else {
-                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
-                    }
-                } //End if ListView.onItemClick().
+            //End if ListView.onItemClick().
+            listView_UserPool.setOnItemClickListener((parent, view, position, id) -> {
+                final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+                icu.bIsChecked = !icu.bIsChecked;
+                if(getActivity() == null) return;
+                if(icu.bIsChecked){
+                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                } else {
+                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+                }
             }); //End ListView.setOnItemClickListener()
 
             ListView listView_ApprovedUsers = getView().findViewById(R.id.listView_ApprovedUsers);
-            listView_ApprovedUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
-                    icu.bIsChecked = !icu.bIsChecked;
-                    if(getActivity() == null) return;
-                    if(icu.bIsChecked){
-                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                    } else {
-                        view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
-                    }
-                } //End if ListView.onItemClick().
+            //End if ListView.onItemClick().
+            listView_ApprovedUsers.setOnItemClickListener((parent, view, position, id) -> {
+                final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+                icu.bIsChecked = !icu.bIsChecked;
+                if(getActivity() == null) return;
+                if(icu.bIsChecked){
+                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                } else {
+                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+                }
             }); //End ListView.setOnItemClickListener()
 
             //Configure the buttons that transfer users from the "user pool" to "selected users" for tag restricted-to selection:
             ImageButton imageButton_AddUser = getView().findViewById(R.id.imageButton_AddUser);
-            imageButton_AddUser.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ArrayList<ItemClass_User> alicu_UsersToAdd = gAdapterUserPool.GetSelectedUsers();
-                    gAdapterApprovedUsers.AddUsers(alicu_UsersToAdd);
-                    gAdapterApprovedUsers.uncheckAll();
-                    gAdapterUserPool.RemoveUsersFromList(alicu_UsersToAdd);
-                }
+            imageButton_AddUser.setOnClickListener(v -> {
+                ArrayList<ItemClass_User> alicu_UsersToAdd = gAdapterUserPool.GetSelectedUsers();
+                gAdapterApprovedUsers.AddUsers(alicu_UsersToAdd);
+                gAdapterApprovedUsers.uncheckAll();
+                gAdapterUserPool.RemoveUsersFromList(alicu_UsersToAdd);
             });
 
             ImageButton imageButton_RemoveUser = getView().findViewById(R.id.imageButton_RemoveUser);
-            imageButton_RemoveUser.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ArrayList<ItemClass_User> alicu_UsersToMoveBack = gAdapterApprovedUsers.GetSelectedUsers();
-                    gAdapterUserPool.AddUsers(alicu_UsersToMoveBack);
-                    gAdapterUserPool.uncheckAll();
-                    gAdapterApprovedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
-                }
+            imageButton_RemoveUser.setOnClickListener(v -> {
+                ArrayList<ItemClass_User> alicu_UsersToMoveBack = gAdapterApprovedUsers.GetSelectedUsers();
+                gAdapterUserPool.AddUsers(alicu_UsersToMoveBack);
+                gAdapterUserPool.uncheckAll();
+                gAdapterApprovedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
             });
 
 
@@ -315,11 +289,23 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         //Get any users to whom the tag is to be restricted (approved users):
         ictNewTag.alsTagApprovedUsers = gAdapterApprovedUsers.getUserNamesInList();
 
+        //Ensure data has no illegal characters:
+        final ItemClass_Tag ict_ValidatedTag = GlobalClass.validateTagData(ictNewTag);
+        ictNewTag = null;
+        if(ict_ValidatedTag == null){
+            Toast.makeText(getContext(), "Critical error with formation of data record. Record creation aborted.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if(ict_ValidatedTag.bIllegalDataFound){
+            //The illegal data should have been corrected by the validation routine. Notify the user:
+            Toast.makeText(getContext(), ict_ValidatedTag.sIllegalDataNarrative, Toast.LENGTH_LONG).show();
+        }
+
         //Check and see if the user has added one or more approved users, and if so, if the list
         // of approved users does not include the current user, notify them of the circumstance
         // and ask for confirmation before continuing.
-        if(ictNewTag.alsTagApprovedUsers.size() > 0 &&
-                !ictNewTag.alsTagApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)){
+        if(ict_ValidatedTag.alsTagApprovedUsers.size() > 0 &&
+                !ict_ValidatedTag.alsTagApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)){
             String sConfirmationMessage = "You have selected to";
             if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE){
                 sConfirmationMessage += " edit";
@@ -341,21 +327,15 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
             builder.setTitle("Tag Does Not Contain Current User");
             builder.setMessage(sConfirmationMessage);
-            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    dialog.dismiss();
-                    continueWithTagAddOrEditFinalize(ictNewTag);
-                }
+            builder.setPositiveButton("Yes", (dialog, id) -> {
+                dialog.dismiss();
+                continueWithTagAddOrEditFinalize(ict_ValidatedTag);
             });
-            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    dialog.dismiss();
-                }
-            });
+            builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
             AlertDialog adConfirmationDialog = builder.create();
             adConfirmationDialog.show();
         } else {
-            continueWithTagAddOrEditFinalize(ictNewTag);
+            continueWithTagAddOrEditFinalize(ict_ValidatedTag);
         }
 
     }
@@ -396,9 +376,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 // ratings and/or approved users for catalog items.
                 boolean bMaturityRatingChanged = ictTagToAddOrEdit.iMaturityRating != giInitialMaturityRating;
                 boolean bApprovedUserChanged = false;
-                if(galsInitialApprovedUsers.size() != ictTagToAddOrEdit.alsTagApprovedUsers.size()){
-                    bApprovedUserChanged = true;
-                }
+
                 for(String sOriginalUserEntry: galsInitialApprovedUsers){
                     boolean bUserFound = false;
                     for(String sNewUserEntry: ictTagToAddOrEdit.alsTagApprovedUsers){
@@ -465,7 +443,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         if(getActivity() == null) return;
         if(getView() == null) return;
         ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
-        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
+        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
         gAdapterUserPool = new AdapterUserList(
                 getActivity().getApplicationContext(), R.layout.listview_useritem, alicuAllUserPool);
         gAdapterUserPool.gbCompactMode = true;
@@ -528,81 +506,78 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                     checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                 }
 
-                v.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        //Handle changing the checked state:
-                        tagItem.bIsChecked = !tagItem.bIsChecked;
-                        boolean bUpdateOtherItemsViews = false;
-                        if (tagItem.bIsChecked) {
-                            checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                            checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
-                            gictTagIDInEditMode = tagItem;
-                            gEditText_TagText.setText(tagItem.sTagText);
-                            gEditText_TagDescription.setText(tagItem.sTagDescription);
-                            gSpinner_AgeRating.setSelection(tagItem.iMaturityRating);
-                            giInitialMaturityRating = tagItem.iMaturityRating;
-                            if(tagItem.alsTagApprovedUsers.size() > 0){
-                                gCheckBox_SetApprovedUsers.setChecked(true);
-                                ToggleRestrictToUserVisibility(true);
-                                ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(globalClass.galicu_Users);
-                                ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
-                                ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>();
-                                galsInitialApprovedUsers = new ArrayList<>();
+                v.setOnClickListener(v1 -> {
+                    //Handle changing the checked state:
+                    tagItem.bIsChecked = !tagItem.bIsChecked;
+                    boolean bUpdateOtherItemsViews = false;
+                    if (tagItem.bIsChecked) {
+                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                        gictTagIDInEditMode = tagItem;
+                        gEditText_TagText.setText(tagItem.sTagText);
+                        gEditText_TagDescription.setText(tagItem.sTagDescription);
+                        gSpinner_AgeRating.setSelection(tagItem.iMaturityRating);
+                        giInitialMaturityRating = tagItem.iMaturityRating;
+                        if(tagItem.alsTagApprovedUsers.size() > 0){
+                            gCheckBox_SetApprovedUsers.setChecked(true);
+                            ToggleRestrictToUserVisibility(true);
+                            ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
+                            ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
+                            ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>();
+                            galsInitialApprovedUsers = new ArrayList<>();
 
-                                for (ItemClass_User icu : alicuAllUserPool) {
-                                    boolean bUserSelected = false;
-                                    for(String sUserName: tagItem.alsTagApprovedUsers) {
-                                        if(sUserName.equals(icu.sUserName)){
-                                            galsInitialApprovedUsers.add(sUserName);
-                                            bUserSelected = true;
-                                            break;
-                                        }
-                                    }
-                                    if(bUserSelected){
-                                        alicuSelectedUsers.add(icu);
-                                    } else {
-                                        alicuRemainingUserPool.add(icu);
+                            for (ItemClass_User icu : alicuAllUserPool) {
+                                boolean bUserSelected = false;
+                                for(String sUserName: tagItem.alsTagApprovedUsers) {
+                                    if(sUserName.equals(icu.sUserName)){
+                                        galsInitialApprovedUsers.add(sUserName);
+                                        bUserSelected = true;
+                                        break;
                                     }
                                 }
-
-                                gAdapterUserPool.clear();
-                                gAdapterApprovedUsers.clear();
-
-                                gAdapterUserPool.AddUsers(alicuRemainingUserPool);
-                                gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
-
-                            } else {
-
-                                gCheckBox_SetApprovedUsers.setChecked(false);
-                                ToggleRestrictToUserVisibility(false);
-                                ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
-                                ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>(globalClass.galicu_Users);
-                                galsInitialApprovedUsers = new ArrayList<>();
-
-                                gAdapterUserPool.clear();
-                                gAdapterApprovedUsers.clear();
-
-                                gAdapterUserPool.AddUsers(alicuRemainingUserPool);
-                                gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
-                            }
-                            //Go through and uncheck anything but this tag:
-                            for (ItemClass_Tag ict : alictTagItems) {
-                                if (ict.bIsChecked && !ict.iTagID.equals(tagItem.iTagID)) {
-                                    ict.bIsChecked = false;
-                                    bUpdateOtherItemsViews = true;
+                                if(bUserSelected){
+                                    alicuSelectedUsers.add(icu);
+                                } else {
+                                    alicuRemainingUserPool.add(icu);
                                 }
                             }
+
+                            gAdapterUserPool.clear();
+                            gAdapterApprovedUsers.clear();
+
+                            gAdapterUserPool.AddUsers(alicuRemainingUserPool);
+                            gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
+
                         } else {
-                            checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                            checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
-                            ClearTagData();
-                        }
-                        if (bUpdateOtherItemsViews) {
-                            notifyDataSetChanged();
-                        }
 
+                            gCheckBox_SetApprovedUsers.setChecked(false);
+                            ToggleRestrictToUserVisibility(false);
+                            ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
+                            ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>(GlobalClass.galicu_Users);
+                            galsInitialApprovedUsers = new ArrayList<>();
+
+                            gAdapterUserPool.clear();
+                            gAdapterApprovedUsers.clear();
+
+                            gAdapterUserPool.AddUsers(alicuRemainingUserPool);
+                            gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
+                        }
+                        //Go through and uncheck anything but this tag:
+                        for (ItemClass_Tag ict : alictTagItems) {
+                            if (ict.bIsChecked && !ict.iTagID.equals(tagItem.iTagID)) {
+                                ict.bIsChecked = false;
+                                bUpdateOtherItemsViews = true;
+                            }
+                        }
+                    } else {
+                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                        ClearTagData();
                     }
+                    if (bUpdateOtherItemsViews) {
+                        notifyDataSetChanged();
+                    }
+
                 });
             }
 
@@ -630,13 +605,12 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         //https://stackoverflow.com/questions/4165414/how-to-hide-soft-keyboard-on-android-after-clicking-outside-edittext/19828165
         // Set up touch listener for non-text box views to hide keyboard.
         if (!(view instanceof EditText)) {
-            view.setOnTouchListener(new View.OnTouchListener() {
-                public boolean onTouch(View v, MotionEvent event) {
-                    if(getActivity() != null) {
-                        GlobalClass.hideSoftKeyboard(getActivity());
-                    }
-                    return false;
+            view.setOnTouchListener((v, event) -> {
+                if(getActivity() != null) {
+                    GlobalClass.hideSoftKeyboard(getActivity());
                 }
+                v.performClick();
+                return false;
             });
         }
 
@@ -648,7 +622,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             }
         }
     }
-
 
 
 
