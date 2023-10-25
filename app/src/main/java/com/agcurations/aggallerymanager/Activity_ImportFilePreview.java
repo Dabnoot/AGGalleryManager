@@ -131,7 +131,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 String sMaturityRatingText = "";
                 if (tagItems.size() > 0) {
                     sb.append(tagItems.get(0).sTagText);
-                    int iGreatestMaturityRating = ((GlobalClass) getApplicationContext()).giDefaultUserMaturityRating;
+                    int iGreatestMaturityRating = GlobalClass.giDefaultUserMaturityRating;
                     if(tagItems.get(0).iMaturityRating > iGreatestMaturityRating){
                         iGreatestMaturityRating = tagItems.get(0).iMaturityRating;
                     }
@@ -656,6 +656,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
+                GlobalClass.gbClearGroupIDAtImportClose = true;
                 Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
             }
         });

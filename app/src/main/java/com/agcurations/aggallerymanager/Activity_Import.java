@@ -681,6 +681,11 @@ public class Activity_Import extends AppCompatActivity {
         WorkManager.getInstance(getApplicationContext())
                 .cancelAllWorkByTag(Worker_Import_GetDirectoryContents.TAG_WORKER_IMPORT_GETDIRECTORYCONTENTS);
 
+        if(GlobalClass.gbClearGroupIDAtImportClose){
+            GlobalClass.gbClearGroupIDAtImportClose = false;
+            GlobalClass.gsGroupIDClip = "";
+        }
+
         finish();
     }
     
