@@ -6,8 +6,12 @@ import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
+import java.io.BufferedWriter;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
@@ -46,6 +50,9 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
         Uri uriBackupFolder = GlobalClass.FormChildUri(GlobalClass.gUriDataFolder, "Backup");
 
+        String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
+
+        //==========================================================================================
         //Backup the catalog text files:
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
             iProgressNumerator = 0;
@@ -81,8 +88,6 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
             try {
                 //Write the catalog file:
-                String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
-
                 String sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents_" + sDateTimeStamp + ".dat";
                 Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
@@ -91,7 +96,19 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                         osBackupFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
                         osBackupFile.flush();
                         osBackupFile.close();
+                    } else {
+                        String sMessage = "Problem creating backup of CatalogContents.dat.";
+                        LogThis("doWork()", sMessage, null);
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                        bProblem = true;
                     }
+                } else {
+                    String sMessage = "Problem creating backup of CatalogContents.dat.";
+                    LogThis("doWork()", sMessage, null);
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                    bProblem = true;
                 }
 
             } catch (Exception e) {
@@ -103,6 +120,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
             }
         }
 
+        //==========================================================================================
         //Backup the tag files:
         for(int i = 0; i < 3; i++){
             StringBuilder sbBuffer = new StringBuilder();
@@ -121,8 +139,6 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
 
             try {
                 //Write the tag file:
-                String sDateTimeStamp = GlobalClass.GetTimeStampFileSafe();
-
                 String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat";
                 Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
@@ -131,7 +147,17 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                         osBackupFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
                         osBackupFile.flush();
                         osBackupFile.close();
+                    } else {
+                        String sMessage = "Problem creating backup of Tags.dat.";
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                        bProblem = true;
                     }
+                } else {
+                    String sMessage = "Problem creating backup of Tags.dat.";
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                    bProblem = true;
                 }
 
             } catch (Exception e) {
@@ -141,6 +167,130 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 bProblem = true;
             }
         }
+
+        //==========================================================================================
+        //Backup the user data file:
+
+        try {
+            //Write the data to the file:
+            String sBaseName = GlobalClass.gsUserDataFileName.substring(0, GlobalClass.gsUserDataFileName.lastIndexOf("."));
+            String sExtension = GlobalClass.gsUserDataFileName.substring(GlobalClass.gsUserDataFileName.lastIndexOf("."));
+            String sFileName = sBaseName + "_" + sDateTimeStamp + sExtension;
+            Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
+            if(uriBackupFile != null) {
+                InputStream isSourceFile = null;
+                OutputStream osDestinationFile = null;
+
+                try {
+                    isSourceFile = GlobalClass.gcrContentResolver.openInputStream(GlobalClass.gUriUserDataFile);
+                    osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
+
+                    if (isSourceFile != null && osDestinationFile != null) {
+                        byte[] bucket = new byte[32 * 1024];
+                        int bytesRead = 0;
+                        while (bytesRead != -1) {
+                            bytesRead = isSourceFile.read(bucket); //-1, 0, or more
+                            if (bytesRead > 0) {
+                                osDestinationFile.write(bucket, 0, bytesRead);
+                            }
+                        }
+                    }
+
+                } catch (Exception e) {
+                    String sMessage = "Problem creating backup of " + GlobalClass.gUriUserDataFile + " file.";
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                    bProblem = true;
+
+                } finally {
+                    if (isSourceFile != null)
+                        isSourceFile.close();
+                    if (osDestinationFile != null)
+                        osDestinationFile.close();
+                }
+            } else {
+                String sMessage = "Problem creating backup of " + GlobalClass.gsUserDataFileName + ".";
+                broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                bProblem = true;
+            }
+        } catch (Exception e) {
+            String sMessage = "Problem creating backup of " + GlobalClass.gsUserDataFileName + ".\n" + e.getMessage();
+            broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+            broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+            bProblem = true;
+        }
+
+        //==========================================================================================
+        //Backup the browser data file:
+
+        try {
+            Uri uriWebPageTabDataFile = GlobalClass.gUriWebpageTabDataFile;
+            if(!GlobalClass.CheckIfFileExists(uriWebPageTabDataFile)){
+                String sMessage = "Problem creating backup of " + GlobalClass.gsBrowserDataFile + " file. Source file not found.";
+                broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                bProblem = true;
+            } else {
+
+                String sBaseName = GlobalClass.gsBrowserDataFile.substring(0, GlobalClass.gsBrowserDataFile.lastIndexOf("."));
+                String sExtension = GlobalClass.gsBrowserDataFile.substring(GlobalClass.gsBrowserDataFile.lastIndexOf("."));
+                String sFileName = sBaseName + "_" + sDateTimeStamp + sExtension;
+
+                Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
+
+                if(uriBackupFile != null) {
+
+                    InputStream isSourceFile = null;
+                    OutputStream osDestinationFile = null;
+
+                    try {
+                        isSourceFile = GlobalClass.gcrContentResolver.openInputStream(uriWebPageTabDataFile);
+                        osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
+
+                        if (isSourceFile != null && osDestinationFile != null) {
+                            byte[] bucket = new byte[32 * 1024];
+                            int bytesRead = 0;
+                            while (bytesRead != -1) {
+                                bytesRead = isSourceFile.read(bucket); //-1, 0, or more
+                                if (bytesRead > 0) {
+                                    osDestinationFile.write(bucket, 0, bytesRead);
+                                }
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        String sMessage = "Problem creating backup of " + GlobalClass.gsBrowserDataFile + " file.";
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                        bProblem = true;
+
+                    } finally {
+                        if (isSourceFile != null)
+                            isSourceFile.close();
+                        if (osDestinationFile != null)
+                            osDestinationFile.close();
+                    }
+
+                } else { //End if uriBackupFile != null.
+                    String sMessage = "Problem creating backup of " + GlobalClass.gsBrowserDataFile + " file.";
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                    broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+                    bProblem = true;
+                }
+            } //End if-else for finding the backup's source file.
+        } catch (Exception e) {
+            String sMessage = "Problem creating backup of " + GlobalClass.gsBrowserDataFile + " file.\n" + e.getMessage();
+            broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+            broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
+            bProblem = true;
+        }
+
+        //==========================================================================================
+        //==========================================================================================
+
+
+
         if(!bProblem) {
             String sMessage = "Database files backup completed.";
             broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE, sMessage);
