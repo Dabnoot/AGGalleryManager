@@ -98,6 +98,7 @@ public class GlobalClass extends Application {
     public static Uri gUriLogsFolder;
     public static Uri gUriBackupFolder;
     public static Uri gUriJobFilesFolder;
+    public static final String gsBrowserDataFile = "WebpageTabData.dat";
     public static Uri gUriBrowserDataFolder;
     public static Uri gUriWebpageTabDataFile;
     public static final String gsImageDownloadHoldingFolderName = "Holding";
@@ -114,10 +115,14 @@ public class GlobalClass extends Application {
 
     public static int PRINTABLE = 0;
     public static int CHECKABLE = 1;
-    public static final String[][] gsIllegalRecordStrings = {
-            {"%%", "%%"},
-            {"\\n", "\n"},
-            {"\\r", "\r"}}; //{Printable notification, actual illegal string/character}
+    public static final String[][] gsIllegalRecordStrings = { //{Printable notification, actual illegal string/character}
+            {"%%", "%%"},       //"%%" is an illegal character sequence in html addresses. It is used to deliminate back/forward history of browser tabs.
+            {"\\n", "\n"},      //Newline will break the .dat files as records are deliminated by newline.
+            {"n\\", "n\\"},     //Jumbled form.
+            {"\\r", "\r"},
+            {"r\\", "r\\"},     //Jumbled form.
+            {"\\t", "\t"},      //Tab is used to separate fields in the .dat files.
+            {"t\\", "t\\"}};    //Tab is used to separate fields in the .dat files.
 
     //Tag variables:
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
@@ -259,6 +264,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_CALLER_TIMESTAMP = "com.agcurations.aggallermanager.long_caller_timestamp";
 
     public static String gsGroupIDClip = "";
+    public static boolean gbClearGroupIDAtImportClose = false;
 
 
     //=====================================================================================
@@ -1363,25 +1369,25 @@ public class GlobalClass extends Application {
                     sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n");
                     sFieldsAndData[i][CHECKABLE] = sFieldsAndData[i][CHECKABLE].replace(sIllegalStringSet[CHECKABLE],"");
                     sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n\n");
-                }
-                switch (i){
-                    case 0: icci.sTags                   = sFieldsAndData[i][1]; break;
-                    case 1: icci.sFilename               = sFieldsAndData[i][1]; break;
-                    case 2: icci.sFolderRelativePath     = sFieldsAndData[i][1]; break;
-                    case 3: icci.sCast                   = sFieldsAndData[i][1]; break;
-                    case 4: icci.sDuration_Text          = sFieldsAndData[i][1]; break;
-                    case 5: icci.sResolution             = sFieldsAndData[i][1]; break;
-                    case 6: icci.sThumbnail_File         = sFieldsAndData[i][1]; break;
-                    case 7: icci.sComicArtists           = sFieldsAndData[i][1]; break;
-                    case 8: icci.sComicCategories        = sFieldsAndData[i][1]; break;
-                    case 9: icci.sComicCharacters        = sFieldsAndData[i][1]; break;
-                    case 10: icci.sComicGroups           = sFieldsAndData[i][1]; break;
-                    case 11: icci.sComicLanguages        = sFieldsAndData[i][1]; break;
-                    case 12: icci.sComicParodies         = sFieldsAndData[i][1]; break;
-                    case 13: icci.sTitle                 = sFieldsAndData[i][1]; break;
-                    case 14: icci.sComic_Missing_Pages   = sFieldsAndData[i][1]; break;
-                    case 15: icci.sSource                = sFieldsAndData[i][1]; break;
-                    case 16: icci.sVideoLink             = sFieldsAndData[i][1]; break;
+                    switch (i){
+                        case 0: icci.sTags                   = sFieldsAndData[i][1]; break;
+                        case 1: icci.sFilename               = sFieldsAndData[i][1]; break;
+                        case 2: icci.sFolderRelativePath     = sFieldsAndData[i][1]; break;
+                        case 3: icci.sCast                   = sFieldsAndData[i][1]; break;
+                        case 4: icci.sDuration_Text          = sFieldsAndData[i][1]; break;
+                        case 5: icci.sResolution             = sFieldsAndData[i][1]; break;
+                        case 6: icci.sThumbnail_File         = sFieldsAndData[i][1]; break;
+                        case 7: icci.sComicArtists           = sFieldsAndData[i][1]; break;
+                        case 8: icci.sComicCategories        = sFieldsAndData[i][1]; break;
+                        case 9: icci.sComicCharacters        = sFieldsAndData[i][1]; break;
+                        case 10: icci.sComicGroups           = sFieldsAndData[i][1]; break;
+                        case 11: icci.sComicLanguages        = sFieldsAndData[i][1]; break;
+                        case 12: icci.sComicParodies         = sFieldsAndData[i][1]; break;
+                        case 13: icci.sTitle                 = sFieldsAndData[i][1]; break;
+                        case 14: icci.sComic_Missing_Pages   = sFieldsAndData[i][1]; break;
+                        case 15: icci.sSource                = sFieldsAndData[i][1]; break;
+                        case 16: icci.sVideoLink             = sFieldsAndData[i][1]; break;
+                    }
                 }
             }
         }
@@ -2384,10 +2390,10 @@ public class GlobalClass extends Application {
                     sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n");
                     sFieldsAndData[i][GlobalClass.CHECKABLE] = sFieldsAndData[i][GlobalClass.CHECKABLE].replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
                     sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n\n");
-                }
-                switch (i){
-                    case 0: ict.sTagText            = sFieldsAndData[i][1]; break;
-                    case 1: ict.sTagDescription     = sFieldsAndData[i][1]; break;
+                    switch (i){
+                        case 0: ict.sTagText            = sFieldsAndData[i][1]; break;
+                        case 1: ict.sTagDescription     = sFieldsAndData[i][1]; break;
+                    }
                 }
             }
         }
@@ -2515,14 +2521,55 @@ public class GlobalClass extends Application {
         return sHeader;
     }
 
-    public static String ConvertWebPageTabDataToString(ItemClass_WebPageTabData icwptd){
+    public static String ConvertWebPageTabDataToDataFileRecordString(ItemClass_WebPageTabData icwptd){
 
         String sRecord = "";  //To be used when writing the catalog file.
-        sRecord = sRecord + GlobalClass.JumbleStorageText(icwptd.sTabID);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sUserName);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sTabTitle);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sAddress);
-        sRecord = sRecord + "\t" + GlobalClass.JumbleStorageText(icwptd.sFaviconAddress);
+
+        String sTabIDClean = GlobalClass.JumbleStorageText(icwptd.sTabID);
+        String sUserNameClean = GlobalClass.JumbleStorageText(icwptd.sUserName);
+        String sTabTitleClean = GlobalClass.JumbleStorageText(icwptd.sTabTitle);
+        String sAddressClean = GlobalClass.JumbleStorageText(icwptd.sAddress);
+        String sFaviconAddressClean = GlobalClass.JumbleStorageText(icwptd.sFaviconAddress);
+
+        //public static final String[][] gsIllegalRecordStrings = { //{Printable notification, actual illegal string/character}
+        boolean bIllegalString = false;
+
+        String[][] sFieldsAndData = {
+                {"TabID"		    	,GlobalClass.JumbleStorageText(icwptd.sTabID)			},
+                {"TabTitle"		    	,GlobalClass.JumbleStorageText(icwptd.sTabTitle)		},
+                {"Address"		    	,GlobalClass.JumbleStorageText(icwptd.sAddress)			},
+                {"FaviconAddress"		,GlobalClass.JumbleStorageText(icwptd.sFaviconAddress)	}};
+
+        StringBuilder sbDataIssueNarrative = new StringBuilder();
+
+        for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+            for(int i = 0; i < sFieldsAndData.length; i++){
+                bIllegalString = sFieldsAndData[i][GlobalClass.CHECKABLE].contains(sIllegalStringSet[GlobalClass.CHECKABLE]);
+                if(bIllegalString) {
+                    icwptd.bIllegalDataFound = true;
+                    sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[GlobalClass.PRINTABLE]).append(" found in ").append(sFieldsAndData[i][GlobalClass.PRINTABLE]).append(" field.\n");
+                    sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n");
+                    sFieldsAndData[i][GlobalClass.CHECKABLE] = sFieldsAndData[i][GlobalClass.CHECKABLE].replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                    sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n\n");
+                    switch (i){
+                        case 0: sTabIDClean =           sFieldsAndData[i][1]; break;
+                        case 2: sTabTitleClean =        sFieldsAndData[i][1]; break;
+                        case 3: sAddressClean =         sFieldsAndData[i][1]; break;
+                        case 4: sFaviconAddressClean =  sFieldsAndData[i][1]; break;
+                    }
+                }
+            }
+        }
+
+        if(icwptd.bIllegalDataFound){
+            icwptd.sIllegalDataNarrative = sbDataIssueNarrative.toString();
+        }
+
+        sRecord = sRecord + sTabIDClean;
+        sRecord = sRecord + "\t" + sUserNameClean;  //No special processing for user name. Any change of that item could make an entry non-recoverable.
+        sRecord = sRecord + "\t" + sTabTitleClean;
+        sRecord = sRecord + "\t" + sAddressClean;
+        sRecord = sRecord + "\t" + sFaviconAddressClean;
 
         //Append the back-stack to the record:
         sRecord = sRecord + "\t" + "{";
@@ -2534,7 +2581,11 @@ public class GlobalClass extends Application {
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb + "%%" + "}";
+        String sBackStackClean = sb.toString();
+        sBackStackClean = sBackStackClean.replace("\n", "");
+        sBackStackClean = sBackStackClean.replace("\r", "");
+        sBackStackClean = sBackStackClean.replace("\t", "");
+        sRecord = sRecord + sBackStackClean + "%%" + "}";
 
         //Append the forward-stack to the record:
         sRecord = sRecord + "\t" + "{";
@@ -2546,7 +2597,11 @@ public class GlobalClass extends Application {
                 sb.append("%%"); //A double-percent is a symbol not allowed in a web address.
             }
         }
-        sRecord = sRecord + sb + "%%" + "}";
+        String sForwardStackClean = sb.toString();
+        sForwardStackClean = sForwardStackClean.replace("\n", "");
+        sForwardStackClean = sForwardStackClean.replace("\r", "");
+        sForwardStackClean = sForwardStackClean.replace("\t", "");
+        sRecord = sRecord + sForwardStackClean + "%%" + "}";
 
         return sRecord;
     }

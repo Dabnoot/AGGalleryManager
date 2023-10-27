@@ -15,4 +15,7 @@ public class ItemClass_WebPageTabData  implements Serializable {
 
     String sUserName = ""; //User name of the tab creator. Don't share tabs between users.
 
+    public boolean bIllegalDataFound = false; //Used during import.
+    public String sIllegalDataNarrative = "";
+
 }
