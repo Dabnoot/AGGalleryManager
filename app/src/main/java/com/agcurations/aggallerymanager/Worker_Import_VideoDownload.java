@@ -235,8 +235,8 @@ public class Worker_Import_VideoDownload extends Worker {
 
         try {
             //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
-            ciNew = GlobalClass.validateCatalogItemData(ciNew);
-            if(ciNew == null){
+            ItemClass_CatalogItem ciValidatedNew = GlobalClass.validateCatalogItemData(ciNew);
+            if(ciValidatedNew == null){
                 //If we are here, validateCatalogItemData found a critical error, such as illegal character in user name;
                 globalClass.BroadcastProgress(true, "Critical error with formation of data record. Download aborted. Record creation aborted.",
                         false, 0,
@@ -244,13 +244,13 @@ public class Worker_Import_VideoDownload extends Worker {
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                 return Result.failure();
             }
-            if(ciNew.bIllegalDataFound){
-                globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
+            if(ciValidatedNew.bIllegalDataFound){
+                globalClass.BroadcastProgress(true, ciValidatedNew.sIllegalDataNarrative,
                         false, 0,
                         false, "",
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
             }
-            globalClass.CatalogDataFile_CreateNewRecord(ciNew);
+            globalClass.CatalogDataFile_CreateNewRecord(ciValidatedNew);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -286,7 +286,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 if(sFileName.contains("/")){
                     sFileName = sFileName.substring(sFileName.lastIndexOf("/") + 1);
                 }
-                //String sNewFilename = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
+
                 String sNewFilename = GlobalClass.cleanFileNameViaTrim(sFileName);  //the 'save-to' filename cannot have special chars or downloadManager will not download the file.
 
                 if(sNewFilename.length() > 50){
@@ -369,8 +369,6 @@ public class Worker_Import_VideoDownload extends Worker {
                     return Result.failure(DataErrorMessage(sMessage));
                 }
                 request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " VideoID " + ciNew.sItemID)
-                        //.setDescription("Video ID " + ciNew.sItemID + "; " + sURLAndFileName[FILE_DOWNLOAD_ADDRESS])
-                        //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
                         //Set to equivalent of binary file so that Android MediaStore will not try to index it,
                         //  and the user can't easily open it. https://stackoverflow.com/questions/6783921/which-mime-type-to-use-for-a-binary-file-thats-specific-to-my-program
@@ -457,7 +455,6 @@ public class Worker_Import_VideoDownload extends Worker {
                         if (sLine.contains("/")) {
                             sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
                         }
-                        //String sTSShortFileName = ciNew.sItemID + "_" + GlobalClass.cleanFileNameViaTrim(sLine);
                         String sTSShortFileName = GlobalClass.cleanFileNameViaTrim(sLine); //Don't add itemID to the filename or the filename might become too long.
                         String sJumbledTSShortFileName = GlobalClass.JumbleFileName(sTSShortFileName);
                         bwM3U8File.write(sJumbledTSShortFileName + "\n");
@@ -483,8 +480,7 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure(DataErrorMessage(sMessage));
                 }
-                //Prepare the file sequence so that an M3U8 sequence can be concatenated properly.
-                //String[] sFilenameSequence = new String[ciNew.alsDownloadURLsAndDestFileNames.size()];
+
                 //A file sequence string array can be too big to pass to a worker, so write it to a file:
 
                 Uri uriDLIDFileSequenceFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriVideoFinalDestinationFolder, GlobalClass.BASE_TYPE_TEXT,
