@@ -9,7 +9,11 @@
     <com.agcurations.aggallerymanager.VideoEnabledWebView
         android:id="@+id/videoEnabledWebView_webView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_above="@+id/linearLayout_ButtonBar"
+        android:layout_below="@+id/textView_StatusInstructions"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp" />
 
     <TextView
         android:id="@+id/textView_Label_WebAddress"
