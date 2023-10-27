@@ -85,7 +85,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             //Combine list of web pages for current user with list of web pages for other users:
 
             for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPagesForCurrentUser){
-                String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
+                String sLine = GlobalClass.ConvertWebPageTabDataToDataFileRecordString(icwptd);
                 sbBuffer.append(sLine);
                 sbBuffer.append("\n");
             }
@@ -98,7 +98,7 @@ public class Worker_Browser_WriteWebPageTabData extends Worker {
             for(ItemClass_WebPageTabData icwptd: GlobalClass.gal_WebPagesForOtherUsers){
                 //Check to make sure that user still exists (automatically handle case of deleted user):
                 if(alsCurrentUserNames.contains(icwptd.sUserName)) {
-                    String sLine = GlobalClass.ConvertWebPageTabDataToString(icwptd);
+                    String sLine = GlobalClass.ConvertWebPageTabDataToDataFileRecordString(icwptd);
                     sbBuffer.append(sLine);
                     sbBuffer.append("\n");
                 }
