@@ -44,8 +44,8 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         boolean bProblem = false;
 
 
-        int iProgressDenominator;
-        int iProgressNumerator;
+        int iProgressDenominator = 8;
+        int iProgressNumerator = 0;
         int iProgressBarValue;
 
         Uri uriBackupFolder = GlobalClass.FormChildUri(GlobalClass.gUriDataFolder, "Backup");
@@ -55,56 +55,48 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         //==========================================================================================
         //Backup the catalog text files:
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
-            iProgressNumerator = 0;
-            iProgressDenominator = GlobalClass.gtmCatalogLists.get(iMediaCategory).size();
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-            globalClass.BroadcastProgress(false, "",
+            globalClass.BroadcastProgress(false, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents.dat",
                     true, iProgressBarValue,
-                    true, "Backing up catalog data files...",
+                    true, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents.dat",
                     CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
-
-            StringBuilder sbBuffer = new StringBuilder();
-            boolean bHeaderWritten = false;
-            for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: GlobalClass.gtmCatalogLists.get(iMediaCategory).entrySet()){
-
-                if(!bHeaderWritten) {
-                    sbBuffer.append(GlobalClass.getCatalogHeader()); //Append the header.
-                    sbBuffer.append("\n");
-                    bHeaderWritten = true;
-                }
-
-                sbBuffer.append(GlobalClass.getCatalogRecordString(tmEntry.getValue())); //Append the data.
-                sbBuffer.append("\n");
-
-                iProgressNumerator++;
-                if(iProgressNumerator % 100 == 0) {
-                    iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(false, "",
-                            true, iProgressBarValue,
-                            true, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog data file.",
-                            CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
-                }
-            }
-
             try {
-                //Write the catalog file:
+                //Copy the catalog file:
                 String sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents_" + sDateTimeStamp + ".dat";
                 Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
-                    OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
-                    if(osBackupFile != null) {
-                        osBackupFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
-                        osBackupFile.flush();
-                        osBackupFile.close();
-                    } else {
-                        String sMessage = "Problem creating backup of CatalogContents.dat.";
-                        LogThis("doWork()", sMessage, null);
+                    InputStream isSourceFile = null;
+                    OutputStream osDestinationFile = null;
+
+                    try {
+                        isSourceFile = GlobalClass.gcrContentResolver.openInputStream(GlobalClass.gUriCatalogContentsFiles[iMediaCategory]);
+                        osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
+
+                        if (isSourceFile != null && osDestinationFile != null) {
+                            byte[] bucket = new byte[32 * 1024];
+                            int bytesRead = 0;
+                            while (bytesRead != -1) {
+                                bytesRead = isSourceFile.read(bucket); //-1, 0, or more
+                                if (bytesRead > 0) {
+                                    osDestinationFile.write(bucket, 0, bytesRead);
+                                }
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        String sMessage = "Problem creating backup of " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents.dat file.";
                         broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                         broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                         bProblem = true;
+
+                    } finally {
+                        if (isSourceFile != null)
+                            isSourceFile.close();
+                        if (osDestinationFile != null)
+                            osDestinationFile.close();
                     }
                 } else {
-                    String sMessage = "Problem creating backup of CatalogContents.dat.";
+                    String sMessage = "Problem creating backup of " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents.dat.";
                     LogThis("doWork()", sMessage, null);
                     broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                     broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
@@ -112,47 +104,60 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 }
 
             } catch (Exception e) {
-                String sMessage = "Problem creating backup of CatalogContents.dat.\n" + e.getMessage();
+                String sMessage = "Problem creating backup of " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_CatalogContents.dat.\n" + e.getMessage();
                 LogThis("doWork()", sMessage, null);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                 bProblem = true;
             }
+            iProgressNumerator++;
         }
 
         //==========================================================================================
         //Backup the tag files:
-        for(int i = 0; i < 3; i++){
-            StringBuilder sbBuffer = new StringBuilder();
-            boolean bHeaderWritten = false;
-            for(Map.Entry<Integer, ItemClass_Tag> tmEntry: GlobalClass.gtmCatalogTagReferenceLists.get(i).entrySet()){
-
-                if(!bHeaderWritten) {
-                    sbBuffer.append(GlobalClass.getTagFileHeader()); //Append the header.
-                    sbBuffer.append("\n");
-                    bHeaderWritten = true;
-                }
-
-                sbBuffer.append(GlobalClass.getTagRecordString(tmEntry.getValue())); //Append the data.
-                sbBuffer.append("\n");
-            }
-
+        for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
+            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+            globalClass.BroadcastProgress(false, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat",
+                    true, iProgressBarValue,
+                    true, "Backing up " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat",
+                    CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
             try {
                 //Write the tag file:
-                String sFileName = GlobalClass.gsCatalogFolderNames[i] + "_Tags_" + sDateTimeStamp + ".dat";
+                String sFileName = GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags_" + sDateTimeStamp + ".dat";
                 Uri uriBackupFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriBackupFolder, GlobalClass.BASE_TYPE_TEXT, sFileName);
                 if(uriBackupFile != null){
-                    OutputStream osBackupFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
-                    if(osBackupFile != null) {
-                        osBackupFile.write(sbBuffer.toString().getBytes(StandardCharsets.UTF_8));
-                        osBackupFile.flush();
-                        osBackupFile.close();
-                    } else {
-                        String sMessage = "Problem creating backup of Tags.dat.";
+
+                    InputStream isSourceFile = null;
+                    OutputStream osDestinationFile = null;
+
+                    try {
+                        isSourceFile = GlobalClass.gcrContentResolver.openInputStream(GlobalClass.gUriCatalogTagsFiles[iMediaCategory]);
+                        osDestinationFile = GlobalClass.gcrContentResolver.openOutputStream(uriBackupFile);
+
+                        if (isSourceFile != null && osDestinationFile != null) {
+                            byte[] bucket = new byte[32 * 1024];
+                            int bytesRead = 0;
+                            while (bytesRead != -1) {
+                                bytesRead = isSourceFile.read(bucket); //-1, 0, or more
+                                if (bytesRead > 0) {
+                                    osDestinationFile.write(bucket, 0, bytesRead);
+                                }
+                            }
+                        }
+
+                    } catch (Exception e) {
+                        String sMessage = "Problem creating backup of " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + "_Tags.dat file.";
                         broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                         broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                         bProblem = true;
+
+                    } finally {
+                        if (isSourceFile != null)
+                            isSourceFile.close();
+                        if (osDestinationFile != null)
+                            osDestinationFile.close();
                     }
+
                 } else {
                     String sMessage = "Problem creating backup of Tags.dat.";
                     broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
@@ -166,11 +171,16 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                 broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                 bProblem = true;
             }
+            iProgressNumerator++;
         }
 
         //==========================================================================================
         //Backup the user data file:
-
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "Backing up " + GlobalClass.gsUserDataFileName,
+                true, iProgressBarValue,
+                true, "Backing up " + GlobalClass.gsUserDataFileName,
+                CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
         try {
             //Write the data to the file:
             String sBaseName = GlobalClass.gsUserDataFileName.substring(0, GlobalClass.gsUserDataFileName.lastIndexOf("."));
@@ -197,7 +207,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
                     }
 
                 } catch (Exception e) {
-                    String sMessage = "Problem creating backup of " + GlobalClass.gUriUserDataFile + " file.";
+                    String sMessage = "Problem creating backup of " + GlobalClass.gsUserDataFileName + " file.";
                     broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
                     broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                     bProblem = true;
@@ -220,10 +230,15 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
             broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
             bProblem = true;
         }
+        iProgressNumerator++;
 
         //==========================================================================================
         //Backup the browser data file:
-
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
+        globalClass.BroadcastProgress(false, "Backing up " + GlobalClass.gsBrowserDataFile,
+                true, iProgressBarValue,
+                true, "Backing up " + GlobalClass.gsBrowserDataFile,
+                CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
         try {
             Uri uriWebPageTabDataFile = GlobalClass.gUriWebpageTabDataFile;
             if(!GlobalClass.CheckIfFileExists(uriWebPageTabDataFile)){
@@ -285,7 +300,7 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
             broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
             bProblem = true;
         }
-
+        iProgressNumerator++;
         //==========================================================================================
         //==========================================================================================
 
@@ -301,8 +316,9 @@ public class Worker_Catalog_BackupCatalogDBFiles extends Worker {
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
+        iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
         globalClass.BroadcastProgress(false, "",
-                true, 100,
+                true, iProgressBarValue,
                 true, "Catalog Backup Complete",
                 CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
 
