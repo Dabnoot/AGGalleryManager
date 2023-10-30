@@ -5,10 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -45,7 +42,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -81,8 +77,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private final int VIDEO_PLAYBACK_STATE_PLAYING = 1;
     private int giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
     private static final String PLAYBACK_TIME = "play_time";
-
-    int[] giGradeImageViews;
 
     ArrayList<Integer> galiLastAssignedTags;
     boolean gbFreezeLastAssignedReset = false;
@@ -121,116 +115,110 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
         ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);
         //React to changes in the selected tag data in the ViewModel:
-        final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {
-            @Override
-            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+        final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = tagItems -> {
 
-                //Get the text of the tags and display:
-                StringBuilder sb = new StringBuilder();
-                sb.append("Tags: ");
-                String sMaturityRatingText = "";
-                if (tagItems.size() > 0) {
-                    sb.append(tagItems.get(0).sTagText);
-                    int iGreatestMaturityRating = GlobalClass.giDefaultUserMaturityRating;
-                    if(tagItems.get(0).iMaturityRating > iGreatestMaturityRating){
-                        iGreatestMaturityRating = tagItems.get(0).iMaturityRating;
-                    }
-                    for (int i = 1; i < tagItems.size(); i++) {
-                        sb.append(", ");
-                        sb.append(tagItems.get(i).sTagText);
-                        if(tagItems.get(i).iMaturityRating > iGreatestMaturityRating){
-                            iGreatestMaturityRating = tagItems.get(i).iMaturityRating;
-                        }
-                    }
-                    sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][0];
-                    sMaturityRatingText += " - ";
-                    String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][1];
-                    int iMaxTextLength = 75;
-                    sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
-                    if(iMaxTextLength < sMatRatDesc.length()) {
-                        sMaturityRatingText += "...";
+            //Get the text of the tags and display:
+            StringBuilder sb = new StringBuilder();
+            sb.append("Tags: ");
+            String sMaturityRatingText = "";
+            if (tagItems.size() > 0) {
+                sb.append(tagItems.get(0).sTagText);
+                int iGreatestMaturityRating = GlobalClass.giDefaultUserMaturityRating;
+                if(tagItems.get(0).iMaturityRating > iGreatestMaturityRating){
+                    iGreatestMaturityRating = tagItems.get(0).iMaturityRating;
+                }
+                for (int i = 1; i < tagItems.size(); i++) {
+                    sb.append(", ");
+                    sb.append(tagItems.get(i).sTagText);
+                    if(tagItems.get(i).iMaturityRating > iGreatestMaturityRating){
+                        iGreatestMaturityRating = tagItems.get(i).iMaturityRating;
                     }
                 }
-                TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
-                if (textView_SelectedTags != null) {
-                    textView_SelectedTags.setText(sb.toString());
+                sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][0];
+                sMaturityRatingText += " - ";
+                String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][1];
+                int iMaxTextLength = 75;
+                sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
+                if(iMaxTextLength < sMatRatDesc.length()) {
+                    sMaturityRatingText += "...";
                 }
-                TextView textView_MaturityRating = findViewById(R.id.textView_MaturityRating);
-                if(textView_MaturityRating != null) {
-                    textView_MaturityRating.setText(sMaturityRatingText);
-                }
+            }
+            TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
+            if (textView_SelectedTags != null) {
+                textView_SelectedTags.setText(sb.toString());
+            }
+            TextView textView_MaturityRating = findViewById(R.id.textView_MaturityRating);
+            if(textView_MaturityRating != null) {
+                textView_MaturityRating.setText(sMaturityRatingText);
+            }
 
-                //Get the tag IDs to pass back to the calling activity:
-                ArrayList<Integer> aliTagIDs = new ArrayList<>();
-                for (ItemClass_Tag ti : tagItems) {
-                    aliTagIDs.add(ti.iTagID);
-                }
+            //Get the tag IDs to pass back to the calling activity:
+            ArrayList<Integer> aliTagIDs = new ArrayList<>();
+            for (ItemClass_Tag ti : tagItems) {
+                aliTagIDs.add(ti.iTagID);
+            }
 
-                boolean bSetCheckedDisplay = false;
-                //If the media type is Comics, tags are applied to each
-                //  file item.
-                if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                    boolean bSetChecked = aliTagIDs.size() > galFileItems.get(0).aliProspectiveTags.size();
-                    for (ItemClass_File icf : galFileItems) {
-                        icf.aliProspectiveTags = aliTagIDs;
-                        icf.bDataUpdateFlag = true;
-                        if (bSetChecked) {
-                            icf.bIsChecked = true;  //Only set if a tag has been added.
-                            icf.bMarkedForDeletion = false;
-                            bSetCheckedDisplay = true;
-                        }
-                    }
-
-                } else {
-                    if (aliTagIDs.size() > galFileItems.get(giFileItemIndex).aliProspectiveTags.size()) {
-                        galFileItems.get(giFileItemIndex).bIsChecked = true; //Only set if a tag has been added.
-                        galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+            boolean bSetCheckedDisplay = false;
+            //If the media type is Comics, tags are applied to each
+            //  file item.
+            if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                boolean bSetChecked = aliTagIDs.size() > galFileItems.get(0).aliProspectiveTags.size();
+                for (ItemClass_File icf : galFileItems) {
+                    icf.aliProspectiveTags = aliTagIDs;
+                    icf.bDataUpdateFlag = true;
+                    if (bSetChecked) {
+                        icf.bIsChecked = true;  //Only set if a tag has been added.
+                        icf.bMarkedForDeletion = false;
                         bSetCheckedDisplay = true;
                     }
-                    galFileItems.get(giFileItemIndex).aliProspectiveTags = aliTagIDs;
-                    galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-
-                    if (!gbFreezeLastAssignedReset) {
-                        galiLastAssignedTags = new ArrayList<>(aliTagIDs);
-                    } else {
-                        //Data protection in place due to initialization.
-                        gbFreezeLastAssignedReset = false; //Unfreeze data protection.
-                    }
-
                 }
 
-                if (bSetCheckedDisplay) {
-                    CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
-                    checkBox_ImportItem.setChecked(true);
-                    CheckboxImportColorSwitch(true);
-                    CheckBox checkBox_MarkForDeletion = findViewById(R.id.checkBox_MarkForDeletion);
-                    checkBox_MarkForDeletion.setChecked(false);
-                    CheckboxMarkForDeletionColorSwitch(false);
+            } else {
+                if (aliTagIDs.size() > galFileItems.get(giFileItemIndex).aliProspectiveTags.size()) {
+                    galFileItems.get(giFileItemIndex).bIsChecked = true; //Only set if a tag has been added.
+                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                    bSetCheckedDisplay = true;
                 }
+                galFileItems.get(giFileItemIndex).aliProspectiveTags = aliTagIDs;
+                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
 
-                if (gbPastingTags) {
-                    gbPastingTags = false;
-                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            //If this is the result of a tag pasting operation, automatically move to the next/previous item.
-                            //Do this with a slight delay to allow the graphics to update so that the user can see
-                            //  that the tag selections were applied.
-                            if (giFileItemIndex > giFileItemLastIndex) {
-                                iterateToGreaterIndexedItem();
-                            } else if (giFileItemIndex < giFileItemLastIndex) {
-                                iterateToLesserIndexedItem();
-                            }
-                        }
-                    }, 500);
-
-
+                if (!gbFreezeLastAssignedReset) {
+                    galiLastAssignedTags = new ArrayList<>(aliTagIDs);
+                } else {
+                    //Data protection in place due to initialization.
+                    gbFreezeLastAssignedReset = false; //Unfreeze data protection.
                 }
-
-                //Set a result to send back to the calling activity (this is also done on checkbox click):
-                setResult(RESULT_OK);
 
             }
+
+            if (bSetCheckedDisplay) {
+                CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
+                checkBox_ImportItem.setChecked(true);
+                CheckboxImportColorSwitch(true);
+                CheckBox checkBox_MarkForDeletion = findViewById(R.id.checkBox_MarkForDeletion);
+                checkBox_MarkForDeletion.setChecked(false);
+                CheckboxMarkForDeletionColorSwitch(false);
+            }
+
+            if (gbPastingTags) {
+                gbPastingTags = false;
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    //If this is the result of a tag pasting operation, automatically move to the next/previous item.
+                    //Do this with a slight delay to allow the graphics to update so that the user can see
+                    //  that the tag selections were applied.
+                    if (giFileItemIndex > giFileItemLastIndex) {
+                        iterateToGreaterIndexedItem();
+                    } else if (giFileItemIndex < giFileItemLastIndex) {
+                        iterateToLesserIndexedItem();
+                    }
+                }, 500);
+
+
+            }
+
+            //Set a result to send back to the calling activity (this is also done on checkbox click):
+            setResult(RESULT_OK);
+
         };
         viewModel_fragment_selectTags.altiTagsSelected.observe(this, selectedTagsObserver);
 
@@ -283,27 +271,27 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             final GestureDetector gestureDetector_SwipeForNextFile = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener(){
 
 
-                public boolean onDoubleTap(MotionEvent e) {
+                public boolean onDoubleTap(@NonNull MotionEvent e) {
                     return true;
                 }
 
                 @Override
-                public void onLongPress(MotionEvent e) {
+                public void onLongPress(@NonNull MotionEvent e) {
                     super.onLongPress(e);
                 }
 
                 @Override
-                public boolean onDoubleTapEvent(MotionEvent e) {
+                public boolean onDoubleTapEvent(@NonNull MotionEvent e) {
                     return true;
                 }
 
                 @Override
-                public boolean onDown(MotionEvent e) {
+                public boolean onDown(@NonNull MotionEvent e) {
                     return true;
                 }
 
                 @Override
-                public boolean onSingleTapConfirmed(MotionEvent e) {
+                public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
                     float fsx1 = gImagePreview.getX();
                     float fsx2 = gImagePreview.getWidth();
                     float fXMidPoint = fsx1 + (fsx2 / 2f);
@@ -324,7 +312,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
                 @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                public boolean onFling(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float velocityX, float velocityY) {
                     boolean result = false;
                     try {
                         float diffY = e2.getY() - e1.getY();
@@ -370,6 +358,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             });
 
 
+            RelativeLayout relativeLayout_VideoView = findViewById(R.id.relativeLayout_VideoView);
+            relativeLayout_VideoView.setOnTouchListener((v, event) -> gestureDetector_SwipeForNextFile.onTouchEvent(event));
+
+
             if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 long lVideoDuration = galFileItems.get(giFileItemIndex).lVideoTimeInMilliseconds;
                 if (lVideoDuration < 0L) {
@@ -381,51 +373,21 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 //Configure the media controller:
                 gMediaController = new MediaController(this);
                 gMediaController.setMediaPlayer(gVideoView_VideoPlayer);
-                gVideoView_VideoPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                    @Override
-                    public void onPrepared(MediaPlayer mp) {
-                        gMediaController.setAnchorView(gVideoView_VideoPlayer);
+                gVideoView_VideoPlayer.setOnPreparedListener(mp -> gMediaController.setAnchorView(gVideoView_VideoPlayer));
+                gMediaController.addOnUnhandledKeyEventListener((view, keyEvent) -> {
+                    //Handle BACK button
+                    if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
+                        onBackPressed();
+                        return true;
                     }
+                    return false;
                 });
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    gMediaController.addOnUnhandledKeyEventListener(new View.OnUnhandledKeyEventListener() {
-                        @Override
-                        public boolean onUnhandledKeyEvent(View view, KeyEvent keyEvent) {
-                            //Handle BACK button
-                            if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                                onBackPressed();
-                                return true;
-                            }
-                            return false;
-                        }
-                    });
-                }
                 gVideoView_VideoPlayer.setMediaController(gMediaController);
-
-                gVideoView_VideoPlayer.setOnTouchListener(new View.OnTouchListener() {
-
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                            if (!gMediaController.isShowing()) {
-                                gMediaController.show(5000);
-                            }
-                        }
-                        return gestureDetector_SwipeForNextFile.onTouchEvent(event);
-                    }
-
-                });
-
 
             } else {
 
                 gImagePreview.bringToFront();
-                gImagePreview.setOnTouchListener(new View.OnTouchListener() {
-                    @Override
-                    public boolean onTouch(View v, MotionEvent event) {
-                        return gestureDetector_SwipeForNextFile.onTouchEvent(event);
-                    }
-                });
+
             }
 
         }
@@ -512,123 +474,108 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         final CheckBox checkBox_ImportItem = findViewById(R.id.checkBox_ImportItem);
         final CheckBox checkBox_MarkForDeletion = findViewById(R.id.checkBox_MarkForDeletion);
 
-        checkBox_ImportItem.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                galFileItems.get(giFileItemIndex).bIsChecked = ((CheckBox)view).isChecked();
-                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+        checkBox_ImportItem.setOnClickListener(view -> {
+            galFileItems.get(giFileItemIndex).bIsChecked = ((CheckBox)view).isChecked();
+            galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+            CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
-                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
-                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
-                    checkBox_MarkForDeletion.setChecked(false);
-                    CheckboxMarkForDeletionColorSwitch(false);
-                }
-
-                //Update result to send back to the calling activity (this is also done on tag change):
-                setResult(RESULT_OK);
+            if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                checkBox_MarkForDeletion.setChecked(false);
+                CheckboxMarkForDeletionColorSwitch(false);
             }
+
+            //Update result to send back to the calling activity (this is also done on tag change):
+            setResult(RESULT_OK);
         });
         TextView textView_LabelImport = findViewById(R.id.textView_LabelImport);
-        textView_LabelImport.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Check/uncheck the checkbox.
-                checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
-                galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
-                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+        textView_LabelImport.setOnClickListener(view -> {
+            //Check/uncheck the checkbox.
+            checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
+            galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
+            galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+            CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
-                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
-                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
-                    checkBox_MarkForDeletion.setChecked(false);
-                    CheckboxMarkForDeletionColorSwitch(false);
-                }
-
-                //Update result to send back to the calling activity (this is also done on tag change):
-                setResult(RESULT_OK);
+            if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                checkBox_MarkForDeletion.setChecked(false);
+                CheckboxMarkForDeletionColorSwitch(false);
             }
+
+            //Update result to send back to the calling activity (this is also done on tag change):
+            setResult(RESULT_OK);
         });
         LinearLayout linearLayout_ImportIndication = findViewById(R.id.linearLayout_ImportIndication);
-        linearLayout_ImportIndication.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Check/uncheck the checkbox.
-                checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
-                galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
-                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
+        linearLayout_ImportIndication.setOnClickListener(view -> {
+            //Check/uncheck the checkbox.
+            checkBox_ImportItem.setChecked(!checkBox_ImportItem.isChecked());
+            galFileItems.get(giFileItemIndex).bIsChecked = checkBox_ImportItem.isChecked();
+            galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+            CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
-                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
-                    galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
-                    checkBox_MarkForDeletion.setChecked(false);
-                    CheckboxMarkForDeletionColorSwitch(false);
-                    //todo: tighten repeat coding.
-                }
-
-                //Update result to send back to the calling activity (this is also done on tag change):
-                setResult(RESULT_OK);
+            if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                galFileItems.get(giFileItemIndex).bMarkedForDeletion = false;
+                checkBox_MarkForDeletion.setChecked(false);
+                CheckboxMarkForDeletionColorSwitch(false);
+                //todo: tighten repeat coding.
             }
+
+            //Update result to send back to the calling activity (this is also done on tag change):
+            setResult(RESULT_OK);
         });
 
         checkBox_ImportItem.setChecked(galFileItems.get(giFileItemIndex).bIsChecked);
         CheckboxImportColorSwitch(galFileItems.get(giFileItemIndex).bIsChecked);
 
 
-        checkBox_MarkForDeletion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                galFileItems.get(giFileItemIndex).bMarkedForDeletion = ((CheckBox)view).isChecked();
-                CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
-                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+        checkBox_MarkForDeletion.setOnClickListener(view -> {
+            galFileItems.get(giFileItemIndex).bMarkedForDeletion = ((CheckBox)view).isChecked();
+            CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
+            galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
 
-                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
-                    galFileItems.get(giFileItemIndex).bIsChecked = false;
-                    checkBox_ImportItem.setChecked(false);
-                    CheckboxImportColorSwitch(false);
-                }
-
-                if(((CheckBox)view).isChecked()){
-                    //If the user has marked this item for deletion, move to the next item automatically.
-                    if(giFileItemIndex > giFileItemLastIndex){
-                        iterateToGreaterIndexedItem();
-                    } else if(giFileItemIndex < giFileItemLastIndex) {
-                        iterateToLesserIndexedItem();
-                    }
-                }
-
-                //Update result to send back to the calling activity (this is also done on tag change):
-                setResult(RESULT_OK);
+            if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                galFileItems.get(giFileItemIndex).bIsChecked = false;
+                checkBox_ImportItem.setChecked(false);
+                CheckboxImportColorSwitch(false);
             }
+
+            if(((CheckBox)view).isChecked()){
+                //If the user has marked this item for deletion, move to the next item automatically.
+                if(giFileItemIndex > giFileItemLastIndex){
+                    iterateToGreaterIndexedItem();
+                } else if(giFileItemIndex < giFileItemLastIndex) {
+                    iterateToLesserIndexedItem();
+                }
+            }
+
+            //Update result to send back to the calling activity (this is also done on tag change):
+            setResult(RESULT_OK);
         });
         TextView textView_LabelMarkForDeletion = findViewById(R.id.textView_LabelMarkForDeletion);
-        textView_LabelMarkForDeletion.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Check/uncheck the checkbox.
-                checkBox_MarkForDeletion.setChecked(!checkBox_MarkForDeletion.isChecked());
-                galFileItems.get(giFileItemIndex).bMarkedForDeletion = checkBox_MarkForDeletion.isChecked();
-                galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
-                CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
+        textView_LabelMarkForDeletion.setOnClickListener(view -> {
+            //Check/uncheck the checkbox.
+            checkBox_MarkForDeletion.setChecked(!checkBox_MarkForDeletion.isChecked());
+            galFileItems.get(giFileItemIndex).bMarkedForDeletion = checkBox_MarkForDeletion.isChecked();
+            galFileItems.get(giFileItemIndex).bDataUpdateFlag = true;
+            CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
 
-                if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
-                    galFileItems.get(giFileItemIndex).bIsChecked = false;
-                    checkBox_ImportItem.setChecked(false);
-                    CheckboxImportColorSwitch(false);
-                }
-
-                if(checkBox_MarkForDeletion.isChecked()){
-                    //If the user has marked this item for deletion, move to the next item automatically.
-                    if(giFileItemIndex > giFileItemLastIndex){
-                        iterateToGreaterIndexedItem();
-                    } else if(giFileItemIndex < giFileItemLastIndex) {
-                        iterateToLesserIndexedItem();
-                    }
-                }
-
-                //Update result to send back to the calling activity (this is also done on tag change):
-                setResult(RESULT_OK);
+            if(galFileItems.get(giFileItemIndex).bIsChecked && galFileItems.get(giFileItemIndex).bMarkedForDeletion){
+                galFileItems.get(giFileItemIndex).bIsChecked = false;
+                checkBox_ImportItem.setChecked(false);
+                CheckboxImportColorSwitch(false);
             }
+
+            if(checkBox_MarkForDeletion.isChecked()){
+                //If the user has marked this item for deletion, move to the next item automatically.
+                if(giFileItemIndex > giFileItemLastIndex){
+                    iterateToGreaterIndexedItem();
+                } else if(giFileItemIndex < giFileItemLastIndex) {
+                    iterateToLesserIndexedItem();
+                }
+            }
+
+            //Update result to send back to the calling activity (this is also done on tag change):
+            setResult(RESULT_OK);
         });
 
         checkBox_MarkForDeletion.setChecked(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
@@ -643,42 +590,30 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         }
 
         ImageButton imageButton_GroupIDNew = findViewById(R.id.imageButton_GroupIDNew);
-        imageButton_GroupIDNew.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.getNewGroupID();
-                textView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
-            }
+        imageButton_GroupIDNew.setOnClickListener(v -> {
+            galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.getNewGroupID();
+            textView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
         });
 
         ImageButton imageButton_GroupIDCopy = findViewById(R.id.imageButton_GroupIDCopy);
-        imageButton_GroupIDCopy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
-                GlobalClass.gbClearGroupIDAtImportClose = true;
-                Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
-            }
+        imageButton_GroupIDCopy.setOnClickListener(v -> {
+            GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
+            GlobalClass.gbClearGroupIDAtImportClose = true;
+            Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
         });
 
         ImageButton imageButton_GroupIDPaste = findViewById(R.id.imageButton_GroupIDPaste);
-        imageButton_GroupIDPaste.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!GlobalClass.gsGroupIDClip.equals("")){
-                    galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.gsGroupIDClip;
-                    textView_GroupID.setText(GlobalClass.gsGroupIDClip);
-                }
+        imageButton_GroupIDPaste.setOnClickListener(v -> {
+            if(!GlobalClass.gsGroupIDClip.equals("")){
+                galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.gsGroupIDClip;
+                textView_GroupID.setText(GlobalClass.gsGroupIDClip);
             }
         });
 
         ImageButton imageButton_GroupIDRemove = findViewById(R.id.imageButton_GroupIDRemove);
-        imageButton_GroupIDRemove.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                galFileItems.get(giFileItemIndex).sGroupID = "";
-                textView_GroupID.setText("----");
-            }
+        imageButton_GroupIDRemove.setOnClickListener(v -> {
+            galFileItems.get(giFileItemIndex).sGroupID = "";
+            textView_GroupID.setText("----");
         });
 
         //END GROUP ID BUTTONS.
@@ -756,24 +691,14 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         ImageButton imageButton_PasteLastTags = findViewById(R.id.imageButton_PasteLastTags);
         if (imageButton_PasteLastTags != null) {
-            imageButton_PasteLastTags.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    copyLastTagSelection();
-                }
-            });
+            imageButton_PasteLastTags.setOnClickListener(v -> copyLastTagSelection());
 
 
         }
 
         TextView textView_LabelCopyLastTagSelection = findViewById(R.id.textView_LabelCopyLastTagSelection);
         if(textView_LabelCopyLastTagSelection != null){
-            textView_LabelCopyLastTagSelection.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    copyLastTagSelection();
-                }
-            });
+            textView_LabelCopyLastTagSelection.setOnClickListener(v -> copyLastTagSelection());
         }
 
         RelativeLayout relativeLayout_Adjacencies = findViewById(R.id.relativeLayout_Adjacencies);
@@ -920,45 +845,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         outState.putInt(IMAGE_PREVIEW_INDEX, giFileItemIndex);
     }
 
-    private void displayGrade(){
-        //Show the rating:
-        ImageView[] imageView_GradeArray = new ImageView[5];
-        boolean bGradeIVsOK = true;
-        for(int i = 0; i < giGradeImageViews.length; i++){
-            imageView_GradeArray[i] = findViewById(giGradeImageViews[i]);
-            if(imageView_GradeArray[i] == null){
-                bGradeIVsOK = false;
-            }
-        }
-        if (bGradeIVsOK){
-            Drawable drawable_SolidStar = ResourcesCompat.getDrawable(getResources(), R.drawable.baseline_grade_white_18dp, null);
-            Drawable drawable_EmptyStar = ResourcesCompat.getDrawable(getResources(), R.drawable.outline_grade_white_18dp, null);
-            for(int i = 0; i < galFileItems.get(giFileItemIndex).iGrade; i++) {
-                imageView_GradeArray[i].setImageDrawable(drawable_SolidStar);
-            }
-            for(int i = galFileItems.get(giFileItemIndex).iGrade; i < giGradeImageViews.length; i++) {
-                imageView_GradeArray[i].setImageDrawable(drawable_EmptyStar);
-            }
-        }
-
-    }
-
-    private class gradeOnClickListener implements View.OnClickListener{
-
-        int iGrade;
-
-        public gradeOnClickListener(int iGrade){
-            this.iGrade = iGrade;
-        }
-
-        @Override
-        public void onClick(View view) {
-            galFileItems.get(giFileItemIndex).iGrade = iGrade;
-            displayGrade();
-        }
-    }
-
-
     @Override
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(getApplicationContext()).unregisterReceiver(importFilePreviewResponseReceiver);
@@ -995,13 +881,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
 
                     final Handler handler = new Handler(Looper.getMainLooper());
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            //Do something after 100ms
-                            if(gProgressBar_AnalysisProgress != null) {
-                                gProgressBar_AnalysisProgress.setProgress(iAmountComplete);
-                            }
+                    handler.postDelayed(() -> {
+                        //Do something after 100ms
+                        if(gProgressBar_AnalysisProgress != null) {
+                            gProgressBar_AnalysisProgress.setProgress(iAmountComplete);
                         }
                     }, 100);
                 }
@@ -1091,7 +974,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             final ItemClass_CatalogItem ci_final = ci;
             assert ci_final != null;
 
-            String sItemName = "";
+            String sItemName;
 
 
             //Load the non-obfuscated image into the RecyclerView ViewHolder:
@@ -1151,7 +1034,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                                     uriThumbnailUri = uriDownloadedThumbnailFile;
                                 } else {
                                     //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
-                                    boolean bVideoFileFound = false;
                                     Uri uriM3U8File = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sFilename);
                                     if (uriM3U8File != null) {
                                         try {
@@ -1165,7 +1047,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                                                         Uri uriThumbnailFileCandidate = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), sLine);
                                                         if (uriThumbnailFileCandidate != null) {
                                                             uriThumbnailUri = uriThumbnailFileCandidate;
-                                                            bVideoFileFound = true;
                                                             break;
                                                         }
                                                     }
@@ -1178,7 +1059,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
                                         } catch (Exception e) {
                                             //Probably a file IO exception.
-                                            bVideoFileFound = false; //redundant, but don't want special behavior.
                                         }
                                     }
 
