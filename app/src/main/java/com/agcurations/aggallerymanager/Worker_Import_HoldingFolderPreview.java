@@ -21,7 +21,7 @@ import java.util.TreeMap;
 public class Worker_Import_HoldingFolderPreview extends Worker {
 
     //Define string used to identify this worker type:
-    public static final String WORKER_IMPORT_HOLDING_FOLDER_PREVIEW = "WORKER_IMPORT_HOLDING_FOLDER_PREVIEW";
+    public static final String TAG_WORKER_IMPORT_HOLDING_FOLDER_PREVIEW = "com.agcurations.aggallermanager.tag_worker_import_getholdingfolderpreview";
 
     public static final String IMPORT_HOLDING_FOLDER_PREVIEW_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_HOLDING_FOLDER_PREVIEW_ACTION_RESPONSE";
 
