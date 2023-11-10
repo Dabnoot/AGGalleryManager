@@ -7,7 +7,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -57,8 +56,6 @@ public class Worker_Import_HoldingFolderPreview extends Worker {
     @Override
     public Result doWork() {
 
-        Data dataProgress;
-
         globalClass = (GlobalClass) getApplicationContext();
 
         String sMessage ="";
@@ -72,19 +69,19 @@ public class Worker_Import_HoldingFolderPreview extends Worker {
         //Determine the number of files in the holding folder and adjust the radiobutton text to show file count.
         ArrayList<String> sImageHoldingFolderFiles = GlobalClass.GetDirectoryFileNames(GlobalClass.gUriImageDownloadHoldingFolder);
 
-        int iFileCount = 0;
+        int iFileCount;
 
         //Need to determine which files have associated .dat metadata files.
         //  If there is an associated metadata file, read which user downloaded the file and
         //  don't expose that file to any other users.
 
-        //List all metadata files by base name:
+        //List all media files with associated .dat files:
         ArrayList<String> alsMediaFilesWithDatFiles = new ArrayList<>();
         for(String sFileName: sImageHoldingFolderFiles){
             String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sFileName);
             if(sBaseAndExtension.length == 2) {
-                if (sBaseAndExtension[1].equals("tad")) {
-                    if(sImageHoldingFolderFiles.contains(sBaseAndExtension[0])){
+                if (sBaseAndExtension[1].equals("tad")) { //.dat file obfuscated. .dat file would be something like 1egamI.gpj.tad.
+                    if(sImageHoldingFolderFiles.contains(sBaseAndExtension[0])){ //sBaseAndExtension[0] will be the media file name AND its extension... such as 1egamI.gpj.
                         //If the media file exists, add it to the list of media files with matching .dat files:
                         alsMediaFilesWithDatFiles.add(sBaseAndExtension[0]);
                     }/* else {
@@ -99,7 +96,6 @@ public class Worker_Import_HoldingFolderPreview extends Worker {
 
         //Now look to see if there are any files without metadata files.
         ArrayList<String> alsNoMetadataFileMediaFiles = new ArrayList<>();
-        boolean bMetadataFileFound;
         for(String sFileName: sImageHoldingFolderFiles){
             String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sFileName);
             if(sBaseAndExtension.length == 2) {

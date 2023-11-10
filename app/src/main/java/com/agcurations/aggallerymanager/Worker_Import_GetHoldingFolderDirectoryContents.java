@@ -7,13 +7,11 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.DocumentsContract;
 import android.util.Log;
-import android.webkit.MimeTypeMap;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -30,11 +28,8 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
     public static final String TAG_WORKER_IMPORT_GETHOLDINGFOLDERDIRECTORYCONTENTS = "com.agcurations.aggallermanager.tag_worker_import_getholdingfolderdirectorycontents";
 
-    private double gdTimeStamp;
-
     public Worker_Import_GetHoldingFolderDirectoryContents(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gdTimeStamp = getInputData().getDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, -1);
     }
 
     @NonNull
@@ -42,6 +37,8 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
     public Result doWork() {
 
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+        String sMessage;
 
         long lProgressNumerator = 0L;
         long lProgressDenominator;
@@ -52,15 +49,15 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
         try {
 
             //Get data about the files:
-            TreeMap<String, String[]> tmHoldingFolderRecordData = new TreeMap<>();
+            //TreeMap<String, String[]> tmHoldingFolderRecordData = new TreeMap<>();
             int MEDIA_FILE_NAME_INDEX = 0;
             int MEDIA_FILE_EXTENSION_INDEX = 1;
             int MEDIA_FILE_MIME_TYPE_INDEX = 2;
-            int MEDIA_FILE_URI_STRING_INDEX = 3;
-            int MEDIA_FILE_LAST_MODIFIED_INDEX = 4;
-            int MEDIA_FILE_SIZE_INDEX = 5;
-            int METADATA_FILE_URI_STRING_INDEX = 6;
-            int iFieldCount = 7;
+            int MEDIA_FILE_LAST_MODIFIED_INDEX = 3;
+            int MEDIA_FILE_SIZE_INDEX = 4;
+            int iFieldCount = 5;
+
+            TreeMap<String, String[]> tmHoldingFolderRecordData_AllFiles = new TreeMap<>();
 
             final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(GlobalClass.gUriImageDownloadHoldingFolder,
                     DocumentsContract.getDocumentId(GlobalClass.gUriImageDownloadHoldingFolder));
@@ -75,73 +72,17 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                     while (c.moveToNext()) {
                         String sMimeType = c.getString( 1);
                         if(!sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
-                            //todo: what if the media file name does not have an extension? I think the program may crash.
+                            //Get data regarding the file:
+                            String[] sDataRecord = new String[iFieldCount];
                             String sFileName = c.getString(0);
-                            String sFileBaseName = sFileName.substring(0, sFileName.lastIndexOf("."));
-                            sFileBaseName = URLDecoder.decode(sFileBaseName, StandardCharsets.UTF_8.toString()); //todo: this line may not be needed after a while due to
-                                        //inclusion in VideoEnabledWebView. There was an issue with encoded filename as the downloader would clean the name up
-                                        //  before creating the file, but the metadata text file that the program creates would retain those characters.
-                                        //  Characters such as '%20' for 'SPACE' character.
-                            String sFileExtension = sFileName.substring(sFileName.lastIndexOf("."));
-                            if(sFileExtension.equals(".tad")){
-                                //The base name of this file will include the media file name with the media file extension. Get the base file name again.
-                                sFileBaseName = sFileBaseName.substring(0, sFileBaseName.lastIndexOf("."));
-
-                                //Due to a legacy issue, the base file name that was retrieved from this metadata file may be too long. Download
-                                //  manager will have shortened the name before completing the download.
-                                //  todo:Remove this code after the holding folder is cleared and try test at rule 34 phael
-                                int iFileNameMaxLength = 47; //Arbitrarily set because I don't know Download Manager's rules. Gave some buffer from what I have seen.
-                                if(sFileBaseName.length() > iFileNameMaxLength){
-                                    //Limit max length of file name or download manager will do it for you.
-                                    int iAmountToTrim = sFileBaseName.length() - iFileNameMaxLength;
-                                    sFileBaseName = sFileBaseName.substring(0, sFileBaseName.length() - iAmountToTrim);
-                                }
-
-
-                            }
                             String sFileLastModified = c.getString(2);
                             String sFileSize = c.getString(3);
-                            if(!tmHoldingFolderRecordData.containsKey(sFileBaseName)){
-                                //If we have not yet processed this FileBaseName, start it:
-                                String[] sDataRecord = new String[iFieldCount];
-                                if(sFileExtension.equals(".tad")){
-                                    //Prepare the Metadata entry
-                                    String sMetadataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sFileName);
-                                    sDataRecord[METADATA_FILE_URI_STRING_INDEX] = sMetadataFileUri;
-                                } else {
-                                    //Prepare the file entry
-                                    sDataRecord[MEDIA_FILE_NAME_INDEX] = sFileName;
-                                    sDataRecord[MEDIA_FILE_EXTENSION_INDEX] = sFileExtension;
-                                    sDataRecord[MEDIA_FILE_MIME_TYPE_INDEX] = sMimeType;
-                                    String sMediaFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sFileName);
-                                    sDataRecord[MEDIA_FILE_URI_STRING_INDEX] = sMediaFileUri;
-                                    sDataRecord[MEDIA_FILE_LAST_MODIFIED_INDEX] = sFileLastModified;
-                                    sDataRecord[MEDIA_FILE_SIZE_INDEX] = sFileSize;
-                                }
-                                tmHoldingFolderRecordData.put(sFileBaseName, sDataRecord);
-                            } else {
-                                String[] sDataRecord = tmHoldingFolderRecordData.get(sFileBaseName);
-                                if(sDataRecord == null){
-                                    //This should never happen, but Android Studio complains that it could.
-                                    sDataRecord = new String[5];
-                                }
-                                if(sFileExtension.equals(".tad")){
-                                    //Prepare the Metadata entry
-                                    String sMetadataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sFileName);
-                                    sDataRecord[METADATA_FILE_URI_STRING_INDEX] = sMetadataFileUri;
-                                } else {
-                                    //Prepare the file entry
-                                    sDataRecord[MEDIA_FILE_NAME_INDEX] = sFileName;
-                                    sDataRecord[MEDIA_FILE_EXTENSION_INDEX] = sFileExtension;
-                                    sDataRecord[MEDIA_FILE_MIME_TYPE_INDEX] = sMimeType;
-                                    String sFileMediaUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sFileName);
-                                    sDataRecord[MEDIA_FILE_URI_STRING_INDEX] = sFileMediaUri;
-                                    sDataRecord[MEDIA_FILE_LAST_MODIFIED_INDEX] = sFileLastModified;
-                                    sDataRecord[MEDIA_FILE_SIZE_INDEX] = sFileSize;
-                                }
-                                tmHoldingFolderRecordData.replace(sFileBaseName, sDataRecord);
-                            }
-
+                            sDataRecord[MEDIA_FILE_NAME_INDEX] = sFileName;
+                            sDataRecord[MEDIA_FILE_EXTENSION_INDEX] = "";
+                            sDataRecord[MEDIA_FILE_MIME_TYPE_INDEX] = sMimeType;
+                            sDataRecord[MEDIA_FILE_LAST_MODIFIED_INDEX] = sFileLastModified;
+                            sDataRecord[MEDIA_FILE_SIZE_INDEX] = sFileSize;
+                            tmHoldingFolderRecordData_AllFiles.put(sFileName, sDataRecord);
                         }
                     }
                     c.close();
@@ -152,17 +93,123 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
 
 
-            if(tmHoldingFolderRecordData.size() == 0){
+            //1. List all media files with associated .dat files:
+            ArrayList<String> alsMediaFilesWithDatFiles = new ArrayList<>();
+            for(Map.Entry<String, String[]> entry: tmHoldingFolderRecordData_AllFiles.entrySet()){
+                String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(entry.getKey());
+                if(sBaseAndExtension.length == 2) {
+                    if (sBaseAndExtension[1].equals("tad")) { //.dat file obfuscated. .dat file would be something like 1egamI.gpj.tad.
+                        if(tmHoldingFolderRecordData_AllFiles.containsKey(sBaseAndExtension[0])){ //sBaseAndExtension[0] will be the media file name AND its extension... such as 1egamI.gpj.
+                            //If the media file exists, add it to the list of media files with matching .dat files:
+                            alsMediaFilesWithDatFiles.add(sBaseAndExtension[0]);
+                        }/* else {
+                        //If this is a .dat file without a media file... do nothing for now. Todo: Consider deleting the .dat file?
+                        //  This case would be if the download failed for some reason, or perhaps the media file was moved
+                        //  or was imported and the .dat file deletion failed.
+                        //  Suggest starting the "delete files" worker if orphaned .dat files are found.
+                    }*/
+                    }
+                }
+            }
+            //2. Look to see if there are any files without metadata files.
+            ArrayList<String> alsNoMetadataFileMediaFiles = new ArrayList<>();
+            for(Map.Entry<String, String[]> entry: tmHoldingFolderRecordData_AllFiles.entrySet()){
+                String sFileName = entry.getKey();
+                String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sFileName);
+                if(sBaseAndExtension.length == 2) {
+                    if (!sBaseAndExtension[1].equals("tad")) {
+                        //If this is not a .dat file then it is a media file. Check if this media file had a corresponding .dat file.
+                        if(!alsMediaFilesWithDatFiles.contains(sFileName)){
+                            //If there was no associated .dat file found for this media file in the previous operation, record this file.
+                            alsNoMetadataFileMediaFiles.add(sFileName);
+                        }
+                    }
+                }
+
+            }
+
+            //3. Check metadata files for user. If the user is specified and matches the current user,
+            //     include this entry in the file count for potential imports.
+            TreeMap<String, String> tmFilenamesAndUsers = new TreeMap<>();
+            for(String sMediaFileName: alsMediaFilesWithDatFiles) {
+                String sMetaDataFileName = sMediaFileName + ".tad";
+                String sMetadataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetaDataFileName);
+                try {
+                    //Read a metadata file.
+                    Uri uriMetadataFile = Uri.parse(sMetadataFileUri);
+                    InputStream isImageMetadataFile = GlobalClass.gcrContentResolver.openInputStream(uriMetadataFile);
+                    if (isImageMetadataFile == null) {
+                        sMessage = "Could not open metadata file for analysis: " + sMetadataFileUri;
+                        Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                        continue;
+                    }
+                    BufferedReader brReader;
+                    brReader = new BufferedReader(new InputStreamReader(isImageMetadataFile));
+                    int iLine = 0;
+                    for (String sLine = brReader.readLine(); sLine != null && iLine < 3; sLine = brReader.readLine()) {
+                        switch (iLine) {
+                            case 0:
+                            case 1:
+                                //Do nothing
+                                break;
+                            case 2:
+                                tmFilenamesAndUsers.put(sMediaFileName, sLine);
+                                break;
+                        }
+                        iLine++;
+                    }
+
+                    brReader.close();
+                    isImageMetadataFile.close();
+
+                    if(!tmFilenamesAndUsers.containsKey(sMediaFileName)){
+                        //If a username was not found for this entry, add the filename but exclude a user.
+                        tmFilenamesAndUsers.put(sMediaFileName, "");
+                    }
+
+                } catch (Exception e) {
+                    sMessage = "Could not open metadata file for analysis: " + sMetadataFileUri + "\n" + e.getMessage();
+                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                }
+            }
+            //tmFilenamesAndUsers now contains a list of all media filenames and the user as derived from an associated metadata file.
+
+
+            //4. Combine file items that had metadata indicating that they are intended for the current
+            //     user with any file items that were missing metadata files.
+            ArrayList<String> alsApprovedFiles = new ArrayList<>();
+            for(Map.Entry<String, String> entry: tmFilenamesAndUsers.entrySet()){
+                if(entry.getValue().equals(GlobalClass.gicuCurrentUser.sUserName) ||
+                        entry.getValue().equals("")){
+                    alsApprovedFiles.add(entry.getKey());
+                }
+            }
+            alsApprovedFiles.addAll(alsNoMetadataFileMediaFiles);
+
+            //5. Refine the treemap containing files so that it only includes the approved files.
+            TreeMap<String, String[]> tmHoldingFolderRecordData_ApprovedFiles = new TreeMap<>();
+            for(String sApprovedFile: alsApprovedFiles){
+                tmHoldingFolderRecordData_ApprovedFiles.put(sApprovedFile, tmHoldingFolderRecordData_AllFiles.get(sApprovedFile));
+            }
+
+            //All media files in holding folder now located that are approved for the current user
+            //  or have no defined user or have no associated metadata file.
+
+
+
+
+
+            if(tmHoldingFolderRecordData_ApprovedFiles.size() == 0){
                 GlobalClass.gbImportFolderAnalysisRunning = false;
                 GlobalClass.gbImportFolderAnalysisFinished = true;
-                String sMessage = "No files found in the holding folder.";
+                sMessage = "No files found in the holding folder.";
                 globalClass.gsbImportFolderAnalysisLog.append(sMessage);
                 globalClass.problemNotificationConfig(sMessage, Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
                 return Result.success();
             }
 
             //Calculate total number of files for a progress bar:
-            lProgressDenominator = tmHoldingFolderRecordData.size();
+            lProgressDenominator = tmHoldingFolderRecordData_ApprovedFiles.size();
 
             globalClass.BroadcastProgress(false, "",
                     true, iProgressBarValue,
@@ -171,7 +218,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
 
             //Process the holding folder entries:
-            for(Map.Entry<String, String[]> HoldingFolderEntry: tmHoldingFolderRecordData.entrySet()){
+            for(Map.Entry<String, String[]> HoldingFolderEntry: tmHoldingFolderRecordData_ApprovedFiles.entrySet()){
 
                 if(GlobalClass.gbImportFolderAnalysisStop){
                     break;
@@ -182,13 +229,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 String sMediaFileExtension = HoldingFolderEntry.getValue()[MEDIA_FILE_EXTENSION_INDEX];
                 String sMediaFileName = HoldingFolderEntry.getValue()[MEDIA_FILE_NAME_INDEX];
 
-                String s;
-                if(sMimeType == null){
-                    s ="sad";
-                }
                 if (sMimeType.startsWith("video") ||
-                        //sMediaFileExtension.equals(".gif") ||
-                        sMediaFileExtension.equals(".tad") || //.dat but reversed as for a jumbled file name.
                         (sMimeType.equals("application/octet-stream") && sMediaFileExtension.equals(".4pm"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
                     //If not a file that we want to analyze...
                     continue; //If requesting images and mimeType is video or the file is text, go to next loop.
@@ -199,8 +240,6 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 long lMediaFileLastModified = Long.parseLong(HoldingFolderEntry.getValue()[MEDIA_FILE_LAST_MODIFIED_INDEX]);// //milliseconds since January 1, 1970 00:00:00.0 UTC.
                 long lMediaFileSize = Long.parseLong(HoldingFolderEntry.getValue()[MEDIA_FILE_SIZE_INDEX]);
 
-
-
                 //Update progress bar:
                 //Update progress right away in order to avoid instances in which a loop is skipped.
                 lProgressNumerator++;
@@ -210,27 +249,25 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                         true, lProgressNumerator + "/" + lProgressDenominator,
                         Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
 
-
-                //If the file is video, get the duration so that the file list can be sorted by duration if requested.
-                long lDurationInMilliseconds = -1L;
-                String sWidth = "";  //We are not doing math with the width and height. Therefore no need to convert to int.
-                String sHeight = "";
+                String sWidth;  //We are not doing math with the width and height. Therefore no need to convert to int.
+                String sHeight;
 
                 //Get date last modified:
                 Calendar cal = Calendar.getInstance(Locale.ENGLISH);
                 cal.setTimeInMillis(lMediaFileLastModified);
                 Date dateLastModified = cal.getTime();
 
+                String sMediaFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), HoldingFolderEntry.getValue()[MEDIA_FILE_NAME_INDEX]);
+
                 //Get the width and height of the image:
                 try {
-
                     BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
                     onlyBoundsOptions.inJustDecodeBounds = true;
 
-                    Uri uriMediaFile = Uri.parse(HoldingFolderEntry.getValue()[MEDIA_FILE_URI_STRING_INDEX]);
+                    Uri uriMediaFile = Uri.parse(sMediaFileUri);
                     InputStream isImageFile = GlobalClass.gcrContentResolver.openInputStream(uriMediaFile);
                     if(isImageFile == null){
-                        String sMessage = "Could not open image file for analysis: " + sMediaFileName;
+                        sMessage = "Could not open image file for analysis: " + sMediaFileName;
                         LogThis("doWork", sMessage, null);
                         continue;
                     }
@@ -250,36 +287,55 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 icfFileItem.dateLastModified = dateLastModified;
                 icfFileItem.sWidth = sWidth;
                 icfFileItem.sHeight = sHeight;
-                icfFileItem.sUri = HoldingFolderEntry.getValue()[MEDIA_FILE_URI_STRING_INDEX];
+                icfFileItem.sUri = sMediaFileUri;
                 icfFileItem.sUriParent = GlobalClass.gUriImageDownloadHoldingFolder.toString();
                 icfFileItem.sMimeType = sMimeType;
                 //Get the URL data from the associated metadata file, if it exists:
 
-                String sMetaDataFileUri = HoldingFolderEntry.getValue()[METADATA_FILE_URI_STRING_INDEX];
-                if(sMetaDataFileUri != null) {
+                String sMetaDataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), HoldingFolderEntry.getValue()[MEDIA_FILE_NAME_INDEX] + ".tad");
+                Uri uriMetaDataFileUri = Uri.parse(sMetaDataFileUri);
+                if(GlobalClass.CheckIfFileExists(uriMetaDataFileUri)) {
                     try {
+                        //Read a metadata file.
                         Uri uriMetaDataFile = Uri.parse(sMetaDataFileUri);
                         InputStream isImageMetadataFile = GlobalClass.gcrContentResolver.openInputStream(uriMetaDataFile);
                         if(isImageMetadataFile == null){
-                            String sMessage = "Could not open metadata file for analysis: " + sMetaDataFileUri;
+                            sMessage = "Could not open metadata file for analysis: " + sMetaDataFileUri;
                             LogThis("doWork()", sMessage, null);
                             continue;
                         }
                         BufferedReader brReader;
                         brReader = new BufferedReader(new InputStreamReader(isImageMetadataFile));
-                        icfFileItem.sURL = brReader.readLine();
-                        icfFileItem.sTitle = brReader.readLine();
-                        icfFileItem.sUserName = brReader.readLine();
+                        int iLine = 0;
+                        for (String sLine = brReader.readLine(); sLine != null && iLine < 3; sLine = brReader.readLine()) {
+                            switch (iLine) {
+                                case 0:
+                                    icfFileItem.sURL = sLine;
+                                    break;
+                                case 1:
+                                    icfFileItem.sTitle = sLine;  //This is the original file name. Coordinate wtih VideoEnabledWebView.java.
+                                    break;
+                                case 2:
+                                    icfFileItem.sUserName = sLine;
+                                    break;
+                            }
+                            iLine++;
+                        }
+
                         brReader.close();
                         isImageMetadataFile.close();
                     } catch (Exception e) {
-                        String sMessage = "Could not open metadata file for analysis: " + sMetaDataFileUri;
+                        sMessage = "Could not open metadata file for analysis: " + sMetaDataFileUri;
                         LogThis("doWork()", sMessage, e.getMessage());
                     }
                 }
+
                 //Add the ItemClass_File to the ArrayList:
-                //LogThis("doWork", "Added entry: " + icfFileItem.sUri, null);
-                alFileList.add(icfFileItem);
+                if(icfFileItem.sUserName.equals(GlobalClass.gicuCurrentUser.sUserName) || icfFileItem.sUserName.equals("")) {
+                    //If the file item has metadata that indicates that this item is intended for the current user or if
+                    //  there was no metadata that defined a user, add the file to the list to be included in the search results.
+                    alFileList.add(icfFileItem);
+                }
 
             } //End loop going through the folder that the user selected.
 
@@ -287,7 +343,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
         }catch (Exception e){
             GlobalClass.gbImportFolderAnalysisRunning = false;
             GlobalClass.gbImportFolderAnalysisFinished = true;
-            String sMessage = "Problem during Worker_Import_GetHoldingFolderDirectoryContents: " + e.getMessage();
+            sMessage = "Problem during Worker_Import_GetHoldingFolderDirectoryContents: " + e.getMessage();
             globalClass.gsbImportFolderAnalysisLog.append(sMessage);
             globalClass.problemNotificationConfig(e.getMessage(), Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE);
             return Result.failure();
@@ -313,21 +369,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
             GlobalClass.gbImportFolderAnalysisStop = false;
         }
 
-
-
-
-
-
         return Result.success();
-    }
-
-    public static String getMimeType(String url) {
-        String type = null;
-        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-        if (extension != null) {
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-        }
-        return type;
     }
 
     private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
