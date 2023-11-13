@@ -488,7 +488,20 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             for(int i = 0; i < aliTags.size(); i++){
                 if(aliTags.get(i) == -1){
                     //Prepare a list of strings representing the new tags that must be created:
+
                     if(!sTags[i].equals("")) {
+                        //Make sure the tag does not contain any illegal characters that could be written to the tags file and corrupt the file:
+                        //Focus on tag name only - a description of the tag is not added via this routine.
+
+                        //Search the fields for illegal characters, and if they are found, replace the illegal
+                        //  characters.
+                        //Go through all of the "illegal" strings/characters:
+                        for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                            if(sTags[i].contains(sIllegalStringSet[GlobalClass.CHECKABLE])) {
+                                sTags[i] = sTags[i].replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                            }
+                        }
+
                         alsNewTags.add(sTags[i]);
                     }
                 } else {

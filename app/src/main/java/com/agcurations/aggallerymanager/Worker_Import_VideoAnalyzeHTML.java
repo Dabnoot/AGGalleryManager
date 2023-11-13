@@ -365,7 +365,21 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                             if (objsTags != null && objsTags.length > 0) {
                                 //If we found something, assign it to a string:
                                 for (Object oTags : objsTags) {
-                                    alsTags.add(oTags.toString());
+                                    String sTag = oTags.toString();
+
+                                    //Make sure the tag does not contain any illegal characters that could be written to the tags file and corrupt the file:
+                                    //Focus on tag name only - a description of the tag is not added via this routine.
+
+                                    //Search the fields for illegal characters, and if they are found, replace the illegal
+                                    //  characters.
+                                    //Go through all of the "illegal" strings/characters:
+                                    for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                                        if(sTag.contains(sIllegalStringSet[GlobalClass.CHECKABLE])) {
+                                            sTag = sTag.replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                                        }
+                                    }
+
+                                    alsTags.add(sTag);
                                 }
                             }
                         } catch (Exception e) {
@@ -382,7 +396,7 @@ public class Worker_Import_VideoAnalyzeHTML extends Worker {
                     for(String sTag: alsTags){
                         String sIncomingTagCleaned = sTag.toLowerCase().trim();
                         boolean bTagFound = false;
-                        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: globalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
+                        for(Map.Entry<Integer, ItemClass_Tag> TagEntry: GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
                             String sExistingTagCleaned = TagEntry.getValue().sTagText.toLowerCase().trim();
                             if(sExistingTagCleaned.equals(sIncomingTagCleaned)){
                                 bTagFound = true;
