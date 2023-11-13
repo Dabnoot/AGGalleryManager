@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 
@@ -290,22 +291,22 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ictNewTag.alsTagApprovedUsers = gAdapterApprovedUsers.getUserNamesInList();
 
         //Ensure data has no illegal characters:
-        final ItemClass_Tag ict_ValidatedTag = GlobalClass.validateTagData(ictNewTag);
-        ictNewTag = null;
-        if(ict_ValidatedTag == null){
+        final ItemClass_Tag ict_ValidatedNewTag = GlobalClass.validateTagData(ictNewTag);
+
+        if(ict_ValidatedNewTag == null){
             Toast.makeText(getContext(), "Critical error with formation of data record. Record creation aborted.", Toast.LENGTH_LONG).show();
             return;
         }
-        if(ict_ValidatedTag.bIllegalDataFound){
+        if(ict_ValidatedNewTag.bIllegalDataFound){
             //The illegal data should have been corrected by the validation routine. Notify the user:
-            Toast.makeText(getContext(), ict_ValidatedTag.sIllegalDataNarrative, Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), ict_ValidatedNewTag.sIllegalDataNarrative, Toast.LENGTH_LONG).show();
         }
 
         //Check and see if the user has added one or more approved users, and if so, if the list
         // of approved users does not include the current user, notify them of the circumstance
         // and ask for confirmation before continuing.
-        if(ict_ValidatedTag.alsTagApprovedUsers.size() > 0 &&
-                !ict_ValidatedTag.alsTagApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)){
+        if(ict_ValidatedNewTag.alsTagApprovedUsers.size() > 0 &&
+                !ict_ValidatedNewTag.alsTagApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)){
             String sConfirmationMessage = "You have selected to";
             if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE){
                 sConfirmationMessage += " edit";
@@ -329,13 +330,13 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             builder.setMessage(sConfirmationMessage);
             builder.setPositiveButton("Yes", (dialog, id) -> {
                 dialog.dismiss();
-                continueWithTagAddOrEditFinalize(ict_ValidatedTag);
+                continueWithTagAddOrEditFinalize(ict_ValidatedNewTag);
             });
             builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
             AlertDialog adConfirmationDialog = builder.create();
             adConfirmationDialog.show();
         } else {
-            continueWithTagAddOrEditFinalize(ict_ValidatedTag);
+            continueWithTagAddOrEditFinalize(ict_ValidatedNewTag);
         }
 
     }
@@ -600,16 +601,16 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     }
 
 
-
+    @SuppressLint("ClickableViewAccessibility") //This is to suppress a warning that the click capture should call v.perform click.
+        // But if that is done, it causes an erroneous click to be performed on the Add Tag button in certain circumstances.
     public void setupUI(View view) {
         //https://stackoverflow.com/questions/4165414/how-to-hide-soft-keyboard-on-android-after-clicking-outside-edittext/19828165
         // Set up touch listener for non-text box views to hide keyboard.
         if (!(view instanceof EditText)) {
             view.setOnTouchListener((v, event) -> {
-                if(getActivity() != null) {
+                if (getActivity() != null) {
                     GlobalClass.hideSoftKeyboard(getActivity());
                 }
-                v.performClick();
                 return false;
             });
         }
