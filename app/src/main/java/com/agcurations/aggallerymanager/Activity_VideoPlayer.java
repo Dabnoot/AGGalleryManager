@@ -50,6 +50,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
@@ -332,6 +333,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         //Create the ExoPlayer.
         gExoPlayer = new ExoPlayer.Builder(this).build();
+
+        gExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
 
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
 
