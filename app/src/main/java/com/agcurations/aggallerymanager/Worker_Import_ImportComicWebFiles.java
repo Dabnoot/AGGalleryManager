@@ -23,9 +23,15 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
 
     public static final String IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE";
 
+
+
+
+
+    String gsAddress;
+
     public Worker_Import_ImportComicWebFiles(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-
+        gsAddress = getInputData().getString(GlobalClass.EXTRA_STRING_WEB_ADDRESS);
     }
 
     @NonNull
@@ -103,7 +109,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ciNew.dDatetime_Import = dTimeStamp;
 
         //Populate Catalog Item data fields:
-        ciNew.sSource            = alFileList.get(0).sURL;
+        ciNew.sSource            = gsAddress;
         ciNew.sTitle             = alFileList.get(0).sTitle;
         ciNew.lSize              = alFileList.get(0).lSizeBytes;
         ciNew.sComicParodies     = alFileList.get(0).sComicParodies;

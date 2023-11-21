@@ -152,6 +152,7 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
                     Data dataImportComicWebFiles = new Data.Builder()
                             .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                             .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .putString(GlobalClass.EXTRA_STRING_WEB_ADDRESS, viewModelImportActivity.sWebAddress)
                             .build();
                     OneTimeWorkRequest otwrImportComicWebFiles = new OneTimeWorkRequest.Builder(Worker_Import_ImportComicWebFiles.class)
                             .setInputData(dataImportComicWebFiles)
