@@ -531,7 +531,9 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                 icf.iThumbnailURLImageHeight = iThumbnailURLImageHeight;
                 icf.iThumbnailURLImageWidth = iThumbnailURLImageWidth;
 
-                alicf_ComicDownloadFileItems.add(icf);
+                //Verify that the icf does not contain any illegal characters:
+                ItemClass_File icf_CleanedData = GlobalClass.validateFileItemData(icf);
+                alicf_ComicDownloadFileItems.add(icf_CleanedData);
             }
 
             //Also send a broadcast to Activity Import to capture the download items in an array adapter:
