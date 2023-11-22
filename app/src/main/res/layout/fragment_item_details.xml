@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <RelativeLayout
+                <!--<RelativeLayout
                     android:id="@+id/relativeLayout_Grade"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -92,7 +92,7 @@
                             android:src="@drawable/outline_grade_white_18dp"/>
 
                     </LinearLayout>
-                </RelativeLayout>
+                </RelativeLayout>-->
 
                 <TextView
                     android:id="@+id/textView_Title"
@@ -103,7 +103,8 @@
                     android:layout_marginStart="15dp"
                     android:layout_marginTop="30dp"
                     android:textSize="20sp"
-                    android:layout_below="@id/relativeLayout_Grade"/>
+                    android:layout_alignParentTop="true"/>
+                    <!--android:layout_below="@id/relativeLayout_Grade"/>-->
 
                 <TextView
                     android:id="@+id/textView_FileName"

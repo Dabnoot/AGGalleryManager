@@ -37,12 +37,12 @@ public class Fragment_ItemDetails extends Fragment {
 
     GlobalClass globalClass;
 
-    int[] giGradeImageViews;
+    /*int[] giGradeImageViews;*/
 
     String gsNewTagIDs;
     String gsPreviousTagIDs;
-    int giNewGrade;
-    int giPreviousGrade;
+    /*int giNewGrade;
+    int giPreviousGrade;*/
 
     ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
@@ -84,8 +84,8 @@ public class Fragment_ItemDetails extends Fragment {
             }
             gsNewTagIDs = gciCatalogItem.sTags;
             gsPreviousTagIDs = gsNewTagIDs;
-            giNewGrade = gciCatalogItem.iGrade;
-            giPreviousGrade = giNewGrade;
+            /*giNewGrade = gciCatalogItem.iGrade;
+            giPreviousGrade = giNewGrade;*/
         } else {
             gciCatalogItem = new ItemClass_CatalogItem(); //todo: This fragment serves no purpose if the catalog item is not received.
         }
@@ -94,7 +94,7 @@ public class Fragment_ItemDetails extends Fragment {
         }
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
-        //Set on-click listener for grade:
+        /*//Set on-click listener for grade:
         giGradeImageViews = new int[]{
                 R.id.imageView_Grade1,
                 R.id.imageView_Grade2,
@@ -116,9 +116,9 @@ public class Fragment_ItemDetails extends Fragment {
             for(int i = 0; i < giGradeImageViews.length; i++) {
                 imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
             }
-        }
+        }*/
 
-        displayGrade();
+        //displayGrade();
 
         UpdateTextViews();
 
@@ -194,9 +194,9 @@ public class Fragment_ItemDetails extends Fragment {
                         //Inform program of a need to update the tags histogram:
                         globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                     }
-                    gciCatalogItem.iGrade = giNewGrade;
+                    /*gciCatalogItem.iGrade = giNewGrade;
                     gsPreviousTagIDs = gsNewTagIDs;
-                    giPreviousGrade = giNewGrade;
+                    giPreviousGrade = giNewGrade;*/
                     Toast.makeText(getContext(), "Saving data...", Toast.LENGTH_SHORT).show();
                     button_Save.setEnabled(false);
                         //Because the item assigned to gciCatalogItem was passed-in by reference,
@@ -298,9 +298,9 @@ public class Fragment_ItemDetails extends Fragment {
         gciCatalogItem = ci;
         gsNewTagIDs = gciCatalogItem.sTags;
         gsPreviousTagIDs = gsNewTagIDs;
-        giNewGrade = gciCatalogItem.iGrade;
+        /*giNewGrade = gciCatalogItem.iGrade;
         giPreviousGrade = giNewGrade;
-        displayGrade();
+        displayGrade();*/
 
         UpdateTextViews();
 
@@ -428,7 +428,7 @@ public class Fragment_ItemDetails extends Fragment {
     }
 
 
-    private void displayGrade(){
+    /*private void displayGrade(){
         if(getView() == null){
             return;
         }
@@ -452,7 +452,7 @@ public class Fragment_ItemDetails extends Fragment {
             }
         }
 
-    }
+    }*/
 
     private void enableSave(){
         if(getView() == null){
@@ -474,8 +474,8 @@ public class Fragment_ItemDetails extends Fragment {
 
         @Override
         public void onClick(View view) {
-            giNewGrade = iGrade;
-            displayGrade();
+            /*giNewGrade = iGrade;
+            displayGrade();*/
             enableSave();
         }
     }
