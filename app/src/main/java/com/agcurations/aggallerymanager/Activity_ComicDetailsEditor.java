@@ -105,9 +105,12 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 gciCatalogItem.sComicLanguages = editText_Languages.getText().toString();
                 gciCatalogItem.sComicCategories = editText_Categories.getText().toString();
 
+
+                ItemClass_CatalogItem icci_validated = GlobalClass.validateCatalogItemData(gciCatalogItem);
+
                 //Update catalog item in memory and in storage:
                 Toast.makeText(getApplicationContext(), "Saving catalog record...", Toast.LENGTH_SHORT).show();
-                globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                globalClass.CatalogDataFile_UpdateRecord(icci_validated);
                 Toast.makeText(getApplicationContext(), "Catalog record saved.", Toast.LENGTH_SHORT).show();
 
                 //Tell Activity_CatalogViewer to refresh its view:

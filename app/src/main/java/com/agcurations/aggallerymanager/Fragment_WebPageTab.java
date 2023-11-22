@@ -646,7 +646,33 @@ public class Fragment_WebPageTab extends Fragment {
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
 
-                String sTitle = view.getTitle();
+                String sTitle = "";
+                String sTemp = view.getTitle();
+                if(sTemp != null){
+                    sTitle = sTemp;
+                }
+
+                //================================================================
+                // ===== CLEAN ANY DATA TO ENSURE NO CORRUPTION OF DATA FILE =====
+                //================================================================
+
+                //If more data eventually requires verification, see coding for verification in other
+                // data sets, such as in GlobalClass.validateCatalogItemData().
+
+                //Go through all of the "illegal" strings/characters:
+                for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                    boolean bIllegalString = sTitle.contains(sIllegalStringSet[GlobalClass.CHECKABLE]);
+                    if(bIllegalString) {
+                        sTitle = sTitle.replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                    }
+                }
+
+                //================================================================
+                //================================================================
+                //================================================================
+
+
+
                 for (int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++) {
                     ItemClass_WebPageTabData icwptd = GlobalClass.gal_WebPagesForCurrentUser.get(i);
                     if (giThisFragmentHashCode == icwptd.iTabFragmentHashID) {

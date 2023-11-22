@@ -169,6 +169,27 @@ public class Worker_Browser_GetWebPagePreview extends Worker {
         }
 
         if(bFaviconAddressFound) {
+
+            //================================================================
+            // ===== CLEAN ANY DATA TO ENSURE NO CORRUPTION OF DATA FILE =====
+            //================================================================
+
+            //If more data eventually requires verification, see coding for verification in other
+            // data sets, such as in GlobalClass.validateCatalogItemData().
+
+            //Go through all of the "illegal" strings/characters:
+            for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                boolean bIllegalString = sTitle.contains(sIllegalStringSet[GlobalClass.CHECKABLE]);
+                if(bIllegalString) {
+                    sTitle = sTitle.replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                }
+            }
+
+            //================================================================
+            //================================================================
+            //================================================================
+
+
             //Broadcast a message to be picked-up by the WebPage Activity:
             Intent broadcastIntent = new Intent();
             broadcastIntent.setAction(Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);

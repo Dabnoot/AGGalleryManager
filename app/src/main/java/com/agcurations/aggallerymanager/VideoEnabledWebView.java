@@ -417,6 +417,7 @@ public class VideoEnabledWebView extends WebView
                             return true;
                         }
                         try {
+                            //Metadata file is read in routine Worker_Import_GetHoldingFolderDirectoryContents.java.
                             OutputStream osImageMetadataFile = GlobalClass.gcrContentResolver.openOutputStream(uriImageMetadataFile, "wt");
                             if(osImageMetadataFile == null){
                                 Log.d("MenuItemClick", "Could not write metadata file for downloaded item.");
@@ -427,11 +428,52 @@ public class VideoEnabledWebView extends WebView
                                 Log.d("MenuItemClick", "No metadata to write to file for downloaded item.");
                                 return true;
                             }
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(sWebPageURL).append("\n");
-                            sb.append(sOriginalFileName).append("\n");
-                            sb.append(GlobalClass.gicuCurrentUser.sUserName).append("\n");
-                            osImageMetadataFile.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+
+                            //...........
+                            //Clean Metadata before attempting to write it to a file:
+                            boolean bIllegalString = false;
+                            boolean bIllegalDataFound = false;
+
+                            //Line up a field name (for messaging to the user), and the field value.
+                            String[][] sFieldsAndData = {
+                                    {"WebPageURL"		    	,sWebPageURL			},
+                                    {"OriginalFileName"		    ,sOriginalFileName	    }};
+
+                            //Create a stringbuilder to provide a message to the user if illegal characters are found:
+                            StringBuilder sbDataIssueNarrative = new StringBuilder();
+
+                            //Search the fields for illegal characters, and if they are found, replace the illegal
+                            //  characters and prepare a message for the user:
+                            //Go through all of the "illegal" strings/characters:
+                            for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                                //Go through all of the data fields:
+                                for(int i = 0; i < sFieldsAndData.length; i++){
+                                    bIllegalString = sFieldsAndData[i][GlobalClass.CHECKABLE].contains(sIllegalStringSet[GlobalClass.CHECKABLE]);
+                                    if(bIllegalString) {
+                                        bIllegalDataFound = true;
+                                        sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[GlobalClass.PRINTABLE]).append(" found in ").append(sFieldsAndData[i][GlobalClass.PRINTABLE]).append(" field.\n");
+                                        sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n");
+                                        sFieldsAndData[i][GlobalClass.CHECKABLE] = sFieldsAndData[i][GlobalClass.CHECKABLE].replace(sIllegalStringSet[GlobalClass.CHECKABLE],"");
+                                        sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][GlobalClass.CHECKABLE]).append("\n\n");
+                                        switch (i){
+                                            case 0: sWebPageURL             = sFieldsAndData[i][1]; break;
+                                            case 1: sOriginalFileName       = sFieldsAndData[i][1]; break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if(bIllegalDataFound){
+                                //The illegal data should have been corrected by the validation routine. Notify the user:
+                                Toast.makeText(getContext(), sbDataIssueNarrative.toString(), Toast.LENGTH_LONG).show();
+                            }
+                            //Data for file-write should now be devoid of any characters that would corrupt the file.
+                            //...........
+
+                            String sb = sWebPageURL + "\n" +
+                                    sOriginalFileName + "\n" +
+                                    GlobalClass.gicuCurrentUser.sUserName + "\n";
+                            osImageMetadataFile.write(sb.getBytes(StandardCharsets.UTF_8));
 
                             osImageMetadataFile.flush();
                             osImageMetadataFile.close();

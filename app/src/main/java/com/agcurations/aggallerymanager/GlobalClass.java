@@ -116,13 +116,10 @@ public class GlobalClass extends Application {
     public static int PRINTABLE = 0;
     public static int CHECKABLE = 1;
     public static final String[][] gsIllegalRecordStrings = { //{Printable notification, actual illegal string/character}
-            {"%%", "%%"},       //"%%" is an illegal character sequence in html addresses. It is used to deliminate back/forward history of browser tabs.
-            {"\\n", "\n"},      //Newline will break the .dat files as records are deliminated by newline.
-            {"n\\", "n\\"},     //Jumbled form.
-            {"\\r", "\r"},
-            {"r\\", "r\\"},     //Jumbled form.
-            {"\\t", "\t"},      //Tab is used to separate fields in the .dat files.
-            {"t\\", "t\\"}};    //Tab is used to separate fields in the .dat files.
+            {"%%", "%%"},               //"%%" is an illegal character sequence in html addresses. It is used to deliminate back/forward history of browser tabs.
+            {"newline", "\n"},          //Newline will break the .dat files as records are deliminated by newline.
+            {"carriage return", "\r"},  //Carriage return alone may break the .dat files as records are deliminated by newline.
+            {"tab", "\t"}};             //Tab is used to separate fields in the .dat files.
 
     //Tag variables:
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
@@ -459,8 +456,18 @@ public class GlobalClass extends Application {
         return sFileNameBody.reverse().toString() + "." + sFileNameExtJumble.reverse().toString();
     }
 
+    /**
+     * Splits a file name into its base name and extension.
+     *
+     * @param sFileName                         A filename of form [base name].[extension]
+     *
+     * @return String[]                         A String array of 2 elements: File base name & file extension. The extension excludes the "." delimiter.
+     */
     public static String[] SplitFileNameIntoBaseAndExtension(String sFileName){
-        return sFileName.split("\\.(?=[^\\.]+$)");
+        //The returned extension excludes the last "." in the full file name.
+        String sBaseName = sFileName.substring(0,sFileName.lastIndexOf("."));
+        String sExtension = sFileName.substring(sFileName.lastIndexOf(".") + 1);
+        return new String[]{sBaseName, sExtension};
     }
 
     public static ArrayList<String> GetDirectoryFileNames(Uri uriParent){
@@ -1301,7 +1308,18 @@ public class GlobalClass extends Application {
         return "";
     }
 
-    static public ItemClass_CatalogItem validateCatalogItemData(ItemClass_CatalogItem icci){
+
+    /**
+     *
+     * @param icci      ItemClass_CatalogItem with String content to be validated to not include
+     *                  characters such as 'newline' which would corrupt the data file.
+     * @return          Returns the same contents as the pass-in ItemClass_CatalogItem. If any
+     *                  Strings were found to contain an illegal character, that illegal character
+     *                  will have been removed and a flag and message text set in the
+     *                  ItemClass_CatalogItem fields 'bIllegalDataFound' & 'sIllegalDataNarrative'.
+     *                  Will never return null.
+     */
+    static public ItemClass_CatalogItem validateCatalogItemData(@NonNull ItemClass_CatalogItem icci){
 
         //There are some characters and or character sequences that are not allowed in the
         //  catalog file.
@@ -1396,22 +1414,99 @@ public class GlobalClass extends Application {
             icci.sIllegalDataNarrative = sbDataIssueNarrative.toString();
         }
 
+        return icci;
+    }
+
+    static public ItemClass_File validateFileItemData(ItemClass_File icf){
+
+        //There are some characters and or character sequences that are not allowed in the
+        //  data file. Introductions of these characters must be elimnated at the source to allow
+        //  user to be informed of data modification, etc.
+
+        //Check all string fields to ensure that there are no illegal strings.
+        boolean bIllegalString = false;
+
+        String[][] sFieldsAndData = {
+                {"Extension"		        ,icf.sExtension		        },
+                {"Width"					,icf.sWidth					},
+                {"Height"			        ,icf.sHeight			    },
+                {"Uri"				        ,icf.sUri				    },
+                {"MimeType"			        ,icf.sMimeType			    },
+                {"DestinationFolder"		,icf.sDestinationFolder		},
+                {"VideoTimeText"			,icf.sVideoTimeText			},
+                {"UriParent"			    ,icf.sUriParent			    },
+                {"UriThumbnailFile"		    ,icf.sUriThumbnailFile		},
+                {"URL"			            ,icf.sURL			        },
+                {"PageCount"			    ,icf.sPageCount			    },
+                {"ComicArtists"			    ,icf.sComicArtists			},
+                {"ComicParodies"		    ,icf.sComicParodies		    },
+                {"ComicCategories"			,icf.sComicCategories		},
+                {"ComicCharacters"			,icf.sComicCharacters		},
+                {"ComicGroups"				,icf.sComicGroups		    },
+                {"ComicLanguages"			,icf.sComicLanguages		},
+                {"URLVideoLink"			    ,icf.sURLVideoLink			},
+                {"URLThumbnail"		        ,icf.sURLThumbnail			},
+                {"GroupID"				    ,icf.sGroupID				}};
+
+        StringBuilder sbDataIssueNarrative = new StringBuilder();
+
+        for(String[] sIllegalStringSet: gsIllegalRecordStrings) {
+            for(int i = 0; i < sFieldsAndData.length; i++){
+                bIllegalString = sFieldsAndData[i][CHECKABLE].contains(sIllegalStringSet[CHECKABLE]);
+                if(bIllegalString) {
+                    icf.bIllegalDataFound = true;
+                    sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[PRINTABLE]).append(" found in ").append(sFieldsAndData[i][PRINTABLE]).append(" field.\n");
+                    sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n");
+                    sFieldsAndData[i][CHECKABLE] = sFieldsAndData[i][CHECKABLE].replace(sIllegalStringSet[CHECKABLE],"");
+                    sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n\n");
+                    switch (i){
+                        case 0:  icf.sExtension				= sFieldsAndData[i][1]; break;
+                        case 1:  icf.sWidth					= sFieldsAndData[i][1]; break;
+                        case 2:  icf.sHeight				= sFieldsAndData[i][1]; break;
+                        case 3:  icf.sUri					= sFieldsAndData[i][1]; break;
+                        case 4:  icf.sMimeType				= sFieldsAndData[i][1]; break;
+                        case 5:  icf.sDestinationFolder		= sFieldsAndData[i][1]; break;
+                        case 6:  icf.sVideoTimeText			= sFieldsAndData[i][1]; break;
+                        case 7:  icf.sUriParent				= sFieldsAndData[i][1]; break;
+                        case 8:  icf.sUriThumbnailFile		= sFieldsAndData[i][1]; break;
+                        case 9:  icf.sURL					= sFieldsAndData[i][1]; break;
+                        case 10: icf.sPageCount				= sFieldsAndData[i][1]; break;
+                        case 11: icf.sComicArtists			= sFieldsAndData[i][1]; break;
+                        case 12: icf.sComicParodies			= sFieldsAndData[i][1]; break;
+                        case 13: icf.sComicCategories		= sFieldsAndData[i][1]; break;
+                        case 14: icf.sComicCharacters		= sFieldsAndData[i][1]; break;
+                        case 15: icf.sComicGroups			= sFieldsAndData[i][1]; break;
+                        case 16: icf.sComicLanguages		= sFieldsAndData[i][1]; break;
+                        case 17: icf.sURLVideoLink			= sFieldsAndData[i][1]; break;
+                        case 18: icf.sURLThumbnail			= sFieldsAndData[i][1]; break;
+                        case 19: icf.sGroupID				= sFieldsAndData[i][1]; break;
+                    }
+                }
+            }
+        }
+
         //Verify user names are acceptable.
         for (String[] sIllegalStringSet : gsIllegalRecordStrings) {
-            for (String sApprovedUser : icci.alsApprovedUsers) {
-                bIllegalString = sApprovedUser.contains(sIllegalStringSet[CHECKABLE]);
+            for (int i = 0; i < icf.alsUnidentifiedTags.size(); i++) {
+                String sUnidentifiedTag = icf.alsUnidentifiedTags.get(i);
+                bIllegalString = sUnidentifiedTag.contains(sIllegalStringSet[CHECKABLE]);
                 if (bIllegalString) {
-                    //If there is a user name containing an illegal character, null the icci as this
-                    // is an unacceptable condition at any time. A corrected username would cause
-                    // the item to disappear within the program as there would be no matching username.
-                    icci = null;
+                    //If there is a tag containing an illegal character, correct it.
+                    icf.bIllegalDataFound = true;
+                    sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[PRINTABLE]).append(" found in unidentified tag list:\n");
+                    sbDataIssueNarrative.append("Original data: ").append(sUnidentifiedTag).append("\n");
+                    icf.alsUnidentifiedTags.set(i,sUnidentifiedTag.replace(sIllegalStringSet[CHECKABLE], ""));
+                    sbDataIssueNarrative.append("Modified data: ").append(icf.alsUnidentifiedTags.get(i)).append("\n\n");
                     break;
                 }
             }
-            if (bIllegalString) break;
         }
 
-        return icci;
+        if(icf.bIllegalDataFound){
+            icf.sIllegalDataNarrative = sbDataIssueNarrative.toString();
+        }
+
+        return icf;
     }
 
 
@@ -2665,6 +2760,49 @@ public class GlobalClass extends Application {
         return ConvertStringToWebPageTabData(sRecord3);
     }
 
+    static public ItemClass_WebPageTabData validateWebPageTabData(ItemClass_WebPageTabData icwptd){
+        //This routine might not be necessary. The only code that could mess up the
+        // .dat file is related to scraped data, such as a web page's title. The web addresses
+        // cannot include illegal characters. Best to address issues involving the title at locations
+        // where the title is acquired from the page.
+
+        //There are some characters and or character sequences that are not allowed in the
+        //  data file. Introductions of these characters must be elimnated at the source to allow
+        //  user to be informed of data modification, etc.
+
+        //Check all string fields to ensure that there are no illegal strings.
+        boolean bIllegalString = false;
+
+        String[][] sFieldsAndData = {
+                {"TabTitle"		    ,icwptd.sTabTitle           }};
+
+        StringBuilder sbDataIssueNarrative = new StringBuilder();
+
+        for(String[] sIllegalStringSet: gsIllegalRecordStrings) {
+            for(int i = 0; i < sFieldsAndData.length; i++){
+                bIllegalString = sFieldsAndData[i][CHECKABLE].contains(sIllegalStringSet[CHECKABLE]);
+                if(bIllegalString) {
+                    icwptd.bIllegalDataFound = true;
+                    sbDataIssueNarrative.append("Illegal string sequence ").append(sIllegalStringSet[PRINTABLE]).append(" found in ").append(sFieldsAndData[i][PRINTABLE]).append(" field.\n");
+                    sbDataIssueNarrative.append("Original data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n");
+                    sFieldsAndData[i][CHECKABLE] = sFieldsAndData[i][CHECKABLE].replace(sIllegalStringSet[CHECKABLE],"");
+                    sbDataIssueNarrative.append("Modified data: ").append(sFieldsAndData[i][CHECKABLE]).append("\n\n");
+                    switch (i){
+                        case 0:  icwptd.sTabTitle				= sFieldsAndData[i][1]; break;
+                    }
+                }
+            }
+        }
+
+        //Don't worry about checking the back and forward history addresses. They should already be checked for illegal characters/sequences.
+
+        if(icwptd.bIllegalDataFound){
+            icwptd.sIllegalDataNarrative = sbDataIssueNarrative.toString();
+        }
+
+        return icwptd;
+    }
+
     //====================================================================================
     //===== Worker/Download Management ==========================================================
     //====================================================================================
@@ -3319,7 +3457,7 @@ public class GlobalClass extends Application {
             }
         }
 
-        //Broadcast a message to be picked-up by the Import Activity:
+        //Broadcast a message to be picked-up by an Activity:
         Intent broadcastIntent = new Intent();
         broadcastIntent.setAction(sIntentActionFilter);
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
@@ -3331,7 +3469,6 @@ public class GlobalClass extends Application {
         broadcastIntent.putExtra(UPDATE_PROGRESS_BAR_TEXT_BOOLEAN, bUpdateProgressBarText);
         broadcastIntent.putExtra(PROGRESS_BAR_TEXT_STRING, sProgressBarText);
 
-        //sendBroadcast(broadcastIntent);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
     }

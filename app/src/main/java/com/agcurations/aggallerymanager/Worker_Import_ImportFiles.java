@@ -325,6 +325,24 @@ public class Worker_Import_ImportFiles extends Worker {
                     }
                 }
 
+                //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
+                ciNew = GlobalClass.validateCatalogItemData(ciNew);
+                if(ciNew == null){
+                    //If we are here, validateCatalogItemData found a critical error, such as illegal character;
+                    globalClass.BroadcastProgress(true, "Critical error with formation of data record. " +
+                                    "File import and record creation aborted for this item. " +
+                                    "Ensure user name or applied tag does not contain an illegal character.",
+                            false, 0,
+                            false, "",
+                            IMPORT_FILES_ACTION_RESPONSE);
+                    continue; //Skip to the next import item.
+                }
+                if(ciNew.bIllegalDataFound){
+                    globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
+                            false, 0,
+                            false, "",
+                            IMPORT_FILES_ACTION_RESPONSE);
+                }
                 alci_NewCatalogItems.add(ciNew);
 
 

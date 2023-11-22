@@ -492,8 +492,26 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
             String sUserName = editText_UserName.getText().toString();
 
+            for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                if(sUserName.contains(sIllegalStringSet[GlobalClass.CHECKABLE])){
+                    String sMessage = "User name contains illegal character '" + sIllegalStringSet[GlobalClass.PRINTABLE] + "'.\n" +
+                            "Remove any illegal characters and try again.";
+                    Toast.makeText(getContext(), sMessage, Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+
             EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
             String sPin = editText_AccessPinNumber.getText().toString();
+
+            for(String[] sIllegalStringSet: GlobalClass.gsIllegalRecordStrings) {
+                if(sPin.contains(sIllegalStringSet[GlobalClass.CHECKABLE])){
+                    String sMessage = "Pin contains illegal character '" + sIllegalStringSet[GlobalClass.PRINTABLE] + "'.\n" +
+                            "Remove any illegal characters and try again.";
+                    Toast.makeText(getContext(), sMessage, Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
 
             CheckBox checkBox_AdminUser = getView().findViewById(R.id.checkBox_AdminUser);
             boolean bAdmin = checkBox_AdminUser.isChecked();

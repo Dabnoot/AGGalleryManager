@@ -75,6 +75,9 @@ public class ItemClass_File implements Serializable {
     public String sGroupID = "";        //Group ID to identify explict related items related much more closely than generic tags.
                                         //  Item is populated during import preview.
 
+    public boolean bIllegalDataFound = false; //Used during import.
+    public String sIllegalDataNarrative = "";
+
     public ItemClass_File(int _iTypeFileFolderURL,
                           String _FileOrFolderName)
     {

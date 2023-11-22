@@ -148,7 +148,7 @@ public class Worker_Catalog_LoadData extends Worker {
         GlobalClass.gUriBrowserDataFolder = initSubfolder(GlobalClass.gUriDataFolder, "BrowserData", "Could not create BrowserData folder.");
 
         //Get file to hold web page tab data:
-        GlobalClass.gUriWebpageTabDataFile = getDataFileOrCreateIt(GlobalClass.gUriBrowserDataFolder, "WebpageTabData.dat", "Could not create file WebpageTabData.dat.");
+        GlobalClass.gUriWebpageTabDataFile = getDataFileOrCreateIt(GlobalClass.gUriBrowserDataFolder, GlobalClass.gsBrowserDataFile, "Could not create file WebpageTabData.dat.");
 
         stopWatch.PostDebugLogAndRestart("External folders built/verified with duration ");
 
