@@ -32,17 +32,18 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
     public final static int RATINGS_COUNT = 9;
 
     public final static int MATURITY_RATING_CODE_INDEX = 0;
-    public final static int MATURITY_RATING_DESCRIPTION_INDEX = 1;
+    public final static int MATURITY_RATING_NAME_INDEX = 1;
+    public final static int MATURITY_RATING_DESCRIPTION_INDEX = 2;
     public final static String[][] MATURITY_RATINGS = {  //DO NOT CHANGE WITHOUT UPDATING STORED USER DATA.
-            {"EC",  "Early Childhood - Suitable for children aged 3 or older; there will be no inappropriate content. E.g., Dora the Explorer, Dragon Tales."},
-            {"E",   "Everyone - Suitable for all age groups. The game should not contain any sounds or images likely to scare young children. No bad language should be used. E.g., Just Dance, FIFA.",},
-            {"E10+","Everyone 10 and Older - Suitable for those aged 10 or above. There could be mild forms of violence, and some scenes might be frightening for children. E.g., Minecraft Dungeons, Plants vs Zombies.",},
-            {"T",	"Teen - Suitable for those aged 13 or above. The game could feature more realistic and graphic scenes of violence. E.g., Fortnite, Sims 4.",},
-            {"M",	"Mature - Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
-            {"AO",	"Adults Only - Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
-            {"RP",  "Rating Pending - Titles with the RP rating have not yet been assigned a final ESRB rating."},
-            {"IB",  "Implicit Bias - Associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW content."},
-            {"X",  "X-Rated - Associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
+            {"EC",  "Early Childhood",          "Suitable for children aged 3 or older; there will be no inappropriate content. E.g., Dora the Explorer, Dragon Tales."},
+            {"E",   "Everyone",                 "Suitable for all age groups. The game should not contain any sounds or images likely to scare young children. No bad language should be used. E.g., Just Dance, FIFA.",},
+            {"E10+","Everyone 10 and Older",    "Suitable for those aged 10 or above. There could be mild forms of violence, and some scenes might be frightening for children. E.g., Minecraft Dungeons, Plants vs Zombies.",},
+            {"T",	"Teen",                     "Suitable for those aged 13 or above. The game could feature more realistic and graphic scenes of violence. E.g., Fortnite, Sims 4.",},
+            {"M",	"Mature",                   "Suitable for those aged 17 or above. This rating is used when the violence becomes realistic and would be expected in real life. Bad language, and the use of tobacco, alcohol, or illegal drugs can also be present. E.g., Ark: Survival Evolved, Destiny 2.",},
+            {"AO",	"Adults Only",              "Suitable for adults aged 18 or above. The adult classification is used when there are extreme levels of violence and motiveless killing. Glamorization of drugs, gambling, and sexual activity can also be featured. E.g., Grand Theft Auto V, Fallout 4.",},
+            {"RP",  "Rating Pending",           "Titles with the RP rating have not yet been assigned a final ESRB rating."},
+            {"IB",  "Implicit Bias",            "Associated with items eschewed by mainstream society, may vary by country, religion, or culture. Implicit Bias is defined as negative associations expressed automatically. May include L.G.B.T.Q.I.A topics in socially-repressive countries. Includes some NFSW content."},
+            {"X",  "X-Rated",                   "Associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
              //DO NOT CHANGE ORDER OR INDEXING WITHOUT UPDATING STORED USER DATA.
     };
 
@@ -80,7 +81,8 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
 
         TextView textView_AgeRatingDescription = convertView.findViewById(R.id.textView_AgeRatingDescription);
         if(sItemData != null) {
-            textView_AgeRatingDescription.setText(sItemData[MATURITY_RATING_DESCRIPTION_INDEX]);
+            String sTemp = sItemData[MATURITY_RATING_NAME_INDEX] + " - " + sItemData[MATURITY_RATING_DESCRIPTION_INDEX];
+            textView_AgeRatingDescription.setText(sTemp);
         }
 
         return convertView;

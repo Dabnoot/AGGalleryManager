@@ -390,9 +390,9 @@ public class Fragment_ItemDetails extends Fragment {
         if(textView_MaturityRating != null){
             String sMaturityRatingText = "Maturity Rating: ";
 
-            sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iMaturityRating][0];
+            sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iMaturityRating][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX];
             sMaturityRatingText += " - ";
-            String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iMaturityRating][1];
+            String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iMaturityRating][AdapterMaturityRatings.MATURITY_RATING_NAME_INDEX];
             boolean bLengthLimit = false;
             if(bLengthLimit) {
                 int iMaxTextLength = 75;

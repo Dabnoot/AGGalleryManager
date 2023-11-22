@@ -134,9 +134,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                         iGreatestMaturityRating = tagItems.get(i).iMaturityRating;
                     }
                 }
-                sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][0];
+                sMaturityRatingText += AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX];
                 sMaturityRatingText += " - ";
-                String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][1];
+                String sMatRatDesc = AdapterMaturityRatings.MATURITY_RATINGS[iGreatestMaturityRating][AdapterMaturityRatings.MATURITY_RATING_NAME_INDEX];
                 int iMaxTextLength = 75;
                 sMaturityRatingText += sMatRatDesc.substring(0, Math.min(iMaxTextLength, sMatRatDesc.length()));
                 if(iMaxTextLength < sMatRatDesc.length()) {
