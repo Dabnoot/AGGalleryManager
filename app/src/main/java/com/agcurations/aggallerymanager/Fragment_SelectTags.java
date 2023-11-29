@@ -24,14 +24,20 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.slider.LabelFormatter;
+import com.google.android.material.slider.RangeSlider;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 public class Fragment_SelectTags extends Fragment {
 
@@ -54,6 +60,9 @@ public class Fragment_SelectTags extends Fragment {
     // If the user creates new tags from this fragment, select those tags in the list upon return.
 
     ChipGroup gChipGroup_SuggestedTags;
+
+    int giMaxTagMaturity;
+    int giMinTagMaturity;
 
     boolean bOptionViewOnly = false;
 
@@ -110,12 +119,20 @@ public class Fragment_SelectTags extends Fragment {
         }
         Button button_TagEdit = getView().findViewById(R.id.button_TagEdit);
 
+        //Maintain the display of suggested tags:
+        gChipGroup_SuggestedTags = getView().findViewById(R.id.chipGroup_SuggestedTags);
+
         if(bOptionViewOnly) {
             //Hide the UncheckTags button:
             button_UncheckTags.setVisibility(View.INVISIBLE);
 
             //Hide the TagEditor button:
             button_TagEdit.setVisibility(View.INVISIBLE);
+
+            //Collapse the chipgroup showing recently-selected tags:
+            RelativeLayout.LayoutParams rlParams = (RelativeLayout.LayoutParams) gChipGroup_SuggestedTags.getLayoutParams();
+            rlParams.height = 0;
+            gChipGroup_SuggestedTags.setLayoutParams(rlParams);
 
         } else if(viewModel_fragment_selectTags.bShowModeXrefTagUse) {
             //When bShowModeXrefTagUse is activated, we are using Fragment_SelectTags
@@ -126,32 +143,30 @@ public class Fragment_SelectTags extends Fragment {
             //Hide the TagEditor button:
             button_TagEdit.setVisibility(View.INVISIBLE);
 
+            //Collapse the chipgroup showing recently-selected tags:
+            RelativeLayout.LayoutParams rlParams = (RelativeLayout.LayoutParams) gChipGroup_SuggestedTags.getLayoutParams();
+            rlParams.height = 0;
+            gChipGroup_SuggestedTags.setLayoutParams(rlParams);
+
         } else {
-
+            //User is applying tags.
             button_TagEdit.setOnClickListener(view12 -> {
-                //Ask for pin code in order to allow access to the Tag Editor:
-
-
                 if (getActivity() == null) {
                     return;
                 }
 
-                if (!GlobalClass.gicuCurrentUser.bAdmin) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Action requires admin credentials", Toast.LENGTH_SHORT).show();
+                //Launch the tag editor in a mode to allow retrieval of any result, such as new tag(s) created.
+                Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
+                intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
+                garlGetResultFromTagEditor.launch(intentTagEditor);
 
-                } else {
-                    //If we are in Admin mode:
-                    Intent intentTagEditor = new Intent(getActivity(), Activity_TagEditor.class);
-                    intentTagEditor.putExtra(Activity_TagEditor.EXTRA_INT_MEDIA_CATEGORY, viewModel_fragment_selectTags.iMediaCategory);
-                    garlGetResultFromTagEditor.launch(intentTagEditor);
-                }
             });
 
 
             //Create adapations for "suggested tags":
             //Update a maintained list of suggested tags:
             //React to changes in the selected tag data in the ViewModel:
-            final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserverForTagSuggestions = tagItems -> {
+            final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = selectedTags -> {
 
                 //Update the suggested tags list in the viewmodel:
                 ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
@@ -160,7 +175,7 @@ public class Fragment_SelectTags extends Fragment {
                     alictSuggestions = new ArrayList<>();
                     alictNewSuggestions = new ArrayList<>();
                 }
-                for (ItemClass_Tag ict : tagItems) {
+                for (ItemClass_Tag ict : selectedTags) {
                     boolean bNotInList = true;
                     for (ItemClass_Tag ictSuggestion : alictSuggestions) {
                         if (ict.iTagID.equals(ictSuggestion.iTagID)) {
@@ -178,60 +193,93 @@ public class Fragment_SelectTags extends Fragment {
                 viewModel_fragment_selectTags.altiTagSuggestions.postValue(alictNewSuggestions);
 
             };
-            viewModel_fragment_selectTags.altiTagsSelected.observe(getActivity(), selectedTagsObserverForTagSuggestions);
-
-            //Maintain the display of suggested tags:
-            gChipGroup_SuggestedTags = getView().findViewById(R.id.chipGroup_SuggestedTags);
+            viewModel_fragment_selectTags.altiTagsSelected.observe(getActivity(), selectedTagsObserver);
 
             //Watch for changes in suggested tags:
-            final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = this::updateSuggestedTagDisplay;
+            //final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = this::updateSuggestedTagDisplay;
+            final Observer<ArrayList<ItemClass_Tag>> suggestedTagsObserver = alTagSuggestions -> {
+
+                //When a tag suggestion changes in the view model...
+                // - User can select a tag in the main tag list, adding it to the item and also to suggested tags, but should not be displayed as a suggested tag,
+                // - User can select a tag from the chip group (which displays the suggested tags), which should add it to the item and hide it from the chip group,
+                // - User can X a tag from the chip group (which displays the suggested tags), which removes it from suggested tags.
+
+                if(alTagSuggestions == null){
+                    return;
+                }
+
+                //Go through the selected tags and only display suggested tags that are not selected:
+                ArrayList<ItemClass_Tag> alictTagSelections = viewModel_fragment_selectTags.altiTagsSelected.getValue();
+
+                if(alictTagSelections == null){
+                    return;
+                }
+
+                ArrayList<ItemClass_Tag> alictValidSuggestions = new ArrayList<>();
+                for(ItemClass_Tag ictSuggestion: alTagSuggestions){
+                    boolean bSuggestedTagNotSelected = true;
+                    for(ItemClass_Tag ictSelection: alictTagSelections){
+                        if(ictSelection.iTagID.equals(ictSuggestion.iTagID)){
+                            bSuggestedTagNotSelected = false;
+                            break;
+                        }
+                    }
+                    if(bSuggestedTagNotSelected){
+                        alictValidSuggestions.add(ictSuggestion);
+                    }
+                }
+
+                //Sort the valid suggestions:
+                TreeMap<String, ItemClass_Tag> tmValidSuggestions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+                for(ItemClass_Tag ictSuggestion: alictValidSuggestions){
+                    tmValidSuggestions.put(ictSuggestion.sTagText, ictSuggestion);
+                }
+                //Copy over:
+                alictValidSuggestions.clear();
+                for(Map.Entry<String, ItemClass_Tag> entry: tmValidSuggestions.entrySet()){
+                    alictValidSuggestions.add(entry.getValue());
+                }
+
+                updateChips(alictValidSuggestions);
+            };
+
             viewModel_fragment_selectTags.altiTagSuggestions.observe(getActivity(), suggestedTagsObserver);
 
         }
 
-    }
+        if (getView() != null) {
+            //Tag maturity view RangeSlider.
+            //  This merely hides/shows tags based on user input.
+            RangeSlider rangeSlider_TagMaturityWindow = getView().findViewById(R.id.rangeSlider_TagMaturityWindow);
+            //Set max available maturity to the max allowed to the user:
+            rangeSlider_TagMaturityWindow.setValueTo((float) GlobalClass.gicuCurrentUser.iMaturityLevel);
+            //Set the current selected maturity window max to the default maturity rating:
+            rangeSlider_TagMaturityWindow.setValues(0.0F, (float) GlobalClass.giDefaultUserMaturityRating);
+            giMinTagMaturity = 0;
+            giMaxTagMaturity = GlobalClass.giDefaultUserMaturityRating;
+            rangeSlider_TagMaturityWindow.setLabelFormatter(value -> {
 
+                String sText = AdapterMaturityRatings.MATURITY_RATINGS[(int)value][0] + " - " + AdapterMaturityRatings.MATURITY_RATINGS[(int)value][1];
 
-    private void updateSuggestedTagDisplay(ArrayList<ItemClass_Tag> alTagSuggestions){
-        //Get the text of the tags and display tag suggestions:
-
-        if(alTagSuggestions == null){
-            return;
-        }
-
-        //Go through the selected tags and only display suggested tags that are not selected:
-        ArrayList<ItemClass_Tag> alictTagSelections = viewModel_fragment_selectTags.altiTagsSelected.getValue();
-
-        if(alictTagSelections == null){
-            return;
-        }
-
-        ArrayList<ItemClass_Tag> alictValidSuggestions = new ArrayList<>();
-        for(ItemClass_Tag ictSuggestion: alTagSuggestions){
-            boolean bSuggestedTagNotSelected = true;
-            for(ItemClass_Tag ictSelection: alictTagSelections){
-                if(ictSelection.iTagID.equals(ictSuggestion.iTagID)){
-                    bSuggestedTagNotSelected = false;
-                    break;
+                return sText;
+            });
+            rangeSlider_TagMaturityWindow.addOnChangeListener(new RangeSlider.OnChangeListener() {
+                @Override
+                public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
+                    List<Float> lfSliderValues = slider.getValues();
+                    if(lfSliderValues.size() == 2){
+                        int iMinTemp = lfSliderValues.get(0).intValue();
+                        int iMaxTemp = lfSliderValues.get(1).intValue();
+                        if(iMinTemp != giMinTagMaturity ||
+                            iMaxTemp != giMaxTagMaturity) {
+                            giMinTagMaturity = lfSliderValues.get(0).intValue();
+                            giMaxTagMaturity = lfSliderValues.get(1).intValue();
+                        }
+                    }
                 }
-            }
-            if(bSuggestedTagNotSelected){
-                alictValidSuggestions.add(ictSuggestion);
-            }
-        }
+            });
+        } //End config of the tag maturity RangeSlider
 
-        //Sort the valid suggestions:
-        TreeMap<String, ItemClass_Tag> tmValidSuggestions = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for(ItemClass_Tag ictSuggestion: alictValidSuggestions){
-            tmValidSuggestions.put(ictSuggestion.sTagText, ictSuggestion);
-        }
-        //Copy over:
-        alictValidSuggestions.clear();
-        for(Map.Entry<String, ItemClass_Tag> entry: tmValidSuggestions.entrySet()){
-            alictValidSuggestions.add(entry.getValue());
-        }
-
-        updateChips(alictValidSuggestions);
 
     }
 
@@ -362,7 +410,7 @@ public class Fragment_SelectTags extends Fragment {
             //  If so, set the item as "checked":
             boolean bIsChecked = false;
             iSelectionOrder = 0;
-            //Log.d("Tag identification", tmEntryTagReferenceItem.getKey());
+            //Record the selection order of the tags selected by the user: todo: tags should be listed alphabetically.
             if (galiPreselectedTags != null) {
                 iPreSelectedTagsCount = galiPreselectedTags.size();
                 int iReferenceTagID = tmEntryTagReferenceItem.getValue().iTagID;
@@ -396,7 +444,6 @@ public class Fragment_SelectTags extends Fragment {
                     tmEntryTagReferenceItem.getValue().iTagID,
                     tmEntryTagReferenceItem.getValue().sTagText);
             ictNew.bIsChecked = bIsChecked;
-            ictNew.iSelectionOrder = iSelectionOrder;
             ictNew.iMaturityRating = tmEntryTagReferenceItem.getValue().iMaturityRating;
             ictNew.iHistogramCount = tmEntryTagReferenceItem.getValue().iHistogramCount;
             if(tmEntryTagReferenceItem.getValue().alsTagApprovedUsers == null){
