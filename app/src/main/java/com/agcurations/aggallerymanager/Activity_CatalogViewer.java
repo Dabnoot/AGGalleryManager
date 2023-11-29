@@ -97,6 +97,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Return theme away from startup_screen
         setTheme(R.style.MainTheme);
 
+        if (getSupportActionBar() != null) {
+            //Hide the action bar to allow more room for everything else.
+            getSupportActionBar().hide();
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog_viewer);
 
