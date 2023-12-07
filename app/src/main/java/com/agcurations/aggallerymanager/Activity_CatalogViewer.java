@@ -1118,96 +1118,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             imageButton.setLayoutParams(params);
         }
 
-        public int[] calculateGroupingControlsColors(String sUUID){
-            int[] iReturnColors = new int[4];
-            String[] sColors = new String[]{sUUID.substring(0, 2),
-                    sUUID.substring(2,4),
-                    sUUID.substring(4,6)};
-            byte[] bytes;
-            byte[] byteColors = new byte[3];
-            for(int i = 0; i < 3; i++){
-                bytes = BaseEncoding.base16().decode(sColors[i].toUpperCase());
-                byteColors[i] = bytes[0];
-            }
-            //Bytes for colors acquired.
 
-            //Convert to scale 0-255:
-            int[] iColors = new int[3];
-            for(int i = 0; i < 3; i++){
-                if(byteColors[i] < 0){
-                    iColors[i] = byteColors[i] + 256;
-                } else {
-                    iColors[i] = byteColors[i];
-                }
-            }
-
-            //Normalize the colors:
-            float[] fColorsNormalized = new float[3];
-            for(int i = 0; i < 3; i++){
-                fColorsNormalized[i] = iColors[i] / 255f;
-            }
-
-            //Determine the min and max values:
-            float fMin = Math.min(fColorsNormalized[0], Math.min(fColorsNormalized[1], fColorsNormalized[2] ));
-            float fMax = Math.max(fColorsNormalized[0], Math.max(fColorsNormalized[1], fColorsNormalized[2] ));
-
-            /*
-            The Hue formula is depending on what RGB color channel is the max value. The three different formulas are:
-            If Red is max, then Hue = (G-B)/(max-min)
-            If Green is max, then Hue = 2.0 + (B-R)/(max-min)
-            If Blue is max, then Hue = 4.0 + (R-G)/(max-min)
-            */
-            float fR = fColorsNormalized[0];
-            float fG = fColorsNormalized[1];
-            float fB = fColorsNormalized[2];
-            float fHue;
-            float fDelta = fMax - fMin;
-            if(fR > fG && fR > fB) {
-                //Red is max
-                fHue = 60 * ( ( (fG - fB) / fDelta) % 6);
-            } else if(fG > fR && fG > fB) {
-                //Green is Max
-                fHue = 60 * (2f + (fB - fR) / fDelta);
-            } else {
-                //Blue is Max
-                fHue = 60 * (4f + (fR - fG) / fDelta);
-            }
-            if(fHue < 0){
-                fHue += 360;
-            } else if (fHue > 360) {
-                fHue -= 360;
-            }
-
-
-            //Ignore potential to derive the luminance from the original RGB and set the luminance hard
-            // so that the coloring is not too dim:
-            //* When 0 ≤ L ≤ 1:
-            float fLum = .50f;
-
-            //Ignore potential to derive the saturation from the original RGB values and set the
-            //  saturation so that it is not ugly:
-            //* When 0 ≤ S ≤ 1:
-            float fSat = 1.0f;
-
-            //Get color for controls' background:
-            String sBackgroundColor = getRGBString(fHue, fSat, fLum);
-            //Get colors for foreground controls:
-            int iContrastColor = getContrastColor(Color.parseColor(sBackgroundColor));
-            iReturnColors[0] = Color.parseColor(sBackgroundColor); //iGroupingControlsColor
-            iReturnColors[1] = iContrastColor; //iGroupingControlsContrastColor
-
-            //Get color for control highlight (specifically for when the 'filter by group ID' feature is activated):
-            float fGroupingControlHighlight = fHue + 180;
-            if(fGroupingControlHighlight > 360){
-                fGroupingControlHighlight -= 360;
-            }
-            String sGCHColor = getRGBString(fGroupingControlHighlight, fSat, fLum);
-            int iGCHContrastColor = getContrastColor(Color.parseColor(sGCHColor));
-            iReturnColors[2] = Color.parseColor(sGCHColor); //iGroupingControlsHighlightColor
-            iReturnColors[3] = iGCHContrastColor; //iGroupingControlsHighlightContrastColor
-
-            return iReturnColors;
-        }
 
         public void applyGroupingControlsColor(ItemClass_CatalogItem ci,
                                                LinearLayout linearLayout_GroupingControls,
@@ -1226,68 +1137,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         }
 
-        private String getRGBString(float fHue, float fSat, float fLum){
-            //Calculate RGB:
-            /*https://www.rapidtables.com/convert/color/hsl-to-rgb.html
-            * When 0 ≤ H < 360, 0 ≤ S ≤ 1 and 0 ≤ L ≤ 1:
-                C = (1 - |2L - 1|) × S
-                X = C × (1 - |(H / 60°) mod 2 - 1|)
-                m = L - C/2
-                (R,G,B) = ((R'+m)×255, (G'+m)×255,(B'+m)×255)
-            * */
-            float fC, fX, fm;
-            fC = (1 - Math.abs(2*fLum - 1)) * fSat;
-            fX = fC * (1 - Math.abs((fHue / 60) % 2 - 1));
-            fm = fLum - fC / 2;
-            float[] fP = new float[3];
-            if( fHue >= 0 && fHue < 60){
-                fP = new float[]{fC, fX, 0};
-            } else if( fHue >= 60 && fHue < 120){
-                fP = new float[]{fX, fC, 0};
-            } else if( fHue >= 120 && fHue < 180){
-                fP = new float[]{0, fC, fX};
-            } else if( fHue >= 180 && fHue < 240){
-                fP = new float[]{0, fX, fC};
-            } else if( fHue >= 240 && fHue < 300){
-                fP = new float[]{fX, 0, fC};
-            } else if( fHue >= 300 && fHue < 360){
-                fP = new float[]{fC, 0, fX};
-            }
-            int[] iColors = new int[]{(int)((fP[0]+fm)*255),
-                    (int)((fP[1]+fm)*255),
-                    (int)((fP[2]+fm)*255)};
 
-            //Convert the values to byte:
-            //Convert to scale 0 to 127 : -128 to 0:
-            byte[] byteColors = new byte[3];
-            for(int i = 0; i < 3; i++){
-                if(iColors[i] >= 128){
-                    iColors[i] = iColors[i] - 256;
-                }
-                byteColors[i] = (byte) iColors[i];
-            }
-
-            //Form the color scheme:
-            StringBuilder sbColorString = new StringBuilder();
-            sbColorString.append("#");
-            for(int i = 0; i < 3; i++){
-                String sColor = String.format("%02X", (short) byteColors[i]);
-                if(sColor.length() > 2){
-                    sColor = sColor.substring(2);
-                }
-                sbColorString.append(sColor);
-            }
-
-            return sbColorString.toString();
-        }
-
-        @ColorInt
-        public int getContrastColor(@ColorInt int color) {
-            //https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
-            // Counting the perceptive luminance - human eye favors green color...
-            double a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255;
-            return a < 0.5 ? Color.BLACK : Color.WHITE;
-        }
 
         public void updateItem(String sItemID){
             //Created for enabling the update of thumbnail image created by user action in Activity_VideoPlayer.
@@ -1314,7 +1164,159 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     }
 
+    public static int[] calculateGroupingControlsColors(String sUUID){
+        int[] iReturnColors = new int[4];
+        String[] sColors = new String[]{sUUID.substring(0, 2),
+                sUUID.substring(2,4),
+                sUUID.substring(4,6)};
+        byte[] bytes;
+        byte[] byteColors = new byte[3];
+        for(int i = 0; i < 3; i++){
+            bytes = BaseEncoding.base16().decode(sColors[i].toUpperCase());
+            byteColors[i] = bytes[0];
+        }
+        //Bytes for colors acquired.
 
+        //Convert to scale 0-255:
+        int[] iColors = new int[3];
+        for(int i = 0; i < 3; i++){
+            if(byteColors[i] < 0){
+                iColors[i] = byteColors[i] + 256;
+            } else {
+                iColors[i] = byteColors[i];
+            }
+        }
+
+        //Normalize the colors:
+        float[] fColorsNormalized = new float[3];
+        for(int i = 0; i < 3; i++){
+            fColorsNormalized[i] = iColors[i] / 255f;
+        }
+
+        //Determine the min and max values:
+        float fMin = Math.min(fColorsNormalized[0], Math.min(fColorsNormalized[1], fColorsNormalized[2] ));
+        float fMax = Math.max(fColorsNormalized[0], Math.max(fColorsNormalized[1], fColorsNormalized[2] ));
+
+            /*
+            The Hue formula is depending on what RGB color channel is the max value. The three different formulas are:
+            If Red is max, then Hue = (G-B)/(max-min)
+            If Green is max, then Hue = 2.0 + (B-R)/(max-min)
+            If Blue is max, then Hue = 4.0 + (R-G)/(max-min)
+            */
+        float fR = fColorsNormalized[0];
+        float fG = fColorsNormalized[1];
+        float fB = fColorsNormalized[2];
+        float fHue;
+        float fDelta = fMax - fMin;
+        if(fR > fG && fR > fB) {
+            //Red is max
+            fHue = 60 * ( ( (fG - fB) / fDelta) % 6);
+        } else if(fG > fR && fG > fB) {
+            //Green is Max
+            fHue = 60 * (2f + (fB - fR) / fDelta);
+        } else {
+            //Blue is Max
+            fHue = 60 * (4f + (fR - fG) / fDelta);
+        }
+        if(fHue < 0){
+            fHue += 360;
+        } else if (fHue > 360) {
+            fHue -= 360;
+        }
+
+
+        //Ignore potential to derive the luminance from the original RGB and set the luminance hard
+        // so that the coloring is not too dim:
+        //* When 0 ≤ L ≤ 1:
+        float fLum = .50f;
+
+        //Ignore potential to derive the saturation from the original RGB values and set the
+        //  saturation so that it is not ugly:
+        //* When 0 ≤ S ≤ 1:
+        float fSat = 1.0f;
+
+        //Get color for controls' background:
+        String sBackgroundColor = getRGBString(fHue, fSat, fLum);
+        //Get colors for foreground controls:
+        int iContrastColor = getContrastColor(Color.parseColor(sBackgroundColor));
+        iReturnColors[0] = Color.parseColor(sBackgroundColor); //iGroupingControlsColor
+        iReturnColors[1] = iContrastColor; //iGroupingControlsContrastColor
+
+        //Get color for control highlight (specifically for when the 'filter by group ID' feature is activated):
+        float fGroupingControlHighlight = fHue + 180;
+        if(fGroupingControlHighlight > 360){
+            fGroupingControlHighlight -= 360;
+        }
+        String sGCHColor = getRGBString(fGroupingControlHighlight, fSat, fLum);
+        int iGCHContrastColor = getContrastColor(Color.parseColor(sGCHColor));
+        iReturnColors[2] = Color.parseColor(sGCHColor); //iGroupingControlsHighlightColor
+        iReturnColors[3] = iGCHContrastColor; //iGroupingControlsHighlightContrastColor
+
+        return iReturnColors;
+    }
+
+    private static String getRGBString(float fHue, float fSat, float fLum){
+        //Calculate RGB:
+            /*https://www.rapidtables.com/convert/color/hsl-to-rgb.html
+            * When 0 ≤ H < 360, 0 ≤ S ≤ 1 and 0 ≤ L ≤ 1:
+                C = (1 - |2L - 1|) × S
+                X = C × (1 - |(H / 60°) mod 2 - 1|)
+                m = L - C/2
+                (R,G,B) = ((R'+m)×255, (G'+m)×255,(B'+m)×255)
+            * */
+        float fC, fX, fm;
+        fC = (1 - Math.abs(2*fLum - 1)) * fSat;
+        fX = fC * (1 - Math.abs((fHue / 60) % 2 - 1));
+        fm = fLum - fC / 2;
+        float[] fP = new float[3];
+        if( fHue >= 0 && fHue < 60){
+            fP = new float[]{fC, fX, 0};
+        } else if( fHue >= 60 && fHue < 120){
+            fP = new float[]{fX, fC, 0};
+        } else if( fHue >= 120 && fHue < 180){
+            fP = new float[]{0, fC, fX};
+        } else if( fHue >= 180 && fHue < 240){
+            fP = new float[]{0, fX, fC};
+        } else if( fHue >= 240 && fHue < 300){
+            fP = new float[]{fX, 0, fC};
+        } else if( fHue >= 300 && fHue < 360){
+            fP = new float[]{fC, 0, fX};
+        }
+        int[] iColors = new int[]{(int)((fP[0]+fm)*255),
+                (int)((fP[1]+fm)*255),
+                (int)((fP[2]+fm)*255)};
+
+        //Convert the values to byte:
+        //Convert to scale 0 to 127 : -128 to 0:
+        byte[] byteColors = new byte[3];
+        for(int i = 0; i < 3; i++){
+            if(iColors[i] >= 128){
+                iColors[i] = iColors[i] - 256;
+            }
+            byteColors[i] = (byte) iColors[i];
+        }
+
+        //Form the color scheme:
+        StringBuilder sbColorString = new StringBuilder();
+        sbColorString.append("#");
+        for(int i = 0; i < 3; i++){
+            String sColor = String.format("%02X", (short) byteColors[i]);
+            if(sColor.length() > 2){
+                sColor = sColor.substring(2);
+            }
+            sbColorString.append(sColor);
+        }
+
+        return sbColorString.toString();
+    }
+
+    @ColorInt
+    public static int getContrastColor(@ColorInt int color) {
+        //https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
+        // Counting the perceptive luminance - human eye favors green color...
+        double a = 1 - (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255;
+        return a < 0.5 ? Color.BLACK : Color.WHITE;
+    }
 
 
     public void populate_RecyclerViewCatalogItems(){

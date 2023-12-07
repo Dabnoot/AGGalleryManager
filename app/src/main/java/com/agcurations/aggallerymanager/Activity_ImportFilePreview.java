@@ -89,6 +89,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     RelativeLayout gRelativeLayout_Adjacencies;
     RecyclerView gRecyclerView_Adjacencies;
 
+    TextView gTextView_GroupID;
+    ImageButton gImageButton_GroupIDNew;
+    ImageButton gImageButton_GroupIDCopy;
+    ImageButton gImageButton_GroupIDPaste;
+    ImageButton gImageButton_GroupIDRemove;
 
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
@@ -583,37 +588,86 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
         //GROUP ID Buttons:
+        boolean bHasGroupID = !galFileItems.get(giFileItemIndex).sGroupID.equals("");
+        gTextView_GroupID = findViewById(R.id.textView_GroupID);
+        gImageButton_GroupIDNew = findViewById(R.id.imageButton_GroupIDNew);
+        gImageButton_GroupIDCopy = findViewById(R.id.imageButton_GroupIDCopy);
+        gImageButton_GroupIDPaste = findViewById(R.id.imageButton_GroupIDPaste);
+        gImageButton_GroupIDRemove = findViewById(R.id.imageButton_GroupIDRemove);
 
-        TextView textView_GroupID = findViewById(R.id.textView_GroupID);
-        if(galFileItems.get(giFileItemIndex).sGroupID.equals("")){
-            textView_GroupID.setText("----");
+        if(bHasGroupID){
+            gTextView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
+            int[] iColors = Activity_CatalogViewer.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
+            gTextView_GroupID.setBackgroundColor(iColors[0]);
+            gTextView_GroupID.setTextColor(iColors[1]);
+            //Show the Group ID Copy icon, but only if the Group ID is not already on the internal clipboard:
+            if(galFileItems.get(giFileItemIndex).sGroupID.equals(GlobalClass.gsGroupIDClip)){
+                gImageButton_GroupIDCopy.setVisibility(View.INVISIBLE);
+            } else {
+                gImageButton_GroupIDCopy.setVisibility(View.VISIBLE);
+            }
+            gImageButton_GroupIDRemove.setVisibility(View.VISIBLE);
+        } else {
+            gTextView_GroupID.setText("----");
+            gTextView_GroupID.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorBlack));
+            gTextView_GroupID.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor));
+            gImageButton_GroupIDCopy.setVisibility(View.INVISIBLE);
+            gImageButton_GroupIDRemove.setVisibility(View.INVISIBLE);
         }
 
-        ImageButton imageButton_GroupIDNew = findViewById(R.id.imageButton_GroupIDNew);
-        imageButton_GroupIDNew.setOnClickListener(v -> {
+        //If the internal clipboard has a group ID, show the paste icon, but only if it is not the
+        // group ID for the current item:
+        if(GlobalClass.gsGroupIDClip.equals("")) {
+            gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
+        } else {
+            if(galFileItems.get(giFileItemIndex).sGroupID.equals(GlobalClass.gsGroupIDClip)){
+                gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
+            } else {
+                gImageButton_GroupIDPaste.setVisibility(View.VISIBLE);
+            }
+        }
+
+        gImageButton_GroupIDNew.setOnClickListener(v -> {
             galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.getNewGroupID();
-            textView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
+            gImageButton_GroupIDRemove.setVisibility(View.VISIBLE);
+            gTextView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
+            GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
+            gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
+            GlobalClass.gbClearGroupIDAtImportClose = true;
+            int[] iColors = Activity_CatalogViewer.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
+            gTextView_GroupID.setBackgroundColor(iColors[0]);
+            gTextView_GroupID.setTextColor(iColors[1]);
+            Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
         });
 
-        ImageButton imageButton_GroupIDCopy = findViewById(R.id.imageButton_GroupIDCopy);
-        imageButton_GroupIDCopy.setOnClickListener(v -> {
+        gImageButton_GroupIDCopy.setOnClickListener(v -> {
             GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
+            gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
+            gImageButton_GroupIDCopy.setVisibility(View.INVISIBLE);
             GlobalClass.gbClearGroupIDAtImportClose = true;
             Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
         });
 
-        ImageButton imageButton_GroupIDPaste = findViewById(R.id.imageButton_GroupIDPaste);
-        imageButton_GroupIDPaste.setOnClickListener(v -> {
+        gImageButton_GroupIDPaste.setOnClickListener(v -> {
             if(!GlobalClass.gsGroupIDClip.equals("")){
                 galFileItems.get(giFileItemIndex).sGroupID = GlobalClass.gsGroupIDClip;
-                textView_GroupID.setText(GlobalClass.gsGroupIDClip);
+                gImageButton_GroupIDRemove.setVisibility(View.VISIBLE);
+                gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
+                gImageButton_GroupIDCopy.setVisibility(View.INVISIBLE);
+                gTextView_GroupID.setText(GlobalClass.gsGroupIDClip);
+                int[] iColors = Activity_CatalogViewer.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
+                gTextView_GroupID.setBackgroundColor(iColors[0]);
+                gTextView_GroupID.setTextColor(iColors[1]);
             }
         });
 
-        ImageButton imageButton_GroupIDRemove = findViewById(R.id.imageButton_GroupIDRemove);
-        imageButton_GroupIDRemove.setOnClickListener(v -> {
+        gImageButton_GroupIDRemove.setOnClickListener(v -> {
             galFileItems.get(giFileItemIndex).sGroupID = "";
-            textView_GroupID.setText("----");
+            gImageButton_GroupIDCopy.setVisibility(View.INVISIBLE);
+            gImageButton_GroupIDRemove.setVisibility(View.INVISIBLE);
+            gTextView_GroupID.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorBlack));
+            gTextView_GroupID.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor));
+            gTextView_GroupID.setText("----");
         });
 
         //END GROUP ID BUTTONS.
@@ -1158,7 +1212,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     //Apply the tags associated with this catalog item to the potential import item.
-
                     fragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(ci.aliTags);
                 }
             });
