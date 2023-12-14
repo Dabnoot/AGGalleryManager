@@ -415,13 +415,15 @@ public class Fragment_WebPageTab extends Fragment {
             imageButton_ImportContent.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    //Paste the current URL to the clipboard:
+                    //Paste the current URL to the internal clipboard:
                     if(getContext() == null){
                         return;
                     }
-                    ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+                    /*ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clipData = ClipData.newPlainText(GlobalClass.IMPORT_REQUEST_FROM_INTERNAL_BROWSER, gsWebAddress);
-                    clipboard.setPrimaryClip(clipData);
+                    clipboard.setPrimaryClip(clipData);*/
+
+                    GlobalClass.gsBrowserAddressClipboard = gsWebAddress;
 
                     //Send the user to the Import Activity:
                     GlobalClass.giSelectedCatalogMediaCategory = -1; //Don't know the type of media selected.

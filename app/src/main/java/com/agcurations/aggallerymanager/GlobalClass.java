@@ -2586,6 +2586,8 @@ public class GlobalClass extends Application {
     public static final String EXTRA_WEBPAGE_TAB_DATA_FAVICON_ADDRESS = "com.agcurations.webbrowser.extra.WEBPAGE_TAB_DATA_FAVICON_ADDRESS";
     public static final String EXTRA_RESULT_TYPE = "com.agcurations.webbrowser.extra.RESULT_TYPE";
 
+    public static String gsBrowserAddressClipboard = "";
+
     public static String giWebViewSettings_UserAgentString;
     public static void ConfigureWebSettings(WebSettings webSettings){
         webSettings.setDomStorageEnabled(true); //Required to load all graphics on some webpages.

@@ -286,7 +286,15 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
         //Check to see if we got here because the user wants to import something that they found on the internal
         // browser:
-        if (getContext() != null) {
+        if(!GlobalClass.gsBrowserAddressClipboard.equals("")){
+            gEditText_WebAddress.setText(GlobalClass.gsBrowserAddressClipboard);
+            SetTextStatusMessage("Loading webpage...");
+            galsRequestedResources = new ArrayList<>();
+            gWebView.loadUrl(GlobalClass.gsBrowserAddressClipboard);
+            GlobalClass.gsBrowserAddressClipboard = "";
+            gbAutoDetect = true; //If we are here and pasting in an address automatically, go ahead and do the detect automatically.
+        }
+        /*if (getContext() != null) {
             ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clipData = clipboard.getPrimaryClip();
             if (clipData != null) {
@@ -310,7 +318,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
                 }
             }
-        }
+        }*/
 
     } //End onViewCreated
 
