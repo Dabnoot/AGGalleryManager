@@ -86,7 +86,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
     private Fragment_ItemDetails gFragment_itemDetails;
 
-    private boolean gbPlayingM3U8;
+    private boolean gbAutoHideControlsDueToSwipe = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -174,15 +174,11 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             @Override
             public boolean onDown(@NonNull MotionEvent e) {
-
-                //The other player does not trigger onSingleTapConfirmed without
-                // this item true.
-                return !gbPlayingM3U8;
+                return super.onDown(e);
             }
 
             @Override
             public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
-                toggle();
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -221,6 +217,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             public void onSwipeRight() {
                 int iTempKey = giKey - 1;
+                if(!gplayerView_ExoVideoPlayer.isControllerFullyVisible()) {
+                    gbAutoHideControlsDueToSwipe = true; //The player will automatically show the controls. Automatically hide them again.
+                }
                 if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     StopPlayback();
                     giKey--;
@@ -231,6 +230,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             public void onSwipeLeft() {
                 int iTempKey = giKey + 1;
+                if(!gplayerView_ExoVideoPlayer.isControllerFullyVisible()) {
+                    gbAutoHideControlsDueToSwipe = true; //The player will automatically show the controls. Automatically hide them again.
+                }
                 if(treeMapRecyclerViewCatItems.containsKey(iTempKey)) {
                     StopPlayback();
                     giKey++;
@@ -277,7 +279,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
             @Override
             public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
-                toggle();
                 return super.onSingleTapConfirmed(e);
             }
 
@@ -336,6 +337,22 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
         gExoPlayer.setRepeatMode(Player.REPEAT_MODE_ONE);
 
+        gExoPlayer.addListener(new Player.Listener() {
+
+            @Override
+            public void onEvents(@NonNull Player player,@NonNull  Player.Events events) {
+                Player.Listener.super.onEvents(player, events);
+                if(!player.isLoading()){
+                    int i = player.getPlaybackState();
+                    if(i == Player.STATE_READY && gbAutoHideControlsDueToSwipe){
+                        gplayerView_ExoVideoPlayer.hideController();
+                        gbAutoHideControlsDueToSwipe = false;
+                    }
+                }
+
+            }
+        });
+
         gplayerView_ExoVideoPlayer.setPlayer(gExoPlayer);
 
         gplayerView_ExoVideoPlayer.setOnTouchListener((v, event) -> gdVideoView.onTouchEvent(event));
@@ -346,8 +363,12 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //This is here to hide these particular views because there is a timeout on the controls that needs to be caught.
                 gButton_GetVideoFrameImage.setVisibility(View.INVISIBLE);
                 gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
-                bControlsAreVisible = false;
+            } else if (visibility == PlayerView.VISIBLE) {
+                gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
+                gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
             }
+
+
         });
 
         gImageView_VideoFrameImage = findViewById(R.id.imageView_VideoFrameImage);
@@ -381,17 +402,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         windowInsetsController.hide(WindowInsetsCompat.Type.statusBars());
         windowInsetsController.hide(WindowInsetsCompat.Type.navigationBars());
 
-        
-        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-            bControlsAreVisible = true;
-            if (gButton_GetVideoFrameImage != null) {
-                gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
-            }
-            if (gImageView_VideoFrameImage != null) {
-                gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
-            }
-        }
-
         initializePlayer();
     }
 
@@ -424,7 +434,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
             giCurrentVideoPlaybackState = VIDEO_PLAYBACK_STATE_PAUSED;
         }
         gExoPlayer.stop();
-
     }
 
     @Override
@@ -537,7 +546,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                 if (bFileIsGif || (GlobalClass.giSelectedCatalogMediaCategory != GlobalClass.MEDIA_CATEGORY_VIDEOS)) {
                     //This will cause the load of gif image or other images.
-                    gbPlayingM3U8 = false;
 
                     Glide.with(getApplicationContext()).load(uriFileUri).into(gImageView_GifViewer);
 
@@ -546,7 +554,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         gplayerView_ExoVideoPlayer.setVisibility(View.INVISIBLE);
                     }
                 } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                    gbPlayingM3U8 = true;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
 
@@ -657,7 +664,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                         gExoPlayer.setMediaItems(lMediaItems, false);
                         gExoPlayer.prepare();
-                        gExoPlayer.setPlayWhenReady(true);
+                        if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                            gExoPlayer.setPlayWhenReady(true);
+                        }
 
                     } else { //End if GlobalClass.gbOptionIndividualizeM3U8VideoSegmentPlayback
                         //If the option to individualize M3U8 video segment playback is not selected,
@@ -813,7 +822,9 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                             mediaItem = MediaItem.fromUri(uriM3U8_SAF);
                             gExoPlayer.setMediaItem(mediaItem);
                             gExoPlayer.prepare();
-                            gExoPlayer.setPlayWhenReady(true);
+                            if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
+                                gExoPlayer.setPlayWhenReady(true);
+                            }
                         } else {
                             sMessage = "Something went wrong while loading the M3U8 file.";
                             Log.d("Activity_VideoPlayer:initializePlayer", sMessage);
@@ -828,19 +839,18 @@ public class Activity_VideoPlayer extends AppCompatActivity {
 
                 } else {
                     //Last case is if this is a non-M3U8 video.
-                    gbPlayingM3U8 = false;
                     gImageView_GifViewer.setVisibility(View.INVISIBLE);
                     gplayerView_ExoVideoPlayer.setVisibility(View.VISIBLE);
                     MediaItem mediaItem = MediaItem.fromUri(uriFileUri);
                     gExoPlayer.setMediaItem(mediaItem);
                     gExoPlayer.prepare();
-                    //gExoPlayer.setPlayWhenReady(true);
 
-                    gExoPlayer.seekTo(glCurrentVideoPosition);
+                    if(glCurrentVideoPosition != 1){
+                        gExoPlayer.seekTo(glCurrentVideoPosition);
+                    }
                     if (giCurrentVideoPlaybackState == VIDEO_PLAYBACK_STATE_PLAYING) {
                         gExoPlayer.setPlayWhenReady(true);
                     }
-                    gExoPlayer.pause();
                 }
 
             } //End if our catalog item is not null.
@@ -995,43 +1005,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
     //==============================================================================================
     //==============================================================================================
     //==============================================================================================
-
-    private boolean bControlsAreVisible;
-
-    @OptIn(markerClass = UnstableApi.class) //todo: remove
-    private void toggle() {
-        if (bControlsAreVisible) {
-            // Hide UI
-            bControlsAreVisible = false;
-
-            if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                if (gButton_GetVideoFrameImage != null) {
-                    gButton_GetVideoFrameImage.setVisibility(View.INVISIBLE);
-                }
-                if (gImageView_VideoFrameImage != null) {
-                    gImageView_VideoFrameImage.setVisibility(View.INVISIBLE);
-                }
-                if(gplayerView_ExoVideoPlayer != null) {
-                    gplayerView_ExoVideoPlayer.hideController();
-                }
-            }
-        } else {
-            bControlsAreVisible = true;
-
-            if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                if (gButton_GetVideoFrameImage != null) {
-                    gButton_GetVideoFrameImage.setVisibility(View.VISIBLE);
-                }
-                if (gImageView_VideoFrameImage != null) {
-                    gImageView_VideoFrameImage.setVisibility(View.VISIBLE);
-                }
-                if(gplayerView_ExoVideoPlayer != null) {
-                    gplayerView_ExoVideoPlayer.showController();
-                }
-            }
-        }
-    }
-
 
     private void LogThis(String sRoutine, String sMainMessage, String sExtraErrorMessage){
         String sMessage = sMainMessage;
