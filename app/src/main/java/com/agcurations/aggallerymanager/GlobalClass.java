@@ -3501,16 +3501,16 @@ public class GlobalClass extends Application {
         //  page. There is no way to determine if end pages are missing. This feature is rather inert
         // and only gives a message to the user to indicate that pages might be missing.
 
-    //nHentai comic import web html search strings (may change if the website changes)
-    //If comic source is nHentai, these strings enable searching the nHentai web page for tag data:
-    //public String snHentai_Default_Comic_Address_Prefix = "https://nhentai.net/g/";
-    //public final String snHentai_Comic_Address_Prefix = "https://nhentai.net/g/";
-    //public String snHentai_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    public final String snHentai_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    //public String snHentai_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public final String snHentai_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public final String snHentai_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
-    public final String snHentai_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
+    //nH comic import web html search strings (may change if the website changes)
+    //If comic source is nH, these strings enable searching the nH web page for tag data:
+    //public String snH_Default_Comic_Address_Prefix = "https://nh.net/g/";
+    //public final String snH_Comic_Address_Prefix = "https://nh.net/g/";
+    //public String snH_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    public final String snH_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
+    //public String snH_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public final String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
+    public final String snH_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
+    public final String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
 
     //Video import web html search strings (may change if the website changes)
 
