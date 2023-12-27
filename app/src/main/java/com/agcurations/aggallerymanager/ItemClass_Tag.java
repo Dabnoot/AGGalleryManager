@@ -18,9 +18,6 @@ public class ItemClass_Tag implements Serializable {
     //A list of users to whom this tag, and items carrying this tag, is restricted. Other users
     //  will not be able to see this tag nor the items to which it has been assigned.
 
-    //Create a variable to be used to preserve the order in which items are selected.
-    //  This is needed because the first tag may be used for special purposes.
-    public int iSelectionOrder;
     //Used for Tag ListViews in selecting tags:
     public Boolean bIsChecked = false;
 
