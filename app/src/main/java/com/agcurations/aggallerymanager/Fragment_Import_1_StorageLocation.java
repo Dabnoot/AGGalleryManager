@@ -246,7 +246,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
 
                     TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
                     textView_Selected_Import_Folder.setVisibility(View.VISIBLE);
-                    textView_Selected_Import_Folder.setText(globalClass.gsImportFolderAnalysisSelectedFolder);
+                    textView_Selected_Import_Folder.setText(GlobalClass.cleanHTMLCodedCharacters(globalClass.gsImportFolderAnalysisSelectedFolder));
 
                     gProgressBar_FileAnalysisProgress.setVisibility(View.VISIBLE);
                     gProgressBar_FileAnalysisProgress.setProgress(globalClass.giImportFolderAnalysisProgressBarPercent);
@@ -389,7 +389,7 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
             return; //todo: create message.
         }
         TextView textView_Selected_Import_Folder = getView().findViewById(R.id.textView_Selected_Import_Folder);
-        textView_Selected_Import_Folder.setText(sImportFolderName);
+        textView_Selected_Import_Folder.setText(GlobalClass.cleanHTMLCodedCharacters(sImportFolderName));
         globalClass.gsImportFolderAnalysisSelectedFolder = sImportFolderName;
         TextView textView_Label_Selected_Folder = getView().findViewById(R.id.textView_Label_Selected_Folder);
         textView_Label_Selected_Folder.setVisibility(View.VISIBLE);
