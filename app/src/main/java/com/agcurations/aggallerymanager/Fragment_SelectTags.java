@@ -23,21 +23,19 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckedTextView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.google.android.material.slider.LabelFormatter;
 import com.google.android.material.slider.RangeSlider;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 public class Fragment_SelectTags extends Fragment {
 
@@ -61,8 +59,7 @@ public class Fragment_SelectTags extends Fragment {
 
     ChipGroup gChipGroup_SuggestedTags;
 
-    int giMaxTagMaturity;
-    int giMinTagMaturity;
+
 
     boolean bOptionViewOnly = false;
 
@@ -252,36 +249,32 @@ public class Fragment_SelectTags extends Fragment {
             //  This merely hides/shows tags based on user input.
             RangeSlider rangeSlider_TagMaturityWindow = getView().findViewById(R.id.rangeSlider_TagMaturityWindow);
             //Set max available maturity to the max allowed to the user:
-            rangeSlider_TagMaturityWindow.setValueTo((float) GlobalClass.gicuCurrentUser.iMaturityLevel);
+            if(GlobalClass.gicuCurrentUser != null) {
+                rangeSlider_TagMaturityWindow.setValueTo((float) GlobalClass.gicuCurrentUser.iMaturityLevel);
+            } else {
+                rangeSlider_TagMaturityWindow.setValueTo((float) GlobalClass.giDefaultUserMaturityRating);
+            }
             //Set the current selected maturity window max to the default maturity rating:
-            rangeSlider_TagMaturityWindow.setValues(0.0F, (float) GlobalClass.giDefaultUserMaturityRating);
-            giMinTagMaturity = 0;
-            giMaxTagMaturity = GlobalClass.giDefaultUserMaturityRating;
-            rangeSlider_TagMaturityWindow.setLabelFormatter(value -> {
+            rangeSlider_TagMaturityWindow.setValues((float) GlobalClass.giMinTagMaturityFilter, (float) GlobalClass.giMaxTagMaturityFilter);
 
-                String sText = AdapterMaturityRatings.MATURITY_RATINGS[(int)value][0] + " - " + AdapterMaturityRatings.MATURITY_RATINGS[(int)value][1];
-
-                return sText;
-            });
-            rangeSlider_TagMaturityWindow.addOnChangeListener(new RangeSlider.OnChangeListener() {
-                @Override
-                public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
-                    List<Float> lfSliderValues = slider.getValues();
-                    if(lfSliderValues.size() == 2){
-                        int iMinTemp = lfSliderValues.get(0).intValue();
-                        int iMaxTemp = lfSliderValues.get(1).intValue();
-                        if(iMinTemp != giMinTagMaturity ||
-                            iMaxTemp != giMaxTagMaturity) {
-                            giMinTagMaturity = lfSliderValues.get(0).intValue();
-                            giMaxTagMaturity = lfSliderValues.get(1).intValue();
-                        }
+            rangeSlider_TagMaturityWindow.setLabelFormatter(value -> AdapterMaturityRatings.MATURITY_RATINGS[(int)value][0] + " - " + AdapterMaturityRatings.MATURITY_RATINGS[(int)value][1]);
+            rangeSlider_TagMaturityWindow.addOnChangeListener((slider, value, fromUser) -> {
+                List<Float> lfSliderValues = slider.getValues();
+                if(lfSliderValues.size() == 2){
+                    int iMinTemp = lfSliderValues.get(0).intValue();
+                    int iMaxTemp = lfSliderValues.get(1).intValue();
+                    if(iMinTemp != GlobalClass.giMinTagMaturityFilter ||
+                        iMaxTemp != GlobalClass.giMaxTagMaturityFilter) {
+                        GlobalClass.giMinTagMaturityFilter = lfSliderValues.get(0).intValue();
+                        GlobalClass.giMaxTagMaturityFilter = lfSliderValues.get(1).intValue();
                     }
+                    //Call routine to filter tags based on the updated maturity bounds:
+                    initListViewData();
                 }
             });
         } //End config of the tag maturity RangeSlider
 
-
-    }
+    } //End onViewCreated.
 
     private void InitializeSuggestedTagDisplay(){
         //Go through the selected tags and only display suggested tags that are not selected:
@@ -307,7 +300,6 @@ public class Fragment_SelectTags extends Fragment {
 
         updateChips(alictValidSuggestions);
 
-
     }
 
     private void updateChips(ArrayList<ItemClass_Tag> alictValidSuggestions){
@@ -328,14 +320,14 @@ public class Fragment_SelectTags extends Fragment {
                 chipNew.setId(ict.iTagID);
                 chipNew.setOnClickListener((view) -> {
                     ArrayList<Integer> aliTagIDs = new ArrayList<>();
-                    aliTagIDs.add(((Chip)view).getId());
+                    aliTagIDs.add(view.getId());
                     gListViewTagsAdapter.selectTagsByIDs(aliTagIDs);
                     gChipGroup_SuggestedTags.removeView(view); //Remove this chip from the group.
                 });
                 chipNew.setCloseIconVisible(true);
                 chipNew.setOnCloseIconClickListener((view)->{
                     //Remove the item from suggested tags:
-                    int iTagToRemove = ((Chip)view).getId();
+                    int iTagToRemove = view.getId();
                     //Update the suggested tags list in the viewmodel:
                     ArrayList<ItemClass_Tag> alictSuggestions = viewModel_fragment_selectTags.altiTagSuggestions.getValue();
                     ArrayList<ItemClass_Tag> alictNewSuggestions = new ArrayList<>();
@@ -393,13 +385,18 @@ public class Fragment_SelectTags extends Fragment {
         }
 
         //Get tags to put in the ListView:
-        int iPreSelectedTagsCount = 0;
-        int iPreSelectedTagIterator = 0;
-        int iSelectionOrder;
 
         viewModel_fragment_selectTags.alTagsAll.clear();
 
-        TreeMap<Integer, ItemClass_Tag> tmTagPool = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
+        //Grab all tags that fall within the maturity range selected by the user:
+        TreeMap<Integer, ItemClass_Tag> tmTagPool_PreMaturityFilter = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
+        TreeMap<Integer, ItemClass_Tag> tmTagPool = new TreeMap<>();
+        for(Map.Entry<Integer, ItemClass_Tag> entry: tmTagPool_PreMaturityFilter.entrySet()){
+            if(entry.getValue().iMaturityRating >= GlobalClass.giMinTagMaturityFilter &&
+                entry.getValue().iMaturityRating <= GlobalClass.giMaxTagMaturityFilter){
+                tmTagPool.put(entry.getKey(), entry.getValue());
+            }
+        }
 
         ArrayList<ItemClass_Tag> alict_SelectedTagsViewModelReset = new ArrayList<>();
 
@@ -409,17 +406,12 @@ public class Fragment_SelectTags extends Fragment {
             //Check to see if the list of preselected tags includes this tag from the reference list.
             //  If so, set the item as "checked":
             boolean bIsChecked = false;
-            iSelectionOrder = 0;
-            //Record the selection order of the tags selected by the user: todo: tags should be listed alphabetically.
+
             if (galiPreselectedTags != null) {
-                iPreSelectedTagsCount = galiPreselectedTags.size();
                 int iReferenceTagID = tmEntryTagReferenceItem.getValue().iTagID;
                 for (int iPreSelectedTagID : galiPreselectedTags) {
                     if (iReferenceTagID == iPreSelectedTagID) {
                         bIsChecked = true;
-                        iPreSelectedTagIterator++;
-                        iSelectionOrder = galiPreselectedTags.indexOf(iPreSelectedTagID) + 1;
-                        //iSelectionOrder = iPreSelectedTagIterator;
                         break;
                     }
                 }
@@ -427,14 +419,11 @@ public class Fragment_SelectTags extends Fragment {
 
             if (galNewTags != null) { //If the user used the TagEditor JUST NOW to add new tags,
                 //  pre-select them:
-                iPreSelectedTagsCount += galNewTags.size();
                 int iReferenceTagID = tmEntryTagReferenceItem.getValue().iTagID;
                 for (ItemClass_Tag iNewTagItem : galNewTags) {
                     if (iReferenceTagID == iNewTagItem.iTagID) {
                         bIsChecked = iNewTagItem.bIsChecked;
                         iNewTagItem.bIsChecked = false; //Only mark as selected once, as the user might not want this tag on the next item they view.
-                        iPreSelectedTagIterator++;
-                        iSelectionOrder = iPreSelectedTagIterator;
                         break;
                     }
                 }
@@ -468,7 +457,7 @@ public class Fragment_SelectTags extends Fragment {
         if(getActivity() == null){
             return;
         }
-        gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), viewModel_fragment_selectTags.alTagsAll, iPreSelectedTagsCount);
+        gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), viewModel_fragment_selectTags.alTagsAll);
         listView_ImportTagSelection.setAdapter(gListViewTagsAdapter);
         listView_ImportTagSelection.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
@@ -543,15 +532,13 @@ public class Fragment_SelectTags extends Fragment {
 
 
     public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
-        int iOrderIterator;
 
         ArrayList<ItemClass_Tag> alictTagItems; //Contains all tag items passed to the listviewTagsAdapter.
         TreeMap<String, ItemClass_Tag> tmTagItemsDisplay;
         TreeMap<Integer, String> tmTagItemsDisplaySequence;
 
-        public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems, int iPreselectedCount) {
+        public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems) {
             super(context, 0, tagItems);
-            iOrderIterator = iPreselectedCount;
             alictTagItems = tagItems;
             tmTagItemsDisplay = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             tmTagItemsDisplaySequence = new TreeMap<>();
@@ -609,46 +596,68 @@ public class Fragment_SelectTags extends Fragment {
             if (viewRow == null) {
                 viewRow = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
             }
-            // Lookup view for data population
-            final CheckedTextView checkedTextView_TagText = viewRow.findViewById(R.id.checkedTextView_TagText);
-            // Populate the data into the template view using the data object
-            String s = tagItem.sTagText;
-            //Attempt to get usage data for the tag:
-            int iTagUseCount;
-            iTagUseCount = tagItem.iHistogramCount;
-            if(iTagUseCount != 0) {
-                s = s + " (" + iTagUseCount + ")";
-            }
-            checkedTextView_TagText.setText(s);
+            // Populate the tag text:
+            final TextView textView_TagText = viewRow.findViewById(R.id.textView_TagText);
+            textView_TagText.setText(tagItem.sTagText);
 
+            TextView textView_HistogramCount = viewRow.findViewById(R.id.textView_HistogramCount);
+            if(viewModel_fragment_selectTags.bShowModeXrefTagUse) {
+                //Attempt to get usage (histogram) data for the tag:
+                int iTagUseCount;
+                iTagUseCount = tagItem.iHistogramCount;
+                String s;
+                if (iTagUseCount != 0) {
+                    s = "(" + iTagUseCount + ")";
+                    textView_HistogramCount.setText(s);
+                    textView_HistogramCount.setVisibility(View.VISIBLE);
+                } else {
+                    textView_HistogramCount.setText("");
+                    textView_HistogramCount.setVisibility(View.INVISIBLE);
+                }
+            } else {
+                textView_HistogramCount.setText("");
+                textView_HistogramCount.setVisibility(View.INVISIBLE);
+            }
+
+            //Set the maturity rating code text for the readout:
+            TextView textView_Maturity = viewRow.findViewById(R.id.textView_Maturity);
+            String sMaturityCode = AdapterMaturityRatings.MATURITY_RATINGS[tagItem.iMaturityRating][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX];
+            sMaturityCode = "(" + sMaturityCode + ")";
+            textView_Maturity.setText(sMaturityCode);
+
+            TextView textView_Private = viewRow.findViewById(R.id.textView_Private);
+            if(tagItem.alsTagApprovedUsers.size() == 1){
+                textView_Private.setVisibility(View.VISIBLE);
+                //textView_Private.getLayoutParams().width = RelativeLayout.LayoutParams.WRAP_CONTENT;
+                textView_Private.setText("(P)");
+            } else {
+                textView_Private.setVisibility(View.INVISIBLE);
+                textView_Private.setText("");
+            }
 
             //Set the selection state (needed as views are recycled).
             if(getActivity() != null) {
                 if (tagItem.bIsChecked) {
-                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                 } else {
-                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
                 }
-                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
             }
 
             viewRow.setOnClickListener(view -> {
                 //Handle changing the checked state:
                 tagItem.bIsChecked = !tagItem.bIsChecked;
                 if(tagItem.bIsChecked){
-                    iOrderIterator++;
-                    tagItem.iSelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
-                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                     if(galiPreselectedTags == null){
                         galiPreselectedTags = new ArrayList<>();
                     }
                     galiPreselectedTags.add(tagItem.iTagID);
                 } else {
-                    //iOrderIterator--; Never decrease the order iterator, because user may unselect a middle item, thus creating duplicate order nums.
-                    tagItem.iSelectionOrder = 0; //Remove the index showing the order in which this item was selected.
-                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                    textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                     //Remove the item from preselected tags, if it exists there:
                     if(galiPreselectedTags == null){
                         //Not a likely case, but just in case.
@@ -665,18 +674,18 @@ public class Fragment_SelectTags extends Fragment {
                 //Reform the tags string listing all of the selected tags:
 
                 //Iterate through all of the items in this ArrayAdapter, gathering the items,
-                //  and using a TreeMap to automatically sort the items by selection order:
-                TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
+                //  and using a TreeMap to automatically sort the items alphabetically:
+                TreeMap<String, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
                 for(Map.Entry<String, ItemClass_Tag> entry: tmTagItemsDisplay.entrySet()){
                     if (entry.getValue().bIsChecked) {
-                        tmSelectedItems.put(entry.getValue().iSelectionOrder, entry.getValue());
+                        tmSelectedItems.put(entry.getValue().sTagText, entry.getValue());
                     }
                 }
 
                 //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
                 ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
 
-                for (Map.Entry<Integer, ItemClass_Tag> entry : tmSelectedItems.entrySet()) {
+                for (Map.Entry<String, ItemClass_Tag> entry : tmSelectedItems.entrySet()) {
                     alTagItems.add(entry.getValue());
                 }
 
@@ -714,8 +723,6 @@ public class Fragment_SelectTags extends Fragment {
                     for (Map.Entry<String, ItemClass_Tag> entry: tmTagItemsDisplay.entrySet()){
                         if (entry.getValue().iTagID.equals(iIncomingTagID)) {
                             //Select the tagItem:
-                            iOrderIterator++;
-                            entry.getValue().iSelectionOrder = iOrderIterator; //Set the index for the order in which this item was selected.
                             entry.getValue().bIsChecked = true;
                             galiPreselectedTags.add(entry.getValue().iTagID);
                             bNotifyDataSetChanged = true;
@@ -731,20 +738,19 @@ public class Fragment_SelectTags extends Fragment {
                 //Reform the tags string listing all of the selected tags:
 
                 //Iterate through all of the items in this ArrayAdapter, gathering the items,
-                //  and using a TreeMap to automatically sort the items by selection order:
-                TreeMap<Integer, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
+                //  and using a TreeMap to automatically sort the items alphabetically:
+                TreeMap<String, ItemClass_Tag> tmSelectedItems = new TreeMap<>();
 
                 for (Map.Entry<String, ItemClass_Tag> entry: tmTagItemsDisplay.entrySet()){
                     if (entry.getValue().bIsChecked) {
-                        tmSelectedItems.put(entry.getValue().iSelectionOrder, entry.getValue());
+                        tmSelectedItems.put(entry.getValue().sTagText, entry.getValue());
                     }
                 }
 
                 //Put the sorted TreeList items into an ArrayList and transfer to the ViewModel:
                 ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
 
-                for (Map.Entry<Integer, ItemClass_Tag>
-                        entry : tmSelectedItems.entrySet()) {
+                for (Map.Entry<String, ItemClass_Tag> entry : tmSelectedItems.entrySet()) {
                     alTagItems.add(entry.getValue());
                 }
 
@@ -761,8 +767,17 @@ public class Fragment_SelectTags extends Fragment {
 
         private void updateXrefTagsHistogram(){
             //recalc cross-referenced tag histogram with the newly checked/unchecked item:
-            TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram =
+            TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram_PreMaturityFilter =
                     globalClass.getXrefTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
+
+            //Only show tags which are within the maturity display bounds selected by the user:
+            TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram = new TreeMap<>();
+            for(Map.Entry<Integer, ItemClass_Tag> entry: tmXrefTagHistogram_PreMaturityFilter.entrySet()){
+                if(entry.getValue().iMaturityRating >= GlobalClass.giMinTagMaturityFilter &&
+                        entry.getValue().iMaturityRating <= GlobalClass.giMaxTagMaturityFilter){
+                    tmXrefTagHistogram.put(entry.getKey(), entry.getValue());
+                }
+            }
 
             //Mark tags selected as appropriate:
             for(int iTagID: galiPreselectedTags){
