@@ -1,10 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
-<CheckedTextView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/checkedTextView_TagText"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:textColor="@color/colorTextColor"
-    android:textSize="20sp"
-    android:textAlignment="center"
-    android:padding="5dp"/>
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/textView_TagText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorTextColor"
+        android:textSize="20sp"
+        android:text="TagText"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/linearLayout_Attributes"
+        android:textAlignment="viewStart"
+        android:padding="5dp"/>
+    <!--android:text="TagText"-->
+    <!--android:text="This is text that I am trying to get to wrap without causing all kinds of problems. I need to to wrap to the line below and stay within the parent."-->
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/linearLayout_Attributes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/textView_TagText"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/textView_Maturity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(E10+)"
+            android:textColor="@color/colorTextColor"
+            android:textSize="16sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/textView_Private"
+            android:maxLines="1"/>
+
+        <TextView
+            android:id="@+id/textView_Private"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(P)"
+            android:textColor="@color/colorTextColor"
+            android:textSize="16sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/textView_HistogramCount"
+            android:maxLines="1"/>
+
+        <TextView
+            android:id="@+id/textView_HistogramCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorTextColor"
+            android:text="(100)"
+            android:textSize="20sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="5dp"
+            android:maxLines="1"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
