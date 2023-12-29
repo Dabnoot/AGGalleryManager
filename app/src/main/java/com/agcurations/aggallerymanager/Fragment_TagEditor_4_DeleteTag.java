@@ -23,7 +23,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -35,11 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_TagEditor_4_DeleteTag#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
     private GlobalClass globalClass;
@@ -347,20 +342,20 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                 v = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
             }
             // Lookup view for data population
-            final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
+            final TextView textView_TagText = v.findViewById(R.id.textView_TagText);
             // Populate the data into the template view using the data object
             String s = tagItem.sTagText;
-            checkedTextView_TagText.setText(s);
+            textView_TagText.setText(s);
 
 
             //Set the selection state (needed as views are recycled).
             if(getActivity() != null) {
                 if (tagItem.bIsChecked) {
-                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                 } else {
-                    checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                    v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
                 }
-                checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
             }
 
             v.setOnClickListener(new View.OnClickListener() {

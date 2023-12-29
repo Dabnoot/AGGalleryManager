@@ -206,6 +206,10 @@ public class GlobalClass extends Application {
     public static ArrayList<ItemClass_User> galicu_Users;
     public static ItemClass_User gicuCurrentUser; //If null, routines will use the default maturity rating.
     public static int giDefaultUserMaturityRating = AdapterMaturityRatings.MATURITY_RATING_M; //todo: Setting - add to settings
+    public static int giMinTagMaturityFilter = 0; //To filter tags based on maturity, configured by the current user.
+    public static int giMaxTagMaturityFilter = giDefaultUserMaturityRating; //To filter tags based on maturity, configured by the current user.
+    public static int giMinContentMaturityFilter = 0; //To filter content based on maturity, configured by the current user.
+    public static int giMaxContentMaturityFilter = giDefaultUserMaturityRating; //To filter content based on maturity, configured by the current user.
 
     public static String gsRefreshCatalogViewerThumbnail = ""; //Used to refresh thumbnail.
 

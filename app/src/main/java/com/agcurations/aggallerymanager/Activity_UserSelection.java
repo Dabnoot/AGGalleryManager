@@ -84,6 +84,8 @@ public class Activity_UserSelection extends AppCompatActivity {
 
                     if (sPinEntered.equals(icu.sPin)) {
                         GlobalClass.gicuCurrentUser = icu;
+                        setUserAdjustableMaturityFilters();
+
                         globalClass.populateApprovedTags();
                         resetContentSortAndFilterTags();
                         Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
@@ -103,6 +105,8 @@ public class Activity_UserSelection extends AppCompatActivity {
             } else {
                 //If this user record does not require a pin to log-in, merely log-in.
                 GlobalClass.gicuCurrentUser = icu;
+                setUserAdjustableMaturityFilters();
+
                 globalClass.populateApprovedTags();
                 resetContentSortAndFilterTags();
                 Toast.makeText(getApplicationContext(), sWelcomeMessage, Toast.LENGTH_SHORT).show();
@@ -112,6 +116,19 @@ public class Activity_UserSelection extends AppCompatActivity {
         }); //End ListView.setOnItemClickListener()
 
     }
+
+    private void setUserAdjustableMaturityFilters(){
+        GlobalClass.giMinTagMaturityFilter = 0;
+        GlobalClass.giMinContentMaturityFilter = 0;
+        if(GlobalClass.gicuCurrentUser.iMaturityLevel > GlobalClass.giDefaultUserMaturityRating) {
+            GlobalClass.giMaxTagMaturityFilter = GlobalClass.giDefaultUserMaturityRating;
+            GlobalClass.giMaxContentMaturityFilter = GlobalClass.giDefaultUserMaturityRating;
+        } else {
+            GlobalClass.giMaxTagMaturityFilter = GlobalClass.gicuCurrentUser.iMaturityLevel;
+            GlobalClass.giMaxContentMaturityFilter = GlobalClass.gicuCurrentUser.iMaturityLevel;
+        }
+    }
+
 
     private void resetContentSortAndFilterTags(){
         ViewModel_Fragment_SelectTags viewModel_fragment_selectTags = new ViewModelProvider(this).get(ViewModel_Fragment_SelectTags.class);

@@ -175,7 +175,7 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         //Start the tag selection fragment:
         FragmentTransaction ft = getChildFragmentManager().beginTransaction();
         Fragment_SelectTags fst = new Fragment_SelectTags();
-        fst.bOptionViewOnly = true;
+        fst.gbOptionViewOnly = true;
         Bundle args = new Bundle();
         args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory);
         fst.setArguments(args);

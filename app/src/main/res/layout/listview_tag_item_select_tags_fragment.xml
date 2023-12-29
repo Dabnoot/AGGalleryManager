@@ -14,14 +14,14 @@
         android:text="TagText"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/linearLayout_Attributes"
+        app:layout_constraintEnd_toStartOf="@+id/constraintLayout_Attributes"
         android:textAlignment="viewStart"
         android:padding="5dp"/>
     <!--android:text="TagText"-->
     <!--android:text="This is text that I am trying to get to wrap without causing all kinds of problems. I need to to wrap to the line below and stay within the parent."-->
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/linearLayout_Attributes"
+        android:id="@+id/constraintLayout_Attributes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"

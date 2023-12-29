@@ -22,8 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckedTextView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -59,9 +57,12 @@ public class Fragment_SelectTags extends Fragment {
 
     ChipGroup gChipGroup_SuggestedTags;
 
+    boolean gbOptionViewOnly = false;
 
-
-    boolean bOptionViewOnly = false;
+    public static final int MULTI_SELECT = 0;
+    public static final int SINGLE_SELECT = 1;
+    public static final int NO_SELECT = 2;
+    public int giSelectionMode = MULTI_SELECT;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -119,7 +120,7 @@ public class Fragment_SelectTags extends Fragment {
         //Maintain the display of suggested tags:
         gChipGroup_SuggestedTags = getView().findViewById(R.id.chipGroup_SuggestedTags);
 
-        if(bOptionViewOnly) {
+        if(gbOptionViewOnly || giSelectionMode != MULTI_SELECT) {
             //Hide the UncheckTags button:
             button_UncheckTags.setVisibility(View.INVISIBLE);
 
@@ -254,6 +255,7 @@ public class Fragment_SelectTags extends Fragment {
             } else {
                 rangeSlider_TagMaturityWindow.setValueTo((float) GlobalClass.giDefaultUserMaturityRating);
             }
+            rangeSlider_TagMaturityWindow.setStepSize((float) 1);
             //Set the current selected maturity window max to the default maturity rating:
             rangeSlider_TagMaturityWindow.setValues((float) GlobalClass.giMinTagMaturityFilter, (float) GlobalClass.giMaxTagMaturityFilter);
 
@@ -376,7 +378,7 @@ public class Fragment_SelectTags extends Fragment {
         initListViewData();
     }
 
-    private void initListViewData(){
+    public void initListViewData(){
         ListView listView_ImportTagSelection;
         if(getView() != null) {
             listView_ImportTagSelection = getView().findViewById(R.id.listView_ImportTagSelection);
@@ -576,7 +578,9 @@ public class Fragment_SelectTags extends Fragment {
             ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
             viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
-            updateXrefTagsHistogram();
+            if (viewModel_fragment_selectTags.bShowModeXrefTagUse) {
+                updateXrefTagsHistogram();
+            }
 
             notifyDataSetChanged();
         }
@@ -638,25 +642,32 @@ public class Fragment_SelectTags extends Fragment {
             //Set the selection state (needed as views are recycled).
             if(getActivity() != null) {
                 if (tagItem.bIsChecked) {
-                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    viewRow.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                 } else {
-                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                    viewRow.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
                 }
                 textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
             }
 
+            View finalViewRow = viewRow;
             viewRow.setOnClickListener(view -> {
                 //Handle changing the checked state:
+                if(!tagItem.bIsChecked && giSelectionMode == SINGLE_SELECT){
+                    uncheckAll();
+                } else if (giSelectionMode == NO_SELECT) {
+                    return;
+                }
+
                 tagItem.bIsChecked = !tagItem.bIsChecked;
                 if(tagItem.bIsChecked){
-                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                    finalViewRow.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                     textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                     if(galiPreselectedTags == null){
                         galiPreselectedTags = new ArrayList<>();
                     }
                     galiPreselectedTags.add(tagItem.iTagID);
                 } else {
-                    textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                    finalViewRow.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
                     textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                     //Remove the item from preselected tags, if it exists there:
                     if(galiPreselectedTags == null){

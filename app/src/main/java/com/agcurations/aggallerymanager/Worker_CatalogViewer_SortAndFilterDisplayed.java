@@ -263,6 +263,13 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 }
             }
 
+            //Filter by maturity, if selected by user:
+            boolean bUserSelectedMaturityInBounds = false;
+            if(entry.getValue().iMaturityRating >= GlobalClass.giMinContentMaturityFilter &&
+                    entry.getValue().iMaturityRating <= GlobalClass.giMaxContentMaturityFilter){
+                bUserSelectedMaturityInBounds = true;
+            }
+
 
             boolean bTagMatchApplicable = false;
             boolean bTagsMatch = false;
@@ -280,7 +287,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
             //Check to see if the record needs to be skipped due to restriction settings:
             boolean bIsRestricted = false;
 
-
+            //Filter by absolute maturity rating - user cannot see content beyond their user rating:
             int iMaturityRating = entry.getValue().iMaturityRating;
             if (GlobalClass.gicuCurrentUser != null) {
                 if (iMaturityRating > GlobalClass.gicuCurrentUser.iMaturityLevel) {
@@ -343,6 +350,8 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                 if(bGroupIDFilterApplicable){
                     bIsMatch = bIsMatch && bGroupIDMatch;
                 }
+
+                bIsMatch = bIsMatch && bUserSelectedMaturityInBounds;
 
                 if(bIsMatch){
                     treeMapPreSort.put(sKey, entry.getValue());

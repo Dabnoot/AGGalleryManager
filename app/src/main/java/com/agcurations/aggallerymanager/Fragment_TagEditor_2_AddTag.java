@@ -1,26 +1,23 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -30,14 +27,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_TagEditor_2_AddTag#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private GlobalClass globalClass;
@@ -59,7 +50,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     private Spinner gSpinner_AgeRating;
     private CheckBox gCheckBox_SetApprovedUsers;
 
-    ListViewTagsAdapter glistViewTagsAdapter = null;
+    private Fragment_SelectTags gFragment_selectTags;
+    ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
     private ItemClass_Tag gictTagIDInEditMode;
 
@@ -120,7 +112,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             ArrayList<String[]> alsTemp = new ArrayList<>();
 
             for(int i = 0; i < AdapterMaturityRatings.MATURITY_RATINGS.length; i++){
-            //for(String[] sESRBRating: AdapterTagMaturityRatings.TAG_AGE_RATINGS){
                 if(GlobalClass.gicuCurrentUser.iMaturityLevel >= i) {
                     //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
                     //  to them unless their user rating is modified.
@@ -145,6 +136,10 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
             Button button_Finish = getView().findViewById(R.id.button_Finish);
             button_Finish.setOnClickListener(v -> {
+                //Uncheck tags that might be in the viewmodel.
+                if(gFragment_selectTags.gListViewTagsAdapter != null) {
+                    gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
+                }
                 if(getActivity() != null) {
                     ((Activity_TagEditor) getActivity()).callForFinish();
                 }
@@ -218,7 +213,100 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         }
 
-        RefreshTagListView();
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
+        gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+        gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
+        gViewModel_fragment_selectTags.bShowModeXrefTagUse = false;
+
+        //Populate the tags fragment:
+        //Start the tag selection fragment:
+        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+        gFragment_selectTags = new Fragment_SelectTags();
+        Bundle fragment_selectTags_args = new Bundle();
+        fragment_selectTags_args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, gViewModelTagEditor.iTagEditorMediaCategory);
+        gFragment_selectTags.setArguments(fragment_selectTags_args);
+        fragmentTransaction.replace(R.id.child_fragment_tag_selector, gFragment_selectTags);
+        fragmentTransaction.commit();
+
+        if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_ADD_MODE) {
+            gFragment_selectTags.gbOptionViewOnly = true;
+            gFragment_selectTags.giSelectionMode = Fragment_SelectTags.NO_SELECT;
+        } else {
+            //Tag Edit mode:
+            gFragment_selectTags.giSelectionMode = Fragment_SelectTags.SINGLE_SELECT;
+            //React to changes in the selected tag data in the ViewModel:
+            final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = getNewTagObserver();
+            gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
+        }
+
+    }
+
+    private Observer<ArrayList<ItemClass_Tag>> getNewTagObserver() {
+        return new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                //In our case, there should only be one tag selected.
+                if(tagItems.size() > 0) {
+                    gictTagIDInEditMode = tagItems.get(0);
+                    gEditText_TagText.setText(gictTagIDInEditMode.sTagText);
+                    gEditText_TagDescription.setText(gictTagIDInEditMode.sTagDescription);
+                    gSpinner_AgeRating.setSelection(gictTagIDInEditMode.iMaturityRating);
+                    giInitialMaturityRating = gictTagIDInEditMode.iMaturityRating;
+                    if(gictTagIDInEditMode.alsTagApprovedUsers.size() > 0){
+                        gCheckBox_SetApprovedUsers.setChecked(true);
+                        ToggleRestrictToUserVisibility(true);
+                        ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
+                        ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
+                        ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>();
+                        galsInitialApprovedUsers = new ArrayList<>();
+
+                        for (ItemClass_User icu : alicuAllUserPool) {
+                            boolean bUserSelected = false;
+                            for(String sUserName: gictTagIDInEditMode.alsTagApprovedUsers) {
+                                if(sUserName.equals(icu.sUserName)){
+                                    galsInitialApprovedUsers.add(sUserName);
+                                    bUserSelected = true;
+                                    break;
+                                }
+                            }
+                            if(bUserSelected){
+                                alicuSelectedUsers.add(icu);
+                            } else {
+                                alicuRemainingUserPool.add(icu);
+                            }
+                        }
+
+                        gAdapterUserPool.clear();
+                        gAdapterApprovedUsers.clear();
+
+                        gAdapterUserPool.AddUsers(alicuRemainingUserPool);
+                        gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
+
+                    } else {
+
+                        gCheckBox_SetApprovedUsers.setChecked(false);
+                        ToggleRestrictToUserVisibility(false);
+                        ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
+                        ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>(GlobalClass.galicu_Users);
+                        galsInitialApprovedUsers = new ArrayList<>();
+
+                        gAdapterUserPool.clear();
+                        gAdapterApprovedUsers.clear();
+
+                        gAdapterUserPool.AddUsers(alicuRemainingUserPool);
+                        gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
+                    }
+                } else {
+                    if(gictTagIDInEditMode != null) { //null ==> the observer will fire when count zero is set to zero again, so accommodate.
+                        //If the tag to be edited has been de-selected, recalculate.
+                        ClearTagData();
+                        gictTagIDInEditMode = null;
+                    }
+                }
+
+            }
+        };
     }
 
     private void ToggleRestrictToUserVisibility(boolean bNewCheckedState){
@@ -228,33 +316,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gLayoutParams_UserSelection.height = 0;
         }
         gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
-    }
-
-    private void RefreshTagListView(){
-        //Populate the listView:
-        if(getView() == null){
-            return;
-        }
-
-        TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        for (Map.Entry<Integer, ItemClass_Tag> entry : GlobalClass.gtmApprovedCatalogTagReferenceLists.get(gViewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
-            String sTagTextForSort = entry.getValue().sTagText + entry.getValue().iTagID;
-            tmTags.put(sTagTextForSort, entry.getValue());
-        }
-
-        ArrayList<ItemClass_Tag> alict_TagsListTags = new ArrayList<>();
-
-        for(Map.Entry<String, ItemClass_Tag> entry : tmTags.entrySet()){
-            alict_TagsListTags.add(entry.getValue());
-        }
-
-        if(getActivity() != null) {
-            glistViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alict_TagsListTags);
-            ListView listView_TagViewer = getView().findViewById(R.id.listView_TagViewer);
-            listView_TagViewer.setAdapter(glistViewTagsAdapter);
-            listView_TagViewer.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-        }
-
     }
 
 
@@ -347,7 +408,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
             //Attempt to update the record:
             if(globalClass.TagDataFile_UpdateRecord(ictTagToAddOrEdit, gViewModelTagEditor.iTagEditorMediaCategory)){
-                RefreshTagListView();
+                gFragment_selectTags.initListViewData();
                 Toast.makeText(getActivity(), "Tag modified successfully.", Toast.LENGTH_SHORT).show();
                 gictTagIDInEditMode = null;
                 gViewModelTagEditor.bTagDataUpdated = true;
@@ -359,14 +420,12 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             //Attempt to add the new record:
             ictTagToAddOrEdit = globalClass.TagDataFile_CreateNewRecord(ictTagToAddOrEdit, gViewModelTagEditor.iTagEditorMediaCategory);
             if (ictTagToAddOrEdit != null) {
-                RefreshTagListView();
+                gFragment_selectTags.initListViewData();
                 galNewTags.add(ictTagToAddOrEdit);
                 gViewModelTagEditor.alNewTags = galNewTags; //To allow new tags to be sent back to a possible calling activity.
                 gViewModelTagEditor.bTagAdded = true;
                 bTagSuccess = true;
                 Toast.makeText(getActivity(), ictTagToAddOrEdit.sTagText + " added successfully.", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getActivity(), ictTagToAddOrEdit.sTagText + " already exists in tag list.", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -392,11 +451,11 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                     }
                 }
 
-                if(getActivity() != null){
-                    Toast.makeText(getActivity().getApplicationContext(), "Updating catalog records...", Toast.LENGTH_SHORT).show();
-                }
 
                 if (bMaturityRatingChanged || bApprovedUserChanged) {
+                    if(getActivity() != null){
+                        Toast.makeText(getActivity().getApplicationContext(), "Updating catalog records...", Toast.LENGTH_SHORT).show();
+                    }
                     if(getContext() == null) return;
                     int iMediaCategoriesToProcessBitSet = 0;
                     int[] iMediaCategoryBits = {1, 2, 4};
@@ -435,9 +494,17 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         galsInitialApprovedUsers = new ArrayList<>();
         RefreshUserPools();
         //Clear any selected tag in the tag listview:
-        if (glistViewTagsAdapter != null) {
+        /*if (glistViewTagsAdapter != null) {
             glistViewTagsAdapter.unselectAllTags();
+        }*/
+
+        if(gFragment_selectTags.gListViewTagsAdapter != null) {
+            gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
         }
+        if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
+            gSpinner_AgeRating.setSelection(0);
+        }
+
     }
 
     private void RefreshUserPools(){
@@ -467,7 +534,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
 
 
-    public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
+    /*public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
 
         ArrayList<ItemClass_Tag> alictTagItems; //Contains all tag items passed to the listviewTagsAdapter.
 
@@ -491,8 +558,11 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 v = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
             }
             // Lookup view for data population
-            final CheckedTextView checkedTextView_TagText = v.findViewById(R.id.checkedTextView_TagText);
-            checkedTextView_TagText.setText(tagItem.sTagText);
+            final TextView textView_TagText = v.findViewById(R.id.textView_TagText);
+            textView_TagText.setText(tagItem.sTagText);
+
+            ConstraintLayout constraintLayout_Attributes = v.findViewById(R.id.constraintLayout_Attributes);
+            constraintLayout_Attributes.getLayoutParams().width = 0;
 
             if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
                 //Only allow the user to select items if we are in edit mode.
@@ -500,20 +570,24 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                 //Set the selection state (needed as views are recycled).
                 if(getActivity() != null) {
                     if (tagItem.bIsChecked) {
-                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                        //textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                        v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
                     } else {
-                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                        //textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                        v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
                     }
-                    checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                    textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                 }
 
+                View finalV = v;
                 v.setOnClickListener(v1 -> {
                     //Handle changing the checked state:
                     tagItem.bIsChecked = !tagItem.bIsChecked;
                     boolean bUpdateOtherItemsViews = false;
                     if (tagItem.bIsChecked) {
-                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                        //textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                        finalV.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+                        textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                         gictTagIDInEditMode = tagItem;
                         gEditText_TagText.setText(tagItem.sTagText);
                         gEditText_TagDescription.setText(tagItem.sTagDescription);
@@ -571,8 +645,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                             }
                         }
                     } else {
-                        checkedTextView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                        checkedTextView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                        textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
+                        textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
                         ClearTagData();
                     }
                     if (bUpdateOtherItemsViews) {
@@ -598,7 +672,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         public int getCount() {
             return super.getCount();
         }
-    }
+    }*/
 
 
     @SuppressLint("ClickableViewAccessibility") //This is to suppress a warning that the click capture should call v.perform click.
