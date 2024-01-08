@@ -10,8 +10,9 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
@@ -21,33 +22,32 @@ import androidx.work.WorkManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
 
 
 public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
-    private GlobalClass globalClass;
-    private ViewModel_TagEditor viewModelTagEditor;
-
-    ListViewTagsAdapter gListViewTagsAdapter;
+    private ViewModel_TagEditor gViewModelTagEditor;
 
     TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
 
-    Button button_DeleteTag = null;
+    Button gButton_DeleteTag = null;
 
     ProgressBar gProgressBar_Progress;
     TextView gTextView_ProgressBarText;
+
+    TextView gTextView_DeleteTagSubText;
+    static String gsDeleteTagSubTextDefault = "Select a tag to delete.";
+
+    private ItemClass_Tag gictTagToBeDeleted;
+
+    private Fragment_SelectTags gFragment_selectTags;
+    ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
     public Fragment_TagEditor_4_DeleteTag() {
         // Required empty public constructor
@@ -63,12 +63,8 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Calling Application class (see application tag in AndroidManifest.xml)
-        if(getActivity() != null) {
-            globalClass = (GlobalClass) getActivity().getApplicationContext();
-        }
         //Instantiate the ViewModel sharing data between fragments:
-        viewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
+        gViewModelTagEditor = new ViewModelProvider(getActivity()).get(ViewModel_TagEditor.class);
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter();
@@ -91,50 +87,13 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         if(getView() != null) {
-            button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
-            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
-            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        initComponents();
-    }
-
-
-    @Override
-    public void onDestroy() {
-        //unregisterReceiver(tagEditorServiceResponseReceiver);
-        if(getActivity() != null) {
-            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(tagEditorServiceResponseReceiver);
-        }
-        super.onDestroy();
-    }
-
-    public void initComponents() {
-
-        if (getView() == null) {
-            return;
-        }
-
-        if(getActivity() == null){
-            return;
-        }
-
-        RefreshTagListView();
-
-        if(getView() != null) {
-            Button button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
-            button_DeleteTag.setOnClickListener(new View.OnClickListener() {
+            gButton_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
+            gButton_DeleteTag.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     button_DeleteTag_Click(v);
                 }
             });
-        }
 
-        if(getView() != null) {
             Button button_Finish = getView().findViewById(R.id.button_Finish);
             button_Finish.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
@@ -143,51 +102,80 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                     }
                 }
             });
-        }
-    }
 
-    private void RefreshTagListView(){
-        //Populate the listView:
-        if (getView() == null) {
-            return;
-        }
-        final ListView listView_TagDelete = getView().findViewById(R.id.listView_TagDelete);
+            gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
+            gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
 
-        // Create the adapter for the ListView, and set the ListView adapter:
+            gTextView_DeleteTagSubText = getView().findViewById(R.id.textView_DeleteTagSubText);
+        }
+
+        //Instantiate the ViewModel tracking tag data from the tag selector fragment:
         if(getActivity() == null){
             return;
         }
+        gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
+        gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
+        gViewModel_fragment_selectTags.bFilterOnXrefTags = false;
 
-        ArrayList<ItemClass_Tag> alict_TagItems = new ArrayList<>();
+        //Populate the tags fragment:
+        //Start the tag selection fragment:
+        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+        gFragment_selectTags = new Fragment_SelectTags();
+        Bundle fragment_selectTags_args = new Bundle();
+        fragment_selectTags_args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, gViewModelTagEditor.iTagEditorMediaCategory);
+        gFragment_selectTags.setArguments(fragment_selectTags_args);
+        fragmentTransaction.replace(R.id.child_fragment_tag_selector, gFragment_selectTags);
+        fragmentTransaction.commit();
 
-        //Go through the tags treeMap and put the ListView together:
-        for (Map.Entry<Integer, ItemClass_Tag> tmEntryTagReferenceItem : GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModelTagEditor.iTagEditorMediaCategory).entrySet()) {
-            alict_TagItems.add(tmEntryTagReferenceItem.getValue());
+        gFragment_selectTags.giSelectionMode = Fragment_SelectTags.SINGLE_SELECT;
+        //React to changes in the selected tag data in the ViewModel:
+        final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = getNewTagObserver();
+        gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
+
+
+    }
+
+    private Observer<ArrayList<ItemClass_Tag>> getNewTagObserver() {
+        return new Observer<ArrayList<ItemClass_Tag>>() {
+            @Override
+            public void onChanged(ArrayList<ItemClass_Tag> tagItems) {
+
+                //In our case, there should only be one tag selected.
+                if(tagItems.size() > 0) {
+                    gictTagToBeDeleted = tagItems.get(0);
+                    gButton_DeleteTag.setEnabled(true);
+                    String sDeleteTagSubText = "Tag '" + gictTagToBeDeleted.sTagText + "' selected for deletion.";
+                    String sMaturityCode = AdapterMaturityRatings.MATURITY_RATINGS[gictTagToBeDeleted.iMaturityRating][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX];
+                    sDeleteTagSubText += "\nTag has rating '" + sMaturityCode + "'.";
+                    sDeleteTagSubText += "\nTag is currently used by " + gictTagToBeDeleted.iHistogramCount + " items viewable by the current user's maturity limit.";
+                    if(gictTagToBeDeleted.alsTagApprovedUsers.size() == 1){
+                        if(gictTagToBeDeleted.alsTagApprovedUsers.get(0).equals(GlobalClass.gicuCurrentUser.sUserName)) {
+                            sDeleteTagSubText += "\nTag is private to the current user.";
+                        }
+                    }
+                    gTextView_DeleteTagSubText.setText(sDeleteTagSubText);
+                } else {
+                    gictTagToBeDeleted = null;
+                    gButton_DeleteTag.setEnabled(false);
+                    gTextView_DeleteTagSubText.setText(gsDeleteTagSubTextDefault);
+                }
+
+            }
+        };
+    }
+
+
+    @Override
+    public void onDestroy() {
+        if(getActivity() != null) {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(tagEditorServiceResponseReceiver);
         }
-
-        //Alphabetize the tags:
-        TreeMap<String, ItemClass_Tag> tmICT = new TreeMap<>();
-        for(ItemClass_Tag ict: alict_TagItems){
-            tmICT.put(ict.sTagText.toLowerCase(Locale.ROOT), ict);
-        }
-        alict_TagItems.clear();
-        for(Map.Entry<String, ItemClass_Tag> tmEntry : tmICT.entrySet()){
-            alict_TagItems.add(tmEntry.getValue());
-        }
-
-        gListViewTagsAdapter = new ListViewTagsAdapter(getActivity().getApplicationContext(), alict_TagItems);
-        listView_TagDelete.setAdapter(gListViewTagsAdapter);
-        listView_TagDelete.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        if(getView() != null) {
-            Button button_DeleteTag = getView().findViewById(R.id.button_DeleteTag);
-            button_DeleteTag.setEnabled(false);
-        }
+        super.onDestroy();
     }
 
 
     private void button_DeleteTag_Click(View v){
-        if (getView() == null) {
+        if (getActivity() == null || getView() == null || gictTagToBeDeleted == null) {
             return;
         }
 
@@ -203,15 +191,11 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                 " low maturity users as the higher default maturity is applied. Use the filter feature" +
                 " of the Catalog Viewer to determine the content to which this tag has been applied.\n" +
                 "Confirm tag deletion: ";
-        sConfirmationMessage = sConfirmationMessage + Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)).sTagText;
+        sConfirmationMessage = sConfirmationMessage + gictTagToBeDeleted.sTagText;
 
-        if (getActivity() == null) {
-            return;
-        }
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), R.style.AlertDialogCustomStyle);
         builder.setTitle("Delete Tag");
         builder.setMessage(sConfirmationMessage);
-        //builder.setIcon(R.drawable.ic_launcher);
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.dismiss();
@@ -228,15 +212,16 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
     }
 
     private void DeleteTag(){
-        if(getContext() == null) return;
-        if(gListViewTagsAdapter == null) return;
-        if(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected) == null) return;
-        String sTagRecord = GlobalClass.getTagRecordString(Objects.requireNonNull(gListViewTagsAdapter.getItem(gListViewTagsAdapter.iTagItemSelected)));
+        if(getContext() == null || gictTagToBeDeleted == null) {
+            return;
+        }
+        GlobalClass.gabDataLoaded.set(false); //Don't let the user get into any catalog until processing is complete.
+        String sTagRecord = GlobalClass.getTagRecordString(gictTagToBeDeleted);
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
         Data dataDeleteTag = new Data.Builder()
                 .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_4_DeleteTag:DeleteTag()")
                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModelTagEditor.iTagEditorMediaCategory)
+                .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, gViewModelTagEditor.iTagEditorMediaCategory)
                 .putString(GlobalClass.EXTRA_TAG_TO_BE_DELETED, sTagRecord)
                 .build();
         OneTimeWorkRequest otwrDeleteTag = new OneTimeWorkRequest.Builder(Worker_Tags_DeleteTag.class)
@@ -245,8 +230,7 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
                 .build();
         WorkManager.getInstance(getContext()).enqueue(otwrDeleteTag);
 
-        //todo: Update user permissions and maturity ratings for catalog items that had this tag.
-        viewModelTagEditor.bTagDeleted = true;
+        gViewModelTagEditor.bTagDeleted = true;
     }
 
 
@@ -311,96 +295,12 @@ public class Fragment_TagEditor_4_DeleteTag extends Fragment {
 
             boolean bTagDeleteComplete = intent.getBooleanExtra(GlobalClass.EXTRA_TAG_DELETE_COMPLETE,false);
             if(bTagDeleteComplete){
-                RefreshTagListView();
+                GlobalClass.gabDataLoaded.set(true); //Allow the user back into catalog viewers.
+                gFragment_selectTags.initListViewData();
                 Toast.makeText(context, "Tag deletion complete.", Toast.LENGTH_SHORT).show();
             }
 
-
-
         }
     }
-
-
-    public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
-
-        int iTagItemSelected = -1;
-
-
-        public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems) {
-            super(context, 0, tagItems);
-        }
-
-        @Override @NonNull
-        public View getView(final int position, View v, @NonNull ViewGroup parent) {
-            // Get the data item for this position
-            final ItemClass_Tag tagItem = getItem(position);
-            if(tagItem == null){
-                return v;
-            }
-            // Check if an existing view is being reused, otherwise inflate the view
-            if (v == null) {
-                v = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
-            }
-            // Lookup view for data population
-            final TextView textView_TagText = v.findViewById(R.id.textView_TagText);
-            // Populate the data into the template view using the data object
-            String s = tagItem.sTagText;
-            textView_TagText.setText(s);
-
-
-            //Set the selection state (needed as views are recycled).
-            if(getActivity() != null) {
-                if (tagItem.bIsChecked) {
-                    v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                } else {
-                    v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                }
-                textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
-            }
-
-            v.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View viewClicked) {
-                    //Handle changing the checked state:
-                    if(iTagItemSelected > -1){
-                        //If a tag item is already selected, make the adjustments:
-                        ItemClass_Tag tagItemPrevSelected = getItem(iTagItemSelected);
-                        if(tagItemPrevSelected != null && (iTagItemSelected != position)){
-                            tagItemPrevSelected.bIsChecked = false;
-                        }
-                        iTagItemSelected = -1;
-                    }
-
-                    ItemClass_Tag tagItem_Clicked = getItem(position);
-
-                    if(tagItem_Clicked != null) {
-                        tagItem_Clicked.bIsChecked = !tagItem_Clicked.bIsChecked;
-                        if (tagItem_Clicked.bIsChecked) {
-                            iTagItemSelected = position;
-                            if(button_DeleteTag != null){
-                                button_DeleteTag.setEnabled(true);
-                            }
-                        } else {
-                            if(button_DeleteTag != null){
-                                button_DeleteTag.setEnabled(false);
-                            }
-                        }
-                    }
-
-                    //Tell the listView adapter to redraw everything, thus "unselecting" any previously selected item:
-                    notifyDataSetChanged();
-                }
-            });
-
-            // Return the completed view to render on screen
-            return v;
-        }
-
-
-    }
-
-
-
-
 
 }

@@ -59,6 +59,8 @@ public class Fragment_SelectTags extends Fragment {
 
     boolean gbOptionViewOnly = false;
 
+    boolean gbHistogramFreeze = false; //Don't perform xref of histogram data as the user selects tags.
+
     public static final int MULTI_SELECT = 0;
     public static final int SINGLE_SELECT = 1;
     public static final int NO_SELECT = 2;
@@ -132,7 +134,7 @@ public class Fragment_SelectTags extends Fragment {
             rlParams.height = 0;
             gChipGroup_SuggestedTags.setLayoutParams(rlParams);
 
-        } else if(viewModel_fragment_selectTags.bShowModeXrefTagUse) {
+        } else if(viewModel_fragment_selectTags.bFilterOnXrefTags) {
             //When bShowModeXrefTagUse is activated, we are using Fragment_SelectTags
             //  for filtering. In this case, only show tags which are used, that is,
             //  has a frequency count greater than zero. Don't give the option for the user to add
@@ -391,7 +393,7 @@ public class Fragment_SelectTags extends Fragment {
         viewModel_fragment_selectTags.alTagsAll.clear();
 
         //Grab all tags that fall within the maturity range selected by the user:
-        TreeMap<Integer, ItemClass_Tag> tmTagPool_PreMaturityFilter = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(viewModel_fragment_selectTags.iMediaCategory);
+        TreeMap<Integer, ItemClass_Tag> tmTagPool_PreMaturityFilter = GlobalClass.getApprovedTagsTreeMapCopy(viewModel_fragment_selectTags.iMediaCategory);
         TreeMap<Integer, ItemClass_Tag> tmTagPool = new TreeMap<>();
         for(Map.Entry<Integer, ItemClass_Tag> entry: tmTagPool_PreMaturityFilter.entrySet()){
             if(entry.getValue().iMaturityRating >= GlobalClass.giMinTagMaturityFilter &&
@@ -545,17 +547,7 @@ public class Fragment_SelectTags extends Fragment {
             tmTagItemsDisplay = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
             tmTagItemsDisplaySequence = new TreeMap<>();
 
-            if (viewModel_fragment_selectTags.bShowModeXrefTagUse) {
-                //When bShowModeXrefTagUse is activated, we are using Fragment_SelectTags
-                //  for filtering. In this case, only show tags which are used, that is,
-                //  has a frequency count greater than zero.
-                updateXrefTagsHistogram();
-            } else {
-                for (ItemClass_Tag ict : alictTagItems) {
-                    String sCompoundID = ict.sTagText.toLowerCase() + ":" + ict.iTagID;
-                    tmTagItemsDisplay.put(sCompoundID, ict);
-                }
-            }
+            updateXrefTagsHistogram(!viewModel_fragment_selectTags.bFilterOnXrefTags);
 
             tmTagItemsDisplaySequence = new TreeMap<>();
             int iSequence = 0;
@@ -569,20 +561,31 @@ public class Fragment_SelectTags extends Fragment {
 
         public void uncheckAll(){
 
+            boolean bHadCheckedItem = false;
+
             for(Map.Entry<String, ItemClass_Tag> entry: tmTagItemsDisplay.entrySet()){
+                if(!bHadCheckedItem){
+                    //This if-block used to prevent unnecessary processing.
+                    if(entry.getValue().bIsChecked){
+                        bHadCheckedItem = true;
+                    }
+                }
                 entry.getValue().bIsChecked = false;
             }
-            if(galiPreselectedTags != null){
-                galiPreselectedTags.clear();
-            }
-            ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
-            viewModel_fragment_selectTags.setSelectedTags(alTagItems);
+            if(bHadCheckedItem) {
+                //Only execute further processing if there actually was a checked item.
+                if (galiPreselectedTags != null) {
+                    galiPreselectedTags.clear();
+                }
+                ArrayList<ItemClass_Tag> alTagItems = new ArrayList<>();
+                viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
-            if (viewModel_fragment_selectTags.bShowModeXrefTagUse) {
-                updateXrefTagsHistogram();
-            }
+                if (!(giSelectionMode == SINGLE_SELECT) && !gbHistogramFreeze) {
+                    updateXrefTagsHistogram(!viewModel_fragment_selectTags.bFilterOnXrefTags);
+                }
 
-            notifyDataSetChanged();
+                notifyDataSetChanged();
+            }
         }
 
         @NonNull
@@ -605,23 +608,13 @@ public class Fragment_SelectTags extends Fragment {
             textView_TagText.setText(tagItem.sTagText);
 
             TextView textView_HistogramCount = viewRow.findViewById(R.id.textView_HistogramCount);
-            if(viewModel_fragment_selectTags.bShowModeXrefTagUse) {
-                //Attempt to get usage (histogram) data for the tag:
-                int iTagUseCount;
-                iTagUseCount = tagItem.iHistogramCount;
-                String s;
-                if (iTagUseCount != 0) {
-                    s = "(" + iTagUseCount + ")";
-                    textView_HistogramCount.setText(s);
-                    textView_HistogramCount.setVisibility(View.VISIBLE);
-                } else {
-                    textView_HistogramCount.setText("");
-                    textView_HistogramCount.setVisibility(View.INVISIBLE);
-                }
-            } else {
-                textView_HistogramCount.setText("");
-                textView_HistogramCount.setVisibility(View.INVISIBLE);
-            }
+
+            //Form histogram data string for the tag:
+            int iTagUseCount;
+            iTagUseCount = tagItem.iHistogramCount;
+            String s;
+            s = "(" + iTagUseCount + ")";
+            textView_HistogramCount.setText(s);
 
             //Set the maturity rating code text for the readout:
             TextView textView_Maturity = viewRow.findViewById(R.id.textView_Maturity);
@@ -702,10 +695,15 @@ public class Fragment_SelectTags extends Fragment {
 
                 viewModel_fragment_selectTags.setSelectedTags(alTagItems);
 
-                if(viewModel_fragment_selectTags.bShowModeXrefTagUse) {
-                    updateXrefTagsHistogram();
-                    notifyDataSetChanged();//todo: should this be moved outside of this if-statement?
+                if (!(giSelectionMode == SINGLE_SELECT) && !gbHistogramFreeze) {
+                    //Don't recalculate histogram if in single_select mode.
+                    // Considered primarily when the selection is related to editing or deleting
+                    // a tag.
+                    //Don't recalculate histogram if commanded to freeze the histogram data. This
+                    // primarily used when assigning tags to an item.
+                    updateXrefTagsHistogram(!viewModel_fragment_selectTags.bFilterOnXrefTags);
                 }
+                notifyDataSetChanged();
 
             });
 
@@ -769,19 +767,32 @@ public class Fragment_SelectTags extends Fragment {
 
                 notifyDataSetChanged();
 
-                if (viewModel_fragment_selectTags.bShowModeXrefTagUse) {
-                    updateXrefTagsHistogram();
+                if (!gbHistogramFreeze) {
+                    updateXrefTagsHistogram(!viewModel_fragment_selectTags.bFilterOnXrefTags);
                 }
 
             }
         }
 
-        private void updateXrefTagsHistogram(){
+        private void updateXrefTagsHistogram(boolean bIncludeZeroCountItems){
             //recalc cross-referenced tag histogram with the newly checked/unchecked item:
-            TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram_PreMaturityFilter =
-                    globalClass.getXrefTagHistogram(viewModel_fragment_selectTags.iMediaCategory, galiPreselectedTags);
+            TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram_PreMaturityFilter;
+            if(gbHistogramFreeze){
+                tmXrefTagHistogram_PreMaturityFilter =
+                        globalClass.getXrefTagHistogram(
+                                viewModel_fragment_selectTags.iMediaCategory,
+                                new ArrayList<>(),      //Don't xref tags, just give the histogram counts for all tags.
+                                bIncludeZeroCountItems);
+            } else {
+                tmXrefTagHistogram_PreMaturityFilter =
+                        globalClass.getXrefTagHistogram(
+                                viewModel_fragment_selectTags.iMediaCategory,
+                                galiPreselectedTags,
+                                bIncludeZeroCountItems);
+            }
 
-            //Only show tags which are within the maturity display bounds selected by the user:
+            //Only show tags which are within the maturity display bounds selected by the user.
+            //  This is not a maturity block-out, but the default filter. The user can expand it to show any X-rated stuff, etc, if they have that maturity level permission.
             TreeMap<Integer, ItemClass_Tag> tmXrefTagHistogram = new TreeMap<>();
             for(Map.Entry<Integer, ItemClass_Tag> entry: tmXrefTagHistogram_PreMaturityFilter.entrySet()){
                 if(entry.getValue().iMaturityRating >= GlobalClass.giMinTagMaturityFilter &&
@@ -792,8 +803,9 @@ public class Fragment_SelectTags extends Fragment {
 
             //Mark tags selected as appropriate:
             for(int iTagID: galiPreselectedTags){
-                if(tmXrefTagHistogram.get(iTagID) != null) {
-                    tmXrefTagHistogram.get(iTagID).bIsChecked = true;
+                ItemClass_Tag ict = tmXrefTagHistogram.get(iTagID);
+                if(ict != null) {
+                    ict.bIsChecked = true;
                 }
             }
 
@@ -816,11 +828,8 @@ public class Fragment_SelectTags extends Fragment {
 
         @Override
         public int getCount() {
-            if(viewModel_fragment_selectTags.bShowModeXrefTagUse){
-                return tmTagItemsDisplay.size();
-            }
-
-            return super.getCount();
+            return tmTagItemsDisplay.size();
+            //return super.getCount();
         }
     }
 

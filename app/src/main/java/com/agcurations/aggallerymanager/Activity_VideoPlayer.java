@@ -511,6 +511,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                     Bundle args = new Bundle();
                     args.putSerializable(Fragment_ItemDetails.CATALOG_ITEM, ci); //NOTE!!!!! ci passed here gets marshalled as a reference, not a copy.
                     //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
+                    args.putBoolean(Fragment_ItemDetails.HISTOGRAM_FREEZE, true); //Don't xref histogram data as the user selects tags - the user is assigning tags, not filtering on xref.
                     gFragment_itemDetails.setArguments(args);
                     fragmentTransaction.replace(R.id.fragment_Item_Details, gFragment_itemDetails);
                     fragmentTransaction.commit();

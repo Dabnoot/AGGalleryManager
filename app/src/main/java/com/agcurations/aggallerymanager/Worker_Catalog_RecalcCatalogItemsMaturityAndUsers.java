@@ -1,10 +1,11 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -16,6 +17,8 @@ public class Worker_Catalog_RecalcCatalogItemsMaturityAndUsers extends Worker {
     public static final String TAG_WORKER_CATALOG_RECALC_APPROVED_USERS = "com.agcurations.aggallermanager.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS";
 
     public static final String WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.WORKER_CATALOG_RECALC_APPROVED_USERS_RESPONSE";
+
+    public static final String EXTRA_CATALOG_RECALC_COMPLETE = "com.agcurations.aggallerymanager.extra.CATALOG_RECALC_COMPLETE";
 
     int giMediaCategoriesToProcessBitSet;
 
@@ -50,7 +53,6 @@ public class Worker_Catalog_RecalcCatalogItemsMaturityAndUsers extends Worker {
         int iProgressNumerator = 0;
         int iProgressBarValue;
 
-        String sMessage;
         int[] iMediaCategoryBits = {1, 2, 4};
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++) {
             if((giMediaCategoriesToProcessBitSet & iMediaCategoryBits[iMediaCategory]) == iMediaCategoryBits[iMediaCategory]) {
@@ -92,6 +94,13 @@ public class Worker_Catalog_RecalcCatalogItemsMaturityAndUsers extends Worker {
                 true, 100,
                 true, "Recalculation and update of catalog file record's approved-users completed.",
                 WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+
+        //Send a broadcast that this process is complete.
+        Intent broadcastIntent_NotifyCatalogRecalcComplete = new Intent();
+        broadcastIntent_NotifyCatalogRecalcComplete.putExtra(EXTRA_CATALOG_RECALC_COMPLETE, true);
+        broadcastIntent_NotifyCatalogRecalcComplete.setAction(WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        broadcastIntent_NotifyCatalogRecalcComplete.addCategory(Intent.CATEGORY_DEFAULT);
+        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_NotifyCatalogRecalcComplete);
 
         return Result.success();
     }

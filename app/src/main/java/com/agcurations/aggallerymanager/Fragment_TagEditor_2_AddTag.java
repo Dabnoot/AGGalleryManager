@@ -1,14 +1,21 @@
 package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -21,6 +28,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -36,6 +44,11 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     RelativeLayout gRelativeLayout_UserSelection;
     RelativeLayout.LayoutParams gLayoutParams_UserSelection;
+
+    ProgressBar gProgressBar_Progress;
+    TextView gTextView_ProgressBarText;
+
+    TagEditorServiceResponseReceiver tagEditorServiceResponseReceiver;
 
     AdapterUserList gAdapterUserPool;
     AdapterUserList gAdapterApprovedUsers;
@@ -76,6 +89,13 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         galNewTags = new ArrayList<>();
         galsInitialApprovedUsers = new ArrayList<>();
+
+        //Configure a response receiver to listen for updates from the Data Service:
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        tagEditorServiceResponseReceiver = new TagEditorServiceResponseReceiver();
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(tagEditorServiceResponseReceiver,filter);
     }
 
     @Override
@@ -86,137 +106,129 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        initComponents();
+    public void onViewCreated(@NonNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
     }
 
-    public void initComponents() {
-
-        if (getView() == null) {
+    @Override
+    public void onResume() {
+        if (getView() == null || getActivity() == null) {
             return;
         }
 
-        if(getActivity() == null){
-            return;
-        }
+        gEditText_TagText = getView().findViewById(R.id.editText_TagText);
+        gEditText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
 
+        gSpinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
+        ArrayList<String[]> alsTemp = new ArrayList<>();
 
-
-        if (getView() != null) {
-
-            gEditText_TagText = getView().findViewById(R.id.editText_TagText);
-            gEditText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
-
-            gSpinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
-            ArrayList<String[]> alsTemp = new ArrayList<>();
-
-            for(int i = 0; i < AdapterMaturityRatings.MATURITY_RATINGS.length; i++){
-                if(GlobalClass.gicuCurrentUser.iMaturityLevel >= i) {
-                    //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
-                    //  to them unless their user rating is modified.
-                    String[] sESRBRating = AdapterMaturityRatings.MATURITY_RATINGS[i];
-                    alsTemp.add(sESRBRating);
-                }
+        for(int i = 0; i < AdapterMaturityRatings.MATURITY_RATINGS.length; i++){
+            if(GlobalClass.gicuCurrentUser.iMaturityLevel >= i) {
+                //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
+                //  to them unless their user rating is modified.
+                String[] sESRBRating = AdapterMaturityRatings.MATURITY_RATINGS[i];
+                alsTemp.add(sESRBRating);
             }
-            if(getContext() == null) return;
-            AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
-            gSpinner_AgeRating.setAdapter(atarSpinnerAdapter);
+        }
+        if(getContext() == null) return;
+        AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
+        gSpinner_AgeRating.setAdapter(atarSpinnerAdapter);
 
-            Button button_AddTag = getView().findViewById(R.id.button_AddTag);
-            TextView textView_NewTagTitle = getView().findViewById(R.id.textView_NewTagTitle);
-            if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE){
-                button_AddTag.setText("Apply");
-                textView_NewTagTitle.setText("Edit Tag");
+        Button button_AddTag = getView().findViewById(R.id.button_AddTag);
+        TextView textView_NewTagTitle = getView().findViewById(R.id.textView_NewTagTitle);
+        if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE){
+            button_AddTag.setText("Apply");
+            textView_NewTagTitle.setText("Edit Tag");
+        } else {
+            button_AddTag.setText("Add Tag");
+            textView_NewTagTitle.setText("New Tag");
+        }
+        button_AddTag.setOnClickListener(this::button_AddTag_Click);
+
+        Button button_Finish = getView().findViewById(R.id.button_Finish);
+        button_Finish.setOnClickListener(v -> {
+            //Uncheck tags that might be in the viewmodel.
+            if(gFragment_selectTags.gListViewTagsAdapter != null) {
+                gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
+            }
+            if(getActivity() != null) {
+                ((Activity_TagEditor) getActivity()).callForFinish();
+            }
+        });
+
+        //Call thing to hide the keyboard when somewhere other than an EditText is touched:
+        setupUI(getView().findViewById(R.id.linearLayout_fragment_tag_editor_2_add_tag));
+
+        //Configure the Restrict-To-User elements:
+        gRelativeLayout_UserSelection = getView().findViewById(R.id.relativeLayout_UserSelection);
+        gLayoutParams_UserSelection = (RelativeLayout.LayoutParams) gRelativeLayout_UserSelection.getLayoutParams();
+        gLayoutParams_UserSelection.height = 0;
+        gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
+
+        gCheckBox_SetApprovedUsers = getView().findViewById(R.id.checkBox_SetApprovedUsers);
+        gCheckBox_SetApprovedUsers.setOnClickListener(v -> ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked()));
+
+        TextView textView_labelRestrictTagToUserIDs = getView().findViewById(R.id.textView_labelRestrictToUsers);
+        textView_labelRestrictTagToUserIDs.setOnClickListener(v -> {
+            gCheckBox_SetApprovedUsers.setChecked(!gCheckBox_SetApprovedUsers.isChecked());
+            ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
+        });
+
+        //Initialize the user list:
+        //Initialize the displayed list of users:
+        RefreshUserPools();
+        ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
+        //End if ListView.onItemClick().
+        listView_UserPool.setOnItemClickListener((parent, listView, position, id) -> {
+            final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+            icu.bIsChecked = !icu.bIsChecked;
+            if(getActivity() == null) return;
+            if(icu.bIsChecked){
+                listView.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
             } else {
-                button_AddTag.setText("Add Tag");
-                textView_NewTagTitle.setText("New Tag");
+                listView.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
             }
-            button_AddTag.setOnClickListener(this::button_AddTag_Click);
+        }); //End ListView.setOnItemClickListener()
 
-            Button button_Finish = getView().findViewById(R.id.button_Finish);
-            button_Finish.setOnClickListener(v -> {
-                //Uncheck tags that might be in the viewmodel.
-                if(gFragment_selectTags.gListViewTagsAdapter != null) {
-                    gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
-                }
-                if(getActivity() != null) {
-                    ((Activity_TagEditor) getActivity()).callForFinish();
-                }
-            });
+        ListView listView_ApprovedUsers = getView().findViewById(R.id.listView_ApprovedUsers);
+        //End if ListView.onItemClick().
+        listView_ApprovedUsers.setOnItemClickListener((parent, listView, position, id) -> {
+            final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
+            icu.bIsChecked = !icu.bIsChecked;
+            if(getActivity() == null) return;
+            if(icu.bIsChecked){
+                listView.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
+            } else {
+                listView.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
+            }
+        }); //End ListView.setOnItemClickListener()
 
-            //Call thing to hide the keyboard when somewhere other than an EditText is touched:
-            setupUI(getView().findViewById(R.id.linearLayout_fragment_tag_editor_2_add_tag));
+        //Configure the buttons that transfer users from the "user pool" to "selected users" for tag restricted-to selection:
+        ImageButton imageButton_AddUser = getView().findViewById(R.id.imageButton_AddUser);
+        imageButton_AddUser.setOnClickListener(v -> {
+            ArrayList<ItemClass_User> alicu_UsersToAdd = gAdapterUserPool.GetSelectedUsers();
+            gAdapterApprovedUsers.AddUsers(alicu_UsersToAdd);
+            gAdapterApprovedUsers.uncheckAll();
+            gAdapterUserPool.RemoveUsersFromList(alicu_UsersToAdd);
+        });
 
-            //Configure the Restrict-To-User elements:
-            gRelativeLayout_UserSelection = getView().findViewById(R.id.relativeLayout_UserSelection);
-            gLayoutParams_UserSelection = (RelativeLayout.LayoutParams) gRelativeLayout_UserSelection.getLayoutParams();
-            gLayoutParams_UserSelection.height = 0;
-            gRelativeLayout_UserSelection.setLayoutParams(gLayoutParams_UserSelection);
+        ImageButton imageButton_RemoveUser = getView().findViewById(R.id.imageButton_RemoveUser);
+        imageButton_RemoveUser.setOnClickListener(v -> {
+            ArrayList<ItemClass_User> alicu_UsersToMoveBack = gAdapterApprovedUsers.GetSelectedUsers();
+            gAdapterUserPool.AddUsers(alicu_UsersToMoveBack);
+            gAdapterUserPool.uncheckAll();
+            gAdapterApprovedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
+        });
 
-            gCheckBox_SetApprovedUsers = getView().findViewById(R.id.checkBox_SetApprovedUsers);
-            gCheckBox_SetApprovedUsers.setOnClickListener(v -> ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked()));
-
-            TextView textView_labelRestrictTagToUserIDs = getView().findViewById(R.id.textView_labelRestrictToUsers);
-            textView_labelRestrictTagToUserIDs.setOnClickListener(v -> {
-                gCheckBox_SetApprovedUsers.setChecked(!gCheckBox_SetApprovedUsers.isChecked());
-                ToggleRestrictToUserVisibility(gCheckBox_SetApprovedUsers.isChecked());
-            });
-
-            //Initialize the user list:
-            //Initialize the displayed list of users:
-            RefreshUserPools();
-            ListView listView_UserPool = getView().findViewById(R.id.listView_UserPool);
-            //End if ListView.onItemClick().
-            listView_UserPool.setOnItemClickListener((parent, view, position, id) -> {
-                final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
-                icu.bIsChecked = !icu.bIsChecked;
-                if(getActivity() == null) return;
-                if(icu.bIsChecked){
-                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                } else {
-                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
-                }
-            }); //End ListView.setOnItemClickListener()
-
-            ListView listView_ApprovedUsers = getView().findViewById(R.id.listView_ApprovedUsers);
-            //End if ListView.onItemClick().
-            listView_ApprovedUsers.setOnItemClickListener((parent, view, position, id) -> {
-                final ItemClass_User icu = (ItemClass_User) parent.getItemAtPosition(position);
-                icu.bIsChecked = !icu.bIsChecked;
-                if(getActivity() == null) return;
-                if(icu.bIsChecked){
-                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                } else {
-                    view.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorBackgroundMain));
-                }
-            }); //End ListView.setOnItemClickListener()
-
-            //Configure the buttons that transfer users from the "user pool" to "selected users" for tag restricted-to selection:
-            ImageButton imageButton_AddUser = getView().findViewById(R.id.imageButton_AddUser);
-            imageButton_AddUser.setOnClickListener(v -> {
-                ArrayList<ItemClass_User> alicu_UsersToAdd = gAdapterUserPool.GetSelectedUsers();
-                gAdapterApprovedUsers.AddUsers(alicu_UsersToAdd);
-                gAdapterApprovedUsers.uncheckAll();
-                gAdapterUserPool.RemoveUsersFromList(alicu_UsersToAdd);
-            });
-
-            ImageButton imageButton_RemoveUser = getView().findViewById(R.id.imageButton_RemoveUser);
-            imageButton_RemoveUser.setOnClickListener(v -> {
-                ArrayList<ItemClass_User> alicu_UsersToMoveBack = gAdapterApprovedUsers.GetSelectedUsers();
-                gAdapterUserPool.AddUsers(alicu_UsersToMoveBack);
-                gAdapterUserPool.uncheckAll();
-                gAdapterApprovedUsers.RemoveUsersFromList(alicu_UsersToMoveBack);
-            });
+        gProgressBar_Progress = getView().findViewById(R.id.progressBar_Progress);
+        gTextView_ProgressBarText = getView().findViewById(R.id.textView_ProgressBarText);
 
 
-
-        }
 
         //Instantiate the ViewModel tracking tag data from the tag selector fragment:
         gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
         gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
-        gViewModel_fragment_selectTags.bShowModeXrefTagUse = false;
+        gViewModel_fragment_selectTags.bFilterOnXrefTags = false;
 
         //Populate the tags fragment:
         //Start the tag selection fragment:
@@ -239,6 +251,15 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gViewModel_fragment_selectTags.altiTagsSelected.observe(getViewLifecycleOwner(), observerSelectedTags);
         }
 
+        super.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        if(getActivity() != null) {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(tagEditorServiceResponseReceiver);
+        }
+        super.onDestroy();
     }
 
     private Observer<ArrayList<ItemClass_Tag>> getNewTagObserver() {
@@ -463,6 +484,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                     if(iMediaCategoriesToProcessBitSet != 0) {
                         //Call a worker to go through this media category data file and recalc the maturity
                         //  rating and assigned users:
+                        GlobalClass.gabDataLoaded.set(false); //Don't let the user get into any catalog until processing is complete.
                         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                         Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
                                 .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_2_AddTag:continueWithTagAddOrEditFinalize()")
@@ -493,10 +515,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         giInitialMaturityRating = -1;
         galsInitialApprovedUsers = new ArrayList<>();
         RefreshUserPools();
-        //Clear any selected tag in the tag listview:
-        /*if (glistViewTagsAdapter != null) {
-            glistViewTagsAdapter.unselectAllTags();
-        }*/
 
         if(gFragment_selectTags.gListViewTagsAdapter != null) {
             gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
@@ -531,150 +549,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
     }
 
 
-
-
-
-    /*public class ListViewTagsAdapter extends ArrayAdapter<ItemClass_Tag> {
-
-        ArrayList<ItemClass_Tag> alictTagItems; //Contains all tag items passed to the listviewTagsAdapter.
-
-        public ListViewTagsAdapter(Context context, ArrayList<ItemClass_Tag> tagItems) {
-            super(context, 0, tagItems);
-            alictTagItems = tagItems;
-        }
-
-        @NonNull
-        @Override
-        public View getView(int position, View v, @NonNull ViewGroup parent) {
-            // Get the data item for this position
-
-            final ItemClass_Tag tagItem = alictTagItems.get(position);
-
-            if(tagItem == null){
-                return v;
-            }
-            // Check if an existing view is being reused, otherwise inflate the view
-            if (v == null) {
-                v = LayoutInflater.from(getContext()).inflate(R.layout.listview_tag_item_select_tags_fragment, parent, false);
-            }
-            // Lookup view for data population
-            final TextView textView_TagText = v.findViewById(R.id.textView_TagText);
-            textView_TagText.setText(tagItem.sTagText);
-
-            ConstraintLayout constraintLayout_Attributes = v.findViewById(R.id.constraintLayout_Attributes);
-            constraintLayout_Attributes.getLayoutParams().width = 0;
-
-            if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
-                //Only allow the user to select items if we are in edit mode.
-
-                //Set the selection state (needed as views are recycled).
-                if(getActivity() != null) {
-                    if (tagItem.bIsChecked) {
-                        //textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                        v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                    } else {
-                        //textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                        v.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                    }
-                    textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
-                }
-
-                View finalV = v;
-                v.setOnClickListener(v1 -> {
-                    //Handle changing the checked state:
-                    tagItem.bIsChecked = !tagItem.bIsChecked;
-                    boolean bUpdateOtherItemsViews = false;
-                    if (tagItem.bIsChecked) {
-                        //textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                        finalV.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorFragmentBackgroundHighlight2));
-                        textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
-                        gictTagIDInEditMode = tagItem;
-                        gEditText_TagText.setText(tagItem.sTagText);
-                        gEditText_TagDescription.setText(tagItem.sTagDescription);
-                        gSpinner_AgeRating.setSelection(tagItem.iMaturityRating);
-                        giInitialMaturityRating = tagItem.iMaturityRating;
-                        if(tagItem.alsTagApprovedUsers.size() > 0){
-                            gCheckBox_SetApprovedUsers.setChecked(true);
-                            ToggleRestrictToUserVisibility(true);
-                            ArrayList<ItemClass_User> alicuAllUserPool = new ArrayList<>(GlobalClass.galicu_Users);
-                            ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
-                            ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>();
-                            galsInitialApprovedUsers = new ArrayList<>();
-
-                            for (ItemClass_User icu : alicuAllUserPool) {
-                                boolean bUserSelected = false;
-                                for(String sUserName: tagItem.alsTagApprovedUsers) {
-                                    if(sUserName.equals(icu.sUserName)){
-                                        galsInitialApprovedUsers.add(sUserName);
-                                        bUserSelected = true;
-                                        break;
-                                    }
-                                }
-                                if(bUserSelected){
-                                    alicuSelectedUsers.add(icu);
-                                } else {
-                                    alicuRemainingUserPool.add(icu);
-                                }
-                            }
-
-                            gAdapterUserPool.clear();
-                            gAdapterApprovedUsers.clear();
-
-                            gAdapterUserPool.AddUsers(alicuRemainingUserPool);
-                            gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
-
-                        } else {
-
-                            gCheckBox_SetApprovedUsers.setChecked(false);
-                            ToggleRestrictToUserVisibility(false);
-                            ArrayList<ItemClass_User> alicuSelectedUsers = new ArrayList<>();
-                            ArrayList<ItemClass_User> alicuRemainingUserPool = new ArrayList<>(GlobalClass.galicu_Users);
-                            galsInitialApprovedUsers = new ArrayList<>();
-
-                            gAdapterUserPool.clear();
-                            gAdapterApprovedUsers.clear();
-
-                            gAdapterUserPool.AddUsers(alicuRemainingUserPool);
-                            gAdapterApprovedUsers.AddUsers(alicuSelectedUsers);
-                        }
-                        //Go through and uncheck anything but this tag:
-                        for (ItemClass_Tag ict : alictTagItems) {
-                            if (ict.bIsChecked && !ict.iTagID.equals(tagItem.iTagID)) {
-                                ict.bIsChecked = false;
-                                bUpdateOtherItemsViews = true;
-                            }
-                        }
-                    } else {
-                        textView_TagText.setBackgroundColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorUnfilledUnselected));
-                        textView_TagText.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
-                        ClearTagData();
-                    }
-                    if (bUpdateOtherItemsViews) {
-                        notifyDataSetChanged();
-                    }
-
-                });
-            }
-
-            // Return the completed view to render on screen
-            return v;
-        }
-
-        public void unselectAllTags(){
-            for(ItemClass_Tag ict: alictTagItems){
-                ict.bIsChecked = false;
-            }
-            notifyDataSetChanged();
-        }
-
-
-        @Override
-        public int getCount() {
-            return super.getCount();
-        }
-    }*/
-
-
     @SuppressLint("ClickableViewAccessibility") //This is to suppress a warning that the click capture should call v.perform click.
         // But if that is done, it causes an erroneous click to be performed on the Add Tag button in certain circumstances.
     public void setupUI(View view) {
@@ -698,9 +572,73 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         }
     }
 
+    public class TagEditorServiceResponseReceiver extends BroadcastReceiver {
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //Errors are checked for in Activity_TagEditor.
+            //Check to see if this is a message indicating that a tag deletion is complete:
 
+            boolean bError;
 
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+                String sStatusMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_STATUS_MESSAGE);
+                if(sStatusMessage != null){
+                    Toast.makeText(context, sStatusMessage, Toast.LENGTH_LONG).show();
+                }
+            }
+
+            //Check to see if this is a response to update log or progress bar:
+            boolean 	bUpdatePercentComplete;
+            boolean 	bUpdateProgressBarText;
+
+            //Get booleans from the intent telling us what to update:
+            bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+            bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+            if(gProgressBar_Progress != null && gTextView_ProgressBarText != null) {
+                if (bUpdatePercentComplete) {
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if (gProgressBar_Progress != null) {
+                        gProgressBar_Progress.setProgress(iAmountComplete);
+                    }
+                    if (iAmountComplete == 100) {
+                        assert gProgressBar_Progress != null;
+                        gProgressBar_Progress.setVisibility(View.INVISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
+                    } else {
+                        assert gProgressBar_Progress != null;
+                        gProgressBar_Progress.setVisibility(View.VISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.VISIBLE);
+                    }
+
+                }
+                if (bUpdateProgressBarText) {
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if (gTextView_ProgressBarText != null) {
+                        gTextView_ProgressBarText.setText(sProgressBarText);
+                    }
+                }
+            }
+
+            //Check to see if this is a completion notification about a tag-delete operation:
+
+            boolean bCatalogRecalcComplete = intent.getBooleanExtra(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.EXTRA_CATALOG_RECALC_COMPLETE,false);
+            if(bCatalogRecalcComplete){
+                GlobalClass.gabDataLoaded.set(true); //Allow the user back into catalog viewers.
+                gFragment_selectTags.initListViewData();
+                Toast.makeText(context, "Catalog recalc complete.", Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
 
 
 

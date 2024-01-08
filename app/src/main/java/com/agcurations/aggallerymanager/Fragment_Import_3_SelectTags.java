@@ -163,8 +163,8 @@ public class Fragment_Import_3_SelectTags extends Fragment {
         }
 
         //Start the tag selection fragment:
-        FragmentTransaction ft = getChildFragmentManager().beginTransaction();
-        Fragment_SelectTags fst = new Fragment_SelectTags();
+        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+        Fragment_SelectTags fragment_selectTags = new Fragment_SelectTags();
         Bundle args = new Bundle();
         args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, viewModelImportActivity.iImportMediaCategory);
         //If this is a webo download import, seed the tag selection fragment with the tags from
@@ -187,9 +187,12 @@ public class Fragment_Import_3_SelectTags extends Fragment {
                 //  user selects the "clear" icon on the tag selection bar.
             }
         }
-        fst.setArguments(args);
-        ft.replace(R.id.child_fragment_tag_selector, fst);
-        ft.commit();
+        fragment_selectTags.setArguments(args);
+        fragmentTransaction.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
+        fragmentTransaction.commit();
+
+        fragment_selectTags.gbHistogramFreeze = true;
+
 
         //React to changes in the selected tag data in the ViewModel initiated in ImportActivity:
         final Observer<ArrayList<ItemClass_Tag>> selectedTagsObserver = new Observer<ArrayList<ItemClass_Tag>>() {

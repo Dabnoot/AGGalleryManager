@@ -386,7 +386,10 @@ public class GlobalClass extends Application {
         return freeBytesExternal;
     }
 
-    static final String gsDatePatternNumSort = "yyyyMMdd.HHmmss";
+    static final String gsDatePatternNumSort = "yyyyMMdd.HHmmssSSS";
+        //This one has milliseconds because the import of files can come in multiple files faster
+        // than 1 second. In this case, sorting by date imported can give out-of-intended-sequence
+        // results.
     static DateTimeFormatter gdtfDateFormatter;
 
     public static Double GetTimeStampDouble(){
@@ -2021,6 +2024,16 @@ public class GlobalClass extends Application {
         return sTagText;
     }
 
+    public static TreeMap<Integer, ItemClass_Tag> getApprovedTagsTreeMapCopy(int iMediaCategory){
+        TreeMap<Integer, ItemClass_Tag> tmCopy = new TreeMap<>();
+        for(Map.Entry<Integer, ItemClass_Tag> entry: GlobalClass.gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()){
+            String sTagCopy = GlobalClass.getTagRecordString(entry.getValue());
+            ItemClass_Tag ictTagCopy = GlobalClass.ConvertFileLineToTagItem(sTagCopy); //This is the only way to get a true copy. Otherwise it is passed by reference.
+            tmCopy.put(entry.getKey(), ictTagCopy);
+        }
+        return tmCopy;
+    }
+
     public static ArrayList<Integer> getTagIDsFromTagIDString(String sTagIDs){
         ArrayList<Integer> aliTagIDs = new ArrayList<>();
         String[] sTemp = sTagIDs.split(",");
@@ -2203,7 +2216,14 @@ public class GlobalClass extends Application {
         }
     }
 
-    public TreeMap<Integer, ItemClass_Tag> getXrefTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs){
+    /**
+     *
+     * @param iMediaCategory            Media category for the tags to be considered.
+     * @param aliTagIDs                 Perform histogram around tags that occur alongside these identified tags. Leave empty for a basic tag histogram.
+     * @param bIncludeZeroCountItems    Return all tag items, including ones that have zero occurrences alongside entries in aliTagIDs.
+     * @return                          A treemap of TagID, and Tag. The Tag structure includes the histogram count.
+     */
+    public TreeMap<Integer, ItemClass_Tag> getXrefTagHistogram(int iMediaCategory, ArrayList<Integer> aliTagIDs, boolean bIncludeZeroCountItems){
         //Get a histogram counting the tags that occur alongside tags found in aliTagIDs.
         //  Suppose the user selects tag ID 7, and wants to know what other tag IDs are frequently
         //  found alongside tag ID 7. This routine returns that list with frequency.
@@ -2264,8 +2284,10 @@ public class GlobalClass extends Application {
                         if (!tmXrefTagHistogram.containsKey(iCatalogItemTagID)) {
                             ItemClass_Tag ict = gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).get(iCatalogItemTagID);
                             if(ict != null){
-                                ict.iHistogramCount = 1;
-                                tmXrefTagHistogram.put(iCatalogItemTagID, ict);
+                                String sTagCopy = GlobalClass.getTagRecordString(ict);
+                                ItemClass_Tag ictTagCopy = GlobalClass.ConvertFileLineToTagItem(sTagCopy); //This is the only way to get a true copy. Otherwise it is passed by reference.
+                                ictTagCopy.iHistogramCount = 1;
+                                tmXrefTagHistogram.put(iCatalogItemTagID, ictTagCopy);
                             } else {
                                 Log.d("getXrefTagHistogram","ICT is null.");
                             }
@@ -2277,47 +2299,48 @@ public class GlobalClass extends Application {
             }
         }
 
+        if(bIncludeZeroCountItems){
+            //Include tags that have not been found to have an occurence and set the histogram count for the item to zero.
+            for (Map.Entry<Integer, ItemClass_Tag> entry : gtmCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
+                boolean bTagIsOutsideMaturityRating;
+                boolean bTagIsPrivateToOtherUsers;
+                if(gicuCurrentUser != null) {
+                    //If a user is logged-in:
+                    bTagIsOutsideMaturityRating = gicuCurrentUser.iMaturityLevel < entry.getValue().iMaturityRating;
+                    bTagIsPrivateToOtherUsers = entry.getValue().alsTagApprovedUsers.size() > 0;
+                    if(entry.getValue().alsTagApprovedUsers.size() > 0){
+                        for(String sApprovedUser: entry.getValue().alsTagApprovedUsers){
+                            if(sApprovedUser.equals(gicuCurrentUser.sUserName)){
+                                bTagIsPrivateToOtherUsers = false;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    //If no user is selected or current user is somehow null, follow guidelines for
+                    //  default user maturity rating.
+                    bTagIsOutsideMaturityRating = giDefaultUserMaturityRating < entry.getValue().iMaturityRating;
+                    bTagIsPrivateToOtherUsers = entry.getValue().alsTagApprovedUsers.size() > 0;
+                }
+                if (bTagIsOutsideMaturityRating ||
+                        bTagIsPrivateToOtherUsers) {
+                    continue;
+                }
+                if(!tmXrefTagHistogram.containsKey(entry.getValue().iTagID)){
+                    String sTagCopy = GlobalClass.getTagRecordString(entry.getValue());
+                    ItemClass_Tag ictTagCopy = GlobalClass.ConvertFileLineToTagItem(sTagCopy); //This is the only way to get a true copy. Otherwise it is passed by reference.
+                    ictTagCopy.iHistogramCount = 0;
+                    tmXrefTagHistogram.put(ictTagCopy.iTagID, ictTagCopy);
+                }
+
+            }
+
+        }
+
         return tmXrefTagHistogram;
     }
 
-    public TreeMap<Integer, Integer> getInitTagHistogram(int iMediaCategory, boolean bCatalogTagsRestrictionsOn){
-        TreeMap<Integer, Integer> tmCompoundTagHistogram = new TreeMap<>();
 
-        ArrayList<Integer> aliRestrictedTagIDs = new ArrayList<>();
-        for (Map.Entry<Integer, ItemClass_Tag> entry : gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).entrySet()) {
-            if (entry.getValue().bIsRestricted) {
-                aliRestrictedTagIDs.add(entry.getValue().iTagID);
-            }
-        }
-
-        //Go through each catalog item:
-        for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogLists.get(iMediaCategory).entrySet()) {
-            ItemClass_CatalogItem ci = entry.getValue();
-            //Collect all of the tags that are associated with this catalog item and count them in the histogram to be returned.
-            //  But skip if this item contains a restricted tag and user is not approved to view restricted tags.
-            ArrayList<Integer> aliRestrictedTest = new ArrayList<>(aliRestrictedTagIDs);
-            aliRestrictedTest.retainAll(ci.aliTags);
-            boolean bContainsRestrictedTag = aliRestrictedTest.size() > 0;
-            if(bCatalogTagsRestrictionsOn && bContainsRestrictedTag) {
-                //Don't add the tag if TagRestrictions are on and this catalog item contains a restricted tag.
-                continue;
-            }
-            for (int iCatalogItemTagID : ci.aliTags) {
-                if (!tmCompoundTagHistogram.containsKey(iCatalogItemTagID)) {
-                    tmCompoundTagHistogram.put(iCatalogItemTagID, 1);
-                } else {
-                    Integer iTagCountofID = tmCompoundTagHistogram.get(iCatalogItemTagID);
-                    if (iTagCountofID != null) {
-                        iTagCountofID++;
-                        tmCompoundTagHistogram.put(iCatalogItemTagID, iTagCountofID);
-                    }
-                }
-            }
-
-        }
-
-        return tmCompoundTagHistogram;
-    }
 
     public static int getHighestTagMaturityRating(ArrayList<ItemClass_Tag> alict_Tags){
         int iLowestTagMaturityRating = giDefaultUserMaturityRating;
@@ -2440,7 +2463,9 @@ public class GlobalClass extends Application {
                     }
                 }
                 if(bOkToAddTag) {
-                    gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(entry.getKey(), entry.getValue());
+                    String sTagCopy = GlobalClass.getTagRecordString(entry.getValue());
+                    ItemClass_Tag ictTagCopy = GlobalClass.ConvertFileLineToTagItem(sTagCopy); //This is the only way to get a true copy. Otherwise it is passed by reference.
+                    gtmApprovedCatalogTagReferenceLists.get(iMediaCategory).put(entry.getKey(), ictTagCopy);
                 }
             }
 

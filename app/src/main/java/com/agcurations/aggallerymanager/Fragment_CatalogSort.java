@@ -678,7 +678,7 @@ public class Fragment_CatalogSort extends Fragment {
         }
         gViewModel_fragment_selectTags = new ViewModelProvider(getActivity()).get(ViewModel_Fragment_SelectTags.class);
 
-        gViewModel_fragment_selectTags.bShowModeXrefTagUse = true; //When the user selects a tag to filter on, update counts of other tag items to reflect those which share the selected tag(s).
+        gViewModel_fragment_selectTags.bFilterOnXrefTags = true; //When the user selects a tag to filter on, update counts of other tag items to reflect those which share the selected tag(s).
 
         gViewModel_fragment_selectTags.altiTagsSelected.removeObservers(getViewLifecycleOwner());
 

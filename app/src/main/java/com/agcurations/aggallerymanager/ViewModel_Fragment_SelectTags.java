@@ -32,7 +32,7 @@ public class ViewModel_Fragment_SelectTags extends ViewModel {
 
     public int iMediaCategory = -1;
 
-    public boolean bShowModeXrefTagUse = false; //Set to true to show tags and frequencies that
+    public boolean bFilterOnXrefTags = false; //Set to true to show tags and frequencies that
                                                     // are in-use alongside tags that the user is
                                                     // selecting. For use with filtering.
 

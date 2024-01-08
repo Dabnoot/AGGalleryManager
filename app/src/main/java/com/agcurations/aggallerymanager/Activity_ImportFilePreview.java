@@ -61,7 +61,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     private int giMaxFileItemIndex;
     private static final String IMAGE_PREVIEW_INDEX = "image_preview_index";
 
-    private Fragment_SelectTags fragment_selectTags; //Used to reset tags when swiping to the next file.
+    private Fragment_SelectTags gFragment_selectTags; //Used to reset tags when swiping to the next file.
 
     private int giMediaCategory;
 
@@ -242,14 +242,16 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             //Start the tag selection fragment:
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-            fragment_selectTags = new Fragment_SelectTags();
+            gFragment_selectTags = new Fragment_SelectTags();
             Bundle args = new Bundle();
             args.putInt(Fragment_SelectTags.MEDIA_CATEGORY, giMediaCategory);
             args.putIntegerArrayList(Fragment_SelectTags.PRESELECTED_TAG_ITEMS, galFileItems.get(giFileItemIndex).aliProspectiveTags);
 
-            fragment_selectTags.setArguments(args);
-            ft.replace(R.id.child_fragment_tag_selector, fragment_selectTags);
+            gFragment_selectTags.setArguments(args);
+            ft.replace(R.id.child_fragment_tag_selector, gFragment_selectTags);
             ft.commit();
+
+            gFragment_selectTags.gbHistogramFreeze = true; //Don't xref histogram data as the user selects tags - the user is assigning tags, not filtering on xref.
 
             //Init the tags list if there are tags already assigned to this item:
             //Get the text of the tags and display:
@@ -732,7 +734,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
                 gbFreezeLastAssignedReset = true; //Don't let the data observer reset the "lastAssignedTags" arrayList.
-                fragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
+                gFragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
             }
 
             //displayGrade(); //Update the displayed grade
@@ -830,7 +832,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         if(galiLastAssignedTags != null){
             //If the user is pasting tags, set a flag to move to the next item automatically.
             gbPastingTags = true;
-            fragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(galiLastAssignedTags);
+            gFragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(galiLastAssignedTags);
         }
 
     }
@@ -1212,7 +1214,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     //Apply the tags associated with this catalog item to the potential import item.
-                    fragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(ci.aliTags);
+                    gFragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(ci.aliTags);
                 }
             });
 

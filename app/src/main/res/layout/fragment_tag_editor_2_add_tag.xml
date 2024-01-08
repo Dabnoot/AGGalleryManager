@@ -1,236 +1,243 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+
+<RelativeLayout
     android:id="@+id/linearLayout_fragment_tag_editor_2_add_tag"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:weightSum="100"
-    android:baselineAligned="false">
+    android:layout_height="match_parent">
 
-
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="99">
+        android:orientation="horizontal"
+        android:weightSum="100"
+        android:baselineAligned="false">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="99">
 
-            <RelativeLayout
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-
-                <TextView
-                    android:id="@+id/textView_NewTagTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentTop="true"
-                    android:layout_centerHorizontal="true"
-                    android:text="New Tag"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="40sp" />
-
-                <TextView
-                    android:id="@+id/textView_NewTagSubText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_NewTagTitle"
-                    android:layout_centerHorizontal="true"
-                    android:text="Enter new tag details below."
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="24sp" />
-
-                <RelativeLayout
-                    android:id="@+id/relativeLayout_TagDetails"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_NewTagSubText"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="10dp">
-
-                    <TextView
-                        android:id="@+id/textView_labelTagText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignEnd="@+id/textView_labelTagDescription"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginBottom="20dp"
-                        android:text="Tag text:"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                    <EditText
-                        android:id="@+id/editText_TagText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBaseline="@+id/textView_labelTagText"
-                        android:layout_marginStart="10dp"
-                        android:layout_toEndOf="@+id/textView_labelTagText"
-                        android:minWidth="200dp"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                    <TextView
-                        android:id="@+id/textView_labelTagDescription"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@+id/editText_TagText"
-                        android:layout_alignParentStart="true"
-                        android:layout_marginTop="10dp"
-                        android:text="Tag description:"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                    <EditText
-                        android:id="@+id/editText_TagDescription"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_alignBaseline="@+id/textView_labelTagDescription"
-                        android:layout_marginStart="10dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_toEndOf="@+id/textView_labelTagDescription"
-                        android:minWidth="200dp"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                </RelativeLayout>
-
-                <TextView
-                    android:id="@+id/textView_labelContentMaturity"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/relativeLayout_TagDetails"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="30dp"
-                    android:text="Maturity rating:"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="22sp" />
-
-                <Spinner
-                    android:id="@+id/spinner_ContentMaturity"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_labelContentMaturity"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginEnd="20dp" />
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <RelativeLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/spinner_ContentMaturity"
-                    android:layout_centerHorizontal="true">
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/textView_NewTagTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
+                        android:text="New Tag"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="40sp" />
+
+                    <TextView
+                        android:id="@+id/textView_NewTagSubText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_NewTagTitle"
+                        android:layout_centerHorizontal="true"
+                        android:text="Enter new tag details below."
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="24sp" />
 
                     <RelativeLayout
-                        android:id="@+id/relativeLayout_CheckboxSetApprovedUsers"
+                        android:id="@+id/relativeLayout_TagDetails"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerHorizontal="true">
-
-                        <CheckBox
-                            android:id="@+id/checkBox_SetApprovedUsers"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                        android:layout_below="@+id/textView_NewTagSubText"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="10dp">
 
                         <TextView
-                            android:id="@+id/textView_labelRestrictToUsers"
+                            android:id="@+id/textView_labelTagText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true"
-                            android:layout_marginTop="7dp"
-                            android:layout_toEndOf="@+id/checkBox_SetApprovedUsers"
-                            android:text="Restrict tag to user IDs"
+                            android:layout_alignEnd="@+id/textView_labelTagDescription"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="20dp"
+                            android:text="Tag text:"
+                            android:textColor="@color/colorTextColor"
+                            android:textSize="22sp" />
+
+                        <EditText
+                            android:id="@+id/editText_TagText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignBaseline="@+id/textView_labelTagText"
+                            android:layout_marginStart="10dp"
+                            android:layout_toEndOf="@+id/textView_labelTagText"
+                            android:minWidth="200dp"
+                            android:textColor="@color/colorTextColor"
+                            android:textSize="22sp" />
+
+                        <TextView
+                            android:id="@+id/textView_labelTagDescription"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/editText_TagText"
+                            android:layout_alignParentStart="true"
+                            android:layout_marginTop="10dp"
+                            android:text="Tag description:"
+                            android:textColor="@color/colorTextColor"
+                            android:textSize="22sp" />
+
+                        <EditText
+                            android:id="@+id/editText_TagDescription"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignBaseline="@+id/textView_labelTagDescription"
+                            android:layout_marginStart="10dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_toEndOf="@+id/textView_labelTagDescription"
+                            android:minWidth="200dp"
                             android:textColor="@color/colorTextColor"
                             android:textSize="22sp" />
 
                     </RelativeLayout>
 
-
-                    <RelativeLayout
-                        android:id="@+id/relativeLayout_UserSelection"
+                    <TextView
+                        android:id="@+id/textView_labelContentMaturity"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_below="@+id/relativeLayout_CheckboxSetApprovedUsers">
+                        android:layout_below="@+id/relativeLayout_TagDetails"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="30dp"
+                        android:text="Maturity rating:"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="22sp" />
+
+                    <Spinner
+                        android:id="@+id/spinner_ContentMaturity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_labelContentMaturity"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:layout_marginEnd="20dp" />
+
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/spinner_ContentMaturity"
+                        android:layout_centerHorizontal="true">
 
                         <RelativeLayout
-                            android:id="@+id/relativeLayout_UserPool"
+                            android:id="@+id/relativeLayout_CheckboxSetApprovedUsers"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content">
+                            android:layout_height="wrap_content"
+                            android:layout_centerHorizontal="true">
+
+                            <CheckBox
+                                android:id="@+id/checkBox_SetApprovedUsers"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
 
                             <TextView
-                                android:id="@+id/textView_labelUserPool"
+                                android:id="@+id/textView_labelRestrictToUsers"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_centerHorizontal="true"
-                                android:text="User pool:"
+                                android:layout_marginTop="7dp"
+                                android:layout_toEndOf="@+id/checkBox_SetApprovedUsers"
+                                android:text="Restrict tag to user IDs"
                                 android:textColor="@color/colorTextColor"
                                 android:textSize="22sp" />
-
-                            <ListView
-                                android:id="@+id/listView_UserPool"
-                                android:layout_width="200dp"
-                                android:layout_height="100dp"
-                                android:layout_below="@+id/textView_labelUserPool" />
 
                         </RelativeLayout>
 
 
                         <RelativeLayout
-                            android:id="@+id/relativeLayout_UserMove"
+                            android:id="@+id/relativeLayout_UserSelection"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_centerVertical="true"
-                            android:layout_margin="10dp"
-                            android:layout_marginTop="30dp"
-                            android:layout_toEndOf="@+id/relativeLayout_UserPool">
+                            android:layout_below="@+id/relativeLayout_CheckboxSetApprovedUsers">
 
-                            <ImageButton
-                                android:id="@+id/imageButton_AddUser"
+                            <RelativeLayout
+                                android:id="@+id/relativeLayout_UserPool"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:id="@+id/textView_labelUserPool"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerHorizontal="true"
+                                    android:text="User pool:"
+                                    android:textColor="@color/colorTextColor"
+                                    android:textSize="22sp" />
+
+                                <ListView
+                                    android:id="@+id/listView_UserPool"
+                                    android:layout_width="200dp"
+                                    android:layout_height="100dp"
+                                    android:layout_below="@+id/textView_labelUserPool" />
+
+                            </RelativeLayout>
+
+
+                            <RelativeLayout
+                                android:id="@+id/relativeLayout_UserMove"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:backgroundTint="@color/colorButton"
-                                android:src="@drawable/baseline_chevron_right_24" />
+                                android:layout_centerVertical="true"
+                                android:layout_margin="10dp"
+                                android:layout_marginTop="30dp"
+                                android:layout_toEndOf="@+id/relativeLayout_UserPool">
 
-                            <ImageButton
-                                android:id="@+id/imageButton_RemoveUser"
+                                <ImageButton
+                                    android:id="@+id/imageButton_AddUser"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:backgroundTint="@color/colorButton"
+                                    android:src="@drawable/baseline_chevron_right_24" />
+
+                                <ImageButton
+                                    android:id="@+id/imageButton_RemoveUser"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_below="@+id/imageButton_AddUser"
+                                    android:backgroundTint="@color/colorButton"
+                                    android:src="@drawable/baseline_chevron_left_24" />
+
+                            </RelativeLayout>
+
+
+                            <RelativeLayout
+                                android:id="@+id/relativeLayout_SelectedUsers"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_below="@+id/imageButton_AddUser"
-                                android:backgroundTint="@color/colorButton"
-                                android:src="@drawable/baseline_chevron_left_24" />
+                                android:layout_toEndOf="@+id/relativeLayout_UserMove">
 
-                        </RelativeLayout>
+                                <TextView
+                                    android:id="@+id/textView_labelApprovedUsers"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerHorizontal="true"
+                                    android:text="Approved Users:"
+                                    android:textColor="@color/colorTextColor"
+                                    android:textSize="22sp" />
 
+                                <ListView
+                                    android:id="@+id/listView_ApprovedUsers"
+                                    android:layout_width="200dp"
+                                    android:layout_height="100dp"
+                                    android:layout_below="@+id/textView_labelApprovedUsers" />
 
-                        <RelativeLayout
-                            android:id="@+id/relativeLayout_SelectedUsers"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_toEndOf="@+id/relativeLayout_UserMove">
+                            </RelativeLayout>
 
-                            <TextView
-                                android:id="@+id/textView_labelApprovedUsers"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_centerHorizontal="true"
-                                android:text="Approved Users:"
-                                android:textColor="@color/colorTextColor"
-                                android:textSize="22sp" />
-
-                            <ListView
-                                android:id="@+id/listView_ApprovedUsers"
-                                android:layout_width="200dp"
-                                android:layout_height="100dp"
-                                android:layout_below="@+id/textView_labelApprovedUsers" />
 
                         </RelativeLayout>
 
@@ -240,43 +247,66 @@
 
                 </RelativeLayout>
 
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-            </RelativeLayout>
+                    <Button
+                        android:id="@+id/button_AddTag"
+                        android:layout_width="160dp"
+                        android:layout_height="67dp"
+                        android:layout_marginTop="10dp"
+                        android:text="Add Tag"
+                        android:textSize="24sp"
+                        app:backgroundTint="@color/colorButton" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                    <Button
+                        android:id="@+id/button_Finish"
+                        android:layout_width="160dp"
+                        android:layout_height="67dp"
+                        android:layout_marginStart="20dp"
+                        android:layout_marginTop="10dp"
+                        android:text="Finish"
+                        android:textSize="24sp"
+                        app:backgroundTint="@color/colorButton" />
 
-                <Button
-                    android:id="@+id/button_AddTag"
-                    android:layout_width="160dp"
-                    android:layout_height="67dp"
-                    android:layout_marginTop="10dp"
-                    android:text="Add Tag"
-                    android:textSize="24sp"
-                    app:backgroundTint="@color/colorButton" />
-
-                <Button
-                    android:id="@+id/button_Finish"
-                    android:layout_width="160dp"
-                    android:layout_height="67dp"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="10dp"
-                    android:text="Finish"
-                    android:textSize="24sp"
-                    app:backgroundTint="@color/colorButton" />
+                </LinearLayout>
 
             </LinearLayout>
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <FrameLayout
+            android:id="@+id/child_fragment_tag_selector"
+            android:layout_width="240dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
 
-    <FrameLayout
-        android:id="@+id/child_fragment_tag_selector"
-        android:layout_width="240dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"/>
+    </LinearLayout>
 
-</LinearLayout>
+    <RelativeLayout
+        android:id="@+id/relativeLayout_Progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true">
+
+        <ProgressBar
+            android:id="@+id/progressBar_Progress"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:progressDrawable="@drawable/progressbar_colors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"/>
+
+        <TextView
+            android:id="@+id/textView_ProgressBarText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible"/>
+    </RelativeLayout>
+
+</RelativeLayout>

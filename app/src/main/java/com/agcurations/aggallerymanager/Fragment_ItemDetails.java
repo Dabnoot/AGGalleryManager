@@ -1,11 +1,9 @@
 package com.agcurations.aggallerymanager;
 
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -15,7 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +29,7 @@ import java.util.TreeMap;
 public class Fragment_ItemDetails extends Fragment {
 
     public final static String CATALOG_ITEM = "CATALOG_ITEM";
+    public final static String HISTOGRAM_FREEZE = "HISTOGRAM_FREEZE";
 
     private ItemClass_CatalogItem gciCatalogItem;
 
@@ -46,7 +44,7 @@ public class Fragment_ItemDetails extends Fragment {
 
     ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
-    private Fragment_SelectTags gFragment_selectTags;
+    public Fragment_SelectTags gFragment_selectTags;
 
     public Fragment_ItemDetails() {
         // Required empty public constructor
@@ -76,9 +74,12 @@ public class Fragment_ItemDetails extends Fragment {
         //Get the Media Category argument passed to this fragment:
         Bundle args = getArguments();
 
+        boolean bHistogramFreeze = false;
+
         if(args != null) {
             gciCatalogItem = (ItemClass_CatalogItem) args.getSerializable(CATALOG_ITEM); //NOTE!!!! This is passed to this fragment by reference.
                                     //Read more here: https://stackoverflow.com/questions/44698863/bundle-putserializable-serializing-reference-not-value
+            bHistogramFreeze = args.getBoolean(HISTOGRAM_FREEZE);
             if(gciCatalogItem == null){
                 return;
             }
@@ -147,7 +148,9 @@ public class Fragment_ItemDetails extends Fragment {
         fragmentTransaction.replace(R.id.child_fragment_tag_selector, gFragment_selectTags);
         fragmentTransaction.commit();
 
-
+        if(bHistogramFreeze){
+            gFragment_selectTags.gbHistogramFreeze = true;
+        }
 
         //React to changes in the selected tag data in the ViewModel:
         final Observer<ArrayList<ItemClass_Tag>> observerSelectedTags = GetNewTagObserver();
