@@ -2,22 +2,12 @@ package com.agcurations.aggallerymanager;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.PreferenceManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -53,7 +43,7 @@ public class Worker_Tags_DeleteTag extends Worker {
         String sMessage;
         int iProgressNumerator = 0;
         int iProgressDenominator = 3;
-        int iProgressBarValue = 0;
+        int iProgressBarValue;
 
         boolean bUpdateCatalogFile = false;
 
@@ -132,7 +122,6 @@ public class Worker_Tags_DeleteTag extends Worker {
         broadcastIntent_NotifyTagDeleteComplete.putExtra(GlobalClass.EXTRA_TAG_DELETE_COMPLETE, true);
         broadcastIntent_NotifyTagDeleteComplete.setAction(DELETE_TAGS_ACTION_RESPONSE);
         broadcastIntent_NotifyTagDeleteComplete.addCategory(Intent.CATEGORY_DEFAULT);
-        //sendBroadcast(broadcastIntent_GetDirectoryContentsResponse);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_NotifyTagDeleteComplete);
 
         return Result.success();
