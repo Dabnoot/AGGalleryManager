@@ -2343,15 +2343,15 @@ public class GlobalClass extends Application {
 
 
     public static int getHighestTagMaturityRating(ArrayList<ItemClass_Tag> alict_Tags){
-        int iLowestTagMaturityRating = giDefaultUserMaturityRating;
+        int iHighestTagMaturityRating = AdapterMaturityRatings.MATURITY_RATING_EC;
 
         for(ItemClass_Tag ict: alict_Tags){
-            if(iLowestTagMaturityRating < ict.iMaturityRating){
-                iLowestTagMaturityRating = ict.iMaturityRating;
+            if(iHighestTagMaturityRating < ict.iMaturityRating){
+                iHighestTagMaturityRating = ict.iMaturityRating;
             }
         }
 
-        return iLowestTagMaturityRating;
+        return iHighestTagMaturityRating;
     }
 
     public static int getHighestTagMaturityRating(ArrayList<Integer> ali_TagIDs, int iMediaCategory){

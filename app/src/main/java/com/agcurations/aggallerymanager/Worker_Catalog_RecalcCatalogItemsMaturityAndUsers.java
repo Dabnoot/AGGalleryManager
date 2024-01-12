@@ -42,6 +42,8 @@ public class Worker_Catalog_RecalcCatalogItemsMaturityAndUsers extends Worker {
     @Override
     public Result doWork() {
 
+        GlobalClass.gabDataLoaded.set(false); //Don't let the user get into any catalog until processing is complete.
+
         if(giMediaCategoriesToProcessBitSet == -1){
             return Result.failure(DataErrorMessage("No media category passed to worker for" +
                     " recalc of catalog items approved users and maturity rating."));
@@ -101,6 +103,8 @@ public class Worker_Catalog_RecalcCatalogItemsMaturityAndUsers extends Worker {
         broadcastIntent_NotifyCatalogRecalcComplete.setAction(WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
         broadcastIntent_NotifyCatalogRecalcComplete.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_NotifyCatalogRecalcComplete);
+
+        GlobalClass.gabDataLoaded.set(true); //Allow the user back into catalog viewers.
 
         return Result.success();
     }

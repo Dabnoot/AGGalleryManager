@@ -632,6 +632,31 @@ public class Activity_Main extends AppCompatActivity {
             boolean bCatalogLoadComplete = intent.getBooleanExtra(Worker_Catalog_LoadData.CATALOG_LOAD_COMPLETE_NOTIFICATION_BOOLEAN,false);
             if(bCatalogLoadComplete){
                 GlobalClass.gabDataLoaded.set(true);
+
+                /*//Recalculate catalog item's maturity ratings:
+                int iMediaCategoriesToProcessBitSet = 0;
+                iMediaCategoriesToProcessBitSet |= 1;
+                //binary    int     description
+                //--------------------------
+                //  001     1       just videos
+                //  010     2       just images
+                //  100     4       just comics
+                //  011     3       v & i
+                //  101     5       v & c
+                //  110     6       i & c
+                //  111     7       v, i, & c
+                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
+                        .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_2_AddTag:continueWithTagAddOrEditFinalize()")
+                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY_BIT_SET, iMediaCategoriesToProcessBitSet)
+                        .build();
+                OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
+                        .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
+                        .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
+                        .build();
+                WorkManager.getInstance(getApplicationContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);*/
+
             }
 
 

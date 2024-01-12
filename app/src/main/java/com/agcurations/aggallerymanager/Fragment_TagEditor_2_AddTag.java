@@ -484,7 +484,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                     if(iMediaCategoriesToProcessBitSet != 0) {
                         //Call a worker to go through this media category data file and recalc the maturity
                         //  rating and assigned users:
-                        GlobalClass.gabDataLoaded.set(false); //Don't let the user get into any catalog until processing is complete.
+
                         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                         Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
                                 .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_TagEditor_2_AddTag:continueWithTagAddOrEditFinalize()")
@@ -632,7 +632,6 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
             boolean bCatalogRecalcComplete = intent.getBooleanExtra(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.EXTRA_CATALOG_RECALC_COMPLETE,false);
             if(bCatalogRecalcComplete){
-                GlobalClass.gabDataLoaded.set(true); //Allow the user back into catalog viewers.
                 gFragment_selectTags.initListViewData();
                 Toast.makeText(context, "Catalog recalc complete.", Toast.LENGTH_SHORT).show();
             }

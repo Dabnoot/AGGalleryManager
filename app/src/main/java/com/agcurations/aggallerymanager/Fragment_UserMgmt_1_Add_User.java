@@ -597,21 +597,19 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             for(int iMediaCategory = 0; iMediaCategory <= 2; iMediaCategory++){
                 iMediaCategoriesToProcessBitSet |= iMediaCategoryBits[iMediaCategory]; //Set a bit to indicate processing of catalog files.
             }
-            if(iMediaCategoriesToProcessBitSet != 0) {
-                //Call a worker to go through this media category data file and recalc the maturity
-                //  rating and assigned users:
-                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-                Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
-                        .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_UserMgmt_1_Add_User:button_AddUser_Click()")
-                        .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                        .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY_BIT_SET, iMediaCategoriesToProcessBitSet)
-                        .build();
-                OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
-                        .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
-                        .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
-                        .build();
-                WorkManager.getInstance(getContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
-            }
+            //Call a worker to go through this media category data file and recalc the maturity
+            //  rating and assigned users:
+            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+            Data dataRecalcCatalogItemsMaturityAndUsers = new Data.Builder()
+                    .putString(GlobalClass.EXTRA_CALLER_ID, "Fragment_UserMgmt_1_Add_User:button_AddUser_Click()")
+                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                    .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY_BIT_SET, iMediaCategoriesToProcessBitSet)
+                    .build();
+            OneTimeWorkRequest otwrRecalcCatalogItemsMaturityAndUsers = new OneTimeWorkRequest.Builder(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.class)
+                    .setInputData(dataRecalcCatalogItemsMaturityAndUsers)
+                    .addTag(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.TAG_WORKER_CATALOG_RECALC_APPROVED_USERS) //To allow finding the worker later.
+                    .build();
+            WorkManager.getInstance(getContext()).enqueue(otwrRecalcCatalogItemsMaturityAndUsers);
 
         }
     }
