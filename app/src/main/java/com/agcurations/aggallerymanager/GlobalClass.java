@@ -1648,7 +1648,7 @@ public class GlobalClass extends Application {
                 "TagID" +
                 "\t" + "TagText" +
                 "\t" + "TagDescription" +
-                "\t" + "TagAgeRating" +
+                "\t" + "TagMaturityRating" +
                 "\t" + "ApprovedUsers" +
                 "\t" + "Version:" + giTagFileVersion;
     }
