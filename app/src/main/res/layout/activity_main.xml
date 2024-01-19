@@ -156,7 +156,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:src="@drawable/daynight"
         android:backgroundTint="@color/colorButton"
-        android:background="?android:selectableItemBackground"/>
+        android:background="?android:selectableItemBackground"
+        android:visibility="invisible"/>
 
     <ImageButton
         android:id="@+id/imageButton_Browser"
