@@ -33,7 +33,8 @@
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:buttonTint="@color/colorTextColor"/>
 
             <RadioButton
                 android:id="@+id/radioButton_EditTags"
@@ -45,7 +46,8 @@
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:buttonTint="@color/colorTextColor"/>
 
             <RadioButton
                 android:id="@+id/radioButton_DeleteTags"
@@ -56,7 +58,8 @@
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:buttonTint="@color/colorTextColor"/>
 
         </RadioGroup>
 

@@ -43,7 +43,8 @@
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                android:checked="true" />
+                android:checked="true"
+                android:buttonTint="@color/colorTextColor"/>
 
             <RadioButton
                 android:id="@+id/radioButton_VideoSourceFolder"
@@ -55,7 +56,8 @@
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent"
+                android:buttonTint="@color/colorTextColor"/>
 
         </RadioGroup>
 
