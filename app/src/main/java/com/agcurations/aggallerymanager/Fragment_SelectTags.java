@@ -322,6 +322,15 @@ public class Fragment_SelectTags extends Fragment {
                 Chip chipNew = new Chip(getContext());
                 chipNew.setText(ict.sTagText);
                 chipNew.setId(ict.iTagID);
+                if(getActivity() != null){
+                    if(getActivity().getApplicationContext()!= null){
+                        chipNew.setTextColor(ContextCompat.getColor(getActivity().getApplicationContext(), R.color.colorTextColor));
+                        //chipNew.setChipBackgroundColorResource(R.color.colorUnfilledUnselected);
+                        chipNew.setChipBackgroundColorResource(R.color.colorFragmentBackgroundHighlight2);
+                        //chipNew.setCloseIconTintResource(R.color.colorFragmentBackgroundHighlight2);
+                        chipNew.setCloseIconTintResource(R.color.colorTextColor);
+                    }
+                }
                 chipNew.setOnClickListener((view) -> {
                     ArrayList<Integer> aliTagIDs = new ArrayList<>();
                     aliTagIDs.add(view.getId());
