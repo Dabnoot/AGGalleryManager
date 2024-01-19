@@ -232,33 +232,28 @@ public class Activity_Main extends AppCompatActivity {
                     "This app will not run properly without a selected external data storage location, " +
                     "otherwise data may be lost.";
             builder.setMessage(sMessage);
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    gbDataFolderSettingIgnored = false;
-                    dialog.dismiss();
+            builder.setPositiveButton("OK", (dialog, id) -> {
+                gbDataFolderSettingIgnored = false;
+                dialog.dismiss();
 
-                    // Allow the user to choose a directory using the system's file picker.
-                    Intent intent_DetermineDataFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+                // Allow the user to choose a directory using the system's file picker.
+                Intent intent_DetermineDataFolder = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
 
-                    // Provide write access to files and sub-directories in the user-selected directory:
-                    intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                    intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                    //Start the activity:
-                    garlPromptForDataFolder.launch(intent_DetermineDataFolder);
-                }
+                // Provide write access to files and sub-directories in the user-selected directory:
+                intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                intent_DetermineDataFolder.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                //Start the activity:
+                garlPromptForDataFolder.launch(intent_DetermineDataFolder);
             });
-            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialog) {
-                    if(gbDataFolderSettingIgnored) {
-                        //If the user dismissed this dialog by not clicking the "ok" button, thus
-                        //  did not select a storage location, remind them of the directions to
-                        //  select a storage location.
-                        Toast.makeText(getApplicationContext(),
-                                "No data folder selected. A storage location may be selected from the Settings menu.",
-                                Toast.LENGTH_LONG).show();
-                    }
+            builder.setOnDismissListener(dialog -> {
+                if(gbDataFolderSettingIgnored) {
+                    //If the user dismissed this dialog by not clicking the "ok" button, thus
+                    //  did not select a storage location, remind them of the directions to
+                    //  select a storage location.
+                    Toast.makeText(getApplicationContext(),
+                            "No data folder selected. A storage location may be selected from the Settings menu.",
+                            Toast.LENGTH_LONG).show();
                 }
             });
             AlertDialog adConfirmationDialog = builder.create();
@@ -299,27 +294,22 @@ public class Activity_Main extends AppCompatActivity {
         textView_WorkerTest = findViewById(R.id.textView_WorkerTest);
 
 
+        //Day/Night button for testing purposes:
         ImageButton imageButton_DayNight = findViewById(R.id.imageButton_DayNight);
-        imageButton_DayNight.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!globalClass.gbIsDarkModeOn) {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                    globalClass.gbIsDarkModeOn = true;
-                } else {
-                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                    globalClass.gbIsDarkModeOn = false;
-                }
+        imageButton_DayNight.setOnClickListener(view -> {
+            if(!GlobalClass.gbIsDarkModeOn) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                GlobalClass.gbIsDarkModeOn = true;
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                GlobalClass.gbIsDarkModeOn = false;
             }
         });
 
         ImageButton imageButton_Browser = findViewById(R.id.imageButton_Browser);
-        imageButton_Browser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intentBrowser = new Intent(getApplicationContext(), Activity_Browser.class);
-                startActivity(intentBrowser);
-            }
+        imageButton_Browser.setOnClickListener(view -> {
+            Intent intentBrowser = new Intent(getApplicationContext(), Activity_Browser.class);
+            startActivity(intentBrowser);
         });
 
         GlobalClass.gsGroupIDClip = ""; //Reset GroupID when switching between catalogs.
@@ -502,75 +492,6 @@ public class Activity_Main extends AppCompatActivity {
             }
         }
     }
-
-    private void AlertDialogTest2(){
-        //Testing of AlertDialog style:
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
-
-        // set the custom layout
-        final View customLayout = getLayoutInflater().inflate(R.layout.dialog_layout_pin_code, null);
-        builder.setView(customLayout);
-
-        final AlertDialog adConfirmationDialog = builder.create();
-
-        //Code action for the Cancel button:
-        Button button_PinCodeCancel = customLayout.findViewById(R.id.button_PinCodeCancel);
-        button_PinCodeCancel.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                adConfirmationDialog.dismiss();
-            }
-        });
-
-        //Code action for the OK button:
-        Button button_PinCodeOK = customLayout.findViewById(R.id.button_PinCodeOK);
-        button_PinCodeOK.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                EditText editText_DialogInput = customLayout.findViewById(R.id.editText_DialogInput);
-                String sPinEntered = editText_DialogInput.getText().toString();
-
-                if(sPinEntered.equals(globalClass.gsPin)){
-                    Toast.makeText(getApplicationContext(), "Correct pin entered.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(getApplicationContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
-                }
-
-                adConfirmationDialog.dismiss();
-            }
-        });
-
-        adConfirmationDialog.show();
-    }
-
-    private void AlertDialogTest1(){
-        //Testing of AlertDialog style:
-        String sConfirmationMessage = "Confirm item: Test test test test test test test";
-        AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AlertDialogCustomStyle);
-        builder.setTitle("Delete Tag");
-        builder.setMessage(sConfirmationMessage);
-        // Set up the input
-        final EditText editText_DialogInput = new EditText(this);
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-        editText_DialogInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-
-        builder.setView(editText_DialogInput);
-        //builder.setIcon(R.drawable.ic_launcher);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-            }
-        });
-        builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.dismiss();
-            }
-        });
-        AlertDialog adConfirmationDialog = builder.create();
-        adConfirmationDialog.show();
-    }
-
-
 
 
 
