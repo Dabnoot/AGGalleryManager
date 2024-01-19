@@ -194,7 +194,7 @@ public class GlobalClass extends Application {
     public static final int COPY = 1;
     public static final String[] gsMoveOrCopy = {"Move", "Copy", "Moving", "Copying"};
 
-    public boolean gbIsDarkModeOn = false;
+    public static boolean gbIsDarkModeOn = false;
 
     public static ArrayList<ItemClass_WebPageTabData> gal_WebPagesForCurrentUser;
     public static ArrayList<ItemClass_WebPageTabData> gal_WebPagesForOtherUsers;
