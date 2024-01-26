@@ -90,8 +90,12 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
                 while (sLine != null) {
                     ItemClass_WebPageTabData icwptd_DataRecordFromFile;
                     icwptd_DataRecordFromFile = GlobalClass.ConvertStringToWebPageTabData(sLine);
-                    if(icwptd_DataRecordFromFile.sUserName.equals(GlobalClass.gicuCurrentUser.sUserName)){
-                        GlobalClass.gal_WebPagesForCurrentUser.add(icwptd_DataRecordFromFile);
+                    if(GlobalClass.gicuCurrentUser != null) {
+                        if (icwptd_DataRecordFromFile.sUserName.equals(GlobalClass.gicuCurrentUser.sUserName)) {
+                            GlobalClass.gal_WebPagesForCurrentUser.add(icwptd_DataRecordFromFile);
+                        } else {
+                            GlobalClass.gal_WebPagesForOtherUsers.add(icwptd_DataRecordFromFile);
+                        }
                     } else {
                         GlobalClass.gal_WebPagesForOtherUsers.add(icwptd_DataRecordFromFile);
                     }
@@ -99,6 +103,12 @@ public class Worker_Browser_GetWebPageTabData extends Worker {
                 }
                 brReader.close();
                 isWebPageTabDataFile.close();
+
+                if(GlobalClass.gicuCurrentUser == null && GlobalClass.gal_WebPagesForOtherUsers.size() > 0){
+                    //Notify that a user is not signed-in. The user may have forgotten.
+                    globalClass.problemNotificationConfig( "Current User: Default",
+                            Activity_Browser.WebPageTabDataServiceResponseReceiver.WEB_PAGE_TAB_DATA_SERVICE_ACTION_RESPONSE);
+                }
             }
         } catch (Exception e) {
             globalClass.problemNotificationConfig( "Problem reading tab records from file: " + e.getMessage() + "\nSelect 'clear' from Settings->Browser.",
