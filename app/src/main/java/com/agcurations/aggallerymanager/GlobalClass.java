@@ -267,6 +267,7 @@ public class GlobalClass extends Application {
     public static String gsGroupIDClip = "";
     public static boolean gbClearGroupIDAtImportClose = false;
 
+    public static String gsCookie = "";
 
     //=====================================================================================
     //===== MIME TYPES ====================================================================
@@ -878,46 +879,49 @@ public class GlobalClass extends Application {
 
         //StringBuilder sbRecord = new StringBuilder();  //To be used when writing the catalog file.
         sbRecord.append(ci.iMediaCategory)                                          //Video, image, or comic.
-        .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
-        .append("\t").append(JumbleStorageText(ci.sGroupID))                        //Group ID to identify explict related items related much more closely than generic tags.
-        .append("\t").append(ci.sFilename)                                          //Video or image filename
-        .append("\t").append(JumbleStorageText(ci.sFolderRelativePath))             //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
-        .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
-        .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
-        .append("\t").append(JumbleStorageText(ci.dDatetime_Last_Viewed_by_User))   //Date of last read by user. Used for sorting if desired
-        .append("\t").append(JumbleStorageText(ci.sTags))                           //Tags given to the video, image, or comic
-        .append("\t").append(JumbleStorageText(ci.iHeight))                         //Video or image dimension/resolution
-        .append("\t").append(JumbleStorageText(ci.iWidth))                          //Video or image dimension/resolution
-        .append("\t").append(JumbleStorageText(ci.lDuration_Milliseconds))          //Duration of video in milliseconds
-        .append("\t").append(JumbleStorageText(ci.sDuration_Text))                  //Duration of video text in 00:00:00 format
-        .append("\t").append(JumbleStorageText(ci.sResolution))                     //Resolution for sorting at user request
-        .append("\t").append(JumbleStorageText(ci.lSize))                           //Size of video, image, or size of all files in the comic, in Bytes
-        .append("\t").append(JumbleStorageText(ci.sCast))                           //For videos and images
+                .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
+                .append("\t").append(JumbleStorageText(ci.sGroupID))                        //Group ID to identify explict related items related much more closely than generic tags.
+                .append("\t").append(ci.sFilename)                                          //Video or image filename
+                .append("\t").append(JumbleStorageText(ci.sFolderRelativePath))             //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
+                .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
+                .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
+                .append("\t").append(JumbleStorageText(ci.dDatetime_Last_Viewed_by_User))   //Date of last read by user. Used for sorting if desired
+                .append("\t").append(JumbleStorageText(ci.sTags))                           //Tags given to the video, image, or comic
+                .append("\t").append(JumbleStorageText(ci.iHeight))                         //Video or image dimension/resolution
+                .append("\t").append(JumbleStorageText(ci.iWidth))                          //Video or image dimension/resolution
+                .append("\t").append(JumbleStorageText(ci.lDuration_Milliseconds))          //Duration of video in milliseconds
+                .append("\t").append(JumbleStorageText(ci.sDuration_Text))                  //Duration of video text in 00:00:00 format
+                .append("\t").append(JumbleStorageText(ci.sResolution))                     //Resolution for sorting at user request
+                .append("\t").append(JumbleStorageText(ci.lSize))                           //Size of video, image, or size of all files in the comic, in Bytes
+                .append("\t").append(JumbleStorageText(ci.sCast))                           //For videos and images
 
         //Comic-related variables:
-        .append("\t").append(JumbleStorageText(ci.sComicArtists))                   //Common comic tag category
-        .append("\t").append(JumbleStorageText(ci.sComicCategories))                //Common comic tag category
-        .append("\t").append(JumbleStorageText(ci.sComicCharacters))                //Common comic tag category
-        .append("\t").append(JumbleStorageText(ci.sComicGroups))                    //Common comic tag category
-        .append("\t").append(JumbleStorageText(ci.sComicLanguages))                 //Language(s) found in the comic
-        .append("\t").append(JumbleStorageText(ci.sComicParodies))                  //Common comic tag category
-        .append("\t").append(JumbleStorageText(ci.sTitle))                          //Comic name
-        .append("\t").append(JumbleStorageText(ci.iComicPages))                     //Total number of pages as defined at the comic source
-        .append("\t").append(JumbleStorageText(ci.iComic_Max_Page_ID))              //Max comic page id extracted from file names
-        .append("\t").append(JumbleStorageText(ci.sComic_Missing_Pages))            //Missing page numbers
-        .append("\t").append(JumbleStorageText(ci.iFile_Count))                     //Files included with the comic. Can be used for integrity check. Also used
+                .append("\t").append(JumbleStorageText(ci.sComicArtists))                   //Common comic tag category
+                .append("\t").append(JumbleStorageText(ci.sComicCategories))                //Common comic tag category
+                .append("\t").append(JumbleStorageText(ci.sComicCharacters))                //Common comic tag category
+                .append("\t").append(JumbleStorageText(ci.sComicGroups))                    //Common comic tag category
+                .append("\t").append(JumbleStorageText(ci.sComicLanguages))                 //Language(s) found in the comic
+                .append("\t").append(JumbleStorageText(ci.sComicParodies))                  //Common comic tag category
+                .append("\t").append(JumbleStorageText(ci.sTitle))                          //Comic name
+                .append("\t").append(JumbleStorageText(ci.sComicVolume))                    //Comic "book number" or volume string
+                .append("\t").append(JumbleStorageText(ci.sComicChapter))                   //Comic chapter string
+                .append("\t").append(JumbleStorageText(ci.sComicChapterSubtitle))           //Comic chapter subtitle
+                .append("\t").append(JumbleStorageText(ci.iComicPages))                     //Total number of pages as defined at the comic source
+                .append("\t").append(JumbleStorageText(ci.iComic_Max_Page_ID))              //Max comic page id extracted from file names
+                .append("\t").append(JumbleStorageText(ci.sComic_Missing_Pages))            //Missing page numbers
+                .append("\t").append(JumbleStorageText(ci.iFile_Count))                     //Files included with the comic. Can be used for integrity check. Also used
         // for video M3U8 download completion check.
-        .append("\t").append(JumbleStorageText(ci.bComic_Online_Data_Acquired))     //Typically used to gather tag data from an online comic source, if automatic.
-        .append("\t").append(JumbleStorageText(ci.sSource))                         //Website, if relevant.
-        .append("\t").append(JumbleStorageText(ci.iGrade))                          //Grade.
-        .append("\t").append(JumbleStorageText(ci.iSpecialFlag))                    //Code for required post-processing.
-        .append("\t").append(ci.iAllVideoSegmentFilesDetected)                      //For verifying m3u8 segment file complex integrity.
+                .append("\t").append(JumbleStorageText(ci.bComic_Online_Data_Acquired))     //Typically used to gather tag data from an online comic source, if automatic.
+                .append("\t").append(JumbleStorageText(ci.sSource))                         //Website, if relevant.
+                .append("\t").append(JumbleStorageText(ci.iGrade))                          //Grade.
+                .append("\t").append(JumbleStorageText(ci.iSpecialFlag))                    //Code for required post-processing.
+                .append("\t").append(ci.iAllVideoSegmentFilesDetected)                      //For verifying m3u8 segment file complex integrity.
 
         //Append the Maturity Rating to the record:
-        .append("\t").append(ci.iMaturityRating)
+                .append("\t").append(ci.iMaturityRating)
 
         //Append the list of approved users for this item to the record:
-        .append("\t").append("{");
+                .append("\t").append("{");
         StringBuilder sb = new StringBuilder();
         int iUserListSize = ci.alsApprovedUsers.size();
         for(int i = 0; i < iUserListSize; i++){
@@ -961,6 +965,9 @@ public class GlobalClass extends Application {
         ci.sComicLanguages = JumbleStorageText(sRecord[iFieldIndex++]);                             //Language(s = sRecord[0] found in the comic
         ci.sComicParodies = JumbleStorageText(sRecord[iFieldIndex++]);                              //Common comic tag category
         ci.sTitle = JumbleStorageText(sRecord[iFieldIndex++]);                                      //Comic name
+        ci.sComicVolume = JumbleStorageText(sRecord[iFieldIndex++]);                                //Comic "book number" or volume string
+        ci.sComicChapter = JumbleStorageText(sRecord[iFieldIndex++]);                               //Comic chapter string
+        ci.sComicChapterSubtitle = JumbleStorageText(sRecord[iFieldIndex++]);                       //Comic chapter subtitle
         ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));               //Total number of pages as defined at the comic source
         ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));        //Max comic page id extracted from file names
         ci.sComic_Missing_Pages = JumbleStorageText(sRecord[iFieldIndex++]);                        //Missing page numbers
@@ -3540,6 +3547,10 @@ public class GlobalClass extends Application {
     public final String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
     public final String snH_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
     public final String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
+
+    //public final String sMP_Comic_Title_xPathExpression = "//div[@class='panel-chapter-info-top']/h1";
+    public final String sMP_Comic_Title_xPathExpression = "//a[@class='link-pri link-hover']";
+    public final String sMP_Comic_Pages_xPE = "//img[@class='w-full h-full']/@src";
 
     //Video import web html search strings (may change if the website changes)
 
