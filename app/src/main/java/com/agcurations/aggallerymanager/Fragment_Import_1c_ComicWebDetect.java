@@ -106,7 +106,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         if(getView() != null) {
-            gbutton_PasteAddress = getView().findViewById(R.id.button_PasteAddress);
             gEditText_WebAddress  = getView().findViewById(R.id.editText_WebAddress);
             gButton_Go = getView().findViewById(R.id.button_Go);
             gButton_Detect = getView().findViewById(R.id.button_Detect);
@@ -117,38 +116,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
         }
 
         SetTextStatusMessage("Enter an address and click 'Go'.");
-
-        //Configure "Paste Address" button:
-        if(gbutton_PasteAddress != null){
-
-            gbutton_PasteAddress.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if(getContext() != null) {
-                        ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                        ClipData clipData = clipboard.getPrimaryClip();
-                        if(clipData != null) {
-                            ClipData.Item clipData_Item = clipData.getItemAt(0);
-                            if (clipData_Item != null) {
-                                String sClipString = clipData_Item.getText().toString();
-                                if (!sClipString.equals("")) {
-                                    if(getView() != null) {
-                                        EditText editText_WebAddress = getView().findViewById(R.id.editText_WebAddress);
-                                        if (editText_WebAddress != null) {
-                                            editText_WebAddress.setText(sClipString);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-        }
-        //End configuration of "Paste Address" button.
-
-
 
         //Configure the WebView:
         gWebView.setBackgroundColor(Color.BLACK);
