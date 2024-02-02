@@ -17,6 +17,7 @@ public class ItemClass_File implements Serializable {
     public long lSizeBytes = 0;
     public Date dateLastModified = null;
     public boolean bMetadataDetected = false;
+    public long lMetadataFileSizeBytes = 0;
     public String sWidth = "";
     public String sHeight = "";
     public Boolean bIsChecked = false;
@@ -51,6 +52,9 @@ public class ItemClass_File implements Serializable {
     public String sComicCharacters = "";                  //Comic characters, if relevant, particular to parodies.
     public String sComicGroups = "";                      //A "group" field sometimes included by some websites.
     public String sComicLanguages = "";                   //Language(s) found in the comic
+    public String sComicVolume = "";                      //Comic "book number" or volume string
+    public String sComicChapter = "";                     //Comic chapter string
+    public String sComicChapterSubtitle = "";             //Comic chapter subtitle
     public int iComicPages = 0;
     int iThumbnailURLImageHeight = -1; //Used specifically for Comic Import Preview.
     int iThumbnailURLImageWidth = -1;  //Used specifically for Comic Import Preview.

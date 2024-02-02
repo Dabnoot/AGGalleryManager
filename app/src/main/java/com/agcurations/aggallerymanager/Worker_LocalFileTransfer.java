@@ -296,7 +296,6 @@ public class Worker_LocalFileTransfer extends Worker {
                                 true, "Files processed: " + giFilesProcessed + "/" + giFileCount,
                                 IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
 
-                        giFilesProcessed++;
                         if (!sLine.equals("")) {
                             String[] sJobFileRecordFields = sLine.split("\t");
                             if (sJobFileRecordFields.length == RECORD_FIELD_COUNT) {
@@ -329,6 +328,12 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                 long lFileSize = Long.parseLong(sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_SIZE_BYTES]);
 
+                                boolean bMetadataFile = Boolean.parseBoolean((sJobFileRecordFields[RECORD_FIELD_INDEX_METADATA_FILE_FLAG]));
+
+                                if(!bMetadataFile) {
+                                    giFilesProcessed++; //Don't update the file count progression for a metadata file. It will likely confuse the user.
+                                                        // If they are deleting one file, we don't want it to show that 2 files were deleted.
+                                }
 
                                 //Check if source file exists:
                                 if (!GlobalClass.CheckIfFileExists(uriSourceFile)) {
@@ -349,7 +354,7 @@ public class Worker_LocalFileTransfer extends Worker {
 
                                 boolean bMarkedForDeletion = Boolean.parseBoolean(sJobFileRecordFields[RECORD_FIELD_INDEX_SOURCE_FILE_DELETE_ONLY]);
 
-                                boolean bMetadataFile = Boolean.parseBoolean((sJobFileRecordFields[RECORD_FIELD_INDEX_METADATA_FILE_FLAG]));
+
 
                                 String sLogLine;
 

@@ -50,11 +50,11 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
 
             //Get data about the files:
             //TreeMap<String, String[]> tmHoldingFolderRecordData = new TreeMap<>();
-            int MEDIA_FILE_NAME_INDEX = 0;
-            int MEDIA_FILE_EXTENSION_INDEX = 1;
-            int MEDIA_FILE_MIME_TYPE_INDEX = 2;
-            int MEDIA_FILE_LAST_MODIFIED_INDEX = 3;
-            int MEDIA_FILE_SIZE_INDEX = 4;
+            int FILE_NAME_INDEX = 0;
+            int FILE_EXTENSION_INDEX = 1;
+            int FILE_MIME_TYPE_INDEX = 2;
+            int FILE_LAST_MODIFIED_INDEX = 3;
+            int FILE_SIZE_INDEX = 4;
             int iFieldCount = 5;
 
             TreeMap<String, String[]> tmHoldingFolderRecordData_AllFiles = new TreeMap<>();
@@ -73,16 +73,16 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                         String sMimeType = c.getString( 1);
                         if(!sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
                             //Get data regarding the file:
-                            String[] sDataRecord = new String[iFieldCount];
+                            String[] sDirectoryQueryDataRecord = new String[iFieldCount];
                             String sFileName = c.getString(0);
                             String sFileLastModified = c.getString(2);
                             String sFileSize = c.getString(3);
-                            sDataRecord[MEDIA_FILE_NAME_INDEX] = sFileName;
-                            sDataRecord[MEDIA_FILE_EXTENSION_INDEX] = "";
-                            sDataRecord[MEDIA_FILE_MIME_TYPE_INDEX] = sMimeType;
-                            sDataRecord[MEDIA_FILE_LAST_MODIFIED_INDEX] = sFileLastModified;
-                            sDataRecord[MEDIA_FILE_SIZE_INDEX] = sFileSize;
-                            tmHoldingFolderRecordData_AllFiles.put(sFileName, sDataRecord);
+                            sDirectoryQueryDataRecord[FILE_NAME_INDEX] = sFileName;
+                            sDirectoryQueryDataRecord[FILE_EXTENSION_INDEX] = "";
+                            sDirectoryQueryDataRecord[FILE_MIME_TYPE_INDEX] = sMimeType;
+                            sDirectoryQueryDataRecord[FILE_LAST_MODIFIED_INDEX] = sFileLastModified;
+                            sDirectoryQueryDataRecord[FILE_SIZE_INDEX] = sFileSize;
+                            tmHoldingFolderRecordData_AllFiles.put(sFileName, sDirectoryQueryDataRecord);
                         }
                     }
                     c.close();
@@ -225,9 +225,9 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 }
 
                 //Check to see if it is a video or an image and if we are looking for videos or images.
-                String sMimeType = HoldingFolderEntry.getValue()[MEDIA_FILE_MIME_TYPE_INDEX];
-                String sMediaFileExtension = HoldingFolderEntry.getValue()[MEDIA_FILE_EXTENSION_INDEX];
-                String sMediaFileName = HoldingFolderEntry.getValue()[MEDIA_FILE_NAME_INDEX];
+                String sMimeType = HoldingFolderEntry.getValue()[FILE_MIME_TYPE_INDEX];
+                String sMediaFileExtension = HoldingFolderEntry.getValue()[FILE_EXTENSION_INDEX];
+                String sMediaFileName = HoldingFolderEntry.getValue()[FILE_NAME_INDEX];
 
                 if (sMimeType.startsWith("video") ||
                         (sMimeType.equals("application/octet-stream") && sMediaFileExtension.equals(".4pm"))) { //https://stackoverflow.com/questions/51059736/why-some-of-the-mp4-files-mime-type-are-application-octet-stream-instead-of-vid
@@ -237,8 +237,8 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                     //Leave it up to the user to decide whether to import gifs from the holding folder to the videos catalog.
                 }
 
-                long lMediaFileLastModified = Long.parseLong(HoldingFolderEntry.getValue()[MEDIA_FILE_LAST_MODIFIED_INDEX]);// //milliseconds since January 1, 1970 00:00:00.0 UTC.
-                long lMediaFileSize = Long.parseLong(HoldingFolderEntry.getValue()[MEDIA_FILE_SIZE_INDEX]);
+                long lMediaFileLastModified = Long.parseLong(HoldingFolderEntry.getValue()[FILE_LAST_MODIFIED_INDEX]);// //milliseconds since January 1, 1970 00:00:00.0 UTC.
+                long lMediaFileSize = Long.parseLong(HoldingFolderEntry.getValue()[FILE_SIZE_INDEX]);
 
                 //Update progress bar:
                 //Update progress right away in order to avoid instances in which a loop is skipped.
@@ -257,7 +257,7 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 cal.setTimeInMillis(lMediaFileLastModified);
                 Date dateLastModified = cal.getTime();
 
-                String sMediaFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), HoldingFolderEntry.getValue()[MEDIA_FILE_NAME_INDEX]);
+                String sMediaFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), HoldingFolderEntry.getValue()[FILE_NAME_INDEX]);
 
                 //Get the width and height of the image:
                 try {
@@ -290,9 +290,14 @@ public class Worker_Import_GetHoldingFolderDirectoryContents extends Worker {
                 icfFileItem.sUri = sMediaFileUri;
                 icfFileItem.sUriParent = GlobalClass.gUriImageDownloadHoldingFolder.toString();
                 icfFileItem.sMimeType = sMimeType;
+                String sMetadataFileName = sMediaFileName + ".tad";
+                String[] sMetadataFileRecord = tmHoldingFolderRecordData_AllFiles.get(sMetadataFileName);
+                if(sMetadataFileRecord != null){
+                    icfFileItem.lMetadataFileSizeBytes = Long.parseLong(sMetadataFileRecord[FILE_SIZE_INDEX]);
+                }
                 //Get the URL data from the associated metadata file, if it exists:
 
-                String sMetaDataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), HoldingFolderEntry.getValue()[MEDIA_FILE_NAME_INDEX] + ".tad");
+                String sMetaDataFileUri = GlobalClass.FormChildUriString(GlobalClass.gUriImageDownloadHoldingFolder.toString(), sMetadataFileName);
                 Uri uriMetaDataFileUri = Uri.parse(sMetaDataFileUri);
                 if(GlobalClass.CheckIfFileExists(uriMetaDataFileUri)) {
                     try {

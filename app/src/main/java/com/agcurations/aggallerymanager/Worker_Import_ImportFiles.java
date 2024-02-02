@@ -129,13 +129,14 @@ public class Worker_Import_ImportFiles extends Worker {
                             uriMetadataFile.toString(),
                             fileItem.sDestinationFolder,
                             fileItem.sFileOrFolderName,
-                            fileItem.lSizeBytes,
+                            fileItem.lMetadataFileSizeBytes,
                             true,
                             true);
 
                     sbJobFileRecords.append(sLine);
 
-                    iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
+                    //iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
+                    //  Don't include metadata files in the file count to be processed as they can confuse the user.
                 }
 
                 continue; //jump to next item in import list.
@@ -315,13 +316,14 @@ public class Worker_Import_ImportFiles extends Worker {
                                 sImageMetadataUri,
                                 fileItem.sDestinationFolder,
                                 fileItem.sFileOrFolderName,
-                                100, //Size should be quite small.
+                                fileItem.lMetadataFileSizeBytes,
                                 true,
                                 true);
 
                         sbJobFileRecords.append(sLine);
 
-                        iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
+                        //iMetadata_File_Count++; //Need to include metadata files in the file count to be processed.
+                        //  Don't include metadata files in the file count to be processed as they can confuse the user.
                     }
                 }
 
