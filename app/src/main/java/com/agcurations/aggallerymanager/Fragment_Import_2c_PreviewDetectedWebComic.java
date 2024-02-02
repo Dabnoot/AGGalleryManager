@@ -8,8 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -59,7 +57,9 @@ public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
         }
 
         getActivity().setTitle("Import - Review Detected Web Comic");
-        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
+            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+        }
 
         //Get the comic title and update on the layout:
         String sTitle = ((Activity_Import) getActivity()).recyclerViewComicPreviewAdapter.alFileItems.get(0).sTitle;
@@ -103,8 +103,11 @@ public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
             return;
         }
 
-        gRecyclerView.setAdapter(((Activity_Import) getActivity()).recyclerViewComicPreviewAdapter);
-        ((Activity_Import) getActivity()).recyclerViewComicPreviewAdapter.notifyDataSetChanged();
+        Activity_Import activityImport = (Activity_Import) getActivity();
+        if(activityImport != null) {
+            gRecyclerView.setAdapter(activityImport.recyclerViewComicPreviewAdapter);
+            activityImport.recyclerViewComicPreviewAdapter.notifyDataSetChanged();
+        }
         //todo: above not needed?
 
         //((Activity_Import) getActivity()).recyclerViewCatalogAdapter.recalcButtonNext();
