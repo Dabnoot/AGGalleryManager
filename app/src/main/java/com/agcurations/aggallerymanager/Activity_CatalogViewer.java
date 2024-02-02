@@ -733,6 +733,22 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 case GlobalClass.MEDIA_CATEGORY_COMICS:
                     sItemName = ci.sTitle;
                     sThumbnailText = sItemName;
+                    if(!ci.sComicVolume.equals("") || !ci.sComicChapter.equals("")) {
+                        sThumbnailText = sThumbnailText + ", ";
+                        if (!ci.sComicVolume.equals("")) {
+                            sThumbnailText = sThumbnailText + "Volume " + ci.sComicVolume;
+                            if (!ci.sComicChapter.equals("")) {
+                                sThumbnailText = sThumbnailText + ", ";
+                            }
+                        }
+                        if (!ci.sComicChapter.equals("")) {
+                            sThumbnailText = sThumbnailText + "Chapter " + ci.sComicChapter;
+                        }
+                    }
+                    if(!ci.sComicChapterSubtitle.equals("")){
+                        sThumbnailText = sThumbnailText + " - " + ci.sComicChapterSubtitle;
+                    }
+
                     break;
             }
 

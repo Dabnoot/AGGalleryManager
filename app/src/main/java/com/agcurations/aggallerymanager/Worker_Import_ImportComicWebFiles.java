@@ -109,17 +109,20 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         ciNew.dDatetime_Import = dTimeStamp;
 
         //Populate Catalog Item data fields:
-        ciNew.sSource            = gsAddress;
-        ciNew.sTitle             = alFileList.get(0).sTitle;
-        ciNew.lSize              = alFileList.get(0).lSizeBytes;
-        ciNew.sComicParodies     = alFileList.get(0).sComicParodies;
-        ciNew.sComicCharacters   = alFileList.get(0).sComicCharacters;
-        ciNew.sComicArtists      = alFileList.get(0).sComicArtists;
-        ciNew.sComicGroups       = alFileList.get(0).sComicGroups;
-        ciNew.sComicLanguages    = alFileList.get(0).sComicLanguages;
-        ciNew.sComicCategories   = alFileList.get(0).sComicCategories;
-        ciNew.iComicPages        = alFileList.get(0).iComicPages;
-        ciNew.iComic_Max_Page_ID = alFileList.get(0).iComicPages;
+        ciNew.sSource               = gsAddress;
+        ciNew.sTitle                = alFileList.get(0).sTitle;
+        ciNew.lSize                 = alFileList.get(0).lSizeBytes;
+        ciNew.sComicParodies        = alFileList.get(0).sComicParodies;
+        ciNew.sComicCharacters      = alFileList.get(0).sComicCharacters;
+        ciNew.sComicArtists         = alFileList.get(0).sComicArtists;
+        ciNew.sComicGroups          = alFileList.get(0).sComicGroups;
+        ciNew.sComicLanguages       = alFileList.get(0).sComicLanguages;
+        ciNew.sComicCategories      = alFileList.get(0).sComicCategories;
+        ciNew.sComicVolume          = alFileList.get(0).sComicVolume;
+        ciNew.sComicChapter         = alFileList.get(0).sComicChapter;
+        ciNew.sComicChapterSubtitle = alFileList.get(0).sComicChapterSubtitle;
+        ciNew.iComicPages           = alFileList.get(0).iComicPages;
+        ciNew.iComic_Max_Page_ID    = alFileList.get(0).iComicPages;
         ciNew.sTags = GlobalClass.formDelimitedString(alFileList.get(0).aliProspectiveTags, ",");
         ciNew.aliTags = new ArrayList<>(alFileList.get(0).aliProspectiveTags);
         ciNew.iMaturityRating = GlobalClass.getHighestTagMaturityRating(ciNew.aliTags, GlobalClass.MEDIA_CATEGORY_COMICS);
@@ -222,8 +225,10 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                             globalClass.gbImportExecutionFinished = true;
                             return Result.failure();
                         }
-                        request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ciNew.sItemID)
-                                .setDescription("Comic ID " + ciNew.sItemID + "; " + icf.sURL)
+                        request.setTitle("AGGallery+ Download " + (lProgressNumerator + 1) + " of " + lProgressDenominator + " ComicID " + ciNew.sItemID);
+                        //request.addRequestHeader("User-Agent", GlobalClass.giWebViewSettings_UserAgentString);
+                        //request.addRequestHeader("cookie", GlobalClass.gsCookie);
+                        request.setDescription("Comic ID " + ciNew.sItemID + "; " + icf.sURL)
                                 //.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                                 //Set to equivalent of binary file so that Android MediaStore will not try to index it,

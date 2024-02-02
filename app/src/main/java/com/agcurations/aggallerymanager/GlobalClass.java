@@ -3537,21 +3537,6 @@ public class GlobalClass extends Application {
         //  page. There is no way to determine if end pages are missing. This feature is rather inert
         // and only gives a message to the user to indicate that pages might be missing.
 
-    //nH comic import web html search strings (may change if the website changes)
-    //If comic source is nH, these strings enable searching the nH web page for tag data:
-    //public String snH_Default_Comic_Address_Prefix = "https://nh.net/g/";
-    //public final String snH_Comic_Address_Prefix = "https://nh.net/g/";
-    //public String snH_Default_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    public final String snH_Comic_Title_xPathExpression = "//div[@id='info-block']//h1[@class='title']//span[@class='pretty']";
-    //public String snH_Default_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public final String snH_Comic_Data_Blocks_xPE = "//div[@class='tag-container field-name']/..";
-    public final String snH_Comic_Cover_Thumb_xPE = "//div[@id='bigcontainer']//img[@class='lazyload']";
-    public final String snH_Comic_Page_Thumbs_xPE = "//div[@class='thumb-container']//img[@class='lazyload']";
-
-    //public final String sMP_Comic_Title_xPathExpression = "//div[@class='panel-chapter-info-top']/h1";
-    public final String sMP_Comic_Title_xPathExpression = "//a[@class='link-pri link-hover']";
-    public final String sMP_Comic_Pages_xPE = "//img[@class='w-full h-full']/@src";
-
     //Video import web html search strings (may change if the website changes)
 
     boolean gbLogM3U8Files = false;     //Writes M3U8 files as they are read and analyzed as part of an
@@ -3568,6 +3553,8 @@ public class GlobalClass extends Application {
 
     //Create an array of keys that allow program to locate image links:
     ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
+
+    public static boolean gbComicAutoDetect = true; //Automatically Detect/Analyze webpage contents once page has loaded.
 
     public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
 
