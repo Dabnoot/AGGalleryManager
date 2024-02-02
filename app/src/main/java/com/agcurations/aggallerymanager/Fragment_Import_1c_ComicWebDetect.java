@@ -42,9 +42,6 @@ import androidx.work.WorkManager;
 
 public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
-    boolean gbTesting = false;
-    boolean gbAutoDetect = false;
-
     GlobalClass globalClass;
 
     private EditText gEditText_WebAddress;
@@ -65,11 +62,13 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     private ArrayList<String> galsRequestedResources;
     private final boolean gbWebSiteCheck = false;
 
+    boolean gbEnableAutoDetect = false; //Used in combination with global setting.
+
     public Fragment_Import_1c_ComicWebDetect() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_1c_ComicWebDetect newInstance(String param1, String param2) {
+    public static Fragment_Import_1c_ComicWebDetect newInstance() {
         return new Fragment_Import_1c_ComicWebDetect();
     }
 
@@ -168,9 +167,36 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                 gWebView.evaluateJavascript(addMyClickCallBackJs(),null);
                 gButton_Detect.setEnabled(true);
                 gEditText_WebAddress.setText(url);
-                SetTextStatusMessage("Click 'Detect' once the comic summary page has loaded with all image thumbnails.");
-                if(gbTesting || gbAutoDetect){
-                    gButton_Detect.performClick();
+
+                //Save the cookie to assist with download if required:
+                //String sCookie = CookieManager.getInstance().getCookie(url);
+                //Evaluate if an address matches a pattern:
+                boolean bWebComicDataLocatorNotFound = true;
+                for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                    String sNonExplicitAddress = icWCDL.sHostnameRegEx;
+                    String sRegexExpression = sNonExplicitAddress.replace("%", "");
+                    if (url.matches(sRegexExpression)) {
+                        bWebComicDataLocatorNotFound = false;
+                        //icWCDL.sCookie = sCookie;
+                        //GlobalClass.gsCookie = sCookie;
+                        break;
+                    }
+                }
+                if(bWebComicDataLocatorNotFound){
+                    //Set the "unknown" WebComicDataLocator as "the one".
+                    for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                        if (icWCDL.sHostnameRegEx.matches(gsUnknownAddress)) {
+                            //icWCDL.sCookie = sCookie;
+                            //GlobalClass.gsCookie = sCookie;
+                            break;
+                        }
+                    }
+                }
+
+                if(gbEnableAutoDetect && GlobalClass.gbComicAutoDetect && !bWebComicDataLocatorNotFound){
+                    initiateDetection();
+                } else {
+                    SetTextStatusMessage("Click 'Detect' once the comic summary page has loaded with all image thumbnails.");
                 }
             }
 
@@ -225,16 +251,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
             }
         });
 
-
-
-        if(gbTesting) {
-            String sTestAddress = "https://nhentai.net/g/406424/";
-            //String sTestAddress = "";
-            gEditText_WebAddress.setText(sTestAddress);
-            SetTextStatusMessage("Loading webpage...");
-            gWebView.loadUrl(sTestAddress);
-        }
-
         if(gEditText_WebAddress != null){
 
             gEditText_WebAddress.addTextChangedListener(new TextWatcher() {
@@ -271,16 +287,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
         gButton_Detect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(gbWebSiteCheck) {
-                    StringBuilder sb = new StringBuilder();
-                    for (String s : galsRequestedResources) {
-                        sb.append(s).append("\n");
-                    }
-                    String s = sb.toString();
-                    Log.d("Resources Requested", s);
-                }
-                gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
-                        "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
+                initiateDetection();
             }
         });
 
@@ -292,35 +299,24 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
             galsRequestedResources = new ArrayList<>();
             gWebView.loadUrl(GlobalClass.gsBrowserAddressClipboard);
             GlobalClass.gsBrowserAddressClipboard = "";
-            gbAutoDetect = true; //If we are here and pasting in an address automatically, go ahead and do the detect automatically.
+            gbEnableAutoDetect = true; //If we are here and pasting in an address automatically, go ahead and do the detect automatically.
         }
-        /*if (getContext() != null) {
-            ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clipData = clipboard.getPrimaryClip();
-            if (clipData != null) {
-                String sClipLabel = clipData.getDescription().getLabel().toString();
-                if(sClipLabel.equals(GlobalClass.IMPORT_REQUEST_FROM_INTERNAL_BROWSER)){
-                    ClipData.Item clipItem = clipData.getItemAt(0);
-                    if(clipItem != null){
-                        if(clipItem.getText() != null){
-                            if(getActivity() == null) return;
-                            String sWebAddress = clipItem.coerceToHtmlText(getActivity().getApplicationContext());
-                            if( sWebAddress != null){
-                                gEditText_WebAddress.setText(sWebAddress);
-                                SetTextStatusMessage("Loading webpage...");
-                                galsRequestedResources = new ArrayList<>();
-                                gWebView.loadUrl(sWebAddress);
-                                clipboard.clearPrimaryClip();
-                                gbAutoDetect = true; //If we are here and pasting in an address automatically, go ahead and do the detect automatically.
-                            }
-                        }
-                    }
-
-                }
-            }
-        }*/
 
     } //End onViewCreated
+
+    public void initiateDetection(){
+        if(gbWebSiteCheck) {
+            StringBuilder sb = new StringBuilder();
+            for (String s : galsRequestedResources) {
+                sb.append(s).append("\n");
+            }
+            String s = sb.toString();
+            Log.d("Resources Requested", s);
+        }
+        gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
+                "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
+    }
+
 
     @Override
     public void onResume() {
@@ -342,9 +338,9 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                                             //  pre-loaded the editText with data, so onChanged for the editText
                                             //  never fires.
                     }
-                    for(ItemClass_WebComicDataLocator icWVDL: globalClass.galWebComicDataLocators) {
-                        if (icWVDL.bHostNameMatchFound) {
-                            icWVDL.sHTML = sHTML;
+                    for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                        if (icWCDL.bHostNameMatchFound) {
+                            icWCDL.sHTML = sHTML;
                             break;
                         }
                     }
@@ -372,23 +368,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
             ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
-
-        if(gbutton_PasteAddress != null) {
-            if (getContext() != null) {
-                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clipData = clipboard.getPrimaryClip();
-                if (clipData != null) {
-                    ClipData.Item clipData_Item = clipData.getItemAt(0);
-                    if (clipData_Item != null) {
-                        if(clipData_Item.getText() != null) {
-                            String sClipString = (String) clipData_Item.coerceToText(getActivity().getApplicationContext());
-                            gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
-                        }
-                    }
-                }
-            }
-        }
-
 
     }
 
@@ -423,22 +402,22 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
             //Evaluate if an address matches a pattern:
             boolean bWebComicDataLocatorNotFound = true;
-            for(ItemClass_WebComicDataLocator icWVDL: globalClass.galWebComicDataLocators) {
-                String sNonExplicitAddress = icWVDL.sHostnameRegEx;
+            for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                String sNonExplicitAddress = icWCDL.sHostnameRegEx;
                 String sRegexExpression = sNonExplicitAddress.replace("%", "");
                 if (sAddressCandidate.matches(sRegexExpression)) {
                     bWebComicDataLocatorNotFound = false;
                     bAddressOK = true;
-                    icWVDL.bHostNameMatchFound = true;
+                    icWCDL.bHostNameMatchFound = true;
                     break;
                 }
             }
             if(bWebComicDataLocatorNotFound){
                 //Set the "unknown" WebComicDataLocator as "the one".
-                for(ItemClass_WebComicDataLocator icWVDL: globalClass.galWebComicDataLocators) {
-                    if (icWVDL.sHostnameRegEx.matches(gsUnknownAddress)) {
+                for(ItemClass_WebComicDataLocator icWCDL: globalClass.galWebComicDataLocators) {
+                    if (icWCDL.sHostnameRegEx.matches(gsUnknownAddress)) {
                         bAddressOK = true;
-                        icWVDL.bHostNameMatchFound = true;
+                        icWCDL.bHostNameMatchFound = true;
                         break;
                     }
                 }
@@ -455,44 +434,48 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     private void InitializeWebDataLocators(){
         //Re-Populate comic data locator structure (clears any previously-found data):
 
+        //Tools:
+        // https://regex101.com/
+        // https://www.freeformatter.com/xpath-tester.html
+
         globalClass.galWebComicDataLocators = new ArrayList<>();
         ItemClass_WebComicDataLocator itemClass_webComicDataLocator;
 
         itemClass_webComicDataLocator =
                 FormWebImageSeriesDataLocator("^h%ttps:\\/\\/n%hen%tai\\.n%et\\/(.*)",
-                        new String[][]{
-                                {ItemClass_ComicDownloadSearchKey.COMIC_DETAILS_TITLE, globalClass.snHentai_Comic_Title_xPathExpression},
-                                {ItemClass_ComicDownloadSearchKey.COMIC_THUMBNAIL, globalClass.snHentai_Comic_Cover_Thumb_xPE}
-                });
+                        null);
+        itemClass_webComicDataLocator.sShortName = "nH"; //For hard-coded behavior differentiation
         globalClass.galWebComicDataLocators.add(itemClass_webComicDataLocator);
 
 
-        //Create a WebComicDataLocator for unknown webpages:
         itemClass_webComicDataLocator =
-                FormWebImageSeriesDataLocator(gsUnknownAddress, new String[][]{});
+                FormWebImageSeriesDataLocator("^ht%tps:\\/\\/man%gapa%rk.io\\/(.*)",
+                        null);
+        itemClass_webComicDataLocator.sShortName = "MP"; //For hard-coded behavior differentiation
         globalClass.galWebComicDataLocators.add(itemClass_webComicDataLocator);
 
-        globalClass.galWebComicDataLocators.add(itemClass_webComicDataLocator);
     }
 
 
     private ItemClass_WebComicDataLocator FormWebImageSeriesDataLocator(String sNonExplicitAddress, String[][] sSearchKeys){
         //Include parenthesis in sNonExplicitAddress to obscure the web address so that searchboottss cannot find it.
-        String sNHRegexExpression = sNonExplicitAddress.replace("%","");
-        ItemClass_WebComicDataLocator itemClass_webComicDataLocator = new ItemClass_WebComicDataLocator(sNHRegexExpression);  //Re-create the data locator, clearing-out any found data.
+        String sExplicitAddress = sNonExplicitAddress.replace("%","");
+        ItemClass_WebComicDataLocator itemClass_webComicDataLocator = new ItemClass_WebComicDataLocator(sExplicitAddress);  //Re-create the data locator, clearing-out any found data.
         itemClass_webComicDataLocator.alComicDownloadSearchKeys = new ArrayList<>();
 
-        for(String[] sFields: sSearchKeys){
-            if(sFields.length == 2) {
-                //SxPathExpression Search Key
-                itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
-                        new ItemClass_ComicDownloadSearchKey(
-                                sFields[0], sFields[1]));
-            } else if (sFields.length == 3){
-                //Text Search Key
-                itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
-                        new ItemClass_ComicDownloadSearchKey(
-                                sFields[0], sFields[1], sFields[2]));
+        if(sSearchKeys != null) {
+            for (String[] sFields : sSearchKeys) {
+                if (sFields.length == 2) {
+                    //SxPathExpression Search Key
+                    itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
+                            new ItemClass_ComicDownloadSearchKey(
+                                    sFields[0], sFields[1]));
+                } else if (sFields.length == 3) {
+                    //Text Search Key
+                    itemClass_webComicDataLocator.alComicDownloadSearchKeys.add(
+                            new ItemClass_ComicDownloadSearchKey(
+                                    sFields[0], sFields[1], sFields[2]));
+                }
             }
         }
         return itemClass_webComicDataLocator;
