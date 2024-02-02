@@ -1970,7 +1970,14 @@ public class Activity_Import extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
             }
 
-
+            /*GlideUrl glideUrl = new GlideUrl(sImageURL, new LazyHeaders.Builder()
+                    //.addHeader("User-Agent", GlobalClass.giWebViewSettings_UserAgentString)
+                    //.addHeader("cookie", GlobalClass.gsCookie) //todo: remove if not needed. Added on 2/1/2024 for testing with different sites.
+                    .build());
+            Glide.with(getApplicationContext())
+                    .load(glideUrl)
+                    .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                    .into(holder.imageView_Thumbnail);*/
             Glide.with(getApplicationContext())
                     .load(sImageURL)
                     .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)

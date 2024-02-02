@@ -286,9 +286,8 @@ public class VideoEnabledWebView extends WebView
                             Toast.makeText(getContext(), "Problem identifying download. Try again.", Toast.LENGTH_SHORT).show();
                         }
                         Toast.makeText(getContext(), "Processing download.", Toast.LENGTH_SHORT).show();
-                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(gsNodeData_src));
 
-                        Context cApplicationContext = ((Activity_Browser) gcContext).getApplicationContext();
+                        Context cApplicationContext = gcContext.getApplicationContext();
 
                         String sFileNameRaw = gsNodeData_src;
                         if(sFileNameRaw.contains("/")){
@@ -369,6 +368,9 @@ public class VideoEnabledWebView extends WebView
                             return true;
                         }
 
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(gsNodeData_src));
+                        //request.addRequestHeader("User-Agent", GlobalClass.giWebViewSettings_UserAgentString);
+                        //request.addRequestHeader("cookie", GlobalClass.gsCookie);
                         request.setTitle("AGGallery+ Download Single Image")
                                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE) //Make download notifications disappear when completed.
                                 //Set to equivalent of binary file so that Android MediaStore will not try to index it,

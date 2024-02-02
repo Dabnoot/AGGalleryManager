@@ -175,6 +175,10 @@ public class Fragment_WebPageTab extends Fragment {
         //webSettings.setJavaScriptEnabled(true); No longer required with VideoEnabledWebView and VideoEnabledWebChromeClient.
         GlobalClass.ConfigureWebSettings(webSettings);
 
+        if(GlobalClass.giWebViewSettings_UserAgentString.equals("")) {
+            GlobalClass.giWebViewSettings_UserAgentString = webSettings.getUserAgentString();
+        }
+
         gWebView.gbEnableNewTabLinkage = true; //Allow a context menu popup that contains "Open link in new tab."
 
         gWebView.setOpenLinkInNewTabHandler(handlerOpenLinkInNewTab);
@@ -644,6 +648,11 @@ public class Fragment_WebPageTab extends Fragment {
         return new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+
+                //Get cookie. Sometimes needed when requesting a resource download according to some sources.
+                //String sCookie = CookieManager.getInstance().getCookie(url);
+                //GlobalClass.gsCookie = sCookie;
+
                 //Trigger update of the favicon address....
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');"); //This will trigger an observable, which may complete after the code below.
