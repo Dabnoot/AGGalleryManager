@@ -1,273 +1,326 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="horizontal"
-    android:weightSum="100"
+    android:background="?attr/background"
     android:baselineAligned="false"
-    android:background="@color/colorFragmentBackgroundHighlight"
+    android:orientation="horizontal"
+
+    android:weightSum="100"
     tools:context=".Fragment_ItemDetails">
+    <!--<style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+    <item name="android:colorSecondary">@color/md_red_850</item>-->
 
     <FrameLayout
         android:id="@+id/child_fragment_tag_selector"
         android:layout_width="240dp"
         android:layout_height="match_parent"
-        android:layout_alignParentStart="true">
-    </FrameLayout>
+        android:layout_alignParentStart="true" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
+        android:layout_alignParentEnd="true"
         android:layout_toEndOf="@id/child_fragment_tag_selector"
-        android:layout_alignParentEnd="true">
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/textView_labelTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
             android:layout_marginTop="5dp"
             android:text="Sort and Filter"
             android:textColor="@color/colorTextColor"
-            android:textSize="24sp"
-            android:layout_centerHorizontal="true" />
+            android:textSize="24sp" />
 
-        <TextView
-            android:id="@+id/textView_labelSortBy"
-            android:layout_height="wrap_content"
+        <RelativeLayout
+            android:id="@+id/relativeLayout_SortBy"
             android:layout_width="wrap_content"
-            android:text="Sort by:"
-            android:textColor="@color/colorTextColor"
-            android:layout_marginTop="10dp"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView_labelTitle"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
-            android:textSize="20sp"
-            android:layout_below="@+id/textView_labelTitle" />
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp">
+
+            <TextView
+                android:id="@+id/textView_labelSortBy"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="Sort by:"
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp" />
+
+            <!--<Spinner
+                android:id="@+id/spinner_SortBy"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_toEndOf="@id/textView_labelSortBy" />-->
 
 
-        <Spinner
-            android:id="@+id/spinner_SortBy"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/textView_labelSortBy"
+                android:layout_toStartOf="@+id/imageButton_SortOrder"
+                android:layout_marginBottom="10dp"
+                android:layout_marginEnd="10dp">
+
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteTextView_SortBy"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:inputType="none"
+                    tools:text="" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+
+            <ImageButton
+                android:id="@+id/imageButton_SortOrder"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_alignTop="@id/textView_labelSortBy"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="-10dp"
+                android:layout_marginEnd="10dp"
+                android:backgroundTint="@color/colorFragmentBackgroundHighlight"
+                android:src="@drawable/baseline_sort_ascending_white_18dp"
+                android:title="sort_order" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_SharedWithUser"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"
-            android:layout_toEndOf="@id/textView_labelSortBy"
-            android:layout_alignBottom="@id/textView_labelSortBy"
-            android:layout_marginBottom="-10dp"/>
-
-        <ImageButton
-            android:id="@+id/imageButton_SortOrder"
-            android:layout_width="wrap_content"
-            android:layout_height="50dp"
-            android:layout_marginTop="-10dp"
-            android:layout_marginEnd="10dp"
+            android:layout_below="@id/relativeLayout_SortBy"
+            android:layout_alignParentStart="true"
             android:layout_alignParentEnd="true"
-            android:layout_alignTop="@id/textView_labelSortBy"
-            android:backgroundTint="@color/colorFragmentBackgroundHighlight"
-            android:src="@drawable/baseline_sort_ascending_white_18dp"
-            android:title="sort_order" />
-
-        <!--Separator-->
-        <View
-            android:id="@+id/view_SharedWithUserSeparator"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:layout_marginTop="10dp"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
-            android:background="@color/colorSeparator"
-            android:layout_below="@id/textView_labelSortBy"/>
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp">
 
-        <TextView
-            android:id="@+id/textView_labelSharedWithUser"
+            <TextView
+                android:id="@+id/textView_labelSharedWithUser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="Shared with user:"
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp" />
+
+            <!--<Spinner
+                android:id="@+id/spinner_SharedWithUser"
+                style="@style/SpinnerStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_toEndOf="@id/textView_labelSharedWithUser" />-->
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/textView_labelSharedWithUser"
+                android:layout_alignParentEnd="true"
+                android:layout_marginBottom="10dp"
+                android:layout_marginEnd="10dp">
+
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteTextView_SharedWithUser"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:inputType="none"
+                    tools:text="" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_SearchKeywords"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_below="@id/relativeLayout_SharedWithUser"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
-            android:text="Shared with user:"
-            android:textColor="@color/colorTextColor"
-            android:textSize="20sp"
-            android:layout_below="@+id/view_SharedWithUserSeparator"/>
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp">
 
-        <Spinner
-            android:id="@+id/spinner_SharedWithUser"
+            <TextView
+                android:id="@+id/textView_labelSearchKeyWords"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="Search keywords:"
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp" />
+
+            <!--<EditText
+                android:id="@+id/editText_SearchKeywords"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@id/textView_labelSearchKeyWords"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="10dp"
+                android:layout_toEndOf="@+id/textView_labelSearchKeyWords"
+                android:textColor="@color/colorTextColor" />-->
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/textView_labelSearchKeyWords"
+                android:layout_alignParentEnd="true"
+                android:layout_marginBottom="10dp"
+                android:layout_marginEnd="10dp">
+
+                <EditText
+                    android:id="@+id/editText_SearchKeywords"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:inputType="none"
+                    tools:text="" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_FilterBy"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/textView_labelSharedWithUser"
-            android:layout_alignEnd="@id/imageButton_SortOrder"
-            android:layout_alignBottom="@+id/textView_labelSharedWithUser"
-            android:layout_marginBottom="-10dp"
-            style="@style/SpinnerStyle"/>
-
-        <!--Separator-->
-        <View
-            android:id="@+id/view_SortBySearchKeywordsSeparator"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:background="@color/colorSeparator"
-            android:layout_below="@id/textView_labelSharedWithUser"/>
-
-
-        <TextView
-            android:id="@+id/textView_labelSearchKeyWords"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:text="Search keywords:"
-            android:textColor="@color/colorTextColor"
-            android:textSize="20sp"
-            android:layout_below="@+id/view_SortBySearchKeywordsSeparator" />
-
-        <EditText
-            android:id="@+id/editText_SearchKeywords"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:layout_toEndOf="@+id/textView_labelSearchKeyWords"
-            android:layout_alignBaseline="@id/textView_labelSearchKeyWords"
+            android:layout_below="@+id/relativeLayout_SearchKeywords"
+            android:layout_alignParentStart="true"
             android:layout_alignParentEnd="true"
-            android:textColor="@color/colorTextColor"/>
-
-        <TextView
-            android:id="@+id/textView_labelSearchField"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:text="Search in:"
-            android:textColor="@color/colorTextColor"
-            android:textSize="20sp"
-            android:layout_alignEnd="@+id/textView_labelSearchKeyWords"
-            android:layout_below="@+id/editText_SearchKeywords"
-            android:layout_marginTop="3dp"/>
-
-        <Spinner
-            android:id="@+id/spinner_SearchIn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_toEndOf="@id/textView_labelSearchField"
-            android:layout_alignEnd="@id/imageButton_SortOrder"
-            android:layout_alignBottom="@+id/textView_labelSearchField"
-            android:layout_marginBottom="-10dp" />
-
-        <!--Separator-->
-        <View
-            android:id="@+id/view_SearchFilterSeparator"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
-            android:background="@color/colorSeparator"
-            android:layout_below="@id/textView_labelSearchField"/>
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp">
 
-        <TextView
-            android:id="@+id/textView_labelFilter"
+            <TextView
+                android:id="@+id/textView_labelFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="Filter by:"
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp" />
+
+            <!--Spinner
+                <android:id="@+id/spinner_FilterBy"
+                style="@style/SpinnerStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_toEndOf="@id/textView_labelFilter" />-->
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/textView_labelFilter"
+                android:layout_alignParentEnd="true"
+                android:layout_marginBottom="10dp"
+                android:layout_marginEnd="10dp">
+
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteTextView_FilterBy"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:inputType="none"
+                    tools:text="" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_FilterResolution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_below="@+id/relativeLayout_FilterBy"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
-            android:text="Filter by:"
-            android:textColor="@color/colorTextColor"
-            android:textSize="20sp"
-            android:layout_below="@+id/view_SearchFilterSeparator"/>
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp">
 
-        <Spinner
-            android:id="@+id/spinner_FilterBy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/textView_labelFilter"
-            android:layout_alignEnd="@id/imageButton_SortOrder"
-            android:layout_alignBottom="@+id/textView_labelFilter"
-            android:layout_marginBottom="-10dp"
-            style="@style/SpinnerStyle"/>
+            <TextView
+                android:id="@+id/textView_labelResolution"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="Resolution:"
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp" />
 
-        <!--Separator-->
-        <View
-            android:id="@+id/view_FilterResolutionSeparator"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:background="@color/colorSeparator"
-            android:layout_below="@id/textView_labelFilter"/>
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/rangeSlider_Resolution"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@id/textView_labelResolution"
+                style="@style/ThemeOverlay.Slider"
+                />
+            <!--app:thumbColor="@color/colorTextColor"
+            app:trackColor="@color/colorTextColor"-->
 
-        <TextView
-            android:id="@+id/textView_labelResolution"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:text="Resolution:"
-            android:textColor="@color/colorTextColor"
-            android:textSize="20sp"
-            android:layout_below="@+id/view_FilterResolutionSeparator"/>
-
-        <com.google.android.material.slider.RangeSlider
-            android:id="@+id/rangeSlider_Resolution"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:thumbColor="@color/colorTextColor"
-            app:trackColor="@color/colorTextColor"
-            android:layout_alignBaseline="@id/textView_labelResolution" />
+        </RelativeLayout>
 
 
-        <!--Separator-->
-        <View
-            android:id="@+id/view_ResolutionVideoDurationSeparator"
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:background="@color/colorSeparator"
-            android:layout_below="@id/rangeSlider_Resolution"/>
 
         <RelativeLayout
             android:id="@+id/relativeLayout_VideoDuration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/view_ResolutionVideoDurationSeparator">
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp"
+            android:layout_below="@id/relativeLayout_FilterResolution">
 
             <TextView
                 android:id="@+id/textView_labelVideoDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
                 android:text="Video duration:"
                 android:textColor="@color/colorTextColor"
-                android:textSize="20sp"/>
+                android:textSize="20sp" />
 
             <com.google.android.material.slider.RangeSlider
                 android:id="@+id/rangeSlider_VideoDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignBaseline="@id/textView_labelVideoDuration"
                 app:thumbColor="@color/colorTextColor"
-                app:trackColor="@color/colorTextColor"
-                android:layout_alignBaseline="@id/textView_labelVideoDuration" />
-
-            <!--Separator-->
-            <View
-                android:id="@+id/view_VideoDurationTagsSeparator"
-                android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:background="@color/colorSeparator"
-                android:layout_below="@id/rangeSlider_VideoDuration"/>
-
+                app:trackColor="@color/colorTextColor" />
 
         </RelativeLayout>
 
@@ -275,38 +328,32 @@
             android:id="@+id/relativeLayout_MaturityFilter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:background="?attr/colorSecondary"
+            android:translationZ="2dp"
             android:layout_below="@id/relativeLayout_VideoDuration">
 
             <TextView
                 android:id="@+id/textView_labelMaturityFilter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
                 android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
                 android:layout_marginEnd="10dp"
                 android:text="Maturity:"
                 android:textColor="@color/colorTextColor"
-                android:textSize="20sp"/>
+                android:textSize="20sp" />
 
             <com.google.android.material.slider.RangeSlider
                 android:id="@+id/rangeSlider_MaturityFilter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_alignBaseline="@id/textView_labelMaturityFilter"
                 app:thumbColor="@color/colorTextColor"
-                app:trackColor="@color/colorTextColor"
-                android:layout_alignBaseline="@id/textView_labelMaturityFilter" />
-
-            <!--Separator-->
-            <View
-                android:id="@+id/view_MaturityTagsSeparator"
-                android:layout_width="match_parent"
-                android:layout_height="3dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:background="@color/colorSeparator"
-                android:layout_below="@id/rangeSlider_MaturityFilter"/>
-
+                app:trackColor="@color/colorTextColor" />
 
         </RelativeLayout>
 
@@ -314,37 +361,37 @@
             android:id="@+id/textView_labelTags"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_below="@id/relativeLayout_MaturityFilter"
             android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
             android:layout_marginEnd="10dp"
             android:text="Tags:"
             android:textColor="@color/colorTextColor"
-            android:textSize="20sp"
-            android:layout_below="@id/relativeLayout_MaturityFilter"/>
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/textView_Tags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:textSize="20sp"
             android:layout_alignTop="@id/textView_labelTags"
+            android:layout_marginEnd="10dp"
             android:layout_toEndOf="@id/textView_labelTags"
-            android:textColor="@color/colorTextColor"/>
+            android:textColor="@color/colorTextColor"
+            android:textSize="20sp" />
 
 
         <Button
             android:id="@+id/button_Apply"
             android:layout_width="180dp"
             android:layout_height="67dp"
-            android:text="Apply"
-            android:textSize="20sp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="10dp"
-            app:backgroundTint="@color/colorButton"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:enabled="false"/>
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:enabled="false"
+            android:text="Apply"
+            android:textSize="20sp"
+            app:backgroundTint="@color/colorButton" />
 
     </RelativeLayout>
 

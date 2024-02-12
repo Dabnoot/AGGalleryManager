@@ -11,11 +11,13 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.android.material.slider.LabelFormatter;
@@ -49,9 +51,9 @@ public class Fragment_CatalogSort extends Fragment {
     public Fragment_SelectTags gFragment_selectTags;
 
 
-    final int SPINNER_SORTBY_ITEM_IMPORT_DATE = 0;
-    final int SPINNER_SORTBY_ITEM_LAST_VIEWED_DATE = 1;
-    final String[] gsSpinnerSortByItems ={"Import Date","Last Read Date"};
+    final int DROPDOWN_SORTBY_ITEM_IMPORT_DATE = 0;
+    final int DROPDOWN_SORTBY_ITEM_LAST_VIEWED_DATE = 1;
+    final String[] gsDropDownSortByItems ={"Import Date","Last Read Date"};
 
     String[] gsSharedWithUsersNameArray = {""};
 
@@ -65,7 +67,7 @@ public class Fragment_CatalogSort extends Fragment {
             "Parodies",
             "Item ID"};
 
-    final String[] gsSpinnerFilterByItems = {
+    final String[] gsFilterByItems = {
             "",
             "Web sources only",
             "Folder sources only",
@@ -143,40 +145,30 @@ public class Fragment_CatalogSort extends Fragment {
 
         if (getView() != null) {
 
-            //Configure the 'Sort by' selection spinner:
-            Spinner spinner_SortBy = getView().findViewById(R.id.spinner_SortBy);
+            //Configure the 'Sort by' "exposed dropdown menu":
+            AutoCompleteTextView autoCompleteTextView_SortBy = getView().findViewById(R.id.autoCompleteTextView_SortBy);
             //wrap the items in the Adapter
-            ArrayAdapter<String> adapterSortBy = new ArrayAdapter<>(getActivity(), R.layout.catalog_spinner_item_sort_search_filter, gsSpinnerSortByItems);
-            //assign adapter to the Spinner
-            spinner_SortBy.setAdapter(adapterSortBy);
+            ArrayAdapter<String> adapterSortBy = new ArrayAdapter<>(getActivity(), R.layout.catalog_dropdown_item_sort_search_filter, gsDropDownSortByItems);
+            //assign adapter to the dropdown menu:
+            autoCompleteTextView_SortBy.setAdapter(adapterSortBy);
 
-            //Initialize the spinner position:
-            //This is here because when onResume hits when the activity is first created,
-            //  the Spinner does not yet exist.
-            if(globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
-                spinner_SortBy.setSelection(SPINNER_SORTBY_ITEM_IMPORT_DATE);
-            } else if(globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
-                spinner_SortBy.setSelection(SPINNER_SORTBY_ITEM_LAST_VIEWED_DATE);
+            //Initialize the drop-down menu position:
+            if(GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_IMPORTED){
+                autoCompleteTextView_SortBy.setText(adapterSortBy.getItem(DROPDOWN_SORTBY_ITEM_IMPORT_DATE), false);
+            } else if(GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] == GlobalClass.SORT_BY_DATETIME_LAST_VIEWED){
+                autoCompleteTextView_SortBy.setText(adapterSortBy.getItem(DROPDOWN_SORTBY_ITEM_LAST_VIEWED_DATE), false);
             }
 
-            spinner_SortBy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                boolean bInitialized = false;
+            autoCompleteTextView_SortBy.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    if(bInitialized) {
-                        enableApply();
-                    }
-                    bInitialized = true;
-                }
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                    // no need to code here
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    enableApply();
                 }
             });
 
             //Initialize the SortOrder ImageButton:
             final ImageButton imageButton_SortOrder = getView().findViewById(R.id.imageButton_SortOrder);
-            if(globalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory]){
+            if(GlobalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory]){
                 imageButton_SortOrder.setImageResource(R.drawable.baseline_sort_ascending_white_18dp);
                 gbCatalogViewerSortAscending = true;
             } else {
@@ -199,8 +191,8 @@ public class Fragment_CatalogSort extends Fragment {
 
 
 
-            //Configure the "Shared with User" sort spinner:
-            Spinner spinner_SharedWithUser = getView().findViewById(R.id.spinner_SharedWithUser);
+            //Configure the "Shared with User" filter:
+            AutoCompleteTextView autoCompleteTextView_SharedWithUser = getView().findViewById(R.id.autoCompleteTextView_SharedWithUser);
 
             //wrap the items in the Adapter
             int iExtraUserNames = 1; //Used to populate extra selection fields
@@ -209,32 +201,21 @@ public class Fragment_CatalogSort extends Fragment {
             for(int i = iExtraUserNames; i < GlobalClass.galicu_Users.size() + iExtraUserNames; i++){
                 gsSharedWithUsersNameArray[i] = GlobalClass.galicu_Users.get(i - iExtraUserNames).sUserName;
             }
-            ArrayAdapter<String> adapterSharedWithUser = new ArrayAdapter<>(getActivity(), R.layout.catalog_spinner_item_sort_search_filter, gsSharedWithUsersNameArray);
-            //assign adapter to the Spinner
-            spinner_SharedWithUser.setAdapter(adapterSharedWithUser);
+            ArrayAdapter<String> adapterSharedWithUser = new ArrayAdapter<>(getActivity(), R.layout.catalog_dropdown_item_sort_search_filter, gsSharedWithUsersNameArray);
+            autoCompleteTextView_SharedWithUser.setAdapter(adapterSharedWithUser);
 
-            //Initialize the spinner position:
-            //This is here because when onResume hits when the activity is first created,
-            //  the Spinner does not yet exist.
+            //Initialize the data:
             for(int i = 0; i < GlobalClass.galicu_Users.size(); i++){
                 if(GlobalClass.gsCatalogViewerSortBySharedWithUser.equals(gsSharedWithUsersNameArray[i])){
-                    spinner_SharedWithUser.setSelection(i);
+                    autoCompleteTextView_SharedWithUser.setText(adapterSharedWithUser.getItem(i), false);
                     break;
                 }
             }
 
-            spinner_SharedWithUser.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                boolean bInitialized = false;
+            autoCompleteTextView_SharedWithUser.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    if(bInitialized) {
-                        enableApply();
-                    }
-                    bInitialized = true;
-                }
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                    // no need to code here
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    enableApply();
                 }
             });
 
@@ -244,8 +225,8 @@ public class Fragment_CatalogSort extends Fragment {
 
             //Listen to when the Keywords EditText field is modified to enable the Apply button:
             EditText editText_SearchKeywords = requireView().findViewById(R.id.editText_SearchKeywords);
-            if(!globalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory].equals("")){
-                editText_SearchKeywords.setText(globalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory]);
+            if(!GlobalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory].equals("")){
+                editText_SearchKeywords.setText(GlobalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory]);
             }
             if (editText_SearchKeywords != null) {
                 editText_SearchKeywords.addTextChangedListener(new TextWatcher() {
@@ -274,68 +255,32 @@ public class Fragment_CatalogSort extends Fragment {
                 });
             } //end config of editText_Keywords.
 
-            //Configure the "SearchIn" spinner:
-            Spinner spinner_SearchIn = getView().findViewById(R.id.spinner_SearchIn);
+
+            //Configure the "FilterBy" drop-down menu:
+            AutoCompleteTextView autoCompleteTextView_FilterBy = getView().findViewById(R.id.autoCompleteTextView_FilterBy);
             //wrap the items in the Adapter
-            ArrayAdapter<String> adapterSearchIn = new ArrayAdapter<>(getActivity(), R.layout.catalog_spinner_item_sort_search_filter, gsSpinnerSearchInItems);
-            //assign adapter to the Spinner
-            spinner_SearchIn.setAdapter(adapterSearchIn);
+            ArrayAdapter<String> adapterFilterBy = new ArrayAdapter<>(getActivity(), R.layout.catalog_dropdown_item_sort_search_filter, gsFilterByItems);
+            //assign adapter:
+            autoCompleteTextView_FilterBy.setAdapter(adapterFilterBy);
 
-            //Initialize the "SearchIn" spinner position:
-            //This is here because when onResume hits when the activity is first created,
-            //  the Spinner does not yet exist.
-            int iSpinnerSelection = globalClass.giCatalogViewerSearchInSelection[GlobalClass.giSelectedCatalogMediaCategory];
-            spinner_SearchIn.setSelection(iSpinnerSelection);
+            //Initialize the "FilterBy" text:
+            String sFilterBySelection = gsFilterByItems[GlobalClass.giCatalogViewerFilterBySelection[GlobalClass.giSelectedCatalogMediaCategory]];
+            autoCompleteTextView_FilterBy.setText(sFilterBySelection, false);
 
-            spinner_SearchIn.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                boolean bInitialized = false;
+            autoCompleteTextView_FilterBy.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    if(bInitialized) {
-                        enableApply();
-                    }
-                    bInitialized = true;
+                public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                    enableApply();
                 }
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                    // no need to code here
-                }
-            }); //End config of spinner_SearchIn.
+            });
 
-            //Configure the "FilterBy" spinner:
-            Spinner spinner_FilterBy = getView().findViewById(R.id.spinner_FilterBy);
-            //wrap the items in the Adapter
-            ArrayAdapter<String> adapterFilterBy = new ArrayAdapter<>(getActivity(), R.layout.catalog_spinner_item_sort_search_filter, gsSpinnerFilterByItems);
-            //assign adapter to the Spinner
-            spinner_FilterBy.setAdapter(adapterFilterBy);
-
-            //Initialize the "FilterBy" spinner position:
-            //This is here because when onResume hits when the activity is first created,
-            //  the Spinner does not yet exist.
-            iSpinnerSelection = globalClass.giCatalogViewerFilterBySelection[GlobalClass.giSelectedCatalogMediaCategory];
-            spinner_FilterBy.setSelection(iSpinnerSelection);
-
-            spinner_FilterBy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                boolean bInitialized = false;
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    if(bInitialized) {
-                        enableApply();
-                    }
-                    bInitialized = true;
-                }
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                    // no need to code here
-                }
-            }); //End config of spinner_FilterBy.
 
             //Configure the resolution range slider:
             if (getView() != null) {
                 RangeSlider rangeSlider_Resolution = getView().findViewById(R.id.rangeSlider_Resolution);
                 if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                     //Configure the rangeSlider to have discrete steps:
-                    float fMaxPositionCount = globalClass.gtmVideoResolutions.size() - 1;
+                    float fMaxPositionCount = GlobalClass.gtmVideoResolutions.size() - 1;
                     rangeSlider_Resolution.setValueTo(Math.max(1.0F, fMaxPositionCount));
                     rangeSlider_Resolution.setValues(0.0F, Math.max(1.0F, fMaxPositionCount));
                     rangeSlider_Resolution.setStepSize(1.0f);
@@ -344,7 +289,7 @@ public class Fragment_CatalogSort extends Fragment {
                         @Override
                         public String getFormattedValue(float value) {
                             int iValue = (int) value;
-                            return globalClass.gtmVideoResolutions.get(iValue) + "p";
+                            return GlobalClass.gtmVideoResolutions.get(iValue) + "p";
                         }
                     });
                     rangeSlider_Resolution.addOnChangeListener(new RangeSlider.OnChangeListener() {
@@ -354,9 +299,9 @@ public class Fragment_CatalogSort extends Fragment {
                         }
                     });
                 } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, (float) globalClass.giMaxImageMegaPixels));
-                    rangeSlider_Resolution.setValues(Math.max(0.0F, (float) globalClass.giMinImageMegaPixels),
-                            Math.max(1.0F, (float) globalClass.giMaxImageMegaPixels));
+                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, (float) GlobalClass.giMaxImageMegaPixels));
+                    rangeSlider_Resolution.setValues(Math.max(0.0F, (float) GlobalClass.giMinImageMegaPixels),
+                            Math.max(1.0F, (float) GlobalClass.giMaxImageMegaPixels));
                     rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
                         @NonNull
                         @Override
@@ -375,9 +320,9 @@ public class Fragment_CatalogSort extends Fragment {
                     if (textView_labelResolution != null) {
                         textView_labelResolution.setText("Comic page count:");
                     }
-                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, (float) globalClass.giMaxComicPageCount));
-                    rangeSlider_Resolution.setValues(Math.max(0.0F, (float) globalClass.giMinComicPageCount),
-                            Math.max(1.0F, (float) globalClass.giMaxComicPageCount));
+                    rangeSlider_Resolution.setValueTo(Math.max(1.0F, (float) GlobalClass.giMaxComicPageCount));
+                    rangeSlider_Resolution.setValues(Math.max(0.0F, (float) GlobalClass.giMinComicPageCount),
+                            Math.max(1.0F, (float) GlobalClass.giMaxComicPageCount));
                     rangeSlider_Resolution.setLabelFormatter(new LabelFormatter() {
                         @NonNull
                         @Override
@@ -409,7 +354,7 @@ public class Fragment_CatalogSort extends Fragment {
                 }
 
                 RangeSlider rangeSlider_VideoDuration = getView().findViewById(R.id.rangeSlider_VideoDuration);
-                float fMaxMilliseconds = globalClass.glMaxVideoDurationMS;
+                float fMaxMilliseconds = GlobalClass.glMaxVideoDurationMS;
                 rangeSlider_VideoDuration.setValueTo(Math.max(1.0F, fMaxMilliseconds));
                 rangeSlider_VideoDuration.setValues(0.0F, Math.max(1.0F, fMaxMilliseconds));
                 rangeSlider_VideoDuration.setLabelFormatter(new LabelFormatter() {
@@ -481,48 +426,46 @@ public class Fragment_CatalogSort extends Fragment {
         }
 
         //Read SortBy:
-        Spinner spinner_SortBy = getView().findViewById(R.id.spinner_SortBy);
-        int iSpinnerSortByPosition = spinner_SortBy.getSelectedItemPosition();
-        if(iSpinnerSortByPosition == SPINNER_SORTBY_ITEM_IMPORT_DATE) {
-            //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeImportIndexes[globalClass.giSelectedCatalogMediaCategory];
-            globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
-        } else if(iSpinnerSortByPosition == SPINNER_SORTBY_ITEM_LAST_VIEWED_DATE) {
-            //globalClass.giCatalogViewerSortBySetting = GlobalClass.giDataRecordDateTimeViewedIndexes[globalClass.giSelectedCatalogMediaCategory];
-            globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_LAST_VIEWED;
+        AutoCompleteTextView autoCompleteTextView_SortBy = getView().findViewById(R.id.autoCompleteTextView_SortBy);
+        String sSortBySelection = autoCompleteTextView_SortBy.getText().toString();
+        if(sSortBySelection.equals(gsDropDownSortByItems[DROPDOWN_SORTBY_ITEM_IMPORT_DATE])) {
+            GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_IMPORTED;
+        } else if(sSortBySelection.equals(gsDropDownSortByItems[DROPDOWN_SORTBY_ITEM_LAST_VIEWED_DATE])) {
+            GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] = GlobalClass.SORT_BY_DATETIME_LAST_VIEWED;
         }
         //Record the user's selected sort item:
         if(getActivity() != null) {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
             sharedPreferences.edit()
                     .putInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory],
-                            globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory])
+                            GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory])
                     .apply();
         }
 
         //Read SharedWithUser selection:
-        Spinner spinner_SharedWithUser = getView().findViewById(R.id.spinner_SharedWithUser);
-        int iSpinnerSharedWithUserPosition = spinner_SharedWithUser.getSelectedItemPosition();
-        GlobalClass.gsCatalogViewerSortBySharedWithUser = gsSharedWithUsersNameArray[iSpinnerSharedWithUserPosition];
+        AutoCompleteTextView autoCompleteTextView_SharedWithUser = getView().findViewById(R.id.autoCompleteTextView_SharedWithUser);
+        String sSharedUser = autoCompleteTextView_SharedWithUser.getText().toString();
+        GlobalClass.gsCatalogViewerSortBySharedWithUser = sSharedUser;
 
 
         //Apply any text search to the search hold in globalClass:
-        Spinner spinner_SearchIn = getView().findViewById(R.id.spinner_SearchIn);
-        int iSpinnerSearchInPosition = spinner_SearchIn.getSelectedItemPosition();
-        globalClass.giCatalogViewerSearchInSelection[GlobalClass.giSelectedCatalogMediaCategory] = iSpinnerSearchInPosition;
-        if (iSpinnerSearchInPosition != GlobalClass.SEARCH_IN_NO_SELECTION) {
-            EditText editText_SearchKeywords = requireView().findViewById(R.id.editText_SearchKeywords);
-            if (editText_SearchKeywords != null) {
-                String sSearchKeywords = editText_SearchKeywords.getText().toString();
-                globalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory] = sSearchKeywords;
-            }
+        EditText editText_SearchKeywords = getView().findViewById(R.id.editText_SearchKeywords);
+        if (editText_SearchKeywords != null) {
+            String sSearchKeywords = editText_SearchKeywords.getText().toString();
+            GlobalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory] = sSearchKeywords;
         } else {
-            globalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory] = "";
+            GlobalClass.gsCatalogViewerSearchInText[GlobalClass.giSelectedCatalogMediaCategory] = "";
         }
 
         //Read FilterBy Selection:
-        Spinner spinner_FilterBy = getView().findViewById(R.id.spinner_FilterBy);
-        int iSpinnerFilterByPosition = spinner_FilterBy.getSelectedItemPosition();
-        globalClass.giCatalogViewerFilterBySelection[GlobalClass.giSelectedCatalogMediaCategory] = iSpinnerFilterByPosition;
+        AutoCompleteTextView autoCompleteTextView_FilterBy = getView().findViewById(R.id.autoCompleteTextView_FilterBy);
+        String sFilterBySelection = autoCompleteTextView_FilterBy.getText().toString();
+        for(int i = 0; i < 5; i++){
+            if(sFilterBySelection.equals(gsFilterByItems[i])){
+                GlobalClass.giCatalogViewerFilterBySelection[GlobalClass.giSelectedCatalogMediaCategory] = i;
+                break;
+            }
+        }
 
 
         //Read Resolution/PageCount RangeSlider:
@@ -530,37 +473,37 @@ public class Fragment_CatalogSort extends Fragment {
         List<Float> lfRangeSliderSelectedMinMaxValues = rangeSlider_Resolution.getValues();
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             if(lfRangeSliderSelectedMinMaxValues.get(0) == 0) {
-                globalClass.giMinVideoResolutionSelected = -1;  //Mark as no value selected.
+                GlobalClass.giMinVideoResolutionSelected = -1;  //Mark as no value selected.
             } else {
-                globalClass.giMinVideoResolutionSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
+                GlobalClass.giMinVideoResolutionSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
             }
-            float fMaxPositionCount = globalClass.gtmVideoResolutions.size() - 1;
+            float fMaxPositionCount = GlobalClass.gtmVideoResolutions.size() - 1;
             if(lfRangeSliderSelectedMinMaxValues.get(1) == fMaxPositionCount) {
-                globalClass.giMaxVideoResolutionSelected = -1;  //Mark as no value selected.
+                GlobalClass.giMaxVideoResolutionSelected = -1;  //Mark as no value selected.
             } else {
-                globalClass.giMaxVideoResolutionSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
+                GlobalClass.giMaxVideoResolutionSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
             }
         } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-            if(lfRangeSliderSelectedMinMaxValues.get(0) == (float) globalClass.giMinImageMegaPixels) {
-                globalClass.giMinImageMegaPixelsSelected = -1;  //Mark as no value selected.
+            if(lfRangeSliderSelectedMinMaxValues.get(0) == (float) GlobalClass.giMinImageMegaPixels) {
+                GlobalClass.giMinImageMegaPixelsSelected = -1;  //Mark as no value selected.
             } else {
-                globalClass.giMinImageMegaPixelsSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
+                GlobalClass.giMinImageMegaPixelsSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
             }
-            if(lfRangeSliderSelectedMinMaxValues.get(1) == (float) globalClass.giMaxImageMegaPixels) {
-                globalClass.giMaxImageMegaPixelsSelected = -1;  //Mark as no value selected.
+            if(lfRangeSliderSelectedMinMaxValues.get(1) == (float) GlobalClass.giMaxImageMegaPixels) {
+                GlobalClass.giMaxImageMegaPixelsSelected = -1;  //Mark as no value selected.
             } else {
-                globalClass.giMaxImageMegaPixelsSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
+                GlobalClass.giMaxImageMegaPixelsSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
             }
         } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-            if(lfRangeSliderSelectedMinMaxValues.get(0) == (float) globalClass.giMinComicPageCount) {
-                globalClass.giMinComicPageCountSelected = -1;  //Mark as no value selected.
+            if(lfRangeSliderSelectedMinMaxValues.get(0) == (float) GlobalClass.giMinComicPageCount) {
+                GlobalClass.giMinComicPageCountSelected = -1;  //Mark as no value selected.
             } else {
-                globalClass.giMinComicPageCountSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
+                GlobalClass.giMinComicPageCountSelected = lfRangeSliderSelectedMinMaxValues.get(0).intValue();
             }
-            if(lfRangeSliderSelectedMinMaxValues.get(1) == (float) globalClass.giMaxComicPageCount) {
-                globalClass.giMaxComicPageCountSelected = -1;  //Mark as no value selected.
+            if(lfRangeSliderSelectedMinMaxValues.get(1) == (float) GlobalClass.giMaxComicPageCount) {
+                GlobalClass.giMaxComicPageCountSelected = -1;  //Mark as no value selected.
             } else {
-                globalClass.giMaxComicPageCountSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
+                GlobalClass.giMaxComicPageCountSelected = lfRangeSliderSelectedMinMaxValues.get(1).intValue();
             }
         }
 
@@ -569,14 +512,14 @@ public class Fragment_CatalogSort extends Fragment {
         lfRangeSliderSelectedMinMaxValues = rangeSlider_VideoDuration.getValues();
         if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             if (lfRangeSliderSelectedMinMaxValues.get(0) == 0.0f) {
-                globalClass.glMinVideoDurationMSSelected = -1;
+                GlobalClass.glMinVideoDurationMSSelected = -1;
             } else {
-                globalClass.glMinVideoDurationMSSelected = lfRangeSliderSelectedMinMaxValues.get(0).longValue();
+                GlobalClass.glMinVideoDurationMSSelected = lfRangeSliderSelectedMinMaxValues.get(0).longValue();
             }
-            if (lfRangeSliderSelectedMinMaxValues.get(1) == (float) globalClass.glMaxVideoDurationMS) {
-                globalClass.glMaxVideoDurationMSSelected = -1;
+            if (lfRangeSliderSelectedMinMaxValues.get(1) == (float) GlobalClass.glMaxVideoDurationMS) {
+                GlobalClass.glMaxVideoDurationMSSelected = -1;
             } else {
-                globalClass.glMaxVideoDurationMSSelected = lfRangeSliderSelectedMinMaxValues.get(1).longValue();
+                GlobalClass.glMaxVideoDurationMSSelected = lfRangeSliderSelectedMinMaxValues.get(1).longValue();
             }
         }
 
@@ -715,6 +658,9 @@ public class Fragment_CatalogSort extends Fragment {
         if(getView() == null){
             return;
         }
+
+        //todo: Evaluate all criteria selected to ensure it has changed before enabling the Apply button.
+
         Button button_Apply = getView().findViewById(R.id.button_Apply);
         if(button_Apply != null){
             button_Apply.setEnabled(true);
