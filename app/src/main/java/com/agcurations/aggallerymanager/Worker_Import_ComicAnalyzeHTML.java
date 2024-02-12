@@ -534,9 +534,6 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                     Integer iPageNumber = 0;
                     for(Object objTagNotePageImageAddress: objsTagNodePageImageAddresses){
                         String sImageAddress = (String) objTagNotePageImageAddress;
-                        if(sImageAddress.contains("&amp;")){
-                            sImageAddress = sImageAddress.replace("amp;", "");
-                        }
                         BroadcastProgress_ComicDetails(sImageAddress + "\n", gsIntentActionFilter); //Broadcast progress
                         iPageNumber++;
                         tmFileIndexAndAddress.put(iPageNumber, sImageAddress);//Put the thumbnail image address in with the file extension.
