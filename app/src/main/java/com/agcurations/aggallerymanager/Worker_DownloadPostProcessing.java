@@ -26,6 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class Worker_DownloadPostProcessing  extends Worker {
     //This routine moves downloaded files from a temporary download folder to a more permanent
@@ -121,7 +123,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         long lProgressNumerator = 0L;
         long lProgressDenominator;
-        int iProgressBarValue = 0;
+        int iProgressBarValue;
 
         if(!GlobalClass.CheckIfFileExists(GlobalClass.gUriLogsFolder)){
             sMessage = "Logs folder missing. Restarting app should create the folder.";
@@ -150,6 +152,11 @@ public class Worker_DownloadPostProcessing  extends Worker {
             }
             lProgressDenominator = glDownloadIDs.length;
 
+            Set<Long> setDownloadIDs = new TreeSet<>();
+            for(long l: glDownloadIDs){
+                setDownloadIDs.add(l);
+            }
+
             if( gsPathToMonitorForDownloads.equals("")){
                 sMessage = "No path to monitor for downloads provided.";
                 return Result.failure(LogReturnWithFailure(sMessage));
@@ -164,8 +171,6 @@ public class Worker_DownloadPostProcessing  extends Worker {
             //Monitor the location for file downloads' completion:
             int iElapsedWaitTime = 0;
             int iWaitDuration = 500; //milliseconds
-            boolean bFileDownloadsComplete = false;
-            boolean bDownloadProblem = false;
             boolean bPaused = false;
             String sDownloadFailedReason = "";
             String sDownloadPausedReason = "";
@@ -182,7 +187,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
                     true, lProgressNumerator + "/" + lProgressDenominator + " downloads completed.",
                     DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
 
-            while ((iElapsedWaitTime < GlobalClass.DOWNLOAD_WAIT_TIMEOUT) && !bFileDownloadsComplete && !bDownloadProblem) {
+            while ((iElapsedWaitTime < GlobalClass.DOWNLOAD_WAIT_TIMEOUT) && setDownloadIDs.size() > 0) {
 
                 try {
                     Thread.sleep(iWaitDuration);
@@ -198,9 +203,12 @@ public class Worker_DownloadPostProcessing  extends Worker {
                 if(bDebug) gbwLogFile.flush();
 
                 //Query for remaining downloads:
+                //Create array of download IDs to query:
+                long[] lDownloadIDs = new long[setDownloadIDs.size()];
+                lDownloadIDs = setDownloadIDs.stream().mapToLong(Long::longValue).toArray();
 
                 DownloadManager.Query dmQuery = new DownloadManager.Query();
-                dmQuery.setFilterById(glDownloadIDs);
+                dmQuery.setFilterById(lDownloadIDs);
 
                 Cursor cursor = downloadManager.query(dmQuery);
 
@@ -214,14 +222,13 @@ public class Worker_DownloadPostProcessing  extends Worker {
                         String sLocalURI = cursor.getString(iLocalURIIndex);
                         int iDownloadURI = cursor.getColumnIndex(DownloadManager.COLUMN_URI);
                         String sDownloadURI = cursor.getString(iDownloadURI);
+                        int iDownloadID = cursor.getColumnIndex((DownloadManager.COLUMN_ID));
+                        long lDownloadID = cursor.getLong(iDownloadID);
 
-                        bDownloadProblem = false;
                         bPaused = false;
-                        bFileDownloadsComplete = false;
 
                         switch (status) {
                             case DownloadManager.STATUS_FAILED:
-                                bDownloadProblem = true;
                                 switch (iReasonID) {
                                     case DownloadManager.ERROR_CANNOT_RESUME:
                                         sDownloadFailedReason = "ERROR_CANNOT_RESUME";
@@ -250,13 +257,28 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                     case DownloadManager.ERROR_UNKNOWN:
                                         sDownloadFailedReason = "ERROR_UNKNOWN";
                                         break;
+                                    case 403:
+                                        sDownloadFailedReason = "Web server is not reachable or access to the server has been denied.";
+                                        break;
+                                    case 404:
+                                        sDownloadFailedReason = "File not found.";
+                                        break;
                                 }
                                 sMessage = "\nThere was a problem with a download.";
                                 sMessage = sMessage + "\n" + "Download: " + sDownloadURI;
                                 sMessage = sMessage + "\n" + "Reason ID: " + iReasonID;
                                 sMessage = sMessage + "\n" + "Reason text: " + sDownloadFailedReason;
+                                lProgressNumerator++;
+                                iProgressBarValue = Math.round((lProgressNumerator / (float) lProgressDenominator) * 100);
+                                globalClass.BroadcastProgress(true, sMessage + "\n",
+                                        true, iProgressBarValue,
+                                        true, lProgressNumerator + "/" + lProgressDenominator + " downloads accounted.",
+                                        DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
                                 if(bDebug) gbwLogFile.write(sMessage + "\n\n");
                                 if(bDebug) gbwLogFile.flush();
+
+                                setDownloadIDs.remove(lDownloadID);
+
                                 break;
                             case DownloadManager.STATUS_PAUSED:
                                 bPaused = true;
@@ -288,7 +310,6 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 //No action.
                                 break;
                             case DownloadManager.STATUS_SUCCESSFUL:
-                                bFileDownloadsComplete = true;
 
                                 //As of Android version 11, API level 30, One UI 3.1, the DownloadManager
                                 //  will only store files in the onboard storage, or something like that.
@@ -380,9 +401,11 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                 if(bDebug) gbwLogFile.write("\n");
                                 if(bDebug) gbwLogFile.flush();
 
+                                setDownloadIDs.remove(lDownloadID);
+
                                 break; //end Case DownloadManager.STATUS_SUCCESSFUL.
                         }
-                    } while (cursor.moveToNext() && bFileDownloadsComplete && !bDownloadProblem); //End loop through download query results.
+                    } while (cursor.moveToNext() && setDownloadIDs.size() > 0); //End loop through download query results.
 
                 } //End if cursor has a record.
 
