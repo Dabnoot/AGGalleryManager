@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <color name="colorPrimary">#9966ff</color>
     <color name="colorPrimaryDark">#9933ff</color>
     <color name="colorAccent">#efefef</color>
@@ -28,6 +28,7 @@
     <color name="tab_backcolor_selected">#FF414141</color>
     <color name="color_browser_fragment_button_enabled">#FF555555</color>
 
+    <color name="mtrl_textinput_default_box_stroke_color" tools:override="true">#eb305b</color>
 
     <array name="colors_user_icon">
         <item>@color/md_red_500</item>
@@ -65,9 +66,13 @@
     <color name="md_red_600">#E53935</color>
     <color name="md_red_700">#D32F2F</color>
     <color name="md_red_800">#C62828</color>
+    <color name="md_red_850">#BB1700</color>
     <color name="md_red_900">#B71C1C</color>
+    <color name="md_red_1000">#87000B</color>
+    <color name="md_red_1100">#680000</color>
     <color name="md_red_A100">#FF8A80</color>
     <color name="md_red_A200">#FF5252</color>
+    <color name="md_red_A300">#eb305b</color>
     <color name="md_red_A400">#FF1744</color>
     <color name="md_red_A700">#D50000</color>
 
@@ -327,6 +332,7 @@
     <color name="md_grey_50">#FAFAFA</color>
     <color name="md_grey_100">#F5F5F5</color>
     <color name="md_grey_200">#EEEEEE</color>
+    <color name="md_grey_250">#efefef</color>
     <color name="md_grey_300">#E0E0E0</color>
     <color name="md_grey_400">#BDBDBD</color>
     <color name="md_grey_500">#9E9E9E</color>

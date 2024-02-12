@@ -8,6 +8,7 @@
         <item name="colorPrimaryDark">@color/colorStatusBar</item>    <!-- Status bar color -->
         <item name="colorPrimary">@color/colorActionBar</item>        <!-- Action bar color -->
 
+        <item name="background">@color/colorBackgroundMain</item>
         <item name="android:windowBackground">@color/colorBackgroundMain</item>
         <item name="android:navigationBarColor">@color/colorNavigationBar</item>
         <!--<item name="android:textColor">@color/colorTextColor</item>-->                 <!--Don't set all of the text color as the WebView ContextMenu Colors are VERY had to identify and change.-->
@@ -36,11 +37,11 @@
 
         <item name="colorSurface">@color/colorNavigationBar</item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
-        <!--<item name="android:itemBackground">@color/colorBlack</item>--> <!-- Can set BG color of menu items, context menu items, and perhaps also list items. -->
-        <!--<item name="actionOverflowMenuStyle">@style/custom_optionsMenuStyle</item>--> <!-- Can set background of menu -->
 
         <!--For the spinner style, specifically for item dividers-->
         <item name="android:dropDownListViewStyle">@style/SpinnerStyle</item>
+
+        <item name="android:colorSecondary">@color/md_indigo_800</item>
 
     </style>
 
@@ -125,6 +126,13 @@
         <item name="android:dividerHeight">1dp</item>
     </style>
 
+    <style name="ThemeOverlay.Slider" parent="">
+        <!--https://proandroiddev.com/problems-with-material-range-slider-in-android-15bb4406f774-->
+        <!-- color used by the text in the Tooltip -->
+        <item name="colorOnPrimary">@color/md_grey_250</item>       <!-- Sets RangeSlider hint label text color-->
+        <item name="colorOnBackground">@color/md_grey_900</item>    <!-- Sets RangeSlider hint label background color-->
+        <item name="colorSurface">@color/md_purple_200</item>
+    </style>
 
 
 </resources>
