@@ -124,15 +124,15 @@ public class GlobalClass extends Application {
     //Tag variables:
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmCatalogTagReferenceLists = new ArrayList<>();
     public static final List<TreeMap<Integer, ItemClass_Tag>> gtmApprovedCatalogTagReferenceLists = new ArrayList<>();
-    public AtomicBoolean gabTagsLoaded = new AtomicBoolean(false);
+    public static AtomicBoolean gabTagsLoaded = new AtomicBoolean(false);
     public static AtomicBoolean gabDataLoaded = new AtomicBoolean(false);
     public static final List<TreeMap<String, ItemClass_CatalogItem>> gtmCatalogLists = new ArrayList<>();
     public static final String[] gsCatalogFolderNames = {"Videos", "Images", "Comics"};
 
-    public int giLoadingState = LOADING_STATE_NOT_STARTED;
     public static final int LOADING_STATE_NOT_STARTED = 0;
     public static final int LOADING_STATE_STARTED = 1;
     public static final int LOADING_STATE_FINISHED = 2;
+    public static int giLoadingState = LOADING_STATE_NOT_STARTED;
 
     public static ArrayList<ItemClass_File> galf_Orphaned_Files;
 
@@ -141,47 +141,40 @@ public class GlobalClass extends Application {
     public static TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogAdjacencyAnalysisTreeMap;
     public static final int SORT_BY_DATETIME_LAST_VIEWED = 0;
     public static final int SORT_BY_DATETIME_IMPORTED = 1;
-    public int[] giCatalogViewerSortBySetting = {SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED};
+    public static int[] giCatalogViewerSortBySetting = {SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED, SORT_BY_DATETIME_LAST_VIEWED};
     public static String gsCatalogViewerSortBySharedWithUser = "";
     public static final String[] gsCatalogViewerPreferenceNameSortBy = {"VIDEOS_SORT_BY", "IMAGES_SORT_BY", "COMICS_SORT_BY"};
     public static final String[] gsCatalogViewerPreferenceNameSortAscending = {"VIDEOS_SORT_ASCENDING", "IMAGES_SORT_ASCENDING", "COMICS_SORT_ASCENDING"};
-    public boolean[] gbCatalogViewerSortAscending = {true, true, true};
+    public static boolean[] gbCatalogViewerSortAscending = {true, true, true};
     //Search and Filter Variables:
-    public static final int SEARCH_IN_NO_SELECTION = 0;
-    public static final int SEARCH_IN_TITLE = 1;
-    public static final int SEARCH_IN_ARTIST = 2;
-    public static final int SEARCH_IN_CHARACTERS = 3;
-    public static final int SEARCH_IN_PARODIES = 4;
-    public static final int SEARCH_IN_ITEMID = 5;
-    public int[] giCatalogViewerSearchInSelection = {SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION};
-    public String[] gsCatalogViewerSearchInText = {"", "", ""};
+    public static String[] gsCatalogViewerSearchInText = {"", "", ""};
     public static final int FILTER_BY_NO_SELECTION = 0;
     public static final int FILTER_BY_WEBSOURCE = 1;
     public static final int FILTER_BY_FOLDERSOURCE = 2;
     public static final int FILTER_BY_NOTAGS = 3;
     public static final int FILTER_BY_ITEMPROBLEM = 4;
     public static String[] gsCatalogViewerSearchByGroupID = {"", "", ""};
-    public int[] giCatalogViewerFilterBySelection = {SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION, SEARCH_IN_NO_SELECTION};
+    public static int[] giCatalogViewerFilterBySelection = {FILTER_BY_NO_SELECTION, FILTER_BY_NO_SELECTION, FILTER_BY_NO_SELECTION};
     //Variables for the Sort & Filter resolution/pagecount RangeSlider:
-    public TreeMap<Integer, Integer> gtmVideoResolutions;
-    public int giMinVideoResolutionSelected = -1;
-    public int giMaxVideoResolutionSelected = -1;
-    public int giMinImageMegaPixels = -1;
-    public int giMaxImageMegaPixels; //todo: carry float here.
-    public int giMinImageMegaPixelsSelected = -1;//todo: carry float here.
-    public int giMaxImageMegaPixelsSelected = -1;//todo: carry float here.
-    public int giMinComicPageCount = -1;
-    public int giMaxComicPageCount;
-    public int giMinComicPageCountSelected = -1;
-    public int giMaxComicPageCountSelected = -1;
-    public long glMaxVideoDurationMS = 1; //For the filter range slider.
-    public long glMinVideoDurationMSSelected = -1;
-    public long glMaxVideoDurationMSSelected = -1;
+    public static TreeMap<Integer, Integer> gtmVideoResolutions;
+    public static int giMinVideoResolutionSelected = -1;
+    public static int giMaxVideoResolutionSelected = -1;
+    public static int giMinImageMegaPixels = -1;
+    public static int giMaxImageMegaPixels; //todo: carry float here.
+    public static int giMinImageMegaPixelsSelected = -1;//todo: carry float here.
+    public static int giMaxImageMegaPixelsSelected = -1;//todo: carry float here.
+    public static int giMinComicPageCount = -1;
+    public static int giMaxComicPageCount;
+    public static int giMinComicPageCountSelected = -1;
+    public static int giMaxComicPageCountSelected = -1;
+    public static long glMaxVideoDurationMS = 1; //For the filter range slider.
+    public static long glMinVideoDurationMSSelected = -1;
+    public static long glMaxVideoDurationMSSelected = -1;
     public static ArrayList<TreeSet<Integer>> galtsiCatalogViewerFilterTags;
     //public boolean gbGuestMode;
-    public boolean gbCatalogViewerRefresh = false; //Used when data is edited.
+    public static boolean gbCatalogViewerRefresh = false; //Used when data is edited.
     //public ArrayList<TreeMap<Integer, Integer>> galtmTagHistogram;
-    public boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
+    public static boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
     public static final String gsUnsortedFolderName = "etc";  //Todo: this folder should not be used anymore. Was used when a tag was not assigned to an item.
