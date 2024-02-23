@@ -23,7 +23,6 @@ import androidx.work.WorkManager;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -34,14 +33,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.DocumentsContract;
-import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -210,11 +206,51 @@ public class Activity_Main extends AppCompatActivity {
             }
         }
 
-        boolean bInitDataFolder;
-        if(GlobalClass.gUriDataFolder == null){
-            bInitDataFolder = true;
-        } else {
-            bInitDataFolder = !GlobalClass.CheckIfFileExists(GlobalClass.gUriDataFolder );
+        boolean bInitDataFolder = true;
+        if(GlobalClass.gUriDataFolder != null){
+
+            /*DocumentFile dfDataFolderTest = DocumentFile.fromTreeUri(getApplicationContext(), GlobalClass.gUriDataFolder);
+            if(dfDataFolderTest != null){
+                //bInitDataFolder = !dfDataFolderTest.exists();
+                //The above did not provide an accurate result after the program was closed, data folder deleted, and program restarted.
+
+                //bInitDataFolder = !dfDataFolderTest.isDirectory();
+                //The above did not provide an accurate result after the program was closed, data folder deleted, and program restarted.
+
+                *//*String sUriChild = GlobalClass.gUriDataFolder.toString();
+                String sUriParent = sUriChild.substring(0, sUriChild.lastIndexOf(GlobalClass.gsFileSeparator));
+                Uri uriParent = Uri.parse(sUriParent);
+                try {
+                    bInitDataFolder = !DocumentsContract.isChildDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriDataFolder, uriParent);
+                } catch (Exception e){
+                    String sMessage = "" + e.getMessage();
+                    Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                }*//*
+                //The above did not work to determine if the data folder exists when setting the data folder to an existing
+                //  location because the user typically gives the program permission to the folder containing the data
+                //  rather than the data folder's parent folder, and this child-parent test requires permission to
+                //  access the parent folder, and that permission-to-parent-folder was not provided by the user
+                //  to the program.
+            }*/
+            //Best option to determine if the data folder exists appears to be to attempt to create
+            //  a text file in the storage location:
+            Uri uriWriteTestFile;
+            String sTestFileName = "WriteTest.dat";
+            String sMessage = "Trouble with find/create file: " + sTestFileName;
+            try {
+                uriWriteTestFile = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriDataFolder, GlobalClass.BASE_TYPE_TEXT, sTestFileName);
+                if (uriWriteTestFile != null) {
+                    bInitDataFolder = false;
+                    DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriWriteTestFile);
+                } else {
+                    globalClass.problemNotificationConfig(sMessage, Worker_Catalog_LoadData.CATALOG_LOAD_ACTION_RESPONSE);
+                }
+            } catch (Exception e) {
+                sMessage = sMessage + "\n" + e.getMessage();
+                globalClass.problemNotificationConfig(sMessage, Worker_Catalog_LoadData.CATALOG_LOAD_ACTION_RESPONSE);
+            }
+
+
         }
         GlobalClass.galicu_Users = new ArrayList<>();
         if(bInitDataFolder){
@@ -426,6 +462,7 @@ public class Activity_Main extends AppCompatActivity {
                 if(!bSingleUserInUse){
                     //show the user selection activity:
                     Intent intentUserSelection = new Intent(context, Activity_UserSelection.class);
+                    intentUserSelection.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intentUserSelection);
                 }
             } else {
