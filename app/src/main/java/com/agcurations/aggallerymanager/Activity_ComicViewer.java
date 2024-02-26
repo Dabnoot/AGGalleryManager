@@ -295,12 +295,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
                         if (iSwipeToExitCounter == 0) {
                             makeToast("Start of comic", Toast.LENGTH_SHORT);
                         } else if (iSwipeToExitCounter == 1) {
-                            //right/left - it feels like a "right-swipe" in the comic reference frame.
-                            makeToast("Swipe left again to exit", Toast.LENGTH_SHORT);
-                        } else if (iSwipeToExitCounter == 2) {
-                            if (toastLastToastMessage != null) {
-                                toastLastToastMessage.cancel();
-                            }
+                            makeToast("Exiting...", Toast.LENGTH_SHORT);
                             finish();
                         }
                         iSwipeToExitCounter++;
@@ -322,12 +317,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
                         if (iSwipeToExitCounter == 0) {
                             makeToast("End of comic", Toast.LENGTH_SHORT);
                         } else if (iSwipeToExitCounter == 1) {
-                            //right/left - it feels like a "right-swipe" in the comic reference frame.
-                            makeToast("Swipe right again to exit", Toast.LENGTH_SHORT);
-                        } else if (iSwipeToExitCounter == 2) {
-                            if (toastLastToastMessage != null) {
-                                toastLastToastMessage.cancel();
-                            }
+                            makeToast("Exiting...", Toast.LENGTH_SHORT);
                             finish();
                         }
                         iSwipeToExitCounter++;
