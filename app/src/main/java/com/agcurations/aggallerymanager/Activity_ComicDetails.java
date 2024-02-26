@@ -170,7 +170,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                     //Update the catalog file with the new record of missing pages:
                     globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
                 }
-                globalClass.gbCatalogViewerRefresh = true;
+                GlobalClass.gbCatalogViewerRefresh = true;
             }
         }
 
@@ -235,11 +235,8 @@ public class Activity_ComicDetails extends AppCompatActivity {
     }
 
     public void DeleteComic(){
-        gtmComicPages = new TreeMap<>();
-        if(gRecyclerViewComicPagesAdapter != null) {
-            gRecyclerViewComicPagesAdapter.notifyDataSetChanged();
-        }
-        globalClass.gbCatalogViewerRefresh = true;
+
+        GlobalClass.gbCatalogViewerRefresh = true;
         Toast.makeText(getApplicationContext(), "Deleting comic...", Toast.LENGTH_SHORT).show();
 
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
@@ -254,7 +251,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 .addTag(Worker_Catalog_DeleteItem.TAG_WORKER_CATALOG_DELETEITEM) //To allow finding the worker later.
                 .build();
         WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogDeleteItem);
-        globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
+        GlobalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
 
         finish();
 
@@ -285,18 +282,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
 
             recyclerView.setLayoutManager(gridLayoutManager);
-
-            View header = LayoutInflater.from(this).inflate(
-                    R.layout.activity_comic_details_header, recyclerView, false);
-            header.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(v.getContext(), "Header clicked.",
-                            Toast.LENGTH_SHORT).show();
-                }
-            });
-
-
 
         } else {
             // In portrait
@@ -430,8 +415,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         @Override
         public Activity_ComicDetails.RecyclerViewComicPagesAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                                                                  int viewType) {
-
-
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
             if (viewType == ITEM_VIEW_TYPE_HEADER) {
@@ -451,10 +434,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             return new Activity_ComicDetails.RecyclerViewComicPagesAdapter.ViewHolder(v);
         }
-
-
-
-
 
 
 
@@ -528,7 +507,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
                         Intent intentComicDetailsEditor = new Intent(getApplicationContext(), Activity_ComicDetailsEditor.class);
                         intentComicDetailsEditor.putExtra(Activity_ComicDetailsEditor.EXTRA_COMIC_CATALOG_ITEM, gciCatalogItem);
                         startActivity(intentComicDetailsEditor);
-
                     }
                 });
 
@@ -536,7 +514,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
                 sThumbnailText = "Page " + (position + 1) + " of " + getItemCount();  //Position is 0-based.
             }
 
-            Uri uriThumbnailFileName = gtmComicPages.get(position);
+            Uri uriThumbnailFileName = treeMap.get(position);
             Glide.with(getApplicationContext()).load(uriThumbnailFileName).into(holder.ivThumbnail);
 
             holder.tvThumbnailText.setText(sThumbnailText);
@@ -544,7 +522,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
 
             holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View v) {
+                public void onClick(View view) {
                     if (gbDebugTouch)
                         Toast.makeText(getApplicationContext(), "Click Item Number " + position, Toast.LENGTH_SHORT).show();
                     StartComicViewerActivity(position);
@@ -552,12 +530,57 @@ public class Activity_ComicDetails extends AppCompatActivity {
             });
 
             if(holder.button_Delete != null){
-                holder.button_Delete.setVisibility(View.INVISIBLE);
+                if(uriThumbnailFileName != null) {
+                    final String sUriFileToDelete = uriThumbnailFileName.toString();
+                    holder.button_Delete.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+
+                            //Present confirmation that the user wishes to delete this item.
+                            String sConfirmationMessage = "Confirm file deletion: " + GlobalClass.cleanHTMLCodedCharacters(sUriFileToDelete);
+
+                            AlertDialog.Builder builder = new AlertDialog.Builder(Activity_ComicDetails.this, R.style.AlertDialogCustomStyle);
+                            builder.setTitle("Delete File");
+                            builder.setMessage(sConfirmationMessage);
+                            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.dismiss();
+                                    Toast.makeText(getApplicationContext(), "Deleting file...", Toast.LENGTH_SHORT).show();
+                                    boolean bDeleteSuccess = false;
+                                    try {
+                                        Uri uriSourceFile = Uri.parse(sUriFileToDelete);
+                                        bDeleteSuccess = DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriSourceFile);
+                                    } catch (Exception e) {
+                                        String sMessage = "Could not delete file. Message: " + e.getMessage();
+                                        Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_LONG).show();
+                                    }
+                                    if (bDeleteSuccess) {
+                                        Toast.makeText(getApplicationContext(), "File successfully deleted.", Toast.LENGTH_SHORT).show();
+                                        //Trigger a reinitialization of the gridview?
+                                        removeAt(position);
+                                        gciCatalogItem.iFile_Count--;
+                                        globalClass.CatalogDataFile_UpdateRecord(gciCatalogItem);
+                                    }
+                                }
+                            });
+                            builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                            AlertDialog adConfirmationDialog = builder.create();
+                            adConfirmationDialog.show();
+                        }
+                    });
+                }
+
             }
 
 
         }
 
+        public void removeAt(int position) {
+            treeMap.remove(position);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, treeMap.size());
+        }
 
     }
 
@@ -584,15 +607,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
         super.onResume();
 
         loadComicPageData();
-
-/*        if(globalClass.ObfuscationOn) {
-            //Obfuscate data:
-            Obfuscate();
-        } else {
-            //Remove obfuscation:
-            RemoveObfuscation();
-        }*/
-
 
     }
 
