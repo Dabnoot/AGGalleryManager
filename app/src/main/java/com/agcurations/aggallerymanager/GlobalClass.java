@@ -637,7 +637,6 @@ public class GlobalClass extends Application {
         String sUriFile = uriParent.toString()
                 + gsFileSeparator + sFileName;
         Uri uriFile = Uri.parse(sUriFile);
-
         return CheckIfFileExists(uriFile, uriParent);
     }
 
@@ -672,6 +671,7 @@ public class GlobalClass extends Application {
 
             String sUriChild = uriFile.toString();
             String sUriParent = sUriChild.substring(0, sUriChild.lastIndexOf(gsFileSeparator));
+
             Uri uriParent = Uri.parse(sUriParent);
             return CheckIfFileExists(uriFile, uriParent);
         }
@@ -813,7 +813,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_CATALOG_ITEM = "com.agcurations.aggallerymanager.extra.catalog_item";
     public static final String EXTRA_DATA_FILE_URI_STRING = "com.agcurations.aggallerymanager.extra.data_file_uri_string";
 
-    public static final int giCatalogFileVersion = 6;
+    public static final int giCatalogFileVersion = 7;
     public static String getCatalogHeader(){
         String sHeader = "";
         sHeader = sHeader + "MediaCategory";                        //Video, image, or comic.
@@ -927,8 +927,9 @@ public class GlobalClass extends Application {
 
         return sbRecord.toString();
     }
-    
-    public static ItemClass_CatalogItem ConvertStringToCatalogItem(String[] sRecord){
+
+
+    public static ItemClass_CatalogItem ConvertStringToCatalogItem(String[] sRecord, int iCatalogFileVersion){
         //Designed for interpretting a line as read from a catalog file.
         ItemClass_CatalogItem ci =  new ItemClass_CatalogItem();
         int iFieldIndex = 0; // Allows insertion of a field in the middle of the sequence
@@ -958,9 +959,11 @@ public class GlobalClass extends Application {
         ci.sComicLanguages = JumbleStorageText(sRecord[iFieldIndex++]);                             //Language(s = sRecord[0] found in the comic
         ci.sComicParodies = JumbleStorageText(sRecord[iFieldIndex++]);                              //Common comic tag category
         ci.sTitle = JumbleStorageText(sRecord[iFieldIndex++]);                                      //Comic name
-        ci.sComicVolume = JumbleStorageText(sRecord[iFieldIndex++]);                                //Comic "book number" or volume string
-        ci.sComicChapter = JumbleStorageText(sRecord[iFieldIndex++]);                               //Comic chapter string
-        ci.sComicChapterSubtitle = JumbleStorageText(sRecord[iFieldIndex++]);                       //Comic chapter subtitle
+        if(iCatalogFileVersion > 5) {
+            ci.sComicVolume = JumbleStorageText(sRecord[iFieldIndex++]);                                //Comic "book number" or volume string
+            ci.sComicChapter = JumbleStorageText(sRecord[iFieldIndex++]);                               //Comic chapter string
+            ci.sComicChapterSubtitle = JumbleStorageText(sRecord[iFieldIndex++]);                       //Comic chapter subtitle
+        }
         ci.iComicPages = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));               //Total number of pages as defined at the comic source
         ci.iComic_Max_Page_ID = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));        //Max comic page id extracted from file names
         ci.sComic_Missing_Pages = JumbleStorageText(sRecord[iFieldIndex++]);                        //Missing page numbers
@@ -988,10 +991,16 @@ public class GlobalClass extends Application {
         return ci;
     }
 
+    public static ItemClass_CatalogItem ConvertStringToCatalogItem(String sRecord, int iCatalogFileVersion){
+        String[] sRecord2 =  sRecord.split("\t");
+        return ConvertStringToCatalogItem(sRecord2, iCatalogFileVersion);
+    }
+
     public static ItemClass_CatalogItem ConvertStringToCatalogItem(String sRecord){
         String[] sRecord2 =  sRecord.split("\t");
-        return ConvertStringToCatalogItem(sRecord2);
+        return ConvertStringToCatalogItem(sRecord2, giCatalogFileVersion);
     }
+
 
     public void CatalogDataFile_CreateNewRecord(ItemClass_CatalogItem ci) throws Exception {
         ArrayList<ItemClass_CatalogItem> alci_CatalogItems = new ArrayList<>();
@@ -1000,6 +1009,37 @@ public class GlobalClass extends Application {
     }
 
     public static final String CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE";
+
+    /**
+     *
+     * @param iMediaCategory    Media category for the catalog file to be read/written.
+     * @return                  True = No other processes are using the file as checked by
+     *                                 GlobalClass.gAB_CatalogFileAvailable.
+     *                          False = The file is not available after waiting for a set time
+     *                                  duration for the file to become available.
+     */
+    public boolean IsCatalogFileAvailability(int iMediaCategory){
+        //Checks to see if a particular catalog file is available, and if not, wait for it to become available.
+        //  If the file does not become available within a time limit, return an indication that the
+        //  file is not available.
+        int iMaxWaitTimeMinutes = 5;
+        int iMaxWaitTimeSeconds = iMaxWaitTimeMinutes * 60;
+        long lMaxWaitTimeMS = iMaxWaitTimeSeconds * 1000;
+        long lCummulativeWaitTimeMS = 0;
+        int iWaitTimeInvervalMS = 250;
+        while(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get() && lCummulativeWaitTimeMS < lMaxWaitTimeMS){
+            try {
+                Thread.sleep(iWaitTimeInvervalMS);
+                lCummulativeWaitTimeMS += iWaitTimeInvervalMS;
+            } catch (Exception ignored){
+                return false;
+            }
+        }
+        if(lCummulativeWaitTimeMS >= lMaxWaitTimeMS){
+            return false;
+        }
+        return true;
+    }
 
     public String CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
 
@@ -1018,18 +1058,10 @@ public class GlobalClass extends Application {
         }
 
         //Wait for the catalog file to become available:
-        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
-            try {
-                Thread.sleep(250);
-            } catch (Exception e){
-                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
-                return sMessage;
-            }
+        if(!IsCatalogFileAvailability(iMediaCategory)){
+            return "Catalog file is being used by another process.";
         }
         GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
-
-
-
 
         gbTagHistogramRequiresUpdate[iMediaCategory] = true;
 
@@ -1123,13 +1155,8 @@ public class GlobalClass extends Application {
         }
 
         //Wait for the catalog file to become available:
-        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
-            try {
-                Thread.sleep(250);
-            } catch (Exception e){
-                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
-                return sMessage;
-            }
+        if(!IsCatalogFileAvailability(iMediaCategory)){
+            return "Catalog file is being used by another process.";
         }
         GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
 
@@ -1147,7 +1174,7 @@ public class GlobalClass extends Application {
             String sLine = brReader.readLine();
             ItemClass_CatalogItem ciFromFile;
             while (sLine != null) {
-                ciFromFile = ConvertStringToCatalogItem(sLine);
+                ciFromFile = ConvertStringToCatalogItem(sLine, giCatalogFileVersion);
 
                 //Check to see if this record is one of the records that we want to update:
                 for (ItemClass_CatalogItem ciToUpdate: alci_CatalogItems) {
@@ -1278,13 +1305,8 @@ public class GlobalClass extends Application {
         }
 
         //Wait for the catalog file to become available:
-        if(!GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].get()){
-            try {
-                Thread.sleep(250);
-            } catch (Exception e){
-                sMessage = "Error while waiting for catalog file to be available. " + e.getMessage();
-                return sMessage;
-            }
+        if(!IsCatalogFileAvailability(iMediaCategory)){
+            return "Catalog file is being used by another process.";
         }
         GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
 
@@ -3550,6 +3572,12 @@ public class GlobalClass extends Application {
     public static boolean gbComicAutoDetect = true; //Automatically Detect/Analyze webpage contents once page has loaded.
 
     public static final int DOWNLOAD_WAIT_TIMEOUT = 2 * 60 * 60 * 1000; //2 hours in milliseconds.
+
+    //=====================================================================================
+    //===== Catalog Analysis Options ================================================================
+    //=====================================================================================
+
+    public static boolean bAllowCheckAndMoveOfComicFolders = false;
 
     //==============================================================================================
     //=========== Other Options ====================================================================
