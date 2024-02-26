@@ -442,6 +442,19 @@ public class Fragment_CatalogSort extends Fragment {
                     .apply();
         }
 
+        //Read SortOrder:
+        if(GlobalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory] != gbCatalogViewerSortAscending) {
+            GlobalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory] = gbCatalogViewerSortAscending;
+            //Record the user's selected sort order:
+            if(getActivity() != null) {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
+                sharedPreferences.edit()
+                        .putBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory],
+                                GlobalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory])
+                        .apply();
+            }
+        }
+
         //Read SharedWithUser selection:
         AutoCompleteTextView autoCompleteTextView_SharedWithUser = getView().findViewById(R.id.autoCompleteTextView_SharedWithUser);
         String sSharedUser = autoCompleteTextView_SharedWithUser.getText().toString();
