@@ -75,11 +75,11 @@ public class Worker_Catalog_LoadData extends Worker {
         GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Images
         GlobalClass.galtsiCatalogViewerFilterTags.add(new TreeSet<>()); //Comics
 
-        if(globalClass.giLoadingState == GlobalClass.LOADING_STATE_STARTED
-            || globalClass.giLoadingState == GlobalClass.LOADING_STATE_FINISHED){
+        if(GlobalClass.giLoadingState == GlobalClass.LOADING_STATE_STARTED
+            || GlobalClass.giLoadingState == GlobalClass.LOADING_STATE_FINISHED){
             return Result.failure();
         }
-        globalClass.giLoadingState = GlobalClass.LOADING_STATE_STARTED;
+        GlobalClass.giLoadingState = GlobalClass.LOADING_STATE_STARTED;
 
         GlobalClass.gsUriAppRootPrefix = GlobalClass.gUriDataFolder.toString();
 
@@ -204,19 +204,19 @@ public class Worker_Catalog_LoadData extends Worker {
                     false, "Reading Tags",
                     CATALOG_LOAD_ACTION_RESPONSE);
         }
-        globalClass.gabTagsLoaded.set(true);
+        GlobalClass.gabTagsLoaded.set(true);
         globalClass.populateApprovedTags();
         stopWatch.PostDebugLogAndRestart("Tag data initialized/read with duration ");
 
         //Configure video resolution options:
         //Prepare to list possible item resolutions:
-        globalClass.gtmVideoResolutions = new TreeMap<>();
-        globalClass.gtmVideoResolutions.put(0,  240);
-        globalClass.gtmVideoResolutions.put(1,  360);
-        globalClass.gtmVideoResolutions.put(2,  480);
-        globalClass.gtmVideoResolutions.put(3,  720);
-        globalClass.gtmVideoResolutions.put(4, 1080);
-        globalClass.gtmVideoResolutions.put(5, 2160);
+        GlobalClass.gtmVideoResolutions = new TreeMap<>();
+        GlobalClass.gtmVideoResolutions.put(0,  240);
+        GlobalClass.gtmVideoResolutions.put(1,  360);
+        GlobalClass.gtmVideoResolutions.put(2,  480);
+        GlobalClass.gtmVideoResolutions.put(3,  720);
+        GlobalClass.gtmVideoResolutions.put(4, 1080);
+        GlobalClass.gtmVideoResolutions.put(5, 2160);
 
         iProgressNumerator++;
         iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
@@ -229,7 +229,204 @@ public class Worker_Catalog_LoadData extends Worker {
         stopWatch.Reset();
         for(int iMediaCategory = 0; iMediaCategory < 3; iMediaCategory++){
 
-            GlobalClass.gtmCatalogLists.add(readCatalogFileToCatalogItems(iMediaCategory));
+            stopWatch.Start();
+
+            Uri uriCatalogFolder = GlobalClass.gUriCatalogFolders[iMediaCategory];
+            Uri uriCatalogContentsFile = GlobalClass.gUriCatalogContentsFiles[iMediaCategory];
+
+            if (!GlobalClass.CheckIfFileExists(uriCatalogFolder)) {
+                problemNotificationConfig("Catalog data folder does not exist: " + uriCatalogFolder + ".");
+                return Result.failure();
+            } else {
+                stopWatch.PostDebugLogAndRestart("Catalog folder existence confirmed at duration ");
+                if(uriCatalogContentsFile == null){
+                    return Result.failure();
+                }
+                TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = new TreeMap<>();
+
+                Long lCatalogContentsFileSize = globalClass.GetFileSize(uriCatalogContentsFile.toString());
+                stopWatch.PostDebugLogAndRestart("Catalog contents file size gathered after duration ");
+
+                if(lCatalogContentsFileSize == 0) {
+
+                    OutputStream osCatalogContentsFile = null;
+                    try {
+                        osCatalogContentsFile = GlobalClass.gcrContentResolver.openOutputStream(uriCatalogContentsFile, "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
+                        if(osCatalogContentsFile == null){
+                            throw new Exception();
+                        }
+                        //Write the activity_comic_details_header line to the file:
+                        osCatalogContentsFile.write(GlobalClass.getCatalogHeader().getBytes()); //Write the header.
+                        osCatalogContentsFile.write("\n".getBytes());
+
+                    } catch (Exception e) {
+                        problemNotificationConfig("Problem during Catalog Contents File write:\n" + GlobalClass.GetFileName(uriCatalogContentsFile) + "\n\n" + e.getMessage());
+                    } finally {
+                        try {
+                            if(osCatalogContentsFile != null){
+                                osCatalogContentsFile.flush();
+                                osCatalogContentsFile.close();
+                            }
+                        } catch (IOException e) {
+                            problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + GlobalClass.GetFileName(uriCatalogContentsFile) + "\n\n" + e.getMessage());
+
+                        }
+                    }
+                } else {
+
+                    //Build the internal list of entries.
+                    //Read the list of entries and populate the catalog array:
+                    //BufferedReader brReader;
+                    InputStream isCatalogReader = null;
+                    try {
+
+                        //Wait for the catalog file to become available:
+                        if(!globalClass.IsCatalogFileAvailability(iMediaCategory)){
+                            return Result.failure();
+                        }
+                        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
+
+                        isCatalogReader = GlobalClass.gcrContentResolver.openInputStream(uriCatalogContentsFile);
+                        stopWatch.PostDebugLogAndRestart("Opening InputStream to catalog file completed at duration ");
+
+                        String sCatalogRecordData;
+                        String[] sCatalogRecords = null;
+
+                        if(isCatalogReader != null) {
+
+                            //Don't use InputStream.readAllBytes() if using a version of Java less than 9.
+                            //byte[] bytesCatalogData = isCatalogReader.readAllBytes(); //Read all data at once as this is fastest.
+                            byte[] bytesCatalogData = GlobalClass.readAllBytes(isCatalogReader);
+
+                            isCatalogReader.close();
+
+                            stopWatch.PostDebugLogAndRestart("All bytes read from catalog file at duration ");
+                            sCatalogRecordData = new String(bytesCatalogData);
+                            sCatalogRecords = sCatalogRecordData.split("\n");
+
+                            stopWatch.PostDebugLogAndRestart("Catalog file bytes processed at duration ");
+                        }
+
+                        GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
+
+                        if(sCatalogRecords == null){
+                            continue; //Loop to the next catalog file.
+                        }
+
+                        int iProgressNumeratorCatReadLoop = 0;
+                        int iProgressDenominatorCatReadLoop = sCatalogRecords.length;
+                        iProgressBarValue = Math.round((iProgressNumeratorCatReadLoop / (float) iProgressDenominatorCatReadLoop) * 100);
+                        globalClass.BroadcastProgress(false, "",
+                                true, iProgressBarValue,
+                                true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
+                                CATALOG_LOAD_ACTION_RESPONSE);
+
+
+                        ItemClass_CatalogItem ci;
+                        String sLine;
+
+                        //Get the version of the catalog file:
+                        int iCatalogFileVersion = GlobalClass.giCatalogFileVersion;
+                        sLine = sCatalogRecords[0];
+                        boolean bUpdateCatalogFileToLatestVersion = false;
+                        String[] sHeaderFields = sLine.split("\t");
+                        if(sHeaderFields.length > 0) {
+                            String sCatalogFileVersionBulk = sHeaderFields[sHeaderFields.length - 1];
+                            String[] sCatalogFileVersionBulk2 = sCatalogFileVersionBulk.split(":");
+
+                            if (sCatalogFileVersionBulk2.length == 2) {
+                                try {
+                                    iCatalogFileVersion = Integer.parseInt(sCatalogFileVersionBulk2[1]);
+                                } catch (Exception ignored) {
+                                    //Could not parse catalog file version.
+                                }
+                                if (iCatalogFileVersion != GlobalClass.giCatalogFileVersion) {
+                                    bUpdateCatalogFileToLatestVersion = true;
+                                }
+                            }
+                        }
+
+                        for(int i = 1; i < sCatalogRecords.length; i++){
+                            sLine = sCatalogRecords[i];
+                            if(sLine.equals("")){
+                                continue;
+                            }
+                            ci = GlobalClass.ConvertStringToCatalogItem(sLine, iCatalogFileVersion);
+
+                            if(ci.iSpecialFlag ==  ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
+                                if(ci.sThumbnail_File.equals("")){
+                                    Log.d("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "============= M3U8 FILE DETECTED WITH MISSING THUMBNAIL DEFINITION ============");
+                                    Log.d("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "============= Come and fix it. ============");
+                                }
+                            }
+
+                            tmCatalogItems.put(ci.sItemID, ci);
+
+                            //Calculate amounts for use in the Sort/Filter capabilities of the comic viewer:
+                            if (ci.lDuration_Milliseconds > GlobalClass.glMaxVideoDurationMS) {
+                                GlobalClass.glMaxVideoDurationMS = ci.lDuration_Milliseconds; //For the filter range slider.
+                            }
+                            if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                                int iMegaPixels = (ci.iHeight * ci.iWidth) / 1000000;
+                                if (GlobalClass.giMinImageMegaPixels == -1) {
+                                    GlobalClass.giMinImageMegaPixels = iMegaPixels;
+                                }
+                                if (iMegaPixels < GlobalClass.giMinImageMegaPixels) {
+                                    GlobalClass.giMinImageMegaPixels = iMegaPixels;
+                                }
+                                if (iMegaPixels > GlobalClass.giMaxImageMegaPixels) {
+                                    GlobalClass.giMaxImageMegaPixels = iMegaPixels;
+                                }
+                            } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                                int iPageCount = ci.iComicPages;
+                                if (GlobalClass.giMinComicPageCount == -1) {
+                                    GlobalClass.giMinComicPageCount = iPageCount;
+                                }
+                                if (iPageCount < GlobalClass.giMinComicPageCount) {
+                                    GlobalClass.giMinComicPageCount = iPageCount;
+                                }
+                                if (iPageCount > GlobalClass.giMaxComicPageCount) {
+                                    GlobalClass.giMaxComicPageCount = iPageCount;
+                                }
+                            }
+
+                            iProgressNumeratorCatReadLoop++;
+                            if(iProgressNumeratorCatReadLoop % 100 == 0) {
+                                iProgressBarValue = Math.round((iProgressNumeratorCatReadLoop / (float) iProgressDenominatorCatReadLoop) * 100);
+                                globalClass.BroadcastProgress(false, "",
+                                        true, iProgressBarValue,
+                                        true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
+                                        CATALOG_LOAD_ACTION_RESPONSE);
+                            }
+                        }
+
+                        //Add the data read from the file to memory:
+                        GlobalClass.gtmCatalogLists.add(tmCatalogItems);
+
+                        GlobalClass.gbTagHistogramRequiresUpdate[iMediaCategory] = false;
+
+                        if(bUpdateCatalogFileToLatestVersion){
+                            String sMessage = "Updating " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog file to the latest version.";
+                            globalClass.CatalogDataFile_UpdateCatalogFile(iMediaCategory, sMessage);
+                        }
+
+                    } catch (IOException e) {
+                        problemNotificationConfig("Trouble reading CatalogContents.dat: " + GlobalClass.GetFileName(uriCatalogFolder));
+                    } finally {
+                        if (isCatalogReader != null) {
+                            try {
+                                isCatalogReader.close();
+                            } catch (Exception e) {
+                                problemNotificationConfig("Problem during Catalog Contents file reader close:\n" + GlobalClass.GetFileName(uriCatalogFolder) + "\n\n" + e.getMessage());
+                            }
+                        }
+                    }
+                    stopWatch.PostDebugLogAndRestart("Processing catalog contents records completed at duration ");
+                } //End read of catalog file.
+
+
+            } //End if catalog media type folder (videos, images, comics) exists
+
             iProgressNumerator++;
             iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
             globalClass.BroadcastProgress(false, "",
@@ -237,7 +434,9 @@ public class Worker_Catalog_LoadData extends Worker {
                     false, "Reading Catalogs",
                     CATALOG_LOAD_ACTION_RESPONSE);
             stopWatch.PostDebugLogAndRestart("Catalog data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " initialized/read with duration ");
-        }
+
+        } //End media categor loop for read of catalogs.
+
         stopWatch.PostDebugLogAndRestart("Catalog data initialized/read with duration ");
 
 
@@ -316,7 +515,7 @@ public class Worker_Catalog_LoadData extends Worker {
 
         LogFilesMaintenance();
         stopWatch.PostDebugLogAndRestart("Log file maintenance completed with duration ");
-        globalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
+        GlobalClass.giLoadingState = GlobalClass.LOADING_STATE_FINISHED;
 
         //Send a broadcast notifying that the data load operation is complete:
         Intent broadcastIntent_CatalogLoadResponse = new Intent();
@@ -363,7 +562,7 @@ public class Worker_Catalog_LoadData extends Worker {
             }
         } catch (Exception e){
             String sMessage = "Trouble with find/create folder: " + sFolderName;
-            Log.d("Worker_Catalog_LoadData:getDataFileOrCreateIt", sMessage);
+            Log.d("Worker_Catalog_LoadData:initSubfolder", sMessage);
         }
         return fSubFolder;
 
@@ -479,241 +678,6 @@ public class Worker_Catalog_LoadData extends Worker {
         return storages;
     }
 
-    private TreeMap<String, ItemClass_CatalogItem> readCatalogFileToCatalogItems(int iMediaCategory){
-
-        StopWatch stopWatch = new StopWatch(false);
-        stopWatch.Start();
-
-        Uri uriCatalogFolder = GlobalClass.gUriCatalogFolders[iMediaCategory];
-        Uri uriCatalogContentsFile = GlobalClass.gUriCatalogContentsFiles[iMediaCategory];
-
-        if (!GlobalClass.CheckIfFileExists(uriCatalogFolder)) {
-            problemNotificationConfig("Catalog data folder does not exist: " + uriCatalogFolder + ".");
-            return null;
-        } else {
-            stopWatch.PostDebugLogAndRestart("Catalog folder existence confirmed at duration ");
-            if(uriCatalogContentsFile == null){
-                return null;
-            }
-            TreeMap<String, ItemClass_CatalogItem> tmCatalogItems = new TreeMap<>();
-
-            Long lCatalogContentsFileSize = globalClass.GetFileSize(uriCatalogContentsFile.toString());
-            stopWatch.PostDebugLogAndRestart("Catalog contents file size gathered after duration ");
-
-            if(lCatalogContentsFileSize == 0) {
-
-                OutputStream osCatalogContentsFile = null;
-                try {
-                    osCatalogContentsFile = GlobalClass.gcrContentResolver.openOutputStream(uriCatalogContentsFile, "wa"); //Mode wa = write-append. See https://developer.android.com/reference/android/content/ContentResolver#openOutputStream(android.net.Uri,%20java.lang.String)
-                    if(osCatalogContentsFile == null){
-                        throw new Exception();
-                    }
-                    //Write the activity_comic_details_header line to the file:
-                    osCatalogContentsFile.write(GlobalClass.getCatalogHeader().getBytes()); //Write the header.
-                    osCatalogContentsFile.write("\n".getBytes());
-
-                } catch (Exception e) {
-                    problemNotificationConfig("Problem during Catalog Contents File write:\n" + GlobalClass.GetFileName(uriCatalogContentsFile) + "\n\n" + e.getMessage());
-                } finally {
-                    try {
-                        if(osCatalogContentsFile != null){
-                            osCatalogContentsFile.flush();
-                            osCatalogContentsFile.close();
-                        }
-                    } catch (IOException e) {
-                        problemNotificationConfig("Problem during Catalog Contents File flush/close:\n" + GlobalClass.GetFileName(uriCatalogContentsFile) + "\n\n" + e.getMessage());
-
-                    }
-                }
-            } else {
-
-                //Build the internal list of entries.
-                //Read the list of entries and populate the catalog array:
-                //BufferedReader brReader;
-                InputStream isCatalogReader = null;
-                try {
-
-                    isCatalogReader = GlobalClass.gcrContentResolver.openInputStream(uriCatalogContentsFile);
-                    stopWatch.PostDebugLogAndRestart("Opening InputStream to catalog file completed at duration ");
-
-                    String sCatalogRecordData;
-                    String[] sCatalogRecords = null;
-
-                    if(isCatalogReader != null) {
-
-
-
-                        //Don't use InputStream.readAllBytes() if using a version of Java less than 9.
-                        //byte[] bytesCatalogData = isCatalogReader.readAllBytes(); //Read all data at once as this is fastest.
-                        byte[] bytesCatalogData = GlobalClass.readAllBytes(isCatalogReader);
-
-                        isCatalogReader.close();
-
-                        stopWatch.PostDebugLogAndRestart("All bytes read from catalog file at duration ");
-                        sCatalogRecordData = new String(bytesCatalogData);
-                        sCatalogRecords = sCatalogRecordData.split("\n");
-
-                        stopWatch.PostDebugLogAndRestart("Catalog file bytes processed at duration ");
-                    }
-                    if(sCatalogRecords == null){
-                        return tmCatalogItems;
-                    }
-
-                    int iProgressNumerator = 0;
-                    int iProgressDenominator = sCatalogRecords.length;
-                    int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                    globalClass.BroadcastProgress(false, "",
-                            true, iProgressBarValue,
-                            true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
-                            CATALOG_LOAD_ACTION_RESPONSE);
-
-
-                    ItemClass_CatalogItem ci;
-                    String sLine;
-                    for(int i = 1; i < sCatalogRecords.length; i++){
-                        sLine = sCatalogRecords[i];
-                        if(sLine.equals("")){
-                            continue;
-                        }
-                        ci = GlobalClass.ConvertStringToCatalogItem(sLine);
-
-                        if(ci.iSpecialFlag ==  ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
-                            if(ci.sThumbnail_File.equals("")){
-                                Log.d("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "============= M3U8 FILE DETECTED WITH MISSING THUMBNAIL DEFINITION ============");
-                                Log.d("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "============= Come and fix it. ============");
-                                //Commented code below was previously used to detect if there was a missing thumbnail definition.
-                                //  Last used on 2/14/2023.
-                                /*iM3U8VideosWithoutThumbnailFile++;
-                                DocumentFile dfVideosFolder = globalClass.gdfCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS];
-                                if(dfVideosFolder != null){
-                                    DocumentFile dfVideoTagFolder = dfVideosFolder.findFile(ci.sFolder_Name);
-                                    if(dfVideoTagFolder != null){
-                                        DocumentFile dfItemFolder = dfVideoTagFolder.findFile(ci.sItemID);
-                                        if(dfItemFolder != null){
-                                            DocumentFile dfM3U8File = dfItemFolder.findFile(ci.sFilename);
-                                            if(dfM3U8File != null){
-                                                InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(dfM3U8File.getUri());
-                                                if (isM3U8File != null) {
-                                                    BufferedReader brReader;
-                                                    brReader = new BufferedReader(new InputStreamReader(isM3U8File));
-                                                    String sLine2 = brReader.readLine();
-
-                                                    //Get a listing of all of the files in this folder:
-                                                    final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(dfItemFolder.getUri(),
-                                                            DocumentsContract.getDocumentId(dfItemFolder.getUri()));
-
-                                                    Cursor c = null;
-                                                    try {
-                                                        ArrayList<String> alsFileNames = new ArrayList<>();
-                                                        c = GlobalClass.gcrContentResolver.query(childrenUri, new String[]{
-                                                                DocumentsContract.Document.COLUMN_DISPLAY_NAME
-                                                        }, null, null, null);
-                                                        if (c != null) {
-                                                            while (c.moveToNext()) {
-                                                                final String sDocumentName = c.getString(0);
-                                                                alsFileNames.add(sDocumentName);
-                                                            }
-                                                        }
-                                                        while (sLine2 != null) {
-                                                            if (!sLine2.startsWith("#") && sLine2.contains(".st")) {
-                                                                if(alsFileNames.contains(sLine2)){
-                                                                    ci.sThumbnail_File = sLine2;
-                                                                    break;
-                                                                }
-                                                            }
-                                                            // read next line
-                                                            sLine2 = brReader.readLine();
-                                                        }
-                                                        brReader.close();
-                                                        isM3U8File.close();
-
-                                                    } catch (Exception e) {
-                                                        Log.w("Worker_Catalog_LoadData:readCatalogFileToCatalogItems()", "Failed query: " + e);
-                                                    } finally {
-                                                        if (c != null) {
-                                                            c.close();
-                                                        }
-                                                    }
-
-
-
-
-
-
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-*/
-                            }
-                        }
-
-
-
-                        tmCatalogItems.put(ci.sItemID, ci);
-
-                        //Calculate amounts for use in the Sort/Filter capabilities of the comic viewer:
-                        if (ci.lDuration_Milliseconds > globalClass.glMaxVideoDurationMS) {
-                            globalClass.glMaxVideoDurationMS = ci.lDuration_Milliseconds; //For the filter range slider.
-                        }
-                        if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                            int iMegaPixels = (ci.iHeight * ci.iWidth) / 1000000;
-                            if (globalClass.giMinImageMegaPixels == -1) {
-                                globalClass.giMinImageMegaPixels = iMegaPixels;
-                            }
-                            if (iMegaPixels < globalClass.giMinImageMegaPixels) {
-                                globalClass.giMinImageMegaPixels = iMegaPixels;
-                            }
-                            if (iMegaPixels > globalClass.giMaxImageMegaPixels) {
-                                globalClass.giMaxImageMegaPixels = iMegaPixels;
-                            }
-                        } else if (iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                            int iPageCount = ci.iComicPages;
-                            if (globalClass.giMinComicPageCount == -1) {
-                                globalClass.giMinComicPageCount = iPageCount;
-                            }
-                            if (iPageCount < globalClass.giMinComicPageCount) {
-                                globalClass.giMinComicPageCount = iPageCount;
-                            }
-                            if (iPageCount > globalClass.giMaxComicPageCount) {
-                                globalClass.giMaxComicPageCount = iPageCount;
-                            }
-                        }
-
-                        iProgressNumerator++;
-                        if(iProgressNumerator % 100 == 0) {
-                            iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                            globalClass.BroadcastProgress(false, "",
-                                    true, iProgressBarValue,
-                                    true, "Reading data for " + GlobalClass.gsCatalogFolderNames[iMediaCategory] + " catalog...",
-                                    CATALOG_LOAD_ACTION_RESPONSE);
-                        }
-                    }
-
-
-                } catch (IOException e) {
-                    problemNotificationConfig("Trouble reading CatalogContents.dat: " + GlobalClass.GetFileName(uriCatalogFolder));
-                } finally {
-                    if (isCatalogReader != null) {
-                        try {
-                            isCatalogReader.close();
-                        } catch (Exception e) {
-                            problemNotificationConfig("Problem during Catalog Contents file reader close:\n" + GlobalClass.GetFileName(uriCatalogFolder) + "\n\n" + e.getMessage());
-                        }
-                    }
-                }
-                stopWatch.PostDebugLogAndRestart("Processing catalog contents records completed at duration ");
-            }
-            globalClass.gbTagHistogramRequiresUpdate[iMediaCategory] = false;
-
-
-            //Return the data read from the file:
-            return tmCatalogItems;
-
-        }
-
-    }
 
     public TreeMap<Integer, ItemClass_Tag> InitTagData(int iMediaCategory){
         //TreeMap<String, ItemClass_Tag> tmTags = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
