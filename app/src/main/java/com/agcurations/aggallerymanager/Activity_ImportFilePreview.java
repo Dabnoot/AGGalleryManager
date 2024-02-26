@@ -399,26 +399,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         }
 
-        //Set on-click listener for grade:
-        /*giGradeImageViews = new int[]{
-                R.id.imageView_Grade1,
-                R.id.imageView_Grade2,
-                R.id.imageView_Grade3,
-                R.id.imageView_Grade4,
-                R.id.imageView_Grade5};
-        ImageView[] imageView_GradeArray = new ImageView[5];
-        boolean bGradeIVsOK = true;
-        for(int i = 0; i < giGradeImageViews.length; i++){
-            imageView_GradeArray[i] = findViewById(giGradeImageViews[i]);
-            if(imageView_GradeArray[i] == null){
-                bGradeIVsOK = false;
-            }
-        }
-        if (bGradeIVsOK){
-            for(int i = 0; i < giGradeImageViews.length; i++) {
-                imageView_GradeArray[i].setOnClickListener(new gradeOnClickListener(i + 1));
-            }
-        }*/
 
         //Add a response receiver to listen for responses from the adjacency analyzer worker.
         IntentFilter filter = new IntentFilter();
@@ -429,7 +409,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
 
         initializeFile();
-        //displayGrade();
 
     }
 
@@ -736,8 +715,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 gbFreezeLastAssignedReset = true; //Don't let the data observer reset the "lastAssignedTags" arrayList.
                 gFragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
             }
-
-            //displayGrade(); //Update the displayed grade
 
             //Show the sequence number of this item:
             TextView textView_ImportItemNumberOfNumber = findViewById(R.id.textView_ImportItemNumberOfNumber);
