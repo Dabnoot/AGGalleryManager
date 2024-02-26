@@ -3582,6 +3582,9 @@ public class GlobalClass extends Application {
     //==============================================================================================
     //=========== Other Options ====================================================================
 
+    public static boolean gbUseCatalogItemThumbnailDeepSearch = false;
+
+
     public static int giLogFileKeepDurationInDays = 30;
 
     public static boolean gbOptionUserAutoLogin = false;

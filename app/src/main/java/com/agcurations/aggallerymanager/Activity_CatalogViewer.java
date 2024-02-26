@@ -20,7 +20,6 @@ import androidx.work.WorkManager;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -62,7 +61,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class Activity_CatalogViewer extends AppCompatActivity {
-
 
     //Global Variables:
     private GlobalClass globalClass;
@@ -515,7 +513,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             // - get element from your data set at this position
             // - replace the contents of the view with that element
 
-            StopWatch stopWatch = new StopWatch(false);
+            StopWatch stopWatch = new StopWatch(false); //enable/disable essentially turns the usage of this item on/off.
             stopWatch.Start();
             String sWatchMessageBase = "Activity_CatalogViewer:RecyclerViewCatalogAdapter:onBindViewHolder:";
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Getting catalog item data from treemap. ");
@@ -533,7 +531,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             //Load the non-obfuscated image into the RecyclerView ViewHolder:
 
             Uri uriThumbnailUri;
-            boolean bThumbnailQuickLookupSuccess;
+            boolean bThumbnailQuickLookupSuccess = true;
 
             String sFileName = ci.sThumbnail_File;
             if(sFileName.equals("")){
@@ -552,7 +550,16 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     + GlobalClass.gsFileSeparator + sPath;
             uriThumbnailUri = Uri.parse(sThumbnailUri);
 
-            bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail Uri development complete.");
+
+            if(GlobalClass.gbUseCatalogItemThumbnailDeepSearch) {
+                //Check to see if the thumbnail source is where it is supposed to be. If it is not
+                //  there, check for other related happenings that might identify the location.
+                //  This can add a little more tha 1/100th of a second to processing the thumbnail,
+                //  and in testing resulted in a stutter of the recyclerView.
+                bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
+                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail file verification complete.");
+            }
 
             if(!bThumbnailQuickLookupSuccess) {
                 Uri uriCatalogItemFolder;
@@ -640,6 +647,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         uriThumbnailUri = null;
                     }
                 }
+                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "First thumbnail lookup didn't work. Second thumbnail lookup attempt complete.");
             }
 
 
@@ -765,7 +773,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             holder.imageView_Thumbnail.setOnClickListener(v -> {
                 giRecyclerViewLastSelectedPosition = holder.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
                 //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
-
                 if (gbDebugTouch)
                     Toast.makeText(getApplicationContext(), "Click Item Number " + holder.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
                 else
@@ -815,6 +822,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             }
 
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item attention icon and text configured.");
+
             if(holder.button_Delete != null) {
 
                 final String sItemNameToDelete = sItemName;
@@ -851,7 +860,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 });
             }
 
-
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item delete button configured.");
 
             if(holder.linearLayout_GroupingControls != null &&
                     holder.imageButton_OpenGroupingControls != null &&
@@ -1116,6 +1125,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 });
 
             }
+
+            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item grouping controls configured.");
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "onBindViewHolder finished. ");
             stopWatch.Stop();
