@@ -522,7 +522,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 //Create a time stamp for "last viewed" and update the catalog record and record in memory:
                 ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampDouble();
 
-                Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                /*Double dTimeStamp = GlobalClass.GetTimeStampDouble();
                 String sCatalogRecord = GlobalClass.getCatalogRecordString(ci);
                 Data dataCatalogUpdateItem = new Data.Builder()
                         .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_VideoPlayer:initializePlayer()")
@@ -533,8 +533,8 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         .setInputData(dataCatalogUpdateItem)
                         .addTag(Worker_Catalog_UpdateItem.TAG_WORKER_CATALOG_UPDATEITEM) //To allow finding the worker later.
                         .build();
-                WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogUpdateItem);
-
+                WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogUpdateItem);*/
+                //Above: No longer update the catalog file with last read data. This data to be housed in a different file.
 
                 //Determine if this is a gif file, which the VideoView will not play:
                 boolean bFileIsGif = GlobalClass.JumbleFileName(sFileName).contains(".gif");

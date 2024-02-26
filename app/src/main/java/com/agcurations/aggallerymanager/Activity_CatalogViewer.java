@@ -1383,7 +1383,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Record the COMIC_DATETIME_LAST_READ_BY_USER:
         ci.dDatetime_Last_Viewed_by_User = GlobalClass.GetTimeStampDouble();
 
-        globalClass.CatalogDataFile_UpdateRecord(ci);
+        //globalClass.CatalogDataFile_UpdateRecord(ci); //No longer update the catalog file record with the date of last read. This data to be moved to another file.
 
 
         Intent intentComicViewer = new Intent(this, Activity_ComicDetails.class);
