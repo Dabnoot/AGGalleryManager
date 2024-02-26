@@ -135,9 +135,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
         //Pull sort-by and sort-order from preferences (recall user's last selection). Note that this item is modified by the import process so that the user can
         //  see the item that they last imported.
-        globalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] =
+        GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] =
                 sharedPreferences.getInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory], GlobalClass.SORT_BY_DATETIME_LAST_VIEWED);
-        globalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory] =
+        GlobalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory] =
                 sharedPreferences.getBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory], true);
 
         ApplicationLogWriter("Configuring RecyclerView");
