@@ -156,7 +156,9 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
                                 entry.getValue().sComicArtists + " " +
                                 entry.getValue().sComicCharacters + " " +
                                 entry.getValue().sComicParodies + " " +
-                                entry.getValue().sItemID;
+                                entry.getValue().sItemID + " " +
+                                entry.getValue().sFilename + " " +
+                                GlobalClass.JumbleFileName(entry.getValue().sFilename);
                 sKey_RecordText = sKey_RecordText.toLowerCase();
                 if (sKey_RecordText.contains(sSearchInText_LowerCase)) {
                     bSearchMatch = true;
