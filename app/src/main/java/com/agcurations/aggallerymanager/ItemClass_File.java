@@ -82,6 +82,8 @@ public class ItemClass_File implements Serializable {
     public boolean bIllegalDataFound = false; //Used during import.
     public String sIllegalDataNarrative = "";
 
+    public int iFileNameDuplicationCount = 0; //Used by catalog analysis.
+
     public ItemClass_File(int _iTypeFileFolderURL,
                           String _FileOrFolderName)
     {
