@@ -2,6 +2,8 @@ package com.agcurations.aggallerymanager;
 
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,10 +15,12 @@ import android.os.PersistableBundle;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -41,6 +45,7 @@ import java.util.TreeMap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -95,10 +100,21 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
     ImageButton gImageButton_GroupIDPaste;
     ImageButton gImageButton_GroupIDRemove;
 
+    Button gButton_ShowAdjacencies;
+    TextView gTextView_AdjacencyCount			;
+    TextView gTextView_FileNameMatchCount		;
+    TextView gTextView_DateModifiedMatchCount	;
+    TextView gTextView_ResolutionMatchCount		;
+    TextView gTextView_DurationMatchCount		;
+
+    Context gContextWindow;
+
     @SuppressLint("ClickableViewAccessibility") //For the onTouch for the imageView.
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        gContextWindow = this;
 
         if(this.getSupportActionBar() != null) {
             this.getSupportActionBar().hide();
@@ -221,13 +237,15 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
             }
 
+            updateAdjacencies();
+
             //Set a result to send back to the calling activity (this is also done on checkbox click):
             setResult(RESULT_OK);
 
         };
         viewModel_fragment_selectTags.altiTagsSelected.observe(this, selectedTagsObserver);
 
-
+        gButton_ShowAdjacencies = findViewById(R.id.button_ShowAdjacencies);
 
         Bundle b = getIntent().getExtras();
         if(b != null) {
@@ -239,6 +257,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             giMediaCategory = b.getInt(Activity_Import.MEDIA_CATEGORY, 0);
 
             gbLookForFileAdjacencies = b.getBoolean(Activity_Import.IMPORT_ALIGN_ADJACENCIES, false);
+            if(gbLookForFileAdjacencies){
+                gButton_ShowAdjacencies.setEnabled(false);
+            } else {
+                gButton_ShowAdjacencies.setEnabled(true);
+            }
 
             //Start the tag selection fragment:
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -402,11 +425,38 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         //Add a response receiver to listen for responses from the adjacency analyzer worker.
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJACENCY_ANALYZER_RESPONSE);
+        filter.addAction(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_RESPONSE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         importFilePreviewResponseReceiver = new ImportFilePreviewResponseReceiver();
         LocalBroadcastManager.getInstance(getApplicationContext()).registerReceiver(importFilePreviewResponseReceiver, filter);
 
+        gRelativeLayout_Adjacencies = findViewById(R.id.relativeLayout_Adjacencies);
+
+        gTextView_AdjacencyCount			= findViewById(R.id.textView_AdjacencyCount			);
+        gTextView_FileNameMatchCount		= findViewById(R.id.textView_FileNameMatchCount		);
+        gTextView_DateModifiedMatchCount	= findViewById(R.id.textView_DateModifiedMatchCount	);
+        gTextView_ResolutionMatchCount		= findViewById(R.id.textView_ResolutionMatchCount	);
+        gTextView_DurationMatchCount		= findViewById(R.id.textView_DurationMatchCount		);
+
+        gButton_ShowAdjacencies.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gRelativeLayout_Adjacencies.setVisibility(View.VISIBLE);
+                gbLookForFileAdjacencies = true;
+                view.setEnabled(false);
+                updateAdjacencies();
+            }
+        });
+
+        ImageButton imageButton_CloseAdjacencies = findViewById(R.id.imageButton_CloseAdjacencies);
+        imageButton_CloseAdjacencies.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
+                gbLookForFileAdjacencies = false;
+                gButton_ShowAdjacencies.setEnabled(true);
+            }
+        });
 
         initializeFile();
 
@@ -568,7 +618,94 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
         CheckboxMarkForDeletionColorSwitch(galFileItems.get(giFileItemIndex).bMarkedForDeletion);
 
 
-        //GROUP ID Buttons:
+        recalcGroupButtonVisibilities();
+
+
+        TextView textView_FileName = findViewById(R.id.textView_FileName);
+        String sFileNameTextLine;// = galFileItems.get(giFileItemIndex).sFileOrFolderName;
+        sFileNameTextLine = GlobalClass.cleanHTMLCodedCharacters(galFileItems.get(giFileItemIndex).sUri);
+        if(!galFileItems.get(giFileItemIndex).sHeight.equals("")){ //Add resolution data to display if available:
+            sFileNameTextLine = sFileNameTextLine + "\n" + galFileItems.get(giFileItemIndex).sWidth + "x" + galFileItems.get(giFileItemIndex).sHeight;
+        }
+        if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+            //If category is images, include megapixels.
+            try {
+                double dWidth = Double.parseDouble(galFileItems.get(giFileItemIndex).sWidth);
+                double dHeight = Double.parseDouble(galFileItems.get(giFileItemIndex).sHeight);
+                double dMegapixels = (dWidth * dHeight) / 1048576; //2^20 pixels per megapixel.
+                sFileNameTextLine = sFileNameTextLine + " " + String.format(Locale.getDefault(), "%.1f", dMegapixels) + "MP";
+            } catch (Exception e){
+                //Do nothing. Just a textual ommision.
+            }
+        }
+        textView_FileName.setText(sFileNameTextLine);
+
+        //Init the tags list if there are tags already assigned to this item:
+        //Get the text of the tags and display:
+        if(galFileItems.get(giFileItemIndex).aliProspectiveTags != null) {
+            TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
+            StringBuilder sbTags = new StringBuilder();
+            sbTags.append("Tags: ");
+
+            int iFileItemTagsIndex = 0; //If the media type is Comics, tags are applied to the first
+            //  file item only.
+            if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS){
+                iFileItemTagsIndex = giFileItemIndex;
+            }
+
+            if (galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.size() > 0) {
+
+                GlobalClass globalClass;
+                globalClass = (GlobalClass) getApplicationContext();
+
+                ArrayList<Integer> aliConfirmedProspectiveTags = new ArrayList<>(); //Confirm all tags exist as user may have deleted a tag.
+                for(Integer iTagID: galFileItems.get(iFileItemTagsIndex).aliProspectiveTags){
+                    if(globalClass.TagIDExists(iTagID, giMediaCategory)){
+                        aliConfirmedProspectiveTags.add(iTagID);
+                    }
+                }
+                galFileItems.get(iFileItemTagsIndex).aliProspectiveTags = aliConfirmedProspectiveTags;
+
+                //Update the Tag text listing on the preview display:
+                sbTags.append(globalClass.getTagTextFromID(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.get(0), giMediaCategory));
+                for (int i = 1; i < galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.size(); i++) {
+                    sbTags.append(", ");
+                    sbTags.append(globalClass.getTagTextFromID(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.get(i), giMediaCategory));
+                }
+
+            }
+            if (textView_SelectedTags != null) {
+                textView_SelectedTags.setText(sbTags.toString());
+            }
+
+            if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
+                gbFreezeLastAssignedReset = true; //Don't let the data observer reset the "lastAssignedTags" arrayList.
+                gFragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
+            }
+
+            //Show the sequence number of this item:
+            TextView textView_ImportItemNumberOfNumber = findViewById(R.id.textView_ImportItemNumberOfNumber);
+            String sTemp = (giFileItemIndex + 1) + "/" + (giMaxFileItemIndex + 1);
+            textView_ImportItemNumberOfNumber.setText(sTemp);
+        }
+
+        ImageButton imageButton_PasteLastTags = findViewById(R.id.imageButton_PasteLastTags);
+        if (imageButton_PasteLastTags != null) {
+            imageButton_PasteLastTags.setOnClickListener(v -> copyLastTagSelection());
+
+
+        }
+
+        TextView textView_LabelCopyLastTagSelection = findViewById(R.id.textView_LabelCopyLastTagSelection);
+        if(textView_LabelCopyLastTagSelection != null){
+            textView_LabelCopyLastTagSelection.setOnClickListener(v -> copyLastTagSelection());
+        }
+
+        updateAdjacencies();
+
+    }
+
+    private void recalcGroupButtonVisibilities(){
         boolean bHasGroupID = !galFileItems.get(giFileItemIndex).sGroupID.equals("");
         gTextView_GroupID = findViewById(R.id.textView_GroupID);
         gImageButton_GroupIDNew = findViewById(R.id.imageButton_GroupIDNew);
@@ -650,98 +787,12 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             gTextView_GroupID.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor));
             gTextView_GroupID.setText("----");
         });
-
-        //END GROUP ID BUTTONS.
-
+    }
 
 
-        TextView textView_FileName = findViewById(R.id.textView_FileName);
-        String sFileNameTextLine = galFileItems.get(giFileItemIndex).sFileOrFolderName;
-        if(!galFileItems.get(giFileItemIndex).sHeight.equals("")){ //Add resolution data to display if available:
-            sFileNameTextLine = sFileNameTextLine + "\n" + galFileItems.get(giFileItemIndex).sWidth + "x" + galFileItems.get(giFileItemIndex).sHeight;
-        }
-        if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-            //If category is images, include megapixels.
-            try {
-                double dWidth = Double.parseDouble(galFileItems.get(giFileItemIndex).sWidth);
-                double dHeight = Double.parseDouble(galFileItems.get(giFileItemIndex).sHeight);
-                double dMegapixels = (dWidth * dHeight) / 1048576; //2^20 pixels per megapixel.
-                sFileNameTextLine = sFileNameTextLine + " " + String.format(Locale.getDefault(), "%.1f", dMegapixels) + "MP";
-            } catch (Exception e){
-                //Do nothing. Just a textual ommision.
-            }
-        }
-        textView_FileName.setText(sFileNameTextLine);
-
-        //Init the tags list if there are tags already assigned to this item:
-        //Get the text of the tags and display:
-        if(galFileItems.get(giFileItemIndex).aliProspectiveTags != null) {
-            TextView textView_SelectedTags = findViewById(R.id.textView_SelectedTags);
-            StringBuilder sbTags = new StringBuilder();
-            sbTags.append("Tags: ");
-
-            int iFileItemTagsIndex = 0; //If the media type is Comics, tags are applied to the first
-            //  file item only.
-            if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS){
-                iFileItemTagsIndex = giFileItemIndex;
-            }
-
-            if (galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.size() > 0) {
-
-                GlobalClass globalClass;
-                globalClass = (GlobalClass) getApplicationContext();
-
-                ArrayList<Integer> aliConfirmedProspectiveTags = new ArrayList<>(); //Confirm all tags exist as user may have deleted a tag.
-                for(Integer iTagID: galFileItems.get(iFileItemTagsIndex).aliProspectiveTags){
-                    if(globalClass.TagIDExists(iTagID, giMediaCategory)){
-                        aliConfirmedProspectiveTags.add(iTagID);
-                    }
-                }
-                galFileItems.get(iFileItemTagsIndex).aliProspectiveTags = aliConfirmedProspectiveTags;
-
-                //Update the Tag text listing on the preview display:
-                sbTags.append(globalClass.getTagTextFromID(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.get(0), giMediaCategory));
-                for (int i = 1; i < galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.size(); i++) {
-                    sbTags.append(", ");
-                    sbTags.append(globalClass.getTagTextFromID(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags.get(i), giMediaCategory));
-                }
-
-            }
-            if (textView_SelectedTags != null) {
-                textView_SelectedTags.setText(sbTags.toString());
-            }
-
-            if(giMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS) { //Don't worry about resetting if it's a comic. Tags are same for every page.
-                gbFreezeLastAssignedReset = true; //Don't let the data observer reset the "lastAssignedTags" arrayList.
-                gFragment_selectTags.resetTagListViewData(galFileItems.get(iFileItemTagsIndex).aliProspectiveTags);
-            }
-
-            //Show the sequence number of this item:
-            TextView textView_ImportItemNumberOfNumber = findViewById(R.id.textView_ImportItemNumberOfNumber);
-            String sTemp = (giFileItemIndex + 1) + "/" + (giMaxFileItemIndex + 1);
-            textView_ImportItemNumberOfNumber.setText(sTemp);
-        }
-
-        ImageButton imageButton_PasteLastTags = findViewById(R.id.imageButton_PasteLastTags);
-        if (imageButton_PasteLastTags != null) {
-            imageButton_PasteLastTags.setOnClickListener(v -> copyLastTagSelection());
-
-
-        }
-
-        TextView textView_LabelCopyLastTagSelection = findViewById(R.id.textView_LabelCopyLastTagSelection);
-        if(textView_LabelCopyLastTagSelection != null){
-            textView_LabelCopyLastTagSelection.setOnClickListener(v -> copyLastTagSelection());
-        }
-
-        RelativeLayout relativeLayout_Adjacencies = findViewById(R.id.relativeLayout_Adjacencies);
+    private void updateAdjacencies(){
         if(gbLookForFileAdjacencies){
-
-            //Include the import location:
-            sFileNameTextLine = GlobalClass.cleanHTMLCodedCharacters(galFileItems.get(giFileItemIndex).sUri);
-            textView_FileName.setText(sFileNameTextLine);
-
-            relativeLayout_Adjacencies.setVisibility(View.VISIBLE);
+            gRelativeLayout_Adjacencies.setVisibility(View.VISIBLE);
 
             gRecyclerView_Adjacencies = findViewById(R.id.recyclerView_Adjacencies);
 
@@ -799,10 +850,11 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrStartAdjacencyAnalyzer);
 
         } else {
-            relativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
+            gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
+            gButton_ShowAdjacencies.setEnabled(true);
         }
-
     }
+
 
 
     private void copyLastTagSelection(){
@@ -930,16 +982,49 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 }
 
                 //Check to see if this is a response indicating adjacencies analysis is complete:
-                boolean bAdjacencyAnalyzerComplete = intent.getBooleanExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJACENCY_ANALYZER_EXTRA_BOOL_COMPLETE, false);
+                boolean bAdjacencyAnalyzerComplete = intent.getBooleanExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_EXTRA_BOOL_COMPLETE, false);
                 if (bAdjacencyAnalyzerComplete) {
                     gRelativeLayout_Adjacency_Analysis_Progress.setVisibility(View.INVISIBLE);
                     if(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap.size() == 0){
                         gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
+                        String sMessage = "No adjacencies found. If this is unexpected, understand that this function" +
+                                " will not compare against catalog items private to other users, and filters" +
+                                " against user-selected maturity settings and tags.";
+                        GlobalClass.ShowMessage(gContextWindow, "Adjacency Analysis", sMessage);
+                        gbLookForFileAdjacencies = false; //Allow the user to click the button to start looking at adjacencies again.
+                        gButton_ShowAdjacencies.setEnabled(true);
                     } else {
                         //Initiate the RecyclerView:
                         gRelativeLayout_Adjacencies.setVisibility(View.VISIBLE);
                         RecyclerViewCatalogAdjacencyAdapter gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdjacencyAdapter(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap);
                         gRecyclerView_Adjacencies.setAdapter(gRecyclerViewCatalogAdapter);
+
+                        //Populate statistics for the adjacencies:
+                        int iMatchTotal						 = intent.getIntExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_EXTRA_INT_MAT_TOTAL, 0);
+                        int iMatchCountOnFileName			 = intent.getIntExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_EXTRA_INT_MAT_FNAME, 0);
+                        int iMatchCountOnModifiedDateWindow	 = intent.getIntExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_EXTRA_INT_MAT_MDATE, 0);
+                        int iMatchCountOnResolution			 = intent.getIntExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_EXTRA_INT_MAT_RES  , 0);
+                        int iMatchCountOnDuration			 = intent.getIntExtra(Worker_Catalog_Adjaceny_Analyzer.CATALOG_ADJAN_EXTRA_INT_MAT_DUR  , 0);
+
+                        if (    (gTextView_AdjacencyCount			!= null) &&
+                                (gTextView_FileNameMatchCount		!= null) &&
+                                (gTextView_DateModifiedMatchCount	!= null) &&
+                                (gTextView_ResolutionMatchCount	    != null) &&
+                                (gTextView_DurationMatchCount		!= null)){
+                            String sTemp = "" + iMatchTotal;
+                            gTextView_AdjacencyCount.setText         (sTemp);
+                            sTemp = "" + iMatchCountOnFileName;
+                            gTextView_FileNameMatchCount.setText     (sTemp);
+                            sTemp = "" + iMatchCountOnModifiedDateWindow;
+                            gTextView_DateModifiedMatchCount.setText (sTemp);
+                            sTemp = "" + iMatchCountOnResolution;
+                            gTextView_ResolutionMatchCount.setText   (sTemp);
+                            sTemp = "" + iMatchCountOnDuration;
+                            gTextView_DurationMatchCount.setText     (sTemp);
+
+                        }
+
+
                     }
                 }
 
@@ -956,6 +1041,8 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
         private final Integer[] mapKeys;
+
+        ViewGroup vgParent;
 
         // Provide a reference to the views for each data item
         // Complex data items may need more than one view per item, and
@@ -991,6 +1078,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             v = inflater.inflate(R.layout.recycler_catalog_adjacencies_grid, parent, false);
 
+            vgParent = parent;
 
             return new RecyclerViewCatalogAdjacencyAdapter.ViewHolder(v);
         }
@@ -1013,7 +1101,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             //Load the non-obfuscated image into the RecyclerView ViewHolder:
 
             Uri uriThumbnailUri;
-            boolean bThumbnailQuickLookupSuccess;
+            boolean bThumbnailQuickLookupSuccess = true;
 
             String sFileName = ci.sThumbnail_File;
             if(sFileName.equals("")){
@@ -1032,7 +1120,15 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     + GlobalClass.gsFileSeparator + sPath;
             uriThumbnailUri = Uri.parse(sThumbnailUri);
 
-            bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
+
+            if(GlobalClass.gbUseCatalogItemThumbnailDeepSearch) {
+                //Check to see if the thumbnail source is where it is supposed to be. If it is not
+                //  there, check for other related happenings that might identify the location.
+                //  This can add a little more tha 1/100th of a second to processing the thumbnail,
+                //  and in testing resulted in a stutter of the recyclerView.
+                bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
+            }
+
 
             if(!bThumbnailQuickLookupSuccess) {
                 Uri uriCatalogItemFolder;
@@ -1186,13 +1282,69 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
 
             holder.tvThumbnailText.setText(sThumbnailText);
-
             holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    //Apply the tags associated with this catalog item to the potential import item.
-                    gFragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(ci.aliTags);
-                }
+                    //Create popup context menu with options for the user.
+                    PopupMenu popupAdjacencyItemOptions = new PopupMenu(vgParent.getContext(), v);
+                    if(ci.sGroupID.equals("")){
+                        popupAdjacencyItemOptions.getMenuInflater().inflate(R.menu.adjacency_action_menu_nogroup, popupAdjacencyItemOptions.getMenu());
+                    } else {
+                        popupAdjacencyItemOptions.getMenuInflater().inflate(R.menu.adjacency_action_menu, popupAdjacencyItemOptions.getMenu());
+                    }
+                    popupAdjacencyItemOptions.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            int itemId = item.getItemId();
+
+                            if (itemId == R.id.menu_ApplyTagsFromItem) {
+                                //Apply the tags associated with this catalog item to the potential import item.
+                                gFragment_selectTags.gListViewTagsAdapter.selectTagsByIDs(ci.aliTags);
+                                return true;
+
+                            } else if (itemId == R.id.menu_CopyFileName) {
+                                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData clip = ClipData.newPlainText("Filename", ci.sFilename);
+                                clipboard.setPrimaryClip(clip);
+                                return true;
+
+                            } else { // (itemId == R.id.menu_CopyGroupID) {
+                                GlobalClass.gsGroupIDClip = ci.sGroupID;
+                                recalcGroupButtonVisibilities();
+                                return true;
+
+                            }
+
+                        }
+                    });
+
+                    popupAdjacencyItemOptions.show();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                } //End context menu popup for if the user clicks on the adjacency item.
             });
 
 

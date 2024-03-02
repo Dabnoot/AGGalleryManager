@@ -483,11 +483,26 @@ public class Worker_Catalog_LoadData extends Worker {
                 Activity_Main.MainActivityDataServiceResponseReceiver.MAIN_ACTIVITY_DATA_SERVICE_ACTION_RESPONSE);
         globalClass.TagDataFileAddNewField();*/
 
-        //globalClass.CatalogDataFile_AddNewField();
-
         //GlobalClass.UpdateAllCatalogItemBasedOnTags();
 
-        //globalClass.CatalogDataFile_UpdateCatalogFiles("Re-writing catalog files...");
+        /*int iUpdateCount = 0;
+        for(int iMediaCateogry = 0; iMediaCateogry < 2; iMediaCateogry++) {
+            for (Map.Entry<String, ItemClass_CatalogItem> entry : GlobalClass.gtmCatalogLists.get(iMediaCateogry).entrySet()) {
+                String sFileNameOriginal = entry.getValue().sFilename;
+                String sFileNameModified =  sFileNameOriginal.trim();
+                //String sItemID = entry.getValue().sItemID;
+                if(!sFileNameModified.equals(sFileNameOriginal)){
+                    entry.getValue().sFilename = sFileNameModified;
+                    iUpdateCount++;
+                }
+            }
+        }
+        String sMessage = "Updated " + iUpdateCount + " items.";
+        globalClass.BroadcastProgress(false, "",
+                true, iProgressBarValue,
+                true, sMessage,
+                CATALOG_LOAD_ACTION_RESPONSE);
+        globalClass.CatalogDataFile_UpdateCatalogFiles("Re-writing catalog files...");*/
 
         //VerifyVideoFilesIntegrity();
 

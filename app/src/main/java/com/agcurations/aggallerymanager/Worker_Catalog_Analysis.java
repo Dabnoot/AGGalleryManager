@@ -63,7 +63,7 @@ public class Worker_Catalog_Analysis extends Worker {
 
         int iProgressNumerator = 0;
         int iProgressDenominator = GlobalClass.gtmCatalogLists.get(giMediaCategory).size();
-        int iProgressBarValue = 0;
+        int iProgressBarValue;
 
         String sAnalysisStartDateTime = GlobalClass.GetTimeStampFileSafe();
         BufferedWriter bwLogFile;
@@ -106,41 +106,143 @@ public class Worker_Catalog_Analysis extends Worker {
                             CATALOG_VERIFICATION_ACTION_RESPONSE);
 
 
-                    String sUri = "";
+                    String sCatalogItemUri = "";
                     if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         if (icci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                             //A folder containing files related to this M3U8:
-                            sUri = GlobalClass.gsUriAppRootPrefix
+                            sCatalogItemUri = GlobalClass.gsUriAppRootPrefix
                                     + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
                                     + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
                         } else {
                             //A single file:
-                            sUri = GlobalClass.gsUriAppRootPrefix
+                            sCatalogItemUri = GlobalClass.gsUriAppRootPrefix
                                     + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
                                     + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
                                     + GlobalClass.gsFileSeparator + icci.sFilename;
                         }
                     } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                         //A single file:
-                        sUri = GlobalClass.gsUriAppRootPrefix
+                        sCatalogItemUri = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
                                 + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
                                 + GlobalClass.gsFileSeparator + icci.sFilename;
                     } else if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                         //A folder containing files related to this comic:
-                        sUri = GlobalClass.gsUriAppRootPrefix
+                        sCatalogItemUri = GlobalClass.gsUriAppRootPrefix
                                 + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
                                 + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
                     }
-                    Uri uriItem = Uri.parse(sUri);
+                    Uri uriCatalogItemUri = Uri.parse(sCatalogItemUri);
 
-                    if (!GlobalClass.CheckIfFileExists(uriItem)) {
-                        sMessage = "Item with ID " + icci.sItemID + " not found. Expected to be found in location "
-                                + sUri + "\n";
+                    if (!GlobalClass.CheckIfFileExists(uriCatalogItemUri)) {
+                        boolean bMarkItemAsMissing = true;
+                        sMessage = "Item with ID " + icci.sItemID + " not found. Expected to be found at the following location:\n"
+                                + GlobalClass.cleanHTMLCodedCharacters(sCatalogItemUri) + "\n";
                         SendLogLine(sMessage);
                         sbLogLines.append(sMessage);
-                        tmCatalogItemsMissing.put(entry.getKey(), entry.getValue());
                         Log.d("AGGalleryManager", sMessage);
+
+                        if(GlobalClass.bAllowCheckAndMoveOfComicFolders) {
+                            //Temporary code related to a data crash and recovery operation:
+                            //Check if item exists at one level above, and if so, attempt to move it:
+                            if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                                if (icci.sFolderRelativePath.contains(GlobalClass.gsFileSeparator)) {
+                                    sMessage = "Checking to see if the item folder exists one level up in the heirarchy...\n";
+                                    SendLogLine(sMessage);
+                                    sbLogLines.append(sMessage);
+                                    Log.d("AGGalleryManager", sMessage);
+
+                                    //Get the suspected parent folder Uri to ensure that it exists, too:
+                                    String sSuspectedParentFolderUri = GlobalClass.gsUriAppRootPrefix
+                                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory];
+                                    Uri uriSuspectedParentFolderUri = Uri.parse(sSuspectedParentFolderUri);
+
+                                    //Get the suspected actual item folder Uri:
+                                    String sItemFolderName = icci.sFolderRelativePath.substring(icci.sFolderRelativePath.lastIndexOf(GlobalClass.gsFileSeparator));
+                                    String sSuspectedActualUri = GlobalClass.gsUriAppRootPrefix
+                                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
+                                            + GlobalClass.gsFileSeparator + sItemFolderName;
+                                    Uri uriSuspectedActualUri = Uri.parse(sSuspectedActualUri);
+
+                                    if (GlobalClass.CheckIfFileExists(uriSuspectedParentFolderUri)) {
+                                        sMessage = "Parent folder confirmation successful...\n";
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+                                        Log.d("AGGalleryManager", sMessage);
+                                        if (GlobalClass.CheckIfFileExists(uriSuspectedActualUri)) {
+                                            sMessage = "Item folder was found one level up in the heirarchy. Attempting to move the folder to the expected location...\n";
+                                            SendLogLine(sMessage);
+                                            sbLogLines.append(sMessage);
+                                            Log.d("AGGalleryManager", sMessage);
+
+                                            //Form the target parent Uri (the parent folder to which the item folder will be moved):
+                                            String sTargetParentFolderName = icci.sFolderRelativePath.substring(0, icci.sFolderRelativePath.lastIndexOf(GlobalClass.gsFileSeparator));
+                                            String sTargetParentFolderUri = GlobalClass.gsUriAppRootPrefix
+                                                    + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
+                                                    + GlobalClass.gsFileSeparator + sTargetParentFolderName;
+                                            Uri uriTargetParentFolderUri = Uri.parse(sTargetParentFolderUri);
+
+                                            boolean bExpectedParentFolderOk = true;
+                                            if (!GlobalClass.CheckIfFileExists(uriTargetParentFolderUri)) {
+                                                //If the folder does not exist, create it.
+                                                try {
+                                                    uriTargetParentFolderUri = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriSuspectedParentFolderUri, DocumentsContract.Document.MIME_TYPE_DIR, sTargetParentFolderName);
+                                                } catch (Exception e) {
+                                                    bExpectedParentFolderOk = false;
+                                                    sMessage = "Expected location's parent folder was not found and could not create the folder.\n";
+                                                    SendLogLine(sMessage);
+                                                    sbLogLines.append(sMessage);
+                                                    Log.d("AGGalleryManager", sMessage);
+                                                }
+                                                if (uriTargetParentFolderUri == null) {
+                                                    bExpectedParentFolderOk = false;
+                                                }
+
+                                            }
+
+                                            if (bExpectedParentFolderOk) {
+                                                boolean bMoveSuccess = false;
+                                                try {
+                                                    Uri uriResult = DocumentsContract.moveDocument(
+                                                            GlobalClass.gcrContentResolver,
+                                                            uriSuspectedActualUri,
+                                                            uriSuspectedParentFolderUri,
+                                                            uriTargetParentFolderUri);
+                                                    if (uriResult != null) {
+                                                        bMoveSuccess = true;
+                                                        bMarkItemAsMissing = false;
+                                                    }
+                                                } catch (Exception e) {
+                                                    sMessage = "Error encountered during move attempt: " + e.getMessage() + "\n";
+                                                    SendLogLine(sMessage);
+                                                    sbLogLines.append(sMessage);
+                                                    Log.d("AGGalleryManager", sMessage);
+                                                }
+                                                if (bMoveSuccess) {
+                                                    sMessage = "Item folder was successfully moved to the expected location.\n\n";
+                                                    SendLogLine(sMessage);
+                                                    sbLogLines.append(sMessage);
+                                                    Log.d("AGGalleryManager", sMessage);
+                                                }
+                                            }
+
+
+                                        } else {
+                                            sMessage = "Item folder does not exist one level up in the heirarchy.\n\n";
+                                            SendLogLine(sMessage);
+                                            sbLogLines.append(sMessage);
+                                            Log.d("AGGalleryManager", sMessage);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if(bMarkItemAsMissing){
+                            tmCatalogItemsMissing.put(entry.getKey(), entry.getValue());
+                        }
+
+
                     }
 
                     if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
@@ -164,7 +266,7 @@ public class Worker_Catalog_Analysis extends Worker {
                     for (Map.Entry<String, ItemClass_CatalogItem> entry : tmCatalogItemsMissing.entrySet()) {
                         sbMissingMediaCatIDs.append(entry.getKey()).append("\n");
                     }
-                    sMessage = sMessage + sbMissingMediaCatIDs.toString();
+                    sMessage = sMessage + sbMissingMediaCatIDs;
                     SendLogLine(sMessage);
                     sbLogLines.append(sMessage);
                 }
@@ -192,19 +294,23 @@ public class Worker_Catalog_Analysis extends Worker {
                     //Start with a listing of all folders in the selected media folder:
                     ArrayList<String> alsFolderNamesInUse = GlobalClass.GetDirectorySubfolderNames(GlobalClass.gUriCatalogFolders[giMediaCategory]);
 
+                    TreeMap<String, String> tmCatalogRelativePaths = new TreeMap<>();
                     //Prepare fast lookup:
-                    ArrayList<String> alsCatalogRelativePaths = new ArrayList<>();
                     for (Map.Entry<String, ItemClass_CatalogItem> entry : GlobalClass.gtmCatalogLists.get(giMediaCategory).entrySet()) {
                         if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
                             String sRelativePath = entry.getValue().sFolderRelativePath +
                                     GlobalClass.gsFileSeparator + entry.getValue().sFilename;
-                            alsCatalogRelativePaths.add(sRelativePath);
+                            tmCatalogRelativePaths.put(sRelativePath, entry.getValue().sFilename);
                         }
                     }
-                    ArrayList<String> alsOrphanedFiles = new ArrayList<>();
+
                     ArrayList<ItemClass_File> alOrphanedFileList = new ArrayList<>();
 
                     for (String sFolderName : alsFolderNamesInUse) {
+
+                        sMessage = "Reviewing folder: " + sFolderName + "...\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
 
                         if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
                             sMessage = "'STOP' command received from user.\n";
@@ -226,6 +332,8 @@ public class Worker_Catalog_Analysis extends Worker {
 
                             ArrayList<ItemClass_File> alicf_FileItemsInFolder = GlobalClass.GetDirectoryFileNamesData(uriFolderUri);
                             if(alicf_FileItemsInFolder != null) {
+                                int iFileItemCountOrphanedInThisFolder = 0;
+                                int iFileItemCountOrphanedInThisFolderButNameMatched = 0;
                                 for (ItemClass_File icf_FileItem : alicf_FileItemsInFolder) {
                                     if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
                                         sMessage = "'STOP' command received from user.\n";
@@ -244,9 +352,8 @@ public class Worker_Catalog_Analysis extends Worker {
                                     //Look for the folder and filename combination in memory:
                                     String sItemRelativePath = sFolderName +
                                             GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;
-                                    if (!alsCatalogRelativePaths.contains(sItemRelativePath)) {
+                                    if (!tmCatalogRelativePaths.containsKey(sItemRelativePath)) {
                                         //Item is not identified in memory. Note the occurrence:
-                                        alsOrphanedFiles.add(sItemRelativePath);
                                         sMessage = "Item not found in catalog: " + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
                                                 "/" + GlobalClass.cleanHTMLCodedCharacters(sItemRelativePath) + "\n";
                                         SendLogLine(sMessage);
@@ -254,17 +361,14 @@ public class Worker_Catalog_Analysis extends Worker {
 
                                         //create the file model and initialize:
                                         String sfileExtension = icf_FileItem.sFileOrFolderName.contains(".") ? icf_FileItem.sFileOrFolderName.substring(icf_FileItem.sFileOrFolderName.lastIndexOf(".")) : "";
-                                        //If the file extension does not match the file extension regex, skip the remainder of the loop.
                                         if (!sfileExtension.matches(".+")) {
                                             icf_FileItem.sExtension = "";
                                         } else {
                                             icf_FileItem.sExtension = sfileExtension;
                                         }
 
-                                        String sUri = sFolderUri +
-                                                GlobalClass.gsFileSeparator + sItemRelativePath;
                                         icf_FileItem.sUri = sFolderUri +
-                                                GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;;
+                                                GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;
                                         icf_FileItem.lVideoTimeInMilliseconds = 0;
 
                                         icf_FileItem.bMetadataDetected = false;
@@ -290,23 +394,61 @@ public class Worker_Catalog_Analysis extends Worker {
                                         icf_FileItem.sWidth = sWidth;
                                         icf_FileItem.sHeight = sHeight;
 
+                                        iFileItemCountOrphanedInThisFolder++;
+
+                                        //Check to see if there is an exact filename match in the catalog:
+                                        if(tmCatalogRelativePaths.containsValue(icf_FileItem.sFileOrFolderName)){
+                                            int iFileNameMatchCount = 0;
+                                            for(Map.Entry<String, String> entryCatalogRelativePath: tmCatalogRelativePaths.entrySet()){
+                                                if(entryCatalogRelativePath.getValue().equals(icf_FileItem.sFileOrFolderName)){
+                                                    iFileNameMatchCount++;
+                                                    iFileItemCountOrphanedInThisFolderButNameMatched++;
+                                                }
+                                            }
+                                            icf_FileItem.iFileNameDuplicationCount = iFileNameMatchCount;
+                                        }
+
                                         //Add the ItemClass_File to the ArrayList:
                                         alOrphanedFileList.add(icf_FileItem);
 
                                     } // End if item not identified in memory.
 
                                 } // End looping through files in folder.
+
+                                if((iFileItemCountOrphanedInThisFolder == iFileItemCountOrphanedInThisFolderButNameMatched) &&
+                                        (iFileItemCountOrphanedInThisFolder == alicf_FileItemsInFolder.size())){
+                                    sMessage = "\tAll items in this folder appear to have the same names as certain items in the " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " catalog.\n\n";
+                                    SendLogLine(sMessage);
+                                    sbLogLines.append(sMessage);
+                                } else {
+                                    if(iFileItemCountOrphanedInThisFolder > 0) {
+                                        String[] sPluarality = {"were", "files"};
+                                        if(iFileItemCountOrphanedInThisFolder == 1){
+                                            sPluarality = new String[]{"was", "file"};
+                                        }
+                                        sMessage = "\tThere " + sPluarality[0] + " " + iFileItemCountOrphanedInThisFolder + " orphaned " + sPluarality[1] + " in this folder out of " + alicf_FileItemsInFolder.size() + " files.\n" +
+                                                "\t" + iFileItemCountOrphanedInThisFolderButNameMatched + " of those orphaned files matched a file name of an item in the " + GlobalClass.gsCatalogFolderNames[giMediaCategory] + " catalog.\n\n";
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+                                    }
+                                }
                             } //End if arraylist is not null.
                         } //End if verifying images.
-                        if(alOrphanedFileList.size() > 100) break;
+                        if(alOrphanedFileList.size() > GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS) break;
                     } //End looping through catalog subfolders.
 
-                    sMessage = "Orphaned file analysis observed " + iProgressNumerator + " file items for " + iProgressDenominator + " catalog items.\n";
+                    sMessage = "\nOrphaned file analysis observed " + iProgressNumerator + " file items for " + iProgressDenominator + " catalog items.\n";
                     SendLogLine(sMessage);
                     sbLogLines.append(sMessage);
-                    sMessage = "A total of " + alsOrphanedFiles.size() + " files were not identified as belonging to a catalog item.\n";
+                    sMessage = "A total of " + alOrphanedFileList.size() + " files were not identified as belonging to a catalog item.\n";
                     SendLogLine(sMessage);
                     sbLogLines.append(sMessage);
+                    if(alOrphanedFileList.size() > GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS){
+                        sMessage = "Analysis result limit set to " + GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS + ", but continues until the end of a folder is reached.\n" +
+                                  "For more results, resolve the existing orphaned files and run the analysis again.\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+                    }
 
                     //Broadcast a message with the list of files so that they can be presented to the user:
                     Intent broadcastIntent_GetDirectoryContentsResponse = new Intent();

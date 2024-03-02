@@ -169,14 +169,18 @@ public class Worker_Import_ImportFiles extends Worker {
                 String sFileName = GlobalClass.GetFileName(uriFileItemSource);
                 //Make sure the file name is not too long. If it is too long, shorten it. "Too long" is arbitrary here.
                 String sTempFileName = sFileName;
-                if(sTempFileName.length() > 50){
+                if(sTempFileName.length() > GlobalClass.AGGM_MAX_FILENAME_LENGTH){
                     //Limit the length of the filename:
                     String[] sBaseAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sTempFileName);
                     if(sBaseAndExtension.length == 2) {
-                        sTempFileName = sBaseAndExtension[0].substring(0, 50 - sBaseAndExtension[1].length());
+                        sTempFileName = sBaseAndExtension[0].substring(0, GlobalClass.AGGM_MAX_FILENAME_LENGTH - sBaseAndExtension[1].length());
+                        sTempFileName = sTempFileName.trim();   //Changing the length of the file name may put a
+                                                                // space as the starting character, and some OSs
+                                                                // don't like that.
                         sTempFileName = sTempFileName + "." + sBaseAndExtension[1];
                     }
                 }
+
                 //Create unique filename, then jumble:
                 if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
                     //File name will already be jumbled, as this program place the file in the holding folder.
@@ -329,16 +333,6 @@ public class Worker_Import_ImportFiles extends Worker {
 
                 //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
                 ciNew = GlobalClass.validateCatalogItemData(ciNew);
-                if(ciNew == null){
-                    //If we are here, validateCatalogItemData found a critical error, such as illegal character;
-                    globalClass.BroadcastProgress(true, "Critical error with formation of data record. " +
-                                    "File import and record creation aborted for this item. " +
-                                    "Ensure user name or applied tag does not contain an illegal character.",
-                            false, 0,
-                            false, "",
-                            IMPORT_FILES_ACTION_RESPONSE);
-                    continue; //Skip to the next import item.
-                }
                 if(ciNew.bIllegalDataFound){
                     globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
                             false, 0,

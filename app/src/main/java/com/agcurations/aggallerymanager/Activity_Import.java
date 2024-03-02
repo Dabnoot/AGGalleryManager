@@ -756,6 +756,9 @@ public class Activity_Import extends AppCompatActivity {
                     double dHeight = Double.parseDouble(alFileItemsDisplay.get(position).sHeight);
                     double dMegapixels = (dWidth * dHeight) / 1048576; //2^20 pixels per megapixel.
                     sLine1 = sLine1 + " " + String.format(Locale.getDefault(), "%.2f", dMegapixels) + "MP";
+                    if(alFileItemsDisplay.get(position).iFileNameDuplicationCount > 0){
+                        sLine1 = sLine1 + " File name duplicated " + alFileItemsDisplay.get(position).iFileNameDuplicationCount + " times.";
+                    }
                 } catch (Exception e){
                     //Do nothing. Just a textual ommision.
                 }
@@ -1503,6 +1506,32 @@ public class Activity_Import extends AppCompatActivity {
             }
         }
 
+        private class FileDuplicateOrphanAscComparator implements Comparator<ItemClass_File> {
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                //This is used when looking for orphaned files within catalog analysis.
+                //  We want to put files that are orphaned and "not in the catalog with a duplicate
+                //  filename" first.
+                String DupCount1 = "" + fi1.iFileNameDuplicationCount;
+                String DupCount2 = "" + fi2.iFileNameDuplicationCount;
+
+                //ascending order
+                return DupCount1.compareTo(DupCount2);
+            }
+        }
+
+        private class FileDuplicateOrphanDescComparator implements Comparator<ItemClass_File> {
+            public int compare(ItemClass_File fi1, ItemClass_File fi2) {
+                //This is used when looking for orphaned files within catalog analysis.
+                //  We want to put files that are orphaned and "not in the catalog with a duplicate
+                //  filename" first.
+                String DupCount1 = "" + fi1.iFileNameDuplicationCount;
+                String DupCount2 = "" + fi2.iFileNameDuplicationCount;
+
+                //ascending order
+                return DupCount2.compareTo(DupCount1);
+            }
+        }
+
 
         public int iCurrentSortMethod;
         private final int SORT_METHOD_FILENAME_ASC = 1;
@@ -1513,6 +1542,8 @@ public class Activity_Import extends AppCompatActivity {
         private final int SORT_METHOD_RESOLUTION_DESC = 6;
         private final int SORT_METHOD_DURATION_ASC = 7;
         private final int SORT_METHOD_DURATION_DESC = 8;
+        private final int SORT_METHOD_ORPHAN_DUPLICATE_ASC = 9;
+        private final int SORT_METHOD_ORPHAN_DUPLICATE_DESC = 10;
         public void SortByFileNameAsc(){
             alFileItemsDisplay.sort(new FileNameAscComparator());
             iCurrentSortMethod = SORT_METHOD_FILENAME_ASC;
@@ -1545,6 +1576,14 @@ public class Activity_Import extends AppCompatActivity {
             alFileItemsDisplay.sort(new FileDurationDescComparator());
             iCurrentSortMethod = SORT_METHOD_DURATION_DESC;
         }
+        public void SortByOrphanDuplicateAsc(){
+            alFileItemsDisplay.sort(new FileDuplicateOrphanAscComparator());
+            iCurrentSortMethod = SORT_METHOD_ORPHAN_DUPLICATE_ASC;
+        }
+        public void SortByOrphanDuplicateDesc(){
+            alFileItemsDisplay.sort(new FileDuplicateOrphanDescComparator());
+            iCurrentSortMethod = SORT_METHOD_ORPHAN_DUPLICATE_DESC;
+        }
         public boolean reverseSort(){
             //Return true if new sort order is ascending, false if descending.
             boolean bSortOrderIsAscending = true;
@@ -1576,6 +1615,12 @@ public class Activity_Import extends AppCompatActivity {
                     break;
                 case SORT_METHOD_DURATION_DESC:
                     SortByDurationAsc();
+                    break;
+                case SORT_METHOD_ORPHAN_DUPLICATE_ASC:
+                    SortByOrphanDuplicateAsc();
+                    break;
+                case SORT_METHOD_ORPHAN_DUPLICATE_DESC:
+                    SortByOrphanDuplicateDesc();
                     break;
             }
             return bSortOrderIsAscending;

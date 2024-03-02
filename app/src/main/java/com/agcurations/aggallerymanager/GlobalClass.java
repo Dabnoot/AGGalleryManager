@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.common.io.BaseEncoding;
@@ -136,7 +137,7 @@ public class GlobalClass extends Application {
 
     public static ArrayList<ItemClass_File> galf_Orphaned_Files;
 
-    //Activity_CatalogViewer variables shared with Service_CatalogViewer:
+    //Activity_CatalogViewer variables:
     public static TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogViewerDisplayTreeMap;
     public static TreeMap<Integer, ItemClass_CatalogItem> gtmCatalogAdjacencyAnalysisTreeMap;
     public static final int SORT_BY_DATETIME_LAST_VIEWED = 0;
@@ -206,6 +207,7 @@ public class GlobalClass extends Application {
 
     public static String gsRefreshCatalogViewerThumbnail = ""; //Used to refresh thumbnail.
 
+    public static final int AGGM_MAX_FILENAME_LENGTH = 46; //For characters up to the '.' extension divider. Primarily needed to avoid Android Download Manager Truncation faults.
 
     //=====================================================================================
     //===== Background Service Tracking Variables =========================================
@@ -242,6 +244,8 @@ public class GlobalClass extends Application {
     // operation is finished.
     public boolean gbImportComicWebAnalysisRunning = false;
     public boolean gbImportComicWebAnalysisFinished = false;
+
+    public static final int CATALOG_ANALYSIS_APPROX_MAX_RESULTS = 100;
 
     //The variable below is used to identify files that were acquired using the Android DownloadManager.
     //  The Android DownloadIdleService will automatically delete the files that this program downloads
@@ -803,6 +807,23 @@ public class GlobalClass extends Application {
 
         return sOutput;
     }
+
+    public static void ShowMessage(Context context, String sTitle, String sMessage){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context, R.style.AlertDialogCustomStyle);
+        if(sTitle != null){
+            if(sTitle != ""){
+                builder.setTitle(sTitle);
+            }
+        }
+        if(sMessage != null){
+            if(sMessage != ""){
+                builder.setMessage(sMessage);
+            }
+        }
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================

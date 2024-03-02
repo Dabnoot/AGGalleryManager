@@ -16,8 +16,13 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
 
     public static final String TAG_WORKER_CATALOG_ADJACENCY_ANALYZER = "com.agcurations.aggallermanager.tag_worker_catalog_adjacency_analyzer";
 
-    public static final String CATALOG_ADJACENCY_ANALYZER_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_ADJACENCY_ANALYZER_RESPONSE";
-    public static final String CATALOG_ADJACENCY_ANALYZER_EXTRA_BOOL_COMPLETE = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJACENCY_ANALYZER_EXTRA_BOOL_COMPLETE";
+    public static final String CATALOG_ADJAN_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_ADJAN_RESPONSE";
+    public static final String CATALOG_ADJAN_EXTRA_BOOL_COMPLETE = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJAN_EXTRA_BOOL_COMPLETE";
+    public static final String CATALOG_ADJAN_EXTRA_INT_MAT_TOTAL = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJAN_EXTRA_INT_MAT_TOTAL";
+    public static final String CATALOG_ADJAN_EXTRA_INT_MAT_FNAME = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJAN_EXTRA_INT_MAT_FNAME";
+    public static final String CATALOG_ADJAN_EXTRA_INT_MAT_MDATE = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJAN_EXTRA_INT_MAT_MDATE";
+    public static final String CATALOG_ADJAN_EXTRA_INT_MAT_RES = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJAN_EXTRA_INT_MAT_RES";
+    public static final String CATALOG_ADJAN_EXTRA_INT_MAT_DUR = "com.agcurations.aggallerymanager.intent.extra.CATALOG_ADJAN_EXTRA_INT_MAT_DUR";
 
     public static final String EXTRA_STRING_FILENAME = "com.agcurations.aggallerymanager.extra.string_filename";
     public static final String EXTRA_STRING_FILENAME_FILTER = "com.agcurations.aggallerymanager.extra.string_filename_filter";
@@ -80,38 +85,58 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
         int iProgressDenominator = GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() + 1;
         int iProgressBarValue = 0;
 
+        String DEPRIORITIZED = "1";
+        String PRIORITIZED = "0";
+        int DATE_MODIFIED = 0;
+        int FILE_NAME = 1;
+        int RESOLUTION = 2;
+        int DURATION = 3;
+
+        int iMatchTotal = 0;
+        int iMatchCountOnFileName = 0;
+        int iMatchCountOnModifiedDateWindow = 0;
+        int iMatchCountOnResolution = 0;
+        int iMatchCountOnDuration = 0;
+
         for (Map.Entry<String, ItemClass_CatalogItem>
                 entry : GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).entrySet()) {
 
-            if (!GlobalClass.gsCatalogViewerSortBySharedWithUser.equals("")) {
-                //The user has requested a sort including only catalog items that are shared with a
-                // specified user. This user could be theirself. If the ApprovedUsers list does not
-                // contain the requested user name, skip the rest of the loop.
-                String sRequestedUserNameShare = GlobalClass.gsCatalogViewerSortBySharedWithUser;
-                if (!entry.getValue().alsApprovedUsers.contains(sRequestedUserNameShare)) {
+
+            //Ensure that the user is approved to view this item.
+            if(entry.getValue().alsApprovedUsers.size() > 0) {
+                if (!entry.getValue().alsApprovedUsers.contains(GlobalClass.gicuCurrentUser.sUserName)) {
                     continue;
                 }
             }
 
-            //Check to see if a filename filter is applicable:
-            boolean bFilterByFileName = false;
-            boolean bFileNameFilterMatch = false;
-            if (gsIncomingData_FileNameFilter != null) {
-                if (!gsIncomingData_FileNameFilter.equals("")) {
-                    bFilterByFileName = true;
-                    bFileNameFilterMatch = entry.getValue().sFilename.matches(gsIncomingData_FileNameFilter);
-                } else {
-                    if(gsIncomingData_FileName.equals(entry.getValue().sFilename)){
-                        bFilterByFileName = true;
-                        bFileNameFilterMatch = true;
-                    }
-                }
+            //Don't show this item if outside the filter by maturity:
+            if(entry.getValue().iMaturityRating < GlobalClass.giMinContentMaturityFilter ||
+                    entry.getValue().iMaturityRating > GlobalClass.giMaxContentMaturityFilter){
+                continue;
             }
+
+            //Sort order should be:
+            //  -Match by file name
+            //  -Match by date modified
+            //  -Match by resolution
+            //Tag match is filter and excludes items in the catalog without the matching tag.
+
+
+            String[] sSortIndex = {
+                    DEPRIORITIZED,
+                    DEPRIORITIZED,
+                    DEPRIORITIZED,
+                    DEPRIORITIZED,};
+
+            int iMatchCountOnFileNameTemp = 0;
+            int iMatchCountOnModifiedDateWindowTemp = 0;
+            int iMatchCountOnResolutionTemp = 0;
+            int iMatchCountOnDurationTemp = 0;
 
             //Check to see if a file modified date is to be used:
             boolean bFilterByFileModifiedDateTime = false;
             boolean bDateTimeFilterMatch = false;
-            /*if (gdIncomingDate_File_Modified_Date > 0) {
+            if (gdIncomingDate_File_Modified_Date > 0) {
                 bFilterByFileModifiedDateTime = true;
                 double dDateTime_CatalogItemImport = entry.getValue().dDatetime_Import;
                 double lDateDiff = Math.abs(dDateTime_CatalogItemImport - gdIncomingDate_File_Modified_Date);
@@ -119,15 +144,37 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
                     //static final String gsDatePatternNumSort = "yyyyMMdd.HHmmss"; 0.000100 = 1 minute difference.
                     bDateTimeFilterMatch = true;
                 }
-            }*/
+                if(bDateTimeFilterMatch) {
+                    sSortIndex[DATE_MODIFIED] = PRIORITIZED;
+                    iMatchCountOnModifiedDateWindowTemp = 1;
+                }
+            }
 
+            //Check to see if a filename filter is applicable:
+            boolean bFilterByFileName = false;
+            boolean bFileNameFilterMatch = false;
+            if (gsIncomingData_FileNameFilter != null) {
+                String sCatalogItemFileName = entry.getValue().sFilename;
+                if (!gsIncomingData_FileNameFilter.equals("")) {
+                    bFilterByFileName = true;
+                    bFileNameFilterMatch = entry.getValue().sFilename.matches(gsIncomingData_FileNameFilter);
+                } else {
+                    if(gsIncomingData_FileName.equals(sCatalogItemFileName)){
+                        bFilterByFileName = true;
+                        bFileNameFilterMatch = true;
+                    }
+                }
+                if(bFileNameFilterMatch) {
+                    sSortIndex[FILE_NAME] = PRIORITIZED;
+                    iMatchCountOnFileNameTemp = 1;
+                }
+            }
 
-            //Filter on resolution or page count, as applicable:
-            boolean bResolutionFilterApplicable = false;
+            //Filter on resolution:
+            boolean bResolutionMatchApplicable = false;
             boolean bResolutionMatch = false;
-
             if (giIncomingData_Height > 0 && giIncomingData_Width > 0) {
-                bResolutionFilterApplicable = true;
+                bResolutionMatchApplicable = true;
                 switch (GlobalClass.giSelectedCatalogMediaCategory) {
                     case GlobalClass.MEDIA_CATEGORY_VIDEOS:
                         if (entry.getValue().iHeight == giIncomingData_Height && entry.getValue().iWidth == giIncomingData_Width) {
@@ -142,29 +189,26 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
                         }
                         break;
                 }
-            }
-            if (bResolutionMatch) {
-                //todo: remove. For debugging.
-                //static final String gsDatePatternNumSort = "yyyyMMdd.HHmmss"; 0.000100 = 1 minute difference.
-                double dDateTime_CatalogItemImport = entry.getValue().dDatetime_Import;
-                double lDateDiff = Math.abs(dDateTime_CatalogItemImport - gdIncomingDate_File_Modified_Date);
-                bDateTimeFilterMatch = true;
-                ItemClass_CatalogItem icci = entry.getValue();
-                String sFolderName = icci.sFolderRelativePath;
-                String sFileName = icci.sFilename;
-                int iTagCount = icci.aliTags.size();
+                if(bResolutionMatch) {
+                    sSortIndex[RESOLUTION] = PRIORITIZED;
+                    iMatchCountOnResolutionTemp = 1;
+                }
             }
 
             //Filter on video duration, as applicable:
             boolean bVideoDurationFilterApplicable = false;
             boolean bVideoDurationMatch = false;
-            /*if (glIncomingData_Duration_Milliseconds > 0) {
+            if (glIncomingData_Duration_Milliseconds > 0) {
                 bVideoDurationFilterApplicable = true;
                 long lVideoDuration = entry.getValue().lDuration_Milliseconds;
                 if (Math.abs(lVideoDuration - glIncomingData_Duration_Milliseconds) < 10000) {
                     bVideoDurationMatch = true;
                 }
-            }*/
+                if(bVideoDurationMatch) {
+                    sSortIndex[DURATION] = PRIORITIZED;
+                    iMatchCountOnDurationTemp = 1;
+                }
+            }
 
 
             boolean bTagMatchApplicable = false;
@@ -179,56 +223,36 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
                 }
             }
 
-            //Check to see if the record needs to be skipped due to restriction settings:
-            boolean bIsRestricted = false;
 
-            int iMaturityRating = entry.getValue().iMaturityRating;
-            if (GlobalClass.gicuCurrentUser != null) {
-                if (iMaturityRating > GlobalClass.gicuCurrentUser.iMaturityLevel) {
-                    bIsRestricted = true;
-                }
-            } else {
-                if (iMaturityRating > GlobalClass.giDefaultUserMaturityRating) {
-                    bIsRestricted = true;
-                }
+
+
+
+            //Aggregate the match items.
+
+            boolean bMandatoryMatchesMet = true;
+            if(bTagMatchApplicable) {
+                bMandatoryMatchesMet = bTagsMatch;
             }
-            boolean bApprovedForThisUser = false;
-            ArrayList<String> alsAssignedUsers = entry.getValue().alsApprovedUsers;
-            if (alsAssignedUsers.size() > 0) {
-                if (GlobalClass.gicuCurrentUser != null) {
-                    for (String sAssignedUser : alsAssignedUsers) {
-                        if (GlobalClass.gicuCurrentUser.sUserName.equals(sAssignedUser)) {
-                            bApprovedForThisUser = true;
-                            break;
-                        }
-                    }
-                }
-            } else {
-                bApprovedForThisUser = true;
+            if(bResolutionMatchApplicable){
+                bMandatoryMatchesMet &= bResolutionMatch;
             }
 
-            if (!bIsRestricted && bApprovedForThisUser) {
-                boolean bIsMatch = true;
+            if(bMandatoryMatchesMet) {
 
-                if (bFilterByFileName) {
-                    bIsMatch = bFileNameFilterMatch;
-                }
-                if (bFilterByFileModifiedDateTime) {
-                    bIsMatch = bIsMatch && bDateTimeFilterMatch;
-                }
-                if (bResolutionFilterApplicable) {
-                    bIsMatch = bIsMatch && bResolutionMatch;
-                }
-                if (bVideoDurationFilterApplicable) {
-                    bIsMatch = bIsMatch && bVideoDurationMatch;
-                }
-                if (bTagMatchApplicable) {
-                    bIsMatch = bIsMatch && bTagsMatch;
-                }
+                String sIndex = sSortIndex[DATE_MODIFIED] +
+                        sSortIndex[FILE_NAME] +
+                        sSortIndex[RESOLUTION] +
+                        sSortIndex[DURATION] +
+                        entry.getKey();
+                iMatchTotal++;
+                iMatchCountOnFileName				+= iMatchCountOnFileNameTemp				;
+                iMatchCountOnModifiedDateWindow		+= iMatchCountOnModifiedDateWindowTemp		;
+                iMatchCountOnResolution				+= iMatchCountOnResolutionTemp				;
+                iMatchCountOnDuration				+= iMatchCountOnDurationTemp				;
 
-                if (bIsMatch) {
-                    treeMapPreSort.put(entry.getKey(), entry.getValue());
-                }
+
+
+                treeMapPreSort.put(sIndex, entry.getValue());
 
             }
 
@@ -239,46 +263,31 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
                 globalClass.BroadcastProgress(false, "",
                         true, iProgressBarValue,
                         true, iProgressBarValue + "%",
-                        CATALOG_ADJACENCY_ANALYZER_RESPONSE);
+                        CATALOG_ADJAN_RESPONSE);
             }
 
         }
 
-        //TreeMap presort will auto-sort itself.
-
-        //Clean up the key, apply a reverse sort order, if applicable:
+        //TreeMap will auto-sort itself.
         TreeMap<Integer, ItemClass_CatalogItem> tmNewOrderCatalogList = new TreeMap<>();
-        int iRID, iIterator;
-        if(globalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory]){
-            iRID = 0;
-            iIterator = 1;
-        } else {
-            iRID = treeMapPreSort.size();
-            iIterator = -1;
-        }
-
-        /* //No need to refresh the progress here - it is pretty quick.
-        iProgressNumerator = 0;
-        iProgressDenominator = treeMapPreSort.size();*/
+        int iRID = 0;
         for (Map.Entry<String, ItemClass_CatalogItem>
                 entry : treeMapPreSort.entrySet()) {
             tmNewOrderCatalogList.put(iRID, entry.getValue());
-            iRID += iIterator;
-            /* //No need to show progress here - it is pretty quick.
-            iProgressNumerator++;
-            if(iProgressNumerator % 2 == 0) {
-                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                BroadcastProgress(true, iProgressBarValue,
-                        true, iProgressNumerator + "/" + iProgressDenominator);
-            }*/
+            iRID++;
         }
 
         GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap = tmNewOrderCatalogList;
 
         //Broadcast the ready state of the SortAndFilterCatalogDisplay operation:
         Intent broadcastIntent_CatalogAdjacencyAnalysisResponse = new Intent();
-        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJACENCY_ANALYZER_EXTRA_BOOL_COMPLETE, true);
-        broadcastIntent_CatalogAdjacencyAnalysisResponse.setAction(CATALOG_ADJACENCY_ANALYZER_RESPONSE);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJAN_EXTRA_BOOL_COMPLETE, true);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJAN_EXTRA_INT_MAT_TOTAL    , iMatchTotal						);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJAN_EXTRA_INT_MAT_FNAME    , iMatchCountOnFileName				);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJAN_EXTRA_INT_MAT_MDATE    , iMatchCountOnModifiedDateWindow	);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJAN_EXTRA_INT_MAT_RES      , iMatchCountOnResolution			);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.putExtra(CATALOG_ADJAN_EXTRA_INT_MAT_DUR      , iMatchCountOnDuration				);
+        broadcastIntent_CatalogAdjacencyAnalysisResponse.setAction(CATALOG_ADJAN_RESPONSE);
         broadcastIntent_CatalogAdjacencyAnalysisResponse.addCategory(Intent.CATEGORY_DEFAULT);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent_CatalogAdjacencyAnalysisResponse);
 

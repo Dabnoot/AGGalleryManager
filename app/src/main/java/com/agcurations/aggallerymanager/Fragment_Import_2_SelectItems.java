@@ -230,19 +230,38 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         });
 
         //Configure the "Sort by" selection Spinner:
-        final int SPINNER_ITEM_FILE_NAME = 0;
-        final int SPINNER_ITEM_MODIFIED_DATE = 1;
-        final int SPINNER_ITEM_RESOLUTION = 2;
-        final int SPINNER_ITEM_DURATION = 3;
+        ArrayList<String> alsSpinnerItems = new ArrayList<>();
+        int iNextPosition = 0;
+        final int SPINNER_ITEM_FILE_NAME = iNextPosition;
+        alsSpinnerItems.add("Filename");
 
+        iNextPosition++;
+        final int SPINNER_ITEM_MODIFIED_DATE = iNextPosition;
+        alsSpinnerItems.add("Modified Date");
 
+        iNextPosition++;
+        final int SPINNER_ITEM_RESOLUTION = iNextPosition;
+        alsSpinnerItems.add("Resolution");
 
-        String[] sSpinnerItems;
-        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-            sSpinnerItems = new String[]{"Filename","Modified Date", "Resolution", "Duration"};
-        } else {
-            sSpinnerItems = new String[]{"Filename","Modified Date", "Resolution"};
+        int SPINNER_ITEM_DURATION_TEMP = -1; //Special treatment - "duration" is not applicable to images or comics.
+        if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+            iNextPosition++;
+            SPINNER_ITEM_DURATION_TEMP = iNextPosition;
+            alsSpinnerItems.add("Duration");
         }
+        final int SPINNER_ITEM_DURATION = SPINNER_ITEM_DURATION_TEMP;
+
+        int SPINNER_ITEM_ORPHAN_DUPLICATED_TEMP = -2; //Special treatment - "orphan duplicates" is only applicable to Catalog Analysis behaviors.
+        if(viewModelImportActivity.bImportingOrphanedFiles) {
+            iNextPosition++;
+            SPINNER_ITEM_ORPHAN_DUPLICATED_TEMP = iNextPosition;
+            alsSpinnerItems.add("Orphaned Duplicate");
+        }
+        final int SPINNER_ITEM_ORPHAN_DUPLICATED = SPINNER_ITEM_ORPHAN_DUPLICATED_TEMP;
+
+        String[] sSpinnerItems = new String[alsSpinnerItems.size()];
+        sSpinnerItems = alsSpinnerItems.toArray(sSpinnerItems);
+
         Spinner spinner_SortBy = getView().findViewById(R.id.spinner_SortBy);
         //wrap the items in the Adapter
         if(getActivity() == null){
@@ -277,6 +296,12 @@ public class Fragment_Import_2_SelectItems extends Fragment {
                 } else if(position == SPINNER_ITEM_DURATION) {
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByDurationAsc();
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
+                    }
+                }
+                else if(position == SPINNER_ITEM_ORPHAN_DUPLICATED) {
+                    if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
+                        ((Activity_Import) getActivity()).fileListCustomAdapter.SortByOrphanDuplicateAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 }

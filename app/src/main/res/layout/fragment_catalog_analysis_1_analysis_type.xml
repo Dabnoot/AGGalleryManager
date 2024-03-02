@@ -29,7 +29,7 @@
             android:id="@+id/radioGroup_MediaCategory"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="60dp">
+            >
 
             <RadioButton
                 android:id="@+id/radioButton_MissingFileIdentification"
@@ -58,6 +58,38 @@
                 android:buttonTint="@color/colorTextColor"/>
 
         </RadioGroup>
+
+        <RelativeLayout
+            android:id="@+id/relativeLayout_MaturityFilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="20dp"
+            android:translationZ="2dp"
+            android:layout_below="@id/relativeLayout_VideoDuration">
+
+            <TextView
+                android:id="@+id/textView_labelMaturityFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp"
+                android:text="Maturity:"
+                android:textColor="@color/colorTextColor"
+                android:textSize="20sp" />
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/rangeSlider_MaturityFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@id/textView_labelMaturityFilter"
+                app:thumbColor="@color/colorTextColor"
+                app:trackColor="@color/colorTextColor" />
+
+        </RelativeLayout>
 
         <LinearLayout
             android:id="@+id/linearLayout_ButtonBar"

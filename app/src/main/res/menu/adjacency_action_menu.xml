@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/menu_ApplyTagsFromItem"
+        android:title="Apply tags from item"/>
+    <item android:id="@+id/menu_CopyFileName"
+        android:title="Copy file name from item"/>
+    <item android:id="@+id/menu_CopyGroupID"
+        android:title="Copy group ID from item"/>
+</menu>

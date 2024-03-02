@@ -303,8 +303,7 @@ public class VideoEnabledWebView extends WebView
                             Log.d("VideoEnabledWebView: onMenuItemClick()", "Trouble with URL Decoder.");
                         }
                         String sOriginalFileName = sFileName;
-                        int iFileNameMaxLength = 46; //Arbitrarily set because I don't know Download Manager's rules. Gave some buffer from what I have seen.
-                        if(sFileName.length() > iFileNameMaxLength){
+                        if(sFileName.length() > GlobalClass.AGGM_MAX_FILENAME_LENGTH){
                             //Limit max length of file name or download manager will do it for you.
                             String sFileBaseName = sFileName.substring(0, sFileName.lastIndexOf("."));
                             String sFileExtension = sFileName.substring(sFileName.lastIndexOf("."));
@@ -312,8 +311,9 @@ public class VideoEnabledWebView extends WebView
                                 Log.d("VideoEnabledWebView: onMenuItemClick()", "File extension wierd. Not processing due to uncaptured case.");
                                 return true;
                             }
-                            int iAmountToTrim = sFileName.length() - iFileNameMaxLength;
+                            int iAmountToTrim = sFileName.length() - GlobalClass.AGGM_MAX_FILENAME_LENGTH;
                             sFileBaseName = sFileBaseName.substring(0, sFileBaseName.length() - iAmountToTrim);
+                            sFileBaseName = sFileBaseName.trim();
                             sFileName = sFileBaseName + sFileExtension;
 
 
