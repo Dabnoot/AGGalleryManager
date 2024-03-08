@@ -1032,8 +1032,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                                 " be available for the base resource, ensure initial analysis of folder items is set" +
                                 " to include resolution data to improve matches.";
                         GlobalClass.ShowMessage(gContextWindow, "Adjacency Analysis", sMessage);
-                        gbLookForFileAdjacencies = false; //Allow the user to click the button to start looking at adjacencies again.
-                        gButton_ShowAdjacencies.setEnabled(true);
+                        gbLookForFileAdjacencies = false; //Don't automatically seek adjacencies again unless the user click the button.
+                        gButton_ShowAdjacencies.setEnabled(true); //Allow the user to click the button to start looking at adjacencies again.
+
                     } else {
                         //Initiate the RecyclerView:
                         gRelativeLayout_Adjacencies.setVisibility(View.VISIBLE);
@@ -1331,13 +1332,12 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     //Create popup context menu with options for the user.
-                    PopupMenu popupAdjacencyItemOptions = new PopupMenu(vgParent.getContext(), v);
+                    PopupMenu popupMenuAdjacencyItemOptions = new PopupMenu(vgParent.getContext(), v);
+                    popupMenuAdjacencyItemOptions.getMenuInflater().inflate(R.menu.adjacency_action_menu, popupMenuAdjacencyItemOptions.getMenu());
                     if(ci.sGroupID.equals("")){
-                        popupAdjacencyItemOptions.getMenuInflater().inflate(R.menu.adjacency_action_menu_nogroup, popupAdjacencyItemOptions.getMenu());
-                    } else {
-                        popupAdjacencyItemOptions.getMenuInflater().inflate(R.menu.adjacency_action_menu, popupAdjacencyItemOptions.getMenu());
+                        popupMenuAdjacencyItemOptions.getMenu().removeItem(R.id.menu_CopyGroupID);
                     }
-                    popupAdjacencyItemOptions.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    popupMenuAdjacencyItemOptions.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                         @Override
                         public boolean onMenuItemClick(MenuItem item) {
                             int itemId = item.getItemId();
@@ -1367,7 +1367,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                         }
                     });
 
-                    popupAdjacencyItemOptions.show();
+                    popupMenuAdjacencyItemOptions.show();
 
 
 
