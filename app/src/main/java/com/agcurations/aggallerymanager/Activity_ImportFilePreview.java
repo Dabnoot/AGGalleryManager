@@ -33,11 +33,13 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.material.slider.RangeSlider;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
@@ -458,6 +460,43 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
         });
 
+        //Configure the maturity filter rangeslider:
+        RangeSlider rangeSlider_MaturityFilter = findViewById(R.id.rangeSlider_MaturityFilter);
+        //Set max available maturity to the max allowed to the user:
+        if(GlobalClass.gicuCurrentUser != null) {
+            rangeSlider_MaturityFilter.setValueTo((float) GlobalClass.gicuCurrentUser.iMaturityLevel);
+        } else {
+            rangeSlider_MaturityFilter.setValueTo((float) GlobalClass.giDefaultUserMaturityRating);
+        }
+        rangeSlider_MaturityFilter.setStepSize((float) 1);
+        //Set the current selected maturity window max to the default maturity rating:
+        rangeSlider_MaturityFilter.setValues((float) GlobalClass.giMinContentMaturityFilter, (float) GlobalClass.giMaxContentMaturityFilter);
+
+        rangeSlider_MaturityFilter.setLabelFormatter(value -> AdapterMaturityRatings.MATURITY_RATINGS[(int)value][0] + " - " + AdapterMaturityRatings.MATURITY_RATINGS[(int)value][1]);
+        rangeSlider_MaturityFilter.addOnChangeListener(new RangeSlider.OnChangeListener() {
+            @Override
+            public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
+                //Todo: Need to ensure that this routine only gets called when the user is done sliding.
+                List<Float> lfSliderValues = slider.getValues();
+                if(lfSliderValues.size() == 2){
+                    int iMinTemp = lfSliderValues.get(0).intValue();
+                    int iMaxTemp = lfSliderValues.get(1).intValue();
+                    if(iMinTemp != GlobalClass.giMinContentMaturityFilter ||
+                            iMaxTemp != GlobalClass.giMaxContentMaturityFilter) {
+                        GlobalClass.giMinContentMaturityFilter = lfSliderValues.get(0).intValue();
+                        GlobalClass.giMaxContentMaturityFilter = lfSliderValues.get(1).intValue();
+                        gbLookForFileAdjacencies = true;
+                        updateAdjacencies();
+                    }
+                }
+            }
+        });
+
+        if(!gbLookForFileAdjacencies){
+            gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
+            gButton_ShowAdjacencies.setEnabled(true);
+        }
+
         initializeFile();
 
     }
@@ -849,9 +888,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                     .build();
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrStartAdjacencyAnalyzer);
 
-        } else {
+        /*} else {
             gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
-            gButton_ShowAdjacencies.setEnabled(true);
+            gButton_ShowAdjacencies.setEnabled(true);*/
         }
     }
 
@@ -986,7 +1025,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 if (bAdjacencyAnalyzerComplete) {
                     gRelativeLayout_Adjacency_Analysis_Progress.setVisibility(View.INVISIBLE);
                     if(GlobalClass.gtmCatalogAdjacencyAnalysisTreeMap.size() == 0){
-                        gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
+                        //gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
                         String sMessage = "No adjacencies found. If this is unexpected, understand that this function" +
                                 " will not compare against catalog items private to other users, and filters" +
                                 " against user-selected maturity settings and tags.";
@@ -1308,9 +1347,13 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                                 clipboard.setPrimaryClip(clip);
                                 return true;
 
-                            } else { // (itemId == R.id.menu_CopyGroupID) {
+                            } else if (itemId == R.id.menu_CopyGroupID) {
                                 GlobalClass.gsGroupIDClip = ci.sGroupID;
                                 recalcGroupButtonVisibilities();
+                                return true;
+
+                            } else { // (itemId == R.id.menu_Magnify) {
+
                                 return true;
 
                             }

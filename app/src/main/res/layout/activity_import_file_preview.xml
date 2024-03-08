@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
@@ -39,7 +41,7 @@
         <RelativeLayout
             android:id="@+id/relativeLayout_Adjacencies"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="wrap_content"
             android:layout_above="@id/relativeLayout_BottomData"
             android:backgroundTint="#80000000"
             android:visibility="visible">
@@ -122,7 +124,7 @@
                     android:layout_below="@+id/textView_LabelDateModifiedMatchCount"
                     android:layout_alignParentStart="true"
                     android:layout_marginTop="5dp"
-                    android:text="Resolution matches X items."
+                    android:text="Resolution match count:"
                     android:textColor="?attr/colorOnPrimary" />
 
                 <TextView
@@ -163,13 +165,39 @@
                     android:text="Catalog viewer maturity filter applied."
                     android:textColor="?attr/colorOnPrimary" />
 
+                <RelativeLayout
+                    android:id="@+id/relativeLayout_MaturityFilter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignEnd="@+id/textView_MaturitySettingsNotifaction"
+                    android:layout_below="@id/textView_MaturitySettingsNotifaction">
+
+                    <TextView
+                        android:id="@+id/textView_labelMaturityFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="5dp"
+                        android:text="Maturity:"
+                        android:textColor="@color/colorTextColor"/>
+
+                    <com.google.android.material.slider.RangeSlider
+                        android:id="@+id/rangeSlider_MaturityFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="15dp"
+                        app:thumbColor="@color/colorTextColor"
+                        app:trackColor="@color/colorTextColor" />
+
+                </RelativeLayout>
+
 
             </RelativeLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerView_Adjacencies"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="200dp"
                 android:layout_toEndOf="@+id/relativeLayout_AdjacenciesData"
                 android:orientation="horizontal" />
 
@@ -186,7 +214,7 @@
                 android:id="@+id/relativeLayout_Adjacency_Analysis_Progress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
+                android:layout_alignBottom="@+id/relativeLayout_AdjacenciesData"
                 android:layout_marginTop="10dp">
 
                 <ProgressBar

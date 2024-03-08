@@ -35,35 +35,5 @@ public class Fragment_CatalogAnalysis_1_AnalysisType extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        if(getView() == null){
-            return;
-        }
-
-        //Configure the maturity filter rangeslider:
-        RangeSlider rangeSlider_MaturityFilter = getView().findViewById(R.id.rangeSlider_MaturityFilter);
-        //Set max available maturity to the max allowed to the user:
-        if(GlobalClass.gicuCurrentUser != null) {
-            rangeSlider_MaturityFilter.setValueTo((float) GlobalClass.gicuCurrentUser.iMaturityLevel);
-        } else {
-            rangeSlider_MaturityFilter.setValueTo((float) GlobalClass.giDefaultUserMaturityRating);
-        }
-        rangeSlider_MaturityFilter.setStepSize((float) 1);
-        //Set the current selected maturity window max to the default maturity rating:
-        rangeSlider_MaturityFilter.setValues((float) GlobalClass.giMinContentMaturityFilter, (float) GlobalClass.giMaxContentMaturityFilter);
-
-        rangeSlider_MaturityFilter.setLabelFormatter(value -> AdapterMaturityRatings.MATURITY_RATINGS[(int)value][0] + " - " + AdapterMaturityRatings.MATURITY_RATINGS[(int)value][1]);
-        rangeSlider_MaturityFilter.addOnChangeListener((slider, value, fromUser) -> {
-            List<Float> lfSliderValues = slider.getValues();
-            if(lfSliderValues.size() == 2){
-                int iMinTemp = lfSliderValues.get(0).intValue();
-                int iMaxTemp = lfSliderValues.get(1).intValue();
-                if(iMinTemp != GlobalClass.giMinContentMaturityFilter ||
-                        iMaxTemp != GlobalClass.giMaxContentMaturityFilter) {
-                    GlobalClass.giMinContentMaturityFilter = lfSliderValues.get(0).intValue();
-                    GlobalClass.giMaxContentMaturityFilter = lfSliderValues.get(1).intValue();
-                }
-            }
-        });
     }
 }
