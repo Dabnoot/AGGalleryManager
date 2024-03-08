@@ -1028,7 +1028,9 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                         //gRelativeLayout_Adjacencies.setVisibility(View.INVISIBLE);
                         String sMessage = "No adjacencies found. If this is unexpected, understand that this function" +
                                 " will not compare against catalog items private to other users, and filters" +
-                                " against user-selected maturity settings and tags.";
+                                " against user-selected maturity settings and tags. If no resolution data appears to" +
+                                " be available for the base resource, ensure initial analysis of folder items is set" +
+                                " to include resolution data to improve matches.";
                         GlobalClass.ShowMessage(gContextWindow, "Adjacency Analysis", sMessage);
                         gbLookForFileAdjacencies = false; //Allow the user to click the button to start looking at adjacencies again.
                         gButton_ShowAdjacencies.setEnabled(true);
@@ -1056,8 +1058,12 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                             gTextView_FileNameMatchCount.setText     (sTemp);
                             sTemp = "" + iMatchCountOnModifiedDateWindow;
                             gTextView_DateModifiedMatchCount.setText (sTemp);
-                            sTemp = "" + iMatchCountOnResolution;
-                            gTextView_ResolutionMatchCount.setText   (sTemp);
+                            if(galFileItems.get(giFileItemIndex).sHeight.equals("")){
+                                sTemp = "No res data avail.";
+                            } else {
+                                sTemp = "" + iMatchCountOnResolution;
+                            }
+                            gTextView_ResolutionMatchCount.setText(sTemp);
                             sTemp = "" + iMatchCountOnDuration;
                             gTextView_DurationMatchCount.setText     (sTemp);
 
