@@ -355,10 +355,47 @@ public class Worker_Catalog_Analysis extends Worker {
                         String sFolderUri = GlobalClass.gUriCatalogFolders[giMediaCategory] +
                                 GlobalClass.gsFileSeparator + sFolderName;
                         Uri uriFolderUri = Uri.parse(sFolderUri);
+
+                        //Get all files in the folder:
                         ArrayList<ItemClass_File> alicf_FileItemsInFolder = GlobalClass.GetDirectoryFileNamesData(uriFolderUri);
+
+                        //Look for items in this folder that are m3u8 folders (subfolder storage of multiple related files):
+                        ArrayList<String> alsSubfolders = GlobalClass.GetDirectorySubfolderNames(uriFolderUri);
+                        if(alsSubfolders.size() > 0){
+                            int iSubFolderCount = 0;
+                            for(String sSubfolderName: alsSubfolders){
+
+                                iSubFolderCount++;
+                                globalClass.BroadcastProgress(false, "",
+                                        true, iProgressBarValue,
+                                        true, "Indexing folder " + iProgressNumerator +
+                                                " [subfolder " + iSubFolderCount + "/" + alsSubfolders.size() + "] of " + iProgressDenominator,
+                                        CATALOG_VERIFICATION_ACTION_RESPONSE);
+
+                                //For each folder, check to see if it has a .m3u8 file:
+                                String sSubfolderUri = GlobalClass.gUriCatalogFolders[giMediaCategory] +
+                                        GlobalClass.gsFileSeparator + sFolderName +
+                                        GlobalClass.gsFileSeparator + sSubfolderName;
+                                Uri uriSubfolderUri = Uri.parse(sSubfolderUri);
+                                ArrayList<ItemClass_File> alicf_SubfolderItems = GlobalClass.GetDirectoryFileNamesData(uriSubfolderUri);
+                                if(alicf_SubfolderItems.size() > 0){
+                                    for(ItemClass_File icf: alicf_SubfolderItems){
+                                        if(icf.sFileOrFolderName.endsWith("m3u8")){
+                                            //Add this .m3u8 item to be considered as an item:
+                                            ItemClass_File icf_Temp = new ItemClass_File(ItemClass_File.TYPE_M3U8, icf.sFileOrFolderName);
+                                            icf_Temp.sMediaFolderRelativePath = sFolderName + GlobalClass.gsFileSeparator + sSubfolderName;
+                                            alicf_FileItemsInFolder.add(icf_Temp);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if(alicf_FileItemsInFolder.size() > 0) {
                             for (ItemClass_File icf : alicf_FileItemsInFolder) {
-                                icf.sMediaFolderRelativePath = sFolderName;
+                                if(icf.iTypeFileFolderURL != ItemClass_File.TYPE_M3U8) {
+                                    icf.sMediaFolderRelativePath = sFolderName;
+                                }
                             }
                             iTotalFiles += alicf_FileItemsInFolder.size();
                             alAllFileItemsInMediaFolder.add(alicf_FileItemsInFolder);
@@ -386,7 +423,9 @@ public class Worker_Catalog_Analysis extends Worker {
 
                     ArrayList<ItemClass_File> alOrphanedFileList = new ArrayList<>();
 
-                    //Loop through all of the folders in memory in the media category storage location:
+                    //Loop through all of the folders in memory in the media category storage location,
+                    // then loop through all of the file items (and m3u8 file items) to see if there
+                    // is a match in the catalog:
                     iProgressNumerator = 0;
                     iProgressDenominator = iTotalFiles;
                     int iTotalOrphanedFileCount = 0;
@@ -398,15 +437,13 @@ public class Worker_Catalog_Analysis extends Worker {
                         SendLogLine(sMessage);
                         sbLogLines.append(sMessage);
 
-                        //Assemble a folder Uri here to avoid potentially creating it over and over again:
-                        //Assemble a Uri for the folder:
-                        String sFolderUri = GlobalClass.gUriCatalogFolders[giMediaCategory] +
-                                GlobalClass.gsFileSeparator + sFolderName;
+                        String sFolderUri;
 
                         int iFileItemCountOrphanedInThisFolder = 0;
                         int iFileItemCountOrphanedInThisFolderButNameMatched = 0;
                         int iFileItemCountOrphanedMissingMatch = 0;
-                        for(ItemClass_File icf_FileItem: alFilesInFolder){
+                        for(ItemClass_File icf_FileItem: alFilesInFolder){ //These are the files in the folders in storage.
+
                             if (GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.STOP_REQUESTED) {
                                 sMessage = "'STOP' command received from user.\n";
                                 SendLogLine(sMessage);
@@ -423,10 +460,18 @@ public class Worker_Catalog_Analysis extends Worker {
 
                             //Look for the folder and filename combination in memory:
                             String sItemRelativePath = icf_FileItem.sMediaFolderRelativePath +
-                                    GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;
+                                    GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName; //This will include a .m3u8 file path and file name, if applicable.
+
+                            boolean bIsM3U8 = false;
+                            if(icf_FileItem.sFileOrFolderName.endsWith("m3u8")){
+                                bIsM3U8 = true;
+                            }
+
                             if (!setCatalogRelativePaths.contains(sItemRelativePath)) {
 
-                                //Item is not identified in memory. Note the occurrence:
+                                //Item is not identified in memory. Record the occurence so that the
+                                //  user can review them in the next step. This requires creating an
+                                //  array of file items to pass to a preview activity.
 
                                 iTotalOrphanedFileCount++;
 
@@ -447,8 +492,9 @@ public class Worker_Catalog_Analysis extends Worker {
                                     icf_FileItem.sExtension = sfileExtension;
                                 }
 
-                                icf_FileItem.sUri = sFolderUri +
-                                        GlobalClass.gsFileSeparator + icf_FileItem.sFileOrFolderName;
+                                icf_FileItem.sUri = GlobalClass.gUriCatalogFolders[giMediaCategory] +
+                                        GlobalClass.gsFileSeparator + sItemRelativePath; //This will include a .m3u8 file path and file name, if applicable.
+
                                 icf_FileItem.lVideoTimeInMilliseconds = 0;
 
                                 icf_FileItem.bMetadataDetected = false;
@@ -481,18 +527,20 @@ public class Worker_Catalog_Analysis extends Worker {
 
                                 //Check to see if this filename matches an item in the catalog that is missing it's file:
                                 boolean bOrphanedFileAssociatedWithMissingCatItem = false;
+                                Set<String> ssCatItemsMissingMediaFinds = new HashSet<>();
                                 if(gtmCatalogItemsMissing.size() > 0){
                                     //Compare to catalog items missing items.
                                     for(Map.Entry<String, ItemClass_CatalogItem> entry: gtmCatalogItemsMissing.entrySet()){
                                         if(entry.getValue().sFilename.equals(icf_FileItem.sFileOrFolderName)){
                                             sMessage = "\t\t\tA catalog item missing it's media is matched with this file. Expected location is: \n" +
-                                                    GlobalClass.gsCatalogFolderNames[giMediaCategory] +
-                                                    GlobalClass.cleanHTMLCodedCharacters(entry.getValue().sFolderRelativePath + GlobalClass.gsFileSeparator) +
+                                                    "\t\t\t\t" + GlobalClass.gsCatalogFolderNames[giMediaCategory] +
+                                                    GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + entry.getValue().sFolderRelativePath + GlobalClass.gsFileSeparator) +
                                                     entry.getValue().sFilename + "\n";
                                             SendLogLine(sMessage);
                                             sbLogLines.append(sMessage);
                                             bOrphanedFileAssociatedWithMissingCatItem = true;
                                             iFileItemCountOrphanedMissingMatch++;
+                                            ssCatItemsMissingMediaFinds.add(entry.getKey());
                                         }
                                     }
                                 }
@@ -506,7 +554,7 @@ public class Worker_Catalog_Analysis extends Worker {
                                     sbLogLines.append(sMessage);
                                 }
 
-                                //Check to see if there is an exact filename match in the catalog:
+                                //Check to see if there is an exact filename match in the catalog (including items that are NOT missing their media):
                                 int iFileNameMatchCount = 0;
                                 boolean bFoundMatch = false;
                                 ArrayList<String> alsFileNameMatchPaths = new ArrayList<>();
@@ -516,6 +564,12 @@ public class Worker_Catalog_Analysis extends Worker {
                                         if(!bFoundMatch) {
                                             iFileItemCountOrphanedInThisFolderButNameMatched++;
                                             bFoundMatch = true;
+                                        }
+                                        if(ssCatItemsMissingMediaFinds.contains(entry.getKey())) {
+                                            //We have already notified the user that the orphaned file matches this catalog items' media, and that
+                                            //  this particular catalog item is in fact missing it's media at it's intended location.
+                                            //  Don't record this item for display to the user a second time.
+                                            continue;
                                         }
                                         String sMatchPath = entry.getValue().sFolderRelativePath + GlobalClass.gsFileSeparator + entry.getValue().sFilename;
                                         alsFileNameMatchPaths.add(sMatchPath);
@@ -542,6 +596,11 @@ public class Worker_Catalog_Analysis extends Worker {
                         } // End looping through files in folder.
 
                         //If there were orphaned files in this folder, display a summary for the folder:
+                        sMessage = "\n------------------------------------------------------\n" +
+                                     "----------   Folder Summary   ------------------------\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
                         if(iFileItemCountOrphanedInThisFolder > 0) {
                             sMessage = "\nThere were " + iFileItemCountOrphanedInThisFolder + " orphaned files in this folder out of " + alFilesInFolder.size() + " files.\n";
                             SendLogLine(sMessage);
@@ -554,8 +613,7 @@ public class Worker_Catalog_Analysis extends Worker {
                             }
 
                             if(iFileItemCountOrphanedMissingMatch > 0){
-                                sMessage = "Some of the file names matched file names with catalog items which are missing their media.\n" +
-                                        "\t" + iFileItemCountOrphanedInThisFolderButNameMatched + " of these significant matches were found.\n";
+                                sMessage = "\t\t" + iFileItemCountOrphanedMissingMatch + " of the orphaned files matched catalog items' missing media file names.\n";
                                 SendLogLine(sMessage);
                                 sbLogLines.append(sMessage);
                             } else {
@@ -569,8 +627,12 @@ public class Worker_Catalog_Analysis extends Worker {
 
                     } //End looping through folders
 
+                    sMessage = "\n------------------------------------------------------\n" +
+                                 "----------   Orphaned File Analysis Summary   --------\n";
+                    SendLogLine(sMessage);
+                    sbLogLines.append(sMessage);
 
-                    sMessage = "\nOrphaned file analysis observed " + iProgressNumerator + " file items for " + iProgressDenominator + " total files.\n";
+                    sMessage = "\nOrphaned file analysis tested " + iProgressNumerator + " file items of " + iProgressDenominator + " total files.\n";
                     SendLogLine(sMessage);
                     sbLogLines.append(sMessage);
                     sMessage = "A total of " + alOrphanedFileList.size() + " orphaned files were found.\n";
@@ -580,7 +642,7 @@ public class Worker_Catalog_Analysis extends Worker {
 
                     if(alOrphanedFileList.size() > GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS){
                         sMessage = "\nAnalysis result limit set to " + GlobalClass.CATALOG_ANALYSIS_APPROX_MAX_RESULTS + ", but continues until the end of a folder is reached.\n" +
-                                "For more results, resolve the existing orphaned files and run the analysis again.\n";
+                                "For more results, resolve the existing orphaned files and run the analysis again.\n\n";
                         SendLogLine(sMessage);
                         sbLogLines.append(sMessage);
                     }
