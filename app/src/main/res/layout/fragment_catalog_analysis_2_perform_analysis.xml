@@ -58,8 +58,9 @@
             android:id="@+id/textView_AnalysisLog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/colorTextColor"
-            android:gravity="bottom"/>
+            android:fontFamily="monospace"
+            android:gravity="bottom"
+            android:textColor="@color/colorTextColor" />
     </ScrollView>
 
     <LinearLayout
