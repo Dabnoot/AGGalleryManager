@@ -510,6 +510,7 @@ public class GlobalClass extends Application {
         Uri uriParent = Uri.parse(sUriParent);
         return GetDirectoryFileNames(uriParent);
     }
+    @NonNull
     public static ArrayList<ItemClass_File> GetDirectoryFileNamesData(Uri uriParent){
         //This routine does not return folder names!
         ArrayList<ItemClass_File> alicf_Files = new ArrayList<>();
@@ -562,13 +563,15 @@ public class GlobalClass extends Application {
         Uri uriParent = Uri.parse(sUriParent);
         return GetDirectoryFileNamesData(uriParent);
     }
+
+    @NonNull
     public static ArrayList<String> GetDirectorySubfolderNames(Uri uriParent){
         //This routine does not return file names!
-        ArrayList<String> alsFileNames = new ArrayList<>();
+        ArrayList<String> alsFolderNames = new ArrayList<>();
 
         if(!GlobalClass.CheckIfFileExists(uriParent)){
             //The program will crash if the folder does not exist.
-            return alsFileNames; //Let it behave as if there are no files in the folder.
+            return alsFolderNames; //Let it behave as if there are no folders in the folder.
         }
         final Uri childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(uriParent,
                 DocumentsContract.getDocumentId(uriParent));
@@ -579,10 +582,10 @@ public class GlobalClass extends Application {
                     DocumentsContract.Document.COLUMN_MIME_TYPE}, null, null, null);
             if(c != null) {
                 while (c.moveToNext()) {
-                    final String sFileName = c.getString(0);
+                    final String sItemName = c.getString(0);
                     final String sMimeType = c.getString( 1);
                     if(sMimeType.equals(DocumentsContract.Document.MIME_TYPE_DIR)) {
-                        alsFileNames.add(sFileName);
+                        alsFolderNames.add(sItemName);
                     }
                 }
                 c.close();
@@ -590,8 +593,9 @@ public class GlobalClass extends Application {
         } catch (Exception e) {
             Log.d("GlobalClass:GetDirectorySubfolderNames()", "Problem querying folder.");
         }
-        return alsFileNames;
+        return alsFolderNames;
     }
+
 
     public static boolean IsDirEmpty(Uri uriDirectory){
         boolean EMPTY = true;
@@ -1299,7 +1303,7 @@ public class GlobalClass extends Application {
         String sMessage;
         int iProgressNumerator = 0;
         int iProgressDenominator = gtmCatalogLists.get(iMediaCategory).size();
-        int iProgressBarValue = 0;
+        int iProgressBarValue;
 
         StringBuilder sbBuffer = new StringBuilder();
         StringBuilder sbRecord = new StringBuilder(); //This is used in an attempt to increase the speed
@@ -3042,167 +3046,6 @@ public class GlobalClass extends Application {
     public static final int FINISHED = 4;
 
 
-    public void verifyCatalogItemsExist(int iMediaCategory, boolean bTrimMissingCatalogItems){
-
-
-
-    }
-
-    public void rectifyRogueComicCatalogItemLocations(){
-
-        String sFolderToMoveItemsTo = "319549";
-
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(MEDIA_CATEGORY_COMICS).entrySet()) {
-
-            ItemClass_CatalogItem icci = entry.getValue();
-
-            if(!icci.sFolderRelativePath.contains(gsFileSeparator)) {
-
-                String sUri = "";
-
-                //Define the uri to the comic folder:
-                sUri = GlobalClass.gsUriAppRootPrefix
-                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_COMICS]
-                        + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
-                Uri uriComicFolder = Uri.parse(sUri);
-
-                //Verify folder location:
-                if (!CheckIfFileExists(uriComicFolder)) {
-                    continue;
-                }
-
-
-                //Define target parent uri:
-                sUri = GlobalClass.gsUriAppRootPrefix
-                        + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_COMICS]
-                        + GlobalClass.gsFileSeparator + sFolderToMoveItemsTo;
-                Uri uriTargetParentUri = Uri.parse(sUri);
-                //Verify folder location:
-                if (!CheckIfFileExists(uriTargetParentUri)) {
-                    continue;
-                }
-
-                try {
-                    DocumentsContract.moveDocument(gcrContentResolver, uriComicFolder, gUriCatalogFolders[MEDIA_CATEGORY_COMICS], uriTargetParentUri);
-                } catch (Exception e){
-                    Log.d("Comic folder move", "" + e.getMessage());
-                }
-
-                //Update memory:
-                icci.sFolderRelativePath = sFolderToMoveItemsTo + gsFileSeparator + icci.sFolderRelativePath;
-
-
-            }
-
-
-        }
-
-        //Write the Catalog data file:
-        CatalogDataFile_UpdateCatalogFile(MEDIA_CATEGORY_COMICS, "Updating catalog after rogue comic folder location correction...");
-
-    }
-
-
-    public void refolderizeImages(){
-        //Routine to move images in "tags" folders to folders in a numerical sequence.
-
-        int iProgressNumerator = 0;
-        int iProgressDenominator = gtmCatalogLists.get(MEDIA_CATEGORY_IMAGES).size();
-        int iProgressBarValue = 0;
-
-        for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogLists.get(MEDIA_CATEGORY_IMAGES).entrySet()) {
-
-            ItemClass_CatalogItem icci = entry.getValue();
-
-            iProgressNumerator++;
-            if (iProgressNumerator % 10 == 0) {
-                iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);
-                BroadcastProgress(false, "",
-                        true, iProgressBarValue,
-                        true, "Verifying item ID " + icci.sItemID + "...",
-                        BROADCAST_CATALOG_FILES_MAINTENANCE);
-            }
-
-            //Check to see if the item is in one of the old folders, either folder number
-            // < 1000 or in the 'etc' folder:
-            boolean bItemOkToMove = false;
-            bItemOkToMove = icci.sFolderRelativePath.equals("etc");
-            try{
-                int iFolderValue;
-                iFolderValue = Integer.parseInt(icci.sFolderRelativePath);
-                //Don't move items that are already in an acceptable folder.
-                bItemOkToMove = iFolderValue < 1000;
-            } catch (Exception ignored){}
-
-
-            if(bItemOkToMove){
-                ItemClass_StorageFolderAvailability icsfa = gtmFolderAvailability.get(MEDIA_CATEGORY_IMAGES);
-                if(icsfa == null){
-                    //If current storage folder is unknown (unlikely), get the next folder by looking at current directory contents:
-                    GlobalClass.getAGGMStorageFolderAvailability(MEDIA_CATEGORY_IMAGES); //This creates the folder if it does not exist.
-                    icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_IMAGES);
-                }
-                if(icsfa != null) {
-                    icsfa.iFileCount++;
-                    if(icsfa.iFileCount > 250){
-                        //Designate the next folder to hold content:
-                        GlobalClass.getAGGMStorageFolderAvailability(MEDIA_CATEGORY_IMAGES); //This creates the folder if it does not exist.
-                        icsfa = GlobalClass.gtmFolderAvailability.get(MEDIA_CATEGORY_IMAGES);
-                    }
-
-                    //Identify the paths:
-
-                    String sSourceParentDocumentUri = GlobalClass.gsUriAppRootPrefix
-                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES]
-                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath;
-                    Uri uriSourceParentDocumentUri = Uri.parse(sSourceParentDocumentUri);
-
-
-                    String sImageUri = "";
-
-                    //Define the uri to the image item:
-                    sImageUri = GlobalClass.gsUriAppRootPrefix
-                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES]
-                            + GlobalClass.gsFileSeparator + icci.sFolderRelativePath
-                            + GlobalClass.gsFileSeparator + icci.sFilename;
-                    Uri uriImageUri = Uri.parse(sImageUri);
-
-                    //Verify source file exists:
-                    if (!CheckIfFileExists(uriImageUri)) {
-                        continue;
-                    }
-
-                    String sFolderToMoveItemsTo = icsfa.sFolderName;
-
-                    //Define target parent uri:
-                    String sTargetFolderUri = GlobalClass.gsUriAppRootPrefix
-                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[MEDIA_CATEGORY_IMAGES]
-                            + GlobalClass.gsFileSeparator + sFolderToMoveItemsTo;
-                    Uri uriTargetParentFolderUri = Uri.parse(sTargetFolderUri);
-                    //Verify destination folder location:
-                    if (!CheckIfFileExists(uriTargetParentFolderUri)) {
-                        continue;
-                    }
-
-
-                    try {
-                        DocumentsContract.moveDocument(gcrContentResolver, uriImageUri, uriSourceParentDocumentUri, uriTargetParentFolderUri);
-                    } catch (Exception e){
-                        Log.d("Comic folder move", "" + e.getMessage());
-                    }
-
-
-                    icci.sFolderRelativePath = icsfa.sFolderName;
-
-                }
-            }
-
-        } //End loop
-
-        CatalogDataFile_UpdateCatalogFile(MEDIA_CATEGORY_IMAGES, "Updating Images Catalog File with New Locations...");
-        //Update 8/1/2023 5:44 PM: Ready to test...
-    }
-
     public void deJumbleOrphanedFiles(int iMediaCategory){
 
         int iProgressNumerator = 0;
@@ -3622,6 +3465,24 @@ public class GlobalClass extends Application {
     //  If the option to individualize M3U8 video segment playback is not selected,
     //  play an SAF-adapted M3U8 file. That is, a file with video listings
     //  of Android Storage Access Framework Uris.
+
+
+    //Repair Orphaned File Items: This variable/function used to move files/folders associated
+    // with orphaned files. The catalog analysis will first look for catalog items missing their
+    // media, then will look for orphaned files in the catalog media storage location. If media
+    // is found that matches the file name, and the file name is unique both among the 'storage'
+    // and the 'database memory', thus there is a one-to-one relation, then the program will move
+    // the orphaned file item into the location indicated by the catalog database entry.
+    // The occurrence limit variable is to allow the user to check success of a repair operation
+    // before continuing.
+    public static boolean gbCatalogAnalysis_RepairOrphanedItems = false;
+    public static int giCatalogAnalysis_RepairOrphanedItemLimit = 1;
+
+    //Trim Missing Catalog Items: This variable is used to trim database entries for catalog items
+    // for which the associated media cannot be found.
+    public static boolean gbCatalogAnalysis_TrimMissingCatalogItems = false;
+    public static int giCatalogAnalysis_TrimMissingCatalogItemLimit = 1; //Set to -1 to trim all applicable.
+
 
     //==============================================================================================
     //=========== Preferences ======================================================================
