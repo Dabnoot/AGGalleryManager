@@ -1,6 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -14,7 +13,6 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -288,14 +286,6 @@ public class Worker_Catalog_Analysis extends Worker {
                     sbLogLines.append(sMessage);
                 }
 
-                /*if (bTrimMissingCatalogItems) {
-                    //Remove from memory and update the catalog file any catalog items whose files were not found:
-                    for (Map.Entry<String, ItemClass_CatalogItem> entry : tmCatalogItemsMissing.entrySet()) {
-                        gtmCatalogLists.get(giMediaCategory).remove(entry.getKey());
-                    }
-                    CatalogDataFile_UpdateCatalogFile(giMediaCategory, "Updating catalog after content trim...");
-                }*/
-
                 //End search for catalog items with missing files.
 
                 //If there were any missing items, search this program's data storage directory dedicated to the media type
@@ -525,7 +515,7 @@ public class Worker_Catalog_Analysis extends Worker {
 
                                 iFileItemCountOrphanedInThisFolder++;
 
-                                //Check to see if this filename matches an item in the catalog that is missing it's file:
+                                //Check to see if this filename matches an item in the catalog that is missing it's media:
                                 boolean bOrphanedFileAssociatedWithMissingCatItem = false;
                                 Set<String> ssCatItemsMissingMediaFinds = new HashSet<>();
                                 if(gtmCatalogItemsMissing.size() > 0){
@@ -541,6 +531,12 @@ public class Worker_Catalog_Analysis extends Worker {
                                             bOrphanedFileAssociatedWithMissingCatItem = true;
                                             iFileItemCountOrphanedMissingMatch++;
                                             ssCatItemsMissingMediaFinds.add(entry.getKey());
+                                            icf_FileItem.bOrphanAssociatedWithCatalogItem = true;
+                                            icf_FileItem.bOrphanAssociatedCatalogItemIsMissingMedia = true;
+                                            if(icf_FileItem.alsOrphanAssociatedCatalogItemIDs == null){
+                                                icf_FileItem.alsOrphanAssociatedCatalogItemIDs = new ArrayList<>();
+                                            }
+                                            icf_FileItem.alsOrphanAssociatedCatalogItemIDs.add(entry.getKey());
                                         }
                                     }
                                 }
@@ -563,6 +559,7 @@ public class Worker_Catalog_Analysis extends Worker {
                                         iFileNameMatchCount++;
                                         if(!bFoundMatch) {
                                             iFileItemCountOrphanedInThisFolderButNameMatched++;
+                                            icf_FileItem.bOrphanAssociatedWithCatalogItem = true;
                                             bFoundMatch = true;
                                         }
                                         if(ssCatItemsMissingMediaFinds.contains(entry.getKey())) {
@@ -571,6 +568,10 @@ public class Worker_Catalog_Analysis extends Worker {
                                             //  Don't record this item for display to the user a second time.
                                             continue;
                                         }
+                                        if(icf_FileItem.alsOrphanAssociatedCatalogItemIDs == null){
+                                            icf_FileItem.alsOrphanAssociatedCatalogItemIDs = new ArrayList<>();
+                                        }
+                                        icf_FileItem.alsOrphanAssociatedCatalogItemIDs.add(entry.getKey());
                                         String sMatchPath = entry.getValue().sFolderRelativePath + GlobalClass.gsFileSeparator + entry.getValue().sFilename;
                                         alsFileNameMatchPaths.add(sMatchPath);
                                     }
@@ -645,6 +646,193 @@ public class Worker_Catalog_Analysis extends Worker {
                                 "For more results, resolve the existing orphaned files and run the analysis again.\n\n";
                         SendLogLine(sMessage);
                         sbLogLines.append(sMessage);
+                    }
+
+
+                    // =============================================================================
+                    // ============================ System repair ==================================
+                    // =============================================================================
+
+                    //Trim database of missing catalog items:
+                    if (GlobalClass.gbCatalogAnalysis_TrimMissingCatalogItems
+                            && (GlobalClass.giCatalogAnalysis_TrimMissingCatalogItemLimit != 0) ) {
+
+                        sMessage = "\n------------------------------------------------------\n" +
+                                     "----------   System Repair - Catalog Trim   ----------\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
+                        sMessage = "\nTrimming catalog items with missing media in accordance with user settings.\n";
+                        if(GlobalClass.giCatalogAnalysis_TrimMissingCatalogItemLimit > 0){
+                            sMessage = sMessage + "Trim limit set to " + GlobalClass.giCatalogAnalysis_TrimMissingCatalogItemLimit + " items.\n";
+                        } else {
+                            sMessage = sMessage + "Trim limit configured to trim all applicable items.\n";
+                        }
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
+                        //Remove from memory and update the catalog file any catalog items whose files were not found:
+                        int iTrimCount = 0;
+                        for (Map.Entry<String, ItemClass_CatalogItem> entry : gtmCatalogItemsMissing.entrySet()) {
+                            iTrimCount++;
+                            if((iTrimCount <= GlobalClass.giCatalogAnalysis_TrimMissingCatalogItemLimit)
+                                || GlobalClass.giCatalogAnalysis_TrimMissingCatalogItemLimit == -1) {
+                                sMessage = iTrimCount + ". Removing item ID " + entry.getKey() + "... ";
+                                SendLogLine(sMessage);
+                                sbLogLines.append(sMessage);
+                                GlobalClass.gtmCatalogLists.get(giMediaCategory).remove(entry.getKey());
+                                sMessage = "success.\n";
+                                SendLogLine(sMessage);
+                                sbLogLines.append(sMessage);
+                            } else {
+                                break;
+                            }
+                        }
+                        sMessage = "\nCatalog trimming complete. Writing catalog file.\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
+                        globalClass.CatalogDataFile_UpdateCatalogFile(giMediaCategory, "Updating catalog after content trim...");
+
+                        sMessage = "Catalog file write complete.\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+                    }
+
+
+                    //Move files/items related to orphaned files and catalog items missing their media:
+                    if(GlobalClass.gbCatalogAnalysis_RepairOrphanedItems &&
+                            (GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit != 0)){
+
+                        sMessage = "\n------------------------------------------------------\n" +
+                                     "------   System Repair - Orphaned Match Move   -------\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
+                        sMessage = "\nMoving orphaned files that have been matched with catalog items with missing media in accordance with user settings.\n";
+                        if(GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit > 0){
+                            sMessage = sMessage + "Repair limit set to " + GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit + " items.\n";
+                        } else {
+                            sMessage = sMessage + "Repair limit configured to repair all applicable items.\n";
+                        }
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
+                        //Go through the list of orphaned file items and move files into position where necessary:
+                        int iRepairCount = 0;
+                        for (ItemClass_File icfOrphanedItem:  alOrphanedFileList) {
+                            if(icfOrphanedItem.bOrphanAssociatedCatalogItemIsMissingMedia &&
+                                    (icfOrphanedItem.alsOrphanAssociatedCatalogItemIDs.size() == 1) ) {
+
+                                iRepairCount++;
+                                if ((iRepairCount <= GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit)
+                                        || GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit == -1) {
+
+                                    String sItemID = icfOrphanedItem.alsOrphanAssociatedCatalogItemIDs.get(0);
+
+                                    sMessage = iRepairCount + ". Repairing item ID " + sItemID + "... ";
+                                    SendLogLine(sMessage);
+                                    sbLogLines.append(sMessage);
+
+                                    //Need:
+                                    //  SourceDocumentUri
+                                    //  SourceParentDocumentUri
+                                    //  TargetParentUri
+
+                                    //Get SourceDocumentUri:
+                                    Uri uriSourceDocumentUri;
+                                    if(icfOrphanedItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8){
+                                        //If this is an m3u8 item, then the Uri desired for the item is the parent folder
+                                        // for the .m3u8 file item.
+                                        try {
+                                            uriSourceDocumentUri = GlobalClass.GetParentUri(icfOrphanedItem.sUri);
+                                        } catch (Exception e){
+                                            sMessage = "Could not form source Uri. Error message: " + e.getMessage();
+                                            SendLogLine(sMessage);
+                                            sbLogLines.append(sMessage);
+                                            continue;
+                                        }
+                                    } else {
+                                        uriSourceDocumentUri = Uri.parse(icfOrphanedItem.sUri);
+                                    }
+
+                                    //Get the SourceParentDocumentUri:
+                                    Uri uriSourceParentDocumentUri;
+                                    try {
+                                        if (icfOrphanedItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) {
+                                            //If this is an m3u8 item, then the Uri desired for the item is the parent folder
+                                            // for the .m3u8 file item, and the source parent Uri is the parent to that parent.
+                                            uriSourceParentDocumentUri = GlobalClass.GetParentUri(uriSourceDocumentUri);
+                                        } else {
+                                            uriSourceParentDocumentUri = GlobalClass.GetParentUri(uriSourceDocumentUri);
+                                        }
+                                    } catch (Exception e){
+                                        sMessage = "Could not form source parent Uri. Error message: " + e.getMessage();
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+                                        continue;
+                                    }
+
+                                    //Get the TargetParentUri:
+                                    ItemClass_CatalogItem icci = GlobalClass.gtmCatalogLists.get(giMediaCategory).get(sItemID);
+                                    String sFolderRelativePath;
+                                    if(icfOrphanedItem.iTypeFileFolderURL == ItemClass_File.TYPE_M3U8) {
+                                        //If this is an m3u8 item, then the Uri desired for the item is the parent folder
+                                        // for the .m3u8 file item, and the source parent Uri is the parent to that parent.
+                                        String[] sFolders = icci.sFolderRelativePath.split(GlobalClass.gsFileSeparator);
+                                        if (sFolders.length <= 1) {
+                                            //There should be at least 2 folders here, since the m3u8 content is held in a folder.
+                                            continue;
+                                        }
+                                        StringBuilder sbParentFolder = new StringBuilder();
+                                        for (int i = 0; i < sFolders.length - 1; i++) {
+                                            //In the case of m3u8, we are ignoring the last folder on the relative path.
+                                            sbParentFolder.append(sFolders[i]);
+                                            if (i < sFolders.length - 2) {
+                                                sbParentFolder.append(GlobalClass.gsFileSeparator);
+                                            }
+                                        }
+                                        sFolderRelativePath = sbParentFolder.toString();
+                                    } else {
+                                        sFolderRelativePath = icci.sFolderRelativePath;
+                                    }
+                                    String sTargetParentDocumentUri = GlobalClass.gsUriAppRootPrefix
+                                            + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[giMediaCategory]
+                                            + GlobalClass.gsFileSeparator + sFolderRelativePath;
+                                    Uri uriTargetParentDocumentUri = Uri.parse(sTargetParentDocumentUri);
+
+                                    //Verify target folder location:
+                                    if (!GlobalClass.CheckIfFileExists(uriTargetParentDocumentUri)) {
+                                        continue;
+                                    }
+
+
+                                    try {
+                                        DocumentsContract.moveDocument(GlobalClass.gcrContentResolver, uriSourceDocumentUri, uriSourceParentDocumentUri, uriTargetParentDocumentUri);
+                                        sMessage = "success.\n";
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+
+                                    } catch (Exception e){
+                                        sMessage = "Could not move item. Error message: " + e.getMessage();
+                                        SendLogLine(sMessage);
+                                        sbLogLines.append(sMessage);
+                                    }
+
+
+                                } else {
+                                    //If the orphaned file repair limit has been reached...
+                                    break;
+                                }
+
+                            } //End if the orphaned file is associated with a catalog item missing its media.
+                            if ((iRepairCount >= GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit) && GlobalClass.giCatalogAnalysis_RepairOrphanedItemLimit != -1) { break;}
+                        } //End loop through orphaned file items.
+
+                        sMessage = "\nFinished repairing orphaned file items.\n";
+                        SendLogLine(sMessage);
+                        sbLogLines.append(sMessage);
+
                     }
 
                     //Broadcast a message with the list of files so that they can be presented to the user:
