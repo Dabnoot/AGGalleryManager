@@ -6,4 +6,8 @@
         android:title="Copy file name from item"/>
     <item android:id="@+id/menu_CopyGroupID"
         android:title="Copy group ID from item"/>
+    <item android:id="@+id/menu_Magnify"
+        android:title="Magnify"/>
+    <item android:id="@+id/menu_SideBySide"
+        android:title="View Side-by-Side"/>
 </menu>
