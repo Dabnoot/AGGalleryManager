@@ -260,7 +260,7 @@ public class VideoEnabledWebView extends WebView
                         Message msg = new Message();
                         Bundle bundle = new Bundle();
                         sURL = gsNodeData_url;
-                        if(sURL == null){
+                        if (sURL == null) {
                             sURL = gsNodeData_src;
                         }
                         bundle.putString("url", sURL);

@@ -198,6 +198,14 @@ public class Activity_Browser extends AppCompatActivity {
             imageButton_AddTab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+
+                    int iTabCount = viewPagerFragmentAdapter.getItemCount();
+                    if(iTabCount >= GlobalClass.giMaxTabCount) {
+                        String sMessage = "Arbitrary tab limit reached at " + iTabCount + " tabs. Close a tab to open a new tab.";
+                        Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
                     gsNewTabSequenceHelper = null; //Clear the helper, new tab creation order reset.
                     Toast.makeText(getApplicationContext(), "New tab...", Toast.LENGTH_SHORT).show();
                     CreateNewTab("");
@@ -305,6 +313,18 @@ public class Activity_Browser extends AppCompatActivity {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
+
+            int iTabCount = viewPagerFragmentAdapter.getItemCount();
+            int iTabWarningCount = (int) Math.floor((double) GlobalClass.giMaxTabCount * .90);
+            if(iTabCount >= GlobalClass.giMaxTabCount) {
+                String sMessage = "Arbitrary tab limit reached at " + iTabCount + " tabs.\nClose a tab to open a new tab.";
+                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                return;
+            } else if(iTabCount >= iTabWarningCount) {
+                String sMessage = iTabCount + " tabs loaded.";
+                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+            }
+
             String sURL = msg.getData().getString("url");
             String sTabID = msg.getData().getString("tabID"); //The TabID for the tab calling for the opening of a link in a new tab.
             //Open the new tab immediately after the current tab, or after a new prior tab.
@@ -452,7 +472,7 @@ public class Activity_Browser extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     //Tab closing...
-
+                    Toast.makeText(getApplicationContext(), "Closing tab...", Toast.LENGTH_SHORT).show();
                     //If the tab being closed is not the tab which has focus, make sure that the
                     //  focus tab retains focus.
                     int iFocusPosition = viewPager2_WebPages.getCurrentItem();
@@ -672,8 +692,8 @@ public class Activity_Browser extends AppCompatActivity {
                     if(sResultType.equals(Worker_Browser_GetWebPageTabData.RESULT_TYPE_WEB_PAGE_TAB_DATA_ACQUIRED)){
 
                         //Initialize the tabs:
-                        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-                        for(int i = 0; i < GlobalClass.gal_WebPagesForCurrentUser.size(); i++){
+                        int iTabCount = GlobalClass.gal_WebPagesForCurrentUser.size();
+                        for(int i = 0; i < iTabCount; i++){
                             //NO PROGRESS BAR TO BE IMPLEMENTED HERE.
                             //  This onReceive blocks the UI thread, and so no progress bar drawing
                             //  will occur.
@@ -698,6 +718,12 @@ public class Activity_Browser extends AppCompatActivity {
                         gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
 
                         bTabsLoaded = true;
+
+                        int iTabWarningCount = (int) Math.floor((double) GlobalClass.giMaxTabCount * .90);
+                        if(iTabCount >= iTabWarningCount) {
+                            String sMessage = iTabCount + " tabs loaded.";
+                            Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                        }
 
                     } else if (sResultType.equals(Worker_Browser_GetWebPagePreview.RESULT_TYPE_WEB_PAGE_TITLE_AND_FAVICON_ACQUIRED)){
                         String sTabID = intent.getStringExtra(GlobalClass.EXTRA_WEBPAGE_TAB_DATA_TABID);
