@@ -65,6 +65,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter();
         filter.addAction(Worker_Catalog_Analysis.CATALOG_VERIFICATION_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         analysisDataServiceResponseReceiver = new AnalysisDataServiceResponseReceiver();
 
