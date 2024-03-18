@@ -1,506 +1,576 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:weightSum="100"
-    android:baselineAligned="false">
+    android:layout_height="match_parent">
 
-    <RelativeLayout
+    <LinearLayout
+
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="25"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:weightSum="100"
+        android:baselineAligned="false">
 
         <RelativeLayout
-            android:id="@+id/relativeLayout_VideoView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/relativeLayout_BottomData"
-            android:background="@color/colorBlack">
-
-            <ImageView
-                android:id="@+id/imageView_ImagePreview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:backgroundTint="@color/colorBlack"
-                android:contentDescription="Image preview"
-                android:layout_centerHorizontal="true"/>
-
-            <VideoView
-                android:id="@+id/videoView_VideoPlayerPreview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:backgroundTint="@color/colorBlack"
-                android:layout_centerHorizontal="true"/>
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/relativeLayout_Adjacencies"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/relativeLayout_BottomData"
-            android:backgroundTint="#80000000"
-            android:visibility="visible">
-
-            <!--This layout used for displaying results related to determination of similar files.-->
+            android:layout_height="match_parent"
+            android:layout_weight="25"
+            android:orientation="vertical">
 
             <RelativeLayout
-                android:id="@+id/relativeLayout_AdjacenciesData"
-                android:layout_width="wrap_content"
+                android:id="@+id/relativeLayout_VideoView"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentTop="true"
-                android:layout_marginStart="5dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginEnd="5dp"
-                android:layout_marginBottom="5dp"
-                android:background="?attr/colorPrimaryDark"
-                android:padding="5dp">
+                android:layout_above="@+id/relativeLayout_BottomData"
+                android:background="@color/colorBlack">
 
-                <TextView
-                    android:id="@+id/textView_LabelAdjacencyCount"
+                <ImageView
+                    android:id="@+id/imageView_ImagePreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@color/colorBlack"
+                    android:contentDescription="Image preview"
+                    android:layout_centerHorizontal="true"/>
+
+                <VideoView
+                    android:id="@+id/videoView_VideoPlayerPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:backgroundTint="@color/colorBlack"
+                    android:layout_centerHorizontal="true"/>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_Adjacencies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_above="@id/relativeLayout_BottomData"
+                android:backgroundTint="#80000000"
+                android:visibility="visible">
+
+                <!--This layout used for displaying results related to determination of similar files.-->
+
+                <RelativeLayout
+                    android:id="@+id/relativeLayout_AdjacenciesData"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"
-                    android:text="Similar item count:"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_AdjacencyCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/textView_LabelAdjacencyCount"
                     android:layout_marginStart="5dp"
-                    android:layout_toEndOf="@+id/textView_LabelAdjacencyCount"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_LabelFileNameMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_LabelAdjacencyCount"
-                    android:layout_alignParentStart="true"
                     android:layout_marginTop="5dp"
-                    android:text="File name match count:"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_FileNameMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/textView_LabelFileNameMatchCount"
-                    android:layout_marginStart="5dp"
-                    android:layout_toEndOf="@+id/textView_LabelFileNameMatchCount"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_LabelDateModifiedMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_LabelFileNameMatchCount"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginTop="5dp"
-                    android:text="Date window match count:"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_DateModifiedMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/textView_LabelDateModifiedMatchCount"
-                    android:layout_marginStart="5dp"
-                    android:layout_toEndOf="@+id/textView_LabelDateModifiedMatchCount"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_LabelResolutionMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_LabelDateModifiedMatchCount"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginTop="5dp"
-                    android:text="Resolution match count:"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_ResolutionMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/textView_LabelResolutionMatchCount"
-                    android:layout_marginStart="5dp"
-                    android:layout_toEndOf="@+id/textView_LabelResolutionMatchCount"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_LabelDurationMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_LabelResolutionMatchCount"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginTop="5dp"
-                    android:text="Duration window match count:"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_DurationMatchCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignBottom="@+id/textView_LabelDurationMatchCount"
-                    android:layout_marginStart="5dp"
-                    android:layout_toEndOf="@+id/textView_LabelDurationMatchCount"
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <TextView
-                    android:id="@+id/textView_MaturitySettingsNotifaction"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/textView_DurationMatchCount"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginTop="5dp"
-                    android:text="Catalog viewer maturity filter applied."
-                    android:textColor="?attr/colorOnPrimary" />
-
-                <RelativeLayout
-                    android:id="@+id/relativeLayout_MaturityFilter"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_alignEnd="@+id/textView_MaturitySettingsNotifaction"
-                    android:layout_below="@id/textView_MaturitySettingsNotifaction">
+                    android:layout_marginEnd="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:background="?attr/colorPrimaryDark"
+                    android:padding="5dp">
 
                     <TextView
-                        android:id="@+id/textView_labelMaturityFilter"
+                        android:id="@+id/textView_LabelAdjacencyCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:text="Maturity:"
-                        android:textColor="@color/colorTextColor"/>
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
+                        android:text="Similar item count:"
+                        android:textColor="?attr/colorOnPrimary" />
 
-                    <com.google.android.material.slider.RangeSlider
-                        android:id="@+id/rangeSlider_MaturityFilter"
+                    <TextView
+                        android:id="@+id/textView_AdjacencyCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="15dp"
-                        app:thumbColor="@color/colorTextColor"
-                        app:trackColor="@color/colorTextColor" />
+                        android:layout_alignBottom="@+id/textView_LabelAdjacencyCount"
+                        android:layout_marginStart="5dp"
+                        android:layout_toEndOf="@+id/textView_LabelAdjacencyCount"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_LabelFileNameMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_LabelAdjacencyCount"
+                        android:layout_alignParentStart="true"
+                        android:layout_marginTop="5dp"
+                        android:text="File name match count:"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_FileNameMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@+id/textView_LabelFileNameMatchCount"
+                        android:layout_marginStart="5dp"
+                        android:layout_toEndOf="@+id/textView_LabelFileNameMatchCount"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_LabelDateModifiedMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_LabelFileNameMatchCount"
+                        android:layout_alignParentStart="true"
+                        android:layout_marginTop="5dp"
+                        android:text="Date window match count:"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_DateModifiedMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@+id/textView_LabelDateModifiedMatchCount"
+                        android:layout_marginStart="5dp"
+                        android:layout_toEndOf="@+id/textView_LabelDateModifiedMatchCount"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_LabelResolutionMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_LabelDateModifiedMatchCount"
+                        android:layout_alignParentStart="true"
+                        android:layout_marginTop="5dp"
+                        android:text="Resolution match count:"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_ResolutionMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@+id/textView_LabelResolutionMatchCount"
+                        android:layout_marginStart="5dp"
+                        android:layout_toEndOf="@+id/textView_LabelResolutionMatchCount"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_LabelDurationMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_LabelResolutionMatchCount"
+                        android:layout_alignParentStart="true"
+                        android:layout_marginTop="5dp"
+                        android:text="Duration window match count:"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_DurationMatchCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignBottom="@+id/textView_LabelDurationMatchCount"
+                        android:layout_marginStart="5dp"
+                        android:layout_toEndOf="@+id/textView_LabelDurationMatchCount"
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <TextView
+                        android:id="@+id/textView_MaturitySettingsNotifaction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_DurationMatchCount"
+                        android:layout_alignParentStart="true"
+                        android:layout_marginTop="5dp"
+                        android:text="Catalog viewer maturity filter applied."
+                        android:textColor="?attr/colorOnPrimary" />
+
+                    <RelativeLayout
+                        android:id="@+id/relativeLayout_MaturityFilter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_alignEnd="@+id/textView_MaturitySettingsNotifaction"
+                        android:layout_below="@id/textView_MaturitySettingsNotifaction">
+
+                        <TextView
+                            android:id="@+id/textView_labelMaturityFilter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:text="Maturity:"
+                            android:textColor="@color/colorTextColor"/>
+
+                        <com.google.android.material.slider.RangeSlider
+                            android:id="@+id/rangeSlider_MaturityFilter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="15dp"
+                            app:thumbColor="@color/colorTextColor"
+                            app:trackColor="@color/colorTextColor" />
+
+                    </RelativeLayout>
+
 
                 </RelativeLayout>
 
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerView_Adjacencies"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:layout_toEndOf="@+id/relativeLayout_AdjacenciesData"
+                    android:orientation="horizontal" />
 
-            </RelativeLayout>
+                <ImageButton
+                    android:id="@+id/imageButton_CloseAdjacencies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentEnd="true"
+                    android:src="@drawable/baseline_close_24"
+                    android:backgroundTint="@color/colorButton"/>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerView_Adjacencies"
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_toEndOf="@+id/relativeLayout_AdjacenciesData"
-                android:orientation="horizontal" />
-
-            <ImageButton
-                android:id="@+id/imageButton_CloseAdjacencies"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true"
-                android:src="@drawable/baseline_close_24"
-                android:backgroundTint="@color/colorButton"/>
-
-            <RelativeLayout
-                android:id="@+id/relativeLayout_Adjacency_Analysis_Progress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignBottom="@+id/relativeLayout_AdjacenciesData"
-                android:layout_marginTop="10dp">
-
-                <ProgressBar
-                    android:id="@+id/progressBar_AnalysisProgress"
-                    style="@android:style/Widget.ProgressBar.Horizontal"
+                <RelativeLayout
+                    android:id="@+id/relativeLayout_Adjacency_Analysis_Progress"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginEnd="10dp"
-                    android:progressDrawable="@drawable/progressbar_colors" />
+                    android:layout_alignBottom="@+id/relativeLayout_AdjacenciesData"
+                    android:layout_marginTop="10dp">
 
-                <TextView
-                    android:id="@+id/textView_AnalysisProgressBarText"
+                    <ProgressBar
+                        android:id="@+id/progressBar_AnalysisProgress"
+                        style="@android:style/Widget.ProgressBar.Horizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginEnd="10dp"
+                        android:progressDrawable="@drawable/progressbar_colors" />
+
+                    <TextView
+                        android:id="@+id/textView_AnalysisProgressBarText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerInParent="true"
+                        android:textColor="@color/colorTextColor" />
+                </RelativeLayout>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_BottomData"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="5dp"
+                android:layout_above="@+id/relativeLayout_Tags"
+                android:background="@color/colorBlack">
+
+                <Button
+                    android:id="@+id/button_ShowAdjacencies"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:textColor="@color/colorTextColor" />
+                    android:layout_centerHorizontal="true"
+                    android:text="Adjacencies"
+                    android:backgroundTint="@color/colorButton"/>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_ImportIndication"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <CheckBox
+                        android:id="@+id/checkBox_ImportItem"
+                        android:layout_width="40dp"
+                        android:layout_height="25dp"
+                        android:buttonTint="@color/colorTextColor"
+                        android:paddingTop="5dp"
+                        android:layout_marginStart="5dp"/>
+
+                    <TextView
+                        android:id="@+id/textView_LabelImport"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Import item"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="26sp" />
+
+                    <TextView
+                        android:id="@+id/textView_ImportItemNumberOfNumber"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:text="0/0"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="26sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_FileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:layout_below="@+id/linearLayout_ImportIndication">
+
+                    <TextView
+                        android:id="@+id/textView_labelFileName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="File details: "
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/textView_FileName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_MaturityRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:layout_below="@+id/linearLayout_FileName"
+                    android:layout_alignStart="@+id/linearLayout_FileName"
+                    android:layout_toStartOf="@+id/linearLayout_GroupID">
+
+                    <TextView
+                        android:id="@+id/textView_labelMaturityRating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Maturity Rating: "
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/textView_MaturityRating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp" />
+
+                </LinearLayout>
+
+
+
+
+
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_MarkForDeletion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignBottom="@+id/linearLayout_ImportIndication"
+                    android:layout_marginEnd="10dp">
+
+                    <CheckBox
+                        android:id="@+id/checkBox_MarkForDeletion"
+                        android:layout_width="35dp"
+                        android:layout_height="25dp"
+                        android:buttonTint="@color/colorTextColor"/>
+
+                    <TextView
+                        android:id="@+id/textView_LabelMarkForDeletion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:text="Mark for deletion"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_GroupID"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignBottom="@+id/linearLayout_MaturityRating"
+                    android:layout_marginEnd="10dp">
+
+                    <TextView
+                        android:id="@+id/textView_LabelGroupID"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:text="Group ID:"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:id="@+id/textView_GroupID"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginEnd="5dp"
+                        android:text="----"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp"/>
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/imageButton_GroupIDNew"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:padding="5dp"
+                        android:src="@drawable/baseline_refresh_24"
+                        android:tooltipText="Create new Group ID"
+                        android:background="@color/colorBlack" />
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/imageButton_GroupIDCopy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:padding="5dp"
+                        android:src="@drawable/baseline_content_copy_24"
+                        android:tooltipText="Copy Group ID"
+                        android:background="@color/colorBlack" />
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/imageButton_GroupIDPaste"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:padding="5dp"
+                        android:src="@drawable/baseline_content_paste_24"
+                        android:tooltipText="Paste Group ID"
+                        android:background="@color/colorBlack" />
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/imageButton_GroupIDRemove"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:padding="5dp"
+                        android:src="@drawable/baseline_remove_circle_outline_24"
+                        android:tooltipText="Remove Group ID"
+                        android:background="@color/colorBlack" />
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout_Tags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:background="@color/colorBlack">
+
+                <TextView
+                    android:id="@+id/textView_SelectedTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_toStartOf="@+id/linearLayout_pasteLastTags"
+                    android:text="Tags:"
+                    android:textColor="@color/colorTextColor"
+                    android:textSize="16sp"/>
+
+                <LinearLayout
+                    android:id="@+id/linearLayout_pasteLastTags"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignTop="@+id/textView_SelectedTags"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginBottom="10dp">
+
+                    <androidx.appcompat.widget.AppCompatImageButton
+                        android:id="@+id/imageButton_PasteLastTags"
+                        android:layout_width="wrap_content"
+                        android:layout_height="30dp"
+                        android:src="@drawable/post_add"
+                        android:background="@color/colorBlack" />
+
+                    <TextView
+                        android:id="@+id/textView_LabelCopyLastTagSelection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Paste last tag selection"
+                        android:textColor="@color/colorTextColor"
+                        android:textSize="16sp"
+                        android:paddingTop="5dp"
+                        android:paddingBottom="5dp"
+                        android:paddingStart="7dp"/>
+
+                </LinearLayout>
+
             </RelativeLayout>
 
         </RelativeLayout>
 
-        <RelativeLayout
-            android:id="@+id/relativeLayout_BottomData"
+        <FrameLayout
+            android:id="@+id/child_fragment_tag_selector"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="5dp"
-            android:layout_above="@+id/relativeLayout_Tags"
-            android:background="@color/colorBlack">
+            android:layout_height="match_parent"
+            android:layout_weight="75">
 
-            <Button
-                android:id="@+id/button_ShowAdjacencies"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:text="Adjacencies"
-                android:backgroundTint="@color/colorButton"/>
+        </FrameLayout>
 
-            <LinearLayout
-                android:id="@+id/linearLayout_ImportIndication"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
+    </LinearLayout>
 
-                <CheckBox
-                    android:id="@+id/checkBox_ImportItem"
-                    android:layout_width="40dp"
-                    android:layout_height="25dp"
-                    android:buttonTint="@color/colorTextColor"
-                    android:paddingTop="5dp"
-                    android:layout_marginStart="5dp"/>
+    <RelativeLayout
+        android:id="@+id/relativeLayout_SimgleImageMagnify"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible">
 
-                <TextView
-                    android:id="@+id/textView_LabelImport"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Import item"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="26sp" />
-
-                <TextView
-                    android:id="@+id/textView_ImportItemNumberOfNumber"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="0/0"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="26sp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/linearLayout_FileName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal"
-                android:layout_below="@+id/linearLayout_ImportIndication">
-
-                <TextView
-                    android:id="@+id/textView_labelFileName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="File details: "
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/textView_FileName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/linearLayout_MaturityRating"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="horizontal"
-                android:layout_below="@+id/linearLayout_FileName"
-                android:layout_alignStart="@+id/linearLayout_FileName"
-                android:layout_toStartOf="@+id/linearLayout_GroupID">
-
-                <TextView
-                    android:id="@+id/textView_labelMaturityRating"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Maturity Rating: "
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/textView_MaturityRating"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=""
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp" />
-
-            </LinearLayout>
-
-
-
-
-
-
-            <LinearLayout
-                android:id="@+id/linearLayout_MarkForDeletion"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_alignParentEnd="true"
-                android:layout_alignBottom="@+id/linearLayout_ImportIndication"
-                android:layout_marginEnd="10dp">
-
-                <CheckBox
-                    android:id="@+id/checkBox_MarkForDeletion"
-                    android:layout_width="35dp"
-                    android:layout_height="25dp"
-                    android:buttonTint="@color/colorTextColor"/>
-
-                <TextView
-                    android:id="@+id/textView_LabelMarkForDeletion"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="5dp"
-                    android:paddingBottom="5dp"
-                    android:text="Mark for deletion"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/linearLayout_GroupID"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_alignParentEnd="true"
-                android:layout_alignBottom="@+id/linearLayout_MaturityRating"
-                android:layout_marginEnd="10dp">
-
-                <TextView
-                    android:id="@+id/textView_LabelGroupID"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="5dp"
-                    android:paddingBottom="5dp"
-                    android:text="Group ID:"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp"/>
-
-                <TextView
-                    android:id="@+id/textView_GroupID"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingTop="5dp"
-                    android:paddingBottom="5dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:text="----"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp"/>
-
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/imageButton_GroupIDNew"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:padding="5dp"
-                    android:src="@drawable/baseline_refresh_24"
-                    android:tooltipText="Create new Group ID"
-                    android:background="@color/colorBlack" />
-
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/imageButton_GroupIDCopy"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:padding="5dp"
-                    android:src="@drawable/baseline_content_copy_24"
-                    android:tooltipText="Copy Group ID"
-                    android:background="@color/colorBlack" />
-
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/imageButton_GroupIDPaste"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:padding="5dp"
-                    android:src="@drawable/baseline_content_paste_24"
-                    android:tooltipText="Paste Group ID"
-                    android:background="@color/colorBlack" />
-
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/imageButton_GroupIDRemove"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:padding="5dp"
-                    android:src="@drawable/baseline_remove_circle_outline_24"
-                    android:tooltipText="Remove Group ID"
-                    android:background="@color/colorBlack" />
-
-            </LinearLayout>
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/relativeLayout_Tags"
+        <TextView
+            android:id="@+id/textView_Fader"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:background="@color/colorBlack">
+            android:layout_height="match_parent"
+            android:text=""
+            android:background="#C0000000"/>
+        <!--    The above TextView is used to provide an darkening to the background.-->
 
-            <TextView
-                android:id="@+id/textView_SelectedTags"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
-                android:layout_alignParentStart="true"
-                android:layout_toStartOf="@+id/linearLayout_pasteLastTags"
-                android:text="Tags:"
-                android:textColor="@color/colorTextColor"
-                android:textSize="16sp"/>
-
-            <LinearLayout
-                android:id="@+id/linearLayout_pasteLastTags"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_alignTop="@+id/textView_SelectedTags"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp">
-
-                <androidx.appcompat.widget.AppCompatImageButton
-                    android:id="@+id/imageButton_PasteLastTags"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:src="@drawable/post_add"
-                    android:background="@color/colorBlack" />
-
-                <TextView
-                    android:id="@+id/textView_LabelCopyLastTagSelection"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Paste last tag selection"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="16sp"
-                    android:paddingTop="5dp"
-                    android:paddingBottom="5dp"
-                    android:paddingStart="7dp"/>
-
-            </LinearLayout>
-
-        </RelativeLayout>
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/acImageView_SingleImageMagnify"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
     </RelativeLayout>
 
-    <FrameLayout
-        android:id="@+id/child_fragment_tag_selector"
+    <RelativeLayout
+        android:id="@+id/relativeLayout_MagnifyImageSideBySide"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="75">
+        android:visibility="invisible">
 
-    </FrameLayout>
+        <TextView
+            android:id="@+id/textView_Fader2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text=""
+            android:background="#C0000000"/>
+        <!--    The above TextView is used to provide an darkening to the background.-->
 
-</LinearLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/acImageView_SideBySideImageA"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/acImageView_SideBySideImageB"
+                app:layout_constraintHorizontal_chainStyle="spread"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:src="@drawable/baseline_image_vector_24"/>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/acImageView_SideBySideImageB"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_chainStyle="spread"
+                app:layout_constraintStart_toEndOf="@+id/acImageView_SideBySideImageA"
+                app:layout_constraintTop_toTopOf="parent"
+                android:src="@drawable/baseline_image_vector_24" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </RelativeLayout>
+</RelativeLayout>

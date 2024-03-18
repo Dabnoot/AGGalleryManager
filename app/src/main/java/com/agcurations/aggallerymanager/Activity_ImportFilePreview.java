@@ -47,6 +47,7 @@ import java.util.TreeMap;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
@@ -1328,6 +1329,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             }
 
             holder.tvThumbnailText.setText(sThumbnailText);
+            final Uri uriThumbnailUriForMagnify = uriThumbnailUri;
             holder.ivThumbnail.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -1358,40 +1360,72 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                                 recalcGroupButtonVisibilities();
                                 return true;
 
-                            } else { // (itemId == R.id.menu_Magnify) {
+                            } else if (itemId == R.id.menu_Magnify) {
+
+                                final RelativeLayout relativeLayout_SimgleImageMagnify = findViewById(R.id.relativeLayout_SimgleImageMagnify);
+                                relativeLayout_SimgleImageMagnify.setVisibility(View.VISIBLE);
+
+                                AppCompatImageView acImageView_SingleImageMagnify = findViewById(R.id.acImageView_SingleImageMagnify);
+                                Glide.with(getApplicationContext()).load(uriThumbnailUriForMagnify).into(acImageView_SingleImageMagnify);
+                                acImageView_SingleImageMagnify.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        relativeLayout_SimgleImageMagnify.setVisibility(View.INVISIBLE);
+                                    }
+                                });
+
+                                TextView textView_Fader = findViewById(R.id.textView_Fader);
+                                textView_Fader.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        relativeLayout_SimgleImageMagnify.setVisibility(View.INVISIBLE);
+                                    }
+                                });
 
                                 return true;
 
+                            } else if (itemId == R.id.menu_SideBySide) {
+
+                                final RelativeLayout relativeLayout_MagnifyImageSideBySide = findViewById(R.id.relativeLayout_MagnifyImageSideBySide);
+                                relativeLayout_MagnifyImageSideBySide.setVisibility(View.VISIBLE);
+
+                                AppCompatImageView acImageView_SideBySideImageA = findViewById(R.id.acImageView_SideBySideImageA);
+                                //Glide.with(getApplicationContext()).load(galFileItems.get(giFileItemIndex).sUri).into(acImageView_SideBySideImageA);
+                                acImageView_SideBySideImageA.setImageURI(Uri.parse(galFileItems.get(giFileItemIndex).sUri));
+                                acImageView_SideBySideImageA.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        relativeLayout_MagnifyImageSideBySide.setVisibility(View.INVISIBLE);
+                                    }
+                                });
+
+                                AppCompatImageView acImageView_SideBySideImageB = findViewById(R.id.acImageView_SideBySideImageB);
+                                //Glide.with(getApplicationContext()).load(uriThumbnailUriForMagnify).into(acImageView_SideBySideImageB);
+                                acImageView_SideBySideImageA.setImageURI(uriThumbnailUriForMagnify);
+                                acImageView_SideBySideImageB.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        relativeLayout_MagnifyImageSideBySide.setVisibility(View.INVISIBLE);
+                                    }
+                                });
+
+                                TextView textView_Fader2 = findViewById(R.id.textView_Fader2);
+                                textView_Fader2.setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        relativeLayout_MagnifyImageSideBySide.setVisibility(View.INVISIBLE);
+                                    }
+                                });
+
+                                return true;
+                            } else {
+                                return true;
                             }
 
                         }
                     });
 
                     popupMenuAdjacencyItemOptions.show();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 } //End context menu popup for if the user clicks on the adjacency item.
             });
