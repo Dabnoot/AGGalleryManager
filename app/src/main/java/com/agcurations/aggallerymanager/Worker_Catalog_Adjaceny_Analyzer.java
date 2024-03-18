@@ -239,8 +239,8 @@ public class Worker_Catalog_Adjaceny_Analyzer extends Worker {
 
             if(bMandatoryMatchesMet) {
 
-                String sIndex = sSortIndex[DATE_MODIFIED] +
-                        sSortIndex[FILE_NAME] +
+                String sIndex = sSortIndex[FILE_NAME] +
+                        sSortIndex[DATE_MODIFIED] +
                         sSortIndex[RESOLUTION] +
                         sSortIndex[DURATION] +
                         entry.getKey();
