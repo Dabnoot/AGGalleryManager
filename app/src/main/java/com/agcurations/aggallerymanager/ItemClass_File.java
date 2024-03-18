@@ -83,6 +83,10 @@ public class ItemClass_File implements Serializable {
     public String sIllegalDataNarrative = "";
 
     public int iFileNameDuplicationCount = 0; //Used by catalog analysis.
+    public String sMediaFolderRelativePath = ""; //Used by catalog analysis
+    public boolean bOrphanAssociatedWithCatalogItem = false;
+    public boolean bOrphanAssociatedCatalogItemIsMissingMedia = false;
+    public ArrayList<String> alsOrphanAssociatedCatalogItemIDs;
 
     public ItemClass_File(int _iTypeFileFolderURL,
                           String _FileOrFolderName)
