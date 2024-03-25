@@ -194,6 +194,10 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
         //Configure the "Select All" checkbox:
         CheckBox checkBox_SelectAllStorageItems = getView().findViewById(R.id.checkBox_SelectAllStorageItems);
+
+        int iFileCount = ((Activity_Import) getActivity()).fileListCustomAdapter.getCount();
+        String sCheckBoxText = "Select All " + iFileCount + " Items";
+        checkBox_SelectAllStorageItems.setText(sCheckBoxText);
         checkBox_SelectAllStorageItems.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
