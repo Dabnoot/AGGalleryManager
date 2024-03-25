@@ -212,7 +212,7 @@ public class Activity_Import extends AppCompatActivity {
             Intent intentStartingIntent = getIntent();
             if(intentStartingIntent != null){
 
-                int iMediaCategory = intentStartingIntent.getIntExtra(EXTRA_INT_MEDIA_CATEGORY, -1);
+                int iMediaCategory = GlobalClass.giSelectedCatalogMediaCategory;
                 if(iMediaCategory != -1){
                     viewModelImportActivity.iImportMediaCategory = iMediaCategory;
 

@@ -853,7 +853,6 @@ public class Activity_Main extends AppCompatActivity {
             return;
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
-        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_VIDEOS); //todo: Redundant
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_VIDEOS;
         startActivity(intentImportGuided);
     }
@@ -863,7 +862,6 @@ public class Activity_Main extends AppCompatActivity {
             return;
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
-        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_IMAGES); //todo: Redundant
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;
         startActivity(intentImportGuided);
     }
@@ -873,7 +871,6 @@ public class Activity_Main extends AppCompatActivity {
             return;
         }
         Intent intentImportGuided = new Intent(this, Activity_Import.class);
-        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, GlobalClass.MEDIA_CATEGORY_COMICS); //todo: Redundant
         GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_COMICS;
         startActivity(intentImportGuided);
     }
