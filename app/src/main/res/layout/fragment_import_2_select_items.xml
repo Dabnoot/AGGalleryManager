@@ -8,7 +8,7 @@
 
 
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/linearLayout_ListViewControlBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,7 +26,9 @@
             android:layout_marginEnd="40dp"
             android:buttonTint="@color/colorTextColor"
             android:text="Select All"
-            android:textColor="@color/colorTextColor" />
+            android:textColor="@color/colorTextColor"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -35,7 +37,8 @@
             android:background="@color/colorFragmentBackgroundHighlight2"
             android:gravity="center_vertical"
             android:paddingTop="2dp"
-            android:paddingBottom="2dp">
+            android:paddingBottom="2dp"
+            android:layout_toEndOf="@+id/checkBox_SelectAllStorageItems">
 
 
             <TextView
@@ -69,7 +72,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Search: "
-            android:textColor="@color/colorTextColor"/>
+            android:textColor="@color/colorTextColor"
+            android:layout_toStartOf="@+id/editText_Search"
+            android:layout_alignBaseline="@+id/editText_Search"/>
 
         <EditText
             android:id="@+id/editText_Search"
@@ -80,9 +85,10 @@
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:singleLine="true"
-            android:textColor="@color/colorTextColor"/>
+            android:textColor="@color/colorTextColor"
+            android:layout_alignParentEnd="true"/>
 
-    </LinearLayout>
+    </RelativeLayout>
 
     <ListView
         android:id="@+id/listView_FolderContents"
