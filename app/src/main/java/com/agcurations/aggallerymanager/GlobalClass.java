@@ -1382,7 +1382,7 @@ public class GlobalClass extends Application {
         //  -Carriage return character.
 
         //Check all string fields to ensure that there are no illegal strings.
-        boolean bIllegalString = false;
+        boolean bIllegalString;
 
         //Note: It would be nice to create an array of objects representing the Strings so that
         //  an array can be formed and the array can be processed in such a way that a modification
@@ -1478,7 +1478,7 @@ public class GlobalClass extends Application {
         //  user to be informed of data modification, etc.
 
         //Check all string fields to ensure that there are no illegal strings.
-        boolean bIllegalString = false;
+        boolean bIllegalString;
 
         String[][] sFieldsAndData = {
                 {"Extension"		        ,icf.sExtension		        },
@@ -3309,10 +3309,8 @@ public class GlobalClass extends Application {
     public static final String EXTRA_AL_GET_WEB_COMIC_ANALYSIS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_WEB_COMIC_ANALYSIS_RESPONSE"; //ArrayList of response data
 
     public static final String EXTRA_STRING_WEB_ADDRESS = "com.agcurations.aggallerymanager.extra.STRING_WEB_ADDRESS";
-    //public static final String EXTRA_LONG_DOWNLOAD_ID = "com.agcurations.aggallerymanager.extra.LONG_DOWNLOAD_ID";
-    public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
 
-    public static final String EXTRA_STRING_INTENT_ACTION_FILTER = "com.agcurations.aggallerymanager.extra.STRING_INTENT_ACTION_FILTER"; //todo: used for the same as EXTRA_CALLER_ACTION_RESPONSE_FILTER?
+    public static final String COMIC_DETAILS_SUCCESS = "COMIC_DETAILS_SUCCESS";
 
     public static final String EXTRA_CALLER_ACTION_RESPONSE_FILTER = "com.agcurations.aggallerymanager.extra.EXTRA_CALLER_ACTION_RESPONSE_FILTER";
 
@@ -3497,21 +3495,6 @@ public class GlobalClass extends Application {
     public static final String gsPreference_DataStorageLocationUri = "com.agcurations.aggallerymanager.preferences.DataStorageLocation";
     //Data storage location, user-friendly for display purposes:
     public static final String gsPreference_DataStorageLocationUriUF = "com.agcurations.aggallerymanager.preferences.DataStorageLocationUF";
-
-    public static final String gsPreferenceName_UserAccountData = "com.agcurations.aggallerymanager.preferences.UserAccountData";
-
-    public static final String[]  gsRestrictedTagsPreferenceNames = new String[]{
-            "multi_select_list_videos_restricted_tags",
-            "multi_select_list_images_restricted_tags",
-            "multi_select_list_comics_restricted_tags"};
-
-    private static final String[] gsCurrentMaxItemIDStoredPreference = new String[]{
-            "current_max_item_ID_videos",
-            "current_max_item_ID_images",
-            "current_max_item_ID_comics"
-    };
-
-    public static final String gsPinPreference = "preferences_pin";
 
     public static final String gsPreference_Import_IncludeGraphicsFileData = "com.agcurations.aggallerymanager.preferences.ImportIncludeGraphicsFileData";
 
