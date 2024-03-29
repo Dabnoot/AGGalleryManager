@@ -2,18 +2,24 @@ package com.agcurations.aggallerymanager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.work.WorkManager;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.RadioButton;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Stack;
@@ -26,7 +32,9 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     public static final int FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY = 0;
     public static final int FRAGMENT_CAT_ANALYSIS_1_ANALYSIS_TYPE = 1;
     public static final int FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS = 2;
-    public static final int FRAGMENT_COUNT = 3;
+    public static final int FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT = 3;
+    public static final int FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER = 4;
+    public static final int FRAGMENT_COUNT = 5;
 
     public ViewPager2 ViewPager2_CatalogAnalysis;
     FragmentCatalogAnalysisViewPagerAdapter catalogAnalysisViewPagerAdapter;
@@ -35,6 +43,14 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
     static Stack<Integer> stackFragmentOrder;
     private static int giStartingFragment;
+
+    private CatalogAnalysisResponseReceiver catalogAnalysisResponseReceiver;
+
+    public static ArrayList<ItemClass_File> galicf_CatalogAnalysisFileItems;
+    public static ArrayList<String> gals_CatalogItemsMissingMedia;
+    public static int giOrphansWOMatch;
+    public static int giOrphansWMatchWMedia;
+    public static int giOrphansWMatchWOMedia;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +76,20 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         stackFragmentOrder = new Stack<>();
         giStartingFragment = FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY;
 
+        //Configure a response receiver to listen for data response from Worker_Catalog_Analysis:
+        IntentFilter filter = new IntentFilter(Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE);
+        filter.addCategory(Intent.CATEGORY_DEFAULT);
+        catalogAnalysisResponseReceiver = new CatalogAnalysisResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(catalogAnalysisResponseReceiver,filter);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(catalogAnalysisResponseReceiver);
+
+        super.onDestroy();
     }
 
     //======================================================
@@ -71,7 +101,7 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if(stackFragmentOrder.empty()){
+        if (stackFragmentOrder.empty()) {
             gotoFinish();
         } else {
             //Go back through the fragments in the order by which we progressed.
@@ -79,18 +109,18 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
             //  to go back to those skipped fragments, hence the use of a Stack, and pop().
             int iCurrentFragment = ViewPager2_CatalogAnalysis.getCurrentItem();
             int iPrevFragment = stackFragmentOrder.pop();
-            if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)){
+            if ((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)) {
                 gotoFinish();
                 return;
             }
 
-            if(iCurrentFragment == iPrevFragment){
+            if (iCurrentFragment == iPrevFragment) {
                 //To handle interesting behavior about how the stack is built.
                 iPrevFragment = stackFragmentOrder.peek();
             }
             ViewPager2_CatalogAnalysis.setCurrentItem(iPrevFragment, false);
 
-            if(iPrevFragment == giStartingFragment){
+            if (iPrevFragment == giStartingFragment) {
                 //There is no item to push '0' onto the fragment order stack. Do it here:
                 stackFragmentOrder.push(giStartingFragment);
             }
@@ -142,19 +172,88 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         } else {
             viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_ORPHANED_FILES;
         }
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.START_REQUESTED);
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
 
     }
 
-    public void buttonNextClick_AnalysisImportSelect(View v){
+    public void buttonNextClick_AnalysisComplete(View v){
 
+
+
+
+        //If we are here, then catalog items missing their media or orphaned files were found.
+        if(gals_CatalogItemsMissingMedia == null){
+            //If there are no items to trim, go to the fragment that will lead the user to the import activity:
+            ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER, false);
+        } else if (galicf_CatalogAnalysisFileItems == null) {
+            //If there are catalog items missing media, but no orphaned files...
+
+            //todo: How to display for review catalog items missing media?
+
+        } else {
+            //If there are both catalog items missing media and orphaned files...
+            ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT, false);
+        }
+
+    }
+
+    public void buttonNextClick_TrimOrImportSelected(View v){
+
+        RadioButton radioButton_ReviewCatalogItemsMissingMedia = findViewById(R.id.radioButton_ReviewCatalogItemsMissingMedia);
+        if(radioButton_ReviewCatalogItemsMissingMedia.isChecked()){
+            //Start the fragment associated with reviewing catalog items with missing media:
+            //todo: How to display for review catalog items missing media?
+
+        } else {
+            //Start the fragment associated with filtering orphaned files for potential import:
+            ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER, false);
+        }
+
+    }
+
+    public void buttonNextClick_ImportFilterSelected(View v){
+
+        //Filter the list of orphan file items based on the user's selection, and then start the
+        //  import activity:
+
+        AppCompatCheckBox acCheckBox_ReviewOrphansWOMatch = findViewById(R.id.acCheckBox_ReviewOrphansWOMatch);
+        AppCompatCheckBox acCheckBox_ReviewOrphansWMatchWMedia = findViewById(R.id.acCheckBox_ReviewOrphansWMatchWMedia);
+        AppCompatCheckBox acCheckBox_ReviewOrphansWMatchWOMedia = findViewById(R.id.acCheckBox_ReviewOrphansWMatchWOMedia);
+
+        boolean bReviewOrphansWOMatch = acCheckBox_ReviewOrphansWOMatch.isChecked();
+        boolean bReviewOrphansWMatchWMedia = acCheckBox_ReviewOrphansWMatchWMedia.isChecked();
+        boolean bReviewOrphansWMatchWOMedia = acCheckBox_ReviewOrphansWMatchWOMedia.isChecked();
+
+        ArrayList<ItemClass_File> alicf_FilteredForImportReview = new ArrayList<>();
+        ArrayList<ItemClass_File> alicf_DownFiltered1 = new ArrayList<>();
+        for(ItemClass_File icf: galicf_CatalogAnalysisFileItems){
+            if(bReviewOrphansWOMatch && !icf.bOrphanAssociatedWithCatalogItem){
+                alicf_FilteredForImportReview.add(icf);
+            } else {
+                alicf_DownFiltered1.add(icf);
+            }
+        }
+        ArrayList<ItemClass_File> alicf_DownFiltered2 = new ArrayList<>();
+        for(ItemClass_File icf: alicf_DownFiltered1){
+            if(bReviewOrphansWMatchWMedia && icf.bOrphanAssociatedWithCatalogItem && !icf.bOrphanAssociatedCatalogItemIsMissingMedia){
+                alicf_FilteredForImportReview.add(icf);
+            } else {
+                alicf_DownFiltered2.add(icf);
+            }
+        }
+        for(ItemClass_File icf: alicf_DownFiltered2){
+            if(bReviewOrphansWMatchWOMedia && icf.bOrphanAssociatedWithCatalogItem && icf.bOrphanAssociatedCatalogItemIsMissingMedia){
+                alicf_FilteredForImportReview.add(icf);
+            }
+        }
+
+        GlobalClass.galf_Orphaned_Files = alicf_FilteredForImportReview;
+
+        GlobalClass.giSelectedCatalogMediaCategory = viewModel_catalogAnalysis.iMediaCategory;
         Intent intentImportGuided = new Intent(getApplicationContext(), Activity_Import.class);
-        intentImportGuided.putExtra(Activity_Import.EXTRA_INT_MEDIA_CATEGORY, viewModel_catalogAnalysis.iMediaCategory); //todo: Redundant?
         intentImportGuided.putExtra(EXTRA_BOOL_IMPORT_ORPHANED_FILES, true);
-        GlobalClass.galf_Orphaned_Files = new ArrayList<>(viewModel_catalogAnalysis.alFileList);
-        GlobalClass.giSelectedCatalogMediaCategory = GlobalClass.MEDIA_CATEGORY_IMAGES;//todo: Redundant?
+
         startActivity(intentImportGuided);
         finish();
     }
@@ -173,6 +272,10 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
                     return new Fragment_CatalogAnalysis_1_AnalysisType();
                 case FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS:
                     return new Fragment_CatalogAnalysis_2_PerformAnalysis();
+                case FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT:
+                    return new Fragment_CatalogAnalysis_3_TrimOrImport();
+                case FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER:
+                    return new Fragment_CatalogAnalysis_4_ImportFilter();
                 default:
                     return new Fragment_CatalogAnalysis_0_MediaCategory();
             }
@@ -190,5 +293,66 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     //==========================================================
     //==========================================================
 
+    @SuppressWarnings("unchecked")
+    public static class CatalogAnalysisResponseReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            //Get boolean indicating that an error may have occurred:
+            boolean bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+
+            if (bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response from the Catalog Analysis worker:
+                boolean bGetCatalogAnalysisFileItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_FILEITEMS_RESPONSE, false);
+                if (bGetCatalogAnalysisFileItemsResponse) {
+                    galicf_CatalogAnalysisFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_FILEITEMS_RESPONSE);
+
+                    //Count items:
+                    giOrphansWOMatch = 0;
+                    giOrphansWMatchWMedia = 0;
+                    giOrphansWMatchWOMedia = 0;
+                    if(galicf_CatalogAnalysisFileItems != null) {
+                        for (ItemClass_File icf : galicf_CatalogAnalysisFileItems) {
+                            if (icf.bOrphanAssociatedWithCatalogItem) {
+                                if (icf.bOrphanAssociatedCatalogItemIsMissingMedia) {
+                                    giOrphansWMatchWOMedia++;
+                                } else {
+                                    giOrphansWMatchWMedia++;
+                                }
+                            } else {
+                                giOrphansWOMatch++;
+                            }
+                        }
+                    }
+                }
+                boolean bGetCatalogAnalysisMissingItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE, false);
+                if (bGetCatalogAnalysisMissingItemsResponse) {
+                    gals_CatalogItemsMissingMedia = (ArrayList<String>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE);
+                }
+
+
+
+                boolean bGetCatalogAnalysisNoItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_CAT_ANALYSIS_NO_ITEMS_RESPONSE, false);
+                if(bGetCatalogAnalysisNoItemsResponse){
+                    //todo: Catalog Analysis has completed, but no catalog items missing media or orphaned files were found.
+                }
+
+
+
+
+
+
+
+
+            }
+
+
+        }
+    }
 
 }

@@ -18,6 +18,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.work.WorkManager;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -101,10 +102,6 @@ public class Activity_Import extends AppCompatActivity {
     public static final String PREVIEW_FILE_ITEMS_POSITION = "PREVIEW_FILE_ITEMS_POSITION";
     public static final String MEDIA_CATEGORY = "MEDIA_CATEGORY";
     public static final String IMPORT_ALIGN_ADJACENCIES = "IMPORT_ALIGN_ADJACENCIES";
-
-    public static final String EXTRA_INT_MEDIA_CATEGORY = "EXTRA_INT_MEDIA_CATEGORY";
-    //If the import routine is being started from somewhere other than
-    //generic menu item, it must be in an area applicable to a particular media type.
 
     //FragmentImport_3_SelectTags
     public static ViewModel_Fragment_SelectTags viewModelTags; //Used for applying tags globally to an entire import selection.
@@ -765,7 +762,18 @@ public class Activity_Import extends AppCompatActivity {
             }
             tvLine1.setText(sLine1);
             DateFormat dfDateFormat = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss a", Locale.getDefault() );
-            String sLine2 = dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
+            String sLine2 = "";
+            if(alFileItemsDisplay.get(position).bIsOrphanedFile){
+                sLine2 = "Orphaned file in folder: " + GlobalClass.gsCatalogFolderNames[GlobalClass.giSelectedCatalogMediaCategory] +
+                        GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + alFileItemsDisplay.get(position).sMediaFolderRelativePath);
+            }
+            if(alFileItemsDisplay.get(position).dateLastModified != null) {
+                if(!sLine2.isEmpty()){
+                    sLine2 = sLine2 + "\n";
+                }
+                sLine2 = sLine2 + dfDateFormat.format(alFileItemsDisplay.get(position).dateLastModified);
+            }
+
 
 
             //If type is video or gif, get the duration:
@@ -906,7 +914,8 @@ public class Activity_Import extends AppCompatActivity {
             tvLine3.setText(sLine3);
 
             //set the image type if folder or file
-            if(alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER) {
+            if((alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_FOLDER)
+                    || (alFileItemsDisplay.get(position).iTypeFileFolderURL == ItemClass_File.TYPE_M3U8)) {
                 //Get the Uri of the file and create/display a thumbnail:
                 String sUri = alFileItemsDisplay.get(position).sUriThumbnailFile;
                 Uri uri = Uri.parse(sUri);
@@ -1686,6 +1695,7 @@ public class Activity_Import extends AppCompatActivity {
 
     public class VideoDownloadListCustomAdapter extends ArrayAdapter<ItemClass_File> {
         //This class for displaying to user video files found in html.
+        // The user can select only one item for download per import instance.
 
         final public ArrayList<ItemClass_File> alFileItems;
         Context contextFromCaller;
