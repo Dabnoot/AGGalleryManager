@@ -2,8 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import androidx.lifecycle.ViewModel;
 
-import java.util.ArrayList;
-
 public class ViewModel_CatalogAnalysis extends ViewModel {
 
     static final String EXTRA_ANALYSIS_TYPE = "com.agcurations.aggallerymanager.extra.EXTRA_ANALYSIS_TYPE";
