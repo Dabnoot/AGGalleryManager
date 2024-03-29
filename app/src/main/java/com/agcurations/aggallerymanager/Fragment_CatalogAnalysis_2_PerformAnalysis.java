@@ -24,7 +24,6 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import java.util.ArrayList;
 import java.util.Locale;
 
 
@@ -64,7 +63,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Worker_Catalog_Analysis.CATALOG_VERIFICATION_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE);
         filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
         analysisDataServiceResponseReceiver = new AnalysisDataServiceResponseReceiver();
@@ -94,7 +93,9 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         super.onResume();
         if(getActivity() != null) {
             getActivity().setTitle("Perform Analysis");
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+            if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
+                ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+            }
         }
         initComponents();
     }
@@ -170,7 +171,6 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
 
         @Override
-        @SuppressWarnings("unchecked")
         public void onReceive(Context context, Intent intent) {
 
             boolean bError;
@@ -238,12 +238,22 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     }
                 }
 
-                //Check to see if this is a response to request to get directory contents:
-                boolean bGetDirContentsResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_GET_DIRECTORY_CONTENTS_RESPONSE, false);
-                if (bGetDirContentsResponse) {
+
+                //Check to see if this is a response from the Catalog Analysis worker:
+                boolean bGetCatalogAnalysisFileItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_FILEITEMS_RESPONSE, false);
+                if (bGetCatalogAnalysisFileItemsResponse) {
                     gButton_AnalysisImportSelect.setEnabled(true);
-                    viewModel_catalogAnalysis.alFileList = (ArrayList<ItemClass_File>) intent.getSerializableExtra(GlobalClass.EXTRA_AL_GET_DIRECTORY_CONTENTS_RESPONSE);
                 }
+                boolean bGetCatalogAnalysisMissingItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE, false);
+                if (bGetCatalogAnalysisMissingItemsResponse) {
+                    gButton_AnalysisImportSelect.setEnabled(true);
+                }
+
+                /*boolean bGetCatalogAnalysisNoItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_CAT_ANALYSIS_NO_ITEMS_RESPONSE, false);
+                if(bGetCatalogAnalysisNoItemsResponse){
+                    //Catalog Analysis has completed, but no catalog items missing media or orphaned files were found.
+                }*/
+
 
             }
 

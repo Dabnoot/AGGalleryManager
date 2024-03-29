@@ -21,23 +21,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select type of analysis to perform:"
+            android:text="Select Next Step:"
             android:textColor="@color/colorTextColor"
-            android:textSize="24sp"/>
+            android:textSize="30sp"/>
 
         <RadioGroup
-            android:id="@+id/radioGroup_AnalysisType"
+            android:id="@+id/radioGroup_TrimOrImport"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp">
 
             <RadioButton
-                android:id="@+id/radioButton_MissingFileIdentification"
+                android:id="@+id/radioButton_ReviewCatalogItemsMissingMedia"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="20dp"
                 android:checked="true"
-                android:text="Identify Catalog Items with Missing Files"
+                android:text="Review catalog items that are missing assigned media"
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -45,12 +45,12 @@
                 android:buttonTint="@color/colorTextColor"/>
 
             <RadioButton
-                android:id="@+id/radioButton_OrphanedFileIdentification"
+                android:id="@+id/radioButton_ReviewOrphanedFiles"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
-                android:text="Identify Orphaned Files\n(use only when confident no catalog items are missing files)"
+                android:text="Review orphaned files\n(Files in catalog storage but without catalog data)"
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -80,7 +80,7 @@
                 android:layout_height="67dp"
                 android:text="Next"
                 android:textSize="24sp"
-                android:onClick="buttonNextClick_AnalysisTypeSelected"
+                android:onClick="buttonNextClick_TrimOrImportSelected"
                 app:backgroundTint="@color/colorButton" />
 
         </LinearLayout>

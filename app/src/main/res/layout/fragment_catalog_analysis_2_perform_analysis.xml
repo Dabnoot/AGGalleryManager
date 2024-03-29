@@ -88,7 +88,7 @@
             android:layout_height="67dp"
             android:layout_marginBottom="10dp"
             android:layout_marginStart="20dp"
-            android:onClick="buttonNextClick_AnalysisImportSelect"
+            android:onClick="buttonNextClick_AnalysisComplete"
             android:text="Next"
             android:textSize="24sp"
             android:enabled="false"
