@@ -178,6 +178,8 @@ public class GlobalClass extends Application {
     public static boolean[] gbTagHistogramRequiresUpdate = {true, true, true};
     //End catalog viewer variables.
 
+    public static final String gsSAF_Adapted_M3U8_Suffix = "_SAF_Adapted";
+
     public static final String gsUnsortedFolderName = "etc";  //Todo: this folder should not be used anymore. Was used when a tag was not assigned to an item.
 
     ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
@@ -622,8 +624,6 @@ public class GlobalClass extends Application {
         }
         return EMPTY;
     }
-
-
 
 
     public static String FormChildUriString(String sUriParent, String sFileName){

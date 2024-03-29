@@ -692,7 +692,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                         String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1);
 
                         //Determine the name of the SAF-adapted M3U8 file:
-                        String sM3U8_SAF_FileName = sFileNameBase + "_SAF_Adapted" + "." + sFileNameExt;
+                        String sM3U8_SAF_FileName = sFileNameBase + GlobalClass.gsSAF_Adapted_M3U8_Suffix + "." + sFileNameExt;
 
                         //Check to see indexing of the files for the app is complete. If not, return.
                         //If the global file indexing is complete, use fast-lookup:
@@ -921,7 +921,7 @@ public class Activity_VideoPlayer extends AppCompatActivity {
                 String sFileNameBase = ci.sFilename.substring(0, ci.sFilename.lastIndexOf("."));
                 String sFileNameExt = ci.sFilename.substring(ci.sFilename.lastIndexOf(".") + 1);
                 //Determine the name of the SAF-adapted M3U8 file:
-                String sM3U8_SAF_FileName = sFileNameBase + "_SAF_Adapted" + "." + sFileNameExt;
+                String sM3U8_SAF_FileName = sFileNameBase + GlobalClass.gsSAF_Adapted_M3U8_Suffix + "." + sFileNameExt;
                 String sUriM3U8 = GlobalClass.gsUriAppRootPrefix
                         + GlobalClass.gsFileSeparator + GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS]
                         + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
