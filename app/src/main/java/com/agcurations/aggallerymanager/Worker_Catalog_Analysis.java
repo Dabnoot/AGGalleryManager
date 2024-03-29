@@ -27,6 +27,10 @@ public class Worker_Catalog_Analysis extends Worker {
 
     public static final String TAG_WORKER_CATALOG_VERIFICATION = "com.agcurations.aggallermanager.tag_worker_catalog_verification";
 
+    static final String EXTRA_ANALYSIS_TYPE = "com.agcurations.aggallerymanager.extra.EXTRA_ANALYSIS_TYPE";
+    public static final int ANALYSIS_TYPE_MISSING_FILES = 1;
+    public static final int ANALYSIS_TYPE_ORPHANED_FILES = 2;
+
     public static final String CATALOG_ANALYSIS_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.CATALOG_ANALYSIS_ACTION_RESPONSE";
     public static final String EXTRA_BOOL_GET_ARRAY_FILEITEMS_RESPONSE = "com.agcurations.aggallerymanager.extra.BOOL_GET_ARRAY_FILEITEMS_RESPONSE"; //Used to flag in a listener.
     public static final String EXTRA_AL_GET_ARRAY_FILEITEMS_RESPONSE = "com.agcurations.aggallerymanager.extra.AL_GET_ARRAY_FILEITEMS_RESPONSE"; //ArrayList of response data
@@ -45,7 +49,7 @@ public class Worker_Catalog_Analysis extends Worker {
         super(context, workerParams);
 
         giMediaCategory = getInputData().getInt(GlobalClass.EXTRA_MEDIA_CATEGORY, -1);
-        giAnalysisType = getInputData().getInt(ViewModel_CatalogAnalysis.EXTRA_ANALYSIS_TYPE, -1);
+        giAnalysisType = getInputData().getInt(EXTRA_ANALYSIS_TYPE, -1);
 
     }
 
@@ -103,7 +107,7 @@ public class Worker_Catalog_Analysis extends Worker {
             bwLogFile = new BufferedWriter(new OutputStreamWriter(osLogFile));
 
 
-            if(giAnalysisType == ViewModel_CatalogAnalysis.ANALYSIS_TYPE_MISSING_FILES) {
+            if(giAnalysisType == ANALYSIS_TYPE_MISSING_FILES) {
 
                 gtmCatalogItemsMissing = new TreeMap<>();
 
@@ -305,8 +309,8 @@ public class Worker_Catalog_Analysis extends Worker {
                 }
             }
 
-            if((giAnalysisType == ViewModel_CatalogAnalysis.ANALYSIS_TYPE_ORPHANED_FILES)
-                || (giAnalysisType == ViewModel_CatalogAnalysis.ANALYSIS_TYPE_MISSING_FILES && !gtmCatalogItemsMissing.isEmpty())) {
+            if((giAnalysisType == ANALYSIS_TYPE_ORPHANED_FILES)
+                || (giAnalysisType == ANALYSIS_TYPE_MISSING_FILES && !gtmCatalogItemsMissing.isEmpty())) {
                 //Analyze orphaned files if we are here for that, or
                 // if we are analyzing missing files and the missing file count is > 0.
 

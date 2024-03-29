@@ -168,9 +168,9 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         RadioButton radioButton_MissingFileIdentification = findViewById(R.id.radioButton_MissingFileIdentification);
 
         if (radioButton_MissingFileIdentification.isChecked()){
-            viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_MISSING_FILES;
+            viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_MISSING_FILES;
         } else {
-            viewModel_catalogAnalysis.iAnalysisType = ViewModel_CatalogAnalysis.ANALYSIS_TYPE_ORPHANED_FILES;
+            viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_ORPHANED_FILES;
         }
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.START_REQUESTED);
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
