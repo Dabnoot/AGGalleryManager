@@ -14,6 +14,4 @@ public class ViewModel_CatalogAnalysis extends ViewModel {
     public static final int ANALYSIS_TYPE_MISSING_FILES = 1;
     public static final int ANALYSIS_TYPE_ORPHANED_FILES = 2;
 
-    ArrayList<ItemClass_File> alFileList;
-
 }
