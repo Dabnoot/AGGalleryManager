@@ -72,7 +72,9 @@ public class Fragment_Import_5_Confirmation extends Fragment {
         super.onResume();
         if(getActivity() != null) {
             getActivity().setTitle("Import");
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+            if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
+                ((AppCompatActivity) getActivity()).getSupportActionBar().show();
+            }
         }
         initComponents();
     }
@@ -220,8 +222,10 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                         if (alFileItemsDisplay.get(position).sMimeType.startsWith("video")) {
                             Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                             Activity_Import.mediaMetadataRetriever.setDataSource(getContext(), docUri);
-                            String time = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                            durationInMilliseconds = Long.parseLong(time);
+                            String sTime = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                            if(sTime != null) {
+                                durationInMilliseconds = Long.parseLong(sTime);
+                            }
                         } else { //if it's not a video file, check to see if it's a gif:
                             if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
                                 //Get the duration of the gif image:
@@ -288,10 +292,11 @@ public class Fragment_Import_5_Confirmation extends Fragment {
                 if(!sLine3.equals("")) {
                     sLine3 = sLine3 + "\n";
                 }
-                sLine3 = sLine3 + "Destination path: " +
-                        globalClass.gUriCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
+                String sDestinationPath = GlobalClass.cleanHTMLCodedCharacters(
+                        GlobalClass.gUriCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
                         File.separator +
-                        alFileItemsDisplay.get(position).sDestinationFolder;
+                        alFileItemsDisplay.get(position).sDestinationFolder);
+                sLine3 = sLine3 + "Destination path: " + sDestinationPath;
             }
             if(alFileItemsDisplay.get(position).bMarkedForDeletion){
                 sLine3 = "";
