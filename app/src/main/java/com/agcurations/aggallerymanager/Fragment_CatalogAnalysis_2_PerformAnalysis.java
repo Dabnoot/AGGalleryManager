@@ -131,7 +131,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
             Data dataAnalysisFiles = new Data.Builder()
                     .putString(GlobalClass.EXTRA_CALLER_ID, sCallerID)
                     .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                    .putInt(ViewModel_CatalogAnalysis.EXTRA_ANALYSIS_TYPE, viewModel_catalogAnalysis.iAnalysisType)
+                    .putInt(Worker_Catalog_Analysis.EXTRA_ANALYSIS_TYPE, viewModel_catalogAnalysis.iAnalysisType)
                     .putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, viewModel_catalogAnalysis.iMediaCategory)
                     .build();
             OneTimeWorkRequest otwrAnalysisFiles = new OneTimeWorkRequest.Builder(Worker_Catalog_Analysis.class)
