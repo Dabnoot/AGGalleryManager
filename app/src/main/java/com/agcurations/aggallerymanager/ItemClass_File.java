@@ -6,13 +6,13 @@ import java.util.Date;
 
 public class ItemClass_File implements Serializable {
 
-    public final int iTypeFileFolderURL; //folder, file, url, etc.
+    public int iTypeFileFolderURL; //folder, file, url, etc.
     public final static int TYPE_FOLDER = 1;
     public final static int TYPE_FILE = 2;
     public final static int TYPE_URL = 3;
     public final static int TYPE_M3U8 = 4;
     public final static int TYPE_IMAGE_FROM_HOLDING_FOLDER = 5;
-    public final String sFileOrFolderName;
+    public String sFileOrFolderName;
     public String sExtension = "";
     public long lSizeBytes = 0;
     public Date dateLastModified = null;
@@ -82,6 +82,7 @@ public class ItemClass_File implements Serializable {
     public boolean bIllegalDataFound = false; //Used during import.
     public String sIllegalDataNarrative = "";
 
+    public boolean bIsOrphanedFile = false; //Set by catalog analysis, used by file import.
     public int iFileNameDuplicationCount = 0; //Used by catalog analysis.
     public String sMediaFolderRelativePath = ""; //Used by catalog analysis
     public boolean bOrphanAssociatedWithCatalogItem = false;
