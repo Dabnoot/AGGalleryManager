@@ -152,14 +152,14 @@ public class Worker_Import_VideoDownload extends Worker {
                     globalClass.gbImportExecutionFinished = true;
                     return Result.failure();
                 } else {
-                    globalClass.BroadcastProgress(true, "Destination folder created: " + uriDestinationFolder + "\n",
+                    globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlySequenceFolder + "\n",
                             false, iProgressBarValue,
                             false, "",
                             IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
                 }
             } else {
                 //todo: What to do if the destination folder already exists?
-                globalClass.BroadcastProgress(true, "Destination folder already exists (could be an issue): " + uriDestinationFolder + "\n",
+                globalClass.BroadcastProgress(true, "Destination folder already exists (could be an issue): " + sUserFriendlySequenceFolder + "\n",
                         true, iProgressBarValue,
                         false, "",
                         IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
@@ -209,6 +209,16 @@ public class Worker_Import_VideoDownload extends Worker {
             sTempFilename = GlobalClass.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
             //sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
                                 //Don't add item ID to create a unique filename as the filename might become too long.
+            String[] sFileNameAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sTempFilename);
+            if(sFileNameAndExtension.length != 2){
+                globalClass.BroadcastProgress(true, "Download file name does not have an extension. Next behavior indeterminate. File name: " + sTempFilename,
+                        false, 0,
+                        false, "",
+                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+                return Result.failure();
+            }
+            sFileNameAndExtension[0] = sFileNameAndExtension[0] + GlobalClass.gsSAF_Adapted_M3U8_Suffix;
+            sTempFilename = sFileNameAndExtension[0] + "." + sFileNameAndExtension[1];
             ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
 
@@ -236,14 +246,6 @@ public class Worker_Import_VideoDownload extends Worker {
         try {
             //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
             ItemClass_CatalogItem ciValidatedNew = GlobalClass.validateCatalogItemData(ciNew);
-            if(ciValidatedNew == null){
-                //If we are here, validateCatalogItemData found a critical error, such as illegal character in user name;
-                globalClass.BroadcastProgress(true, "Critical error with formation of data record. Download aborted. Record creation aborted.",
-                        false, 0,
-                        false, "",
-                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                return Result.failure();
-            }
             if(ciValidatedNew.bIllegalDataFound){
                 globalClass.BroadcastProgress(true, ciValidatedNew.sIllegalDataNarrative,
                         false, 0,
@@ -252,7 +254,12 @@ public class Worker_Import_VideoDownload extends Worker {
             }
             globalClass.CatalogDataFile_CreateNewRecord(ciValidatedNew);
         } catch (Exception e) {
-            e.printStackTrace();
+            sMessage = "Problem with creating new record. " + e.getMessage();
+            globalClass.BroadcastProgress(true, sMessage,
+                    false, 0,
+                    false, "",
+                    IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+            return Result.failure();
         }
 
         //Map-out the files to be downloaded with destination file names:
@@ -425,6 +432,7 @@ public class Worker_Import_VideoDownload extends Worker {
                 inputStream.close();
 
                 //Write the m3u8 file to the working folder:
+                assert uriDestinationFolder != null; //Destination folder Uri should not be null via above logic, but Android Studio warns about it nonetheless.
                 Uri uriM3U8 = DocumentsContract.createDocument(GlobalClass.gcrContentResolver, uriDestinationFolder, GlobalClass.BASE_TYPE_TEXT, ciNew.sFilename);
                 if (uriM3U8 == null) {
                     sMessage = "Could not create M3U8 file.";
@@ -455,9 +463,11 @@ public class Worker_Import_VideoDownload extends Worker {
                         if (sLine.contains("/")) {
                             sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
                         }
-                        String sTSShortFileName = GlobalClass.cleanFileNameViaTrim(sLine); //Don't add itemID to the filename or the filename might become too long.
+                        String sTSShortFileName = GlobalClass.cleanFileNameViaTrim(sLine);
                         String sJumbledTSShortFileName = GlobalClass.JumbleFileName(sTSShortFileName);
-                        bwM3U8File.write(sJumbledTSShortFileName + "\n");
+                        //Add the path to the file name, or the video player will not be able to find the file:
+                        String sFullPath = uriDestinationFolder + GlobalClass.gsFileSeparator + sJumbledTSShortFileName;
+                        bwM3U8File.write(sFullPath + "\n");
                     } else if (sLine.contains("ENDLIST")) {
                         bwM3U8File.write(sLine + "\n");
                         break;
