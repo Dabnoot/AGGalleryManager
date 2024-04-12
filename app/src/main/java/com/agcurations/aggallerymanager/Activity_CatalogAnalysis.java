@@ -33,8 +33,9 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     public static final int FRAGMENT_CAT_ANALYSIS_1_ANALYSIS_TYPE = 1;
     public static final int FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS = 2;
     public static final int FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT = 3;
-    public static final int FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER = 4;
-    public static final int FRAGMENT_COUNT = 5;
+    public static final int FRAGMENT_CAT_ANALYSIS_3A_M3U8_PROCESS_SELECTION = 4;
+    public static final int FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER = 5;
+    public static final int FRAGMENT_COUNT = 6;
 
     public ViewPager2 ViewPager2_CatalogAnalysis;
     FragmentCatalogAnalysisViewPagerAdapter catalogAnalysisViewPagerAdapter;
@@ -51,6 +52,9 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
     public static int giOrphansWOMatch;
     public static int giOrphansWMatchWMedia;
     public static int giOrphansWMatchWOMedia;
+    public static ArrayList<String> gals_M3U8_CatItems_Missing_SAF_Playlist = new ArrayList<>();
+    public static ArrayList<String> gals_M3U8_CatItems_Misaligned_Paths = new ArrayList<>();
+    public static ArrayList<String> gals_M3U8_CatItems_Missing_Segments = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,6 +131,10 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         }
     }
 
+    public void buttonClick_Back(View v){
+        onBackPressed();
+    }
+
     public void buttonClick_Cancel(View v){
         gotoFinish();
     }
@@ -166,11 +174,14 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
     public void buttonNextClick_AnalysisTypeSelected(View v){
         RadioButton radioButton_MissingFileIdentification = findViewById(R.id.radioButton_MissingFileIdentification);
+        RadioButton radioButton_OrphanedFileIdentification = findViewById(R.id.radioButton_OrphanedFileIdentification);
 
         if (radioButton_MissingFileIdentification.isChecked()){
             viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_MISSING_FILES;
-        } else {
+        } else if (radioButton_OrphanedFileIdentification.isChecked()) {
             viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_ORPHANED_FILES;
+        } else {
+            viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_M3U8;
         }
         GlobalClass.aiCatalogVerificationRunning.set(GlobalClass.START_REQUESTED);
         ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_2_PERFORM_ANALYSIS, false);
@@ -179,21 +190,23 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
     public void buttonNextClick_AnalysisComplete(View v){
 
+        if(viewModel_catalogAnalysis.iAnalysisType != Worker_Catalog_Analysis.ANALYSIS_TYPE_M3U8) {
+            //If we are here, then catalog items missing their media or orphaned files were found.
+            if (gals_CatalogItemsMissingMedia == null) {
+                //If there are no items to trim, go to the fragment that will lead the user to the import activity:
+                ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER, false);
+            } else if (galicf_CatalogAnalysisFileItems == null) {
+                //If there are catalog items missing media, but no orphaned files...
 
+                //todo: How to display for review catalog items missing media?
 
-
-        //If we are here, then catalog items missing their media or orphaned files were found.
-        if(gals_CatalogItemsMissingMedia == null){
-            //If there are no items to trim, go to the fragment that will lead the user to the import activity:
-            ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER, false);
-        } else if (galicf_CatalogAnalysisFileItems == null) {
-            //If there are catalog items missing media, but no orphaned files...
-
-            //todo: How to display for review catalog items missing media?
-
+            } else {
+                //If there are both catalog items missing media and orphaned files...
+                ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT, false);
+            }
         } else {
-            //If there are both catalog items missing media and orphaned files...
-            ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT, false);
+            //M3U8 analysis
+            ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_3A_M3U8_PROCESS_SELECTION, false);
         }
 
     }
@@ -208,6 +221,25 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         } else {
             //Start the fragment associated with filtering orphaned files for potential import:
             ViewPager2_CatalogAnalysis.setCurrentItem(FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER, false);
+        }
+
+    }
+
+    public void buttonNextClick_M3U8ProcessSelect(View v){
+
+        RadioButton radioButton_UpdateM3U8sToSAF = findViewById(R.id.radioButton_UpdateM3U8sToSAF);
+        RadioButton radioButton_UpdateM3U8sBaseStorageString = findViewById(R.id.radioButton_UpdateM3U8sBaseStorageString);
+        RadioButton radioButton_ReviewM3U8MissingSegments = findViewById(R.id.radioButton_ReviewM3U8MissingSegments);
+        RadioButton radioButton_UpdateM3U8MissingSegments = findViewById(R.id.radioButton_UpdateM3U8MissingSegments);
+
+        if(radioButton_UpdateM3U8sToSAF.isChecked()){
+
+        } else if (radioButton_UpdateM3U8sBaseStorageString.isChecked()) {
+
+        } else if (radioButton_ReviewM3U8MissingSegments.isChecked()) {
+
+        } else if (radioButton_UpdateM3U8MissingSegments.isChecked()) {
+
         }
 
     }
@@ -258,6 +290,11 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         finish();
     }
 
+    public void buttonNextClick_M3U8PerformUpdateNext(View v){
+
+
+    }
+
     public static class FragmentCatalogAnalysisViewPagerAdapter extends FragmentStateAdapter {
 
         public FragmentCatalogAnalysisViewPagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle) {
@@ -274,6 +311,8 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
                     return new Fragment_CatalogAnalysis_2_PerformAnalysis();
                 case FRAGMENT_CAT_ANALYSIS_3_TRIM_OR_IMPORT:
                     return new Fragment_CatalogAnalysis_3_TrimOrImport();
+                case FRAGMENT_CAT_ANALYSIS_3A_M3U8_PROCESS_SELECTION:
+                    return new Fragment_CatalogAnalysis_3a_M3U8_Process_Select();
                 case FRAGMENT_CAT_ANALYSIS_4_IMPORT_FILTER:
                     return new Fragment_CatalogAnalysis_4_ImportFilter();
                 default:
@@ -308,9 +347,9 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
             } else {
 
                 //Check to see if this is a response from the Catalog Analysis worker:
-                boolean bGetCatalogAnalysisFileItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_FILEITEMS_RESPONSE, false);
+                boolean bGetCatalogAnalysisFileItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE, false);
                 if (bGetCatalogAnalysisFileItemsResponse) {
-                    galicf_CatalogAnalysisFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_FILEITEMS_RESPONSE);
+                    galicf_CatalogAnalysisFileItems = (ArrayList<ItemClass_File>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE);
 
                     //Count items:
                     giOrphansWOMatch = 0;
@@ -333,6 +372,16 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
                 boolean bGetCatalogAnalysisMissingItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE, false);
                 if (bGetCatalogAnalysisMissingItemsResponse) {
                     gals_CatalogItemsMissingMedia = (ArrayList<String>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE);
+                }
+
+
+                boolean bGetCatalogAnalysisM3U8MisalignedPathsItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_M3U8_INTERN_PATH_ITEMS_RESPONSE, false);
+                if (bGetCatalogAnalysisM3U8MisalignedPathsItemsResponse) {
+                    gals_M3U8_CatItems_Misaligned_Paths = (ArrayList<String>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_M3U8_INTERN_PATH_ITEMS_RESPONSE);
+                }
+                boolean bGetCatalogAnalysisM3U8MissingSegFilesResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_M3U8_MISSING_SEG_ITEMS_RESPONSE, false);
+                if (bGetCatalogAnalysisM3U8MissingSegFilesResponse) {
+                    gals_M3U8_CatItems_Missing_Segments = (ArrayList<String>) intent.getSerializableExtra(Worker_Catalog_Analysis.EXTRA_AL_GET_ARRAY_M3U8_MISSING_SEG_ITEMS_RESPONSE);
                 }
 
 

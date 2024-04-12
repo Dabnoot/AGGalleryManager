@@ -207,18 +207,6 @@ public class Worker_Import_VideoDownload extends Worker {
             //Form a name for the M3U8 file:
             String sTempFilename = icfDownloadItem.ic_M3U8.sFileName;
             sTempFilename = GlobalClass.cleanFileNameViaTrim(sTempFilename); //Remove special characters.
-            //sTempFilename = ciNew.sItemID + "_" + sTempFilename; //Add item ID to create a unique filename.
-                                //Don't add item ID to create a unique filename as the filename might become too long.
-            String[] sFileNameAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sTempFilename);
-            if(sFileNameAndExtension.length != 2){
-                globalClass.BroadcastProgress(true, "Download file name does not have an extension. Next behavior indeterminate. File name: " + sTempFilename,
-                        false, 0,
-                        false, "",
-                        IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
-                return Result.failure();
-            }
-            sFileNameAndExtension[0] = sFileNameAndExtension[0] + GlobalClass.gsSAF_Adapted_M3U8_Suffix;
-            sTempFilename = sFileNameAndExtension[0] + "." + sFileNameAndExtension[1];
             ciNew.sFilename = sTempFilename; //Do not jumble the M3U8 file. Exoplayer will not recognize.
             ciNew.iFile_Count = icfDownloadItem.ic_M3U8.als_TSDownloads.size(); //Record the file count.
 
@@ -546,38 +534,20 @@ public class Worker_Import_VideoDownload extends Worker {
             WorkManager.getInstance(getApplicationContext()).enqueue(otwrDownloadPostProcessor);
 
             sMessage = "Operation complete.\n";
-            if(icfDownloadItem.iTypeFileFolderURL == ItemClass_File.TYPE_URL){
-                sMessage = sMessage + "The download will continue in the background and will be available once completed.\n";
-            } else {
-                sMessage = sMessage + "M3U8 video downloads will continue in the background and will be concatenated into a single video once completed.\n";
-            }
+            sMessage = sMessage + "The download will continue in the background and will be available once completed.\n";
+
             //Check to see if the user has applied a restricted tag so that an appropriate reminder
             //  message can be shown:
-            boolean bRestrictedTagInUse = false;
-            String sRecordTags = ciNew.sTags;
-            if(sRecordTags.length() > 0) {
-                String[] saRecordTags = sRecordTags.split(",");
-                for (String s : saRecordTags) {
-                    //if list of restricted tags contains this particular record tag, mark as restricted item:
-                    int iTagID;
-                    //String sErrorMessage;
-                    try {
-                        iTagID = Integer.parseInt(s);
-                    } catch (Exception e){
-                        //sErrorMessage = e.getMessage();
-                        continue;
-                    }
-                    ItemClass_Tag ict = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(iTagID);
-                    if (ict != null) {
-                        if (ict.bIsRestricted) {
-                            bRestrictedTagInUse = true;
-                            break;
-                        }
+            for(int iTagID: ciNew.aliTags){
+                ItemClass_Tag ict = GlobalClass.gtmApprovedCatalogTagReferenceLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).get(iTagID);
+                if(ict!=null) {
+                    if (ict.iMaturityRating > GlobalClass.giDefaultUserMaturityRating) {
+                        sMessage = sMessage + "The item might not be readily shown in the catalog due to the application " +
+                                "of a tag with a maturity rating above the default view's rating. Make sure to set the view filter " +
+                                "to include items of a higher maturity in order to view this item.\n";
+                        break;
                     }
                 }
-            }
-            if(bRestrictedTagInUse) {
-                sMessage = sMessage + "The item will not be readily shown in the catalog due to the application of a restricted tag.\n";
             }
 
             globalClass.BroadcastProgress(true, sMessage,

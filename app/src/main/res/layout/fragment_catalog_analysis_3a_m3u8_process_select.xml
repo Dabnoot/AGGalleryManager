@@ -21,23 +21,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select type of analysis to perform:"
+            android:text="Select Next Step:"
             android:textColor="@color/colorTextColor"
-            android:textSize="24sp"/>
+            android:textSize="30sp"/>
 
         <RadioGroup
-            android:id="@+id/radioGroup_AnalysisType"
+            android:id="@+id/radioGroup_M3U8ProcessSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp">
+            android:layout_marginBottom="20dp">
 
             <RadioButton
-                android:id="@+id/radioButton_MissingFileIdentification"
+                android:id="@+id/radioButton_UpdateM3U8sToSAF"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="20dp"
+                android:layout_marginTop="20dp"
                 android:checked="true"
-                android:text="Identify Catalog Items with Missing Files"
+                android:text="Update M3U8 playlists to use full base storage paths."
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -45,46 +45,40 @@
                 android:buttonTint="@color/colorTextColor"/>
 
             <RadioButton
-                android:id="@+id/radioButton_OrphanedFileIdentification"
+                android:id="@+id/radioButton_UpdateM3U8sBaseStorageString"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:text="Identify Orphaned Files"
+                android:layout_marginTop="20dp"
+                android:text="Update M3U8 playlists to use up-to-date base storage paths."
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 android:buttonTint="@color/colorTextColor"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Use only when confident no catalog items are missing files."
-                android:textColor="@color/colorTextColor"
-                android:textSize="24sp"
-                android:layout_marginStart="50dp"
-                android:layout_marginBottom="10dp"/>
 
             <RadioButton
-                android:id="@+id/radioButton_M3U8_Analysis"
+                android:id="@+id/radioButton_ReviewM3U8MissingSegments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:layout_marginStart="20dp"
-                android:text="Analyze M3U8 video playlist files"
+                android:layout_marginTop="20dp"
+                android:text="Review M3U8 playlists that are missing segment files."
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 android:buttonTint="@color/colorTextColor"/>
 
-            <TextView
+            <RadioButton
+                android:id="@+id/radioButton_UpdateM3U8MissingSegments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Some video downloads are saved as an M3U8 playlist with \naccompanying video segment files."
+                android:layout_marginTop="20dp"
+                android:text="Update M3U8 playlists to exclude missing segment files."
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"
-                android:layout_marginStart="50dp"/>
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:buttonTint="@color/colorTextColor"/>
 
         </RadioGroup>
 
@@ -109,7 +103,7 @@
                 android:layout_height="67dp"
                 android:text="Next"
                 android:textSize="24sp"
-                android:onClick="buttonNextClick_AnalysisTypeSelected"
+                android:onClick="buttonNextClick_M3U8ProcessSelect"
                 app:backgroundTint="@color/colorButton" />
 
         </LinearLayout>

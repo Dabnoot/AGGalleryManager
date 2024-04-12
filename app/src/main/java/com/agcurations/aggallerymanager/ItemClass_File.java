@@ -12,7 +12,7 @@ public class ItemClass_File implements Serializable {
     public final static int TYPE_URL = 3;
     public final static int TYPE_M3U8 = 4;
     public final static int TYPE_IMAGE_FROM_HOLDING_FOLDER = 5;
-    public String sFileOrFolderName;
+    public final String sFileOrFolderName;
     public String sExtension = "";
     public long lSizeBytes = 0;
     public Date dateLastModified = null;

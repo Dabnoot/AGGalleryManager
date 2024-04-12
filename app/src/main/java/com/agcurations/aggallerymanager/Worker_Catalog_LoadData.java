@@ -837,64 +837,17 @@ public class Worker_Catalog_LoadData extends Worker {
     }
 
     private void fixM3U8InternalFilePaths(){
-        //I had coded the M3U8 text files to have full paths to segment files, but it should be
-        //  relative. The segment files can't be found after copying all of the data over to an
-        //  upgraded SD card because the Android storage device name changes in the path.
 
-        for(Map.Entry<String, ItemClass_CatalogItem> tmEntry: GlobalClass.gtmCatalogLists.get(GlobalClass.MEDIA_CATEGORY_VIDEOS).entrySet()){
-            ItemClass_CatalogItem ci = tmEntry.getValue();
-            if(ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8){
-                //If this is an M3U8 file catalog item, locate the M3U8 file and update file paths.
-                String sMessage = "Examining M3U8 video ID " + tmEntry.getKey();
-                Log.d("VideoFilesCheck", sMessage);
-                String sM3U8FilePath = GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS] +
-                        File.separator + ci.sFolderRelativePath +
-                        File.separator + ci.sItemID +
-                        File.separator + ci.sFilename;
-                File fM3U8File = new File(sM3U8FilePath);
-                if(fM3U8File.exists()) {
-                    StringBuilder sbBuffer = new StringBuilder();
-                    //Get data from file:
-                    BufferedReader brReader;
-                    try {
-                        brReader = new BufferedReader(new FileReader(fM3U8File.getAbsolutePath()));
-                        String sLine = brReader.readLine();
-
-                        while (sLine != null) {
-                            if (sLine.contains("/storage/3966-3438")) {
-                                sLine = sLine.substring(sLine.lastIndexOf("/") + 1);
-                            }
-                            sbBuffer.append(sLine);
-                            sbBuffer.append("\n");
-                            sLine = brReader.readLine();
-                        }
-                        brReader.close();
-
-                        //Re-write the CatalogContentsFile without the deleted item's data record:
-                        FileWriter fwNewM3U8File = new FileWriter(fM3U8File, false);
-                        fwNewM3U8File.write(sbBuffer.toString());
-                        fwNewM3U8File.flush();
-                        fwNewM3U8File.close();
-
-                    } catch (IOException e) {
-                        sMessage = e.getMessage() + "";
-                        Log.d("VideoFilesCheck", sMessage);
-                    }
-
-                } else {
-                    sMessage = "Cannot find M3U8 file: " + sM3U8FilePath;
-                    Log.d("VideoFilesCheck", sMessage);
-                }
-
-
-
-
-            }
-
-        } //End for loop going through Catalog items.
 
 
     }
+
+
+
+
+
+
+
 
     void problemNotificationConfig(String sMessage){
         globalClass.problemNotificationConfig(sMessage,

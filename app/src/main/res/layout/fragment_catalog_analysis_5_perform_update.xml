@@ -11,7 +11,7 @@
         android:id="@+id/textView_Label_Title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Perform Analysis"
+        android:text="Perform Update"
         android:textColor="@color/colorTextColor"
         android:textSize="24sp"
         android:layout_marginTop="10dp"
@@ -26,7 +26,7 @@
         android:layout_below="@+id/textView_Label_Title">
 
         <ProgressBar
-            android:id="@+id/progressBar_AnalysisProgress"
+            android:id="@+id/progressBar_UpdateProgress"
             style="@android:style/Widget.ProgressBar.Horizontal"
             android:progressDrawable="@drawable/progressbar_colors"
             android:layout_width="match_parent"
@@ -35,7 +35,7 @@
             android:layout_marginEnd="10dp"/>
 
         <TextView
-            android:id="@+id/textView_AnalysisProgressBarText"
+            android:id="@+id/textView_UpdateProgressBarText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/colorTextColor"
@@ -43,7 +43,7 @@
     </RelativeLayout>
 
     <ScrollView
-        android:id="@+id/scrollView_AnalysisLog"
+        android:id="@+id/scrollView_UpdateLog"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="10dp"
@@ -55,7 +55,7 @@
         android:scrollbarSize="20dp">
 
         <TextView
-            android:id="@+id/textView_AnalysisLog"
+            android:id="@+id/textView_UpdateLog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fontFamily="monospace"
@@ -71,7 +71,7 @@
         android:layout_centerHorizontal="true">
 
         <Button
-            android:id="@+id/button_AnalysisRestart"
+            android:id="@+id/button_UpdateRestart"
             android:layout_width="149dp"
             android:layout_height="67dp"
             android:layout_marginBottom="10dp"
@@ -83,27 +83,27 @@
             />
 
         <Button
-            android:id="@+id/button_AnalysisImportSelect"
+            android:id="@+id/button_UpdateNext"
             android:layout_width="149dp"
             android:layout_height="67dp"
             android:layout_marginBottom="10dp"
             android:layout_marginStart="20dp"
-            android:onClick="buttonNextClick_AnalysisComplete"
+            android:onClick="buttonNextClick_M3U8PerformUpdateNext"
             android:text="Next"
             android:textSize="24sp"
             android:enabled="false"
             app:backgroundTint="@color/colorButton" />
 
         <Button
-            android:id="@+id/button_AnalysisFinish"
-            android:layout_width="149dp"
+            android:id="@+id/button_UpdateFinish"
+            android:layout_width="131dp"
             android:layout_height="67dp"
-            android:layout_marginBottom="10dp"
             android:layout_marginStart="20dp"
+            android:layout_marginBottom="10dp"
+            android:enabled="true"
             android:onClick="buttonNextClick_AnalysisFinish"
             android:text="Finish"
             android:textSize="24sp"
-            android:enabled="true"
             app:backgroundTint="@color/colorButton" />
 
     </LinearLayout>

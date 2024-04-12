@@ -239,8 +239,11 @@ public class GlobalClass extends Application {
     public String gsImportExecutionProgressBarText = "";
     //Variables related to catalog analysis:
     public StringBuilder gsbAnalysisExecutionLog = new StringBuilder();
+    public StringBuilder gsbUpdateExecutionLog = new StringBuilder();
     public int giAnalysisExecutionProgressBarPercent = 0;
     public String gsAnalysisExecutionProgressBarText = "";
+    public int giUpdateExecutionProgressBarPercent = 0;
+    public String gsUpdateExecutionProgressBarText = "";
     //Variables to control starting of comic web address analysis:
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.
@@ -845,8 +848,7 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "ItemID";                        //Video, image, comic id
         sHeader = sHeader + "\t" + "GroupID";                        //Video, image, comic id
         sHeader = sHeader + "\t" + "Filename";                      //Video or image filename
-        sHeader = sHeader + "\t" + "Folder_Name";                   //Name of the folder holding the video, image, or comic pages
-        sHeader = sHeader + "\t" + "Item_Folder_Name";              //m3u8 video folder
+        sHeader = sHeader + "\t" + "Folder Relative Path";          //Name of the folder holding the video, image, or comic pages
         sHeader = sHeader + "\t" + "Thumbnail_File";                //Name of the file used as the thumbnail for a video or comic
         sHeader = sHeader + "\t" + "Datetime_Import";               //Date of import. Used for sorting if desired
         sHeader = sHeader + "\t" + "Datetime_Last_Viewed_by_User";  //Date of last read by user. Used for sorting if desired
@@ -867,20 +869,23 @@ public class GlobalClass extends Application {
         sHeader = sHeader + "\t" + "ComicLanguages";                //Language(s) found in the comic
         sHeader = sHeader + "\t" + "ComicParodies";                 //Common comic tag category
         sHeader = sHeader + "\t" + "Title";                         //Comic name or Video Title
+        sHeader = sHeader + "\t" + "Comic Volume";                  //Comic name or Video Title
+        sHeader = sHeader + "\t" + "Comic Chapter";                 //Comic name or Video Title
+        sHeader = sHeader + "\t" + "Comic Subtitle";                //Comic name or Video Title
         sHeader = sHeader + "\t" + "ComicPages";                    //Total number of pages as defined at the comic source
         sHeader = sHeader + "\t" + "Comic_Max_Page_ID";             //Max comic page id extracted from file names
         sHeader = sHeader + "\t" + "Comic_Missing_Pages";           //Missing page numbers
         sHeader = sHeader + "\t" + "File_Count";                    //Files included with the comic. Can be used for integrity check. Also used
                                                                     // for video M3U8 download completion check.
         sHeader = sHeader + "\t" + "Comic_Online_Data_Acquired";    //Typically used to gather tag data from an online comic source, if automatic.
-        sHeader = sHeader + "\t" + "Comic_Source";
+        sHeader = sHeader + "\t" + "Source";
 
         sHeader = sHeader + "\t" + "Grade";                         //Grade of the item, set by the user
         sHeader = sHeader + "\t" + "PostProcessingCode";            //Code for required post-processing.
         /*sHeader = sHeader + "\t" + "Video_Link";                    //For video download from web page or M3U8 stream. Web address of page is
                                                                     //  stored in sAddress. There can be multiple video downloads and streams
                                                                     //  per web page, hence this field.*/
-        sHeader = sHeader + "\t" + "M3U8IntegrityFlag";             //For verifying m3u8 segment-file-complex integrity.
+        sHeader = sHeader + "\t" + "M3U8 Integrity Flag";           //
         sHeader = sHeader + "\t" + "Maturity_Rating";               //Maturity rating either defined by the user or inherited from tags.
         sHeader = sHeader + "\t" + "Approved_Users";                //Approved user(s) either defined from the importing user, explicity by the user, or inhereted from tags.
         sHeader = sHeader + "\t" + "Version:" + giCatalogFileVersion;
@@ -3045,6 +3050,7 @@ public class GlobalClass extends Application {
     public static final String BROADCAST_CATALOG_FILES_MAINTENANCE = "com.agcurations.aggallerymanager.intent.action.CATALOG_FILES_MAINTENANCE";
 
     static AtomicInteger aiCatalogVerificationRunning = new AtomicInteger(0);
+    static AtomicInteger aiCatalogUpdateRunning = new AtomicInteger(0);
     public static final int STOPPED = 0;
     public static final int START_REQUESTED = 1;
     public static final int RUNNING = 2;

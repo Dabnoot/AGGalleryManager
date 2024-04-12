@@ -27,29 +27,27 @@ import androidx.work.WorkManager;
 import java.util.Locale;
 
 
-public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
+public class Fragment_CatalogAnalysis_5_PerformUpdate extends Fragment {
 
     private ViewModel_CatalogAnalysis viewModel_catalogAnalysis;
 
-    ProgressBar gProgressBar_AnalysisProgress;
-    TextView gTextView_AnalysisProgressBarText;
-    TextView gtextView_AnalysisLog;
-    ScrollView gScrollView_AnalysisLog;
-
-    Button gButton_AnalysisImportSelect;
+    ProgressBar gProgressBar_UpdateProgress;
+    TextView gTextView_UpdateProgressBarText;
+    TextView gtextView_UpdateLog;
+    ScrollView gScrollView_UpdateLog;
 
     GlobalClass globalClass;
 
-    public Fragment_CatalogAnalysis_2_PerformAnalysis() {
+    public Fragment_CatalogAnalysis_5_PerformUpdate() {
         // Required empty public constructor
     }
 
-    public static Fragment_CatalogAnalysis_2_PerformAnalysis newInstance() {
-        return new Fragment_CatalogAnalysis_2_PerformAnalysis();
+    public static Fragment_CatalogAnalysis_5_PerformUpdate newInstance() {
+        return new Fragment_CatalogAnalysis_5_PerformUpdate();
     }
 
 
-    AnalysisDataServiceResponseReceiver analysisDataServiceResponseReceiver;
+    UpdateDataServiceResponseReceiver updateDataServiceResponseReceiver;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,20 +61,20 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
 
         //Configure a response receiver to listen for updates from the Data Service:
         IntentFilter filter = new IntentFilter();
-        filter.addAction(Worker_Catalog_Analysis.CATALOG_ANALYSIS_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_Maintenance.CATALOG_MAINTENANCE_ACTION_RESPONSE);
         filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        analysisDataServiceResponseReceiver = new AnalysisDataServiceResponseReceiver();
+        updateDataServiceResponseReceiver = new UpdateDataServiceResponseReceiver();
 
         if(getContext() != null) {
-            LocalBroadcastManager.getInstance(getContext()).registerReceiver(analysisDataServiceResponseReceiver, filter);
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver(updateDataServiceResponseReceiver, filter);
         }
     }
 
     @Override
     public void onDestroy() {
         if(getContext() != null) {
-            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(analysisDataServiceResponseReceiver);
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(updateDataServiceResponseReceiver);
         }
         super.onDestroy();
     }
@@ -108,21 +106,19 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         if(getView() == null){
             return;
         }
-        gProgressBar_AnalysisProgress = getView().findViewById(R.id.progressBar_AnalysisProgress);
-        gProgressBar_AnalysisProgress.setMax(100);
-        gTextView_AnalysisProgressBarText = getView().findViewById(R.id.textView_AnalysisProgressBarText);
+        gProgressBar_UpdateProgress = getView().findViewById(R.id.progressBar_AnalysisProgress);
+        gProgressBar_UpdateProgress.setMax(100);
+        gTextView_UpdateProgressBarText = getView().findViewById(R.id.textView_AnalysisProgressBarText);
 
         //Set the log textView to be able to scroll vertically:
-        gtextView_AnalysisLog = getView().findViewById(R.id.textView_AnalysisLog);
-        gScrollView_AnalysisLog = getView().findViewById(R.id.scrollView_AnalysisLog);
+        gtextView_UpdateLog = getView().findViewById(R.id.textView_AnalysisLog);
+        gScrollView_UpdateLog = getView().findViewById(R.id.scrollView_AnalysisLog);
 
-        gButton_AnalysisImportSelect = getView().findViewById(R.id.button_AnalysisImportSelect);
-
-        if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.START_REQUESTED) {
-            gProgressBar_AnalysisProgress.setProgress(0);
-            gTextView_AnalysisProgressBarText.setText("0/0");
-            gtextView_AnalysisLog.setText("");
-            globalClass.gsbAnalysisExecutionLog = new StringBuilder();
+        if(GlobalClass.aiCatalogUpdateRunning.get() == GlobalClass.START_REQUESTED) {
+            gProgressBar_UpdateProgress.setProgress(0);
+            gTextView_UpdateProgressBarText.setText("0/0");
+            gtextView_UpdateLog.setText("");
+            globalClass.gsbUpdateExecutionLog = new StringBuilder();
 
             if(getContext() == null) return;
             String sCallerID = "Fragment_CatalogAnalysis_2_PerformAnalysis:initComponents()";
@@ -143,22 +139,22 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
         } else {
             //If an Analysis has been started...
             //Refresh the text and progress:
-            gProgressBar_AnalysisProgress.setProgress(globalClass.giAnalysisExecutionProgressBarPercent);
-            gTextView_AnalysisProgressBarText.setText(globalClass.gsAnalysisExecutionProgressBarText);
-            gtextView_AnalysisLog.setText(globalClass.gsbAnalysisExecutionLog.toString());
+            gProgressBar_UpdateProgress.setProgress(globalClass.giUpdateExecutionProgressBarPercent);
+            gTextView_UpdateProgressBarText.setText(globalClass.gsUpdateExecutionProgressBarText);
+            gtextView_UpdateLog.setText(globalClass.gsbUpdateExecutionLog.toString());
 
 
-            if(GlobalClass.aiCatalogVerificationRunning.get() == GlobalClass.FINISHED){
-                //If the user has returned to this fragment and the Analysis is finished,
+            if(GlobalClass.aiCatalogUpdateRunning.get() == GlobalClass.FINISHED){
+                //If the user has returned to this fragment and the Update is finished,
                 //  enable the buttons:
                 if(getView() != null) {
-                    Button button_AnalysisFinish = getView().findViewById(R.id.button_AnalysisFinish);
-                    if (button_AnalysisFinish != null) {
-                        button_AnalysisFinish.setEnabled(true);
+                    Button button_UpdateFinish = getView().findViewById(R.id.button_UpdateFinish);
+                    if (button_UpdateFinish != null) {
+                        button_UpdateFinish.setEnabled(true);
                     }
-                    Button button_AnalysisRestart = getView().findViewById(R.id.button_AnalysisRestart);
-                    if (button_AnalysisRestart != null) {
-                        button_AnalysisRestart.setEnabled(true);
+                    Button button_UpdateRestart = getView().findViewById(R.id.button_UpdateRestart);
+                    if (button_UpdateRestart != null) {
+                        button_UpdateRestart.setEnabled(true);
                     }
                 }
             }
@@ -167,7 +163,7 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
     }
 
 
-    public class AnalysisDataServiceResponseReceiver extends BroadcastReceiver {
+    public class UpdateDataServiceResponseReceiver extends BroadcastReceiver {
 
 
         @Override
@@ -195,16 +191,16 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                     String sLogLine;
                     sLogLine = intent.getStringExtra(GlobalClass.LOG_LINE_STRING);
                     if(sLogLine != null) {
-                        if (gtextView_AnalysisLog != null) {
-                            gtextView_AnalysisLog.append(sLogLine);
+                        if (gtextView_UpdateLog != null) {
+                            gtextView_UpdateLog.append(sLogLine);
                             //Execute delayed scroll down since this broadcast listener is not on the UI thread:
                             final Handler handler = new Handler(Looper.getMainLooper());
                             handler.postDelayed(new Runnable() {
                                 @Override
                                 public void run() {
                                     //Do something after 100ms
-                                    if(gScrollView_AnalysisLog != null){
-                                        gScrollView_AnalysisLog.fullScroll(View.FOCUS_DOWN);
+                                    if(gScrollView_UpdateLog != null){
+                                        gScrollView_UpdateLog.fullScroll(View.FOCUS_DOWN);
                                     }
                                 }
                             }, 100);
@@ -226,33 +222,17 @@ public class Fragment_CatalogAnalysis_2_PerformAnalysis extends Fragment {
                 if(bUpdatePercentComplete){
                     int iAmountComplete;
                     iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
-                    if(gProgressBar_AnalysisProgress != null) {
-                        gProgressBar_AnalysisProgress.setProgress(iAmountComplete);
+                    if(gProgressBar_UpdateProgress != null) {
+                        gProgressBar_UpdateProgress.setProgress(iAmountComplete);
                     }
                 }
                 if(bUpdateProgressBarText){
                     String sProgressBarText;
                     sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
-                    if(gTextView_AnalysisProgressBarText != null) {
-                        gTextView_AnalysisProgressBarText.setText(sProgressBarText);
+                    if(gTextView_UpdateProgressBarText != null) {
+                        gTextView_UpdateProgressBarText.setText(sProgressBarText);
                     }
                 }
-
-
-                //Check to see if this is a response from the Catalog Analysis worker:
-                boolean bGetCatalogAnalysisFileItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_ORPHANED_FILEITEMS_RESPONSE, false);
-                if (bGetCatalogAnalysisFileItemsResponse) {
-                    gButton_AnalysisImportSelect.setEnabled(true);
-                }
-                boolean bGetCatalogAnalysisMissingItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_GET_ARRAY_MISSING_CAT_ITEMS_RESPONSE, false);
-                if (bGetCatalogAnalysisMissingItemsResponse) {
-                    gButton_AnalysisImportSelect.setEnabled(true);
-                }
-
-                /*boolean bGetCatalogAnalysisNoItemsResponse = intent.getBooleanExtra(Worker_Catalog_Analysis.EXTRA_BOOL_CAT_ANALYSIS_NO_ITEMS_RESPONSE, false);
-                if(bGetCatalogAnalysisNoItemsResponse){
-                    //Catalog Analysis has completed, but no catalog items missing media or orphaned files were found.
-                }*/
 
 
             }
