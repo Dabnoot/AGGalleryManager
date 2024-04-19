@@ -490,7 +490,7 @@ public class Worker_Import_GetDirectoryContents extends Worker {
                                         } //End if this is/not an image file.
 
                                         //Set the parent folder Uri for various uses later:
-                                        icf_ComicPage.sUriParent = docUri.toString();
+                                        icf_ComicPage.sUriParent = docUri.toString(); //Among other things, used to determine if pages belong to a comic.
 
                                         //Now determine opportunities to decypher comic page number:
                                         ArrayList<Integer[]> aliNumberBlocksSingleFile = new ArrayList<>();
