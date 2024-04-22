@@ -207,7 +207,7 @@ public class Activity_Browser extends AppCompatActivity {
                     }
 
                     gsNewTabSequenceHelper = null; //Clear the helper, new tab creation order reset.
-                    Toast.makeText(getApplicationContext(), "New tab...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "New tab (" + iTabCount + ")...", Toast.LENGTH_SHORT).show();
                     CreateNewTab("");
                 }
             });
