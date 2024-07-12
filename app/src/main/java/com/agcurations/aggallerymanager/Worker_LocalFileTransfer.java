@@ -11,7 +11,6 @@ import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,8 +18,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
@@ -204,10 +203,10 @@ public class Worker_LocalFileTransfer extends Worker {
                         if (sMediaCategoryData.length != 2) {
                             throw new Exception("Data header missing data for media category in job file.");
                         }
-                        if (sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[2])){
+                        if (sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_COMICS])){
                             iMediaCategory = 2; //Comics
                             //Destination may be a combination of subfolder/comicfolder.
-                        } else if(sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[0])){
+                        } else if(sMediaCategoryData[1].equals(GlobalClass.gsCatalogFolderNames[GlobalClass.MEDIA_CATEGORY_VIDEOS])){
                             iMediaCategory = 0; //Videos
                         } else {
                             iMediaCategory = 1; //default to Images.
