@@ -12,10 +12,12 @@
         <item name="android:windowBackground">@color/colorBackgroundMain</item>
         <item name="android:navigationBarColor">@color/colorNavigationBar</item>
         <!--<item name="android:textColor">@color/colorTextColor</item>-->                 <!--Don't set all of the text color as the WebView ContextMenu Colors are VERY had to identify and change.-->
-        <item name="android:textColorPrimary">@color/colorTextColor</item>          <!-- sets AlertDialog summaryText color -->
+        <item name="android:textColorPrimary">@color/colorTextColor
+        </item>          <!-- sets AlertDialog summaryText color -->
         <item name="android:textColorSecondary">@color/colorTextColor</item>
         <!--<item name="colorBackgroundFloating">@color/colorButton</item>-->       <!-- Sets AlertDialog color -->
-        <item name="textColorAlertDialogListItem">@color/colorTextColor</item>      <!-- Sets AlertDialog text color -->
+        <item name="textColorAlertDialogListItem">@color/colorTextColor
+        </item>      <!-- Sets AlertDialog text color -->
         <item name="android:editTextColor">@color/colorTextColor</item>
 
         <item name="subtitleTextColor">@color/colorTextColor</item>
@@ -35,7 +37,8 @@
         <item name="actionTextColorAlpha">@color/colorTextColor</item>
         <item name="helperTextTextColor">@color/colorTextColor</item>
 
-        <item name="colorSurface">@color/colorNavigationBar</item> <!-- Background of menu, as well as multiSelect preference popup.-->
+        <item name="colorSurface">@color/colorNavigationBar
+        </item> <!-- Background of menu, as well as multiSelect preference popup.-->
 
 
         <!--For the spinner style, specifically for item dividers-->
@@ -114,6 +117,7 @@
     <style name="CustomTabLayout" parent="Widget.Design.TabLayout">
         <item name="tabBackground">@drawable/tabitem_bg_selector</item>
     </style>
+
     <style name="CustomTabTextAppearance" parent="TextAppearance.Design.Tab">
         <item name="textAllCaps">false</item>
         <item name="android:textAllCaps">false</item>
@@ -129,9 +133,20 @@
     <style name="ThemeOverlay.Slider" parent="">
         <!--https://proandroiddev.com/problems-with-material-range-slider-in-android-15bb4406f774-->
         <!-- color used by the text in the Tooltip -->
-        <item name="colorOnPrimary">@color/md_grey_250</item>       <!-- Sets RangeSlider hint label text color-->
-        <item name="colorOnBackground">@color/md_grey_900</item>    <!-- Sets RangeSlider hint label background color-->
+        <item name="colorOnPrimary">@color/md_grey_250
+        </item>       <!-- Sets RangeSlider hint label text color-->
+        <item name="colorOnBackground">@color/md_grey_900
+        </item>    <!-- Sets RangeSlider hint label background color-->
         <item name="colorSurface">@color/md_purple_200</item>
+    </style>
+
+    <style name="Widget.AppTheme.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
+    </style>
+
+    <style name="Widget.AppTheme.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
 
 

@@ -100,7 +100,6 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
 
     //Global constants
-    public static final String EXTRA_CATALOG_ITEM = "CATALOG_ITEM";
     public static final String EXTRA_COMIC_PAGE_START = "COMIC_PAGE_START";
 
     public static final String SAVED_STATE_ITEM_INDEX = "SAVED_STATE_ITEM_INDEX";
@@ -184,7 +183,7 @@ public class Activity_ComicViewer extends AppCompatActivity {
             giCurrentCatalogItemIndex = intentCaller.getIntExtra(EXTRA_COMIC_PAGE_START, 0);
         }
         ItemClass_CatalogItem gciCatalogItem;
-        gciCatalogItem = (ItemClass_CatalogItem) intentCaller.getSerializableExtra(EXTRA_CATALOG_ITEM);
+        gciCatalogItem = (ItemClass_CatalogItem) intentCaller.getSerializableExtra(GlobalClass.EXTRA_CATALOG_ITEM);
 
 
         if( gciCatalogItem == null) return;

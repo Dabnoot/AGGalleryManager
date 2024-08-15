@@ -96,7 +96,7 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                     gciCatalogItem.iMaturityRating = GlobalClass.getHighestTagMaturityRating(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
                     gciCatalogItem.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(gciCatalogItem.aliTags, gciCatalogItem.iMediaCategory);
                     //Inform program of a need to update the tags histogram:
-                    globalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
+                    GlobalClass.gbTagHistogramRequiresUpdate[gciCatalogItem.iMediaCategory] = true;
                 }
 
 
@@ -114,7 +114,7 @@ public class Activity_ComicDetailsEditor extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Catalog record saved.", Toast.LENGTH_SHORT).show();
 
                 //Tell Activity_CatalogViewer to refresh its view:
-                globalClass.gbCatalogViewerRefresh = true;
+                GlobalClass.gbCatalogViewerRefresh = true;
 
                 finish();
             }
