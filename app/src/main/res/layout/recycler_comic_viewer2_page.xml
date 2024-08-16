@@ -3,7 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="10dp">
+    android:paddingBottom="5dp"
+    android:paddingStart="0dp"
+    android:paddingEnd="5dp"><!--Including only paddingEnd to allow vision of scroll bar.-->
 
     <ImageView
         android:id="@+id/imageView_ComicPage"
