@@ -557,6 +557,18 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
         globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
 
         itemClass_webVideoDataLocator =
+                FormWebVideoDataLocator("^h%ttps:\\/\\/w%ww\\.x%nxx\\.g%old\\/v%ideo(.*)",
+                        new String[][]{
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE, "html5player.setVideoTitle('", "');"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TAGS, "//div[@class='metadata-row video-tags']//a/text()"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_THUMBNAIL, "//div[@class='video-pic']//@src"},
+                                {VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlLow('","');"},
+                                {VIDEO_DOWNLOAD_LINK, "html5player.setVideoUrlHigh('","');"},
+                                {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_M3U8, "html5player.setVideoHLS('","');"}
+                        });
+        globalClass.galWebVideoDataLocators.add(itemClass_webVideoDataLocator);
+
+        itemClass_webVideoDataLocator =
                 FormWebVideoDataLocator("^h%ttps:\\/\\/w%ww\\.p%ornh%ub\\.c%om\\/v%iew_v%ideo.p%hp(.*)",
                         new String[][]{
                                 {ItemClass_VideoDownloadSearchKey.VIDEO_DOWNLOAD_TITLE, "//span[@class='inlineFree']//text()"},
