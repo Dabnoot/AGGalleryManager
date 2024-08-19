@@ -47,8 +47,6 @@ public class Activity_ComicDetails extends AppCompatActivity {
     private ItemClass_CatalogItem gciCatalogItem;
     private TreeMap<Integer, Uri> gtmComicPages;
 
-    public static final String EXTRA_CATALOG_ITEM_ID = "com.agcurations.aggallerymanager.extra.CATALOG_ITEM_ID";
-
     private Activity_ComicDetails.ComicDetailsResponseReceiver gComicDetailsResponseReceiver;
 
     private RecyclerViewComicPagesAdapter gRecyclerViewComicPagesAdapter;
@@ -72,7 +70,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         Intent intent = getIntent();
 
         //Get the item ID:
-        gsComicItemID = intent.getStringExtra(EXTRA_CATALOG_ITEM_ID);
+        gsComicItemID = intent.getStringExtra(GlobalClass.EXTRA_CATALOG_ITEM_ID);
 
         if( gsComicItemID == null) return;
 

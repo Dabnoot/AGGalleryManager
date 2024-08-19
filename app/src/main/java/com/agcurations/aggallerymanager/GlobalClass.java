@@ -16,6 +16,7 @@ import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.text.Html;
 import android.util.Log;
@@ -37,6 +38,7 @@ import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -111,6 +113,14 @@ public class GlobalClass extends Application {
     public static AtomicBoolean[] gAB_CatalogFileAvailable = {new AtomicBoolean(true), new AtomicBoolean(true), new AtomicBoolean(true)};
     public static final Uri[] gUriCatalogContentsFiles = new Uri[3];
     public static final Uri[] gUriCatalogTagsFiles = new Uri[3];
+
+    //Start Catalog Anaylsis globals
+    public static List<TreeMap<String, ItemClass_File>> gtmicf_AllFileItemsInMediaFolder = new ArrayList<>(); //Used for catalog analysis
+    // The treemap variable "gtmicf_AllFileItemsInMediaFolder" is an array list of 3 treemaps. Each
+    // treemap key consists of
+    // icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName.
+    // icf.sMediaFolderRelativePath excludes the media type folder. Media type folder is identified by the media type array index.
+    //End Catalog Analysis globals
 
     public static ContentResolver gcrContentResolver;
 
@@ -405,7 +415,7 @@ public class GlobalClass extends Application {
     public static Double GetTimeStampDouble(Date dateInput){
         //Get an easily-comparable time stamp.
         gdtfDateFormatter = DateTimeFormatter.ofPattern(gsDatePatternNumSort)
-                .withZone( ZoneId.systemDefault() );;
+                .withZone( ZoneId.systemDefault() );
         Instant instant = dateInput.toInstant();
         String sTimeStamp = gdtfDateFormatter.format(instant);
         return Double.parseDouble(sTimeStamp);
@@ -520,6 +530,8 @@ public class GlobalClass extends Application {
         //This routine does not return folder names!
         ArrayList<ItemClass_File> alicf_Files = new ArrayList<>();
 
+        String sUriParent = uriParent.toString();
+
         if(!GlobalClass.CheckIfFileExists(uriParent)){
             //The program will crash if the folder does not exist.
             return null;
@@ -552,7 +564,7 @@ public class GlobalClass extends Application {
                         icf.dateLastModified = cal.getTime();
 
                         icf.lSizeBytes = Long.parseLong(sFileSize);
-
+                        icf.sUriParent = sUriParent; //Among other things, used to determine if pages belong to a comic or an M3U8 playlist.
                         alicf_Files.add(icf);
                     }
                 }
@@ -750,13 +762,13 @@ public class GlobalClass extends Application {
         return CreateDirectory(Uri.parse(sDesiredDirectory));
     }
 
-    public static Uri GetParentUri(String sUriChild){
+    public static String GetParentUri(String sUriChild){
         String sUriParent = sUriChild.substring(0, sUriChild.lastIndexOf(gsFileSeparator));
-        return Uri.parse(sUriParent);
+        return sUriParent;
     }
 
-    public static Uri GetParentUri(Uri sUriChild){
-        return GetParentUri(sUriChild.toString());
+    public static Uri GetParentUri(Uri uriChild){
+        return Uri.parse(GetParentUri(uriChild.toString()));
     }
 
     public static byte[] readAllBytes(InputStream inputStream) throws IOException {
@@ -839,6 +851,7 @@ public class GlobalClass extends Application {
     public static final String EXTRA_BOOL_DELETE_ITEM_RESULT = "com.agcurations.aggallerymanager.extra.delete_item_result";
     public static final String EXTRA_BOOL_REFRESH_CATALOG_DISPLAY = "com.agcurations.aggallerymanager.extra.refresh_catalog_display";
     public static final String EXTRA_CATALOG_ITEM = "com.agcurations.aggallerymanager.extra.catalog_item";
+    public static final String EXTRA_CATALOG_ITEM_ID = "com.agcurations.aggallerymanager.extra.catalog_item_id";
     public static final String EXTRA_DATA_FILE_URI_STRING = "com.agcurations.aggallerymanager.extra.data_file_uri_string";
 
     public static final int giCatalogFileVersion = 7;
@@ -1567,6 +1580,52 @@ public class GlobalClass extends Application {
 
         return icf;
     }
+
+    /**
+     * Removes a record of a file item stored in this program media folder from the index
+     * used by the CatalogAnalysis worker. This is only part of CatalogAnalysis and does
+     * not affect storage.
+     * @param iMediaCategory - the media category of the affected index
+     * @param sUri - a String of the Uri to the file listing to be removed from the index
+     */
+    public static boolean RemoveItemFromAnalysisIndex(int iMediaCategory, String sUri){
+        //Remove the item from the CatalogAnalysis index if in use:
+        //Update file indexing:
+        //This is used in catalog analysis.
+        // The treemap variable "gtmicf_AllFileItemsInMediaFolder" is an array list of 3 treemaps. Each
+        // treemap key consists of
+        // icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName.
+        // icf.sMediaFolderRelativePath excludes the media type folder. Media type folder is identified by the media type array index related to the TreeMap index.
+        // Only update if the size of the tree is > 0, as it must be initiated by the Catalog Analysis worker.
+
+        if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+            String sKey = GetRelativePathFromUriString(sUri);
+            if(!sKey.equals("")) {
+                if (GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).containsKey(sKey)) {
+                    GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).remove(sKey);
+                } else {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns a path to a file or folder relative to a media storage folder associated with this program.
+     * Relative path = subfolder + GlobalClass.gsFileSeparator + filename.
+     * It does not include the media class folder, such as "Videos", "Images", or "Comics".
+     * @param sUri - A string representing a Uri path.
+     * @return - Returns the relative path, such as "1013/2e5d2p4/index.m3u8" or "1013/046256.mbew"
+     */
+    public static String GetRelativePathFromUriString(String sUri){
+        String sRelativePath = "";
+        if(sUri.lastIndexOf(":") > 0) {
+            sRelativePath = sUri.substring(sUri.lastIndexOf(":"));
+        }
+        return sRelativePath;
+    }
+
 
 
 
@@ -3027,6 +3086,40 @@ public class GlobalClass extends Application {
                     if (!GlobalClass.CheckIfFileExists(uriDestinationFolder)) {
                         try {
                             uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+
+                            //If we are creating a folder here, perform the below action if necessary.
+                            //If the user has been performing catalog analysis, that is, analyzing the catalog
+                            // in this session, update the analysis index to include this new folder.
+                            if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+                                //If a folder was created record it
+                                //  in the Catalog Analysis index variable if the index is in use.
+
+                                String sKey = icsfa.sFolderName;
+                                ItemClass_File icfCollectionFolder = new ItemClass_File(ItemClass_File.TYPE_FOLDER, icsfa.sFolderName);
+                                icfCollectionFolder.sMimeType = DocumentsContract.Document.MIME_TYPE_DIR;
+                                icfCollectionFolder.lSizeBytes = 0;
+                                icfCollectionFolder.sUriParent = GlobalClass.gUriCatalogFolders[iMediaCategory].toString();
+                                icfCollectionFolder.sMediaFolderRelativePath = icsfa.sFolderName;
+                                icfCollectionFolder.sUriThumbnailFile = "";
+                                icfCollectionFolder.sUri = uriDestinationFolder.toString();
+
+                                try {
+                                    Bundle bundle = DocumentsContract.getDocumentMetadata(GlobalClass.gcrContentResolver, uriDestinationFolder);
+                                    if(bundle != null) {
+                                        long lLastModified = bundle.getLong(DocumentsContract.Document.COLUMN_LAST_MODIFIED, 0);
+                                        Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                                        cal.setTimeInMillis(lLastModified);
+                                        icfCollectionFolder.dateLastModified = cal.getTime();
+
+                                    }
+                                } catch (FileNotFoundException e) {
+                                    throw new RuntimeException(e);
+                                }
+                                GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).put(sKey, icfCollectionFolder);
+
+                            }
+
+
                         } catch (Exception e) {
                             Log.d("AGGalleryManager", "" + e.getMessage());
                         }
