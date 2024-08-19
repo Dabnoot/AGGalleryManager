@@ -4,6 +4,7 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
@@ -11,6 +12,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -18,6 +20,8 @@ import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
@@ -89,10 +93,45 @@ public class Worker_Import_VideoDownload extends Worker {
 
         if (!GlobalClass.CheckIfFileExists(uriSequenceFolder)) {
             uriSequenceFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory].toString(), icfDownloadItem.sDestinationFolder);
-
+            //todo: this should already be handled by a call to GlobalClass.getAGGMStorageFolderAvailability in Fragment_Import_5_Confirmation. Confirm.
 
             try {
                 uriSequenceFolder = GlobalClass.CreateDirectory(uriSequenceFolder);
+
+                //If we are creating a folder here, perform the below action if necessary.
+                //If the user has been performing catalog analysis, that is, analyzing the catalog
+                // in this session, update the analysis index to include this new folder.
+                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+                    //If a folder was created record it
+                    //  in the Catalog Analysis index variable if the index is in use.
+                    String sKey = icfDownloadItem.sDestinationFolder;
+                    ItemClass_File icfCollectionFolder = new ItemClass_File(ItemClass_File.TYPE_FOLDER, icfDownloadItem.sDestinationFolder);
+                    icfCollectionFolder.sMimeType = DocumentsContract.Document.MIME_TYPE_DIR;
+                    icfCollectionFolder.lSizeBytes = 0;
+                    icfCollectionFolder.sUriParent = GlobalClass.gUriCatalogFolders[iMediaCategory].toString();
+                    icfCollectionFolder.sMediaFolderRelativePath = icfDownloadItem.sDestinationFolder;
+                    icfCollectionFolder.sUriThumbnailFile = "";
+                    icfCollectionFolder.sUri = uriSequenceFolder.toString();
+
+                    try {
+                        Bundle bundle = DocumentsContract.getDocumentMetadata(GlobalClass.gcrContentResolver, uriSequenceFolder);
+                        if(bundle != null) {
+                            long lLastModified = bundle.getLong(DocumentsContract.Document.COLUMN_LAST_MODIFIED, 0);
+                            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                            cal.setTimeInMillis(lLastModified);
+                            icfCollectionFolder.dateLastModified = cal.getTime();
+
+                        }
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                    GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).put(sKey, icfCollectionFolder);
+
+                }
+
+
+
+
             } catch (Exception e){
                 sMessage = "Could not locate parent directory of destination folder in order to create destination folder. Destination folder: " + sUserFriendlySequenceFolder;
                 LogThis("doWork()", sMessage, e.getMessage());
@@ -133,6 +172,40 @@ public class Worker_Import_VideoDownload extends Worker {
 
                 try {
                     uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+
+                    //If we are creating a folder here, perform the below action if necessary.
+                    //If the user has been performing catalog analysis, that is, analyzing the catalog
+                    // in this session, update the analysis index to include this new folder.
+                    if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+                        //If a folder was created record it
+                        //  in the Catalog Analysis index variable if the index is in use.
+                        String sKey = icfDownloadItem.sDestinationFolder;
+                        ItemClass_File icfCollectionFolder = new ItemClass_File(ItemClass_File.TYPE_FOLDER, icfDownloadItem.sDestinationFolder);
+                        icfCollectionFolder.sMimeType = DocumentsContract.Document.MIME_TYPE_DIR;
+                        icfCollectionFolder.lSizeBytes = 0;
+                        icfCollectionFolder.sUriParent = GlobalClass.gUriCatalogFolders[iMediaCategory].toString();
+                        icfCollectionFolder.sMediaFolderRelativePath = icfDownloadItem.sDestinationFolder;
+                        icfCollectionFolder.sUriThumbnailFile = "";
+                        icfCollectionFolder.sUri = uriSequenceFolder.toString();
+
+                        try {
+                            Bundle bundle = DocumentsContract.getDocumentMetadata(GlobalClass.gcrContentResolver, uriSequenceFolder);
+                            if(bundle != null) {
+                                long lLastModified = bundle.getLong(DocumentsContract.Document.COLUMN_LAST_MODIFIED, 0);
+                                Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                                cal.setTimeInMillis(lLastModified);
+                                icfCollectionFolder.dateLastModified = cal.getTime();
+
+                            }
+                        } catch (FileNotFoundException e) {
+                            throw new RuntimeException(e);
+                        }
+                        GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).put(sKey, icfCollectionFolder);
+
+                    }
+                    
+
+
                 } catch (Exception e) {
                     sMessage = "Could not locate parent directory of destination folder in order to create working folder. Working folder: " + uriDestinationFolder;
                     LogThis("doWork()", sMessage, e.getMessage());
