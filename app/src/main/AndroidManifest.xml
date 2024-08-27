@@ -18,6 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".Activity_ComicGroupViewer"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+        <activity
             android:name=".Activity_CatalogAnalysis"
             android:exported="false" />
         <activity

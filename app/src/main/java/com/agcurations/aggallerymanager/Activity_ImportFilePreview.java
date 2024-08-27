@@ -755,7 +755,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         if(bHasGroupID){
             gTextView_GroupID.setText(galFileItems.get(giFileItemIndex).sGroupID);
-            int[] iColors = Activity_CatalogViewer.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
+            int[] iColors = GlobalClass.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
             gTextView_GroupID.setBackgroundColor(iColors[0]);
             gTextView_GroupID.setTextColor(iColors[1]);
             //Show the Group ID Copy icon, but only if the Group ID is not already on the internal clipboard:
@@ -792,7 +792,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             GlobalClass.gsGroupIDClip = galFileItems.get(giFileItemIndex).sGroupID;
             gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
             GlobalClass.gbClearGroupIDAtImportClose = true;
-            int[] iColors = Activity_CatalogViewer.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
+            int[] iColors = GlobalClass.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
             gTextView_GroupID.setBackgroundColor(iColors[0]);
             gTextView_GroupID.setTextColor(iColors[1]);
             Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
@@ -813,7 +813,7 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
                 gImageButton_GroupIDPaste.setVisibility(View.INVISIBLE);
                 gImageButton_GroupIDCopy.setVisibility(View.INVISIBLE);
                 gTextView_GroupID.setText(GlobalClass.gsGroupIDClip);
-                int[] iColors = Activity_CatalogViewer.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
+                int[] iColors = GlobalClass.calculateGroupingControlsColors(galFileItems.get(giFileItemIndex).sGroupID);
                 gTextView_GroupID.setBackgroundColor(iColors[0]);
                 gTextView_GroupID.setTextColor(iColors[1]);
             }
@@ -1327,6 +1327,10 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
             if(sThumbnailText.length() > 100){
                 sThumbnailText = sThumbnailText.substring(0, 100) + "...";
             }
+
+            sThumbnailText = sThumbnailText + "\n" +
+                    "Location: " + GlobalClass.gsCatalogFolderNames[GlobalClass.giSelectedCatalogMediaCategory] +
+                    GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + ci.sFolderRelativePath);
 
             holder.tvThumbnailText.setText(sThumbnailText);
             final Uri uriThumbnailUriForMagnify = uriThumbnailUri;

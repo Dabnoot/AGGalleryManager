@@ -1,30 +1,9 @@
 package com.agcurations.aggallerymanager;
 
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.content.res.AppCompatResources;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.work.Data;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.WorkManager;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.ColorDrawable;
@@ -32,10 +11,15 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Parcelable;
-import android.util.Log;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -47,41 +31,39 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.common.io.BaseEncoding;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Activity_CatalogViewer extends AppCompatActivity {
+public class Activity_ComicGroupViewer extends AppCompatActivity {
 
-    //Global Variables:
-    private GlobalClass globalClass;
+    //This is an activity to allow the user to view all comics that belong to a group.
+
+    GlobalClass globalClass;
     private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     int giRecyclerViewLastSelectedPosition = -1;
 
     Toast toastLastToastMessage;
 
-    ProgressBar gProgressBar_CatalogSortProgress;
-    TextView gTextView_CatalogSortProgressBarText;
+    ProgressBar gProgressBar_GeneralPurpose;
+    TextView gTextView_ProgressBarText;
 
-    private CatalogViewerServiceResponseReceiver catalogViewerServiceResponseReceiver;
+    private CatalogGroupViewerReceiver catalogGroupViewerReceiver;
 
-    boolean gbWriteApplicationLog = false;
-    String gsApplicationLogFilePath = "";
-
-    private Fragment_CatalogSort gFragment_CatalogSort;
-    private Fragment_CatalogDataEditor gFragment_CatalogDataEditor;
-
-    RecyclerViewCatalogAdapter gRecyclerViewCatalogAdapter;
+    RecyclerViewCatalogGroupAdapter gRecyclerViewCatalogGroupAdapter;
 
     LinearLayout gLinearLayout_GroupingModeNotifier;
     TextView gTextView_GroupIDClipboardLabel;
@@ -90,348 +72,82 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
     int giGroupControlImageButtonWidth;
 
+    String gsGroupID;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        //Return theme away from startup_screen
-        setTheme(R.style.MainTheme);
-
-        if (getSupportActionBar() != null) {
-            //Hide the action bar to allow more room for everything else.
-            getSupportActionBar().hide();
-        }
-
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_catalog_viewer);
+
+        setContentView(R.layout.activity_catalog_group_viewer);
 
         //Make it so that the thumbnail of the app in the app switcher hides the last-viewed screen:
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Intent intent = getIntent();
 
-        gbWriteApplicationLog = sharedPreferences.getBoolean(GlobalClass.PREF_WRITE_APPLICATION_LOG_FILE, false);
-        if(gbWriteApplicationLog){
-            gsApplicationLogFilePath = sharedPreferences.getString(GlobalClass.PREF_APPLICATION_LOG_PATH_FILENAME, "");
-        }
+        //Get the item ID:
+        gsGroupID = intent.getStringExtra(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID);
 
-        // Calling Application class (see application tag in AndroidManifest.xml)
+        if( gsGroupID == null) return;
+
         globalClass = (GlobalClass) getApplicationContext();
 
-        if(GlobalClass.giSelectedCatalogMediaCategory == null){
-            ApplicationLogWriter("Selected media category is null. Returning to Main Activity.");
-            finish();
-            return;
-        }
-
-        ApplicationLogWriter("OnCreate Start");
-
-        ApplicationLogWriter("Notifying zero catalog items if applicable");
-        //Update TextView to show 0 catalog items if applicable:
-        notifyZeroCatalogItemsIfApplicable();
-
-        ApplicationLogWriter("Obtaining preferences");
-
-        //Pull sort-by and sort-order from preferences (recall user's last selection). Note that this item is modified by the import process so that the user can
-        //  see the item that they last imported.
-        GlobalClass.giCatalogViewerSortBySetting[GlobalClass.giSelectedCatalogMediaCategory] =
-                sharedPreferences.getInt(GlobalClass.gsCatalogViewerPreferenceNameSortBy[GlobalClass.giSelectedCatalogMediaCategory], GlobalClass.SORT_BY_DATETIME_LAST_VIEWED);
-        GlobalClass.gbCatalogViewerSortAscending[GlobalClass.giSelectedCatalogMediaCategory] =
-                sharedPreferences.getBoolean(GlobalClass.gsCatalogViewerPreferenceNameSortAscending[GlobalClass.giSelectedCatalogMediaCategory], true);
-
-        ApplicationLogWriter("Configuring RecyclerView");
-
-        gRecyclerView = findViewById(R.id.RecyclerView_CatalogItems);
+        gRecyclerView = findViewById(R.id.recyclerView_ComicChapters);
 
         gRecyclerView.setHasFixedSize(true);
-            // use this setting to improve performance if you know that changes in content do not
-            // change the layout size of the RecyclerView
+        // use this setting to improve performance if you know that changes in content do not
+        // change the layout size of the RecyclerView
 
         RecyclerView.LayoutManager layoutManager;
-        GridLayoutManager gridLayoutManager;
+        layoutManager = new LinearLayoutManager(this);
+        gRecyclerView.setLayoutManager(layoutManager);
 
-        int orientation = getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // In landscape
-            // use a grid layout manager
-            gridLayoutManager = new GridLayoutManager(this, 4, RecyclerView.VERTICAL, false);
-            gRecyclerView.setLayoutManager(gridLayoutManager);
-        } else {
-            // In portrait
-            // use a linear layout manager
-            layoutManager = new LinearLayoutManager(this);
-            gRecyclerView.setLayoutManager(layoutManager);
-        }
 
-        gLinearLayout_GroupingModeNotifier = findViewById(R.id.linearLayout_GroupingModeNotifier);
-        gTextView_GroupIDClipboardLabel = findViewById(R.id.textView_GroupIDClipboardLabel);
-        gTextView_GroupIDClipboard = findViewById(R.id.textView_GroupIDClipboard);
-        gImageButton_ClearGroupingClipboard = findViewById(R.id.imageButton_ClearGroupingClipboard);
-        gImageButton_ClearGroupingClipboard.setOnClickListener(v -> {
-            GlobalClass.gsGroupIDClip = "";
-            updateVisibleRecyclerItems();
-            gLinearLayout_GroupingModeNotifier.setVisibility(View.INVISIBLE);
-        });
-
-        ApplicationLogWriter("Creating ResponseReceiver");
-
-        //Configure a response receiver to listen for updates from the Data Service:
+        //Configure a response receiver to listen for updates from the workers:
         IntentFilter filter = new IntentFilter();
         filter.addAction(Worker_Catalog_DeleteItem.CATALOG_DELETE_ITEM_ACTION_RESPONSE);
-        filter.addAction(Worker_CatalogViewer_SortAndFilterDisplayed.CATALOG_SORT_AND_FILTER_DISP_ACTION_RESPONSE);
-
+        filter.addAction(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_SORT_AND_FILTER_GROUP_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE);
+        filter.addAction(Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE);
+        filter.addAction(Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_BackupCatalogDBFiles.CATALOG_DATA_FILE_BACKUP_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_DeleteMultipleItems.DELETE_MULTIPLE_ITEMS_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.BROADCAST_WRITE_CATALOG_FILE);
+        filter.addAction(Worker_User_Delete.USER_DELETE_ACTION_RESPONSE);
+        filter.addAction(Worker_Catalog_RecalcCatalogItemsMaturityAndUsers.WORKER_CATALOG_RECALC_APPROVED_USERS_ACTION_RESPONSE);
+        filter.addAction(Worker_DownloadPostProcessing.DOWNLOAD_POST_PROCESSING_ACTION_RESPONSE);
+        filter.addAction(GlobalClass.BROADCAST_CATALOG_FILES_MAINTENANCE);
         filter.addCategory(Intent.CATEGORY_DEFAULT);
-        catalogViewerServiceResponseReceiver = new CatalogViewerServiceResponseReceiver();
-        //registerReceiver(importDataServiceResponseReceiver, filter);
+        catalogGroupViewerReceiver = new CatalogGroupViewerReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(catalogGroupViewerReceiver,filter);
 
-        ApplicationLogWriter("Registering ResponseReceiver");
+        gProgressBar_GeneralPurpose = findViewById(R.id.progressBar_GeneralPurpose);
+        gTextView_ProgressBarText = findViewById(R.id.textView_ProgressBarText);
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(catalogViewerServiceResponseReceiver,filter);
-
-        gProgressBar_CatalogSortProgress = findViewById(R.id.progressBar_CatalogSortProgress);
-        gTextView_CatalogSortProgressBarText = findViewById(R.id.textView_CatalogSortProgressBarText);
-
-
-        //Populate the CatalogSort fragment:
-        if(gFragment_CatalogSort == null) {
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            gFragment_CatalogSort = new Fragment_CatalogSort();
-
-            Bundle args = new Bundle();
-            args.putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, GlobalClass.giSelectedCatalogMediaCategory);
-            gFragment_CatalogSort.setArguments(args);
-            fragmentTransaction.replace(R.id.fragment_Catalog_Sort, gFragment_CatalogSort);
-            fragmentTransaction.commit();
-        }
-
-        final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
-        drawer_layout_sort.openDrawer(GravityCompat.START); //Start the drawer open so that the user knows it's there.
-        //Configure a runnable to close the drawer after a timeout.
-        drawer_layout_sort.postDelayed(() ->
-                drawer_layout_sort.closeDrawer(GravityCompat.START), 1500);
-
-        //Populate the CatalogDataEditor fragment:
-        if(gFragment_CatalogDataEditor == null) {
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            gFragment_CatalogDataEditor = new Fragment_CatalogDataEditor();
-
-            Bundle args = new Bundle();
-            args.putInt(GlobalClass.EXTRA_MEDIA_CATEGORY, GlobalClass.giSelectedCatalogMediaCategory);
-            gFragment_CatalogDataEditor.setArguments(args);
-            fragmentTransaction.replace(R.id.fragment_Catalog_Data_Editor, gFragment_CatalogDataEditor);
-            fragmentTransaction.commit();
-        }
-
-        final DrawerLayout drawer_layout_data = findViewById(R.id.drawer_layout_data);
-        drawer_layout_data.openDrawer(GravityCompat.END); //Start the drawer open so that the user knows it's there.
-        //Configure a runnable to close the drawer after a timeout.
-        drawer_layout_data.postDelayed(() ->
-                drawer_layout_data.closeDrawer(GravityCompat.END), 1500);
-
-        populate_RecyclerViewCatalogItems();
-
-        float factor = getResources().getDisplayMetrics().density;
-        giGroupControlImageButtonWidth = (int)(40 * factor);
-
-
-        ApplicationLogWriter("OnCreate End");
-
-    }
-
-
-    private void ApplicationLogWriter(String sMessage){
-        if(gbWriteApplicationLog){
-            try {
-                File fLog = new File(gsApplicationLogFilePath);
-                FileWriter fwLogFile = new FileWriter(fLog, true);
-                fwLogFile.write(GlobalClass.GetTimeStampReadReady() + ": " + this.getLocalClassName() + ", " + sMessage + "\n");
-                fwLogFile.close();
-            } catch (Exception e) {
-                sMessage = e.getMessage() + "";
-                Log.d("Log FileWriter", sMessage);
-            }
-        }
+        populate_RecyclerViewCatalogGroupItems();
 
     }
 
     @Override
     protected void onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(catalogViewerServiceResponseReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(catalogGroupViewerReceiver);
         super.onDestroy();
     }
 
-    public void notifyZeroCatalogItemsIfApplicable(){
-
-        //Update TextView to show 0 items if applicable:
-        TextView textView_CatalogStatus = findViewById(R.id.textView_CatalogStatus);
-        try {
-            if (GlobalClass.gtmCatalogLists.get(GlobalClass.giSelectedCatalogMediaCategory).size() == 0) {
-                textView_CatalogStatus.setVisibility(View.VISIBLE);
-                String s = "Catalog contains 0 items.";
-                textView_CatalogStatus.setText(s);
-            } else {
-                textView_CatalogStatus.setVisibility(View.INVISIBLE);
-            }
-        }catch (Exception e){
-            ApplicationLogWriter(e.getMessage());
-        }
-
-    }
-
-
-
-    private Parcelable recyclerViewState;
-    @Override
-    protected void onPause() {
-        //Attempt to save the state, ie scroll position, of the recyclerView:
-        if(gRecyclerView.getLayoutManager() != null) {
-            recyclerViewState = gRecyclerView.getLayoutManager().onSaveInstanceState();
-        }
-        super.onPause();
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-
-        //Attempt to restore the state, ie scroll position, of the recyclerView:
-        if(gRecyclerView.getLayoutManager() != null) {
-            gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
-        }
-
-        if(globalClass.gbCatalogViewerRefresh){
-            //Typically enter here if data has been edited.
-            populate_RecyclerViewCatalogItems();
-        } else if (!GlobalClass.gsRefreshCatalogViewerThumbnail.equals("")) {
-            //Cause an update of the thumbnail for the specified item.
-            gRecyclerViewCatalogAdapter.updateItem(GlobalClass.gsRefreshCatalogViewerThumbnail);
-        }
-
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
-        //Display a message showing the name of the item selected.
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void CloseSortDrawer(){
-        final DrawerLayout drawer_layout_sort = findViewById(R.id.drawer_layout_sort);
-        drawer_layout_sort.closeDrawer(GravityCompat.START);
-    }
-
-
-    public class CatalogViewerServiceResponseReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            boolean bError;
-
-            //Get boolean indicating that an error may have occurred:
-            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
-            if(bError) {
-                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
-                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
-            } else {
-
-                //Check to see if this is a response to request to delete an item:
-                boolean bIsDeleteItemResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM, false);
-                if(bIsDeleteItemResponse) {
-                    boolean bDeleteItemResult = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
-                    if (bDeleteItemResult) {
-                        globalClass.updateTagHistogramsIfRequired(); //todo: Moved here after refactor of comic delete logic. Examine if this is appropriate.
-                        populate_RecyclerViewCatalogItems(); //Refresh the catalog recycler view.
-                    } else {
-                        Toast.makeText(getApplicationContext(),"Could not successfully delete item.", Toast.LENGTH_LONG).show();
-                    }
-                }
-
-                //Check to see if this is a response to request to SortAndFilterCatalogDisplay:
-                boolean bRefreshCatalogDisplay = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
-                if(bRefreshCatalogDisplay) {
-                    //Catalog sort is complete.
-
-                    if(gProgressBar_CatalogSortProgress != null) {
-                        gProgressBar_CatalogSortProgress.setProgress(100);
-                    }
-                    if(gTextView_CatalogSortProgressBarText != null) {
-                        String s = "100%";
-                        gTextView_CatalogSortProgressBarText.setText(s);
-                    }
-
-                    //Apply the new TreeMap to the RecyclerView:
-                    gRecyclerViewCatalogAdapter = new RecyclerViewCatalogAdapter(GlobalClass.gtmCatalogViewerDisplayTreeMap);
-                    gRecyclerView.setAdapter(gRecyclerViewCatalogAdapter);
-                    gRecyclerViewCatalogAdapter.notifyDataSetChanged();
-                    if(giRecyclerViewLastSelectedPosition > -1){
-                        gRecyclerView.scrollToPosition(giRecyclerViewLastSelectedPosition); //Scroll RecyclerView back to the last item selected by the user, due to refresh.
-                        giRecyclerViewLastSelectedPosition = -1;
-                    }
-                    if(toastLastToastMessage != null){
-                        toastLastToastMessage.cancel();
-                    }
-                    if(gProgressBar_CatalogSortProgress != null && gTextView_CatalogSortProgressBarText != null){
-                        gProgressBar_CatalogSortProgress.setVisibility(View.INVISIBLE);
-                        gTextView_CatalogSortProgressBarText.setVisibility(View.INVISIBLE);
-                    }
-
-                    int iItemCount = gRecyclerViewCatalogAdapter.getItemCount();
-                    String sNoun = "item";
-                    if(iItemCount != 1){
-                        sNoun += "s";
-                    }
-                    toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogAdapter.getItemCount() + " " + sNoun + ".", Toast.LENGTH_SHORT);
-                    toastLastToastMessage.show();
-                }
-
-                //Check to see if this is a response to update log or progress bar:
-                boolean 	bUpdatePercentComplete;
-                boolean 	bUpdateProgressBarText;
-
-                //Get booleans from the intent telling us what to update:
-                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
-                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
-
-                if(bUpdatePercentComplete){
-                    int iAmountComplete;
-                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
-                    if(gProgressBar_CatalogSortProgress != null) {
-                        gProgressBar_CatalogSortProgress.setProgress(iAmountComplete);
-                    }
-                }
-                if(bUpdateProgressBarText){
-                    String sProgressBarText;
-                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
-                    if(gTextView_CatalogSortProgressBarText != null) {
-                        gTextView_CatalogSortProgressBarText.setText(sProgressBarText);
-                    }
-                }
-
-            } //End if not an error message.
-
-        } //End onReceive.
-
-    } //End CatalogViewerServiceResponseReceiver.
-
-    //=====================================================================================
-    //===== RecyclerView Code =================================================================
-    //=====================================================================================
-
-    public void configure_RecyclerViewCatalogItems(){
-
-
-
-    }
-
-    public class RecyclerViewCatalogAdapter extends RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> {
+    public class RecyclerViewCatalogGroupAdapter extends RecyclerView.Adapter<RecyclerViewCatalogGroupAdapter.ViewHolder> {
 
         private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
         private final Integer[] mapKeys;
 
-        // Provide a reference to the views for each data item
-        // Complex data items may need more than one view per item, and
-        // you provide access to all the views for a data item in a view holder
+        /**
+         * Provide a reference to the type of views that you are using
+         * (custom ViewHolder)
+         */
         public class ViewHolder extends RecyclerView.ViewHolder {
+
             // each data item is just a string in this case
             public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
@@ -474,7 +190,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             }
         }
 
-        public RecyclerViewCatalogAdapter(TreeMap<Integer, ItemClass_CatalogItem> data) {
+        /**
+         * Initialize the dataset of the Adapter
+         *
+         * @param data Treemap containing sequence and catalog item.
+         * by RecyclerView
+         */
+        public RecyclerViewCatalogGroupAdapter(TreeMap<Integer, ItemClass_CatalogItem> data) {
             this.treeMap = data;
             mapKeys = treeMap.keySet().toArray(new Integer[getCount()]);
         }
@@ -486,31 +208,20 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         // Create new views (invoked by the layout manager)
         @NonNull
         @Override
-        public RecyclerViewCatalogAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                                        int viewType) {
-            // create a new view
-            View v;
+        public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
 
-            LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-            int orientation = getResources().getConfiguration().orientation;
-            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-                    v = inflater.inflate(R.layout.recycler_catalog_grid_videos, parent, false);
-                } else {
-                    v = inflater.inflate(R.layout.recycler_catalog_grid, parent, false);
-                }
-            } else {
-                v = inflater.inflate(R.layout.recycler_catalog_row, parent, false);
-            }
+            // Create a new view, which defines the UI of the list item
+            View view = LayoutInflater.from(viewGroup.getContext())
+                    .inflate(R.layout.recycler_catalog_row, viewGroup, false);
 
-            return new RecyclerViewCatalogAdapter.ViewHolder(v);
+            return new ViewHolder(view);
         }
+
+
 
         // Replace the contents of a view (invoked by the layout manager)
         @Override
-        public void onBindViewHolder(@androidx.annotation.NonNull RecyclerViewCatalogAdapter.ViewHolder holder, final int position) {
-            // - get element from your data set at this position
-            // - replace the contents of the view with that element
+        public void onBindViewHolder(ViewHolder viewHolder, final int position) {
 
             StopWatch stopWatch = new StopWatch(false); //enable/disable essentially turns the usage of this item on/off.
             stopWatch.Start();
@@ -624,11 +335,11 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                                         }
                                     }
                                     if (!bVideoFileFound) {
-                                        if (holder.textView_CatalogItemNotification != null) {
+                                        if (viewHolder.textView_CatalogItemNotification != null) {
                                             //Notify the user that post-processing is incomplete:
-                                            holder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                            viewHolder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
                                             String sMessage = "Item pending post-processing...";
-                                            holder.textView_CatalogItemNotification.setText(sMessage);
+                                            viewHolder.textView_CatalogItemNotification.setText(sMessage);
                                         }
                                     }
 
@@ -637,8 +348,8 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         } //End if unable to find video tag folder DocumentFile.
                     } //End if video is m3u8 style.
                 } else {
-                    if (holder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
-                        holder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
+                    if (viewHolder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
+                        viewHolder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
                     }
                 }
                 if(uriThumbnailUri != null) {
@@ -657,7 +368,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     Glide.with(getApplicationContext())
                             .load(uriThumbnailUri)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.imageView_Thumbnail);
+                            .into(viewHolder.imageView_Thumbnail);
                 } else {
                     //Ignore cache. Used when the user updates a thumbnail.
                     Glide.with(getApplicationContext())
@@ -665,7 +376,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                             .diskCacheStrategy(DiskCacheStrategy.NONE ) //This will only affect this one call.
                             .skipMemoryCache(true)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.imageView_Thumbnail);
+                            .into(viewHolder.imageView_Thumbnail);
 
                     //IF Glide is misbehaving, provide the option to clear the cache and memory:
                     //https://bumptech.github.io/glide/doc/caching.html#cache-configuration
@@ -709,13 +420,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     Glide.with(getApplicationContext())
                             .load(uriThumbnailUri)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.imageView_Thumbnail);
+                            .into(viewHolder.imageView_Thumbnail);
                     globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
                 } else {
                     Glide.with(getApplicationContext())
                             .load(R.drawable.baseline_image_white_18dp_wpagepad)
                             .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(holder.imageView_Thumbnail);
+                            .into(viewHolder.imageView_Thumbnail);
                 }
             }
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail image loaded. ");
@@ -763,17 +474,17 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 sThumbnailText = sThumbnailText.substring(0, 100) + "...";
             }
 
-            holder.textView_Title.setText(sThumbnailText);
+            viewHolder.textView_Title.setText(sThumbnailText);
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail text set. ");
 
 
 
-            holder.imageView_Thumbnail.setOnClickListener(v -> {
-                giRecyclerViewLastSelectedPosition = holder.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
+            viewHolder.imageView_Thumbnail.setOnClickListener(v -> {
+                giRecyclerViewLastSelectedPosition = viewHolder.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
                 //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
-                if (gbDebugTouch){
-                    Toast.makeText(getApplicationContext(), "Click Item Number " + holder.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
+                if (gbDebugTouch) {
+                    Toast.makeText(getApplicationContext(), "Click Item Number " + viewHolder.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
                 }
 
                 if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
@@ -791,45 +502,45 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 if (ci.sComic_Missing_Pages.equals("")) {
-                    holder.imageView_Attention.setVisibility(View.INVISIBLE);
-                    holder.textView_AttentionNote.setVisibility(View.INVISIBLE);
+                    viewHolder.imageView_Attention.setVisibility(View.INVISIBLE);
+                    viewHolder.textView_AttentionNote.setVisibility(View.INVISIBLE);
                 } else {
-                    holder.imageView_Attention.setVisibility(View.VISIBLE);
-                    holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
+                    viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
                     String sAttentionNote = "Missing pages: " + ci.sComic_Missing_Pages;
-                    holder.textView_AttentionNote.setText(sAttentionNote);
+                    viewHolder.textView_AttentionNote.setText(sAttentionNote);
                 }
             } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                 if (ci.lDuration_Milliseconds >= 0) {
-                    holder.imageView_Attention.setVisibility(View.INVISIBLE);
-                    holder.textView_AttentionNote.setVisibility(View.INVISIBLE);
+                    viewHolder.imageView_Attention.setVisibility(View.INVISIBLE);
+                    viewHolder.textView_AttentionNote.setVisibility(View.INVISIBLE);
                 } else {
                     //Duration is <0 only when the source is from an online stream (M3U8), and suggests
                     //  that there was an error in the FFMPEG concatenation activity
-                    holder.imageView_Attention.setVisibility(View.VISIBLE);
-                    holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
+                    viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
                     String sAttentionNote = "Possible incomplete stream download.";
-                    holder.textView_AttentionNote.setText(sAttentionNote);
+                    viewHolder.textView_AttentionNote.setText(sAttentionNote);
                 }
                 if (ci.iAllVideoSegmentFilesDetected == ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE){
-                    holder.imageView_Attention.setVisibility(View.VISIBLE);
-                    holder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
+                    viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
                     String sAttentionNote = "Incomplete stream download.";
-                    holder.textView_AttentionNote.setText(sAttentionNote);
+                    viewHolder.textView_AttentionNote.setText(sAttentionNote);
                 }
 
             }
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item attention icon and text configured.");
 
-            if(holder.button_Delete != null) {
+            if(viewHolder.button_Delete != null) {
 
                 final String sItemNameToDelete = sItemName;
-                holder.button_Delete.setOnClickListener(view -> {
+                viewHolder.button_Delete.setOnClickListener(view -> {
                     //Present confirmation that the user wishes to delete this item.
                     String sConfirmationMessage = "Confirm item deletion: " + sItemNameToDelete;
 
-                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogViewer.this, R.style.AlertDialogCustomStyle);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext(), R.style.AlertDialogCustomStyle);
                     builder.setTitle("Delete Item");
                     builder.setMessage(sConfirmationMessage);
                     //builder.setIcon(R.drawable.ic_launcher);
@@ -860,13 +571,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item delete button configured.");
 
-            if(holder.linearLayout_GroupingControls != null &&
-                    holder.imageButton_OpenGroupingControls != null &&
-                    holder.textView_GroupID != null &&
-                    holder.imageButton_GroupIDNew != null &&
-                    holder.imageButton_GroupIDCopy!= null &&
-                    holder.imageButton_GroupIDPaste!= null &&
-                    holder.imageButton_GroupIDRemove!= null) {
+            if(viewHolder.linearLayout_GroupingControls != null &&
+                    viewHolder.imageButton_OpenGroupingControls != null &&
+                    viewHolder.textView_GroupID != null &&
+                    viewHolder.imageButton_GroupIDNew != null &&
+                    viewHolder.imageButton_GroupIDCopy!= null &&
+                    viewHolder.imageButton_GroupIDPaste!= null &&
+                    viewHolder.imageButton_GroupIDRemove!= null) {
                 //Todo: Map the logic for this section and reorganize. Showing the controls, partial controls,
                 //   applying coloring, is complicated logic.
                 //Controls for:
@@ -880,31 +591,31 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
                 //Logic:
                 /*
-                * If the user has clicked the group icon, show group control panel for the item.
-                * If the user has copied a group ID, show group control panel for all items.
-                *
-                *
-                * */
+                 * If the user has clicked the group icon, show group control panel for the item.
+                 * If the user has copied a group ID, show group control panel for all items.
+                 *
+                 *
+                 * */
 
                 ImageButton[] ibGroupingControls = new ImageButton[]{
-                        holder.imageButton_GroupIDNew,
-                        holder.imageButton_GroupIDCopy,
-                        holder.imageButton_GroupIDPaste,
-                        holder.imageButton_GroupIDRemove,
-                        holder.imageButton_GroupIDFilter,
-                        holder.imageButton_CloseGroupingControls
+                        viewHolder.imageButton_GroupIDNew,
+                        viewHolder.imageButton_GroupIDCopy,
+                        viewHolder.imageButton_GroupIDPaste,
+                        viewHolder.imageButton_GroupIDRemove,
+                        viewHolder.imageButton_GroupIDFilter,
+                        viewHolder.imageButton_CloseGroupingControls
                 };
                 TextView[] tvGroupingTextViews = new TextView[]{
-                        holder.textView_LabelGroupID,
-                        holder.textView_GroupID
+                        viewHolder.textView_LabelGroupID,
+                        viewHolder.textView_GroupID
                 };
 
 
                 if(ci.bShowGroupingControls || !GlobalClass.gsGroupIDClip.equals("")){
                     //If the user has opened the grouping controls for this item or if the user
                     //  has copied a GroupID to the internal clipboard, show the grouping controls.
-                    holder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
-                    holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
+                    viewHolder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
+                    viewHolder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
 
                     //If controls are shown, you must calc the colors every time otherwise it will recycle colors.
                     if(!ci.bColorsCalculated) {
@@ -925,12 +636,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                     GlobalClass.applyGroupingControlsColor(
                             ci,
-                            holder.linearLayout_GroupingControls,
+                            viewHolder.linearLayout_GroupingControls,
                             ibGroupingControls,
                             tvGroupingTextViews);
                 } else {
-                    holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
-                    holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
+                    viewHolder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                    viewHolder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
                 }
 
                 if(!ci.sGroupID.equals("")){
@@ -939,20 +650,20 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         //  with the filter icon showing.
                         if (ci.sGroupID.equals(GlobalClass.gsCatalogViewerSearchByGroupID[GlobalClass.giSelectedCatalogMediaCategory])) {
                             //ci.bSearchByGroupID = true;
-                            holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
-                            holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                            viewHolder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
+                            viewHolder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
                         }
                     } else {
                         //ci.bSearchByGroupID = false;
                     }
                 }
 
-                holder.imageButton_OpenGroupingControls.setOnClickListener(new View.OnClickListener() {
+                viewHolder.imageButton_OpenGroupingControls.setOnClickListener(new View.OnClickListener() {
                     //This is the button that the user clicks to show the grouping controls
                     @Override
                     public void onClick(View v) {
-                        holder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
-                        holder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
+                        viewHolder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
+                        viewHolder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
                         ci.bShowGroupingControls = true;
                         //Open the grouping controls for all other items with the same group ID:
                         boolean bOtherGroupItemsFound = false;
@@ -973,38 +684,38 @@ public class Activity_CatalogViewer extends AppCompatActivity {
 
 
                 if (ci.sGroupID.equals("")) {
-                    holder.textView_GroupID.setText("----");
-                    setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
-                    setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
-                    setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
+                    viewHolder.textView_GroupID.setText("----");
+                    setGroupControlSize(viewHolder.imageButton_GroupIDCopy, 0);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDFilter, 0);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDRemove, 0);
                 } else {
-                    holder.textView_GroupID.setText(ci.sGroupID);
-                    setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
-                    setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
-                    setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                    viewHolder.textView_GroupID.setText(ci.sGroupID);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
                 }
 
-                holder.imageButton_GroupIDNew.setOnClickListener(v -> {
+                viewHolder.imageButton_GroupIDNew.setOnClickListener(v -> {
                     ci.sGroupID = GlobalClass.getNewGroupID();
                     int[] iColors = GlobalClass.calculateGroupingControlsColors(ci.sGroupID);
                     ci.iGroupingControlsColor = iColors[0];
                     ci.iGroupingControlsContrastColor = iColors[1];
                     ci.iGroupingControlHighlight = iColors[2];
                     ci.iGroupingControlHighlightContrastColor = iColors[3];
-                    holder.textView_GroupID.setText(ci.sGroupID);
-                    setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
-                    setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
-                    setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                    viewHolder.textView_GroupID.setText(ci.sGroupID);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
                     GlobalClass.applyGroupingControlsColor(
                             ci,
-                            holder.linearLayout_GroupingControls,
+                            viewHolder.linearLayout_GroupingControls,
                             ibGroupingControls,
                             tvGroupingTextViews);
                     Toast.makeText(getApplicationContext(), "New group ID generated.", Toast.LENGTH_SHORT).show();
                     globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                 });
 
-                holder.imageButton_GroupIDCopy.setOnClickListener(v -> {
+                viewHolder.imageButton_GroupIDCopy.setOnClickListener(v -> {
                     boolean bGroupControlsAlreadyOpen = !GlobalClass.gsGroupIDClip.equals("");
                     GlobalClass.gsGroupIDClip = ci.sGroupID;
                     gLinearLayout_GroupingModeNotifier.setVisibility(View.VISIBLE);
@@ -1035,7 +746,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     //Toast.makeText(getApplicationContext(), "Group ID copied.", Toast.LENGTH_SHORT).show();
                 });
 
-                holder.imageButton_GroupIDPaste.setOnClickListener(v -> {
+                viewHolder.imageButton_GroupIDPaste.setOnClickListener(v -> {
                     if (!GlobalClass.gsGroupIDClip.equals("")) {
                         ci.sGroupID = GlobalClass.gsGroupIDClip;
                         int[] iColors = GlobalClass.calculateGroupingControlsColors(ci.sGroupID);
@@ -1043,13 +754,13 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                         ci.iGroupingControlsContrastColor = iColors[1];
                         ci.iGroupingControlHighlight = iColors[2];
                         ci.iGroupingControlHighlightContrastColor = iColors[3];
-                        holder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
-                        setGroupControlSize(holder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
-                        setGroupControlSize(holder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
-                        setGroupControlSize(holder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
+                        viewHolder.textView_GroupID.setText(GlobalClass.gsGroupIDClip);
+                        setGroupControlSize(viewHolder.imageButton_GroupIDCopy, giGroupControlImageButtonWidth);
+                        setGroupControlSize(viewHolder.imageButton_GroupIDFilter, giGroupControlImageButtonWidth);
+                        setGroupControlSize(viewHolder.imageButton_GroupIDRemove, giGroupControlImageButtonWidth);
                         GlobalClass.applyGroupingControlsColor(
                                 ci,
-                                holder.linearLayout_GroupingControls,
+                                viewHolder.linearLayout_GroupingControls,
                                 ibGroupingControls,
                                 tvGroupingTextViews);
                         Toast.makeText(getApplicationContext(), "Group ID pasted.", Toast.LENGTH_SHORT).show();
@@ -1057,7 +768,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     }
                 });
 
-                holder.imageButton_GroupIDRemove.setOnClickListener(v -> {
+                viewHolder.imageButton_GroupIDRemove.setOnClickListener(v -> {
                     ci.sGroupID = "";
                     ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
                     ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
@@ -1065,41 +776,41 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                     ci.iGroupingControlHighlightContrastColor = 0;
                     GlobalClass.applyGroupingControlsColor(
                             ci,
-                            holder.linearLayout_GroupingControls,
+                            viewHolder.linearLayout_GroupingControls,
                             ibGroupingControls,
                             tvGroupingTextViews);
-                    holder.textView_GroupID.setText("----");
-                    setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
-                    setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
-                    setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
+                    viewHolder.textView_GroupID.setText("----");
+                    setGroupControlSize(viewHolder.imageButton_GroupIDCopy, 0);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDFilter, 0);
+                    setGroupControlSize(viewHolder.imageButton_GroupIDRemove, 0);
                     Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
                     globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
                 });
 
-                holder.imageButton_GroupIDFilter.setOnClickListener(v -> {
+                viewHolder.imageButton_GroupIDFilter.setOnClickListener(v -> {
                     if(ci.bSearchByGroupID){ //Technically it is a search, but we are using the filter icon.
                         //Filter is on, turn it off.
-                        holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlsColor);
-                        holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlsContrastColor);
+                        viewHolder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlsColor);
+                        viewHolder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlsContrastColor);
                         ci.bSearchByGroupID = false;
-                        holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_24);
+                        viewHolder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_24);
                         GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = "";
                         //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
                     } else {
                         //Filter is off, turn it on.
-                        holder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
-                        holder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
+                        viewHolder.imageButton_GroupIDFilter.setBackgroundColor(ci.iGroupingControlHighlight);
+                        viewHolder.imageButton_GroupIDFilter.setColorFilter(ci.iGroupingControlHighlightContrastColor);
                         ci.bSearchByGroupID = true;
-                        holder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_off_24);
+                        viewHolder.imageButton_GroupIDFilter.setImageResource(R.drawable.baseline_filter_alt_off_24);
                         GlobalClass.gsCatalogViewerSearchByGroupID[ci.iMediaCategory] = ci.sGroupID;
                         //Todo: quickly search for any items in the viewable area that are of the same group and change their filter icon color.
                     }
-                    populate_RecyclerViewCatalogItems(); //This will cause a set all of the shown items' ci.bSearchByGroupID members.
+                    populate_RecyclerViewCatalogGroupItems(); //This will cause a set all of the shown items' ci.bSearchByGroupID members.
                 });
 
-                holder.imageButton_CloseGroupingControls.setOnClickListener(v -> {
-                    holder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
-                    holder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
+                viewHolder.imageButton_CloseGroupingControls.setOnClickListener(v -> {
+                    viewHolder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                    viewHolder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
                     ci.bShowGroupingControls = false;
                     if(!ci.sGroupID.equals("")){
                         //If this item has a group ID, then if it is open it is likely that there are other items
@@ -1131,7 +842,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             stopWatch.Reset();
         }
 
-        // Return the size of the data set (invoked by the layout manager)
+        // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
             return treeMap.size();
@@ -1143,51 +854,139 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             imageButton.setLayoutParams(params);
         }
 
-        public void updateItem(String sItemID){
-            //Created for enabling the update of thumbnail image created by user action in Activity_VideoPlayer.
-            try {
-                for (int i = 0; i <= mapKeys.length; i++) {
-                    //TreeMap<Integer, ItemClass_CatalogItem>
-                    ItemClass_CatalogItem icci = treeMap.get(mapKeys[i]);
-                    if(icci != null) {
-                        if (icci.sItemID.equals(sItemID)) {
-                            gRecyclerViewCatalogAdapter.notifyItemChanged(i);
-                            return;
-                        }
-                    }
-                }
-            } catch (Exception e){
-                String sMessage = "Trouble finding item ID " + sItemID + ".\n" +
-                        "Error: " + e.getMessage();
-                Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
-                return;
+
+
+        public void applyGroupingControlsColor(ItemClass_CatalogItem ci,
+                                               LinearLayout linearLayout_GroupingControls,
+                                               ImageButton[] imageButtons,
+                                               TextView[] textViews){
+
+            linearLayout_GroupingControls.setBackground(new ColorDrawable(ci.iGroupingControlsColor));
+
+            //Set colors for foreground controls:
+            for(ImageButton imageButton: imageButtons){
+                imageButton.setColorFilter(ci.iGroupingControlsContrastColor);
             }
-            Toast.makeText(getApplicationContext(), "Could not find item ID " + sItemID, Toast.LENGTH_SHORT).show();
+            for(TextView textView: textViews){
+                textView.setTextColor(ci.iGroupingControlsContrastColor);
+            }
+
         }
-
-
     }
 
 
+    public class CatalogGroupViewerReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            boolean bError;
+
+            //Get boolean indicating that an error may have occurred:
+            bError = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_PROBLEM,false);
+            if(bError) {
+                String sMessage = intent.getStringExtra(GlobalClass.EXTRA_STRING_PROBLEM);
+                Toast.makeText(context, sMessage, Toast.LENGTH_LONG).show();
+            } else {
+
+                //Check to see if this is a response to request to delete an item:
+                boolean bIsDeleteItemResponse = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM, false);
+                if(bIsDeleteItemResponse) {
+                    boolean bDeleteItemResult = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_DELETE_ITEM_RESULT, false);
+                    if (bDeleteItemResult) {
+                        globalClass.updateTagHistogramsIfRequired(); //todo: Moved here after refactor of comic delete logic. Examine if this is appropriate.
+                        populate_RecyclerViewCatalogGroupItems(); //Refresh the catalog recycler view.
+                    } else {
+                        Toast.makeText(getApplicationContext(),"Could not successfully delete item.", Toast.LENGTH_LONG).show();
+                    }
+                }
+
+                //Check to see if this is a response to request to SortAndFilterCatalogDisplay:
+                boolean bRefreshCatalogDisplay = intent.getBooleanExtra(GlobalClass.EXTRA_BOOL_REFRESH_CATALOG_DISPLAY, false);
+                if(bRefreshCatalogDisplay) {
+                    //Catalog sort is complete.
+
+                    if(gProgressBar_GeneralPurpose != null) {
+                        gProgressBar_GeneralPurpose.setProgress(100);
+                    }
+                    if(gTextView_ProgressBarText != null) {
+                        String s = "100%";
+                        gTextView_ProgressBarText.setText(s);
+                    }
+
+                    //Apply the new TreeMap to the RecyclerView:
+                    gRecyclerViewCatalogGroupAdapter = new RecyclerViewCatalogGroupAdapter(GlobalClass.gtmCatalogViewerDisplayTreeMap);
+                    gRecyclerView.setAdapter(gRecyclerViewCatalogGroupAdapter);
+                    gRecyclerViewCatalogGroupAdapter.notifyDataSetChanged();
+                    if(giRecyclerViewLastSelectedPosition > -1){
+                        gRecyclerView.scrollToPosition(giRecyclerViewLastSelectedPosition); //Scroll RecyclerView back to the last item selected by the user, due to refresh.
+                        giRecyclerViewLastSelectedPosition = -1;
+                    }
+                    if(toastLastToastMessage != null){
+                        toastLastToastMessage.cancel();
+                    }
+                    if(gProgressBar_GeneralPurpose != null && gTextView_ProgressBarText != null){
+                        gProgressBar_GeneralPurpose.setVisibility(View.INVISIBLE);
+                        gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
+                    }
+
+                    int iItemCount = gRecyclerViewCatalogGroupAdapter.getItemCount();
+                    String sNoun = "item";
+                    if(iItemCount != 1){
+                        sNoun += "s";
+                    }
+                    toastLastToastMessage = Toast.makeText(getApplicationContext(), "Showing " + gRecyclerViewCatalogGroupAdapter.getItemCount() + " " + sNoun + ".", Toast.LENGTH_SHORT);
+                    toastLastToastMessage.show();
+                }
+
+                //Check to see if this is a response to update log or progress bar:
+                boolean 	bUpdatePercentComplete;
+                boolean 	bUpdateProgressBarText;
+
+                //Get booleans from the intent telling us what to update:
+                bUpdatePercentComplete = intent.getBooleanExtra(GlobalClass.UPDATE_PERCENT_COMPLETE_BOOLEAN,false);
+                bUpdateProgressBarText = intent.getBooleanExtra(GlobalClass.UPDATE_PROGRESS_BAR_TEXT_BOOLEAN,false);
+
+                if(bUpdatePercentComplete){
+                    int iAmountComplete;
+                    iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
+                    if(gProgressBar_GeneralPurpose != null) {
+                        gProgressBar_GeneralPurpose.setProgress(iAmountComplete);
+                    }
+                }
+                if(bUpdateProgressBarText){
+                    String sProgressBarText;
+                    sProgressBarText = intent.getStringExtra(GlobalClass.PROGRESS_BAR_TEXT_STRING);
+                    if(gTextView_ProgressBarText != null) {
+                        gTextView_ProgressBarText.setText(sProgressBarText);
+                    }
+                }
+
+            } //End if not an error message.
+
+        } //End onReceive.
+
+    } //End CatalogViewerServiceResponseReceiver.
 
 
-    public void populate_RecyclerViewCatalogItems(){
+    public void populate_RecyclerViewCatalogGroupItems(){
         GlobalClass.gbCatalogViewerRefresh = false;
-        if(gProgressBar_CatalogSortProgress != null && gTextView_CatalogSortProgressBarText != null){
-            gProgressBar_CatalogSortProgress.setVisibility(View.VISIBLE);
-            gTextView_CatalogSortProgressBarText.setVisibility(View.VISIBLE);
+        if(gProgressBar_GeneralPurpose != null && gTextView_ProgressBarText != null){
+            gProgressBar_GeneralPurpose.setVisibility(View.VISIBLE);
+            gTextView_ProgressBarText.setVisibility(View.VISIBLE);
         }
 
         Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-        Data dataSortAndFilterCatalogDisplay = new Data.Builder()
-                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogViewer:populate_RecyclerViewCatalogItems()")
+        Data dataSortAndFilterGroup = new Data.Builder()
+                .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_CatalogGroupViewer:populate_RecyclerViewCatalogGroupItems()")
                 .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                .putString(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID, gsGroupID)
                 .build();
-        OneTimeWorkRequest otwrSortAndFilterCatalogDisplay = new OneTimeWorkRequest.Builder(Worker_CatalogViewer_SortAndFilterDisplayed.class)
-                .setInputData(dataSortAndFilterCatalogDisplay)
-                .addTag(Worker_CatalogViewer_SortAndFilterDisplayed.TAG_WORKER_CATALOGVIEWER_SORTANDFILTERDISPLAYED) //To allow finding the worker later.
+        OneTimeWorkRequest otwrSortAndFilterGroup = new OneTimeWorkRequest.Builder(Worker_CatalogViewer_SortAndFilterGroup.class)
+                .setInputData(dataSortAndFilterGroup)
+                .addTag(Worker_CatalogViewer_SortAndFilterGroup.TAG_WORKER_CATALOGVIEWER_SORTANDFILTERGROUP) //To allow finding the worker later.
                 .build();
-        WorkManager.getInstance(getApplicationContext()).enqueue(otwrSortAndFilterCatalogDisplay);
+        WorkManager.getInstance(getApplicationContext()).enqueue(otwrSortAndFilterGroup);
 
     }
 
@@ -1223,14 +1022,12 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //globalClass.CatalogDataFile_UpdateRecord(ci); //No longer update the catalog file record with the date of last read. This data to be moved to another file.
 
         Intent intentComicViewer;
-        if(ci.sGroupID.equals("")) {
+        if(!ci.sGroupID.equals("")) {
             intentComicViewer = new Intent(this, Activity_ComicDetails.class);
-            intentComicViewer.putExtra(GlobalClass.EXTRA_CATALOG_ITEM_ID, ci.sItemID); //Pass item ID and load record from file. To accommodate comic detail edit.
         } else {
             intentComicViewer = new Intent(this, Activity_ComicGroupViewer.class);
-            intentComicViewer.putExtra(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID, ci.sGroupID);
         }
-
+        intentComicViewer.putExtra(GlobalClass.EXTRA_CATALOG_ITEM_ID, ci.sItemID); //Pass item ID and load record from file. To accommodate comic detail edit.
 
         if(toastLastToastMessage != null){
             toastLastToastMessage.cancel(); //Hide any toast message that might be shown.
@@ -1239,8 +1036,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         startActivity(intentComicViewer);
     }
 
-
-
     private void updateVisibleRecyclerItems() {
         RecyclerView.LayoutManager layoutManager = gRecyclerView.getLayoutManager();
         if (layoutManager instanceof LinearLayoutManager) {
@@ -1248,7 +1043,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             int first = linearLayoutManager.findFirstVisibleItemPosition();
             int last = linearLayoutManager.findLastVisibleItemPosition();
             for (int i = first; i <= last; i++) {
-                gRecyclerViewCatalogAdapter.notifyItemChanged(i);
+                gRecyclerViewCatalogGroupAdapter.notifyItemChanged(i);
             }
         }
     }

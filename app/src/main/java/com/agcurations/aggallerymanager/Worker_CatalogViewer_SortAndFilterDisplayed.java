@@ -22,7 +22,7 @@ public class Worker_CatalogViewer_SortAndFilterDisplayed extends Worker {
 
     public Worker_CatalogViewer_SortAndFilterDisplayed(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        gsIntentActionFilter = Fragment_Import_1c_ComicWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_COMIC_WEB_DETECT;
+        gsIntentActionFilter = Fragment_Import_1c_ComicWebDetect.ImportDataServiceResponseReceiver.IMPORT_RESPONSE_COMIC_WEB_DETECT; //todo: I don't think this is right.
     }
 
     @NonNull
