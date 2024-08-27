@@ -31,7 +31,7 @@ public class Worker_Import_DeleteFiles extends Worker {
 
         int iProgressNumerator = 0;
         int iProgressDenominator = galsUriFilesToDelete.size();
-        int iProgressBarValue = 0;
+        int iProgressBarValue;
 
         Uri uriSourceFile;
 
