@@ -27,6 +27,7 @@ import java.util.Stack;
 public class Activity_CatalogAnalysis extends AppCompatActivity {
 
     public static final String EXTRA_BOOL_IMPORT_ORPHANED_FILES = "com.agcurations.aggallerymanager.intent.extra.BOOL_IMPORT_ORPHANED_FILES";
+    public static final String EXTRA_BOOL_IMPORT_ORPHANED_FILES_REPAIR = "com.agcurations.aggallerymanager.intent.extra.BOOL_IMPORT_ORPHANED_FILES_REPAIR";
 
     //Fragment page indexes:
     public static final int FRAGMENT_CAT_ANALYSIS_0_ID_MEDIA_CATEGORY = 0;
@@ -174,12 +175,12 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
 
     public void buttonNextClick_AnalysisTypeSelected(View v){
         RadioButton radioButton_MissingFileIdentification = findViewById(R.id.radioButton_MissingFileIdentification);
-        RadioButton radioButton_OrphanedFileIdentification = findViewById(R.id.radioButton_OrphanedFileIdentification);
+        //RadioButton radioButton_OrphanedFileIdentification = findViewById(R.id.radioButton_OrphanedFileIdentification);
 
         if (radioButton_MissingFileIdentification.isChecked()){
             viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_MISSING_FILES;
-        } else if (radioButton_OrphanedFileIdentification.isChecked()) {
-            viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_ORPHANED_FILES;
+        /*} else if (radioButton_OrphanedFileIdentification.isChecked()) {
+            viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_ORPHANED_FILES;*/
         } else {
             viewModel_catalogAnalysis.iAnalysisType = Worker_Catalog_Analysis.ANALYSIS_TYPE_M3U8;
         }
@@ -257,6 +258,8 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         boolean bReviewOrphansWMatchWMedia = acCheckBox_ReviewOrphansWMatchWMedia.isChecked();
         boolean bReviewOrphansWMatchWOMedia = acCheckBox_ReviewOrphansWMatchWOMedia.isChecked();
 
+        Intent intentImportGuided = new Intent(getApplicationContext(), Activity_Import.class);
+
         ArrayList<ItemClass_File> alicf_FilteredForImportReview = new ArrayList<>();
         ArrayList<ItemClass_File> alicf_DownFiltered1 = new ArrayList<>();
         for(ItemClass_File icf: galicf_CatalogAnalysisFileItems){
@@ -277,13 +280,13 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
         for(ItemClass_File icf: alicf_DownFiltered2){
             if(bReviewOrphansWMatchWOMedia && icf.bOrphanAssociatedWithCatalogItem && icf.bOrphanAssociatedCatalogItemIsMissingMedia){
                 alicf_FilteredForImportReview.add(icf);
+                intentImportGuided.putExtra(EXTRA_BOOL_IMPORT_ORPHANED_FILES_REPAIR, true);
             }
         }
 
         GlobalClass.galf_Orphaned_Files = alicf_FilteredForImportReview;
 
         GlobalClass.giSelectedCatalogMediaCategory = viewModel_catalogAnalysis.iMediaCategory;
-        Intent intentImportGuided = new Intent(getApplicationContext(), Activity_Import.class);
         intentImportGuided.putExtra(EXTRA_BOOL_IMPORT_ORPHANED_FILES, true);
 
         startActivity(intentImportGuided);
@@ -357,14 +360,16 @@ public class Activity_CatalogAnalysis extends AppCompatActivity {
                     giOrphansWMatchWOMedia = 0;
                     if(galicf_CatalogAnalysisFileItems != null) {
                         for (ItemClass_File icf : galicf_CatalogAnalysisFileItems) {
-                            if (icf.bOrphanAssociatedWithCatalogItem) {
-                                if (icf.bOrphanAssociatedCatalogItemIsMissingMedia) {
-                                    giOrphansWMatchWOMedia++;
+                            if(!icf.bSetSubItem) {
+                                if (icf.bOrphanAssociatedWithCatalogItem) {
+                                    if (icf.bOrphanAssociatedCatalogItemIsMissingMedia) {
+                                        giOrphansWMatchWOMedia++;
+                                    } else {
+                                        giOrphansWMatchWMedia++;
+                                    }
                                 } else {
-                                    giOrphansWMatchWMedia++;
+                                    giOrphansWOMatch++;
                                 }
-                            } else {
-                                giOrphansWOMatch++;
                             }
                         }
                     }

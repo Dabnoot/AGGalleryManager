@@ -170,6 +170,13 @@ public class Worker_Catalog_LoadData extends Worker {
             globalClass.TagsFile_UpdateAllRecords_JumbleTagID(i);
         }*/
 
+        //Initialize arrays used by catalog analysis here. They are checked during import/delete operations.
+        //  Initializing them here saves lines of code in other locations.
+        GlobalClass.gtmicf_AllFileItemsInMediaFolder.add(new TreeMap<>()); //Videos
+        GlobalClass.gtmicf_AllFileItemsInMediaFolder.add(new TreeMap<>()); //Images
+        GlobalClass.gtmicf_AllFileItemsInMediaFolder.add(new TreeMap<>()); //Comics
+
+        //Read tags:
         int iProgressDenominator = 10;
         int iProgressNumerator = 0;
         int iProgressBarValue = Math.round((iProgressNumerator / (float) iProgressDenominator) * 100);

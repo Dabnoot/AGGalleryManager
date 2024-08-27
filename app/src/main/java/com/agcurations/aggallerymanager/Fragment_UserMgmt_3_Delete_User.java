@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 
 public class Fragment_UserMgmt_3_Delete_User extends Fragment {
@@ -368,6 +369,14 @@ public class Fragment_UserMgmt_3_Delete_User extends Fragment {
         if(bPrivateCatalogItemsFound){
             //If a search of the catalog determined that the user had private catalog items, build
             // and start the file deletion worker...
+
+            //Clear content analysis indexes. If the user is performing user deletion, let them
+            // redo the catalog analysis due to complexity in coding. If interested in working the coding,
+            // look into Worker_Catalog_DeleteItem's use of gtmicf_AllFileItemsInMediaFolder, compare
+            // to Worker_Catalog_DeleteMultipleItems.
+            GlobalClass.gtmicf_AllFileItemsInMediaFolder.set(GlobalClass.MEDIA_CATEGORY_VIDEOS, new TreeMap<>());
+            GlobalClass.gtmicf_AllFileItemsInMediaFolder.set(GlobalClass.MEDIA_CATEGORY_IMAGES, new TreeMap<>());
+            GlobalClass.gtmicf_AllFileItemsInMediaFolder.set(GlobalClass.MEDIA_CATEGORY_COMICS, new TreeMap<>());
 
             //Create a data file containing the catalog records that are to be deleted:
             StringBuilder sbBuffer = new StringBuilder();

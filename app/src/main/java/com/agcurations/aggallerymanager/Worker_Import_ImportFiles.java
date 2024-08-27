@@ -27,14 +27,18 @@ public class Worker_Import_ImportFiles extends Worker {
     public static final String TAG_WORKER_IMPORT_IMPORTFILES = "com.agcurations.aggallermanager.tag_worker_import_importfiles";
 
     public static final String IMPORT_FILES_ACTION_RESPONSE = "com.agcurations.aggallerymanager.intent.action.IMPORT_FILES_ACTION_RESPONSE";
-    
+
+    public static final String EXTRA_BOOL_REPAIR_MODE_OPTION = "com.agcurations.aggallerymanager.extra.BOOL_REPAIR_MODE_OPTION";
+
     int giMoveOrCopy;
     int giMediaCategory;
+    boolean bRepairMode = false;
 
     public Worker_Import_ImportFiles(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         giMoveOrCopy = getInputData().getInt(GlobalClass.EXTRA_IMPORT_FILES_MOVE_OR_COPY, -1);
         giMediaCategory = getInputData().getInt(GlobalClass.EXTRA_MEDIA_CATEGORY, -1);
+        bRepairMode = getInputData().getBoolean(EXTRA_BOOL_REPAIR_MODE_OPTION, false);
     }
 
     @NonNull
@@ -160,7 +164,6 @@ public class Worker_Import_ImportFiles extends Worker {
 
 
             try {
-
                 ItemClass_CatalogItem ciNew = new ItemClass_CatalogItem();
                 ciNew.sItemID = GlobalClass.getNewCatalogRecordID();
 
@@ -183,7 +186,7 @@ public class Worker_Import_ImportFiles extends Worker {
 
                 //Create unique filename, then jumble:
                 if(fileItem.iTypeFileFolderURL == ItemClass_File.TYPE_IMAGE_FROM_HOLDING_FOLDER){
-                    //File name will already be jumbled, as this program place the file in the holding folder.
+                    //File name will already be jumbled, as this program placed the file in the holding folder.
                     sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, false);
                 } else {
                     sFileName = GlobalClass.getUniqueFileName(GlobalClass.GetParentUri(uriFileItemSource), sTempFileName, true);
@@ -332,7 +335,7 @@ public class Worker_Import_ImportFiles extends Worker {
                 }
 
                 //Check ensure that the record does not have any illegal character sequences that would mess with the data file:
-                ciNew = GlobalClass.validateCatalogItemData(ciNew);
+                ciNew = GlobalClass.validateCatalogItemData(ciNew); //todo: Systems gives notification that variable is assigned to itself. Test and resolve.
                 if(ciNew.bIllegalDataFound){
                     globalClass.BroadcastProgress(true, ciNew.sIllegalDataNarrative,
                             false, 0,
@@ -356,7 +359,9 @@ public class Worker_Import_ImportFiles extends Worker {
         } //End fileItem processing loop.
 
         //Create catalog records in both the catalog contents file and memory:
-        globalClass.CatalogDataFile_CreateNewRecords(alci_NewCatalogItems);
+        if(!bRepairMode) {
+            globalClass.CatalogDataFile_CreateNewRecords(alci_NewCatalogItems);
+        }
 
 
         //Prepare the job file from a StringBuilder configured in the loop above:

@@ -48,6 +48,14 @@
             android:layout_below="@+id/textView_OptionsStarterSentence">
 
             <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/acCheckBox_ReviewOrphansWMatchWOMedia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="With catalog matches missing their media"
+                android:textColor="@color/colorTextColor"
+                android:textSize="24sp"/>
+
+            <androidx.appcompat.widget.AppCompatCheckBox
                 android:id="@+id/acCheckBox_ReviewOrphansWOMatch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -63,13 +71,7 @@
                 android:textColor="@color/colorTextColor"
                 android:textSize="24sp"/>
 
-            <androidx.appcompat.widget.AppCompatCheckBox
-                android:id="@+id/acCheckBox_ReviewOrphansWMatchWOMedia"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="With catalog matches missing their media"
-                android:textColor="@color/colorTextColor"
-                android:textSize="24sp"/>
+
 
         </androidx.appcompat.widget.LinearLayoutCompat>
 

@@ -26,7 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 public class Worker_DownloadPostProcessing  extends Worker {
@@ -66,6 +69,7 @@ public class Worker_DownloadPostProcessing  extends Worker {
     String gsPathToMonitorForDownloads;                 //Location to monitor for download file(s)
     long[] glDownloadIDs;                               //Used to determine if a download ID in DownloadManager has status 'completed'.
     String gsItemID;
+    String gsRelativeFolder = null;
     Uri uriDestinationFolder = null;
     boolean gbExpectDifferentFilesSameNames = false;
     int giMediaCategory;
@@ -98,9 +102,9 @@ public class Worker_DownloadPostProcessing  extends Worker {
         //Get the media category for the download.
         giMediaCategory = getInputData().getInt(KEY_ARG_MEDIA_CATEGORY, -1);
 
-        String sRelativePath = getInputData().getString(KEY_ARG_RELATIVE_PATH_TO_FOLDER); //If this is a comic, it will be the comic ID. If it is a video, it will be the tag folder.
-        if(sRelativePath != null){
-            uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[giMediaCategory], sRelativePath);
+        gsRelativeFolder = getInputData().getString(KEY_ARG_RELATIVE_PATH_TO_FOLDER); //If this is a comic, it will be the comic ID. If it is a video, it will be a sub folder.
+        if(gsRelativeFolder != null){
+            uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[giMediaCategory], gsRelativeFolder);
         } else {
             LogThis("Worker_DownloadPostProcessing Constructor:", "Relative path data not passed to worker.", null);
         }
@@ -132,6 +136,9 @@ public class Worker_DownloadPostProcessing  extends Worker {
 
         //Prepare log file:
         String sLogFileName = GlobalClass.GetTimeStampFileSafe() + "_DLTransferLog_" + gsItemID + ".txt";
+
+        TreeMap<String, ItemClass_File> tmicf_ItemsToAddToFileIndex = new TreeMap<>();
+        String sThumbnailUri = "";
 
         try {
             if(bDebug) {
@@ -368,12 +375,56 @@ public class Worker_DownloadPostProcessing  extends Worker {
                                                 }
                                                 inputStream = Files.newInputStream(Paths.get(fSource.getPath()));
                                                 byte[] buffer = new byte[100000];
+                                                long lSize = 0;
                                                 while ((inputStream.read(buffer, 0, buffer.length)) >= 0) {
                                                     osDestinationFile.write(buffer, 0, buffer.length);
+                                                    lSize += buffer.length;
                                                 }
                                                 osDestinationFile.flush();
                                                 osDestinationFile.close();
                                                 if (bDebug) gbwLogFile.write(" Copied to working folder.");
+
+                                                //Update file indexing:
+                                                //This is used in catalog analysis.
+                                                // The treemap variable "gtmicf_AllFileItemsInMediaFolder" is an array list of 3 treemaps. Each
+                                                // treemap key consists of
+                                                // icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName.
+                                                // icf.sMediaFolderRelativePath excludes the media type folder. Media type folder is identified by the media type array index related to the TreeMap index.
+                                                // Only update if the size of the tree is > 0, as it must be initiated by the Catalog Analysis worker.
+                                                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).size() > 0){
+
+
+                                                    String sKey = gsRelativeFolder + GlobalClass.gsFileSeparator + sFileName;
+                                                    ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_FILE, sFileName);
+
+                                                    //Get the mime type, date modified, file size:
+                                                    icf.sUri = uriDestinationFile.toString();
+                                                    icf.sUriParent = uriDestinationFolder.toString(); //Among other things, used to determine if pages belong to a comic or an M3U8 playlist.
+                                                    icf.sMimeType = "";
+
+                                                    icf.dateLastModified = new Date();
+
+                                                    icf.lSizeBytes = lSize;
+
+                                                    icf.sMediaFolderRelativePath = gsRelativeFolder;
+                                                    if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                                                        if (giSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
+                                                            icf.iTypeFileFolderURL = ItemClass_File.TYPE_M3U8;
+                                                        }
+                                                    }
+
+                                                    icf.sUriThumbnailFile = sThumbnailUri;
+
+                                                    if (sThumbnailUri.equals("") &&
+                                                            (icf.sFileOrFolderName.endsWith(".jpg") || icf.sFileOrFolderName.endsWith(".gpj") ||
+                                                            icf.sFileOrFolderName.endsWith(".png") || icf.sFileOrFolderName.endsWith(".gnp"))) {
+                                                        sThumbnailUri = icf.sUri;
+                                                    }
+
+                                                    tmicf_ItemsToAddToFileIndex.put(sKey, icf);
+
+                                                }
+
 
                                             } catch (Exception e) {
                                                 sMessage = fSource.getPath() + "\n" + e.getMessage();
@@ -428,6 +479,30 @@ public class Worker_DownloadPostProcessing  extends Worker {
                     }
                 }
             }
+
+            if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).size() > 0){
+                //If we are tracking a file index (likely due to catalog analysis activities)\
+                //If this is a video or comic download, apply any additional attributes to the
+                //  data intended for the file index:
+                if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
+                        giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    for (Map.Entry<String, ItemClass_File> entry : tmicf_ItemsToAddToFileIndex.entrySet()) {
+                        if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                            if (giSingleOrM3U8 == DOWNLOAD_TYPE_M3U8) {
+                                entry.getValue().iTypeFileFolderURL = ItemClass_File.TYPE_M3U8;
+                            }
+                        }
+                        if (giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS ||
+                                giMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                            if (!sThumbnailUri.equals("")) {
+                                entry.getValue().sUriThumbnailFile = sThumbnailUri;
+                            }
+                        }
+                    }
+                }
+                GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(giMediaCategory).putAll(tmicf_ItemsToAddToFileIndex);
+            }
+
             if(giMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
                 if(giSingleOrM3U8 == DOWNLOAD_TYPE_M3U8){
                     //Delete the temporary download folder parent if empty, which would be a tags folder.

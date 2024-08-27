@@ -4,10 +4,15 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
@@ -91,6 +96,37 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                 globalClass.gbImportExecutionFinished = true;
                 return Result.failure();
             } else {
+
+                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(GlobalClass.MEDIA_CATEGORY_COMICS).size() > 0){
+                    //If a folder was created for a comic in the comics media folder, record it
+                    //  in the Catalog Analysis index variable if the index is in use.
+
+                    String sKey = ciNew.sFolderRelativePath;
+                    ItemClass_File icfCollectionFolder = new ItemClass_File(ItemClass_File.TYPE_FOLDER, ciNew.sItemID);
+                    icfCollectionFolder.sMimeType = DocumentsContract.Document.MIME_TYPE_DIR;
+                    icfCollectionFolder.lSizeBytes = 0;
+                    icfCollectionFolder.sUriParent = GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString();
+                    icfCollectionFolder.sMediaFolderRelativePath = ciNew.sFolderRelativePath;
+                    icfCollectionFolder.sUriThumbnailFile = "";
+                    icfCollectionFolder.sUri = uriDestinationFolder.toString();
+
+                    try {
+                        Bundle bundle = DocumentsContract.getDocumentMetadata(GlobalClass.gcrContentResolver, uriDestinationFolder);
+                        if(bundle != null) {
+                            long lLastModified = bundle.getLong(DocumentsContract.Document.COLUMN_LAST_MODIFIED, 0);
+                            Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+                            cal.setTimeInMillis(lLastModified);
+                            icfCollectionFolder.dateLastModified = cal.getTime();
+
+                        }
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                    GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(GlobalClass.MEDIA_CATEGORY_COMICS).put(sKey, icfCollectionFolder);
+
+
+                }
+
                 globalClass.BroadcastProgress(true, "Destination folder created: " + sUserFriendlyDestinationFolder + "\n",
                         false, iProgressBarValue,
                         false, "",
@@ -129,7 +165,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
         //ciNew.alsApprovedUsers.add(globalClass.gicuCurrentUser.sUserName);
         ciNew.alsApprovedUsers = GlobalClass.getApprovedUsersForTagGrouping(ciNew.aliTags, ciNew.iMediaCategory);
         //Inform program of a need to update the tags histogram:
-        globalClass.gbTagHistogramRequiresUpdate[ciNew.iMediaCategory] = true;
+        GlobalClass.gbTagHistogramRequiresUpdate[ciNew.iMediaCategory] = true;
         ciNew.sGroupID = alFileList.get(0).sGroupID; //todo: This line added during rough-draft implementation of catalog item grouping. Comic grouping not really thought-out, but putting it here might make things magically work later as a bonus.
 
         //The below call should add the record to both the catalog contents file
@@ -184,7 +220,7 @@ public class Worker_Import_ImportComicWebFiles extends Worker {
                         ciNew.sThumbnail_File = sJumbledNewFileName;
                         //Update the catalog record with the filename and thumbnail image:
                         globalClass.CatalogDataFile_UpdateRecord(ciNew);
-                    }
+                    }//todo: time this operation.
 
 
 

@@ -82,10 +82,11 @@ public class Activity_Import extends AppCompatActivity {
     public static final int FRAGMENT_IMPORT_4_ID_IMPORT_METHOD = 13;
     public static final int FRAGMENT_IMPORT_5_ID_CONFIRMATION = 14;
     public static final int FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE = 15;
-    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 16;
-    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 17;
+    public static final int FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR = 16;
+    public static final int FRAGMENT_IMPORT_2B_SELECT_SINGLE_WEB_COMIC = 17;
+    public static final int FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT = 18;
 
-    public static final int FRAGMENT_COUNT = 18;
+    public static final int FRAGMENT_COUNT = 19;
 
     //=================================================
     //User selection global variables:
@@ -225,6 +226,10 @@ public class Activity_Import extends AppCompatActivity {
                     boolean bImportOrphanedFiles = intentStartingIntent.getBooleanExtra(Activity_CatalogAnalysis.EXTRA_BOOL_IMPORT_ORPHANED_FILES, false);
                     if(bImportOrphanedFiles){
                         viewModelImportActivity.bImportingOrphanedFiles = true;
+
+                        boolean bImportOrphanedFilesRepairMode = intentStartingIntent.getBooleanExtra(Activity_CatalogAnalysis.EXTRA_BOOL_IMPORT_ORPHANED_FILES_REPAIR, false);
+                        viewModelImportActivity.bImportingOrphanedFilesRepairMode = bImportOrphanedFilesRepairMode;
+
                         ArrayList<ItemClass_File> alFileList = new ArrayList<>(GlobalClass.galf_Orphaned_Files);
                         fileListCustomAdapter = new FileListCustomAdapter(getApplicationContext(), R.id.listView_FolderContents, alFileList);
                         giStartingFragment = FRAGMENT_IMPORT_2_ID_SELECT_ITEMS;
@@ -519,6 +524,16 @@ public class Activity_Import extends AppCompatActivity {
         //Need to decide whether to go on to "import detected tags", "confirm materials to delete"
         // (if the user is only deleting items from internal storage), or "select tags".
 
+        if(viewModelImportActivity.bImportingOrphanedFilesRepairMode){
+            //If we are importing from an orphaned file analysis' repair mode,
+            // then we are merely moving items.
+            viewModelImportActivity.iImportMethod = GlobalClass.COPY;
+            ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR, false);
+            stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+            return;
+        }
+
+
         boolean bImportIsOnlineVideo = viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE;
         boolean bImportIsOnlineComic = viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
@@ -652,6 +667,15 @@ public class Activity_Import extends AppCompatActivity {
         stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
     }
 
+    public void buttonNextClick_ImportConfirmRepair(View v){ //todo: merge with "buttonNextClick_ImportConfirmDelete"?
+        globalClass.gbImportExecutionStarted = true;
+        globalClass.gbImportExecutionFinished = false;
+        giStartingFragment = FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT; //Don't allow user to go back.
+        ViewPager2_Import.setCurrentItem(giStartingFragment, false);
+        stackFragmentOrder.clear();
+        stackFragmentOrder.push(ViewPager2_Import.getCurrentItem());
+    }
+
     public void buttonNextClick_ImportFinish(View v){
         gotoFinish();
     }
@@ -716,9 +740,13 @@ public class Activity_Import extends AppCompatActivity {
                     alFileItemsDisplay = new ArrayList<>(); //initialize.
                     applyFilterByType(ItemClass_File.TYPE_FOLDER);
 
-
+            } else if (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                alFileItemsDisplay = new ArrayList<>(); //initialize.
+                applyFilterNoSupportingFiles(); //Used particularly during repair after a catalog analysis. Allows bring-in of m3u8 works.
             } else {
+
                 alFileItemsDisplay = new ArrayList<>(alfi);
+
             }
 
             SortByFileNameAsc();
@@ -766,6 +794,16 @@ public class Activity_Import extends AppCompatActivity {
             if(alFileItemsDisplay.get(position).bIsOrphanedFile){
                 sLine2 = "Orphaned file in folder: " + GlobalClass.gsCatalogFolderNames[GlobalClass.giSelectedCatalogMediaCategory] +
                         GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + alFileItemsDisplay.get(position).sMediaFolderRelativePath);
+                //Try to find a potential match if available:
+                if(alFileItemsDisplay.get(position).alsOrphanAssociatedCatalogItemIDs != null) {
+                    if(alFileItemsDisplay.get(position).alsOrphanAssociatedCatalogItemIDs.size() > 0) {
+                            sLine2 = sLine2 + "\nExpected at location: " + GlobalClass.gsCatalogFolderNames[GlobalClass.giSelectedCatalogMediaCategory] +
+                                    GlobalClass.cleanHTMLCodedCharacters(GlobalClass.gsFileSeparator + alFileItemsDisplay.get(position).sDestinationFolder);
+                        if(alFileItemsDisplay.get(position).alsOrphanAssociatedCatalogItemIDs.size() > 1) {
+                            sLine2 = sLine2 + "\n  However, multiple potential matches exist.";
+                        }
+                    }
+                }
             }
             if(alFileItemsDisplay.get(position).dateLastModified != null) {
                 if(!sLine2.isEmpty()){
@@ -1091,9 +1129,13 @@ public class Activity_Import extends AppCompatActivity {
                 }
 
                 alFileItemsDisplay.get(position).bMarkedForDeletion = bNewDeleteStateIsYesDelete;
-                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+                if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER ||
+                        (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                                && viewModelImportActivity.bImportingOrphanedFilesRepairMode )) {
                     //Special behavior for comic imports as we only show the comic cover page.
                     //The folder is marked for deletion/not-deletion by the display item.
+                    //Same special behavior is we are repairing and source is of video type.
+                    // We may be repairing an m3u8 case which has supporting files.
 
                     //Mark comic page files for deletion/not-deletion:
                     String sComicParentUri = alFileItemsDisplay.get(position).sUri;
@@ -1203,12 +1245,21 @@ public class Activity_Import extends AppCompatActivity {
         private void toggleItemChecked(int iFileItemsDisplayPosition, boolean bNewCheckedState){
 
 
-            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
+            if((viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) ||
+                    (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                    && viewModelImportActivity.bImportingOrphanedFilesRepairMode )) {
                 //If this is a comic, need to select all of the files that are part of that comic.
                 //If the user is importing comic pages by folder, find
-                // all files with the comic parent Uri assigned and apply the checked state:
+                // all files with the comic parent Uri assigned and apply the checked state.
+                //If this is a video and we are in repair mode, we may be importing an M3U8 from a
+                // folder with a set of files. If this is the case, locate the supporting files
+                // and mark them to be imported.
                 String sUriParent = alFileItemsDisplay.get(iFileItemsDisplayPosition).sUri;
+                if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+                    sUriParent = sUriParent.substring(0, sUriParent.lastIndexOf(GlobalClass.gsFileSeparator));
+                }
+
                 for (ItemClass_File icf : alFileItems) {
                     if (icf.sUriParent.equals(sUriParent)) {
                         icf.bIsChecked = bNewCheckedState;
@@ -1283,20 +1334,25 @@ public class Activity_Import extends AppCompatActivity {
                 }
             }
 
-            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                if (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
-                    //If we are importing comics from folders, update the comic parent item with the selected tags.
-                    if(alicfIncomingFIs.size() > 0) {
-                        String sParentComic = alicfIncomingFIs.get(0).sUriParent;
-                        for (ItemClass_File icfUpdate : alFileItems) {
-                            if (icfUpdate.sUri.equals(sParentComic)) {
-                                icfUpdate.aliProspectiveTags = alicfIncomingFIs.get(0).aliProspectiveTags;
-                                icfUpdate.iGrade = alicfIncomingFIs.get(0).iGrade;
-                                icfUpdate.bIsChecked = true;
-                            }
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
+            && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER ||
+                    (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                            && viewModelImportActivity.bImportingOrphanedFilesRepairMode )) {
+                //If we are importing comics from folders, update the comic parent item with the selected tags.
+                if(alicfIncomingFIs.size() > 0) {
+                    String sUriParent = alicfIncomingFIs.get(0).sUriParent;
+                    if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+                        sUriParent = sUriParent.substring(0, sUriParent.lastIndexOf(GlobalClass.gsFileSeparator));
+                    }
+                    for (ItemClass_File icfUpdate : alFileItems) {
+                        if (icfUpdate.sUri.equals(sUriParent)) {
+                            icfUpdate.aliProspectiveTags = alicfIncomingFIs.get(0).aliProspectiveTags;
+                            icfUpdate.iGrade = alicfIncomingFIs.get(0).iGrade;
+                            icfUpdate.bIsChecked = true;
                         }
                     }
                 }
+
             }
 
             recalcButtonNext();
@@ -1329,7 +1385,9 @@ public class Activity_Import extends AppCompatActivity {
         public void toggleSelectAll(){
             bSelectAllSelected = !bSelectAllSelected;
 
-            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+            if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS  ||
+                    (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
+                            && viewModelImportActivity.bImportingOrphanedFilesRepairMode )){
                 //If we are working with comics, then the items on display are only the cover pages.
                 //  We need to apply "Select All" to all items including the items which are not displayed.
                 for(ItemClass_File fiDisplayed: alFileItems){
@@ -1386,6 +1444,15 @@ public class Activity_Import extends AppCompatActivity {
             alFileItemsDisplay.clear();
             for(ItemClass_File fi : alFileItems){
                 if(fi.iTypeFileFolderURL ==iTypeFileOrFolder){
+                    alFileItemsDisplay.add(fi);
+                }
+            }
+        }
+
+        public void applyFilterNoSupportingFiles(){
+            alFileItemsDisplay.clear();
+            for(ItemClass_File fi : alFileItems){
+                if(!fi.bSetSubItem){
                     alFileItemsDisplay.add(fi);
                 }
             }
@@ -2110,6 +2177,8 @@ public class Activity_Import extends AppCompatActivity {
                     return new Fragment_Import_5_Confirmation();
                 case FRAGMENT_IMPORT_5A_ID_CONFIRMATION_DELETE:
                     return new Fragment_Import_5a_ConfirmationDelete();
+                case FRAGMENT_IMPORT_5B_ID_CONFIRMATION_REPAIR:
+                    return new Fragment_Import_5b_ConfirmationRepair();
                 case FRAGMENT_IMPORT_6_ID_EXECUTE_IMPORT:
                     return new Fragment_Import_6_ExecuteImport();
                 default:

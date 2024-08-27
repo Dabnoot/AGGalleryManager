@@ -43,11 +43,13 @@ public class Worker_Catalog_DeleteItem extends Worker {
             // worker again.
             return Result.failure();
         }
+
         GlobalClass globalClass;
         globalClass = (GlobalClass) getApplicationContext();
 
         //Delete the item record from the CatalogContentsFile:
         boolean bSuccess = true;
+        String sMessage;
 
         //Delete the file(s):
 
@@ -62,8 +64,30 @@ public class Worker_Catalog_DeleteItem extends Worker {
             if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
                 // If the user is attempting to delete a comic, merely delete the comic folder:
                 try {
+                    ArrayList<String> alsComicFolderFileNames = new ArrayList<>();
+                    //Get items from folder if CatalogAnalysis has recently been utilized:
+                    if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(ciToDelete.iMediaCategory).size() > 0){
+                        alsComicFolderFileNames = GlobalClass.GetDirectoryFileNames(uriItemFolder);
+                    }
+
                     if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
                         Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
+                    } else {
+                        //Remove the items from the CatalogAnalysis index if in use:
+                        if(alsComicFolderFileNames.size() > 0) {
+                            for(String sFileName: alsComicFolderFileNames) {
+                                String sFileUri = uriItemFolder.toString() + GlobalClass.gsFileSeparator + sFileName;
+                                if (!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, sFileUri)) {
+                                    sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + sFileUri + "\n";
+                                    globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                }
+                            }
+                            if (!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriItemFolder.toString())) {
+                                sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriItemFolder + "\n";
+                                globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                            }
+                        }
+
                     }
                 } catch (FileNotFoundException e) {
                     Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
@@ -79,8 +103,15 @@ public class Worker_Catalog_DeleteItem extends Worker {
                             if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
                                 globalClass.problemNotificationConfig("Could not delete file: " + GlobalClass.cleanHTMLCodedCharacters(uriFileToBeDeleted.toString()), CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                 bSuccess = false;
-                            }
-                            if(bSuccess) {
+                            } else {
+
+                                //Remove the item from the CatalogAnalysis index if in use:
+                                if(!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())){
+                                    sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
+                                    globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                }
+
+
                                 //Check to see if there is a thumbnail file to delete:
                                 if (!ciToDelete.sThumbnail_File.equals("")) {
                                     if(!ciToDelete.sFilename.equals(ciToDelete.sThumbnail_File)){
@@ -89,6 +120,12 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                         if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
                                             globalClass.problemNotificationConfig("Could not delete thumbnail file: " + GlobalClass.cleanHTMLCodedCharacters(uriFileToBeDeleted.toString()), CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                             bSuccess = false;
+                                        } else {
+                                            //Remove the item from the CatalogAnalysis index if in use:
+                                            if(!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())){
+                                                sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
+                                                globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                            }
                                         }
                                     }
                                 }
@@ -109,10 +146,32 @@ public class Worker_Catalog_DeleteItem extends Worker {
                     if (ciToDelete.iMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                         if (ciToDelete.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
                             //This item is held by itself as a collection of files within an individual folder.
+
+                            ArrayList<String> alsM3U8FolderFileNames = new ArrayList<>();
+                            //Get items from folder if CatalogAnalysis has recently been utilized:
+                            if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(ciToDelete.iMediaCategory).size() > 0){
+                                alsM3U8FolderFileNames = GlobalClass.GetDirectoryFileNames(uriItemFolder);
+                            }
+
                             //Delete folder:
                             try {
                                 if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriItemFolder)) {
                                     Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
+                                } else {
+                                    //Remove the items from the CatalogAnalysis index if in use:
+                                    if(alsM3U8FolderFileNames.size() > 0) {
+                                        for(String sFileName: alsM3U8FolderFileNames) {
+                                            String sFileUri = uriItemFolder + GlobalClass.gsFileSeparator + sFileName;
+                                            if (!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, sFileUri)) {
+                                                sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + sFileUri + "\n";
+                                                globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                            }
+                                        }
+                                        if (!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriItemFolder.toString())) {
+                                            sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriItemFolder + "\n";
+                                            globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                        }
+                                    }
                                 }
                             } catch (FileNotFoundException e) {
                                 Log.d("File Deletion", "Unable to delete folder " + uriItemFolder + ".");
@@ -126,8 +185,15 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                     if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
                                         globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                         bSuccess = false;
-                                    }
-                                    if(bSuccess) {
+                                    } else {
+
+                                        //Remove the item from the CatalogAnalysis index if in use:
+                                        if(!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())){
+                                            sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
+                                            globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                        }
+
+
                                         //Check to see if there is a thumbnail file to delete:
                                         if (!ciToDelete.sThumbnail_File.equals("")) {
                                             if(!ciToDelete.sFilename.equals(ciToDelete.sThumbnail_File)){
@@ -136,6 +202,14 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                                 if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
                                                     globalClass.problemNotificationConfig("Could not delete thumbnail file: " + GlobalClass.cleanHTMLCodedCharacters(uriFileToBeDeleted.toString()), CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                                     bSuccess = false;
+                                                } else {
+
+                                                    //Remove the item from the CatalogAnalysis index if in use:
+                                                    if(!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())){
+                                                        sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
+                                                        globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                                    }
+
                                                 }
                                             }
                                         }
@@ -207,6 +281,12 @@ public class Worker_Catalog_DeleteItem extends Worker {
                                 if (!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriFileToBeDeleted)) {
                                     globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);
                                     bSuccess = false;
+                                } else {
+                                    //Remove the item from the CatalogAnalysis index if in use:
+                                    if(!GlobalClass.RemoveItemFromAnalysisIndex(ciToDelete.iMediaCategory, uriFileToBeDeleted.toString())){
+                                        sMessage = "Could not remove item from CatalogAnalysis index (non-critical error): " + uriFileToBeDeleted + "\n";
+                                        globalClass.problemNotificationConfig(sMessage, CATALOG_DELETE_ITEM_ACTION_RESPONSE);
+                                    }
                                 }
                             } catch (FileNotFoundException e) {
                                 globalClass.problemNotificationConfig("Could not delete file.", CATALOG_DELETE_ITEM_ACTION_RESPONSE);

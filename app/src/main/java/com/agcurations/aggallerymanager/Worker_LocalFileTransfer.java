@@ -402,13 +402,44 @@ public class Worker_LocalFileTransfer extends Worker {
                                             Uri uriDestinationFolderParentA = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sRelativePathFolders[i]);
                                             if(!GlobalClass.CheckIfFileExists(uriDestinationFolderParentA)){
                                                 GlobalClass.CreateDirectory(uriDestinationFolderParentA);
+
+                                                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+                                                    //todo: untested.
+                                                    //Build an entry for CatalogAnalysis index if necessary:
+                                                    //If a folder was created, and the user has recently been engage with catalog anaylsis, add the new folder to the catalog analysis index:
+                                                    String sKey = sRelativePathFolders[i];
+                                                    ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_FOLDER, sRelativePathFolders[i]);
+                                                    icf.sUri = uriDestinationFolderParentA.toString();
+                                                    icf.sUriParent = GlobalClass.GetParentUri(uriDestinationFolderParentA.toString()); //Among other things, used to determine if pages belong to a comic or an M3U8 playlist.
+                                                    icf.sMimeType = "";
+                                                    icf.dateLastModified = new Date();
+                                                    icf.lSizeBytes = 0;
+                                                    icf.sMediaFolderRelativePath = sRelativePathFolders[i];
+                                                    GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).put(sKey, icf);
+                                                }
+
                                             }
                                         }
                                     }
 
-                                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FOLDER]);
+                                    String sDestinationFolderName = sJobFileRecordFields[RECORD_FIELD_INDEX_DESTINATION_FOLDER];
+                                    Uri uriDestinationFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[iMediaCategory], sDestinationFolderName);
                                     if(!GlobalClass.CheckIfFileExists(uriDestinationFolder)){
                                         uriDestinationFolder = GlobalClass.CreateDirectory(uriDestinationFolder);
+                                        if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+                                            //todo: untested.
+                                            //Build an entry for CatalogAnalysis index if necessary:
+                                            //If a folder was created, and the user has recently been engage with catalog anaylsis, add the new folder to the catalog analysis index:
+                                            String sKey = sDestinationFolderName;
+                                            ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_FOLDER, sDestinationFolderName);
+                                            icf.sUri = uriDestinationFolder.toString();
+                                            icf.sUriParent = GlobalClass.GetParentUri(uriDestinationFolder.toString()); //Among other things, used to determine if pages belong to a comic or an M3U8 playlist.
+                                            icf.sMimeType = "";
+                                            icf.dateLastModified = new Date();
+                                            icf.lSizeBytes = 0;
+                                            icf.sMediaFolderRelativePath = sDestinationFolderName;
+                                            GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).put(sKey, icf);
+                                        }
                                     }
 
                                     String sUserFriendlyDestinationFolderUri = URLDecoder.decode(uriDestinationFolder.toString(), StandardCharsets.UTF_8.toString());
@@ -477,12 +508,14 @@ public class Worker_LocalFileTransfer extends Worker {
                                             if (isSourceFile != null && osDestinationFile != null) {
                                                 byte[] bucket = new byte[32 * 1024];
                                                 int bytesRead = 0;
+                                                long lTotalBytes = 0;
                                                 int iLoopCount = 1;
                                                 while (bytesRead != -1) {
                                                     bytesRead = isSourceFile.read(bucket); //-1, 0, or more
                                                     if (bytesRead > 0) {
                                                         osDestinationFile.write(bucket, 0, bytesRead);
                                                         glProgressNumerator = glProgressNumerator + bytesRead;
+                                                        lTotalBytes = lTotalBytes + bytesRead;
                                                         if(iLoopCount % 10 == 0) {
                                                             //Update bytes transferred every 10 loops:
                                                             UpdateProgressOutput();
@@ -492,7 +525,26 @@ public class Worker_LocalFileTransfer extends Worker {
                                                 }
                                                 UpdateProgressOutput();
 
+                                                //Build an entry for CatalogAnalysis index if necessary:
+                                                if(GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).size() > 0){
+                                                    //todo: untested.
+                                                    //Create an entry in the CatalogAnalysis index for the file added to the data storage.
+                                                    String sKey = sDestinationFolderName + GlobalClass.gsFileSeparator + sDestinationFileName;
+                                                    ItemClass_File icf = new ItemClass_File(ItemClass_File.TYPE_FILE, sDestinationFileName);
+                                                    icf.sUri = uriOutputFile.toString();
+                                                    icf.sUriParent = GlobalClass.GetParentUri(uriOutputFile.toString()); //Among other things, used to determine if pages belong to a comic or an M3U8 playlist.
+                                                    icf.sMimeType = "";
+                                                    icf.dateLastModified = new Date();
+                                                    icf.lSizeBytes = lTotalBytes;
+                                                    // The key consists of icf.sMediaFolderRelativePath + GlobalClass.gsFileSeparator + icf.sFileOrFolderName
+                                                    icf.sMediaFolderRelativePath = sDestinationFolderName;
+                                                    GlobalClass.gtmicf_AllFileItemsInMediaFolder.get(iMediaCategory).put(sKey, icf);
+                                                }
+
                                             }
+
+
+
 
                                         } catch (Exception e) {
                                             sMessage = "Source file could not be copied. File \""

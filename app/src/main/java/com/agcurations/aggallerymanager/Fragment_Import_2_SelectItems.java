@@ -149,7 +149,8 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         TreeMap<String, ItemClass_File> tmFileItemsSort = new TreeMap<>();
 
         if(getActivity() != null) {
-            for (ItemClass_File fi : ((Activity_Import) getActivity()).fileListCustomAdapter.alFileItems) {
+            ArrayList<ItemClass_File> alFileItems = ((Activity_Import) getActivity()).fileListCustomAdapter.alFileItems;
+            for (ItemClass_File fi : alFileItems) {
                 if (fi.bIsChecked || fi.bMarkedForDeletion){// && (viewModelImportActivity.iImportMediaCategory != GlobalClass.MEDIA_CATEGORY_COMICS))) {
                     tmFileItemsSort.put(fi.sUri, fi); //Sort by Uri rather than file name because comic folders might contain the same file names.
 

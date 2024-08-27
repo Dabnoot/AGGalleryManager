@@ -38,5 +38,6 @@ public class ViewModel_ImportActivity extends ViewModel {
                                      // are gathered before the import takes place.
 
     public boolean bImportingOrphanedFiles = false;
+    public boolean bImportingOrphanedFilesRepairMode = false;
 
 }

@@ -88,6 +88,10 @@ public class ItemClass_File implements Serializable {
     public boolean bOrphanAssociatedWithCatalogItem = false;
     public boolean bOrphanAssociatedCatalogItemIsMissingMedia = false;
     public ArrayList<String> alsOrphanAssociatedCatalogItemIDs;
+    public boolean bSetSubItem = false; //Set and used by catalog analysis to simplify determining
+                                        // if an item belongs to a set, such as a comic or M3U8.
+    public boolean bSetHeadItem = false; //Set and used by catalog analysis to simplify determining
+    // if an item belongs to a set, such as a comic or M3U8.
 
     public ItemClass_File(int _iTypeFileFolderURL,
                           String _FileOrFolderName)
