@@ -42,8 +42,8 @@ public class StopWatch {
 
     public void PostDebugLogAndRestart(String sMessageBase){
         if(bEnableDebug){
-            String sMessage = sMessageBase + GetElapsed();
-            Log.d("======StopWatch======", sMessage);
+            String sMessage = sMessageBase + " " + GetElapsed();
+            Log.d("StopWatch", sMessage);
             Start();
         }
     }
