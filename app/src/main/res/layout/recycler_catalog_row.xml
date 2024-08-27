@@ -1,47 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="300dp"
-    android:padding="6dip" >
+    android:id="@+id/relativeLayout_Row"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="6dip"
+    android:layout_marginTop="5dp"
+    android:background="@color/colorBackgroundShadow">
 
     <ImageView
         android:id="@+id/imageView_Thumbnail"
         android:layout_width="200dp"
-        android:layout_height="fill_parent"
+        android:layout_height="300dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentTop="true"
         android:layout_marginEnd="6dip"
         android:contentDescription="Thumbnail image"/>
-
-    <ImageView
-        android:id="@+id/imageView_Attention"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:contentDescription="Attention. This item has an issue."
-        android:src="@drawable/attention_32px"
-        android:visibility="invisible"/>
-
-    <TextView
-        android:id="@+id/textView_AttentionNote"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:visibility="invisible"
-        android:layout_toEndOf="@id/imageView_Attention"
-        android:shadowColor = "#000000"
-        android:shadowDx = "3"
-        android:shadowDy = "3"
-        android:shadowRadius = "3"
-        android:textColor="@color/colorTextColor"/>
 
     <Button
         android:id="@+id/button_Delete"
         android:layout_width="50dp"
         android:layout_height="40dp"
         android:drawableLeft="@drawable/baseline_delete_white_18dp"
-        android:layout_alignTop="@id/imageView_Thumbnail"
-        android:layout_alignEnd="@id/imageView_Thumbnail"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
         android:background="@android:color/transparent"/>
 
     <androidx.appcompat.widget.AppCompatImageButton
@@ -49,8 +30,9 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:padding="5dp"
-        android:layout_alignStart="@id/imageView_Thumbnail"
-        android:layout_alignBottom="@id/imageView_Thumbnail"
+        android:layout_alignParentTop="true"
+        android:layout_toStartOf="@id/button_Delete"
+        android:layout_marginEnd="10dp"
         android:src="@drawable/baseline_collections_24"
         android:tooltipText="Open Grouping controls"
         android:background="@android:color/transparent" />
@@ -60,8 +42,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="@color/colorBlack"
-        android:layout_alignStart="@id/imageView_Thumbnail"
-        android:layout_alignBottom="@id/imageView_Thumbnail"
+        android:layout_alignParentTop="true"
+        android:layout_toStartOf="@id/button_Delete"
         android:visibility="invisible"
         android:orientation="vertical">
 
@@ -158,12 +140,13 @@
         android:layout_width="wrap_content"
         android:layout_height="26dip"
         android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_toRightOf="@id/imageView_Thumbnail"
+
+        android:layout_toEndOf="@id/imageView_Thumbnail"
+        android:layout_toStartOf="@id/linearLayout_GroupingControls"
         android:ellipsize="marquee"
         android:text="@string/comic_name"
         android:textColor="@color/colorTextColor"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:singleLine="true" />
 
     <TextView
@@ -171,12 +154,35 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/textView_Title"
-        android:layout_alignParentRight="true"
-        android:layout_alignWithParentIfMissing="true"
-        android:layout_toRightOf="@id/imageView_Thumbnail"
+        android:layout_toEndOf="@id/imageView_Thumbnail"
+        android:layout_toStartOf="@id/linearLayout_GroupingControls"
         android:gravity="center_vertical"
-        android:text="@string/comic_details"
+        android:text=""
         android:textColor="@color/colorTextColor"
         android:textSize="16sp"/>
+
+    <ImageView
+        android:id="@+id/imageView_Attention"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView_Details"
+        android:layout_toEndOf="@id/imageView_Thumbnail"
+        android:contentDescription="Attention. This item has an issue."
+        android:src="@drawable/attention_32px"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/textView_AttentionNote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView_Details"
+        android:layout_toEndOf="@id/imageView_Attention"
+        android:visibility="invisible"
+        android:shadowColor = "#000000"
+        android:shadowDx = "3"
+        android:shadowDy = "3"
+        android:shadowRadius = "3"
+        android:text=""
+        android:textColor="@color/colorTextColor"/>
 
 </RelativeLayout>

@@ -1058,22 +1058,35 @@ public class Activity_CatalogViewer extends AppCompatActivity {
                 });
 
                 holder.imageButton_GroupIDRemove.setOnClickListener(v -> {
-                    ci.sGroupID = "";
-                    ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
-                    ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
-                    ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
-                    ci.iGroupingControlHighlightContrastColor = 0;
-                    GlobalClass.applyGroupingControlsColor(
-                            ci,
-                            holder.linearLayout_GroupingControls,
-                            ibGroupingControls,
-                            tvGroupingTextViews);
-                    holder.textView_GroupID.setText("----");
-                    setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
-                    setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
-                    setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
-                    Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
-                    globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+
+                    String sConfirmationMessage = "Are you sure you want to remove assigned group ID?";
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(Activity_CatalogViewer.this, R.style.AlertDialogCustomStyle);
+                    builder.setTitle("Remove Group Assignment");
+                    builder.setMessage(sConfirmationMessage);
+                    builder.setPositiveButton("Yes", (dialog, id) -> {
+                        dialog.dismiss();
+                        ci.sGroupID = "";
+                        ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
+                        ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+                        ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
+                        ci.iGroupingControlHighlightContrastColor = 0;
+                        GlobalClass.applyGroupingControlsColor(
+                                ci,
+                                holder.linearLayout_GroupingControls,
+                                ibGroupingControls,
+                                tvGroupingTextViews);
+                        holder.textView_GroupID.setText("----");
+                        setGroupControlSize(holder.imageButton_GroupIDCopy, 0);
+                        setGroupControlSize(holder.imageButton_GroupIDFilter, 0);
+                        setGroupControlSize(holder.imageButton_GroupIDRemove, 0);
+                        Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
+                        globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+
+                    });
+                    builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                    AlertDialog adConfirmationDialog = builder.create();
+                    adConfirmationDialog.show();
                 });
 
                 holder.imageButton_GroupIDFilter.setOnClickListener(v -> {
@@ -1229,6 +1242,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         } else {
             intentComicViewer = new Intent(this, Activity_ComicGroupViewer.class);
             intentComicViewer.putExtra(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID, ci.sGroupID);
+            intentComicViewer.putExtra(Activity_ComicGroupViewer.CATALOG_FILTER_EXTRA_STRING_GROUP_NAME, ci.sTitle);
         }
 
 

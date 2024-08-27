@@ -337,6 +337,7 @@ public class GlobalClass extends Application {
     }
 
     public int ConvertDPtoPX(int dp){
+        //Pixel
         Resources r = getResources();
         return (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,

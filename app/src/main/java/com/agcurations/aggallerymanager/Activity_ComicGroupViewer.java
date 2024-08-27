@@ -1,9 +1,13 @@
 package com.agcurations.aggallerymanager;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.ColorDrawable;
@@ -19,7 +23,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -28,6 +36,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +59,8 @@ import java.util.TreeMap;
 public class Activity_ComicGroupViewer extends AppCompatActivity {
 
     //This is an activity to allow the user to view all comics that belong to a group.
+
+    public static final String CATALOG_FILTER_EXTRA_STRING_GROUP_NAME = "com.agcurations.aggallerymanager.intent.extra.CATALOG_FILTER_EXTRA_STRING_GROUP_NAME";
 
     GlobalClass globalClass;
     private final boolean gbDebugTouch = false;
@@ -74,6 +85,9 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
     String gsGroupID;
 
+    boolean gbThumbnails_Visible = false;
+    Resources gResources;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,6 +102,21 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
         //Get the item ID:
         gsGroupID = intent.getStringExtra(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID);
+        String sActionBarText = "";
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+            sActionBarText = "Comic Group: ";
+            sActionBarText = sActionBarText + intent.getStringExtra(CATALOG_FILTER_EXTRA_STRING_GROUP_NAME);
+        } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+            sActionBarText = "Video Group Viewer";
+        } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+            sActionBarText = "Image Group Viewer";
+        }
+
+        if(getSupportActionBar()!=null) {
+            getSupportActionBar().setTitle(sActionBarText);
+        }
+
+        gResources = getResources();
 
         if( gsGroupID == null) return;
 
@@ -137,6 +166,24 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
         super.onDestroy();
     }
 
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.activity_group_viewer_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+        if((item.getItemId() == R.id.icon_ChangeView)){
+            gbThumbnails_Visible = !gbThumbnails_Visible;
+            updateVisibleRecyclerItems();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     public class RecyclerViewCatalogGroupAdapter extends RecyclerView.Adapter<RecyclerViewCatalogGroupAdapter.ViewHolder> {
 
         private final TreeMap<Integer, ItemClass_CatalogItem> treeMap;
@@ -149,6 +196,7 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
         public class ViewHolder extends RecyclerView.ViewHolder {
 
             // each data item is just a string in this case
+            public final RelativeLayout relativeLayout_Row;
             public final ImageView imageView_Thumbnail;
             public final ImageView imageView_Attention;
             public final TextView textView_AttentionNote;
@@ -169,6 +217,7 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
             public ViewHolder(View v) {
                 super(v);
+                relativeLayout_Row = v.findViewById(R.id.relativeLayout_Row);
                 imageView_Thumbnail = v.findViewById(R.id.imageView_Thumbnail);
                 imageView_Attention = v.findViewById(R.id.imageView_Attention);
                 textView_AttentionNote = v.findViewById(R.id.textView_AttentionNote);
@@ -187,6 +236,28 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                 imageButton_GroupIDRemove = v.findViewById(R.id.imageButton_GroupIDRemove);
                 imageButton_GroupIDFilter = v.findViewById(R.id.imageButton_GroupIDFilter);
                 imageButton_CloseGroupingControls = v.findViewById(R.id.imageButton_CloseGroupingControls);
+            }
+
+            public void StartAction(ItemClass_CatalogItem icci){
+
+                giRecyclerViewLastSelectedPosition = this.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
+                //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
+                if (gbDebugTouch) {
+                    Toast.makeText(getApplicationContext(), "Click Item Number " + this.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
+                }
+
+                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                    StartVideoPlayerActivity(treeMap, icci.sItemID);
+
+                } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
+                    //Temporarily set the image catalog to use the video player activity to display images until the
+                    // SeriesImageViewer activity is genericized (was previously comic page viewer):
+                    StartVideoPlayerActivity(treeMap, icci.sItemID);
+
+                } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                    StartComicViewerActivity(icci);
+                }
+
             }
         }
 
@@ -240,196 +311,215 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
             //Load the non-obfuscated image into the RecyclerView ViewHolder:
 
-            Uri uriThumbnailUri;
-            boolean bThumbnailQuickLookupSuccess = true;
+            if(gbThumbnails_Visible) {
 
-            String sFileName = ci.sThumbnail_File;
-            if(sFileName.equals("")){
-                sFileName = ci.sFilename;
-            }
-            String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
-                    + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
-                    + GlobalClass.gsFileSeparator + sFileName;
-            if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
-                sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                ViewGroup.LayoutParams layoutParams = viewHolder.imageView_Thumbnail.getLayoutParams();
+                int iPixels =  (int) TypedValue.applyDimension(
+                                TypedValue.COMPLEX_UNIT_DIP,
+                                200,
+                                gResources.getDisplayMetrics());
+                layoutParams.width = iPixels;
+                layoutParams.height = MATCH_PARENT;
+                viewHolder.imageView_Thumbnail.setLayoutParams(layoutParams);
+
+                Uri uriThumbnailUri;
+                boolean bThumbnailQuickLookupSuccess = true;
+
+                String sFileName = ci.sThumbnail_File;
+                if (sFileName.equals("")) {
+                    sFileName = ci.sFilename;
+                }
+                String sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
                         + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
-                        + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
-            }
-            String sThumbnailUri = GlobalClass.gsUriAppRootPrefix
-                    + GlobalClass.gsFileSeparator + sPath;
-            uriThumbnailUri = Uri.parse(sThumbnailUri);
+                        + GlobalClass.gsFileSeparator + sFileName;
+                if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                    //If this is an m3u8 video style catalog item, configure the path to the file to use as the thumbnail.
+                    sPath = GlobalClass.gsCatalogFolderNames[ci.iMediaCategory]
+                            + GlobalClass.gsFileSeparator + ci.sFolderRelativePath
+                            + GlobalClass.gsFileSeparator + ci.sThumbnail_File; //ci.sFilename will be the m3u8 file name in this case.
+                }
+                String sThumbnailUri = GlobalClass.gsUriAppRootPrefix
+                        + GlobalClass.gsFileSeparator + sPath;
+                uriThumbnailUri = Uri.parse(sThumbnailUri);
 
-            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail Uri development complete.");
+                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail Uri development complete.");
 
-            if(GlobalClass.gbUseCatalogItemThumbnailDeepSearch) {
-                //Check to see if the thumbnail source is where it is supposed to be. If it is not
-                //  there, check for other related happenings that might identify the location.
-                //  This can add a little more tha 1/100th of a second to processing the thumbnail,
-                //  and in testing resulted in a stutter of the recyclerView.
-                bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
-                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail file verification complete.");
-            }
+                if (GlobalClass.gbUseCatalogItemThumbnailDeepSearch) {
+                    //Check to see if the thumbnail source is where it is supposed to be. If it is not
+                    //  there, check for other related happenings that might identify the location.
+                    //  This can add a little more tha 1/100th of a second to processing the thumbnail,
+                    //  and in testing resulted in a stutter of the recyclerView.
+                    bThumbnailQuickLookupSuccess = GlobalClass.CheckIfFileExists(uriThumbnailUri);
+                    stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail file verification complete.");
+                }
 
-            if(!bThumbnailQuickLookupSuccess) {
-                Uri uriCatalogItemFolder;
-                uriCatalogItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.giSelectedCatalogMediaCategory].toString(), ci.sFolderRelativePath);
+                if (!bThumbnailQuickLookupSuccess) {
+                    Uri uriCatalogItemFolder;
+                    uriCatalogItemFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.giSelectedCatalogMediaCategory].toString(), ci.sFolderRelativePath);
 
-                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
-                        ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
-                    //If this is a comic, and the files from DownloadManager have not been moved as
-                    //  part of download post-processing, look in the [comic]\download folder for the files:
-                    if (uriCatalogItemFolder != null) {
-                        Uri uriDLTempFolder = GlobalClass.FormChildUri(uriCatalogItemFolder.toString(), GlobalClass.gsDLTempFolderName);
-                        if (uriDLTempFolder != null) {
-                            uriThumbnailUri = GlobalClass.FormChildUri(uriDLTempFolder.toString(), ci.sFilename);
+                    if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS &&
+                            ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_COMIC_DLM_MOVE) {
+                        //If this is a comic, and the files from DownloadManager have not been moved as
+                        //  part of download post-processing, look in the [comic]\download folder for the files:
+                        if (uriCatalogItemFolder != null) {
+                            Uri uriDLTempFolder = GlobalClass.FormChildUri(uriCatalogItemFolder.toString(), GlobalClass.gsDLTempFolderName);
+                            if (uriDLTempFolder != null) {
+                                uriThumbnailUri = GlobalClass.FormChildUri(uriDLTempFolder.toString(), ci.sFilename);
+                            }
                         }
                     }
-                }
-                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                    if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
-                        //We are not doing anything with this item.
-                        uriThumbnailUri = null;
-                    } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
-                        //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
-                        Uri uriVideoTagFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolderRelativePath);
+                    if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
+                        if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_DLM_CONCAT) {
+                            //We are not doing anything with this item.
+                            uriThumbnailUri = null;
+                        } else if (ci.iSpecialFlag == ItemClass_CatalogItem.FLAG_VIDEO_M3U8) {
+                            //If this is a local M3U8, locate the downloaded thumbnail image or first video to present as thumbnail.
+                            Uri uriVideoTagFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_VIDEOS].toString(), ci.sFolderRelativePath);
 
-                        if (uriVideoTagFolder != null) {
-                            Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoTagFolder.toString(), ci.sItemID);
+                            if (uriVideoTagFolder != null) {
+                                Uri uriVideoWorkingFolder = GlobalClass.FormChildUri(uriVideoTagFolder.toString(), ci.sItemID);
 
-                            if (uriVideoWorkingFolder != null) {
-                                Uri uriDownloadedThumbnailFile = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sThumbnail_File);
+                                if (uriVideoWorkingFolder != null) {
+                                    Uri uriDownloadedThumbnailFile = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sThumbnail_File);
 
-                                if (uriDownloadedThumbnailFile != null) { //isDir if ci.sThum=="".
-                                    uriThumbnailUri = uriDownloadedThumbnailFile;
-                                } else {
-                                    //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
-                                    boolean bVideoFileFound = false;
-                                    Uri uriM3U8File = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sFilename);
-                                    if (uriM3U8File != null) {
-                                        try {
-                                            InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(uriM3U8File);
-                                            if (isM3U8File != null) {
-                                                BufferedReader brReader;
-                                                brReader = new BufferedReader(new InputStreamReader(isM3U8File));
-                                                String sLine = brReader.readLine();
-                                                while (sLine != null) {
-                                                    if (!sLine.startsWith("#") && sLine.contains(".st")) {
-                                                        Uri uriThumbnailFileCandidate = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), sLine);
-                                                        if (uriThumbnailFileCandidate != null) {
-                                                            uriThumbnailUri = uriThumbnailFileCandidate;
-                                                            bVideoFileFound = true;
-                                                            break;
+                                    if (uriDownloadedThumbnailFile != null) { //isDir if ci.sThum=="".
+                                        uriThumbnailUri = uriDownloadedThumbnailFile;
+                                    } else {
+                                        //If there is no downloaded thumbnail file, find the first .ts file and use that for the thumbnail:
+                                        boolean bVideoFileFound = false;
+                                        Uri uriM3U8File = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), ci.sFilename);
+                                        if (uriM3U8File != null) {
+                                            try {
+                                                InputStream isM3U8File = GlobalClass.gcrContentResolver.openInputStream(uriM3U8File);
+                                                if (isM3U8File != null) {
+                                                    BufferedReader brReader;
+                                                    brReader = new BufferedReader(new InputStreamReader(isM3U8File));
+                                                    String sLine = brReader.readLine();
+                                                    while (sLine != null) {
+                                                        if (!sLine.startsWith("#") && sLine.contains(".st")) {
+                                                            Uri uriThumbnailFileCandidate = GlobalClass.FormChildUri(uriVideoWorkingFolder.toString(), sLine);
+                                                            if (uriThumbnailFileCandidate != null) {
+                                                                uriThumbnailUri = uriThumbnailFileCandidate;
+                                                                bVideoFileFound = true;
+                                                                break;
+                                                            }
                                                         }
+                                                        // read next line
+                                                        sLine = brReader.readLine();
                                                     }
-                                                    // read next line
-                                                    sLine = brReader.readLine();
+                                                    brReader.close();
+                                                    isM3U8File.close();
                                                 }
-                                                brReader.close();
-                                                isM3U8File.close();
+
+                                            } catch (Exception e) {
+                                                //Probably a file IO exception.
+                                                bVideoFileFound = false; //redundant, but don't want special behavior.
                                             }
-
-                                        } catch (Exception e) {
-                                            //Probably a file IO exception.
-                                            bVideoFileFound = false; //redundant, but don't want special behavior.
                                         }
-                                    }
-                                    if (!bVideoFileFound) {
-                                        if (viewHolder.textView_CatalogItemNotification != null) {
-                                            //Notify the user that post-processing is incomplete:
-                                            viewHolder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
-                                            String sMessage = "Item pending post-processing...";
-                                            viewHolder.textView_CatalogItemNotification.setText(sMessage);
+                                        if (!bVideoFileFound) {
+                                            if (viewHolder.textView_CatalogItemNotification != null) {
+                                                //Notify the user that post-processing is incomplete:
+                                                viewHolder.textView_CatalogItemNotification.setVisibility(View.VISIBLE);
+                                                String sMessage = "Item pending post-processing...";
+                                                viewHolder.textView_CatalogItemNotification.setText(sMessage);
+                                            }
                                         }
-                                    }
 
-                                }  //End if we had to look for a .ts file to serve as a thumbnail file.
-                            } //End if unable to find video working folder DocumentFile.
-                        } //End if unable to find video tag folder DocumentFile.
-                    } //End if video is m3u8 style.
+                                    }  //End if we had to look for a .ts file to serve as a thumbnail file.
+                                } //End if unable to find video working folder DocumentFile.
+                            } //End if unable to find video tag folder DocumentFile.
+                        } //End if video is m3u8 style.
+                    } else {
+                        if (viewHolder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
+                            viewHolder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
+                        }
+                    }
+                    if (uriThumbnailUri != null) {
+                        if (!GlobalClass.CheckIfFileExists(uriThumbnailUri)) {
+                            uriThumbnailUri = null;
+                        }
+                    }
+                    stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "First thumbnail lookup didn't work. Second thumbnail lookup attempt complete.");
+                }
+
+
+                if (uriThumbnailUri != null) {
+                    if (!GlobalClass.gsRefreshCatalogViewerThumbnail.equals(ci.sItemID)) {
+                        //If a command to refresh a thumbnail is "" or not equal to a specified item,
+                        // let Glide load the image using whatever disk strategy it has been using.
+                        Glide.with(getApplicationContext())
+                                .load(uriThumbnailUri)
+                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .into(viewHolder.imageView_Thumbnail);
+                    } else {
+                        //Ignore cache. Used when the user updates a thumbnail.
+                        Glide.with(getApplicationContext())
+                                .load(uriThumbnailUri)
+                                .diskCacheStrategy(DiskCacheStrategy.NONE) //This will only affect this one call.
+                                .skipMemoryCache(true)
+                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .into(viewHolder.imageView_Thumbnail);
+
+                        //IF Glide is misbehaving, provide the option to clear the cache and memory:
+                        //https://bumptech.github.io/glide/doc/caching.html#cache-configuration
+                        //Glide.get(context).clearMemory();
+                        //Glide.get(applicationContext).clearDiskCache();
+
+                        GlobalClass.gsRefreshCatalogViewerThumbnail = "";
+                    }
+                    stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail load complete. ");
                 } else {
-                    if (viewHolder.textView_CatalogItemNotification != null) { //Default to turn off text notification for this video item.
-                        viewHolder.textView_CatalogItemNotification.setVisibility(View.INVISIBLE);
+                    //Special behavior if this is a comic.
+                    boolean bFoundMissingComicThumbnail = false;
+                    if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
+                        //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
+                        Uri uriComicFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ci.sFolderRelativePath);
+
+
+                        //Load the full path to each comic page into tmComicPages (sorts files):
+                        TreeMap<String, String> tmSortByFileName = new TreeMap<>();
+                        if (uriComicFolder != null) {
+                            ArrayList<String> sComicPages = GlobalClass.GetDirectoryFileNames(uriComicFolder);
+                            if (sComicPages.size() > 0) {
+                                for (String sComicPage : sComicPages) {
+                                    tmSortByFileName.put(GlobalClass.JumbleFileName(sComicPage), GlobalClass.FormChildUriString(uriComicFolder.toString(), sComicPage)); //de-jumble to get proper alphabetization.
+                                }
+                            }
+                            //Assign the existing file to be the new thumbnail file:
+                            if (tmSortByFileName.size() > 0) {
+                                Map.Entry<String, String> mapNewComicThumbnail = tmSortByFileName.firstEntry();
+                                if (mapNewComicThumbnail != null) {
+                                    ci.sFilename = GlobalClass.JumbleFileName(mapNewComicThumbnail.getKey()); //re-jumble to get actual file name.
+                                    uriThumbnailUri = Uri.parse(mapNewComicThumbnail.getValue());
+                                    bFoundMissingComicThumbnail = true;
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (bFoundMissingComicThumbnail) {
+                        Glide.with(getApplicationContext())
+                                .load(uriThumbnailUri)
+                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .into(viewHolder.imageView_Thumbnail);
+                        globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
+                    } else {
+                        Glide.with(getApplicationContext())
+                                .load(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
+                                .into(viewHolder.imageView_Thumbnail);
                     }
                 }
-                if(uriThumbnailUri != null) {
-                    if (!GlobalClass.CheckIfFileExists(uriThumbnailUri)) {
-                        uriThumbnailUri = null;
-                    }
-                }
-                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "First thumbnail lookup didn't work. Second thumbnail lookup attempt complete.");
-            }
-
-
-            if(uriThumbnailUri != null) {
-                if(!GlobalClass.gsRefreshCatalogViewerThumbnail.equals(ci.sItemID)) {
-                    //If a command to refresh a thumbnail is "" or not equal to a specified item,
-                    // let Glide load the image using whatever disk strategy it has been using.
-                    Glide.with(getApplicationContext())
-                            .load(uriThumbnailUri)
-                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(viewHolder.imageView_Thumbnail);
-                } else {
-                    //Ignore cache. Used when the user updates a thumbnail.
-                    Glide.with(getApplicationContext())
-                            .load(uriThumbnailUri)
-                            .diskCacheStrategy(DiskCacheStrategy.NONE ) //This will only affect this one call.
-                            .skipMemoryCache(true)
-                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(viewHolder.imageView_Thumbnail);
-
-                    //IF Glide is misbehaving, provide the option to clear the cache and memory:
-                    //https://bumptech.github.io/glide/doc/caching.html#cache-configuration
-                    //Glide.get(context).clearMemory();
-                    //Glide.get(applicationContext).clearDiskCache();
-
-                    GlobalClass.gsRefreshCatalogViewerThumbnail = "";
-                }
-                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail load complete. ");
+                stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail image loaded. ");
             } else {
-                //Special behavior if this is a comic.
-                boolean bFoundMissingComicThumbnail = false;
-                if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-                    //Check to see if the comic thumbnail was merely deleted such in the case if it were renamed or a duplicate, and if so select the next file (alphabetically) to be the thumbnail.
-                    Uri uriComicFolder = GlobalClass.FormChildUri(GlobalClass.gUriCatalogFolders[GlobalClass.MEDIA_CATEGORY_COMICS].toString(), ci.sFolderRelativePath);
 
+                ViewGroup.LayoutParams layoutParams = viewHolder.imageView_Thumbnail.getLayoutParams();
+                layoutParams.width = 0;
+                layoutParams.height = 0;
+                viewHolder.imageView_Thumbnail.setLayoutParams(layoutParams);
 
-                    //Load the full path to each comic page into tmComicPages (sorts files):
-                    TreeMap<String, String> tmSortByFileName = new TreeMap<>();
-                    if(uriComicFolder != null){
-                        ArrayList<String> sComicPages = GlobalClass.GetDirectoryFileNames(uriComicFolder);
-                        if(sComicPages.size() > 0) {
-                            for (String sComicPage : sComicPages) {
-                                tmSortByFileName.put(GlobalClass.JumbleFileName(sComicPage), GlobalClass.FormChildUriString(uriComicFolder.toString(), sComicPage)); //de-jumble to get proper alphabetization.
-                            }
-                        }
-                        //Assign the existing file to be the new thumbnail file:
-                        if(tmSortByFileName.size() > 0) {
-                            Map.Entry<String, String> mapNewComicThumbnail = tmSortByFileName.firstEntry();
-                            if(mapNewComicThumbnail != null) {
-                                ci.sFilename = GlobalClass.JumbleFileName(mapNewComicThumbnail.getKey()); //re-jumble to get actual file name.
-                                uriThumbnailUri = Uri.parse(mapNewComicThumbnail.getValue());
-                                bFoundMissingComicThumbnail = true;
-                            }
-                        }
-                    }
-
-                }
-
-                if(bFoundMissingComicThumbnail){
-                    Glide.with(getApplicationContext())
-                            .load(uriThumbnailUri)
-                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(viewHolder.imageView_Thumbnail);
-                    globalClass.CatalogDataFile_UpdateRecord(ci); //update the record with the new thumbnail file name.
-                } else {
-                    Glide.with(getApplicationContext())
-                            .load(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .placeholder(R.drawable.baseline_image_white_18dp_wpagepad)
-                            .into(viewHolder.imageView_Thumbnail);
-                }
             }
-            stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail image loaded. ");
 
             String sThumbnailText = "";
             switch (GlobalClass.giSelectedCatalogMediaCategory) {
@@ -451,18 +541,13 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                 case GlobalClass.MEDIA_CATEGORY_COMICS:
                     sItemName = ci.sTitle;
                     sThumbnailText = sItemName;
-                    if(!ci.sComicVolume.equals("") || !ci.sComicChapter.equals("")) {
-                        sThumbnailText = sThumbnailText + ", ";
-                        if (!ci.sComicVolume.equals("")) {
-                            sThumbnailText = sThumbnailText + "Volume " + ci.sComicVolume;
-                            if (!ci.sComicChapter.equals("")) {
-                                sThumbnailText = sThumbnailText + ", ";
-                            }
-                        }
-                        if (!ci.sComicChapter.equals("")) {
-                            sThumbnailText = sThumbnailText + "Chapter " + ci.sComicChapter;
-                        }
+                    if (!ci.sComicVolume.equals("")) {
+                        sThumbnailText = sThumbnailText + ", Volume " + ci.sComicVolume;
                     }
+                    if (!ci.sComicChapter.equals("")) {
+                        sThumbnailText = sThumbnailText + ", Chapter " + ci.sComicChapter;
+                    }
+
                     if(!ci.sComicChapterSubtitle.equals("")){
                         sThumbnailText = sThumbnailText + " - " + ci.sComicChapterSubtitle;
                     }
@@ -479,57 +564,62 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Thumbnail text set. ");
 
 
-
+            viewHolder.relativeLayout_Row.setOnClickListener(view -> {
+                viewHolder.StartAction(ci_final);
+            });
             viewHolder.imageView_Thumbnail.setOnClickListener(v -> {
-                giRecyclerViewLastSelectedPosition = viewHolder.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
-                //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
-                if (gbDebugTouch) {
-                    Toast.makeText(getApplicationContext(), "Click Item Number " + viewHolder.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
-                }
-
-                if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                    StartVideoPlayerActivity(treeMap, ci_final.sItemID);
-
-                } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES) {
-                    //Temporarily set the image catalog to use the video player activity to display images until the
-                    // SeriesImageViewer activity is genericized (was previously comic page viewer):
-                    StartVideoPlayerActivity(treeMap, ci_final.sItemID);
-
-                } else if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                    StartComicViewerActivity(ci_final);
-                }
+                viewHolder.StartAction(ci_final);
+            });
+            viewHolder.textView_Title.setOnClickListener(view -> {
+                viewHolder.StartAction(ci_final);
+            });
+            viewHolder.textView_Details.setOnClickListener(view -> {
+                viewHolder.StartAction(ci_final);
+            });
+            viewHolder.imageView_Attention.setOnClickListener(v -> {
+                viewHolder.StartAction(ci_final);
+            });
+            viewHolder.textView_AttentionNote.setOnClickListener(view -> {
+                viewHolder.StartAction(ci_final);
             });
 
+            boolean bAttention_Visible = false;
             if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS) {
-                if (ci.sComic_Missing_Pages.equals("")) {
-                    viewHolder.imageView_Attention.setVisibility(View.INVISIBLE);
-                    viewHolder.textView_AttentionNote.setVisibility(View.INVISIBLE);
-                } else {
-                    viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
-                    viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                if (!ci.sComic_Missing_Pages.equals("")) {
+                    bAttention_Visible = true;
                     String sAttentionNote = "Missing pages: " + ci.sComic_Missing_Pages;
                     viewHolder.textView_AttentionNote.setText(sAttentionNote);
                 }
             } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
-                if (ci.lDuration_Milliseconds >= 0) {
-                    viewHolder.imageView_Attention.setVisibility(View.INVISIBLE);
-                    viewHolder.textView_AttentionNote.setVisibility(View.INVISIBLE);
-                } else {
+                if (ci.lDuration_Milliseconds < 0) {
                     //Duration is <0 only when the source is from an online stream (M3U8), and suggests
                     //  that there was an error in the FFMPEG concatenation activity
-                    viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
-                    viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    bAttention_Visible = true;
                     String sAttentionNote = "Possible incomplete stream download.";
                     viewHolder.textView_AttentionNote.setText(sAttentionNote);
                 }
                 if (ci.iAllVideoSegmentFilesDetected == ItemClass_CatalogItem.VIDEO_SEGMENT_FILES_KNOWN_INCOMPLETE){
-                    viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
-                    viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
+                    bAttention_Visible = true;
                     String sAttentionNote = "Incomplete stream download.";
                     viewHolder.textView_AttentionNote.setText(sAttentionNote);
                 }
 
             }
+            if(bAttention_Visible){
+                viewHolder.imageView_Attention.setVisibility(View.VISIBLE);
+                ViewGroup.LayoutParams layoutParams = viewHolder.imageView_Attention.getLayoutParams();
+                layoutParams.height = WRAP_CONTENT;
+                viewHolder.imageView_Attention.setLayoutParams(layoutParams);
+                viewHolder.textView_AttentionNote.setVisibility(View.VISIBLE);
+            } else {
+                viewHolder.imageView_Attention.setVisibility(View.INVISIBLE);
+                ViewGroup.LayoutParams layoutParams = viewHolder.imageView_Attention.getLayoutParams();
+                layoutParams.height = 0;
+                viewHolder.imageView_Attention.setLayoutParams(layoutParams);
+                viewHolder.textView_AttentionNote.setVisibility(View.INVISIBLE);
+
+            }
+
 
             stopWatch.PostDebugLogAndRestart(sWatchMessageBase + "Catalog item attention icon and text configured.");
 
@@ -615,6 +705,9 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                     //If the user has opened the grouping controls for this item or if the user
                     //  has copied a GroupID to the internal clipboard, show the grouping controls.
                     viewHolder.linearLayout_GroupingControls.setVisibility(View.VISIBLE);
+                    ViewGroup.LayoutParams layoutParams = viewHolder.linearLayout_GroupingControls.getLayoutParams();
+                    layoutParams.height = WRAP_CONTENT;
+                    viewHolder.linearLayout_GroupingControls.setLayoutParams(layoutParams);
                     viewHolder.imageButton_OpenGroupingControls.setVisibility(View.INVISIBLE);
 
                     //If controls are shown, you must calc the colors every time otherwise it will recycle colors.
@@ -641,6 +734,9 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                             tvGroupingTextViews);
                 } else {
                     viewHolder.linearLayout_GroupingControls.setVisibility(View.INVISIBLE);
+                    ViewGroup.LayoutParams layoutParams = viewHolder.linearLayout_GroupingControls.getLayoutParams();
+                    layoutParams.height = 0;
+                    viewHolder.linearLayout_GroupingControls.setLayoutParams(layoutParams);
                     viewHolder.imageButton_OpenGroupingControls.setVisibility(View.VISIBLE);
                 }
 
@@ -769,22 +865,33 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                 });
 
                 viewHolder.imageButton_GroupIDRemove.setOnClickListener(v -> {
-                    ci.sGroupID = "";
-                    ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
-                    ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
-                    ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
-                    ci.iGroupingControlHighlightContrastColor = 0;
-                    GlobalClass.applyGroupingControlsColor(
-                            ci,
-                            viewHolder.linearLayout_GroupingControls,
-                            ibGroupingControls,
-                            tvGroupingTextViews);
-                    viewHolder.textView_GroupID.setText("----");
-                    setGroupControlSize(viewHolder.imageButton_GroupIDCopy, 0);
-                    setGroupControlSize(viewHolder.imageButton_GroupIDFilter, 0);
-                    setGroupControlSize(viewHolder.imageButton_GroupIDRemove, 0);
-                    Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
-                    globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+                    String sConfirmationMessage = "Are you sure you want to remove assigned group ID?";
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext(), R.style.AlertDialogCustomStyle);
+                    builder.setTitle("Remove Group Assignment");
+                    builder.setMessage(sConfirmationMessage);
+                    builder.setPositiveButton("Yes", (dialog, id) -> {
+                        dialog.dismiss();
+                        ci.sGroupID = "";
+                        ci.iGroupingControlsColor = ContextCompat.getColor(getApplicationContext(), R.color.colorBlack);
+                        ci.iGroupingControlsContrastColor = ContextCompat.getColor(getApplicationContext(), R.color.colorTextColor);
+                        ci.iGroupingControlHighlight = 0;   //Does not matter without an assigned group ID - used to indicate that the filter is on.
+                        ci.iGroupingControlHighlightContrastColor = 0;
+                        GlobalClass.applyGroupingControlsColor(
+                                ci,
+                                viewHolder.linearLayout_GroupingControls,
+                                ibGroupingControls,
+                                tvGroupingTextViews);
+                        viewHolder.textView_GroupID.setText("----");
+                        setGroupControlSize(viewHolder.imageButton_GroupIDCopy, 0);
+                        setGroupControlSize(viewHolder.imageButton_GroupIDFilter, 0);
+                        setGroupControlSize(viewHolder.imageButton_GroupIDRemove, 0);
+                        Toast.makeText(getApplicationContext(), "Group ID removed.", Toast.LENGTH_SHORT).show();
+                        globalClass.CatalogDataFile_UpdateCatalogFile(ci.iMediaCategory, "Saving...");
+                    });
+                    builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                    AlertDialog adConfirmationDialog = builder.create();
+                    adConfirmationDialog.show();
                 });
 
                 viewHolder.imageButton_GroupIDFilter.setOnClickListener(v -> {
