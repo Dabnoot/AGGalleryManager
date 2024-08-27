@@ -59,7 +59,6 @@
         <activity
             android:name=".Activity_ComicDetails"
             android:label="@string/title_activity_comic_details"
-            android:parentActivityName=".Activity_CatalogViewer"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".Activity_ComicViewer"
