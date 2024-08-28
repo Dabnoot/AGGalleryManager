@@ -13,6 +13,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -38,6 +40,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -741,6 +744,58 @@ public class Fragment_WebPageTab extends Fragment {
                 }
                 return super.shouldInterceptRequest(view, request);
 
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+
+                //Give the user a message if they are leaving the host area, such as for an add redirect:
+
+
+                //Determine the base host address:
+                String sHostAddress = "";
+                int iCharIndexOfHostStart = gsWebAddress.indexOf("://");
+                if(iCharIndexOfHostStart > 0){
+                    iCharIndexOfHostStart += 3;
+                    int iCharIndexOfHostEnd = gsWebAddress.indexOf("/", iCharIndexOfHostStart);
+                    if(iCharIndexOfHostEnd > 0){
+                        sHostAddress = gsWebAddress.substring(0,iCharIndexOfHostEnd);
+                    }
+                }
+
+                //Determine if navigation should continue regardless:
+                String sRequestedAddress = request.getUrl().toString();
+                if(sHostAddress.equals("") ||
+                        sRequestedAddress.startsWith(sHostAddress) ||
+                        sRequestedAddress.equals("https://www.google.com")){
+                    return super.shouldOverrideUrlLoading(view, request);
+                }
+
+                //Determine the host for the new page for reporting to the user:
+                String sNewHostAddress = "";
+                iCharIndexOfHostStart = sRequestedAddress.indexOf("://");
+                if(iCharIndexOfHostStart > 0){
+                    iCharIndexOfHostStart += 3;
+                    int iCharIndexOfHostEnd = sRequestedAddress.indexOf("/", iCharIndexOfHostStart);
+                    if(iCharIndexOfHostEnd > 0){
+                        sNewHostAddress = sRequestedAddress.substring(0,iCharIndexOfHostEnd);
+                    }
+                }
+
+                String sConfirmationMessage = "Web page tab is attempting to navigate to a new URL. Would you like to allow this navigation?\nNew host: " + sNewHostAddress;
+                AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext(), R.style.AlertDialogCustomStyle);
+                builder.setTitle("Tab Navigation");
+                builder.setMessage(sConfirmationMessage);
+                builder.setPositiveButton("Yes", (dialog, id) -> {
+                    dialog.dismiss();
+                    view.loadUrl(request.getUrl().toString());
+                    //super.shouldOverrideUrlLoading(view, request);
+
+                });
+                builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                AlertDialog adConfirmationDialog = builder.create();
+                adConfirmationDialog.show();
+                return true;
             }
         };
 
