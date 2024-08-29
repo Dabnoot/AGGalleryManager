@@ -12,6 +12,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
@@ -22,8 +23,6 @@ import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -387,6 +386,59 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
 
             }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+
+                //Give the user a message if they are leaving the host area, such as for an ad redirect:
+
+
+                //Determine the base host address:
+                String sOriginalAddress = viewModelImportActivity.sWebAddress;
+                String sHostAddress = "";
+                int iCharIndexOfHostStart = sOriginalAddress.indexOf("://");
+                if(iCharIndexOfHostStart > 0){
+                    iCharIndexOfHostStart += 3;
+                    int iCharIndexOfHostEnd = sOriginalAddress.indexOf("/", iCharIndexOfHostStart);
+                    if(iCharIndexOfHostEnd > 0){
+                        sHostAddress = sOriginalAddress.substring(0,iCharIndexOfHostEnd);
+                    }
+                }
+
+                //Determine if navigation should continue regardless:
+                String sRequestedAddress = request.getUrl().toString();
+                if(sHostAddress.equals("") ||
+                        sRequestedAddress.startsWith(sHostAddress) ||
+                        sRequestedAddress.equals("https://www.google.com")){
+                    return super.shouldOverrideUrlLoading(view, request);
+                }
+
+                //Determine the host for the new page for reporting to the user:
+                String sNewHostAddress = "";
+                iCharIndexOfHostStart = sRequestedAddress.indexOf("://");
+                if(iCharIndexOfHostStart > 0){
+                    iCharIndexOfHostStart += 3;
+                    int iCharIndexOfHostEnd = sRequestedAddress.indexOf("/", iCharIndexOfHostStart);
+                    if(iCharIndexOfHostEnd > 0){
+                        sNewHostAddress = sRequestedAddress.substring(0,iCharIndexOfHostEnd);
+                    }
+                }
+
+                String sConfirmationMessage = "Web page tab is attempting to navigate to a new URL. Would you like to allow this navigation?\nNew host: " + sNewHostAddress;
+                AlertDialog.Builder builder = new AlertDialog.Builder(view.getContext(), R.style.AlertDialogCustomStyle);
+                builder.setTitle("Tab Navigation");
+                builder.setMessage(sConfirmationMessage);
+                builder.setPositiveButton("Yes", (dialog, id) -> {
+                    dialog.dismiss();
+                    view.loadUrl(request.getUrl().toString());
+                    //super.shouldOverrideUrlLoading(view, request);
+
+                });
+                builder.setNegativeButton("No", (dialog, id) -> dialog.dismiss());
+                AlertDialog adConfirmationDialog = builder.create();
+                adConfirmationDialog.show();
+                return true;
+            }
         });
 
 
@@ -715,7 +767,9 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         if (sLogLine.contains("Click 'Next' to continue.")) {
                             gButton_Next.setEnabled(true);
                         } else {
-                            gButton_Next.setEnabled(false);
+                            //gButton_Next.setEnabled(false);
+                            //New logging, such as continuously detected resource requests of a particular type,
+                            // would cause the Next button to become disabled.
                         }
                     }
                 }
