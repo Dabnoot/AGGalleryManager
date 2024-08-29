@@ -29,6 +29,7 @@ import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -1785,6 +1786,7 @@ public class Activity_Import extends AppCompatActivity {
 
             CheckBox checkBox_StorageItemSelect =  row.findViewById(R.id.checkBox_StorageItemSelect);
             final VideoView vvPreview =  row.findViewById(R.id.videoView_Preview);
+
             TextView tvLine1 =  row.findViewById(R.id.textView_Line1);
             TextView tvLine2 = row.findViewById(R.id.textView_Line2);
             TextView tvLine3 = row.findViewById(R.id.textView_Line3);
@@ -1808,11 +1810,17 @@ public class Activity_Import extends AppCompatActivity {
             }
             tvLine2.setText(sLine2);
 
-            tvLine3.setVisibility(View.INVISIBLE);
-
             //Display a thumbnail:
-
+            vvPreview.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+                    String sMessage = "Problem locating video.";
+                    tvLine2.setText(sMessage);
+                    return true;
+                }
+            });
             String sURLVideoLink = alFileItems.get(position).sURLVideoLink;
+            tvLine3.setText(sURLVideoLink);
             if(!sURLVideoLink.equals("")) {
                 vvPreview.setVideoPath(sURLVideoLink);
                 //vvPreview.start();
