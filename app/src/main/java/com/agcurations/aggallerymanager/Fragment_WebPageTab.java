@@ -749,7 +749,7 @@ public class Fragment_WebPageTab extends Fragment {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 
-                //Give the user a message if they are leaving the host area, such as for an add redirect:
+                //Give the user a message if they are leaving the host area, such as for an ad redirect:
 
 
                 //Determine the base host address:
