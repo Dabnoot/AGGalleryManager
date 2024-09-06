@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activity_XPath_Tester">
+
+    <TextView
+        android:id="@+id/textView_TitleSubText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="5dp"
+        android:layout_marginStart="10dp"
+        android:textSize="20dp"
+        android:textColor="@color/colorTextColor"
+        android:text="Use this area to determine XPath string to isolate components of a webpage."/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout_WebAddress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/textView_TitleSubText"
+        android:layout_toStartOf="@id/button_Go"
+        android:layout_below="@+id/textView_TitleSubText"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:hint="Address"
+        android:textColorHint="@color/colorTextColor"
+        app:endIconMode="clear_text">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/textInputEditText_WebAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="@color/colorTextColor"
+            android:textCursorDrawable="@null"
+            android:text="https://mangapark.io/title/10049-en-hikaru-no-go"/><!--android:textCursorDrawable="@null" forces the cursor to use the text color-->
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/button_Go"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/textInputLayout_WebAddress"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@id/textInputLayout_WebAddress"
+
+        android:layout_marginEnd="10dp"
+        android:backgroundTint="@color/colorButton"
+        android:text="Go"
+        android:textSize="20sp" />
+
+    <com.agcurations.aggallerymanager.VideoEnabledWebView
+        android:id="@+id/videoEnabledWebView_webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/textInputLayout_WebAddress"
+        android:layout_above="@+id/textInputLayout_XPathString"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout_XPathString"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/textView_TitleSubText"
+        android:layout_toStartOf="@id/button_TestXPathString"
+        android:layout_above="@+id/scrollView_OutputLog"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:hint="XPath Expression"
+        android:textColorHint="@color/colorTextColor"
+        app:endIconMode="clear_text">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/textInputEditText_XPathExpression"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="//a[@class='link-hover link-primary visited:text-accent']"
+            android:textColor="@color/colorTextColor"
+            android:textSize="20sp" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/button_TestXPathString"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/textInputLayout_XPathString"
+        android:layout_alignParentEnd="true"
+        android:layout_alignBottom="@id/textInputLayout_XPathString"
+        android:layout_marginEnd="10dp"
+        android:backgroundTint="@color/colorButton"
+        android:enabled="false"
+        android:text="Test"
+        android:textSize="20sp" />
+
+    <ScrollView
+        android:id="@+id/scrollView_OutputLog"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dp"
+        android:textColor="@color/colorTextColor"
+        android:background="@color/colorBackgroundShadow"
+        android:scrollbarSize="20dp">
+        <TextView
+            android:id="@+id/textView_OutputLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorTextColor"
+            android:gravity="bottom"
+            android:text="[XPath Result]"/>
+    </ScrollView>
+
+    <RelativeLayout
+        android:id="@+id/linearLayout_Progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <ProgressBar
+            android:id="@+id/progressBar_GeneralPurpose"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:progressDrawable="@drawable/progressbar_colors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"/>
+
+        <TextView
+            android:id="@+id/textView_ProgressBarText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="invisible"
+            android:textColor="@color/colorTextColor"/>
+    </RelativeLayout>
+
+</RelativeLayout>

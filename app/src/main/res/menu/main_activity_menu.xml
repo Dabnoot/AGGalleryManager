@@ -26,6 +26,8 @@
         android:title="Catalog Analysis"/>
     <item android:id="@+id/menu_WorkerConsole"
         android:title="Worker Console"/>
+    <item android:id="@+id/menu_XPathTester"
+        android:title="XPath Tester"/>
     <!--<item android:id="@+id/menu_About"
         android:title="@string/about" />-->
     <!--<item android:id="@+id/menu_Test"

@@ -735,6 +735,10 @@ public class Activity_Main extends AppCompatActivity {
             Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
             startActivity(intentWorkerConsoleActivity);
             return true;
+        } else  if(item.getItemId() == R.id.menu_XPathTester){
+            Intent intentXPathTesterActivity = new Intent(this, Activity_XPath_Tester.class);
+            startActivity(intentXPathTesterActivity);
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }

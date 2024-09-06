@@ -18,6 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".Activity_XPath_Tester"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan"/>
+        <activity
             android:name=".Activity_ComicGroupViewer"
             android:exported="false"
             android:theme="@style/AppTheme" />
@@ -70,7 +74,7 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_comic_viewer2"
             android:parentActivityName=".Activity_ComicDetails"
-            android:theme="@style/AppTheme.Fullscreen"/>
+            android:theme="@style/AppTheme.Fullscreen" />
         <activity
             android:name=".Activity_ExportComics"
             android:parentActivityName=".Activity_CatalogViewer"
