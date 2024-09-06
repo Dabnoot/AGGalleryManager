@@ -68,6 +68,8 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
+import androidx.work.ListenableWorker;
 
 import com.google.common.io.BaseEncoding;
 
@@ -1020,6 +1022,25 @@ public class GlobalClass extends Application {
         dialog.show();
     }
 
+    public boolean WaitForObjectReady(AtomicBoolean abIsReady, int iMaxWaitTimeMinutes){
+        int iMaxWaitTimeSeconds = iMaxWaitTimeMinutes * 60;
+        long lMaxWaitTimeMS = iMaxWaitTimeSeconds * 1000L;
+        long lCummulativeWaitTimeMS = 0;
+        int iWaitTimeInvervalMS = 250;
+        while(!abIsReady.get() && lCummulativeWaitTimeMS < lMaxWaitTimeMS){
+            try {
+                Thread.sleep(iWaitTimeInvervalMS);
+                lCummulativeWaitTimeMS += iWaitTimeInvervalMS;
+            } catch (Exception ignored){
+                return false;
+            }
+        }
+        if(lCummulativeWaitTimeMS >= lMaxWaitTimeMS){
+            return false;
+        }
+        return true;
+    }
+
 
     //=====================================================================================
     //===== Catalog Subroutines Section ===================================================
@@ -1036,7 +1057,8 @@ public class GlobalClass extends Application {
         String sHeader = "";
         sHeader = sHeader + "MediaCategory";                        //Video, image, or comic.
         sHeader = sHeader + "\t" + "ItemID";                        //Video, image, comic id
-        sHeader = sHeader + "\t" + "GroupID";                        //Video, image, comic id
+        sHeader = sHeader + "\t" + "GroupID";                       //Group ID
+        sHeader = sHeader + "\t" + "Group Sequence";                //Sequence number within a Group
         sHeader = sHeader + "\t" + "Filename";                      //Video or image filename
         sHeader = sHeader + "\t" + "Folder Relative Path";          //Name of the folder holding the video, image, or comic pages
         sHeader = sHeader + "\t" + "Thumbnail_File";                //Name of the file used as the thumbnail for a video or comic
@@ -1094,7 +1116,8 @@ public class GlobalClass extends Application {
         sbRecord.append(ci.iMediaCategory)                                          //Video, image, or comic.
                 .append("\t").append(JumbleStorageText(ci.sItemID))                         //Video, image, comic id
                 .append("\t").append(JumbleStorageText(ci.sGroupID))                        //Group ID to identify explict related items related much more closely than generic tags.
-                .append("\t").append(ci.sFilename)                                          //Video or image filename
+                .append("\t").append(JumbleStorageText(ci.iGroupSequence))                  //Sequence of item within a group
+                .append("\t").append(ci.sFilename)                                          //Video or image filename. The file name is jumbled at the moment in which it was written to storage.
                 .append("\t").append(JumbleStorageText(ci.sFolderRelativePath))             //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
                 .append("\t").append(ci.sThumbnail_File)                                    //Name of the file used as the thumbnail for a video or comic
                 .append("\t").append(JumbleStorageText(ci.dDatetime_Import))                //Date of import. Used for sorting if desired
@@ -1156,6 +1179,7 @@ public class GlobalClass extends Application {
         ci.iMediaCategory = Integer.parseInt(sRecord[iFieldIndex++]);                               //Video, image, or comic.
         ci.sItemID = JumbleStorageText(sRecord[iFieldIndex++]);                                     //Video, image, comic id
         ci.sGroupID = JumbleStorageText(sRecord[iFieldIndex++]);                                    //Group ID to identify explict related items related much more closely than generic tags.
+        ci.iGroupSequence = Integer.parseInt(JumbleStorageText(sRecord[iFieldIndex++]));                               //Sequence of item within a group
         ci.sFilename = sRecord[iFieldIndex++];                                                      //Video or image filename
         ci.sFolderRelativePath = JumbleStorageText(sRecord[iFieldIndex++]);                                //Relative path of the folder holding the video, image, or comic pages, relative to the catalog folder.
         ci.sThumbnail_File = sRecord[iFieldIndex++];                                                //Name of the file used as the thumbnail for a video or comic
@@ -1261,7 +1285,7 @@ public class GlobalClass extends Application {
         return true;
     }
 
-    public String CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
+    public void CatalogDataFile_CreateNewRecords(ArrayList<ItemClass_CatalogItem> alci_CatalogItems) {
 
         String sMessage;
 
@@ -1271,15 +1295,15 @@ public class GlobalClass extends Application {
             if(alci_CatalogItems.size() > 0){
                 iMediaCategory = alci_CatalogItems.get(0).iMediaCategory; //All items should have the same media category.
             } else {
-                return "No catalog items passed for creation of new records.";
+                return;
             }
         } else {
-            return "No catalog items passed for creation of new records.";
+            return;
         }
 
         //Wait for the catalog file to become available:
         if(!IsCatalogFileAvailability(iMediaCategory)){
-            return "Catalog file is being used by another process.";
+            return;
         }
         GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(false);
 
@@ -1313,7 +1337,7 @@ public class GlobalClass extends Application {
 
                 //Set the catalog file to "available":
                 GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
-                return sMessage;
+                return;
             }
             //Write the data to the file:
             osNewCatalogContentsFile.write(sbNewCatalogRecords.toString().getBytes());
@@ -1330,7 +1354,7 @@ public class GlobalClass extends Application {
 
             //Set the catalog file to "available":
             GlobalClass.gAB_CatalogFileAvailable[iMediaCategory].set(true);
-            return sMessage;
+            return;
         }
 
         //Set the catalog file to "available":
@@ -1339,7 +1363,6 @@ public class GlobalClass extends Application {
         //Update the tags histogram:
         updateTagHistogramsIfRequired();
 
-        return "";
     }
 
     public void CatalogDataFile_UpdateRecord(ItemClass_CatalogItem ci) {
@@ -3670,8 +3693,11 @@ public class GlobalClass extends Application {
 
     }
 
-
-
+    //=====================================================================================
+    //===== XPath Testing  ================================================================
+    //=====================================================================================
+    public static String sWebPageHTML;
+    public static AtomicBoolean gabHTMLHolderAvailable = new AtomicBoolean(true);
 
     //=====================================================================================
     //===== Import Options ================================================================
@@ -3712,6 +3738,10 @@ public class GlobalClass extends Application {
 
     //Create an array of keys that allow program to locate image links:
     ArrayList<ItemClass_WebComicDataLocator> galWebComicDataLocators;
+
+    //Array to allow passing of web comic series analysis data:
+    public static AtomicBoolean gabComicSeriesArrayAvailable = new AtomicBoolean(true);
+    public static ArrayList<ItemClass_File> galicf_ComicSeriesEntries;
 
     public static boolean gbComicAutoDetect = true; //Automatically Detect/Analyze webpage contents once page has loaded.
 
