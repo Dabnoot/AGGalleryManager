@@ -82,7 +82,7 @@
             android:id="@+id/textInputEditText_XPathExpression"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="//a[@class='link-hover link-primary visited:text-accent']"
+            android:text="//body/div/main/div[1]/div[2]/div[4]/div/div[1]/div[1]/react-island/div/div[1]"
             android:textColor="@color/colorTextColor"
             android:textSize="20sp" />
 

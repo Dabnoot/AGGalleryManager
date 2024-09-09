@@ -16,16 +16,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
-public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
+public class Fragment_Import_2d_PreviewDetectedWebComicSeries extends Fragment {
 
     public static ViewModel_ImportActivity viewModelImportActivity;
 
-    public Fragment_Import_2c_PreviewDetectedWebComic() {
+    public Fragment_Import_2d_PreviewDetectedWebComicSeries() {
         // Required empty public constructor
     }
 
-    public static Fragment_Import_2c_PreviewDetectedWebComic newInstance() {
-        return new Fragment_Import_2c_PreviewDetectedWebComic();
+    public static Fragment_Import_2d_PreviewDetectedWebComicSeries newInstance() {
+        return new Fragment_Import_2d_PreviewDetectedWebComicSeries();
     }
 
     RecyclerView gRecyclerView;
@@ -45,7 +45,7 @@ public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_import_2c_preview_detctd_web_comic, container, false);
+        return inflater.inflate(R.layout.fragment_import_2d_preview_detctd_web_comic_ser, container, false);
     }
 
     private Parcelable recyclerViewState;

@@ -470,12 +470,17 @@ public class Activity_Import extends AppCompatActivity {
 
     public void buttonNextClick_ComicSourceSelected(View v){
         RadioButton radioButton_ComicSourceWebpage = findViewById(R.id.radioButton_ComicSourceWebpage);
+        RadioButton radioButton_ComicSeriesSourceWebpage = findViewById(R.id.radioButton_ComicSeriesSourceWebpage);
 
-        int iNewComicSource;
+        int iNewComicSource; //This variable used to reset if the user used the back button to select a different import source.
 
-        if (radioButton_ComicSourceWebpage.isChecked()){
-            iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+        if (radioButton_ComicSourceWebpage.isChecked() || radioButton_ComicSeriesSourceWebpage.isChecked()){
             gpDisplayDims = GlobalClass.getScreenWidth(this); //For recycler grid imageview sizing.
+            if (radioButton_ComicSourceWebpage.isChecked()) {
+                iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+            } else {
+                iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE_SERIES;
+            }
         } else {
             iNewComicSource = ViewModel_ImportActivity.COMIC_SOURCE_FOLDER;
         }
@@ -489,7 +494,7 @@ public class Activity_Import extends AppCompatActivity {
         if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_FOLDER) {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1_ID_STORAGE_LOCATION, false);
 
-        } else {// if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE) { //Allow user to import web address of a comic to import.
+        } else {
             ViewPager2_Import.setCurrentItem(FRAGMENT_IMPORT_1C_ID_COMIC_WEB_DETECT, false);
 
         }
@@ -538,7 +543,8 @@ public class Activity_Import extends AppCompatActivity {
         boolean bImportIsOnlineVideo = viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE;
         boolean bImportIsOnlineComic = viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE;
+                && (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE
+                    || viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE_SERIES);
 
         boolean bNewTagsFound = false;
         if(bImportIsOnlineVideo){
@@ -610,7 +616,8 @@ public class Activity_Import extends AppCompatActivity {
                 && viewModelImportActivity.iVideoImportSource == ViewModel_ImportActivity.VIDEO_SOURCE_WEBPAGE)
             || (viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER)
             || (viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS
-                && viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE)){
+                && (viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE
+                    || viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE_SERIES))){
             //If we are importing from the web or holding folder, go to import confirm.
             if (viewModelImportActivity.iImageImportSource == ViewModel_ImportActivity.IMAGE_SOURCE_HOLDING_FOLDER){
                 viewModelImportActivity.iImportMethod = GlobalClass.MOVE; //Always move items from the holding folder.

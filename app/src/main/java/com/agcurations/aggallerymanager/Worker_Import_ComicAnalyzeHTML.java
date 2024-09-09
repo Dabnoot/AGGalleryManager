@@ -19,6 +19,7 @@ import java.util.TreeMap;
 
 import androidx.annotation.NonNull;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -39,6 +40,8 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
     @Override
     public Result doWork() {
         GlobalClass globalClass = (GlobalClass) getApplicationContext();
+
+        String sMessage;
 
         globalClass.BroadcastProgress(true, "Searching webpage for target data...",
                 false, 0,
@@ -115,7 +118,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
             sHTML = sHTML.replaceAll("tag-container field-name ", "tag-container field-name"); //Quick find&replace specific to a particular website. //TODO: specify in vdsk.
             node = pageParser.clean(sHTML);
         } catch (Exception e){
-            String sMessage = "Problem with HTML parser. Try again?\n" + e.getMessage();
+            sMessage = "Problem with HTML parser. Try again?\n" + e.getMessage();
             globalClass.problemNotificationConfig(sMessage, gsIntentActionFilter);
             return Result.failure();
         }
@@ -132,6 +135,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         broadcastIntent.addCategory(Intent.CATEGORY_DEFAULT);
 
         String sTitle = "";
+        String sComicDescription = "";
         String sComicThumbnailURL = "";
         String sComicParodies = "";
         String sComicCharacters = "";
@@ -431,7 +435,7 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         int iMinimumWidth = d.getMinimumWidth();
                         iThumbnailURLImageWidth = Math.max(iIntrinsicWidth, iMinimumWidth);
                     } catch (Exception e) {
-                        String sMessage = e.getMessage();
+                        sMessage = e.getMessage();
                         Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
                     }
 
@@ -455,164 +459,267 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
         } else if(icWebDataLocator.sShortName.equals("MP")) {
             /////==============================================================
             /////==============================================================
-            /////=======BELOW CODE FROM IMPORT MP COMIC DETAILS  ==============
+            /////=======BELOW CODE FROM IMPORT MP (M.A.N.G.A.P.A.R.K.) COMIC DETAILS  ==============
             /////==============================================================
             /////==============================================================
 
             try {
-                //===
-                //== Get comic metadata ===
-                //===
 
-                //Attempt to get the comic title from the WebPage html:
-                BroadcastProgress_ComicDetails("Looking for comic title...", gsIntentActionFilter);
-                String sxPathExpression;
-                sxPathExpression = "//a[@class='link-pri link-hover']";
-                //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
-                Object[] objsTagNodeTitle = node.evaluateXPath(sxPathExpression);
-                //Check to see if we found anything:
-                if (objsTagNodeTitle != null && objsTagNodeTitle.length > 0) {
-                    //If we found something, assign it to a string:
-                    sTitle = ((TagNode)objsTagNodeTitle[0]).getText().toString();
-                }
-                sTitle = GlobalClass.cleanHTMLCodedCharacters(sTitle);
-
-                //Look for comic Chapter:
-                sxPathExpression = "//div[@class='text-base-content comic-detail space-y-2']/h6/a[@class='link-primary link-hover']/span[@class='opacity-80']";
-                Object[] objsTagNodeChapter = node.evaluateXPath(sxPathExpression);
-                //Check to see if we found anything:
-                if (objsTagNodeChapter != null && objsTagNodeChapter.length > 0) {
-                    //If we found something, assign it to a string:
-                    sComicChapter = ((TagNode)objsTagNodeChapter[0]).getText().toString();
-                }
-                sComicChapter = GlobalClass.cleanHTMLCodedCharacters(sComicChapter);
-
-                sxPathExpression = "//div[@class='text-base-content comic-detail space-y-2']/h6/a[@class='link-primary link-hover']/span[@class='opacity-50']";
-                Object[] objsTagNodeSubtitle = node.evaluateXPath(sxPathExpression);
-                //Check to see if we found anything:
-                String[] sTrimStrings = {
-                        "^:",
-                        "^-",
-                        "^_",
-                        "^ ",
-                        " $"
-                };
-                if (objsTagNodeSubtitle != null && objsTagNodeSubtitle.length > 0) {
-                    //If we found something, assign it to a string:
-                    sComicChapterSubtitle = ((TagNode)objsTagNodeSubtitle[0]).getText().toString();
-                    sComicChapterSubtitle = GlobalClass.cleanHTMLCodedCharacters(sComicChapterSubtitle);
-                    int iLengthDiff = 0;
-                    do {
-                        iLengthDiff = sComicChapterSubtitle.length();
-                        for (String sTrimString: sTrimStrings){
-                            sComicChapterSubtitle = sComicChapterSubtitle.replaceAll(sTrimString,"");
+                if(icWebDataLocator.bSeriesFlag){
+                    //The user is considering importing a series listing from this webpage.
+                    //Get title:
+                    BroadcastProgress_ComicDetails("Looking for comic title...", gsIntentActionFilter);
+                    String sxPathExpression;
+                    sxPathExpression = "//a[@class='link link-hover']";
+                    //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+                    {
+                        Object[] objsTagNodeTitle = node.evaluateXPath(sxPathExpression);
+                        //Check to see if we found anything:
+                        if (objsTagNodeTitle != null && objsTagNodeTitle.length > 0) {
+                            //If we found something, assign it to a string:
+                            sTitle = ((TagNode) objsTagNodeTitle[0]).getText().toString();
                         }
-                        iLengthDiff = iLengthDiff - sComicChapterSubtitle.length();
-                    } while(iLengthDiff > 0);
-                }
-
-                //For this site, volume, chapter, and chapter subtitle can sometimes appear combined.
-                //Volume, Chapter, and Chapter Subtitle can all appear in the "Chapter" element.
-                //Chapter Subtitle can appear in the subtitle element, but is sometimes ommited.
-
-                String[] sVolumeAndChapter = ExtractVolumeAndChapter(sComicChapter);
-                sComicVolume = sVolumeAndChapter[0];
-                sComicChapter = sVolumeAndChapter[1];
-
-
-                //===
-                //== Get comic page images ===
-                //===
-
-                //Decypher the comic page image URLs to be used in a later step of the import:
-                BroadcastProgress_ComicDetails("Looking for listing of comic pages...", gsIntentActionFilter);
-                sxPathExpression = "//img[@class='w-full h-full']/@src";
-                Object[] objsTagNodePageImageAddresses = node.evaluateXPath(sxPathExpression);
-                //Check to see if we found anything:
-                TreeMap<Integer, String> tmFileIndexAndAddress = new TreeMap<>(); //Store page data.
-                if (objsTagNodePageImageAddresses != null && objsTagNodePageImageAddresses.length > 0) {
-                    Integer iPageNumber = 0;
-                    for(Object objTagNotePageImageAddress: objsTagNodePageImageAddresses){
-                        String sImageAddress = (String) objTagNotePageImageAddress;
-                        BroadcastProgress_ComicDetails(sImageAddress + "\n", gsIntentActionFilter); //Broadcast progress
-                        iPageNumber++;
-                        tmFileIndexAndAddress.put(iPageNumber, sImageAddress);//Put the thumbnail image address in with the file extension.
                     }
-                }
+                    sTitle = GlobalClass.cleanHTMLCodedCharacters(sTitle);
 
-                if(tmFileIndexAndAddress.size() == 0){
-                    String sMsg = "Problem identifying comic page images on this webpage.";
-                    BroadcastProgress_ComicDetails(sMsg, gsIntentActionFilter);
-                    broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
-                    broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
-                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
-
-                    globalClass.gbImportComicWebAnalysisRunning = false;
-                    globalClass.gbImportComicWebAnalysisFinished = true;
-                    return Result.failure();
-                }
-                //Page addresses should now be acquired.
-
-                //===
-                //== Estimate comic size ===
-                //===
-
-                int iFileSizeLoopCount = 0;
-                boolean bGetOnlineSize = true;
-                long lProjectedComicSize;
-
-                long lSize = 0;
-                for (Map.Entry<Integer, String> tmEntryPageNumImageExt : tmFileIndexAndAddress.entrySet()) {
-                    String sImageAddress = tmEntryPageNumImageExt.getValue();
-                    //Build a filename to save the file to in the catalog:
-                    String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
-                    if(sImageFilename.contains("?")) {
-                        sImageFilename = sImageAddress.substring(0, sImageAddress.lastIndexOf("?"));
-                    }
-                    String[] sFileNameAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sImageFilename);
-                    String sExtension = "jpg"; //Assume jpeg.
-                    if(sFileNameAndExtension.length == 2){
-                        sExtension = sFileNameAndExtension[1];
-                    }
-                    String sPageStringForFilename = String.format(Locale.getDefault(), "%04d", tmEntryPageNumImageExt.getKey());
-                    String sNewFilename = "Page_" + sPageStringForFilename + "." + sExtension;
-                    String[] sTemp = {sImageAddress, sNewFilename, sImageAddress}; //Image address, file name, Thumbnail address. Excuse the redundancy.
-                    alsComicPageAndImageData.add(sTemp);
-
-                    //Get the size of the image and add it to the total size of the comic:
-                    if (bGetOnlineSize) {
-                        URL urlPage = new URL(sImageAddress);
-                        BroadcastProgress_ComicDetails("Getting file size data for " + sImageAddress, gsIntentActionFilter); //Broadcast progress
-                        //URLConnection connection = urlPage.openConnection();
-                        HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
-                        connection.setRequestProperty("Accept-Encoding", "identity");
-                        //connection.setRequestProperty("cookie", icWebDataLocator.sCookie); //todo: remove if not needed. Added on 2/1/2024 for testing with different sites.
-
-                        lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
-                        if (lSize == -1) {
-                            bGetOnlineSize = false;
+                    //Get description:
+                    BroadcastProgress_ComicDetails("Looking for comic description...", gsIntentActionFilter);
+                    sxPathExpression = "//body/div/main/div[1]/div[2]/div[4]/div/div[1]/div[1]/react-island/div/div[1]";
+                    //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+                    {
+                        Object[] objsTagNodeDescription = node.evaluateXPath(sxPathExpression);
+                        //Check to see if we found anything:
+                        if (objsTagNodeDescription != null && objsTagNodeDescription.length > 0) {
+                            //If we found something, assign it to a string:
+                            sComicDescription = ((TagNode) objsTagNodeDescription[0]).getText().toString();
                         }
-                        iFileSizeLoopCount++;
-                        if (iFileSizeLoopCount == 2) {  //Use a sample set of images to project the size of the comic.
-                            //  Larger loop creates a longer delay before the user can move on
-                            //  to the next step of an import process.
-                            bGetOnlineSize = false;
-                        }
-                        connection.disconnect();
                     }
-                }
-                iComicPages = tmFileIndexAndAddress.size();
-                if (lSize > 0) {
-                    lAveragePageSize = lSize / iFileSizeLoopCount;
-                    lProjectedComicSize = lAveragePageSize * iComicPages;
+                    sComicDescription = GlobalClass.cleanHTMLCodedCharacters(sComicDescription);
 
-                    String sCleanedProjectedSize = GlobalClass.CleanStorageSize(lProjectedComicSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
-                    BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", gsIntentActionFilter);
+                    //Get the chapter listing:
+                    sxPathExpression = "//a[@class='link-hover link-primary visited:text-accent']";
+                    Object[] objsTagNodeChapters = node.evaluateXPath(sxPathExpression);
+                    ArrayList<String> alsChapterListing = new ArrayList<>();
+                    if (objsTagNodeChapters != null && objsTagNodeChapters.length > 0) {
+                        //If we found something, assign it to a string:
+                        String sTemp;
+                        for (Object obj : objsTagNodeChapters) {
+                            sTemp = ((TagNode) obj).getText().toString();
+                            sTemp = GlobalClass.cleanHTMLCodedCharacters(sTemp);
+                            alsChapterListing.add(sTemp);
+                        }
+                    }
+
+                    //Get the chapter link listing:
+                    String sHostAddress = "";
+                    int iCharIndexOfHostStart = icWebDataLocator.sAddress.indexOf("://");
+                    if(iCharIndexOfHostStart > 0){
+                        iCharIndexOfHostStart += 3;
+                        int iCharIndexOfHostEnd = icWebDataLocator.sAddress.indexOf("/", iCharIndexOfHostStart);
+                        if(iCharIndexOfHostEnd > 0){
+                            sHostAddress = icWebDataLocator.sAddress.substring(0,iCharIndexOfHostEnd);
+                        }
+                    }
+                    sxPathExpression = "//a[@class='link-hover link-primary visited:text-accent']/@href";
+                    Object[] objsTagNodeChapterLinks = node.evaluateXPath(sxPathExpression);
+                    ArrayList<String> alsChapterLinkListing = new ArrayList<>();
+                    if (objsTagNodeChapterLinks != null && objsTagNodeChapterLinks.length > 0) {
+                        //If we found something, assign it to a string:
+                        String sTemp;
+                        for (Object obj : objsTagNodeChapterLinks) {
+                            sTemp = (String) obj;
+                            sTemp = GlobalClass.cleanHTMLCodedCharacters(sTemp);
+                            sTemp = sHostAddress + sTemp;
+                            alsChapterLinkListing.add(sTemp);
+                        }
+                    }
+
+                    //Verify that there are the same number of chapter listings and links:
+                    if(alsChapterListing.size() != alsChapterLinkListing.size()){
+                        sMessage = "Trouble identifying same count comic chapters and links to chapters.";
+                        BroadcastProgress_ComicDetails("\n" + sMessage, gsIntentActionFilter); //Broadcast progress
+                        Data data = new Data.Builder().putString("FAILURE_REASON", sMessage).build();
+                        return Result.failure(data);
+                    }
+
+                    //Wait for shared data array to become available. It should be available, but
+                    //  since this is a worker in another thread, must be careful.
+                    if(!globalClass.WaitForObjectReady(GlobalClass.gabComicSeriesArrayAvailable, 2)) {
+                        sMessage = "Wait time for ComicSeriesArray to become available exceeded. Worker terminated.";
+                        BroadcastProgress_ComicDetails("\n" + sMessage, gsIntentActionFilter); //Broadcast progress
+                        Data data = new Data.Builder().putString("FAILURE_REASON", sMessage).build();
+                        return Result.failure(data);
+                    }
+
+                    //Set marker to prevent any parallel worker or Activity to not touch the shared
+                    // data array:
+                    GlobalClass.gabComicSeriesArrayAvailable.set(false);
+                    //Build the array of comic series entries:
+                    GlobalClass.galicf_ComicSeriesEntries = new ArrayList<>();
+
+
+
+
+
+                    //Set marker to allow other worker or Activity to work with the shared data array:
+                    GlobalClass.gabComicSeriesArrayAvailable.set(true);
+
                 } else {
 
+
+                    //===
+                    //== Get comic metadata ===
+                    //===
+
+                    //Attempt to get the comic title from the WebPage html:
+                    BroadcastProgress_ComicDetails("Looking for comic title...", gsIntentActionFilter);
+                    String sxPathExpression;
+                    sxPathExpression = "//a[@class='link-pri link-hover']";
+                    //Use an xPathExpression (similar to RegEx) to look for the comic title in the html/xml:
+                    Object[] objsTagNodeTitle = node.evaluateXPath(sxPathExpression);
+                    //Check to see if we found anything:
+                    if (objsTagNodeTitle != null && objsTagNodeTitle.length > 0) {
+                        //If we found something, assign it to a string:
+                        sTitle = ((TagNode) objsTagNodeTitle[0]).getText().toString();
+                    }
+                    sTitle = GlobalClass.cleanHTMLCodedCharacters(sTitle);
+
+                    //Look for comic Chapter:
+                    sxPathExpression = "//div[@class='text-base-content comic-detail space-y-2']/h6/a[@class='link-primary link-hover']/span[@class='opacity-80']";
+                    Object[] objsTagNodeChapter = node.evaluateXPath(sxPathExpression);
+                    //Check to see if we found anything:
+                    if (objsTagNodeChapter != null && objsTagNodeChapter.length > 0) {
+                        //If we found something, assign it to a string:
+                        sComicChapter = ((TagNode) objsTagNodeChapter[0]).getText().toString();
+                    }
+                    sComicChapter = GlobalClass.cleanHTMLCodedCharacters(sComicChapter);
+
+                    sxPathExpression = "//div[@class='text-base-content comic-detail space-y-2']/h6/a[@class='link-primary link-hover']/span[@class='opacity-50']";
+                    Object[] objsTagNodeSubtitle = node.evaluateXPath(sxPathExpression);
+                    //Check to see if we found anything:
+                    String[] sTrimStrings = {
+                            "^:",
+                            "^-",
+                            "^_",
+                            "^ ",
+                            " $"
+                    };
+                    if (objsTagNodeSubtitle != null && objsTagNodeSubtitle.length > 0) {
+                        //If we found something, assign it to a string:
+                        sComicChapterSubtitle = ((TagNode) objsTagNodeSubtitle[0]).getText().toString();
+                        sComicChapterSubtitle = GlobalClass.cleanHTMLCodedCharacters(sComicChapterSubtitle);
+                        int iLengthDiff = 0;
+                        do {
+                            iLengthDiff = sComicChapterSubtitle.length();
+                            for (String sTrimString : sTrimStrings) {
+                                sComicChapterSubtitle = sComicChapterSubtitle.replaceAll(sTrimString, "");
+                            }
+                            iLengthDiff = iLengthDiff - sComicChapterSubtitle.length();
+                        } while (iLengthDiff > 0);
+                    }
+
+                    //For this site, volume, chapter, and chapter subtitle can sometimes appear combined.
+                    //Volume, Chapter, and Chapter Subtitle can all appear in the "Chapter" element.
+                    //Chapter Subtitle can appear in the subtitle element, but is sometimes ommited.
+
+                    String[] sVolumeAndChapter = ExtractVolumeAndChapter(sComicChapter);
+                    sComicVolume = sVolumeAndChapter[0];
+                    sComicChapter = sVolumeAndChapter[1];
+
+
+                    //===
+                    //== Get comic page images ===
+                    //===
+
+                    //Decypher the comic page image URLs to be used in a later step of the import:
+                    BroadcastProgress_ComicDetails("Looking for listing of comic pages...", gsIntentActionFilter);
+                    sxPathExpression = "//img[@class='w-full h-full']/@src";
+                    Object[] objsTagNodePageImageAddresses = node.evaluateXPath(sxPathExpression);
+                    //Check to see if we found anything:
+                    TreeMap<Integer, String> tmFileIndexAndAddress = new TreeMap<>(); //Store page data.
+                    if (objsTagNodePageImageAddresses != null && objsTagNodePageImageAddresses.length > 0) {
+                        Integer iPageNumber = 0;
+                        for (Object objTagNotePageImageAddress : objsTagNodePageImageAddresses) {
+                            String sImageAddress = (String) objTagNotePageImageAddress;
+                            BroadcastProgress_ComicDetails(sImageAddress + "\n", gsIntentActionFilter); //Broadcast progress
+                            iPageNumber++;
+                            tmFileIndexAndAddress.put(iPageNumber, sImageAddress);//Put the thumbnail image address in with the file extension.
+                        }
+                    }
+
+                    if (tmFileIndexAndAddress.size() == 0) {
+                        String sMsg = "Problem identifying comic page images on this webpage.";
+                        BroadcastProgress_ComicDetails(sMsg, gsIntentActionFilter);
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
+                        broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
+                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
+
+                        globalClass.gbImportComicWebAnalysisRunning = false;
+                        globalClass.gbImportComicWebAnalysisFinished = true;
+                        return Result.failure();
+                    }
+                    //Page addresses should now be acquired.
+
+                    //===
+                    //== Estimate comic size ===
+                    //===
+
+                    int iFileSizeLoopCount = 0;
+                    boolean bGetOnlineSize = true;
+                    long lProjectedComicSize;
+
+                    long lSize = 0;
+                    for (Map.Entry<Integer, String> tmEntryPageNumImageExt : tmFileIndexAndAddress.entrySet()) {
+                        String sImageAddress = tmEntryPageNumImageExt.getValue();
+                        //Build a filename to save the file to in the catalog:
+                        String sImageFilename = sImageAddress.substring(sImageAddress.lastIndexOf("/") + 1);
+                        if (sImageFilename.contains("?")) {
+                            sImageFilename = sImageAddress.substring(0, sImageAddress.lastIndexOf("?"));
+                        }
+                        String[] sFileNameAndExtension = GlobalClass.SplitFileNameIntoBaseAndExtension(sImageFilename);
+                        String sExtension = "jpg"; //Assume jpeg.
+                        if (sFileNameAndExtension.length == 2) {
+                            sExtension = sFileNameAndExtension[1];
+                        }
+                        String sPageStringForFilename = String.format(Locale.getDefault(), "%04d", tmEntryPageNumImageExt.getKey());
+                        String sNewFilename = "Page_" + sPageStringForFilename + "." + sExtension;
+                        String[] sTemp = {sImageAddress, sNewFilename, sImageAddress}; //Image address, file name, Thumbnail address. Excuse the redundancy.
+                        alsComicPageAndImageData.add(sTemp);
+
+                        //Get the size of the image and add it to the total size of the comic:
+                        if (bGetOnlineSize) {
+                            URL urlPage = new URL(sImageAddress);
+                            BroadcastProgress_ComicDetails("Getting file size data for " + sImageAddress, gsIntentActionFilter); //Broadcast progress
+                            //URLConnection connection = urlPage.openConnection();
+                            HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
+                            connection.setRequestProperty("Accept-Encoding", "identity");
+                            //connection.setRequestProperty("cookie", icWebDataLocator.sCookie); //todo: remove if not needed. Added on 2/1/2024 for testing with different sites.
+
+                            lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                            if (lSize == -1) {
+                                bGetOnlineSize = false;
+                            }
+                            iFileSizeLoopCount++;
+                            if (iFileSizeLoopCount == 2) {  //Use a sample set of images to project the size of the comic.
+                                //  Larger loop creates a longer delay before the user can move on
+                                //  to the next step of an import process.
+                                bGetOnlineSize = false;
+                            }
+                            connection.disconnect();
+                        }
+                    }
+                    iComicPages = tmFileIndexAndAddress.size();
+                    if (lSize > 0) {
+                        lAveragePageSize = lSize / iFileSizeLoopCount;
+                        lProjectedComicSize = lAveragePageSize * iComicPages;
+
+                        String sCleanedProjectedSize = GlobalClass.CleanStorageSize(lProjectedComicSize, GlobalClass.STORAGE_SIZE_NO_PREFERENCE);
+                        BroadcastProgress_ComicDetails("Average page size is " + lAveragePageSize + " bytes. Total comic size projected to be " + sCleanedProjectedSize + ".", gsIntentActionFilter);
+                    } else {
+
+                    }
+
                 }
-
-
 
             } catch (Exception e) {
                 String sMsg = e.getMessage();

@@ -376,6 +376,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                     bWebComicDataLocatorNotFound = false;
                     bAddressOK = true;
                     icWCDL.bHostNameMatchFound = true;
+                    icWCDL.sAddress = sAddressCandidate;
                     break;
                 }
             }
@@ -385,6 +386,7 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                     if (icWCDL.sHostnameRegEx.matches(gsUnknownAddress)) {
                         bAddressOK = true;
                         icWCDL.bHostNameMatchFound = true;
+                        icWCDL.sAddress = sAddressCandidate;
                         break;
                     }
                 }
@@ -419,7 +421,11 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
                 FormWebImageSeriesDataLocator("^ht%tps:\\/\\/man%gapa%rk.io\\/(.*)",
                         null);
         itemClass_webComicDataLocator.sShortName = "MP"; //For hard-coded behavior differentiation
+        if(viewModelImportActivity.iComicImportSource == ViewModel_ImportActivity.COMIC_SOURCE_WEBPAGE_SERIES){
+            itemClass_webComicDataLocator.bSeriesFlag = true;
+        }
         globalClass.galWebComicDataLocators.add(itemClass_webComicDataLocator);
+
 
     }
 
