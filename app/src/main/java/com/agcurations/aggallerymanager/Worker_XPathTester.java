@@ -103,8 +103,11 @@ public class Worker_XPathTester extends Worker {
                         sbData.append("\n");
                     }
                 }
+                BroadcastProgress_LogOutput("\n[DATA RESULTS]\n" + sbData);
+            } else {
+                BroadcastProgress_LogOutput("\n[DATA RESULTS]\n" + "No data found.");
             }
-            BroadcastProgress_LogOutput("\n[DATA RESULTS]\n" + sbData);
+
 
         } catch (Exception e) {
             String sMessage = "\nProblem collecting comic data from address. " + e.getMessage();
