@@ -1,5 +1,6 @@
 package com.agcurations.aggallerymanager;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -155,6 +156,10 @@ public class Activity_XPath_Tester extends AppCompatActivity {
                 gTextView_OutputLog.setText(sMessage);
                 gButton_TestXPathString.setEnabled(false);
                 gWebView.loadUrl(sWebAddress);
+                //Hide the keyboard:
+                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                gTextInputEditText_XPathExpression.clearFocus();
             }
         });
 
@@ -204,6 +209,11 @@ public class Activity_XPath_Tester extends AppCompatActivity {
             public void onClick(View view) {
                 gWebView.loadUrl("javascript:HtmlViewer.showHTML" +
                         "('<html>'+document.getElementsByTagName('html')[0].innerHTML+'</html>');");
+                //Hide the keyboard:
+                InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                gTextInputEditText_XPathExpression.clearFocus();
+
             }
         });
     }
