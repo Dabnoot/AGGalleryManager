@@ -43,6 +43,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.BufferedReader;
@@ -68,7 +69,8 @@ public class Activity_Main extends AppCompatActivity {
     TextView textView_WorkerTest;
     Observer<WorkInfo> workInfoObserver_TrackingTest;
 
-    ProgressBar gProgressBar_CatalogReadProgress;
+    /*ProgressBar gProgressBar_CatalogReadProgress;*/
+    LinearProgressIndicator gProgressBar_CatalogReadProgress;
     TextView gTextView_CatalogReadProgressBarText;
 
     boolean bSingleUserInUse = false;
@@ -153,7 +155,8 @@ public class Activity_Main extends AppCompatActivity {
         String sWindowsUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
         GlobalClass.giWebViewSettings_UserAgentString = "";
 
-        gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);
+        /*gProgressBar_CatalogReadProgress = findViewById(R.id.progressBar_CatalogReadProgress);*/
+        gProgressBar_CatalogReadProgress = findViewById(R.id.progressIndicator_CatalogReadProgress);
         gTextView_CatalogReadProgressBarText = findViewById(R.id.textView_CatalogReadProgressBarText);
 
         //Configure a response receiver to listen for updates from the Main Activity (MA) Data Services:
