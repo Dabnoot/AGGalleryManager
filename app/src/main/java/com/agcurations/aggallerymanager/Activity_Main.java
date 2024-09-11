@@ -5,11 +5,11 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.widget.Toolbar;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
@@ -34,8 +34,6 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.DocumentsContract;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -43,6 +41,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -83,7 +82,7 @@ public class Activity_Main extends AppCompatActivity {
     //Configure the thing that asks the user to select a data folder:
     ActivityResultLauncher<Intent> garlPromptForDataFolder = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            new ActivityResultCallback<ActivityResult>() {
+            new ActivityResultCallback<>() {
                 @SuppressLint("WrongConstant")
                 @Override
                 public void onActivityResult(ActivityResult result) {
@@ -127,18 +126,13 @@ public class Activity_Main extends AppCompatActivity {
                 .build());
 
         //Return theme away from startup_screen
-        setTheme(R.style.MainTheme);
+        setTheme(R.style.MainTheme); //For the background image.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         AM = this;
 
         GlobalClass.gcrContentResolver = getContentResolver();
-
-        ActionBar AB = getSupportActionBar();
-        if(AB != null) {
-            AB.show();
-        }
 
         // Calling Application class (see application tag in AndroidManifest.xml)
         globalClass = (GlobalClass) getApplicationContext();
@@ -352,6 +346,97 @@ public class Activity_Main extends AppCompatActivity {
         });
 
         GlobalClass.gsGroupIDClip = ""; //Reset GroupID when switching between catalogs.
+
+
+        MaterialToolbar materialToolbar_TopAppBar = findViewById(R.id.materialToolbar_TopAppBar);
+        materialToolbar_TopAppBar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+
+                if((item.getItemId() == R.id.menu_UserManagement)){
+                    if(!dataStorageAndLoadOk()){
+                        return true;
+                    }
+                    //Ask for pin code in order to allow access to feature if not admin:
+                    if (GlobalClass.gicuCurrentUser != null) {
+                        if (!GlobalClass.gicuCurrentUser.bAdmin) {
+                            Toast.makeText(getApplicationContext(), "User must be logged-in and have admin privileges to configure users.", Toast.LENGTH_LONG).show();
+                        } else {
+                            Intent intentUserManagement = new Intent(getApplicationContext(), Activity_UserManagement.class);
+                            startActivity(intentUserManagement);
+                        }
+                    } else {
+                        Toast.makeText(getApplicationContext(), "User must be logged-in and have admin privileges to configure users.", Toast.LENGTH_LONG).show();
+                    }
+
+                }
+
+                if(item.getItemId() == R.id.menu_Settings){
+                    Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
+                    startActivity(intentSettings);
+                    return true;
+                } else if(item.getItemId() == R.id.icon_login){
+                    Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
+                    startActivity(intentUserSelection);
+                    return true;
+                } else if(item.getItemId() == R.id.menu_TagEditor) {
+                    if(!dataStorageAndLoadOk()){
+                        return true;
+                    }
+                    Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
+                    startActivity(intentTagEditor);
+                    return true;
+                } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
+                    if(!dataStorageAndLoadOk()){
+                        return true;
+                    }
+                    Toast.makeText(getApplicationContext(), "Initiating database backup.", Toast.LENGTH_SHORT).show();
+                    Double dTimeStamp = GlobalClass.GetTimeStampDouble();
+                    Data dataCatalogBackupCatalogDBFiles = new Data.Builder()
+                            .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
+                            .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
+                            .build();
+                    OneTimeWorkRequest otwrCatalogBackupCatalogDBFiles = new OneTimeWorkRequest.Builder(Worker_Catalog_BackupCatalogDBFiles.class)
+                            .setInputData(dataCatalogBackupCatalogDBFiles)
+                            .addTag(Worker_Catalog_BackupCatalogDBFiles.TAG_WORKER_CATALOG_BACKUPCATALOGDBFILES) //To allow finding the worker later.
+                            .build();
+                    WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBackupCatalogDBFiles);
+
+                    return true;
+                } else if(item.getItemId() == R.id.menu_LogViewer) {
+                    if(!dataStorageAndLoadOk()){
+                        return true;
+                    }
+                    Intent intentLogViewerActivity = new Intent(getApplicationContext(), Activity_LogViewer.class);
+                    startActivity(intentLogViewerActivity);
+                    return true;
+
+                } else if(item.getItemId() == R.id.menu_CatalogAnalysis){
+                    if(!dataStorageAndLoadOk()){
+                        return true;
+                    }
+                    Intent intentCatalogAnalysisActivity = new Intent(getApplicationContext(), Activity_CatalogAnalysis.class);
+                    startActivity(intentCatalogAnalysisActivity);
+                    return true;
+
+                } else if(item.getItemId() == R.id.menu_WorkerConsole){
+                    if(!dataStorageAndLoadOk()){
+                        return true;
+                    }
+                    Intent intentWorkerConsoleActivity = new Intent(getApplicationContext(), Activity_WorkerConsole.class);
+                    startActivity(intentWorkerConsoleActivity);
+                    return true;
+                } else  if(item.getItemId() == R.id.menu_XPathTester){
+                    Intent intentXPathTesterActivity = new Intent(getApplicationContext(), Activity_XPath_Tester.class);
+                    startActivity(intentXPathTesterActivity);
+                    return true;
+                } else {
+                    return false;
+                }
+
+            }
+        });
+
 
 
     }
@@ -632,121 +717,22 @@ public class Activity_Main extends AppCompatActivity {
         super.onDestroy();
     }
 
-    //=====================================================================================
-    //===== Menu Code =================================================================
-    //=====================================================================================
-    Menu optionsMenu;
-    public boolean onCreateOptionsMenu(Menu menu) {
-        optionsMenu = menu;
 
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_activity_menu, menu);
-
-        if(GlobalClass.gicuCurrentUser != null){
-            MenuItem menuItemLogin = menu.findItem(R.id.icon_login);
-            if(menuItemLogin != null){
-                setUserColor(menuItemLogin, GlobalClass.gicuCurrentUser.iUserIconColor);
-            }
-        }
-
-        return true;
-    }
-
-    private void setUserColor(MenuItem item, int iColor){
-        Drawable d1 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login);
-        if(d1 == null){
+    private void setUserColor(){
+        if(GlobalClass.gicuCurrentUser == null){
             return;
         }
-        Drawable drawable = d1.mutate();
-        drawable.setColorFilter(new PorterDuffColorFilter(iColor, PorterDuff.Mode.SRC_IN));
-        item.setIcon(drawable);
-    }
+        MaterialToolbar materialToolbar_TopAppBar = findViewById(R.id.materialToolbar_TopAppBar);
+        if(materialToolbar_TopAppBar != null) {
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        if((item.getItemId() == R.id.menu_UserManagement)){
-            if(!dataStorageAndLoadOk()){
-                return true;
+            Drawable d1 = AppCompatResources.getDrawable(getApplicationContext(), R.drawable.login);
+            if (d1 == null) {
+                return;
             }
-            //Ask for pin code in order to allow access to feature if not admin:
-            if (GlobalClass.gicuCurrentUser != null) {
-                if (!GlobalClass.gicuCurrentUser.bAdmin) {
-                    Toast.makeText(getApplicationContext(), "User must be logged-in and have admin privileges to configure users.", Toast.LENGTH_LONG).show();
-                } else {
-                    Intent intentUserManagement = new Intent(getApplicationContext(), Activity_UserManagement.class);
-                    startActivity(intentUserManagement);
-                }
-            } else {
-                Toast.makeText(getApplicationContext(), "User must be logged-in and have admin privileges to configure users.", Toast.LENGTH_LONG).show();
-            }
-
+            Drawable drawable = d1.mutate();
+            drawable.setColorFilter(new PorterDuffColorFilter(GlobalClass.gicuCurrentUser.iUserIconColor, PorterDuff.Mode.SRC_IN));
+            materialToolbar_TopAppBar.getMenu().findItem(R.id.icon_login).setIcon(drawable);
         }
-
-        if(item.getItemId() == R.id.menu_Settings){
-            Intent intentSettings = new Intent(getApplicationContext(), Activity_AppSettings.class);
-            startActivity(intentSettings);
-            return true;
-        } else if(item.getItemId() == R.id.icon_login){
-            Intent intentUserSelection = new Intent(getApplicationContext(), Activity_UserSelection.class);
-            startActivity(intentUserSelection);
-            return true;
-        } else if(item.getItemId() == R.id.menu_TagEditor) {
-            if(!dataStorageAndLoadOk()){
-                return true;
-            }
-            Intent intentTagEditor = new Intent(getApplicationContext(), Activity_TagEditor.class);
-            startActivity(intentTagEditor);
-            return true;
-        } else if(item.getItemId() == R.id.menu_DatabaseBackup) {
-            if(!dataStorageAndLoadOk()){
-                return true;
-            }
-            Toast.makeText(getApplicationContext(), "Initiating database backup.", Toast.LENGTH_SHORT).show();
-            Double dTimeStamp = GlobalClass.GetTimeStampDouble();
-            Data dataCatalogBackupCatalogDBFiles = new Data.Builder()
-                    .putString(GlobalClass.EXTRA_CALLER_ID, "Activity_Main:onCreate()")
-                    .putDouble(GlobalClass.EXTRA_CALLER_TIMESTAMP, dTimeStamp)
-                    .build();
-            OneTimeWorkRequest otwrCatalogBackupCatalogDBFiles = new OneTimeWorkRequest.Builder(Worker_Catalog_BackupCatalogDBFiles.class)
-                    .setInputData(dataCatalogBackupCatalogDBFiles)
-                    .addTag(Worker_Catalog_BackupCatalogDBFiles.TAG_WORKER_CATALOG_BACKUPCATALOGDBFILES) //To allow finding the worker later.
-                    .build();
-            WorkManager.getInstance(getApplicationContext()).enqueue(otwrCatalogBackupCatalogDBFiles);
-
-            return true;
-        } else if(item.getItemId() == R.id.menu_LogViewer) {
-            if(!dataStorageAndLoadOk()){
-                return true;
-            }
-            Intent intentLogViewerActivity = new Intent(this, Activity_LogViewer.class);
-            startActivity(intentLogViewerActivity);
-            return true;
-
-        } else if(item.getItemId() == R.id.menu_CatalogAnalysis){
-            if(!dataStorageAndLoadOk()){
-                return true;
-            }
-            Intent intentCatalogAnalysisActivity = new Intent(this, Activity_CatalogAnalysis.class);
-            startActivity(intentCatalogAnalysisActivity);
-            return true;
-
-        } else if(item.getItemId() == R.id.menu_WorkerConsole){
-            if(!dataStorageAndLoadOk()){
-                return true;
-            }
-            Intent intentWorkerConsoleActivity = new Intent(this, Activity_WorkerConsole.class);
-            startActivity(intentWorkerConsoleActivity);
-            return true;
-        } else  if(item.getItemId() == R.id.menu_XPathTester){
-            Intent intentXPathTesterActivity = new Intent(this, Activity_XPath_Tester.class);
-            startActivity(intentXPathTesterActivity);
-            return true;
-        } else {
-            return super.onOptionsItemSelected(item);
-        }
-
-
     }
 
 
@@ -754,18 +740,11 @@ public class Activity_Main extends AppCompatActivity {
     @Override
     public void onResume(){
         super.onResume();
-        if(optionsMenu != null) {
-            MenuItem menuItemLogin = optionsMenu.findItem(R.id.icon_login);
-            if (menuItemLogin != null) {
-                if (GlobalClass.gicuCurrentUser != null) {
-                    setUserColor(menuItemLogin, GlobalClass.gicuCurrentUser.iUserIconColor);
-                }
-            }
-        }
 
+        setUserColor();
 
         //Create a generic observer to be assigned to any active video concatenation workers (shows the progress of the worker):
-        workInfoObserver_TrackingTest = new Observer<WorkInfo>() {
+        workInfoObserver_TrackingTest = new Observer<>() {
             @Override
             public void onChanged(WorkInfo workInfo) {
                 if (workInfo != null) {

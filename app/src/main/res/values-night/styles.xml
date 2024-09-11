@@ -43,7 +43,7 @@
     </style>-->
 
 
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
         <item name="colorAccent">@color/md_red_A300</item>
 
@@ -87,10 +87,6 @@
         <item name="android:windowBackground">@drawable/startup_screen</item>
     </style>
 
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
 
     <style name="BusyBackgroundOverlayText"> <!-- This is for putting a shadow behind text. -->
         <item name="android:paddingLeft">8dp</item>

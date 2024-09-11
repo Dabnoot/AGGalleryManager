@@ -8,6 +8,21 @@
     android:layout_height="match_parent"
     tools:context=".Activity_Main">
 
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/materialToolbar_TopAppBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:title="Gallery+"
+            app:menu="@menu/main_activity_menu"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
     <!--    The above TextView is used to provide an darkening to the background.-->
 
     <TextView

@@ -1,7 +1,7 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Base application theme. -->
     <!--<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">-->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
         <item name="colorAccent">@color/colorAccent</item>
 
@@ -56,25 +56,9 @@
         <item name="android:windowBackground">@drawable/sora_sagano_unsplash</item>
     </style>
 
-    <!--<style name="ActionBarTheme" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
-        <item name="popupTheme">@style/ActionBarPopupTheme</item>
-    </style>
-
-    &lt;!&ndash; Popup menu theme &ndash;&gt;
-    <style name="ActionBarPopupTheme">
-        <item name="android:textColor">@color/colorWhite</item>
-        <item name="android:background">@color/colorPopupPurple</item>
-    </style>-->
-
-
     <!-- Starting activity theme -->
     <style name="AppTheme.Launcher">
         <item name="android:windowBackground">@drawable/startup_screen</item>
-    </style>
-
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
     </style>
 
     <style name="BusyBackgroundOverlayText"> <!-- This is for putting a shadow behind text. -->
