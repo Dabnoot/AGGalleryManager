@@ -1,6 +1,5 @@
 package com.agcurations.aggallerymanager;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,10 +23,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
@@ -49,7 +46,6 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.common.io.BaseEncoding;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -1240,9 +1236,9 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             intentComicViewer = new Intent(this, Activity_ComicDetails.class);
             intentComicViewer.putExtra(GlobalClass.EXTRA_CATALOG_ITEM_ID, ci.sItemID); //Pass item ID and load record from file. To accommodate comic detail edit.
         } else {
-            intentComicViewer = new Intent(this, Activity_ComicGroupViewer.class);
+            intentComicViewer = new Intent(this, Activity_CatalogGroupViewer.class);
             intentComicViewer.putExtra(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID, ci.sGroupID);
-            intentComicViewer.putExtra(Activity_ComicGroupViewer.CATALOG_FILTER_EXTRA_STRING_GROUP_NAME, ci.sTitle);
+            intentComicViewer.putExtra(Activity_CatalogGroupViewer.CATALOG_FILTER_EXTRA_STRING_GROUP_NAME, ci.sTitle);
         }
 
 

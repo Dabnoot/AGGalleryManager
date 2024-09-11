@@ -18,6 +18,8 @@ import android.os.Bundle;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -25,8 +27,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,12 +35,12 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -56,20 +56,19 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Activity_ComicGroupViewer extends AppCompatActivity {
+public class Activity_CatalogGroupViewer extends AppCompatActivity {
 
     //This is an activity to allow the user to view all comics that belong to a group.
 
     public static final String CATALOG_FILTER_EXTRA_STRING_GROUP_NAME = "com.agcurations.aggallerymanager.intent.extra.CATALOG_FILTER_EXTRA_STRING_GROUP_NAME";
 
     GlobalClass globalClass;
-    private final boolean gbDebugTouch = false;
     RecyclerView gRecyclerView;
     int giRecyclerViewLastSelectedPosition = -1;
 
     Toast toastLastToastMessage;
 
-    ProgressBar gProgressBar_GeneralPurpose;
+    LinearProgressIndicator gProgressIndicator_GeneralPurpose;
     TextView gTextView_ProgressBarText;
 
     private CatalogGroupViewerReceiver catalogGroupViewerReceiver;
@@ -102,19 +101,30 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
         //Get the item ID:
         gsGroupID = intent.getStringExtra(Worker_CatalogViewer_SortAndFilterGroup.CATALOG_FILTER_EXTRA_STRING_GROUP_ID);
-        String sActionBarText = "";
-        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
-            sActionBarText = "Comic Group: ";
-            sActionBarText = sActionBarText + intent.getStringExtra(CATALOG_FILTER_EXTRA_STRING_GROUP_NAME);
-        } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
-            sActionBarText = "Video Group Viewer";
-        } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
-            sActionBarText = "Image Group Viewer";
-        }
 
-        if(getSupportActionBar()!=null) {
-            getSupportActionBar().setTitle(sActionBarText);
+        //Set the title:
+        String sMaterialToolbarText = "";
+        if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_COMICS){
+            sMaterialToolbarText = "Comic Group: ";
+            sMaterialToolbarText = sMaterialToolbarText + intent.getStringExtra(CATALOG_FILTER_EXTRA_STRING_GROUP_NAME);
+        } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS){
+            sMaterialToolbarText = "Video Group Viewer";
+        } else if(GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_IMAGES){
+            sMaterialToolbarText = "Image Group Viewer";
         }
+        MaterialToolbar materialToolbar_TopAppBar = findViewById(R.id.materialToolbar_TopAppBar);
+        materialToolbar_TopAppBar.setTitle(sMaterialToolbarText);
+        materialToolbar_TopAppBar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if((item.getItemId() == R.id.icon_ChangeView)){
+                    gbThumbnails_Visible = !gbThumbnails_Visible;
+                    updateVisibleRecyclerItems();
+                    return true;
+                }
+                return false;
+            }
+        });
 
         gResources = getResources();
 
@@ -153,7 +163,7 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
         catalogGroupViewerReceiver = new CatalogGroupViewerReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(catalogGroupViewerReceiver,filter);
 
-        gProgressBar_GeneralPurpose = findViewById(R.id.progressBar_GeneralPurpose);
+        gProgressIndicator_GeneralPurpose = findViewById(R.id.progressIndicator_GeneralPurpose);
         gTextView_ProgressBarText = findViewById(R.id.textView_ProgressBarText);
 
         populate_RecyclerViewCatalogGroupItems();
@@ -164,24 +174,6 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
     protected void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(catalogGroupViewerReceiver);
         super.onDestroy();
-    }
-
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.activity_group_viewer_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-
-        if((item.getItemId() == R.id.icon_ChangeView)){
-            gbThumbnails_Visible = !gbThumbnails_Visible;
-            updateVisibleRecyclerItems();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     public class RecyclerViewCatalogGroupAdapter extends RecyclerView.Adapter<RecyclerViewCatalogGroupAdapter.ViewHolder> {
@@ -242,9 +234,6 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
                 giRecyclerViewLastSelectedPosition = this.getAbsoluteAdapterPosition(); //To allow scroll back to this position if the user edits the item and RecyclerView refreshes.
                 //https://stackoverflow.com/questions/34942840/lint-error-do-not-treat-position-as-fixed-only-use-immediately
-                if (gbDebugTouch) {
-                    Toast.makeText(getApplicationContext(), "Click Item Number " + this.getAbsoluteAdapterPosition(), Toast.LENGTH_LONG).show();
-                }
 
                 if (GlobalClass.giSelectedCatalogMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
                     StartVideoPlayerActivity(treeMap, icci.sItemID);
@@ -1013,8 +1002,8 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                 if(bRefreshCatalogDisplay) {
                     //Catalog sort is complete.
 
-                    if(gProgressBar_GeneralPurpose != null) {
-                        gProgressBar_GeneralPurpose.setProgress(100);
+                    if(gProgressIndicator_GeneralPurpose != null) {
+                        gProgressIndicator_GeneralPurpose.setProgress(100);
                     }
                     if(gTextView_ProgressBarText != null) {
                         String s = "100%";
@@ -1032,8 +1021,8 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                     if(toastLastToastMessage != null){
                         toastLastToastMessage.cancel();
                     }
-                    if(gProgressBar_GeneralPurpose != null && gTextView_ProgressBarText != null){
-                        gProgressBar_GeneralPurpose.setVisibility(View.INVISIBLE);
+                    if(gProgressIndicator_GeneralPurpose != null && gTextView_ProgressBarText != null){
+                        gProgressIndicator_GeneralPurpose.setVisibility(View.INVISIBLE);
                         gTextView_ProgressBarText.setVisibility(View.INVISIBLE);
                     }
 
@@ -1057,8 +1046,8 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
                 if(bUpdatePercentComplete){
                     int iAmountComplete;
                     iAmountComplete = intent.getIntExtra(GlobalClass.PERCENT_COMPLETE_INT, -1);
-                    if(gProgressBar_GeneralPurpose != null) {
-                        gProgressBar_GeneralPurpose.setProgress(iAmountComplete);
+                    if(gProgressIndicator_GeneralPurpose != null) {
+                        gProgressIndicator_GeneralPurpose.setProgress(iAmountComplete);
                     }
                 }
                 if(bUpdateProgressBarText){
@@ -1078,8 +1067,8 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
 
     public void populate_RecyclerViewCatalogGroupItems(){
         GlobalClass.gbCatalogViewerRefresh = false;
-        if(gProgressBar_GeneralPurpose != null && gTextView_ProgressBarText != null){
-            gProgressBar_GeneralPurpose.setVisibility(View.VISIBLE);
+        if(gProgressIndicator_GeneralPurpose != null && gTextView_ProgressBarText != null){
+            gProgressIndicator_GeneralPurpose.setVisibility(View.VISIBLE);
             gTextView_ProgressBarText.setVisibility(View.VISIBLE);
         }
 
@@ -1132,7 +1121,7 @@ public class Activity_ComicGroupViewer extends AppCompatActivity {
         if(!ci.sGroupID.equals("")) {
             intentComicViewer = new Intent(this, Activity_ComicDetails.class);
         } else {
-            intentComicViewer = new Intent(this, Activity_ComicGroupViewer.class);
+            intentComicViewer = new Intent(this, Activity_CatalogGroupViewer.class);
         }
         intentComicViewer.putExtra(GlobalClass.EXTRA_CATALOG_ITEM_ID, ci.sItemID); //Pass item ID and load record from file. To accommodate comic detail edit.
 

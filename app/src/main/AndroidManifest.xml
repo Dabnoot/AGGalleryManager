@@ -23,8 +23,7 @@
             android:windowSoftInputMode="adjustPan"/>
         <activity
             android:name=".Activity_CatalogGroupViewer"
-            android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:exported="false"/>
         <activity
             android:name=".Activity_CatalogAnalysis"
             android:exported="false" />
