@@ -32,7 +32,6 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -302,12 +301,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gRecyclerViewCatalogAdapter.updateItem(GlobalClass.gsRefreshCatalogViewerThumbnail);
         }
 
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull final MenuItem item) {
-        //Display a message showing the name of the item selected.
-        return super.onOptionsItemSelected(item);
     }
 
     public void CloseSortDrawer(){
