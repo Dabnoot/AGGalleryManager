@@ -12,13 +12,15 @@
         <item name="android:windowBackground">@color/colorBackgroundMain</item>
         <item name="android:navigationBarColor">@color/colorNavigationBar</item>
         <!--<item name="android:textColor">@color/colorTextColor</item>-->                 <!--Don't set all of the text color as the WebView ContextMenu Colors are VERY had to identify and change.-->
-        <item name="android:textColorPrimary">@color/colorTextColor
-        </item>          <!-- sets AlertDialog summaryText color -->
+        <item name="android:textColorPrimary">@color/colorTextColor</item>          <!-- sets AlertDialog summaryText color -->
         <item name="android:textColorSecondary">@color/colorTextColor</item>
         <!--<item name="colorBackgroundFloating">@color/colorButton</item>-->       <!-- Sets AlertDialog color -->
         <item name="textColorAlertDialogListItem">@color/colorTextColor
         </item>      <!-- Sets AlertDialog text color -->
         <item name="android:editTextColor">@color/colorTextColor</item>
+
+        <item name="colorOnSurface">@color/colorTextColor</item>        <!--Text color on EditText-->
+
 
         <item name="subtitleTextColor">@color/colorTextColor</item>
         <item name="editTextColor">@color/colorTextColor</item>
