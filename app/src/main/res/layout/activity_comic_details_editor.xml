@@ -31,107 +31,73 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/textView_ActivityTitle">
 
-                <TextView
-                    android:id="@+id/textView_LabelComicTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:layout_marginStart="15dp"
-                    android:text="Comic Title:"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"/>
-
-                <EditText
-                    android:id="@+id/editText_ComicTitle"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_ComicTitle"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_alignParentTop="true"
-                    android:layout_alignParentEnd="true"
-                    android:layout_marginStart="15dp"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:inputType="textMultiLine"
-                    android:text="Comic Title"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp" />
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Title">
 
-                <TextView
-                    android:id="@+id/textView_LabelComicSource"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="Comic Source:"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_ComicSource" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_ComicTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_ComicSource"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_ComicSource"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_ComicTitle"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="ComicSource"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/editText_ComicTitle"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true" />
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Source">
 
-                <TextView
-                    android:id="@+id/textView_LabelParodies"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="@string/parodies"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Parodies"
-                    android:layout_alignEnd="@id/textView_LabelComicSource" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_ComicSource"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_Parodies"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Parodies"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_ComicSource"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="@string/parodies_"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/editText_ComicSource"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Parodies">
 
-                <TextView
-                    android:id="@+id/textView_LabelCharacters"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="@string/characters"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Characters"
-                    android:layout_alignEnd="@id/textView_LabelComicSource" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Parodies"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_Characters"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Characters"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/editText_Parodies"
-                    android:layout_alignParentEnd="true"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_Parodies"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:inputType="textMultiLine"
-                    android:text="@string/characters_"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp" />
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Characters">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Characters"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
                     android:id="@+id/textView_LabelTags"
@@ -141,19 +107,18 @@
                     android:text="@string/tags"
                     android:textColor="@color/colorTextColor"
                     android:textSize="20sp"
-                    android:layout_alignBaseline="@id/textView_Tags"
-                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+                    android:layout_alignBaseline="@id/textView_Tags"/>
 
                 <TextView
                     android:id="@+id/textView_Tags"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignTop="@id/imageView_EditTags"
-                    android:layout_marginStart="15dp"
-                    android:layout_marginEnd="15dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
                     android:paddingStart="3dp"
-                    android:layout_toStartOf="@id/imageView_EditTags"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
+                    android:layout_toEndOf="@+id/textView_LabelTags"
+                    android:layout_toStartOf="@+id/imageView_EditTags"
                     android:text="@string/tags_"
                     android:textColor="@color/colorTextColor"
                     android:textSize="20sp" />
@@ -167,152 +132,93 @@
                     android:layout_marginEnd="15dp"
                     android:layout_marginBottom="15dp"
                     android:layout_alignParentEnd="true"
-                    android:layout_below="@id/editText_Characters"
+                    android:layout_below="@id/textInputLayout_Characters"
                     android:contentDescription="Edit tags." />
 
-                <!--Separator-->
-                <View
-                    android:id="@+id/view_ComicDetailsEditorTagsSeparator"
-                    android:layout_width="wrap_content"
-                    android:layout_height="1.25dp"
-                    android:background="@color/colorTextColor"
-                    android:layout_toStartOf="@+id/textView_Tags"
-                    android:layout_below="@id/imageView_EditTags"
-                    android:layout_toEndOf="@+id/imageView_EditTags"
-                    android:layout_marginStart="-20dp"
-                    android:layout_marginEnd="-20dp"/>
-
-                <TextView
-                    android:id="@+id/textView_LabelArtists"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Artists"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="@string/artists"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Artists"
-                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
-
-                <EditText
-                    android:id="@+id/editText_Artists"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textView_Tags"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="@string/artists_"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/view_ComicDetailsEditorTagsSeparator"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Artists">
 
-                <TextView
-                    android:id="@+id/textView_LabelGroups"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="@string/groups"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Groups"
-                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Artists"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_Groups"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Groups"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_Artists"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="@string/groups_"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/editText_Artists"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Groups">
 
-                <TextView
-                    android:id="@+id/textView_LabelLanguages"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="@string/languages_"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Languages"
-                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Groups"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_Languages"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Languages"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_Groups"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="@string/languages"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/editText_Groups"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Languages">
 
-                <TextView
-                    android:id="@+id/textView_LabelCategories"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="@string/categories"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Categories"
-                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Languages"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_Categories"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Categories"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_Languages"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="@string/categories_"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/editText_Languages"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Categories">
 
-                <TextView
-                    android:id="@+id/textView_LabelPages"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
-                    android:text="Pages"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_alignBaseline="@id/editText_Pages"
-                    android:layout_alignEnd="@id/textView_LabelComicSource"/>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Categories"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
-                <EditText
-                    android:id="@+id/editText_Pages"
-                    android:layout_width="wrap_content"
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayout_Pages"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="15dp"
+                    android:layout_below="@+id/textInputLayout_Categories"
                     android:layout_marginTop="10dp"
-                    android:layout_marginEnd="15dp"
-                    android:inputType="textMultiLine"
-                    android:text="Pages"
-                    android:textColor="@color/colorTextColor"
-                    android:textSize="20sp"
-                    android:layout_below="@id/editText_Categories"
-                    android:layout_toEndOf="@id/textView_LabelComicSource"
-                    android:layout_alignParentEnd="true"/>
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:hint="Comic Pages">
 
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editText_Pages"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
 
+                </com.google.android.material.textfield.TextInputLayout>
 
             </RelativeLayout>
 
