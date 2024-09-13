@@ -2,7 +2,6 @@ package com.agcurations.aggallerymanager;
 
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -11,8 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-
-import java.util.ArrayList;
 
 
 public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
@@ -53,9 +50,6 @@ public class Fragment_Import_2a_SelectDetectedWebVideo extends Fragment {
         if(getActivity() == null || getView() == null) {
             return;
         }
-
-        getActivity().setTitle("Import - Select Download Item");
-        ((AppCompatActivity) getActivity()).getSupportActionBar().show();
 
         if(ListViewState != null) {
             ListView listView_VideoDownloadItems = getView().findViewById(R.id.listView_WebDownloadItems);

@@ -24,7 +24,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -53,18 +52,8 @@ public class Activity_XPath_Tester extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        /*EdgeToEdge.enable(this);*/
-        setContentView(R.layout.activity_xpath_tester);
-        /*ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });*/
 
-        ActionBar AB = getSupportActionBar();
-        if(AB != null) {
-            AB.setTitle("XPath Tester");
-        }
+        setContentView(R.layout.activity_xpath_tester);
 
         //Configure a response receiver to listen for updates from the workers:
         IntentFilter filter = new IntentFilter();

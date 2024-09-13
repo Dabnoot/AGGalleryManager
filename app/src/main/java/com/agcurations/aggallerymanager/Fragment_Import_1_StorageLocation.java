@@ -15,9 +15,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -190,12 +187,6 @@ public class Fragment_Import_1_StorageLocation extends Fragment {
         super.onResume();
         if(getActivity() == null || getView() == null) {
             return;
-        }
-
-        getActivity().setTitle("Import");
-        ActionBar actionBar =((AppCompatActivity) getActivity()).getSupportActionBar();
-        if(actionBar != null) {
-            actionBar.show();
         }
 
         if(!GlobalClass.gbImportHoldingFolderAnalysisAutoStart) {

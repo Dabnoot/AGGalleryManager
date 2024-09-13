@@ -7,7 +7,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -28,11 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_5_Confirmation#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class Fragment_Import_5_Confirmation extends Fragment {
 
     private GlobalClass globalClass;
@@ -70,12 +65,6 @@ public class Fragment_Import_5_Confirmation extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() != null) {
-            getActivity().setTitle("Import");
-            if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
-                ((AppCompatActivity) getActivity()).getSupportActionBar().show();
-            }
-        }
         initComponents();
     }
 

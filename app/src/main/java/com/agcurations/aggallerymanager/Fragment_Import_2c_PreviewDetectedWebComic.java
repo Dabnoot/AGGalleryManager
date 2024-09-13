@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
@@ -54,11 +53,6 @@ public class Fragment_Import_2c_PreviewDetectedWebComic extends Fragment {
         super.onResume();
         if(getActivity() == null || getView() == null) {
             return;
-        }
-
-        getActivity().setTitle("Import - Review Detected Web Comic");
-        if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
 
         //Get the comic title and update on the layout:

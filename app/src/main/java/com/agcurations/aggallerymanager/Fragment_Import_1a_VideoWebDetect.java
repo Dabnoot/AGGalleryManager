@@ -1,8 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.BroadcastReceiver;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -13,7 +11,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -53,7 +50,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
     GlobalClass globalClass;
 
     private EditText gEditText_WebAddress;
-    private Button gbutton_PasteAddress;
     private Button gButton_Go;
     private Button gButton_Detect;
     private TextView gTextView_StatusInstructions;
@@ -549,30 +545,7 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
         if(getActivity() != null) {
             gmLiveDataStringHTML.observe(getActivity(), observerStringHTML); //When the HTML code changes...
-
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
-
-        if(gbutton_PasteAddress != null) {
-            if (getContext() != null) {
-                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clipData = clipboard.getPrimaryClip();
-                if (clipData != null) {
-                    ClipData.Item clipData_Item = clipData.getItemAt(0);
-                    if (clipData_Item != null) {
-                        if(clipData_Item.getText() != null) {
-                            try {
-                                String sClipString = (String) clipData_Item.coerceToText(getActivity().getApplicationContext());
-                                gbutton_PasteAddress.setEnabled(!sClipString.equals(""));
-                            } catch (Exception e){
-                                Log.d("Problem", e.getMessage());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
 
     }
 
@@ -751,8 +724,6 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
 
                 //Check to see if this is a response to update log or progress bar:
                 boolean 	bUpdateLog;
-                boolean 	bUpdatePercentComplete;
-                boolean 	bUpdateProgressBarText;
 
                 //Get booleans from the intent telling us what to update:
                 bUpdateLog = intent.getBooleanExtra(GlobalClass.UPDATE_LOG_BOOLEAN,false);
@@ -766,11 +737,11 @@ public class Fragment_Import_1a_VideoWebDetect extends Fragment {
                         //Check to see if the operation is complete:
                         if (sLogLine.contains("Click 'Next' to continue.")) {
                             gButton_Next.setEnabled(true);
-                        } else {
+                        } //else {
                             //gButton_Next.setEnabled(false);
                             //New logging, such as continuously detected resource requests of a particular type,
                             // would cause the Next button to become disabled.
-                        }
+                        //}
                     }
                 }
 

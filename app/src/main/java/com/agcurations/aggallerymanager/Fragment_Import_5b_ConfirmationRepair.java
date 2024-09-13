@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -27,11 +26,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_5b_ConfirmationRepair#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class Fragment_Import_5b_ConfirmationRepair extends Fragment {
 
     private GlobalClass globalClass;
@@ -69,10 +63,6 @@ public class Fragment_Import_5b_ConfirmationRepair extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() != null) {
-            getActivity().setTitle("Import");
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
-        }
         initComponents();
     }
 
@@ -159,7 +149,9 @@ public class Fragment_Import_5b_ConfirmationRepair extends Fragment {
                             Uri docUri = Uri.parse(alFileItemsDisplay.get(position).sUri);
                             Activity_Import.mediaMetadataRetriever.setDataSource(getContext(), docUri);
                             String time = Activity_Import.mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                            durationInMilliseconds = Long.parseLong(time);
+                            if (time != null) {
+                                durationInMilliseconds = Long.parseLong(time);
+                            }
                         } else { //if it's not a video file, check to see if it's a gif:
                             if (alFileItemsDisplay.get(position).sExtension.contentEquals(".gif")) {
                                 //Get the duration of the gif image:
@@ -232,7 +224,7 @@ public class Fragment_Import_5b_ConfirmationRepair extends Fragment {
                     sLine3 = sLine3 + "\n";
                 }
                 sLine3 = sLine3 + "Destination path: " +
-                        globalClass.gUriCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
+                        GlobalClass.gUriCatalogFolders[viewModelImportActivity.iImportMediaCategory] +
                         File.separator +
                         alFileItemsDisplay.get(position).sDestinationFolder;
             }

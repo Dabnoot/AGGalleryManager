@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,16 +12,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
-
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
@@ -67,13 +57,6 @@ public class Fragment_Import_0b_ImageSource extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() != null) {
-            getActivity().setTitle("Import");
-            ActionBar AB = ((AppCompatActivity) getActivity()).getSupportActionBar();
-            if(AB != null) {
-                AB.show();
-            }
-        }
 
 
         //Determine the number of files in the holding folder and adjust the radiobutton text to show file count.

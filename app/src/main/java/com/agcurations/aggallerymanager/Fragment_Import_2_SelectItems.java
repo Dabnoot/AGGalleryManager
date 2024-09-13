@@ -8,7 +8,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -36,11 +35,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_2_SelectItems#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class Fragment_Import_2_SelectItems extends Fragment {
 
     public static ViewModel_ImportActivity viewModelImportActivity; //Used to transfer data between fragments.
@@ -77,8 +71,6 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         if(getContext() != null) {
             LocalBroadcastManager.getInstance(getContext()).registerReceiver(importDataServiceResponseReceiver, filter);
         }
-
-
 
     }
 
@@ -122,9 +114,6 @@ public class Fragment_Import_2_SelectItems extends Fragment {
         if(getActivity() == null || getView() == null) {
             return;
         }
-
-        getActivity().setTitle("Import - Select Items");
-        ((AppCompatActivity) getActivity()).getSupportActionBar().hide();
 
         if(ListViewState != null) {
             ListView listView_FolderContents = getView().findViewById(R.id.listView_FolderContents);

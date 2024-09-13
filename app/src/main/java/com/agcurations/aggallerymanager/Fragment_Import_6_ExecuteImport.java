@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -95,10 +94,6 @@ public class Fragment_Import_6_ExecuteImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() != null) {
-            getActivity().setTitle("Import");
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
-        }
         initComponents();
     }
 

@@ -8,7 +8,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
@@ -58,8 +57,6 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
         if(getActivity() != null) {
             //Instantiate the ViewModel sharing data between fragments:
             viewModelImportActivity = new ViewModelProvider(getActivity()).get(ViewModel_ImportActivity.class);
-
-            //globalClass = (GlobalClass) getActivity().getApplicationContext();
         }
 
         //Configure a response receiver to listen for response from Service_TagEditor when adding tags:
@@ -130,10 +127,6 @@ public class Fragment_Import_3a_ItemDownloadTagImport extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() == null) return;
-        if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
-        }
         initComponents();
     }
 

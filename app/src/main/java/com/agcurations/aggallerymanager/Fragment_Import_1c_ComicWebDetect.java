@@ -1,8 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.BroadcastReceiver;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -29,7 +27,6 @@ import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
@@ -45,7 +42,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
     GlobalClass globalClass;
 
     private EditText gEditText_WebAddress;
-    private Button gbutton_PasteAddress;
     private Button gButton_Go;
     private Button gButton_Detect;
     private TextView gTextView_StatusInstructions;
@@ -332,8 +328,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
         if(getActivity() != null) {
             gmLiveDataStringHTML.observe(getActivity(), observerStringHTML); //When the HTML code changes...
-
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
         }
 
     }
@@ -519,8 +513,6 @@ public class Fragment_Import_1c_ComicWebDetect extends Fragment {
 
                 //Check to see if this is a response to update log or progress bar:
                 boolean 	bUpdateLog;
-                boolean 	bUpdatePercentComplete;
-                boolean 	bUpdateProgressBarText;
 
                 //Get booleans from the intent telling us what to update:
                 bUpdateLog = intent.getBooleanExtra(GlobalClass.UPDATE_LOG_BOOLEAN,false);

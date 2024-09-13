@@ -119,10 +119,6 @@ public class Activity_ImportFilePreview extends AppCompatActivity {
 
         gContextWindow = this;
 
-        if(this.getSupportActionBar() != null) {
-            this.getSupportActionBar().hide();
-        }
-
         //Source: https://www.youtube.com/watch?v=fn5OlqQuOCk
         setContentView(R.layout.activity_import_file_preview);
 

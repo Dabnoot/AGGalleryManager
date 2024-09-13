@@ -3,7 +3,6 @@ package com.agcurations.aggallerymanager;
 import android.annotation.SuppressLint;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -82,11 +81,6 @@ public class Activity_ComicViewer extends AppCompatActivity {
     private final Runnable mShowPart2Runnable = new Runnable() {
         @Override
         public void run() {
-            // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.show();
-            }
             mControlsView.setVisibility(View.VISIBLE);
         }
     };
@@ -361,10 +355,6 @@ public class Activity_ComicViewer extends AppCompatActivity {
 
     private void hide() {
         // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-        }
         mControlsView.setVisibility(View.GONE);
         mVisible = false;
 

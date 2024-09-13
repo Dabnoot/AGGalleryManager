@@ -1,47 +1,28 @@
 package com.agcurations.aggallerymanager;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
-import android.text.InputType;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.preference.EditTextPreference;
-import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -84,10 +65,6 @@ public class Activity_AppSettings extends AppCompatActivity implements
                     }
 
                 });
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
 
 
 
@@ -229,7 +206,7 @@ public class Activity_AppSettings extends AppCompatActivity implements
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.dismiss();
 
-                            if(globalClass.CheckIfFileExists(GlobalClass.gUriWebpageTabDataFile)){
+                            if(GlobalClass.CheckIfFileExists(GlobalClass.gUriWebpageTabDataFile)){
                                 try {
                                     if(DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, GlobalClass.gUriWebpageTabDataFile)){
                                         Toast.makeText(getContext(), "Success deleting file maintaining browser open tabs.", Toast.LENGTH_SHORT).show();

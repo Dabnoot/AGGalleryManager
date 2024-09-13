@@ -7,7 +7,6 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Observer;
@@ -26,11 +25,7 @@ import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link Fragment_Import_3_SelectTags#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class Fragment_Import_3_SelectTags extends Fragment {
 
     GlobalClass globalClass;
@@ -69,10 +64,6 @@ public class Fragment_Import_3_SelectTags extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getActivity() != null) {
-            getActivity().setTitle("Import");
-            ((AppCompatActivity) getActivity()).getSupportActionBar().show();
-        }
         initComponents();
     }
 

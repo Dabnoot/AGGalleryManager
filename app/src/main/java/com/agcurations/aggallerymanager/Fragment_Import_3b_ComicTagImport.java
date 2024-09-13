@@ -131,12 +131,7 @@ public class Fragment_Import_3b_ComicTagImport extends Fragment {
     public void onResume() {
         super.onResume();
         //Instantiate the ViewModel sharing data between fragments:
-        if(getActivity() != null) {
-            if(((AppCompatActivity) getActivity()).getSupportActionBar() != null) {
-                ((AppCompatActivity) getActivity()).getSupportActionBar().show();
-            }
-            alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
-        }
+        alsUnidentifiedTags = viewModelImportActivity.alsUnidentifiedTags;
         initComponents();
     }
 

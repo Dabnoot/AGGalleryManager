@@ -82,10 +82,6 @@ public class Activity_Browser extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE);
 
-        //Hide the Action Bar
-        if(getSupportActionBar() != null) {
-            getSupportActionBar().hide();
-        }
         //Hide the Status Bar
         WindowInsetsController insetsController = getWindow().getInsetsController();
         if(insetsController != null) {

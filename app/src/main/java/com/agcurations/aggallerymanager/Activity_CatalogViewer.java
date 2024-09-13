@@ -90,11 +90,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
         //Return theme away from startup_screen
         setTheme(R.style.MainTheme);
 
-        if (getSupportActionBar() != null) {
-            //Hide the action bar to allow more room for everything else.
-            getSupportActionBar().hide();
-        }
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_catalog_viewer);
 
@@ -293,7 +288,7 @@ public class Activity_CatalogViewer extends AppCompatActivity {
             gRecyclerView.getLayoutManager().onRestoreInstanceState(recyclerViewState);//restore
         }
 
-        if(globalClass.gbCatalogViewerRefresh){
+        if(GlobalClass.gbCatalogViewerRefresh){
             //Typically enter here if data has been edited.
             populate_RecyclerViewCatalogItems();
         } else if (!GlobalClass.gsRefreshCatalogViewerThumbnail.equals("")) {
@@ -405,12 +400,6 @@ public class Activity_CatalogViewer extends AppCompatActivity {
     //=====================================================================================
     //===== RecyclerView Code =================================================================
     //=====================================================================================
-
-    public void configure_RecyclerViewCatalogItems(){
-
-
-
-    }
 
     public class RecyclerViewCatalogAdapter extends RecyclerView.Adapter<RecyclerViewCatalogAdapter.ViewHolder> {
 

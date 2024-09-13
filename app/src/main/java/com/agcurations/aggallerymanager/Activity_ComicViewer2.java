@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,10 +39,6 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
         if(mContentView.getWindowInsetsController() != null) {
             mContentView.getWindowInsetsController().hide(
                     WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-        }
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
         }
 
         // Initialize RecyclerView
