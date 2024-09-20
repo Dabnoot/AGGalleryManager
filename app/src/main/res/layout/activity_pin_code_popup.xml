@@ -21,7 +21,7 @@
             android:textSize="30sp"
             android:layout_centerHorizontal="true"/>
 
-        <EditText
+        <!--<EditText
             android:id="@+id/editText_NumberPassword"
             android:layout_width="140sp"
             android:layout_height="wrap_content"
@@ -31,14 +31,32 @@
             android:textSize="30sp"
             android:layout_centerHorizontal="true"
             android:textAlignment="center"
-            android:layout_below="@+id/textView_PinText"/>
+            android:layout_below="@+id/textView_PinText"/>-->
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout_NumberPassword"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/textView_PinText">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editText_NumberPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="30sp"
+                android:ems="10"
+                android:inputType="numberPassword"
+                android:textAlignment="center"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_centerHorizontal="true"
-            android:layout_below="@+id/editText_NumberPassword">
+            android:layout_below="@+id/textInputLayout_NumberPassword">
 
             <Button
                 android:id="@+id/button_PinCodeCancel"

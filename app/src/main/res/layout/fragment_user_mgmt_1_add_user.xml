@@ -40,28 +40,77 @@
                         android:id="@+id/textView_AddUser"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_alignParentTop="true"
+                        android:layout_centerHorizontal="true"
                         android:text="New User"
                         android:textColor="@color/colorTextColor"
-                        android:textSize="40sp"
-                        android:layout_alignParentTop="true"
-                        android:layout_centerHorizontal="true"/>
+                        android:textSize="40sp"/>
 
                     <TextView
                         android:id="@+id/textView_AddUserSubText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_AddUser"
+                        android:layout_centerHorizontal="true"
+                        android:layout_marginTop="10dp"
                         android:text="Enter new user details below."
                         android:textColor="@color/colorTextColor"
-                        android:textSize="24sp"
-                        android:layout_centerHorizontal="true"
-                        android:layout_below="@+id/textView_AddUser"/>
+                        android:textSize="24sp" />
+
+                    <RelativeLayout
+                        android:id="@+id/relativeLayout_TextEntry"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/textView_AddUserSubText"
+                        android:orientation="vertical"
+                        android:layout_centerHorizontal="true">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/textInputLayout_UserName"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentTop="true"
+                            android:layout_alignParentStart="true"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginBottom="20dp"
+                            android:hint="User Name">
+
+                            <EditText
+                                android:id="@+id/editText_UserName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:minWidth="200dp"/>
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/textInputLayout_AccessPinNumber"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/textInputLayout_UserName"
+                            android:layout_alignParentStart="true"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="20dp"
+                            android:hint="Pin Number">
+
+                            <EditText
+                                android:id="@+id/editText_AccessPinNumber"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:minWidth="200dp"/>
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </RelativeLayout>
 
                     <LinearLayout
-                        android:id="@+id/linearLayout_LabelsAndData"
+                        android:id="@+id/linearLayout_CenteredItems"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_below="@+id/textView_AddUserSubText"
+                        android:layout_below="@+id/relativeLayout_TextEntry"
                         android:layout_marginTop="10dp"
                         android:layout_centerHorizontal="true">
 
@@ -70,25 +119,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/textView_labelUserName"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="User name:"
-                                android:textColor="@color/colorTextColor"
-                                android:textSize="22sp"
-                                android:layout_gravity="end"/>
-
-                            <TextView
-                                android:id="@+id/textView_labelAccessPinNumber"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="10dp"
-                                android:text="Access pin:"
-                                android:textColor="@color/colorTextColor"
-                                android:textSize="22sp"
-                                android:layout_gravity="end"/>
 
                             <TextView
                                 android:id="@+id/textView_labelAdmin"
@@ -107,7 +137,7 @@
                                 android:text="User icon color:"
                                 android:textColor="@color/colorTextColor"
                                 android:textSize="22sp"
-                                android:layout_marginTop="20dp"
+                                android:layout_marginTop="29dp"
                                 android:layout_gravity="end"/>
 
                         </LinearLayout>
@@ -117,29 +147,6 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:orientation="vertical">
-
-                            <EditText
-                                android:id="@+id/editText_UserName"
-                                android:layout_width="wrap_content"
-                                android:minWidth="200dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:layout_marginEnd="10dp"
-                                android:textColor="@color/colorTextColor"
-                                android:textSize="22sp"
-                                android:background="@color/colorBlack"/>
-
-                            <EditText
-                                android:id="@+id/editText_AccessPinNumber"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="10dp"
-                                android:layout_marginTop="10dp"
-                                android:textColor="@color/colorTextColor"
-                                android:background="@color/colorBlack"
-                                android:inputType="numberPassword"
-                                android:minWidth="200dp"
-                                android:textSize="22sp" />
 
                             <CheckBox
                                 android:id="@+id/checkBox_AdminUser"
@@ -165,21 +172,22 @@
                         android:id="@+id/textView_labelContentMaturity"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginTop="20dp"
                         android:text="Content Maturity:"
                         android:textColor="@color/colorTextColor"
                         android:textSize="22sp"
-                        android:layout_below="@+id/linearLayout_LabelsAndData"
+                        android:layout_below="@+id/linearLayout_CenteredItems"
                         android:layout_alignParentStart="true"/>
 
                     <Spinner
                         android:id="@+id/spinner_ContentMaturity"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:dropDownWidth="400dp"
                         android:layout_alignTop="@+id/textView_labelContentMaturity"
+                        android:layout_marginStart="18dp"
+                        android:layout_marginTop="0dp"
                         android:layout_toEndOf="@id/textView_labelContentMaturity"
-                        android:layout_marginStart="10dp"/>
+                        android:dropDownWidth="400dp" />
 
                 </RelativeLayout>
 

@@ -45,35 +45,16 @@
             android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
             android:translationZ="2dp">
 
-            <TextView
-                android:id="@+id/textView_labelSortBy"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:text="Sort by:"
-                android:textColor="@color/colorTextColor"
-                android:textSize="20sp" />
-
-            <!--<Spinner
-                android:id="@+id/spinner_SortBy"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_toEndOf="@id/textView_labelSortBy" />-->
-
-
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayout_SortBy"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/textView_labelSortBy"
+                android:layout_alignParentStart="true"
                 android:layout_toStartOf="@+id/imageButton_SortOrder"
-                android:layout_marginBottom="10dp"
-                android:layout_marginEnd="10dp">
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:hint="Sort by:">
 
                 <AutoCompleteTextView
                     android:id="@+id/autoCompleteTextView_SortBy"
@@ -87,20 +68,24 @@
             <ImageButton
                 android:id="@+id/imageButton_SortOrder"
                 android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                android:layout_alignTop="@id/textView_labelSortBy"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/textInputLayout_SortBy"
+                android:layout_alignBottom="@id/textInputLayout_SortBy"
                 android:layout_alignParentEnd="true"
-                android:layout_marginTop="-10dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="3dp"
                 android:backgroundTint="@color/colorFragmentBackgroundHighlight"
                 android:src="@drawable/baseline_sort_ascending_white_18dp"
-                android:title="sort_order" />
+                android:title="sort_order"/>
 
         </RelativeLayout>
 
-        <RelativeLayout
-            android:id="@+id/relativeLayout_SharedWithUser"
-            android:layout_width="wrap_content"
+        <!--Use this to apply a surface color: android:background="?attr/colorSecondary"-->
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout_SharedWithUser"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/relativeLayout_SortBy"
             android:layout_alignParentStart="true"
@@ -109,161 +94,70 @@
             android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
-            android:translationZ="2dp">
+            android:hint="Shared with user:">
 
-            <TextView
-                android:id="@+id/textView_labelSharedWithUser"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:text="Shared with user:"
-                android:textColor="@color/colorTextColor"
-                android:textSize="20sp" />
+            <AutoCompleteTextView
+                android:id="@+id/autoCompleteTextView_SharedWithUser"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:inputType="none"
+                tools:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <!--<Spinner
-                android:id="@+id/spinner_SharedWithUser"
-                style="@style/SpinnerStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_toEndOf="@id/textView_labelSharedWithUser" />-->
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/textView_labelSharedWithUser"
-                android:layout_alignParentEnd="true"
-                android:layout_marginBottom="10dp"
-                android:layout_marginEnd="10dp">
-
-                <AutoCompleteTextView
-                    android:id="@+id/autoCompleteTextView_SharedWithUser"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:inputType="none"
-                    tools:text="" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/relativeLayout_SearchKeywords"
-            android:layout_width="wrap_content"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout_SearchKeywords"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/relativeLayout_SharedWithUser"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="10dp"
-            android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
-            android:translationZ="2dp">
-
-            <TextView
-                android:id="@+id/textView_labelSearchKeyWords"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:text="Search keywords:"
-                android:textColor="@color/colorTextColor"
-                android:textSize="20sp" />
-
-            <!--<EditText
-                android:id="@+id/editText_SearchKeywords"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignBaseline="@id/textView_labelSearchKeyWords"
-                android:layout_alignParentEnd="true"
-                android:layout_marginEnd="10dp"
-                android:layout_toEndOf="@+id/textView_labelSearchKeyWords"
-                android:textColor="@color/colorTextColor" />-->
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/textView_labelSearchKeyWords"
-                android:layout_alignParentEnd="true"
-                android:layout_marginBottom="10dp"
-                android:layout_marginEnd="10dp">
-
-                <EditText
-                    android:id="@+id/editText_SearchKeywords"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:inputType="none"
-                    tools:text="" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-        </RelativeLayout>
-
-
-        <RelativeLayout
-            android:id="@+id/relativeLayout_FilterBy"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/relativeLayout_SearchKeywords"
+            android:layout_below="@id/textInputLayout_SharedWithUser"
             android:layout_alignParentStart="true"
             android:layout_alignParentEnd="true"
             android:layout_marginStart="10dp"
             android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
-            android:translationZ="2dp">
+            android:hint="Search keywords:">
 
-            <TextView
-                android:id="@+id/textView_labelFilter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:text="Filter by:"
-                android:textColor="@color/colorTextColor"
-                android:textSize="20sp" />
+            <EditText
+                android:id="@+id/editText_SearchKeywords"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:inputType="none"
+                tools:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <!--Spinner
-                <android:id="@+id/spinner_FilterBy"
-                style="@style/SpinnerStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_toEndOf="@id/textView_labelFilter" />-->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout_FilterBy"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textInputLayout_SearchKeywords"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="5dp"
+            android:hint="Filter by:">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@id/textView_labelFilter"
-                android:layout_alignParentEnd="true"
-                android:layout_marginBottom="10dp"
-                android:layout_marginEnd="10dp">
-
-                <AutoCompleteTextView
-                    android:id="@+id/autoCompleteTextView_FilterBy"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:inputType="none"
-                    tools:text="" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-        </RelativeLayout>
+            <AutoCompleteTextView
+                android:id="@+id/autoCompleteTextView_FilterBy"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:inputType="none"
+                tools:text="" />
+        </com.google.android.material.textfield.TextInputLayout>
 
 
         <RelativeLayout
             android:id="@+id/relativeLayout_FilterResolution"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/relativeLayout_FilterBy"
+            android:layout_below="@+id/textInputLayout_FilterBy"
             android:layout_marginStart="10dp"
             android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
             android:translationZ="2dp">
 
             <TextView
@@ -282,8 +176,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignBaseline="@id/textView_labelResolution"
-                style="@style/ThemeOverlay.Slider"
                 />
+            <!--Use this to change the thumb colors: style="@style/ThemeOverlay.Slider"-->
             <!--app:thumbColor="@color/colorTextColor"
             app:trackColor="@color/colorTextColor"-->
 
@@ -299,7 +193,6 @@
             android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
             android:translationZ="2dp"
             android:layout_below="@id/relativeLayout_FilterResolution">
 
@@ -318,9 +211,7 @@
                 android:id="@+id/rangeSlider_VideoDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@id/textView_labelVideoDuration"
-                app:thumbColor="@color/colorTextColor"
-                app:trackColor="@color/colorTextColor" />
+                android:layout_alignBaseline="@id/textView_labelVideoDuration" />
 
         </RelativeLayout>
 
@@ -332,7 +223,6 @@
             android:layout_marginTop="5dp"
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="5dp"
-            android:background="?attr/colorSecondary"
             android:translationZ="2dp"
             android:layout_below="@id/relativeLayout_VideoDuration">
 
@@ -351,9 +241,7 @@
                 android:id="@+id/rangeSlider_MaturityFilter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@id/textView_labelMaturityFilter"
-                app:thumbColor="@color/colorTextColor"
-                app:trackColor="@color/colorTextColor" />
+                android:layout_alignBaseline="@id/textView_labelMaturityFilter"/>
 
         </RelativeLayout>
 

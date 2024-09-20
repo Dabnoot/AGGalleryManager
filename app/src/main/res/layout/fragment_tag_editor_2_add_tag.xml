@@ -61,50 +61,40 @@
                         android:layout_centerHorizontal="true"
                         android:layout_marginTop="10dp">
 
-                        <TextView
-                            android:id="@+id/textView_labelTagText"
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/textInputLayout_TagText"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_alignEnd="@+id/textView_labelTagDescription"
+                            android:minWidth="200dp"
                             android:layout_marginTop="10dp"
                             android:layout_marginBottom="20dp"
-                            android:text="Tag text:"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp" />
+                            android:hint="Tag Name">
 
-                        <EditText
-                            android:id="@+id/editText_TagText"
+                            <EditText
+                                android:id="@+id/editText_TagText"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/textInputLayout_TagDescription"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_alignBaseline="@+id/textView_labelTagText"
-                            android:layout_marginStart="10dp"
-                            android:layout_toEndOf="@+id/textView_labelTagText"
                             android:minWidth="200dp"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp" />
-
-                        <TextView
-                            android:id="@+id/textView_labelTagDescription"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@+id/editText_TagText"
-                            android:layout_alignParentStart="true"
+                            android:layout_below="@+id/textInputLayout_TagText"
                             android:layout_marginTop="10dp"
-                            android:text="Tag description:"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp" />
+                            android:layout_marginBottom="20dp"
+                            android:hint="Tag Description">
 
-                        <EditText
-                            android:id="@+id/editText_TagDescription"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignBaseline="@+id/textView_labelTagDescription"
-                            android:layout_marginStart="10dp"
-                            android:layout_marginTop="10dp"
-                            android:layout_toEndOf="@+id/textView_labelTagDescription"
-                            android:minWidth="200dp"
-                            android:textColor="@color/colorTextColor"
-                            android:textSize="22sp" />
+                            <EditText
+                                android:id="@+id/editText_TagDescription"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
+
+                        </com.google.android.material.textfield.TextInputLayout>
 
                     </RelativeLayout>
 

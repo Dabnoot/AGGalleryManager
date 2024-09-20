@@ -6,44 +6,36 @@
     android:layout_height="match_parent"
     tools:context=".Activity_Import">
 
-    <TextView
-        android:id="@+id/textView_Label_WebAddress"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/textInputLayout_Address"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Address:"
-        android:textColor="@color/colorTextColor"
-        android:background="@color/black_overlay"
-        android:layout_marginStart="20dp"
-        android:padding="5dp"
-        android:layout_marginEnd="20dp"
-        android:textSize="20sp"
-        android:layout_alignBaseline="@id/editText_WebAddress"/>
-
-    <EditText
-        android:id="@+id/editText_WebAddress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
         android:layout_marginTop="10dp"
+        android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
-        android:padding="5dp"
-        android:textColor="@color/colorTextColor"
-        android:background="@color/black_overlay"
         android:layout_toStartOf="@id/linearLayout_WebNavDetectControls"
-        android:layout_toEndOf="@id/textView_Label_WebAddress"
-        android:singleLine="true"
-        android:textSize="20sp" />
+        android:hint="Address">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editText_WebAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout_WebNavDetectControls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
+        android:layout_alignTop="@+id/textInputLayout_Address"
+        android:layout_alignBottom="@+id/textInputLayout_Address"
         android:layout_alignParentEnd="true">
 
         <Button
             android:id="@+id/button_Go"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:text="Go"
             android:textSize="20sp"
             android:layout_marginEnd="20dp"
@@ -52,7 +44,7 @@
         <Button
             android:id="@+id/button_Detect"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:text="Detect"
             android:textSize="20sp"
             android:layout_marginEnd="20dp"
@@ -72,7 +64,7 @@
         android:text="Enter an address and click 'Go'."
         android:textColor="@color/colorTextColor"
         android:background="@color/black_overlay"
-        android:layout_below="@id/editText_WebAddress"
+        android:layout_below="@id/textInputLayout_Address"
         android:layout_alignParentEnd="true"/>
 
     <WebView

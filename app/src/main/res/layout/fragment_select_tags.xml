@@ -6,8 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Fragment_SelectTags"
-    android:orientation="vertical"
-    android:background="@color/colorActionBar">
+    android:orientation="vertical">
+    <!--android:background="@color/colorActionBar"-->
 
     <TextView
         android:id="@+id/textView_Title"
@@ -60,9 +60,9 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/button_UncheckTags"
         android:layout_marginTop="8dp"
-        app:thumbColor="@color/colorTextColor"
-        app:trackColor="@color/colorTextColor"
         />
+    <!--app:thumbColor="@color/colorTextColor"
+        app:trackColor="@color/colorTextColor"-->
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chipGroup_SuggestedTags"
