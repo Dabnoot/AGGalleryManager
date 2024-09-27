@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -46,6 +47,33 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
             {"X",  "X-Rated",                   "Associated with items highly eschewed by mainstream society, such as pron, or some topics in certain countries, religions, or cultures. All content should be considered NFSW."},
              //DO NOT CHANGE ORDER OR INDEXING WITHOUT UPDATING STORED USER DATA.
     };
+
+    public static ArrayList<String> GetMaturityShortStringsForUsers(){
+        ArrayList<String> alsShortStrings = new ArrayList<>();
+        for(String[] sESRBRating: MATURITY_RATINGS){
+            if(!(sESRBRating[MATURITY_RATING_CODE_INDEX].equals(
+                    MATURITY_RATINGS[MATURITY_RATING_RP][MATURITY_RATING_CODE_INDEX]))) {
+                //Don't add "rating pending" to list of short strings. Those are for tags only.
+                String sLine = sESRBRating[0] + " - " + sESRBRating[1];
+                alsShortStrings.add(sLine);
+            }
+        }
+        return alsShortStrings;
+    }
+
+    public static int GetMaturityFromShortString(String sShortString){
+        String[] sSplit = sShortString.split(" . ");
+        String sItem = sSplit[0];
+        int iMaturityLevel = GlobalClass.giDefaultUserMaturityRating;
+        for(int i = 0; i < RATINGS_COUNT; i++){
+            String[] sMaturityRecord = MATURITY_RATINGS[i];
+            if(sItem.equals(sMaturityRecord[AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX])){
+                iMaturityLevel = i;
+                break;
+            }
+        }
+        return iMaturityLevel;
+    }
 
 
     public AdapterMaturityRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects ) {

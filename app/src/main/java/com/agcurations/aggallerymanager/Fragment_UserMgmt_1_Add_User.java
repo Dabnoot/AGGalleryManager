@@ -36,13 +36,14 @@ import android.view.WindowMetrics;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Adapter;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -103,8 +104,6 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_user_mgmt_1_add_user, container, false);
     }
-
-    private boolean gbSpinnerDropdownWidthSet = false;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -236,40 +235,14 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 }
             });
 
-
-
-
-
-            final Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
-            ArrayList<String[]> alsTemp = new ArrayList<>();
-            for(String[] sESRBRating: AdapterMaturityRatings.MATURITY_RATINGS){
-                if(!(sESRBRating[AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX].equals(
-                        AdapterMaturityRatings.MATURITY_RATINGS[AdapterMaturityRatings.MATURITY_RATING_RP][AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX]))) {
-                    //Don't add "rating pending" to the drop-down. Those are for tags only.
-                    alsTemp.add(sESRBRating);
-                }
-            }
-
             if(getContext() == null) {
                 return;
             }
-            AdapterMaturityRatings amrSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
-            spinner_ContentMaturity.setAdapter(amrSpinnerAdapter);
 
-            spinner_ContentMaturity.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    if(!gbSpinnerDropdownWidthSet) {
-                        int iSpinnerWidthPixels = spinner_ContentMaturity.getWidth();
-                        if (iSpinnerWidthPixels > 0) {
-                            spinner_ContentMaturity.setDropDownWidth(iSpinnerWidthPixels);
-                            gbSpinnerDropdownWidthSet = true;
-                        }
-                    }
-                    return false;
-                }
-            });
-
+            //Configure the maturity ratings dropdown:
+            ArrayAdapter<String> aasMaturityRatings = new ArrayAdapter<>(getContext(), R.layout.dropdown_item_generic, AdapterMaturityRatings.GetMaturityShortStringsForUsers());
+            AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+            autoCompleteTextView_ExposedDropDownTest.setAdapter(aasMaturityRatings);
 
 
             Button button_Finish = getView().findViewById(R.id.button_Finish);
@@ -297,7 +270,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
     private void initUserList(){
         //Initialize the displayed list of users:
-        if(getView() == null){
+        if(getView() == null || getActivity() == null){
             return;
         }
         ListView listView_UserList = getView().findViewById(R.id.listView_UserList);
@@ -317,7 +290,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             final EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
             final EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
             final CheckBox checkBox_AdminUser = getView().findViewById(R.id.checkBox_AdminUser);
-            final Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
+            final AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
 
             listView_UserList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -373,7 +346,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                                             //User maturity level does not make use of level 6, which is "rating pending"
                                             iAdjustedMaturityLevel -= 1;
                                         }
-                                        spinner_ContentMaturity.setSelection(iAdjustedMaturityLevel);
+                                        autoCompleteTextView_ExposedDropDownTest.setSelection(iAdjustedMaturityLevel);
                                     } else {
                                         gsEditUser_OriginalUserName = "";
                                         Toast.makeText(getContext(), "Incorrect pin entered.", Toast.LENGTH_SHORT).show();
@@ -402,7 +375,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                                 //User maturity level does not make use of level 6, which is "rating pending"
                                 iAdjustedMaturityLevel -= 1;
                             }
-                            spinner_ContentMaturity.setSelection(iAdjustedMaturityLevel);
+                            autoCompleteTextView_ExposedDropDownTest.setSelection(iAdjustedMaturityLevel);
 
 
                         }
@@ -418,7 +391,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                         final int iAC = initColorIcon();
                         mldiSelectedUserColor.setValue(iAC);
                         //Reset maturity selection:
-                        spinner_ContentMaturity.setSelection(0);
+                        autoCompleteTextView_ExposedDropDownTest.setSelection(0);
                     }
                     adapterUserList.notifyDataSetChanged();
                 }
@@ -436,7 +409,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
     }
 
     /**
-     * https://stackoverflow.com/questions/6547154/wrap-content-for-a-listviews-width
+     * <a href="https://stackoverflow.com/questions/6547154/wrap-content-for-a-listviews-width">...</a>
      * Computes the widest view in an adapter, best used when you need to wrap_content on a ListView, please be careful
      * and don't use it on an adapter that is extremely numerous in items or it will take a long time.
      *
@@ -521,24 +494,12 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
                 return;
             }
 
-            Spinner spinner_ContentMaturity = getView().findViewById(R.id.spinner_ContentMaturity);
-            String sMaturityCode;
-            int iMaturityLevel = -1;
-            View viewSpinnerItemMaturityRating = spinner_ContentMaturity.getSelectedView();
-            if(viewSpinnerItemMaturityRating != null){
-                TextView tv = viewSpinnerItemMaturityRating.findViewById(R.id.textView_AgeRatingCode);
-                if(tv != null){
-                    sMaturityCode = tv.getText().toString();
-                    //Maturity code lookup
-                    for(int i = 0; i < AdapterMaturityRatings.RATINGS_COUNT; i++){
-                        String[] sMaturityRecord = AdapterMaturityRatings.MATURITY_RATINGS[i];
-                        if(sMaturityCode.equals(sMaturityRecord[AdapterMaturityRatings.MATURITY_RATING_CODE_INDEX])){
-                            iMaturityLevel = i;
-                            break;
-                        }
-                    }
-                }
-            }
+
+            //Get the maturity code:
+            AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+            String sLine = autoCompleteTextView_ExposedDropDownTest.getText().toString();
+            int iMaturityLevel = AdapterMaturityRatings.GetMaturityFromShortString(sLine);
+
             if(iMaturityLevel == -1){
                 Toast.makeText(requireContext(), "Unable to parse maturity rating. User addition aborted.", Toast.LENGTH_SHORT).show();
                 return;
@@ -584,7 +545,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             final int iAC = initColorIcon();
             mldiSelectedUserColor.setValue(iAC);
             //Reset maturity selection:
-            spinner_ContentMaturity.setSelection(0);
+            autoCompleteTextView_ExposedDropDownTest.setSelection(0);
 
             //Update listview of users:
             initUserList();
