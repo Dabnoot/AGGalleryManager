@@ -242,14 +242,14 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             }
 
             //Configure the maturity ratings dropdown:
-            ArrayAdapter<String> aasMaturityRatings = new ArrayAdapter<>(getContext(), R.layout.dropdown_item_generic, AdapterMaturityRatings.GetMaturityShortStringsForUsers());
+            ArrayAdapter<String> aasMaturityRatings = new ArrayAdapter<>(getContext(), R.layout.dropdown_item_generic, AdapterMaturityRatings.GetMaturityStringsForUserAssignment());
             AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
             autoCompleteTextView_ExposedDropDownTest.setAdapter(aasMaturityRatings);
 
             //Configure the maturity descriptions listview:
-            AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, AdapterMaturityRatings.GetAssignmentArrayList());
+            AdapterMaturityRatings amrMaturityRatings = new AdapterMaturityRatings(getContext(), R.layout.listview_item_maturity_rating, AdapterMaturityRatings.GetAssignmentArrayList());
             ListView listView_MaturityLevelDescriptions = getView().findViewById(R.id.listView_MaturityLevelDescriptions);
-            listView_MaturityLevelDescriptions.setAdapter(atarSpinnerAdapter);
+            listView_MaturityLevelDescriptions.setAdapter(amrMaturityRatings);
 
             RelativeLayout relativeLayout_MaturityLevelDescriptions = getView().findViewById(R.id.relativeLayout_MaturityLevelDescriptions);
             relativeLayout_MaturityLevelDescriptions.setOnClickListener(new View.OnClickListener() {

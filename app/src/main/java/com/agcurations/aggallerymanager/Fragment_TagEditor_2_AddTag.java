@@ -23,6 +23,8 @@ import androidx.work.WorkManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -30,7 +32,6 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,13 +61,14 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private EditText gEditText_TagText;
     private EditText gEditText_TagDescription;
-    private Spinner gSpinner_AgeRating;
     private CheckBox gCheckBox_SetApprovedUsers;
 
     private Fragment_SelectTags gFragment_selectTags;
     ViewModel_Fragment_SelectTags gViewModel_fragment_selectTags;
 
     private ItemClass_Tag gictTagIDInEditMode;
+
+    private AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest;
 
     public Fragment_TagEditor_2_AddTag() {
         // Required empty public constructor
@@ -112,27 +114,42 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     @Override
     public void onResume() {
-        if (getView() == null || getActivity() == null) {
+        if (getView() == null || getActivity() == null || getContext() == null) {
             return;
         }
 
         gEditText_TagText = getView().findViewById(R.id.editText_TagText);
         gEditText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
 
-        gSpinner_AgeRating = getView().findViewById(R.id.spinner_ContentMaturity);
-        ArrayList<String[]> alsTemp = new ArrayList<>();
+        //Configure the maturity ratings dropdown:
+        ArrayAdapter<String> aasMaturityRatings = new ArrayAdapter<>(getContext(), R.layout.dropdown_item_generic, AdapterMaturityRatings.GetMaturityStringsForTagAssigment());
+        autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+        autoCompleteTextView_ExposedDropDownTest.setAdapter(aasMaturityRatings);
 
-        for(int i = 0; i < AdapterMaturityRatings.MATURITY_RATINGS.length; i++){
-            if(GlobalClass.gicuCurrentUser.iMaturityLevel >= i) {
-                //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
-                //  to them unless their user rating is modified.
-                String[] sESRBRating = AdapterMaturityRatings.MATURITY_RATINGS[i];
-                alsTemp.add(sESRBRating);
+        //Configure the maturity descriptions listview:
+        AdapterMaturityRatings amrMaturityRatings = new AdapterMaturityRatings(getContext(), R.layout.listview_item_maturity_rating, AdapterMaturityRatings.GetAssignmentArrayList());
+        ListView listView_MaturityLevelDescriptions = getView().findViewById(R.id.listView_MaturityLevelDescriptions);
+        listView_MaturityLevelDescriptions.setAdapter(amrMaturityRatings);
+
+        RelativeLayout relativeLayout_MaturityLevelDescriptions = getView().findViewById(R.id.relativeLayout_MaturityLevelDescriptions);
+        relativeLayout_MaturityLevelDescriptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(relativeLayout_MaturityLevelDescriptions.getVisibility() == View.VISIBLE) {
+                    relativeLayout_MaturityLevelDescriptions.setVisibility(View.INVISIBLE);
+                } else {
+                    relativeLayout_MaturityLevelDescriptions.setVisibility(View.VISIBLE);
+                }
             }
-        }
-        if(getContext() == null) return;
-        AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, alsTemp);
-        gSpinner_AgeRating.setAdapter(atarSpinnerAdapter);
+        });
+
+        ImageButton button_ShowMaturityDescriptions = getView().findViewById(R.id.button_ShowMaturityDescriptions);
+        button_ShowMaturityDescriptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                relativeLayout_MaturityLevelDescriptions.setVisibility(View.VISIBLE);
+            }
+        });
 
         Button button_AddTag = getView().findViewById(R.id.button_AddTag);
         TextView textView_NewTagTitle = getView().findViewById(R.id.textView_NewTagTitle);
@@ -272,7 +289,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                     gictTagIDInEditMode = tagItems.get(0);
                     gEditText_TagText.setText(gictTagIDInEditMode.sTagText);
                     gEditText_TagDescription.setText(gictTagIDInEditMode.sTagDescription);
-                    gSpinner_AgeRating.setSelection(gictTagIDInEditMode.iMaturityRating);
+                    autoCompleteTextView_ExposedDropDownTest.setSelection(gictTagIDInEditMode.iMaturityRating);
                     giInitialMaturityRating = gictTagIDInEditMode.iMaturityRating;
                     if(gictTagIDInEditMode.alsTagApprovedUsers.size() > 0){
                         gCheckBox_SetApprovedUsers.setChecked(true);
@@ -367,8 +384,12 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         //Get the user-entered tag description:
         EditText editText_TagDescription = getView().findViewById(R.id.editText_TagDescription);
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
-        //Get the selected Age Rating:
-        ictNewTag.iMaturityRating = gSpinner_AgeRating.getSelectedItemPosition();
+
+        //Get the selected Maturity Rating:
+        AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+        String sLine = autoCompleteTextView_ExposedDropDownTest.getText().toString();
+        ictNewTag.iMaturityRating = AdapterMaturityRatings.GetMaturityFromShortString(sLine);
+
         //Get any users to whom the tag is to be restricted (approved users):
         ictNewTag.alsTagApprovedUsers = gAdapterApprovedUsers.getUserNamesInList();
 
@@ -520,7 +541,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
         }
         if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
-            gSpinner_AgeRating.setSelection(0);
+            autoCompleteTextView_ExposedDropDownTest.setSelection(0);
         }
 
     }

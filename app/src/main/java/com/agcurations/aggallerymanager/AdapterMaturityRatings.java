@@ -48,13 +48,28 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
              //DO NOT CHANGE ORDER OR INDEXING WITHOUT UPDATING STORED USER DATA.
     };
 
-    public static ArrayList<String> GetMaturityShortStringsForUsers(){
+    public static ArrayList<String> GetMaturityStringsForUserAssignment(){
         ArrayList<String> alsShortStrings = new ArrayList<>();
-        for(String[] sESRBRating: MATURITY_RATINGS){
-            if(!(sESRBRating[MATURITY_RATING_CODE_INDEX].equals(
-                    MATURITY_RATINGS[MATURITY_RATING_RP][MATURITY_RATING_CODE_INDEX]))) {
-                //Don't add "rating pending" to list of short strings. Those are for tags only.
-                String sLine = sESRBRating[0] + " - " + sESRBRating[1];
+        for(int i = 0; i < RATINGS_COUNT - 1; i++){
+            if(i <= GlobalClass.gicuCurrentUser.iMaturityLevel) {
+                //Don't allow a user to create a user with a maturity rating higher than theirself.
+                if (!(MATURITY_RATINGS[i][MATURITY_RATING_CODE_INDEX].equals(
+                        MATURITY_RATINGS[MATURITY_RATING_RP][MATURITY_RATING_CODE_INDEX]))) {
+                    //Don't add "rating pending" to list of short strings. Those are for tags only.
+                    String sLine = MATURITY_RATINGS[i][0] + " - " + MATURITY_RATINGS[i][1];
+                    alsShortStrings.add(sLine);
+                }
+            }
+        }
+        return alsShortStrings;
+    }
+
+    public static ArrayList<String> GetMaturityStringsForTagAssigment(){
+        ArrayList<String> alsShortStrings = new ArrayList<>();
+        for(int i = 0; i < RATINGS_COUNT - 1; i++){
+            if(i <= GlobalClass.gicuCurrentUser.iMaturityLevel) {
+                //Don't allow a user to create a user with a maturity rating higher than theirself.
+                String sLine = MATURITY_RATINGS[i][0] + " - " + MATURITY_RATINGS[i][1];
                 alsShortStrings.add(sLine);
             }
         }

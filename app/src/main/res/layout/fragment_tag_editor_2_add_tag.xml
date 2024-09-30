@@ -68,7 +68,6 @@
                             android:layout_height="wrap_content"
                             android:minWidth="200dp"
                             android:layout_marginTop="10dp"
-                            android:layout_marginBottom="20dp"
                             android:hint="Tag Name">
 
                             <EditText
@@ -85,8 +84,7 @@
                             android:layout_height="wrap_content"
                             android:minWidth="200dp"
                             android:layout_below="@+id/textInputLayout_TagText"
-                            android:layout_marginTop="10dp"
-                            android:layout_marginBottom="20dp"
+                            android:layout_marginTop="15dp"
                             android:hint="Tag Description">
 
                             <EditText
@@ -98,37 +96,60 @@
 
                     </RelativeLayout>
 
-                    <TextView
-                        android:id="@+id/textView_labelContentMaturity"
+                    <LinearLayout
+                        android:id="@+id/linearLayout_MaturityRating"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_below="@+id/relativeLayout_TagDetails"
-                        android:layout_centerHorizontal="true"
-                        android:layout_marginTop="30dp"
-                        android:text="Maturity rating:"
-                        android:textColor="@color/colorTextColor"
-                        android:textSize="22sp" />
-
-                    <Spinner
-                        android:id="@+id/spinner_ContentMaturity"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@+id/textView_labelContentMaturity"
+                        android:layout_marginTop="20dp"
                         android:layout_marginStart="20dp"
-                        android:layout_marginTop="10dp"
-                        android:layout_marginEnd="20dp" />
+                        android:layout_centerHorizontal="true">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:id="@+id/textInputLayout_ExposedDropDownTest"
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:hint="Maturity Level">
+
+                            <AutoCompleteTextView
+                                android:id="@+id/autoCompleteTextView_ExposedDropDownTest"
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:inputType="none"
+                                android:layout_weight="1"
+                                android:textSize="20sp"
+                                android:textColor="@color/colorTextColor"
+                                android:text="E - Everyone"/>
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <ImageButton
+                            android:id="@+id/button_ShowMaturityDescriptions"
+                            android:layout_width="80dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            style="?attr/materialIconButtonStyle"
+                            android:src="@drawable/baseline_info_outline_24"
+                            android:contentDescription="Show maturity level descriptions"
+                            android:backgroundTint="@android:color/transparent"
+                            android:layout_gravity="center"/>
+                    </LinearLayout>
+
+
 
                     <RelativeLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_below="@+id/spinner_ContentMaturity"
+                        android:layout_below="@+id/linearLayout_MaturityRating"
                         android:layout_centerHorizontal="true">
 
                         <RelativeLayout
                             android:id="@+id/relativeLayout_CheckboxSetApprovedUsers"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_centerHorizontal="true">
+                            android:layout_centerHorizontal="true"
+                            android:layout_marginTop="10dp">
 
                             <CheckBox
                                 android:id="@+id/checkBox_SetApprovedUsers"
@@ -153,6 +174,7 @@
                             android:id="@+id/relativeLayout_UserSelection"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
                             android:layout_below="@+id/relativeLayout_CheckboxSetApprovedUsers">
 
                             <RelativeLayout
@@ -297,6 +319,31 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:visibility="invisible"/>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout_MaturityLevelDescriptions"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#55111111"
+        android:visibility="invisible"><!--Faded background to let the user know background controls are frozen-->
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@color/colorPrimary"
+            android:layout_centerHorizontal="true">
+
+            <ListView
+                android:id="@+id/listView_MaturityLevelDescriptions"
+                android:layout_width="800dp"
+                android:layout_height="match_parent"
+                android:scrollbarSize="20dp"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true" />
+
+        </RelativeLayout>
+
     </RelativeLayout>
 
 </RelativeLayout>
