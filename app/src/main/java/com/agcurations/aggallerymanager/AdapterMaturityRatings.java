@@ -75,6 +75,20 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
         return iMaturityLevel;
     }
 
+    public static ArrayList<String[]> GetAssignmentArrayList() {
+        //This function used to seed the adapter the same way for every usage.
+        ArrayList<String[]> alsItems = new ArrayList<>();
+        for (int i = 0; i < AdapterMaturityRatings.MATURITY_RATINGS.length; i++) {
+            if (GlobalClass.gicuCurrentUser.iMaturityLevel >= i) {
+                //Don't let the user add a tag or modify a tag to a maturity level greater than their user level, or the tag will be lost
+                //  to them unless their user rating is modified.
+                String[] sESRBRating = AdapterMaturityRatings.MATURITY_RATINGS[i];
+                alsItems.add(sESRBRating);
+            }
+        }
+        return alsItems;
+    }
+
 
     public AdapterMaturityRatings(@NonNull Context context, int resource, @NonNull List<String[]> objects ) {
         super(context, resource, objects);
@@ -95,7 +109,7 @@ public class AdapterMaturityRatings extends ArrayAdapter<String[]> {
                           ViewGroup parent)
     {
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item_maturity_rating, parent, false);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.listview_item_maturity_rating, parent, false);
         }
 
         String[] sItemData = getItem(position);

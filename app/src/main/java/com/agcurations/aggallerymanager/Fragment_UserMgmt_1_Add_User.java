@@ -42,8 +42,10 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -244,6 +246,30 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
             autoCompleteTextView_ExposedDropDownTest.setAdapter(aasMaturityRatings);
 
+            //Configure the maturity descriptions listview:
+            AdapterMaturityRatings atarSpinnerAdapter = new AdapterMaturityRatings(getContext(), R.layout.spinner_item_maturity_rating, AdapterMaturityRatings.GetAssignmentArrayList());
+            ListView listView_MaturityLevelDescriptions = getView().findViewById(R.id.listView_MaturityLevelDescriptions);
+            listView_MaturityLevelDescriptions.setAdapter(atarSpinnerAdapter);
+
+            RelativeLayout relativeLayout_MaturityLevelDescriptions = getView().findViewById(R.id.relativeLayout_MaturityLevelDescriptions);
+            relativeLayout_MaturityLevelDescriptions.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if(relativeLayout_MaturityLevelDescriptions.getVisibility() == View.VISIBLE) {
+                        relativeLayout_MaturityLevelDescriptions.setVisibility(View.INVISIBLE);
+                    } else {
+                        relativeLayout_MaturityLevelDescriptions.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+
+            ImageButton button_ShowMaturityDescriptions = getView().findViewById(R.id.button_ShowMaturityDescriptions);
+            button_ShowMaturityDescriptions.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    relativeLayout_MaturityLevelDescriptions.setVisibility(View.VISIBLE);
+                }
+            });
 
             Button button_Finish = getView().findViewById(R.id.button_Finish);
             button_Finish.setOnClickListener(new View.OnClickListener() {

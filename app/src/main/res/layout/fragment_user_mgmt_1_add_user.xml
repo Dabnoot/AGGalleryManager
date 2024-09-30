@@ -261,4 +261,29 @@
             android:visibility="invisible"/>
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/relativeLayout_MaturityLevelDescriptions"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#55111111"
+        android:visibility="invisible"><!--Faded background to let the user know background controls are frozen-->
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@color/colorPrimary"
+            android:layout_centerHorizontal="true">
+
+        <ListView
+            android:id="@+id/listView_MaturityLevelDescriptions"
+            android:layout_width="800dp"
+            android:layout_height="match_parent"
+            android:scrollbarSize="20dp"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
 </RelativeLayout>
