@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <color name="colorPrimary">#9966ff</color>
-    <color name="colorPrimaryDark">#9933ff</color>
+    <color name="colorPrimary">#343995</color>
+    <color name="colorPrimaryDark">#282668</color>
     <color name="colorAccent">#efefef</color>
 
     <color name="colorStatusBar">#282668</color>
