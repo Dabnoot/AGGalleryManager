@@ -68,7 +68,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
     private ItemClass_Tag gictTagIDInEditMode;
 
-    private AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest;
+    private AutoCompleteTextView autoCompleteTextView_MaturityLevel;
 
     public Fragment_TagEditor_2_AddTag() {
         // Required empty public constructor
@@ -123,8 +123,8 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
 
         //Configure the maturity ratings dropdown:
         ArrayAdapter<String> aasMaturityRatings = new ArrayAdapter<>(getContext(), R.layout.dropdown_item_generic, AdapterMaturityRatings.GetMaturityStringsForTagAssigment());
-        autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
-        autoCompleteTextView_ExposedDropDownTest.setAdapter(aasMaturityRatings);
+        autoCompleteTextView_MaturityLevel = getView().findViewById(R.id.autoCompleteTextView_MaturityLevel);
+        autoCompleteTextView_MaturityLevel.setAdapter(aasMaturityRatings);
 
         //Configure the maturity descriptions listview:
         AdapterMaturityRatings amrMaturityRatings = new AdapterMaturityRatings(getContext(), R.layout.listview_item_maturity_rating, AdapterMaturityRatings.GetAssignmentArrayList());
@@ -289,7 +289,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
                     gictTagIDInEditMode = tagItems.get(0);
                     gEditText_TagText.setText(gictTagIDInEditMode.sTagText);
                     gEditText_TagDescription.setText(gictTagIDInEditMode.sTagDescription);
-                    autoCompleteTextView_ExposedDropDownTest.setSelection(gictTagIDInEditMode.iMaturityRating);
+                    autoCompleteTextView_MaturityLevel.setSelection(gictTagIDInEditMode.iMaturityRating);
                     giInitialMaturityRating = gictTagIDInEditMode.iMaturityRating;
                     if(gictTagIDInEditMode.alsTagApprovedUsers.size() > 0){
                         gCheckBox_SetApprovedUsers.setChecked(true);
@@ -386,7 +386,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
         ictNewTag.sTagDescription = editText_TagDescription.getText().toString();
 
         //Get the selected Maturity Rating:
-        AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+        AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_MaturityLevel);
         String sLine = autoCompleteTextView_ExposedDropDownTest.getText().toString();
         ictNewTag.iMaturityRating = AdapterMaturityRatings.GetMaturityFromShortString(sLine);
 
@@ -541,7 +541,7 @@ public class Fragment_TagEditor_2_AddTag extends Fragment {
             gFragment_selectTags.gListViewTagsAdapter.uncheckAll();
         }
         if(gViewModelTagEditor.iTagAddOrEditMode == ViewModel_TagEditor.TAG_EDIT_MODE) {
-            autoCompleteTextView_ExposedDropDownTest.setSelection(0);
+            autoCompleteTextView_MaturityLevel.setSelection(0);
         }
 
     }

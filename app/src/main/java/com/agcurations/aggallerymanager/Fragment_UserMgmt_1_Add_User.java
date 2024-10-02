@@ -243,8 +243,8 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
             //Configure the maturity ratings dropdown:
             ArrayAdapter<String> aasMaturityRatings = new ArrayAdapter<>(getContext(), R.layout.dropdown_item_generic, AdapterMaturityRatings.GetMaturityStringsForUserAssignment());
-            AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
-            autoCompleteTextView_ExposedDropDownTest.setAdapter(aasMaturityRatings);
+            AutoCompleteTextView autoCompleteTextView_MaturityLevel = getView().findViewById(R.id.autoCompleteTextView_MaturityLevel);
+            autoCompleteTextView_MaturityLevel.setAdapter(aasMaturityRatings);
 
             //Configure the maturity descriptions listview:
             AdapterMaturityRatings amrMaturityRatings = new AdapterMaturityRatings(getContext(), R.layout.listview_item_maturity_rating, AdapterMaturityRatings.GetAssignmentArrayList());
@@ -316,7 +316,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
             final EditText editText_UserName = getView().findViewById(R.id.editText_UserName);
             final EditText editText_AccessPinNumber = getView().findViewById(R.id.editText_AccessPinNumber);
             final CheckBox checkBox_AdminUser = getView().findViewById(R.id.checkBox_AdminUser);
-            final AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+            final AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_MaturityLevel);
 
             listView_UserList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -522,7 +522,7 @@ public class Fragment_UserMgmt_1_Add_User extends Fragment {
 
 
             //Get the maturity code:
-            AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_ExposedDropDownTest);
+            AutoCompleteTextView autoCompleteTextView_ExposedDropDownTest = getView().findViewById(R.id.autoCompleteTextView_MaturityLevel);
             String sLine = autoCompleteTextView_ExposedDropDownTest.getText().toString();
             int iMaturityLevel = AdapterMaturityRatings.GetMaturityFromShortString(sLine);
 
