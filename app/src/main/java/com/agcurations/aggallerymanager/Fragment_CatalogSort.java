@@ -16,8 +16,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.android.material.slider.LabelFormatter;
@@ -58,14 +56,6 @@ public class Fragment_CatalogSort extends Fragment {
     String[] gsSharedWithUsersNameArray = {""};
 
     boolean gbCatalogViewerSortAscending;
-
-    final String[] gsSpinnerSearchInItems = {
-            "",
-            "Title",
-            "Artist",
-            "Characters",
-            "Parodies",
-            "Item ID"};
 
     final String[] gsFilterByItems = {
             "",
