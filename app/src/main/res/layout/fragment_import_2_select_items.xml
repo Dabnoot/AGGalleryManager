@@ -26,6 +26,7 @@
             android:layout_marginEnd="40dp"
             android:buttonTint="@color/colorTextColor"
             android:text="Select All"
+            android:textSize="20sp"
             android:textColor="@color/colorTextColor"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"/>
@@ -40,53 +41,61 @@
             android:paddingBottom="2dp"
             android:layout_toEndOf="@+id/checkBox_SelectAllStorageItems">
 
-
-            <TextView
-                android:id="@+id/textView_labelSortBy"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayout_ExposedDropDownTest"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="15dp"
-                android:text="Sort by: "
-                android:textColor="@color/colorTextColor"/>
+                android:layout_marginStart="10dp"
+                android:layout_marginBottom="3dp"
+                android:hint="Sort by">
 
-            <Spinner
-                android:id="@+id/spinner_SortBy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="5dp" />
+                <AutoCompleteTextView
+                    android:id="@+id/autoCompleteTextView_SortBy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:inputType="none"
+                    android:layout_weight="1"
+                    android:textSize="20sp"
+                    android:textColor="@color/colorTextColor"
+                    android:text="Filename"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
 
             <ImageView
                 android:id="@+id/imageView_SortOrder"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
+                android:layout_marginStart="10dp"
                 android:layout_marginEnd="15dp"
                 android:src="@drawable/baseline_sort_ascending_white_18dp" />
 
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/textView_labelSearch"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout_Search"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Search: "
-            android:textColor="@color/colorTextColor"
-            android:layout_toStartOf="@+id/editText_Search"
-            android:layout_alignBaseline="@+id/editText_Search"/>
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="20dp"
+            android:hint="Search">
 
-        <EditText
-            android:id="@+id/editText_Search"
-            android:layout_width="150dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:ems="10"
-            android:imeOptions="actionSearch"
-            android:inputType="text"
-            android:singleLine="true"
-            android:textColor="@color/colorTextColor"
-            android:layout_alignParentEnd="true"/>
+            <EditText
+                android:id="@+id/editText_Search"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:minWidth="200dp"
+                android:ems="10"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:layout_weight="1"
+                android:textSize="20sp"
+                android:textColor="@color/colorTextColor" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
     </RelativeLayout>
 

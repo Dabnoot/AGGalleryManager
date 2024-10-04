@@ -22,12 +22,12 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -160,7 +160,7 @@ public class Fragment_Import_2_SelectItems extends Fragment {
 
     public void initComponents(){
         viewModelImportActivity.bUpdateImportSelectList = false;
-        if(getView() == null){
+        if(getActivity() == null || getView() == null){
             return;
         }
 
@@ -223,90 +223,81 @@ public class Fragment_Import_2_SelectItems extends Fragment {
             }
         });
 
-        //Configure the "Sort by" selection Spinner:
-        ArrayList<String> alsSpinnerItems = new ArrayList<>();
+        //Configure the "Sort by" selection menu:
+        ArrayList<String> alsSortBy = new ArrayList<>();
         int iNextPosition = 0;
-        final int SPINNER_ITEM_FILE_NAME = iNextPosition;
-        alsSpinnerItems.add("Filename");
+        final int MENU_ITEM_FILE_NAME = iNextPosition;
+        alsSortBy.add("Filename");
 
         iNextPosition++;
-        final int SPINNER_ITEM_MODIFIED_DATE = iNextPosition;
-        alsSpinnerItems.add("Modified Date");
+        final int MENU_ITEM_MODIFIED_DATE = iNextPosition;
+        alsSortBy.add("Modified Date");
 
         iNextPosition++;
-        final int SPINNER_ITEM_RESOLUTION = iNextPosition;
-        alsSpinnerItems.add("Resolution");
+        final int MENU_ITEM_RESOLUTION = iNextPosition;
+        alsSortBy.add("Resolution");
 
-        int SPINNER_ITEM_DURATION_TEMP = -1; //Special treatment - "duration" is not applicable to images or comics.
+        int MENU_ITEM_DURATION_TEMP = -1; //Special treatment - "duration" is not applicable to images or comics.
         if(viewModelImportActivity.iImportMediaCategory == GlobalClass.MEDIA_CATEGORY_VIDEOS) {
             iNextPosition++;
-            SPINNER_ITEM_DURATION_TEMP = iNextPosition;
-            alsSpinnerItems.add("Duration");
+            MENU_ITEM_DURATION_TEMP = iNextPosition;
+            alsSortBy.add("Duration");
         }
-        final int SPINNER_ITEM_DURATION = SPINNER_ITEM_DURATION_TEMP;
+        final int MENU_ITEM_DURATION = MENU_ITEM_DURATION_TEMP;
 
-        int SPINNER_ITEM_ORPHAN_DUPLICATED_TEMP = -2; //Special treatment - "orphan duplicates" is only applicable to Catalog Analysis behaviors.
+        int MENU_ITEM_ORPHAN_DUPLICATED_TEMP = -2; //Special treatment - "orphan duplicates" is only applicable to Catalog Analysis behaviors.
         if(viewModelImportActivity.bImportingOrphanedFiles) {
             iNextPosition++;
-            SPINNER_ITEM_ORPHAN_DUPLICATED_TEMP = iNextPosition;
-            alsSpinnerItems.add("Orphaned Duplicate");
+            MENU_ITEM_ORPHAN_DUPLICATED_TEMP = iNextPosition;
+            alsSortBy.add("Orphaned Duplicate");
         }
-        final int SPINNER_ITEM_ORPHAN_DUPLICATED = SPINNER_ITEM_ORPHAN_DUPLICATED_TEMP;
+        final int MENU_ITEM_ORPHAN_DUPLICATED = MENU_ITEM_ORPHAN_DUPLICATED_TEMP;
 
-        String[] sSpinnerItems = new String[alsSpinnerItems.size()];
-        sSpinnerItems = alsSpinnerItems.toArray(sSpinnerItems);
+        String[] sSortByStringArray = new String[alsSortBy.size()];
+        sSortByStringArray = alsSortBy.toArray(sSortByStringArray);
 
-        Spinner spinner_SortBy = getView().findViewById(R.id.spinner_SortBy);
-        //wrap the items in the Adapter
-        if(getActivity() == null){
-            return;
-        }
-        ArrayAdapter<String> adapter=new ArrayAdapter<>(getActivity().getApplicationContext(), R.layout.activity_import_comics_spinner_item, sSpinnerItems);
-        //assign adapter to the Spinner
-        spinner_SortBy.setAdapter(adapter);
+        AutoCompleteTextView autoCompleteTextView_SortBy = getView().findViewById(R.id.autoCompleteTextView_SortBy);
+        ArrayAdapter<String> aasSortByAdapter=new ArrayAdapter<>(getActivity().getApplicationContext(), R.layout.dropdown_item_generic, sSortByStringArray);
+        autoCompleteTextView_SortBy.setAdapter(aasSortByAdapter);
 
-        spinner_SortBy.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        autoCompleteTextView_SortBy.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            //Note: autoCompleteTextView_SortBy.setOnItemSelectedListener did not appear to fire in testing.
             @Override
-            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-
+            public void onItemClick(AdapterView<?> adapterView, View view, int iPosition, long l) {
                 if(getActivity()==null){
                     return;
                 }
-                if(position == SPINNER_ITEM_FILE_NAME){
+                if(iPosition == MENU_ITEM_FILE_NAME){
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByFileNameAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
-                } else if(position == SPINNER_ITEM_MODIFIED_DATE) {
+                } else if(iPosition == MENU_ITEM_MODIFIED_DATE) {
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByDateModifiedAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
-                } else if(position == SPINNER_ITEM_RESOLUTION) {
+                } else if(iPosition == MENU_ITEM_RESOLUTION) {
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByResolutionAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
-                } else if(position == SPINNER_ITEM_DURATION) {
+                } else if(iPosition == MENU_ITEM_DURATION) {
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByDurationAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 }
-                else if(position == SPINNER_ITEM_ORPHAN_DUPLICATED) {
+                else if(iPosition == MENU_ITEM_ORPHAN_DUPLICATED) {
                     if(((Activity_Import) getActivity()).fileListCustomAdapter != null) {
                         ((Activity_Import) getActivity()).fileListCustomAdapter.SortByOrphanDuplicateAsc();
                         ((Activity_Import) getActivity()).fileListCustomAdapter.notifyDataSetChanged();
                     }
                 }
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-                // no code needed here
-            }
-
         });
+
+
 
         //Configure the sort order imageView to respond to click:
         ImageView imageView_SortOrder = getView().findViewById(R.id.imageView_SortOrder);
