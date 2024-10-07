@@ -3,7 +3,6 @@ package com.agcurations.aggallerymanager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.widget.Toast;
 
 import org.htmlcleaner.CleanerProperties;
 import org.htmlcleaner.HtmlCleaner;
@@ -396,19 +395,25 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         URL urlPage = new URL(sImageDownloadAddress);
                         BroadcastProgress_ComicDetails("Getting file size data for " + sImageDownloadAddress, gsIntentActionFilter); //Broadcast progress
                         //URLConnection connection = urlPage.openConnection();
-                        HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
-                        connection.setRequestProperty("Accept-Encoding", "identity");
-                        lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
-                        if (lSize == -1) {
-                            bGetOnlineSize = false;
+                        try{
+                            HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
+                            connection.setRequestProperty("Accept-Encoding", "identity");
+                            connection.setConnectTimeout(5000);
+                            lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                            if (lSize == -1) {
+                                bGetOnlineSize = false;
+                            }
+                            iFileSizeLoopCount++;
+                            if (iFileSizeLoopCount == 2) {  //Use a sample set of images to project the size of the comic.
+                                //  Larger loop creates a longer delay before the user can move on
+                                //  to the next step of an import process.
+                                bGetOnlineSize = false;
+                            }
+                            connection.disconnect();
+                        } catch (java.net.SocketTimeoutException e) {
+                            sMessage = "Could not get image size due to timeout. " + e.getMessage();
+                            BroadcastProgress_ComicDetails(sMessage , gsIntentActionFilter);
                         }
-                        iFileSizeLoopCount++;
-                        if (iFileSizeLoopCount == 2) {  //Use a sample set of images to project the size of the comic.
-                            //  Larger loop creates a longer delay before the user can move on
-                            //  to the next step of an import process.
-                            bGetOnlineSize = false;
-                        }
-                        connection.disconnect();
                     }
                 }
                 if (lSize > 0) {
@@ -428,15 +433,17 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         //  Have to get this data here as we are not on the main thread (network activities not allowed on main thread).
                         InputStream is = (InputStream) new URL(alsComicPageAndImageData.get(0)[THUMBNAIL_INDEX]).getContent();
                         Drawable d = Drawable.createFromStream(is, "src name");
-                        int iIntrinsicHeight = d.getIntrinsicHeight();
-                        int iMinimumHeight = d.getMinimumHeight();
-                        iThumbnailURLImageHeight = Math.max(iIntrinsicHeight, iMinimumHeight);
-                        int iIntrinsicWidth = d.getIntrinsicWidth();
-                        int iMinimumWidth = d.getMinimumWidth();
-                        iThumbnailURLImageWidth = Math.max(iIntrinsicWidth, iMinimumWidth);
+                        if(d != null) {
+                            int iIntrinsicHeight = d.getIntrinsicHeight();
+                            int iMinimumHeight = d.getMinimumHeight();
+                            iThumbnailURLImageHeight = Math.max(iIntrinsicHeight, iMinimumHeight);
+                            int iIntrinsicWidth = d.getIntrinsicWidth();
+                            int iMinimumWidth = d.getMinimumWidth();
+                            iThumbnailURLImageWidth = Math.max(iIntrinsicWidth, iMinimumWidth);
+                        }
                     } catch (Exception e) {
-                        sMessage = e.getMessage();
-                        Toast.makeText(getApplicationContext(), sMessage, Toast.LENGTH_SHORT).show();
+                        sMessage = "Could not get image height/width data. " + e.getMessage();
+                        BroadcastProgress_ComicDetails(sMessage , gsIntentActionFilter);
                     }
 
                 }
@@ -444,10 +451,10 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
 
 
             } catch (Exception e) {
-                String sMsg = e.getMessage();
-                BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMsg, gsIntentActionFilter);
+                sMessage = e.getMessage();
+                BroadcastProgress_ComicDetails("Problem collecting comic data from address. " + sMessage, gsIntentActionFilter);
                 broadcastIntent.putExtra(GlobalClass.EXTRA_BOOL_PROBLEM, true);
-                broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMsg);
+                broadcastIntent.putExtra(GlobalClass.EXTRA_STRING_PROBLEM, sMessage);
                 //sendBroadcast(broadcastIntent);
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(broadcastIntent);
 
@@ -690,22 +697,28 @@ public class Worker_Import_ComicAnalyzeHTML extends Worker {
                         if (bGetOnlineSize) {
                             URL urlPage = new URL(sImageAddress);
                             BroadcastProgress_ComicDetails("Getting file size data for " + sImageAddress, gsIntentActionFilter); //Broadcast progress
-                            //URLConnection connection = urlPage.openConnection();
-                            HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
-                            connection.setRequestProperty("Accept-Encoding", "identity");
-                            //connection.setRequestProperty("cookie", icWebDataLocator.sCookie); //todo: remove if not needed. Added on 2/1/2024 for testing with different sites.
+                            try {
+                                //URLConnection connection = urlPage.openConnection();
+                                HttpURLConnection connection = (HttpURLConnection) urlPage.openConnection();
+                                connection.setRequestProperty("Accept-Encoding", "identity");
+                                connection.setConnectTimeout(5000);
+                                //connection.setRequestProperty("cookie", icWebDataLocator.sCookie); //todo: remove if not needed. Added on 2/1/2024 for testing with different sites.
 
-                            lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
-                            if (lSize == -1) {
-                                bGetOnlineSize = false;
+                                lSize += connection.getContentLength(); //Returns -1 if content size is not in the header.
+                                if (lSize == -1) {
+                                    bGetOnlineSize = false;
+                                }
+                                iFileSizeLoopCount++;
+                                if (iFileSizeLoopCount == 2) {  //Use a sample set of images to project the size of the comic.
+                                    //  Larger loop creates a longer delay before the user can move on
+                                    //  to the next step of an import process.
+                                    bGetOnlineSize = false;
+                                }
+                                connection.disconnect();
+                            } catch (java.net.SocketTimeoutException e) {
+                                sMessage = "Could not get image size due to timeout. " + e.getMessage();
+                                BroadcastProgress_ComicDetails(sMessage , gsIntentActionFilter);
                             }
-                            iFileSizeLoopCount++;
-                            if (iFileSizeLoopCount == 2) {  //Use a sample set of images to project the size of the comic.
-                                //  Larger loop creates a longer delay before the user can move on
-                                //  to the next step of an import process.
-                                bGetOnlineSize = false;
-                            }
-                            connection.disconnect();
                         }
                     }
                     iComicPages = tmFileIndexAndAddress.size();
