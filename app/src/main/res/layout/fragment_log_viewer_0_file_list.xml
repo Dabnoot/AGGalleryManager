@@ -46,16 +46,19 @@
             android:layout_marginEnd="20dp"
             android:text="Delete"
             android:textSize="24sp"
-            app:backgroundTint="@color/colorButton" />
+            app:backgroundTint="@color/colorButton"
+            android:enabled="false"
+            android:onClick="button_Delete"/>
 
         <Button
-            android:id="@+id/button_ItemSelectComplete"
+            android:id="@+id/button_Finish"
             android:layout_width="149dp"
             android:layout_height="67dp"
-            android:text="Export"
+            android:text="Finish"
             android:textSize="24sp"
             app:backgroundTint="@color/colorButton"
-            android:enabled="false"/>
+            android:enabled="true"
+            android:onClick="button_Finish"/>
 
     </LinearLayout>
 

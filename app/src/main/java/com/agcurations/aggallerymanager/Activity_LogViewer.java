@@ -1,7 +1,7 @@
 package com.agcurations.aggallerymanager;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -10,23 +10,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Stack;
 
 public class Activity_LogViewer extends AppCompatActivity {
@@ -39,8 +26,9 @@ public class Activity_LogViewer extends AppCompatActivity {
 
     public static final int FRAGMENT_LOG_VIEWER_0_FILE_LIST = 0; //View list of log files
     public static final int FRAGMENT_LOG_VIEWER_1_VIEW = 1; //View a log
+    public static final int FRAGMENT_LOG_VIEWER_1A_EXECUTE_DELETE = 2;
 
-    public static final int FRAGMENT_COUNT = 2;
+    public static final int FRAGMENT_COUNT = 3;
 
     static Stack<Integer> stackFragmentOrder;
     private static int giStartingFragment;
@@ -69,37 +57,48 @@ public class Activity_LogViewer extends AppCompatActivity {
 
         stackFragmentOrder = new Stack<>();
         giStartingFragment = FRAGMENT_LOG_VIEWER_0_FILE_LIST;
-
         stackFragmentOrder.push(giStartingFragment);
+        if(GlobalClass.gabGeneralFileDeletionRunning.get()){
+            stackFragmentOrder.push(FRAGMENT_LOG_VIEWER_1A_EXECUTE_DELETE);
+            viewPager_LogViewer.setCurrentItem(FRAGMENT_LOG_VIEWER_1A_EXECUTE_DELETE, false);
+        }
+
+        boolean ENABLED = true;
+        getOnBackPressedDispatcher().addCallback(new OnBackPressedCallback(ENABLED) {
+            @Override
+            public void handleOnBackPressed() {
+                if (stackFragmentOrder.empty()) {
+                    finish();
+                } else {
+                    //Go back through the fragments in the order by which we progressed.
+                    //  Some user selections will cause a fragment to be skipped, and we don't want
+                    //  to go back to those skipped fragments, hence the use of a Stack, and pop().
+                    int iCurrentFragment = viewPager_LogViewer.getCurrentItem();
+                    int iPrevFragment = stackFragmentOrder.pop();
+                    if ((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)) {
+                        finish();
+                        return;
+                    }
+                    if (iCurrentFragment == iPrevFragment) {
+                        //To handle interesting behavior about how the stack is built.
+                        iPrevFragment = stackFragmentOrder.peek();
+                    }
+                    viewPager_LogViewer.setCurrentItem(iPrevFragment, false);
+
+                    if (iPrevFragment == giStartingFragment) {
+                        //Go home:
+                        stackFragmentOrder.push(giStartingFragment);
+                    }
+                }
+            }
+        });
 
     }
 
     @Override
-    public void onBackPressed() {
-
-        if(stackFragmentOrder.empty()){
-            finish();
-        } else {
-            //Go back through the fragments in the order by which we progressed.
-            //  Some user selections will cause a fragment to be skipped, and we don't want
-            //  to go back to those skipped fragments, hence the use of a Stack, and pop().
-            int iCurrentFragment = viewPager_LogViewer.getCurrentItem();
-            int iPrevFragment = stackFragmentOrder.pop();
-            if((iCurrentFragment == iPrevFragment) && (iCurrentFragment == giStartingFragment)){
-                finish();
-                return;
-            }
-            if(iCurrentFragment == iPrevFragment){
-                //To handle interesting behavior about how the stack is built.
-                iPrevFragment = stackFragmentOrder.peek();
-            }
-            viewPager_LogViewer.setCurrentItem(iPrevFragment, false);
-
-            if(iPrevFragment == giStartingFragment){
-                //Go home:
-                stackFragmentOrder.push(giStartingFragment);
-            }
-        }
+    protected void onDestroy() {
+        GlobalClass.gabGeneralFileDeletionCancel.set(false);
+        super.onDestroy();
     }
 
     public void gotoViewer(){
@@ -108,6 +107,26 @@ public class Activity_LogViewer extends AppCompatActivity {
         viewPager_LogViewer.setCurrentItem(FRAGMENT_LOG_VIEWER_1_VIEW, false);
         stackFragmentOrder.push(viewPager_LogViewer.getCurrentItem());
 
+    }
+
+    //=======================
+    //   Button Routines
+    //=======================
+
+    @SuppressWarnings("unchecked")
+    public void button_Delete(View v) {
+        GlobalClass.galicf_FilesToDeleteDataTransfer = (ArrayList<ItemClass_File>) viewModel_fragment_logViewer.alicf_LogFiles.clone();
+        GlobalClass.gabGeneralFileDeletionStart.set(true);
+        viewPager_LogViewer.setCurrentItem(FRAGMENT_LOG_VIEWER_1A_EXECUTE_DELETE, false);
+        stackFragmentOrder.push(viewPager_LogViewer.getCurrentItem());
+    }
+
+    public void button_Cancel(View v){
+        GlobalClass.gabGeneralFileDeletionCancel.set(true);
+    }
+
+    public void button_Finish(View v){
+        finish();
     }
 
 
@@ -127,6 +146,8 @@ public class Activity_LogViewer extends AppCompatActivity {
             switch (position) {
                 case FRAGMENT_LOG_VIEWER_1_VIEW:
                     return new Fragment_LogViewer_1_View();
+                case FRAGMENT_LOG_VIEWER_1A_EXECUTE_DELETE:
+                    return new Fragment_LogViewer_1a_ExecuteDelete();
                 default:
                     return new Fragment_LogViewer_0_FileList();
             }

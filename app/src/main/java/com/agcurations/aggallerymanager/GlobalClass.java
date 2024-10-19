@@ -68,8 +68,6 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.work.Data;
-import androidx.work.ListenableWorker;
 
 import com.google.common.io.BaseEncoding;
 
@@ -84,14 +82,14 @@ public class GlobalClass extends Application {
 
     public static final String EXTRA_STRING_STATUS_MESSAGE = "com.agcurations.aggallerymanager.extra.String_Status_Message";
 
-    NotificationChannel notificationChannel;
-    NotificationManager notificationManager;
+    public static NotificationChannel notificationChannel;
+    public static NotificationManager notificationManager;
     public static final String NOTIFICATION_CHANNEL_ID = "com.agcurations.aggallerymanager.NOTICIFATION_CHANNEL";
     public static final String NOTIFICATION_CHANNEL_NAME = "Download progress & completion";
     public static final String NOTIFICATION_CHANNEL_DESCRIPTION = "Notifications from AGGalleryManager, such as download progress or completion.";
-    public int iNotificationID = 0;
+    public static int iNotificationID = 0;
 
-    public String gsPin = "";
+    public static String gsPin = "";
 
     public static Uri gUriDataFolder;
     public static String gsDataFolderBaseName = "AGGalleryManager";
@@ -199,8 +197,8 @@ public class GlobalClass extends Application {
 
     public static final String gsUnsortedFolderName = "etc";  //Todo: this folder should not be used anymore. Was used when a tag was not assigned to an item.
 
-    ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
-    ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
+    public static ArrayList<ItemClass_File> galImportFileList; //Used to pass a large list of files to import to the import service.
+    public static ArrayList<ItemClass_File> galPreviewFileList; //Same as above, but for preview.
     //  This is done because the list of files can exceed the intent extra transaction size limit.
 
     public static final int MOVE = 0;
@@ -212,7 +210,7 @@ public class GlobalClass extends Application {
     public static ArrayList<ItemClass_WebPageTabData> gal_WebPagesForCurrentUser;
     public static ArrayList<ItemClass_WebPageTabData> gal_WebPagesForOtherUsers;
 
-    public boolean gbWorkerVideoAnalysisInProgress = false;
+    public static boolean gbWorkerVideoAnalysisInProgress = false;
 
     public static String gsUserDataFileName = "Data.dat";
     public static Uri gUriUserDataFile;
@@ -237,37 +235,48 @@ public class GlobalClass extends Application {
     // These variables prevent the system/user from starting another folder analysis until an
     // existing folder analysis operation is finished.
     //public boolean gbImportFolderAnalysisStarted = false; This item not needed for this fragment.
-    public static boolean gbImportFolderAnalysisRunning = false;
-    public static boolean gbImportHoldingFolderAnalysisAutoStart = false;
-    public static boolean gbImportFolderAnalysisStop = false;
-    public static boolean gbImportFolderAnalysisFinished = false;
-    public StringBuilder gsbImportFolderAnalysisLog = new StringBuilder();
-    public int giImportFolderAnalysisProgressBarPercent = 0;
-    public String gsImportFolderAnalysisProgressBarText = "";
-    public String gsImportFolderAnalysisSelectedFolder = "";
+    public static boolean gbImportFolderAnalysisRunning = false;            //todo: Change to AtomicBoolean
+    public static boolean gbImportHoldingFolderAnalysisAutoStart = false;   //todo: Change to AtomicBoolean?
+    public static boolean gbImportFolderAnalysisStop = false;               //todo: Change to AtomicBoolean
+    public static boolean gbImportFolderAnalysisFinished = false;           //todo: Change to AtomicBoolean
+    public static StringBuilder gsbImportFolderAnalysisLog = new StringBuilder();
+    public static int giImportFolderAnalysisProgressBarPercent = 0;
+    public static String gsImportFolderAnalysisProgressBarText = "";
+    public static String gsImportFolderAnalysisSelectedFolder = "";
     //Variables to control starting of import execution:
     // These variables prevent the system/user from starting another import until an existing
     // import operation is finished.
-    public boolean gbImportExecutionStarted = false;
-    public boolean gbImportExecutionRunning = false;
-    public boolean gbImportExecutionFinished = false;
-    public StringBuilder gsbImportExecutionLog = new StringBuilder();
-    public int giImportExecutionProgressBarPercent = 0;
-    public String gsImportExecutionProgressBarText = "";
+    public static boolean gbImportExecutionStarted = false;                        //todo: Change to AtomicBoolean?
+    public static boolean gbImportExecutionRunning = false;                        //todo: Change to AtomicBoolean
+    public static boolean gbImportExecutionFinished = false;                       //todo: Change to AtomicBoolean
+    public static StringBuilder gsbImportExecutionLog = new StringBuilder();
+    public static int giImportExecutionProgressBarPercent = 0;
+    public static String gsImportExecutionProgressBarText = "";
     //Variables related to catalog analysis:
-    public StringBuilder gsbAnalysisExecutionLog = new StringBuilder();
-    public StringBuilder gsbUpdateExecutionLog = new StringBuilder();
-    public int giAnalysisExecutionProgressBarPercent = 0;
-    public String gsAnalysisExecutionProgressBarText = "";
-    public int giUpdateExecutionProgressBarPercent = 0;
-    public String gsUpdateExecutionProgressBarText = "";
+    public static StringBuilder gsbAnalysisExecutionLog = new StringBuilder();
+    public static StringBuilder gsbUpdateExecutionLog = new StringBuilder();
+    public static int giAnalysisExecutionProgressBarPercent = 0;
+    public static String gsAnalysisExecutionProgressBarText = "";
+    public static int giUpdateExecutionProgressBarPercent = 0;
+    public static String gsUpdateExecutionProgressBarText = "";
     //Variables to control starting of comic web address analysis:
     // These variables prevent the system/user from starting another analysis until an existing
     // operation is finished.
-    public boolean gbImportComicWebAnalysisRunning = false;
-    public boolean gbImportComicWebAnalysisFinished = false;
+    public static boolean gbImportComicWebAnalysisRunning = false;
+    public static boolean gbImportComicWebAnalysisFinished = false;
 
     public static final int CATALOG_ANALYSIS_APPROX_MAX_RESULTS = 100;
+
+    //==============================
+    // Global variables for working with the File Deletion Utility internal to this program:
+    public static AtomicBoolean gabGeneralFileDeletionStart = new AtomicBoolean(false);
+    public static AtomicBoolean gabGeneralFileDeletionRunning = new AtomicBoolean(false);
+    public static AtomicBoolean gabGeneralFileDeletionCancel = new AtomicBoolean(false);
+    public static ArrayList<ItemClass_File> galicf_FilesToDeleteDataTransfer = new ArrayList<>();
+    public static StringBuilder gsbDeleteFilesExecutionLog = new StringBuilder();
+    public static int giDeleteFilesExecutionProgressBarPercent = 0;
+    public static String gsDeleteFilesExecutionProgressBarText = "";
+    //==============================
 
     //The variable below is used to identify files that were acquired using the Android DownloadManager.
     //  The Android DownloadIdleService will automatically delete the files that this program downloads
@@ -286,8 +295,6 @@ public class GlobalClass extends Application {
     public static String gsGroupIDClip = "";
     public static boolean gbClearGroupIDAtImportClose = false;
 
-    public static String gsCookie = "";
-
     //=====================================================================================
     //===== MIME TYPES ====================================================================
     //=====================================================================================
@@ -298,7 +305,7 @@ public class GlobalClass extends Application {
     //===== Network Monitoring ============================================================
     //=====================================================================================
     public boolean isNetworkConnected = false;
-    public ConnectivityManager connectivityManager;
+    public static ConnectivityManager connectivityManager;
     // Network Check
     public void registerNetworkCallback() {
         try {
@@ -3613,9 +3620,6 @@ public class GlobalClass extends Application {
 
     public static final String EXTRA_CALLER_ACTION_RESPONSE_FILTER = "com.agcurations.aggallerymanager.extra.EXTRA_CALLER_ACTION_RESPONSE_FILTER";
 
-    public static final String FILE_DELETION_MESSAGE = "Deleting file: ";
-    public static final String FILE_DELETION_OP_COMPLETE_MESSAGE = "File deletion operation complete.";
-
     public static final String STRING_COMIC_XML_FILENAME = "ComicData.xml";
 
     public static final int FOLDERS_ONLY = 0;
@@ -3629,8 +3633,6 @@ public class GlobalClass extends Application {
     public static final String PROGRESS_BAR_TEXT_STRING = "PROGRESS_BAR_TEXT_STRING";
 
     public static final String FAILURE_MESSAGE = "FAILURE_MESSAGE";
-
-    public ArrayList<String> alsUriFilesToDelete;
 
     public static String cleanHTMLCodedCharacters(String sInput){
         String sResult;
@@ -3649,32 +3651,49 @@ public class GlobalClass extends Application {
                                   boolean bUpdateProgressBarText, String sProgressBarText,
                                   String sIntentActionFilter){
 
-        //Preserve the log for the event of a screen rotation, or activity looses focus:
-        GlobalClass globalClass = (GlobalClass) getApplicationContext();
-        globalClass.gsbImportExecutionLog.append(sLogLine);
 
-        if(sIntentActionFilter.equals(Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE) ||
-                sIntentActionFilter.equals(Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE) ||
-                sIntentActionFilter.equals(Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE) ||
-                sIntentActionFilter.equals(Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE) ||
-                sIntentActionFilter.equals(Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE) ||
-                sIntentActionFilter.equals(GlobalClass.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE)) {
-            if (bUpdatePercentComplete) {
-                globalClass.giImportExecutionProgressBarPercent = iAmountComplete;
-            }
-            if (bUpdateProgressBarText) {
-                globalClass.gsImportExecutionProgressBarText = sProgressBarText;
-            }
-        }
-
-        if(sIntentActionFilter.equals(
-                Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE)) {
-            if(bUpdatePercentComplete) {
-                globalClass.giImportFolderAnalysisProgressBarPercent = iAmountComplete;
-            }
-            if(bUpdateProgressBarText){
-                globalClass.gsImportFolderAnalysisProgressBarText = sProgressBarText;
-            }
+        //Preserve data in memory for the event of a screen rotation, or activity loses focus. This
+        //  is typically used when log data is given from a worker in a separate thread.
+        switch (sIntentActionFilter) {
+            case Worker_Import_ImportComicFolders.IMPORT_COMIC_FOLDERS_ACTION_RESPONSE:
+            case Worker_Import_ImportFiles.IMPORT_FILES_ACTION_RESPONSE:
+            case Worker_Import_ImportComicWebFiles.IMPORT_COMIC_WEB_FILES_ACTION_RESPONSE:
+            case Worker_Import_VideoDownload.IMPORT_VIDEO_DOWNLOAD_ACTION_RESPONSE:
+            case Worker_LocalFileTransfer.IMPORT_LOCAL_FILE_TRANSFER_ACTION_RESPONSE:
+            case GlobalClass.CATALOG_CREATE_NEW_RECORDS_ACTION_RESPONSE:
+                if (bUpdatePercentComplete) {
+                    giImportExecutionProgressBarPercent = iAmountComplete;
+                }
+                if (bUpdateProgressBarText) {
+                    //Preserve progress bar text for the event of a screen rotation, or activity looses focus:
+                    gsImportExecutionProgressBarText = sProgressBarText;
+                }
+                if (bUpdateLog) {
+                    //Preserve the log for the event of a screen rotation, or activity looses focus:
+                    gsbImportExecutionLog.append(sLogLine);
+                }
+                break;
+            case Fragment_Import_1_StorageLocation.ImportDataServiceResponseReceiver.IMPORT_DATA_SERVICE_STORAGE_LOCATION_RESPONSE:
+                if (bUpdatePercentComplete) {
+                    giImportFolderAnalysisProgressBarPercent = iAmountComplete;
+                }
+                if (bUpdateProgressBarText) {
+                    gsImportFolderAnalysisProgressBarText = sProgressBarText;
+                }
+                break;
+            case Worker_DeleteFiles.DELETE_FILES_RESPONSE:
+                if (bUpdatePercentComplete) {
+                    giDeleteFilesExecutionProgressBarPercent = iAmountComplete;
+                }
+                if (bUpdateProgressBarText) {
+                    //Preserve progress bar text for the event of a screen rotation, or activity looses focus:
+                    gsDeleteFilesExecutionProgressBarText = sProgressBarText;
+                }
+                if (bUpdateLog) {
+                    //Preserve the log for the event of a screen rotation, or activity looses focus:
+                    gsbDeleteFilesExecutionLog.append(sLogLine);
+                }
+                break;
         }
 
         //Broadcast a message to be picked-up by an Activity:

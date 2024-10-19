@@ -1,7 +1,6 @@
 package com.agcurations.aggallerymanager;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -9,8 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import android.os.Handler;
-import android.provider.DocumentsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,10 +15,9 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
 
@@ -34,7 +30,8 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
 
     private ViewModel_Fragment_LogViewer viewModel_fragment_logViewer;
 
-    boolean bItemsDeletedFlag = false;
+    Button gButton_Delete;
+    CheckBox gCheckBox_SelectAll;
 
     public Fragment_LogViewer_0_FileList() {
         // Required empty public constructor
@@ -67,55 +64,34 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
 
         globalClass = (GlobalClass) getActivity().getApplicationContext();
 
+        gButton_Delete = getView().findViewById(R.id.button_Delete);
+
+        gCheckBox_SelectAll = getView().findViewById(R.id.checkBox_SelectAll);
+
         initializeLogFileList();
 
-        Button button_Delete = getView().findViewById(R.id.button_Delete);
-        if(button_Delete != null){
-            button_Delete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if(getActivity() == null){
-                        return;
-                    }
-
-                    if(logListCustomAdapter != null) {
-                        for (int i = 0; i < logListCustomAdapter.sLogFiles.length; i++) {
-                            if (logListCustomAdapter.bRowSelected[i]) {
-                                String sLogFileName = logListCustomAdapter.sLogFiles[i];
-                                Uri uriLogFileToBeDeleted = GlobalClass.FormChildUri(GlobalClass.gUriLogsFolder, sLogFileName);
-                                try {
-                                    if(!DocumentsContract.deleteDocument(GlobalClass.gcrContentResolver, uriLogFileToBeDeleted)){
-                                        Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + sLogFileName, Toast.LENGTH_SHORT).show();
-                                    }
-                                } catch (FileNotFoundException e) {
-                                    Toast.makeText(getActivity().getApplicationContext(), "Could not delete file: " + sLogFileName, Toast.LENGTH_SHORT).show();
-                                }
-
-                            }
-                        }
-                        bItemsDeletedFlag = true;
-                        initializeLogFileList();
-                    }
-                }
-            });
-        }
-
-        CheckBox checkBox_SelectAll = getView().findViewById(R.id.checkBox_SelectAll);
-        checkBox_SelectAll.setOnClickListener(new View.OnClickListener() {
+        gCheckBox_SelectAll.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(getActivity() == null){
                     return;
                 }
                 if(logListCustomAdapter != null) {
-                    for (int i = 0; i < logListCustomAdapter.sLogFiles.length; i++) {
-                        logListCustomAdapter.bRowSelected[i] = ((CheckBox) view).isChecked();
+                    for (ItemClass_File icf: logListCustomAdapter.alicf_LogFiles) {
+                        icf.bIsChecked = ((CheckBox) view).isChecked();
                     }
                     logListCustomAdapter.notifyDataSetChanged();
+                    logListCustomAdapter.EvaluateDeleteButtonEnabled();
                 }
             }
         });
 
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        viewModel_fragment_logViewer.alicf_LogFiles = logListCustomAdapter.alicf_LogFiles;
     }
 
     public void initializeLogFileList(){
@@ -124,50 +100,40 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             return;
         }
 
-        ArrayList<String> alsLogFiles = GlobalClass.GetDirectoryFileNames(GlobalClass.gUriLogsFolder);
+        //todo: handle screen rotation.
+        ArrayList<ItemClass_File> alicfLogFiles = GlobalClass.GetDirectoryFileNamesData(GlobalClass.gUriLogsFolder);
 
-        logListCustomAdapter = new LogListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, alsLogFiles.toArray(new String[0]));
+        String[] sFileNames = new String[alicfLogFiles.size()];
+        for(int i = 0; i < alicfLogFiles.size(); i++){
+            sFileNames[i] = alicfLogFiles.get(i).sFileOrFolderName;
+        }
+
+        logListCustomAdapter = new LogListCustomAdapter(getActivity(), R.layout.listview_selectable_1line_btn_view, sFileNames, alicfLogFiles);
         ListView listView_LogFiles = getView().findViewById(R.id.listView_LogFiles);
         listView_LogFiles.setAdapter(logListCustomAdapter);
 
         TextView textView_NotificationNoLogFiles = getView().findViewById(R.id.textView_NotificationNoLogFiles);
         if(textView_NotificationNoLogFiles != null) {
-            if (alsLogFiles.size() > 0) {
+            if (alicfLogFiles.size() > 0) {
                 textView_NotificationNoLogFiles.setVisibility(View.INVISIBLE);
+                gCheckBox_SelectAll.setVisibility(View.VISIBLE);
             } else {
                 textView_NotificationNoLogFiles.setVisibility(View.VISIBLE);
-                if (bItemsDeletedFlag){
-                    //If items were just deleted and now the list of files is empty, wait a moment
-                    // and then end this activity.
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            if(getActivity() instanceof Activity_LogViewer) {
-                                getActivity().finish();
-                            }
-                        }
-                    }, 2000);
-                }
-
+                gCheckBox_SelectAll.setVisibility(View.INVISIBLE);
             }
         }
 
-
-        bItemsDeletedFlag = false;
     }
 
 
 
     public class LogListCustomAdapter extends ArrayAdapter<String> {
 
-        String[] sLogFiles;
-        boolean[] bRowSelected;
+        ArrayList<ItemClass_File> alicf_LogFiles;
 
-        public LogListCustomAdapter(@NonNull Context context, int resource, @NonNull String[] objects) {
+        public LogListCustomAdapter(@NonNull Context context, int resource, @NonNull String[] objects, ArrayList<ItemClass_File> _alicf_LogFiles) {
             super(context, resource, objects);
-            sLogFiles = objects;
-            bRowSelected = new boolean[objects.length];
+            alicf_LogFiles = _alicf_LogFiles;
         }
 
         @NonNull
@@ -184,23 +150,43 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             CheckBox checkBox_ItemSelect =  row.findViewById(R.id.checkBox_ItemSelect);
             TextView textView_Line1 = row.findViewById(R.id.textView_Line1);
             Button button_View = row.findViewById(R.id.button_View);
+            RelativeLayout relativeLayout_Row = row.findViewById(R.id.relativeLayout_Row);
 
-            checkBox_ItemSelect.setChecked(bRowSelected[position]);
+            checkBox_ItemSelect.setChecked(alicf_LogFiles.get(position).bIsChecked);
 
             checkBox_ItemSelect.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    bRowSelected[position] = ((CheckBox)view).isChecked();
+                    alicf_LogFiles.get(position).bIsChecked = ((CheckBox) view).isChecked();
+                    EvaluateDeleteButtonEnabled();
                 }
             });
 
-            String sFileName = sLogFiles[position];
+            textView_Line1.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    checkBox_ItemSelect.setChecked(!checkBox_ItemSelect.isChecked());
+                    alicf_LogFiles.get(position).bIsChecked = checkBox_ItemSelect.isChecked();
+                    EvaluateDeleteButtonEnabled();
+                }
+            });
+
+            relativeLayout_Row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    checkBox_ItemSelect.setChecked(!checkBox_ItemSelect.isChecked());
+                    alicf_LogFiles.get(position).bIsChecked = checkBox_ItemSelect.isChecked();
+                    EvaluateDeleteButtonEnabled();
+                }
+            });
+
+            String sFileName = alicf_LogFiles.get(position).sFileOrFolderName;
             textView_Line1.setText(sFileName);
 
             button_View.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    viewModel_fragment_logViewer.sLogFileName = sLogFiles[position];
+                    viewModel_fragment_logViewer.sLogFileName = alicf_LogFiles.get(position).sFileOrFolderName;
 
                     Activity_LogViewer activity_logViewer = (Activity_LogViewer) getActivity();
                     if(activity_logViewer != null){
@@ -211,6 +197,29 @@ public class Fragment_LogViewer_0_FileList extends Fragment {
             });
 
             return row;
+        }
+
+        @SuppressWarnings("unchecked")
+        private void EvaluateDeleteButtonEnabled(){
+            boolean bEnabled = false;
+            viewModel_fragment_logViewer.alicf_LogFiles.clear();
+            for(ItemClass_File icf: alicf_LogFiles){
+                if(icf.bIsChecked){
+                    bEnabled = true;
+                    break;
+                }
+            }
+            if(gCheckBox_SelectAll.isChecked()){
+                for(ItemClass_File icf: alicf_LogFiles) {
+                    if (!icf.bIsChecked) {
+                        gCheckBox_SelectAll.setChecked(false);
+                        break;
+                    }
+
+                }
+            }
+            viewModel_fragment_logViewer.alicf_LogFiles = (ArrayList<ItemClass_File>) alicf_LogFiles.clone();
+            gButton_Delete.setEnabled(bEnabled);
         }
 
     }
