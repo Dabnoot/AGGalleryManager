@@ -2,8 +2,27 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
+      <entry key="Test_GetRelativePathFromUriString()">
+        <State />
+      </entry>
       <entry key="app">
         <State />
+      </entry>
+      <entry key="cleanHTMLCodedCharacters()">
+        <State>
+          <targetSelectedWithDropDown>
+            <Target>
+              <type value="QUICK_BOOT_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="VIRTUAL_DEVICE_PATH" />
+                  <value value="C:\Users\Willi\.android\avd\Nexus_10_API_33.avd" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </targetSelectedWithDropDown>
+          <timeTargetWasSelectedWithDropDown value="2024-10-21T19:43:05.536120200Z" />
+        </State>
       </entry>
     </value>
   </component>
