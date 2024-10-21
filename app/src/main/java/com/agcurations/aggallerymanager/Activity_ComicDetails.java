@@ -591,7 +591,7 @@ public class Activity_ComicDetails extends AppCompatActivity {
         Intent intentComicViewer = new Intent(this, Activity_ComicViewer2.class);
 
         intentComicViewer.putExtra(GlobalClass.EXTRA_CATALOG_ITEM, gciCatalogItem);
-        intentComicViewer.putExtra(Activity_ComicViewer.EXTRA_COMIC_PAGE_START, iComicPage);
+        intentComicViewer.putExtra(Activity_ComicViewer2.EXTRA_COMIC_PAGE_START, iComicPage);
 
         startActivity(intentComicViewer);
     }

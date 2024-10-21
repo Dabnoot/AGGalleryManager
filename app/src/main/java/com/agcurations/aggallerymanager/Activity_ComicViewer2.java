@@ -27,6 +27,8 @@ import java.util.TreeMap;
 
 public class Activity_ComicViewer2 extends AppCompatActivity {
 
+    public static final String EXTRA_COMIC_PAGE_START = "COMIC_PAGE_START";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +57,7 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
         ItemClass_CatalogItem gciCatalogItem;
         gciCatalogItem = (ItemClass_CatalogItem) intentCaller.getSerializableExtra(GlobalClass.EXTRA_CATALOG_ITEM);
 
+        int iStartPage = intentCaller.getIntExtra(Activity_ComicViewer2.EXTRA_COMIC_PAGE_START, 0);
 
         if( gciCatalogItem == null) return;
 
@@ -119,6 +122,14 @@ public class Activity_ComicViewer2 extends AppCompatActivity {
         // Initialize adapter and set to RecyclerView
         ComicAdapter comicAdapter = new ComicAdapter(comicUris);
         gRecyclerView_ComicViewer.setAdapter(comicAdapter);
+
+        if(iStartPage > 0) {
+            //Navigate to a start page:
+            RecyclerView.LayoutManager rvlm = gRecyclerView_ComicViewer.getLayoutManager();
+            if(rvlm != null){
+                rvlm.scrollToPosition(iStartPage);
+            }
+        }
     }
 
 
