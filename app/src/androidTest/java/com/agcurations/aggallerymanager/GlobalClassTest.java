@@ -19,4 +19,13 @@ public class GlobalClassTest {
 
     }
 
+    @Test
+    public void Test_GetRelativePathFromUriString(){
+        String sDataFolder = "content://com.android.externalstorage.documents/tree/3538-3631%3AArchive%2FAGGalleryManager/document/3538-3631%3AArchive%2FAGGalleryManager";
+        String sPath = "content://com.android.externalstorage.documents/tree/3538-3631%3AArchive%2FAGGalleryManager/document/3538-3631%3AArchive%2FAGGalleryManager%2FVideos%2F1%2F10089";
+        String sSuccessfulResult = "1/10089";
+        String sResult = GlobalClass.GetRelativePathFromUriString(sPath, sDataFolder);
+        assertEquals(sResult, sSuccessfulResult);
+    }
+
 }
