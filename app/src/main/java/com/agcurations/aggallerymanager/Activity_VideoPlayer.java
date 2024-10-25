@@ -13,7 +13,6 @@ import android.os.Looper;
 import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.PixelCopy;
 import android.view.SurfaceView;
@@ -21,7 +20,6 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -130,17 +128,6 @@ public class Activity_VideoPlayer extends AppCompatActivity {
         if (savedInstanceState != null) {
             glCurrentVideoPosition = savedInstanceState.getLong(PLAYBACK_TIME);
         }
-
-        MediaController gMediaController = new MediaController(this);
-        gMediaController.addOnUnhandledKeyEventListener((view, keyEvent) -> {
-            //Handle BACK button
-            if (keyEvent.getKeyCode() == KeyEvent.KEYCODE_BACK && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                onBackPressed();
-                return true;
-            }
-            return false;
-        });
-
 
 
         //Set a touch listener to the VideoView so that the user can pause video and obfuscate with a
